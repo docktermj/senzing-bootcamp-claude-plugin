@@ -1,0 +1,11 @@
+{
+  "source": {
+    "repo": "docktermj/senzing-bootcamp-kiro-powers",
+    "local": "~/github.com/docktermj/senzing-bootcamp-kiro-powers",
+    "branch": "1-docktermj-7"
+  },
+  "syncedCommit": "23788118890e9fa7976a2007c74464164a533ea5",
+  "syncedCommitShort": "2378811",
+  "syncedDate": "2026-07-12",
+  "notes": "Kiro Power commit from which this Claude plugin was initially scaffolded (v0.1.0). Bump on each migration."
+}
