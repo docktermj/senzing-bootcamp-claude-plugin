@@ -1,0 +1,1 @@
+# senzing-bootcamp-claude-plugin
