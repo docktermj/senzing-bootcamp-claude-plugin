@@ -156,5 +156,5 @@ later porting phases.)
 
 ## 7. Hand off to Module 1
 
-Invoke the `module-01-first-resolution` skill to begin Module 1, applying the module-start
+Invoke the `module-01-business-problem` skill to begin Module 1, applying the module-start
 banner and journey map from `ground-rules.md`.

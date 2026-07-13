@@ -36,7 +36,7 @@ Follow `onboarding-flow.md` for the detailed steps. The sequence is:
    verbosity preference and a light comprehension check.
 6. **Track selection** - Core Bootcamp (Modules 1-7) or Advanced Topics (Modules 1-11). This
    is a gate: wait for their choice.
-7. **Hand off to Module 1** - invoke the `module-01-first-resolution` skill.
+7. **Hand off to Module 1** - invoke the `module-01-business-problem` skill.
 
 ## Ground rules you must never break during onboarding
 

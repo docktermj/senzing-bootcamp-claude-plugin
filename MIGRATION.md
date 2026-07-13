@@ -106,11 +106,11 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 - [ ] `steering/steering-index.yaml` -> onboarding skill ground-rules / plugin instructions
 - [~] `steering/verbosity-control.md` -> onboarding skill ground-rules / plugin instructions
 
-### Phase 2 - Module 01 (currently PARTIAL: simplified sample only)
+### Phase 2 - Module 01 (ported: Discover the Business Problem)
 
-- [ ] `steering/module-01-business-problem.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-01-phase1-discovery.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-01-phase2-document-confirm.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-01-business-problem.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-01-phase1-discovery.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-01-phase2-document-confirm.md` -> `skills/module-01-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 02
 
@@ -447,3 +447,32 @@ steering load/unload model; Claude Code manages context via compaction), mcp-res
 
 **Runtime-untested:** the onboarding has not been exercised by installing the plugin and running
 `/start-bootcamp`. Smoke-test before considering Phase 1 closed.
+
+---
+
+# Phase 2 status (Module 1: Discover the Business Problem)
+
+**Done.** Replaced the incorrect `module-01-first-resolution` placeholder with a faithful port
+of the real Module 1:
+
+- `skills/module-01-business-problem/SKILL.md` - router (intro, before/after, error handling,
+  phase manifest, ground-rules reference).
+- `skills/module-01-business-problem/phase1-discovery.md` - steps 1-9 (git init, privacy
+  reminder, design-pattern gallery, three discovery paths, Business Case Offer + CORD-via-MCP
+  sourcing, six-category inference, record-count/license guidance 6a-6e, gap-filling 7a-7d,
+  integration, deployment target).
+- `skills/module-01-business-problem/phase2-document-confirm.md` - steps 10-18 (visuals,
+  scenario ID, `docs/business_problem.md` template, README update, solution approach, value
+  restatement, confirmation, stakeholder summary, transition to Module 4).
+
+**Translation decisions:** `🛑`/`⛔` kept internal (rendered as italic "end the turn" directives,
+not glyphs); `#[[file:]]` replaced with relative references; license in-flow path reconciled
+(dropped the Kiro `disabledTools`/`mcp.json` edit; check `submit_feedback` via
+`get_capabilities` instead). Referenced-but-not-yet-ported dependencies noted inline:
+`business_case_offer.py` (scenario invariants validated directly), `templates/
+stakeholder_summary.md`, `design-patterns.md`, `common-pitfalls.md`.
+
+**Note:** Module 1 transitions to **Module 4** (data collection), not Module 2 - matches the
+Kiro track ordering.
+
+**Runtime-untested:** not yet exercised via a local plugin install.
