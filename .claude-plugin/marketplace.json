@@ -1,0 +1,15 @@
+{
+  "name": "senzing-bootcamp",
+  "owner": {
+    "name": "docktermj"
+  },
+  "description": "Senzing bootcamp plugin for Claude Code.",
+  "plugins": [
+    {
+      "name": "senzing-bootcamp",
+      "source": "./plugins/senzing-bootcamp",
+      "description": "Guided bootcamp for learning Senzing entity resolution with Claude Code, from first demo to production deployment.",
+      "keywords": ["senzing", "bootcamp", "entity-resolution", "tutorial", "learning-track"]
+    }
+  ]
+}
