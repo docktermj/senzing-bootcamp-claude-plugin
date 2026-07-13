@@ -7,7 +7,7 @@ description: Bootcamp Module 1 — run a first Senzing entity-resolution demo. U
 
 **Goal:** the bootcamper loads a small set of sample records and sees Senzing resolve them.
 
-Follow the ground rules in `bootcamp-onboarding` (MCP-only facts, project-relative files,
+Follow `bootcamp-onboarding/ground-rules.md` (MCP-only facts, project-relative files,
 progress tracking).
 
 ## Steps
@@ -26,5 +26,5 @@ progress tracking).
 ## Completion
 
 - Summarize what the bootcamper accomplished.
-- Update `.bootcamp/progress.json` to mark Module 1 complete.
+- Update `config/bootcamp_progress.json` to mark Module 1 complete.
 - Offer to continue to the next module.

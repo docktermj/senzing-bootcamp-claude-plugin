@@ -83,28 +83,28 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 ### Phase 1 - Onboarding + core agent parity
 
-- [ ] `steering/onboarding-flow.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
-- [ ] `steering/onboarding-phase1b-intro-language.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
-- [ ] `steering/onboarding-phase2-track-setup.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
-- [ ] `steering/agent-behavior-rules.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/agent-context-management.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/agent-instructions.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/complexity-estimator.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/conversation-examples.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/conversation-protocol.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/entity-resolution-intro.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/file-placement.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/inline-status.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/mcp-response-caching.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/mcp-tool-decision-tree.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/mcp-usage-reference.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/module-prerequisites.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/module-transitions.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/phase-loading-guide.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/project-structure.md` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/skip-step-protocol.md` -> onboarding skill ground-rules / plugin instructions
+- [x] `steering/onboarding-flow.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
+- [x] `steering/onboarding-phase1b-intro-language.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
+- [x] `steering/onboarding-phase2-track-setup.md` -> `skills/bootcamp-onboarding/` (SKILL.md + supporting files)
+- [x] `steering/agent-behavior-rules.md` -> onboarding skill ground-rules / plugin instructions
+- [ ] `steering/agent-context-management.md` -> onboarding skill ground-rules / plugin instructions  _NOT ported (Phase 1): Kiro steering load/unload model; N/A in Claude Code (compaction handles context)_
+- [x] `steering/agent-instructions.md` -> onboarding skill ground-rules / plugin instructions
+- [ ] `steering/complexity-estimator.md` -> onboarding skill ground-rules / plugin instructions  _NOT ported (Phase 1): deferred to Module 4/5 content_
+- [~] `steering/conversation-examples.md` -> onboarding skill ground-rules / plugin instructions
+- [~] `steering/conversation-protocol.md` -> onboarding skill ground-rules / plugin instructions
+- [x] `steering/entity-resolution-intro.md` -> onboarding skill ground-rules / plugin instructions
+- [x] `steering/file-placement.md` -> onboarding skill ground-rules / plugin instructions
+- [ ] `steering/inline-status.md` -> onboarding skill ground-rules / plugin instructions  _NOT ported (Phase 1): deferred (status command) - small, revisit_
+- [ ] `steering/mcp-response-caching.md` -> onboarding skill ground-rules / plugin instructions  _NOT ported (Phase 1): Kiro agent-executed file cache; revisit if needed_
+- [~] `steering/mcp-tool-decision-tree.md` -> onboarding skill ground-rules / plugin instructions
+- [x] `steering/mcp-usage-reference.md` -> onboarding skill ground-rules / plugin instructions
+- [~] `steering/module-prerequisites.md` -> onboarding skill ground-rules / plugin instructions
+- [~] `steering/module-transitions.md` -> onboarding skill ground-rules / plugin instructions
+- [ ] `steering/phase-loading-guide.md` -> onboarding skill ground-rules / plugin instructions  _NOT ported (Phase 1): Kiro steering sub-file load/unload; N/A in Claude Code_
+- [~] `steering/project-structure.md` -> onboarding skill ground-rules / plugin instructions
+- [~] `steering/skip-step-protocol.md` -> onboarding skill ground-rules / plugin instructions
 - [ ] `steering/steering-index.yaml` -> onboarding skill ground-rules / plugin instructions
-- [ ] `steering/verbosity-control.md` -> onboarding skill ground-rules / plugin instructions
+- [~] `steering/verbosity-control.md` -> onboarding skill ground-rules / plugin instructions
 
 ### Phase 2 - Module 01 (currently PARTIAL: simplified sample only)
 
@@ -408,3 +408,42 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 - [ ] `scripts/validate_yaml_schemas.py` -> dev tooling; port only if a plugin build/CI needs it
 - [ ] `scripts/verbosity.py` -> dev tooling; port only if a plugin build/CI needs it
 - [ ] `scripts/version.py` -> dev tooling; port only if a plugin build/CI needs it
+
+---
+
+# Phase 1 status (onboarding + core agent parity)
+
+**Done.** The `bootcamp-onboarding` skill now ports the onboarding flow and core agent rules:
+
+- `skills/bootcamp-onboarding/SKILL.md` - entry + fresh-vs-resume + sequence.
+- `skills/bootcamp-onboarding/onboarding-flow.md` - steps 0-7 (MCP health check, setup, ER
+  intro, language gate, welcome + verbosity, track gate, hand off to Module 1).
+- `skills/bootcamp-onboarding/ground-rules.md` - always-apply rules (👉 conversation protocol,
+  mandatory gates, MCP-first invariant, no-SQL, file placement, progress/state, verbosity,
+  module banners, closing questions). Every module skill should load this file.
+- `skills/bootcamp-onboarding/entity-resolution-intro.md` - ER intro with MCP-sourced facts and
+  the exploration gate.
+
+**Translation decisions applied:**
+
+- Adopted Kiro `config/` conventions (`config/bootcamp_progress.json`,
+  `config/bootcamp_preferences.yaml`); updated the session-start hook, `/start-bootcamp`
+  command, and Module 1 skill to match (replaced the scaffold's `.bootcamp/`).
+- Dropped the Kiro `createHook` / hook-install onboarding step: hooks ship with the plugin.
+- `🛑 STOP` / `⛔ MANDATORY GATE` kept as internal, never-rendered directives.
+- Reconciled MCP tool routing to the tools the current Senzing MCP server actually exposes;
+  entity-query operations go through generated SDK code (`get_sdk_reference` + `sdk_guide`)
+  rather than direct query tools.
+
+**Condensed (marked `[~]`), full port later:** conversation-protocol (385 lines -> core rules),
+conversation-examples, project-structure (full tree), verbosity-control (5-category system),
+mcp-tool-decision-tree, skip-step-protocol, module-prerequisites (gate table),
+module-transitions (banner/journey-map ported; quality-loop and sub-step convention pending).
+
+**Deliberately not ported in Phase 1:** agent-context-management and phase-loading-guide (Kiro
+steering load/unload model; Claude Code manages context via compaction), mcp-response-caching
+(Kiro agent-executed file cache), inline-status (small; revisit), complexity-estimator
+(deferred to Module 4/5).
+
+**Runtime-untested:** the onboarding has not been exercised by installing the plugin and running
+`/start-bootcamp`. Smoke-test before considering Phase 1 closed.
