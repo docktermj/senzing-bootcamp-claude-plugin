@@ -34,6 +34,9 @@ or just tell Claude "start the bootcamp".
 
 ```
 .claude-plugin/marketplace.json        # marketplace listing (this repo)
+.sync-state.json                       # last-migrated Kiro Power commit
+MIGRATION.md                           # how to keep this in sync with the Kiro Power
+scripts/sync-check.sh                  # report Kiro changes since the last sync
 plugins/senzing-bootcamp/
   .claude-plugin/plugin.json           # plugin manifest
   .mcp.json                            # Senzing MCP server
@@ -49,7 +52,16 @@ plugins/senzing-bootcamp/
 Early scaffold (v0.1.0). One sample module is included; the remaining modules and the full
 onboarding flow are being ported from the Kiro bootcamp.
 
-## Mapping from the Kiro Power
+## Keeping in sync with the Kiro Power
+
+This plugin is a port of the Kiro Power (`docktermj/senzing-bootcamp-kiro-powers`).
+Improvements usually land in the Kiro repo first, then get migrated here.
+
+- `.sync-state.json` records the last-migrated Kiro commit.
+- Run `scripts/sync-check.sh` to see what changed in the Kiro Power since then.
+- Follow [`MIGRATION.md`](MIGRATION.md) for the path mapping and the step-by-step procedure.
+
+### Component mapping (overview)
 
 | Kiro Power | This plugin |
 | --- | --- |
@@ -60,3 +72,5 @@ onboarding flow are being ported from the Kiro bootcamp.
 | `mcp.json` | `.mcp.json` |
 | "Start the bootcamp" | `/start-bootcamp` command + `bootcamp-onboarding` skill |
 | Powers panel distribution | Plugin marketplace |
+
+Full mapping and translation notes: [`MIGRATION.md`](MIGRATION.md).
