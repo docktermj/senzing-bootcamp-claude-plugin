@@ -34,14 +34,14 @@ Save to `docs/business_problem.md` using this template:
 [If a pattern was selected: Pattern, Standard Goal, Customizations]
 
 ## Data Sources
-1. **[Source name]** — Type / ~Records / Entity type / Update frequency / Access
-2. **[Source name]** — [same structure]
+1. **[Source name]**: Type / ~Records / Entity type / Update frequency / Access
+2. **[Source name]**: [same structure]
 
 ## Entity Types
 [People / Organizations / Both / Other]
 
 ## Key Matching Criteria
-- **[Attribute]** (High/Medium/Low priority) — [why]
+- **[Attribute]** (High/Medium/Low priority): [why]
 
 ## Success Criteria
 - [Measurable outcome 1..3]
@@ -57,7 +57,7 @@ Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 [If `deployment_target` present in preferences: Platform / Category (Cloud/Container/Local/
 Undecided) / Note "development proceeds locally first; infra configured in Module 11". If
 "not sure yet": Platform "To be determined", Category "Undecided". If absent: "Not applicable
-— current track does not include Module 11."]
+: current track does not include Module 11."]
 
 ## Timeline
 **Target completion** / **Key milestones**
@@ -74,7 +74,7 @@ would, plus:
 - Record each distinct scenario source into `config/data_sources.yaml` (one entry per source).
 - Keep `docs/business_problem.md` self-contained (problem, category, sources, success), not
   dependent on the registry.
-- Never embed CORD names/counts from training data — retrieve via MCP (`get_sample_data`,
+- Never embed CORD names/counts from training data: retrieve via MCP (`get_sample_data`,
   `search_docs`) at runtime.
 
 **If writing an artifact fails:** say WHICH artifact failed; do not report Module 1 complete
@@ -93,7 +93,7 @@ pattern if one was selected. **Checkpoint:** write step 13.
 Explain how Senzing solves this and which modules are most relevant. If a pattern was selected,
 reference how the bootcamp implements it.
 
-- **If the problem involves search/lookup:** clarify the correct layering — Senzing first for
+- **If the problem involves search/lookup:** clarify the correct layering: Senzing first for
   entity resolution, THEN a search index (Elasticsearch/OpenSearch) over resolved entities.
   This prevents a common architecture mistake. (Full `design-patterns` reference is a later
   porting phase; use `search_docs` for specifics.)

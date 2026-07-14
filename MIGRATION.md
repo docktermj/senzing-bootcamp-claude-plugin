@@ -114,41 +114,41 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 ### Phase 3 - Module 02
 
-- [ ] `steering/module-02-sdk-setup.md` -> `skills/module-02-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-02-sdk-setup.md` -> `skills/module-02-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 03
 
-- [ ] `steering/module-03-phase1-verification.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-03-phase2-visualization.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-03-phase3-report-close.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-03-system-verification.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-03-visualization-api-reference.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-03-phase1-verification.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-03-phase2-visualization.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-03-phase3-report-close.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-03-system-verification.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-03-visualization-api-reference.md` -> `skills/module-03-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 04
 
-- [ ] `steering/module-04-data-collection.md` -> `skills/module-04-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-04-data-collection.md` -> `skills/module-04-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 05
 
-- [ ] `steering/module-05-data-quality-mapping.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-05-phase1-quality-assessment.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-05-phase2-data-mapping.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-05-phase3-test-load.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-05-data-quality-mapping.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-05-phase1-quality-assessment.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-05-phase2-data-mapping.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-05-phase3-test-load.md` -> `skills/module-05-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 06
 
-- [ ] `steering/module-06-data-processing.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-06-phaseA-build-loading.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-06-phaseB-load-first-source.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-06-phaseC-multi-source.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-06-phaseD-validation.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-06-data-processing.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-06-phaseA-build-loading.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-06-phaseB-load-first-source.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-06-phaseC-multi-source.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-06-phaseD-validation.md` -> `skills/module-06-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 07
 
-- [ ] `steering/module-07-phase1-query-visualize.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-07-phase2-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-07-phase2b-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
-- [ ] `steering/module-07-query-visualize-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-07-phase1-query-visualize.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-07-phase2-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-07-phase2b-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
+- [x] `steering/module-07-query-visualize-discover.md` -> `skills/module-07-<slug>/SKILL.md` (+ phase supporting files)
 
 ### Phase 3 - Module 08
 
@@ -476,3 +476,39 @@ stakeholder_summary.md`, `design-patterns.md`, `common-pitfalls.md`.
 Kiro track ordering.
 
 **Runtime-untested:** not yet exercised via a local plugin install.
+
+---
+
+# Phase 3 status (Modules 2-7 ported, Core track complete)
+
+**Done.** All Core Bootcamp modules are now ported (one skill per module, multi-phase modules
+split into router + phase files, mirroring Module 1):
+
+- `module-02-sdk-setup/` (single file) - SDK Installation and Configuration.
+- `module-03-system-verification/` (router + phase1-verification + phase2-visualization +
+  phase3-report-close + visualization-api-reference).
+- `module-04-data-collection/` (single file) - Identify and Collect Data Sources.
+- `module-05-data-quality-mapping/` (router + phase1-quality-assessment + phase2-data-mapping +
+  phase3-test-load).
+- `module-06-data-processing/` (router + phaseA-build-loading + phaseB-load-first-source +
+  phaseC-multi-source + phaseD-validation; step numbering reconciled to a clean sequence).
+- `module-07-query-visualize-discover/` (router + phase1-query-visualize + phase2-discover +
+  phase2b-discover) - end of the Core track.
+
+Ported in parallel (one subagent per module) from Kiro Power commit 2378811. Same translation
+rules as Module 1: dropped `inclusion:` frontmatter; `🛑`/`⛔` kept internal; `#[[file:]]` ->
+relative refs; config/ conventions; MCP tool routing reconciled to the tools the current
+Senzing MCP server exposes (entity query/why/how -> generated SDK code via get_sdk_reference +
+sdk_guide; counts -> reporting_guide); no direct SQL. Em dashes normalized to colons across all
+skill docs (including Module 1) to match the house style.
+
+**Reconciliations / unported deps flagged inline in the module files** (all on the checklist
+for later phases): Kiro `scripts/*.py` helpers (validators, progress/volume utils, recap and
+comparison scripts), `templates/*`, `common-pitfalls.md`, `design-patterns.md`,
+`visualization-guide.md` / `visualization-web-service.md`, `data-processing-reference.md`, and
+the per-module `docs/modules/MODULE_*.md` user references.
+
+**Runtime-untested (all 7 modules).** Nothing has been exercised via a local plugin install.
+This remains the top follow-up before relying on the bootcamp end to end.
+
+**Advanced Topics (Modules 8-11) not started** - still on the checklist.

@@ -42,15 +42,16 @@ plugins/senzing-bootcamp/
   .mcp.json                            # Senzing MCP server
   commands/start-bootcamp.md           # entry point (/start-bootcamp)
   skills/bootcamp-onboarding/          # onboarding + ground rules
-  skills/module-01-business-problem/   # Module 1: discover the business problem
+  skills/module-01-business-problem/ ... module-07-query-visualize-discover/  # Core track (1-7)
   hooks/hooks.json                     # SessionStart (resume), PreToolUse (write-gate), Stop (next-step nudge)
   scripts/                             # hook scripts
 ```
 
 ## Status
 
-Early port (v0.1.0). Onboarding and Module 1 (Discover the Business Problem) are ported from
-the Kiro bootcamp; Modules 2-11 and runtime support are pending (see MIGRATION.md).
+Early port (v0.1.0). Onboarding and the full Core track (Modules 1-7) are ported from the
+Kiro bootcamp. Advanced Topics (Modules 8-11), runtime support scripts, and templates are
+pending (see MIGRATION.md). Not yet runtime-tested via a local install.
 
 ## Keeping in sync with the Kiro Power
 
