@@ -48,7 +48,7 @@ This repository is both the plugin and its own marketplace.
     /start-bootcamp
     ```
 
-  or just tell Claude "start the bootcamp".
+      or just tell Claude "start the bootcamp".
 
 ### Uninstall plugin
 
