@@ -1,7 +1,8 @@
 # Senzing Bootcamp Claude Code plugin
 
-A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution, packaged
-as a Claude Code plugin. Install it, then say **"start the bootcamp"** to be guided through
+A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution,
+packaged as a Claude Code plugin.
+Install it, then say **"start the bootcamp"** to be guided through
 a hands-on, module-by-module tutorial.
 
 ## Requirements
