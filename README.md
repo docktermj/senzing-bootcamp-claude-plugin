@@ -37,7 +37,7 @@ a hands-on, module-by-module tutorial.
 
 1. *Note:* In addition to Claude code,
    the Senzing Bootcamp Claude plugin can also be run with:
-    - Claude Code for VSCode
+    - [Claude Code for VSCode]
 
 ## Install plugin
 
@@ -61,4 +61,5 @@ This repository is both the plugin and its own marketplace.
     ```
 
 [Claude Code]: https://claude.com/product/claude-code
+[Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp
