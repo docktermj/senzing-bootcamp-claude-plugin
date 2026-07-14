@@ -1,6 +1,6 @@
 # Module 1, Phase 1: Discovery (steps 1–9)
 
-Discovery and gap-filling. Follow the ground rules. `🛑`/`⛔` are internal directives — do not
+Discovery and gap-filling. Follow the ground rules. `🛑`/`⛔` are internal directives: do not
 render them; signal a stop by ending the turn on the single 👉 question and waiting.
 
 ## 1. Initialize version control (optional)
@@ -12,8 +12,7 @@ git rev-parse --git-dir 2>/dev/null   # Linux/macOS
 ```
 
 - **Already a repo:** skip the question, checkpoint, proceed to Step 2.
-- **Not a repo:** ask —
-
+- **Not a repo:** ask: 
   👉 **If you don't know what "git" is, just skip this. It's optional: would you like me to initialize a git repository for version control?**
 
   *(Internal: end the turn here and wait.)* If yes, `git init`; if no, skip. Then checkpoint.
@@ -37,7 +36,7 @@ for testing. We'll set up proper security measures as we go."
 ## 4. If they want patterns
 
 Present an entity-resolution design-pattern gallery (recognized use-case categories below;
-pull real-world examples via `search_docs` — the full pattern gallery is a later porting
+pull real-world examples via `search_docs`: the full pattern gallery is a later porting
 phase). For each: the problem it solves, the goal, typical data sources, business value.
 
 👉 **Do any of these patterns match your situation?**
@@ -47,14 +46,14 @@ adapt to their context). If none fit, they can accept the Business Case Offer in
 
 **Checkpoint:** write step 4.
 
-## 5. Discovery prompt — three selectable paths
+## 5. Discovery prompt: three selectable paths
 
 Offer exactly one of:
 
-1. **Describe a real business case:** "Tell me about the problem you're solving — what data you
+1. **Describe a real business case:** "Tell me about the problem you're solving: what data you
    have, where it comes from, and what success looks like."
 2. **Adopt a design pattern** (if they picked one in Step 4): "You picked [pattern]. How does
-   that apply — what data, from where, and what does success look like?"
+   that apply: what data, from where, and what does success look like?"
 3. **Accept the Business Case Offer:** "Don't have a case in mind, or would rather not share
    one? I can generate a realistic, multi-source scenario so you can complete the full bootcamp
    without supplying your own."
@@ -64,7 +63,7 @@ bootcamper explicitly accepts.)*
 
 **Checkpoint:** write step 5.
 
-### 5a. Business Case Offer — acceptance handling (branch)
+### 5a. Business Case Offer: acceptance handling (branch)
 
 - **Accepted:** generate a complete scenario in-session: a non-empty problem description,
   exactly one use-case category from the recognized set (Customer 360, Fraud Detection, Data
@@ -81,14 +80,14 @@ bootcamper explicitly accepts.)*
   back to their own description, no generated `docs/business_problem.md`.
 
 *(The Kiro helper `business_case_offer.py` encodes these invariants; the script port is a later
-phase — validate them directly for now.)*
+phase: validate them directly for now.)*
 
 **Checkpoint:** write step 5a.
 
 ### 5b. CORD sourcing for the generated scenario (via MCP)
 
-Treat the Senzing MCP server as the ONLY source of CORD facts — never training data. Call
-`get_sample_data` and/or `search_docs(query='CORD datasets — names, contents, and availability
+Treat the Senzing MCP server as the ONLY source of CORD facts: never training data. Call
+`get_sample_data` and/or `search_docs(query='CORD datasets: names, contents, and availability
 for entity resolution scenarios')` to learn which datasets exist and what they contain. Present
 values exactly as returned. Wait up to 30s; retry once.
 
@@ -153,7 +152,7 @@ Paths:
    `submit_feedback` once with the `license_request` category; the license arrives by email
    with a download link. (In the Kiro Power this tool was disabled by default in `mcp.json`; in
    the Claude plugin, ensure the senzing MCP server's `submit_feedback` tool is enabled in
-   Claude Code — reconcile this when finalizing the plugin's MCP config.)
+   Claude Code: reconcile this when finalizing the plugin's MCP config.)
 2. **External channel:** email <support@senzing.com>, mention the Senzing Bootcamp, include
    name, org, expected record count, use case. Response in 1–2 business days.
 3. **Apply an existing license:** follow Step 6c.
@@ -192,7 +191,7 @@ what they already covered.
 
 - 7b (record types): 👉 **Are you working with people records, organization records, or both?**
 - 7c (source count): 👉 **How many distinct data sources or systems will we work with?**
-- 7d (desired outcome): 👉 **What does the end result look like — a clean master list, an API, reports, or something else?**
+- 7d (desired outcome): 👉 **What does the end result look like: a clean master list, an API, reports, or something else?**
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, proceed immediately to Step 8 in the same turn (Step 8's question is
@@ -211,10 +210,10 @@ Read `track` from `config/bootcamp_preferences.yaml`.
 
 **If `advanced_topics`:** ask (separate question):
 
-👉 **Where do you plan to deploy the final solution — a cloud hyperscaler (AWS/Azure/GCP), a container platform (Kubernetes/Docker Swarm), local/on-premises, or not sure yet?**
+👉 **Where do you plan to deploy the final solution: a cloud hyperscaler (AWS/Azure/GCP), a container platform (Kubernetes/Docker Swarm), local/on-premises, or not sure yet?**
 
 Reassure: "We'll develop everything locally first; deployment code comes in Module 11." Persist
-`deployment_target` (`aws`/`azure`/`gcp` — also set `cloud_provider`; `kubernetes`/
+`deployment_target` (`aws`/`azure`/`gcp`: also set `cloud_provider`; `kubernetes`/
 `docker_swarm`; `local`/`on_premises`; or `undecided`). **Checkpoint:** step 9 "completed".
 
 **If not `advanced_topics` (or unset):** skip; do not persist `deployment_target`.
