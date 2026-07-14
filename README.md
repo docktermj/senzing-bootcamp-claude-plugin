@@ -7,7 +7,7 @@ a hands-on, module-by-module tutorial.
 
 ## Requirements
 
-- Network access to the Senzing MCP server (`https://mcp.senzing.com/mcp`).
+- Network access to the [Senzing MCP server].
   The bootcamp cannot proceed without it.
   It generates SDK code,
   looks up Senzing facts,
@@ -19,11 +19,11 @@ a hands-on, module-by-module tutorial.
 1. For "smoothest ride", run Claude with "auto".
    Example:
 
-  ```console
-  mkdir senzing-bootcamp
-  cd senzing-bootcamp
-  claude --permission-mode auto
-  ```
+    ```console
+    mkdir senzing-bootcamp
+    cd senzing-bootcamp
+    claude --permission-mode auto
+    ```
 
 ## Install plugin
 
@@ -31,22 +31,22 @@ This repository is both the plugin and its own marketplace.
 
 1. Install Senzing Bootcamp plugin.
 
-  ```console
-  /plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
-  /plugin install senzing-bootcamp@senzing-bootcamp
-  ```
+    ```console
+    /plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
+    /plugin install senzing-bootcamp@senzing-bootcamp
+    ```
 
 1. Activate the plugin.
 
-  ```console
-  /reload-plugins
-  ```
+    ```console
+    /reload-plugins
+    ```
 
 1. Start the bootcamp.
 
-  ```console
-  /start-bootcamp
-  ```
+    ```console
+    /start-bootcamp
+    ```
 
   or just tell Claude "start the bootcamp".
 
@@ -57,3 +57,4 @@ claude plugin uninstall senzing-bootcamp@senzing-bootcamp
 ```
 
 [Claude Code]: https://claude.com/product/claude-code
+[Senzing MCP server]: https://mcp.senzing.com/mcp
