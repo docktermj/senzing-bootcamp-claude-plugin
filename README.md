@@ -13,9 +13,19 @@ a hands-on, module-by-module tutorial.
   looks up Senzing facts,
   and provides working examples.
 
-## Run Claude Code
+## Install Claude Code and plugin
 
 1. Download and install [Claude Code].
+
+1. Install Senzing Bootcamp Claude plugin.
+
+    ```console
+    claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
+    claude plugin install senzing-bootcamp@senzing-bootcamp
+    ```
+
+## Run Claude Code
+
 1. For "smoothest ride", run Claude with "auto".
    Example:
 
@@ -25,22 +35,13 @@ a hands-on, module-by-module tutorial.
     claude --permission-mode auto
     ```
 
+1. *Note:* In addition to Claude code,
+   the Senzing Bootcamp Claude plugin can also be run in:
+    - Claude Code for VSCode
+
 ## Install plugin
 
 This repository is both the plugin and its own marketplace.
-
-1. Install Senzing Bootcamp plugin.
-
-    ```console
-    /plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
-    /plugin install senzing-bootcamp@senzing-bootcamp
-    ```
-
-1. Activate the plugin.
-
-    ```console
-    /reload-plugins
-    ```
 
 1. Start the bootcamp.
 
@@ -54,6 +55,7 @@ This repository is both the plugin and its own marketplace.
 
 ```console
 claude plugin uninstall senzing-bootcamp@senzing-bootcamp
+claude plugin marketplace remove senzing-bootcamp
 ```
 
 [Claude Code]: https://claude.com/product/claude-code
