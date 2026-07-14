@@ -39,9 +39,7 @@ a hands-on, module-by-module tutorial.
    the Senzing Bootcamp Claude plugin can also be run with:
     - [Claude Code for VSCode]
 
-## Install plugin
-
-This repository is both the plugin and its own marketplace.
+## Start the Senzing Bootcamp
 
 1. Start the bootcamp.
 
