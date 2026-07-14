@@ -35,7 +35,7 @@ a hands-on, module-by-module tutorial.
     claude --permission-mode auto
     ```
 
-1. *Note:* In addition to Claude code,
+1. *Note:* In addition to Claude Code,
    the Senzing Bootcamp Claude plugin can also be run with:
     - [Claude Code for VSCode]
 
