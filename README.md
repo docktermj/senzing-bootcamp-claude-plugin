@@ -1,77 +1,58 @@
-# Senzing Bootcamp (Claude Code plugin)
+# Senzing Bootcamp Claude Code plugin
 
 A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution, packaged
 as a Claude Code plugin. Install it, then say **"start the bootcamp"** to be guided through
 a hands-on, module-by-module tutorial.
 
-This is the Claude Code counterpart to the Kiro "Senzing Bootcamp" Power.
+## Requirements
 
-## Install
+- Network access to the Senzing MCP server (`https://mcp.senzing.com/mcp`).
+  The bootcamp cannot proceed without it.
+  It generates SDK code,
+  looks up Senzing facts,
+  and provides working examples.
+
+## Run Claude Code
+
+1. Download and install [Claude Code].
+1. For "smoothest ride", run Claude with "auto".
+   Example:
+
+  ```console
+  mkdir senzing-bootcamp
+  cd senzing-bootcamp
+  claude --permission-mode auto
+  ```
+
+## Install plugin
 
 This repository is both the plugin and its own marketplace.
 
-```
-/plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
-/plugin install senzing-bootcamp@senzing-bootcamp
-```
+1. Install Senzing Bootcamp plugin.
 
-Then, in any working directory:
+  ```console
+  /plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
+  /plugin install senzing-bootcamp@senzing-bootcamp
+  ```
 
-```
-/start-bootcamp
-```
+1. Activate the plugin.
 
-or just tell Claude "start the bootcamp".
+  ```console
+  /reload-plugins
+  ```
 
-## Requirements
+1. Start the bootcamp.
 
-- Claude Code with plugin support.
-- Network access to the Senzing MCP server (`https://mcp.senzing.com/mcp`). The bootcamp
-  cannot proceed without it; it generates SDK code, looks up Senzing facts, and provides
-  working examples.
+  ```console
+  /start-bootcamp
+  ```
 
-## What's inside
+  or just tell Claude "start the bootcamp".
 
-```
-.claude-plugin/marketplace.json        # marketplace listing (this repo)
-.sync-state.json                       # last-migrated Kiro Power commit
-MIGRATION.md                           # how to keep this in sync with the Kiro Power
-scripts/sync-check.sh                  # report Kiro changes since the last sync
-plugins/senzing-bootcamp/
-  .claude-plugin/plugin.json           # plugin manifest
-  .mcp.json                            # Senzing MCP server
-  commands/start-bootcamp.md           # entry point (/start-bootcamp)
-  skills/bootcamp-onboarding/          # onboarding + ground rules
-  skills/module-01-business-problem/ ... module-07-query-visualize-discover/  # Core track (1-7)
-  hooks/hooks.json                     # SessionStart (resume), PreToolUse (write-gate), Stop (next-step nudge)
-  scripts/                             # hook scripts
+### Uninstall plugin
+
+```console
+claude plugin uninstall senzing-bootcamp@senzing-bootcamp
 ```
 
-## Status
-
-Early port (v0.1.0). Onboarding and the full Core track (Modules 1-7) are ported from the
-Kiro bootcamp. Advanced Topics (Modules 8-11), runtime support scripts, and templates are
-pending (see MIGRATION.md). Not yet runtime-tested via a local install.
-
-## Keeping in sync with the Kiro Power
-
-This plugin is a port of the Kiro Power (`docktermj/senzing-bootcamp-kiro-powers`).
-Improvements usually land in the Kiro repo first, then get migrated here.
-
-- `.sync-state.json` records the last-migrated Kiro commit.
-- Run `scripts/sync-check.sh` to see what changed in the Kiro Power since then.
-- Follow [`MIGRATION.md`](MIGRATION.md) for the path mapping and the step-by-step procedure.
-
-### Component mapping (overview)
-
-| Kiro Power | This plugin |
-| --- | --- |
-| POWER.md manifest | `.claude-plugin/plugin.json` |
-| Steering files (`inclusion: manual`) | Skills (`skills/<name>/SKILL.md`) |
-| Steering files (`inclusion: always`) | Plugin instructions / skill ground rules |
-| Agent hooks (`.kiro/hooks/*.json`) | `hooks/hooks.json` (command / prompt / agent types) |
-| `mcp.json` | `.mcp.json` |
-| "Start the bootcamp" | `/start-bootcamp` command + `bootcamp-onboarding` skill |
-| Powers panel distribution | Plugin marketplace |
-
-Full mapping and translation notes: [`MIGRATION.md`](MIGRATION.md).
+[Claude Code]: https://claude.com/product/claude-code
