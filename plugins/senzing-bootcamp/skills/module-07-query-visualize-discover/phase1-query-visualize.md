@@ -25,7 +25,7 @@ least one non-empty desired-output field:
 - List each requirement with its source (e.g. "From your success criterion about [X]..." or
   "From your desired output format of [Y]...").
 
-👉 **Is there anything you'd like to add or change?**
+👉 **Is there anything you'd like to adjust?**
 
 *(Internal: end the turn on this question and wait.)*
 

@@ -39,10 +39,10 @@ Ask these in order, each as its own turn (pre-fill the module from captured
 context so you do not ask the bootcamper to repeat it):
 
 1. 👉 **What would you like to give feedback about?**
-2. 👉 **What happened, or what would you change?**
+2. 👉 **What happened?**
 3. 👉 **Why does it matter to you?**
-4. 👉 **Do you have a suggested fix or improvement?**
-5. 👉 **What priority would you give this: high, medium, or low?**
+4. 👉 **Do you have a suggested fix?**
+5. 👉 **What priority would you give this? Reply with a number:** (1) High, (2) Medium, (3) Low.
 
 If the bootcamper gives everything in one message, do not re-ask: confirm what you
 captured and proceed.

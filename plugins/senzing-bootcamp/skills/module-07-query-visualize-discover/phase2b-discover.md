@@ -91,7 +91,10 @@ connections between entities using `find_network` and `find_path`.
    - Write step 4d status as `"skipped"` with reason `"no_relationships"` in the checkpoint.
 8. **Transition:**
 
-   👉 **Would you like to continue to the next demonstration (Visualization Suggestions, data-specific analytical views), or proceed to module completion?**
+   👉 **What would you like to do next? Reply with a number:**
+
+   1. Continue to the next demonstration — Visualization Suggestions (data-specific analytical views).
+   2. Proceed to module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to
@@ -111,22 +114,22 @@ Suggest at least two visualizations tailored to the bootcamper's data structure 
 results. Select from the catalog below based on what was found in step 4a.
 
 1. **Visualization catalog, select based on the bootcamper's data:**
-   - **Cross-source overlap heatmap**: suggest when 2+ data sources are loaded. Reveals which
+   - **Cross-source overlap heatmap:** suggest when 2+ data sources are loaded. Reveals which
      sources share the most resolved entities. Framing: "Since you have records from [Source A]
      and [Source B], a cross-source overlap heatmap would show which sources share the most
      resolved entities, helping you see where your data sources agree."
-   - **Entity size distribution chart**: suggest for any data. Shows records per entity
+   - **Entity size distribution chart:** suggest for any data. Shows records per entity
      (singletons vs. small merges vs. large merges). Framing: "An entity size distribution
      chart would show how your records clustered, how many entities are singletons versus
      multi-record merges."
-   - **Relationship network graph**: suggest when relationships exist (from step 4a). Shows how
+   - **Relationship network graph:** suggest when relationships exist (from step 4a). Shows how
      entities connect through shared attributes. Framing: "Since your data has relationship
      clusters, a network graph would visualize how entities connect through shared attributes."
-   - **Match key frequency analysis**: suggest when multi-record entities exist. Shows which
+   - **Match key frequency analysis:** suggest when multi-record entities exist. Shows which
      feature combinations (match keys) drive the most resolutions. Framing: "A match key
      frequency chart would show which feature combinations, like NAME+ADDRESS or NAME+DOB , 
      are driving the most resolutions in your data."
-   - **Feature score distribution**: suggest when multi-record entities exist. Shows how
+   - **Feature score distribution:** suggest when multi-record entities exist. Shows how
      closely features match across resolved records. Framing: "A feature score distribution
      would show how tightly your resolved records match, whether most merges are near-exact or
      fuzzy matches."

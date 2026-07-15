@@ -27,7 +27,10 @@ Read `config/bootcamp_preferences.yaml` and check the `mapping_verbosity` key.
 
 - **If `mapping_verbosity` is `null` or absent:**
 
-  👉 **Before we start mapping, would you like *verbose mode* (I'll show each mapping step in detail: field detection, attribute selection rationale, transformation preview) or *concise mode* (I'll map quickly and show only the final mapped record and any warnings)?**
+  👉 **Before we start mapping, which mode would you like? Reply with a number:**
+
+  1. **Verbose mode** — I'll show each mapping step in detail: field detection, attribute selection rationale, transformation preview.
+  2. **Concise mode** — I'll map quickly and show only the final mapped record and any warnings.
 
   *(Internal: end the turn on this question and wait.)* Persist their choice (`verbose` or
   `concise`) to `mapping_verbosity` in `config/bootcamp_preferences.yaml`.
@@ -280,11 +283,17 @@ close the turn on one 👉 question:
   loading (Module 6)."
 - **Quality 70-79%:**
 
-  👉 **Quality is acceptable. Would you like to proceed to loading now, or iterate to improve [specific weak areas] first?**
+  👉 **Quality is acceptable. What would you like to do? Reply with a number:**
+
+  1. Proceed to loading now.
+  2. Iterate to improve [specific weak areas] first.
 
 - **Quality <70%:**
 
-  👉 **Quality needs improvement before loading will produce meaningful results. I'd recommend going back to address [specific issues]: would you like to iterate, or proceed knowing results may be limited?**
+  👉 **Quality needs improvement before loading will produce meaningful results. I'd recommend going back to address [specific issues]. What would you like to do? Reply with a number:**
+
+  1. Iterate to improve the data.
+  2. Proceed anyway, knowing results may be limited.
 
 *(Internal: end the turn on the applicable question and wait.)*
 

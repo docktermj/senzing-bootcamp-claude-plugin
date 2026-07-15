@@ -126,7 +126,7 @@ transformations:
     fast_path_reason: "CORD source already in Senzing-loadable form"
 ```
 
-**Invariants**: every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
+**Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
 original `data/raw/` file, unchanged); `records_in == records_out`; `records_rejected: 0`;
 `transformation_script: null`; `fast_pathed: true`.
 
@@ -229,13 +229,19 @@ to close the turn:
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
   mapping now, or improve the weakest fields first."
 
-  👉 **Your data quality is acceptable but has some gaps: would you like to improve the weakest fields first, or continue to mapping now?**
+  👉 **Your data quality is acceptable but has some gaps. What would you like to do? Reply with a number:**
+
+  1. Improve the weakest fields first.
+  2. Continue to mapping now.
 
 - **Quality <70%:** "Your data quality needs attention before mapping will produce good
   results. I'd recommend focusing on [specific issues: e.g., filling missing phone numbers,
   standardizing address formats]."
 
-  👉 **Your data quality needs attention before mapping will produce good results: would you like to work on improving the data first, or proceed anyway knowing the results may be limited?**
+  👉 **Your data quality needs attention before mapping will produce good results. What would you like to do? Reply with a number:**
+
+  1. Work on improving the data first.
+  2. Proceed anyway, knowing the results may be limited.
 
 *(Internal: end the turn on the applicable question and wait.)*
 

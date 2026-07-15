@@ -393,7 +393,11 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
      substitute a remembered number. Present a load-time warning built from what the server
      returned, then end the turn on the question below and wait for the bootcamper's choice.
 
-   👉 **Loading all collected records into SQLite may take a while. Would you like to (1) load all records on SQLite, (2) sample down to a smaller record count, or (3) switch to an alternative database like PostgreSQL?**
+   👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
+
+   1. Load all records into SQLite.
+   2. Sample down to a smaller record count.
+   3. Switch to an alternative database like PostgreSQL.
 
    *(Internal: end the turn on this question and wait.)*
 
