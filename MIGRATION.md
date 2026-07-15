@@ -512,3 +512,23 @@ the per-module `docs/modules/MODULE_*.md` user references.
 This remains the top follow-up before relying on the bootcamp end to end.
 
 **Advanced Topics (Modules 8-11) not started** - still on the checklist.
+
+---
+
+# Hook gating fix (post-port)
+
+**Problem found live:** the `Stop` hook (prompt type) and the `PreToolUse` write-gate fired in
+EVERY Claude Code session once the plugin was installed, not just during a bootcamp. The Stop
+hook nagged for a 👉 closing question on unrelated turns; the write-gate would block legitimate
+`/tmp` writes in non-bootcamp work.
+
+**Fix:** gate both on a deterministic bootcamp-active signal instead of model judgment. A
+bootcamp is "active" when `config/bootcamp_progress.json` exists in the working directory.
+
+- `Stop` hook converted from `prompt` type to a `command` script (`scripts/stop-nudge.sh`):
+  emits nothing unless a bootcamp is active; when active, injects the closing-question
+  instruction via `hookSpecificOutput.additionalContext`.
+- `scripts/write-gate.sh`: no-ops (allows the write) unless a bootcamp is active.
+
+This keeps the plugin from altering unrelated sessions. Verified both silent/allow outside a
+bootcamp and active inside one.
