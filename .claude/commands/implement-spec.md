@@ -17,6 +17,6 @@ Spec(s) to implement: $ARGUMENTS
   implement each.
 
 For every spec: confirm its root cause in the code, make the change while
-honoring `specs/invariants.md`, verify it against the spec's acceptance
+honoring `specs/INVARIANTS.md`, verify it against the spec's acceptance
 criteria, and only then record it in `specs/IMPLEMENTED.md`. Do not commit unless
 asked.

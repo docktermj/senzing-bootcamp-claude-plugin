@@ -1,6 +1,6 @@
 # Cross-platform hook execution on Windows
 
-Maintain the invariant conditions in @invariants.md and fix the following issue:
+Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
@@ -34,7 +34,7 @@ Windows, not merely assumed to be.
 - [ ] The Windows execution path for all four hooks is either verified and documented, or removed as a dependency.
 - [ ] `write-gate.sh` and `stop-nudge.sh` behavior is unchanged on Linux/macOS (re-run their existing verification scenarios).
 - [ ] `hooks/README.md` states the runtime prerequisites per platform.
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 

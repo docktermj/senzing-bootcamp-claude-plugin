@@ -8,7 +8,7 @@ following improvement" for enhancements.
 ```markdown
 # <Title>
 
-Maintain the invariant conditions in @invariants.md and <fix the following issue | implement the following improvement>:
+Maintain the invariant conditions in @INVARIANTS.md and <fix the following issue | implement the following improvement>:
 
 ## Problem
 
@@ -29,7 +29,7 @@ cause. For a feature: what to add and where it fits the module/flow.>
 
 - [ ] <Observable, testable outcome that proves the item is resolved.>
 - [ ] <Any additional outcome.>
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 

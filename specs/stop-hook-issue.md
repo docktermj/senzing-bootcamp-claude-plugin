@@ -1,6 +1,6 @@
 # Stop hook loop
 
-Maintain the invariant conditions in @invariants.md and fix the following issue:
+Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
   👉 Would you like to explore any entity-resolution concepts before we begin, or are you ready to move on?
 
