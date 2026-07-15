@@ -160,7 +160,12 @@ Paths:
 Retrieve any validity period / capacity figures from MCP at runtime; never substitute a
 remembered figure.
 
-👉 **Which would you like to do: request via the MCP server, request through the external channel, apply a license you already have, or defer for now?**
+👉 **Which would you like to do? Reply with a number:**
+
+1. Request via the MCP server (if available).
+2. Request through the external channel.
+3. Apply a license you already have.
+4. Defer for now.
 
 *(Internal: end the turn and wait.)* Act on the choice; defer → Step 6e.
 
@@ -189,9 +194,9 @@ what they already covered.
 
 ### 7b–7d. Ask only about "not yet determined" items, one per turn
 
-- 7b (record types): 👉 **Are you working with people records, organization records, or both?**
-- 7c (source count): 👉 **How many distinct data sources or systems will we work with?**
-- 7d (desired outcome): 👉 **What does the end result look like: a clean master list, an API, reports, or something else?**
+- 7b (record types): 👉 **Which records are you working with? Reply with a number:** (1) people, (2) organizations, (3) both.
+- 7c (source count): 👉 **How many distinct data sources will we work with?**
+- 7d (desired outcome): 👉 **What does the end result look like? Reply with a number:** (1) a clean master list, (2) an API, (3) reports, (4) something else.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, proceed immediately to Step 8 in the same turn (Step 8's question is
@@ -210,7 +215,12 @@ Read `track` from `config/bootcamp_preferences.yaml`.
 
 **If `advanced_topics`:** ask (separate question):
 
-👉 **Where do you plan to deploy the final solution: a cloud hyperscaler (AWS/Azure/GCP), a container platform (Kubernetes/Docker Swarm), local/on-premises, or not sure yet?**
+👉 **Where do you plan to deploy the final solution? Reply with a number:**
+
+1. A cloud hyperscaler (AWS/Azure/GCP).
+2. A container platform (Kubernetes/Docker Swarm).
+3. Local / on-premises.
+4. Not sure yet.
 
 Reassure: "We'll develop everything locally first; deployment code comes in Module 11." Persist
 `deployment_target` (`aws`/`azure`/`gcp`: also set `cloud_provider`; `kubernetes`/

@@ -99,8 +99,13 @@ Proceed with Step 2.
 
 ## Step 2: Determine Platform
 
-Ask: 👉 **What operating system are you on: Linux, macOS, or Windows?** For macOS, also
-establish whether it is Apple Silicon (M1/M2/M3/M4) or Intel.
+Ask: 👉 **What operating system are you on? Reply with a number:**
+
+1. Linux
+2. macOS
+3. Windows
+
+For macOS, also establish whether it is Apple Silicon (M1/M2/M3/M4) or Intel.
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -364,7 +369,11 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 
 ### 5b. Ask about the bootcamper's license situation
 
-👉 **Do you have a Senzing license file (.lic) or a Base64-encoded license key?**
+👉 **Do you have a Senzing license? Reply with a number:**
+
+1. Yes — a license file (`.lic`).
+2. Yes — a Base64-encoded license key.
+3. No — I need to obtain one.
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*
@@ -456,7 +465,11 @@ Never substitute a hardcoded or remembered figure.
 
 Ask the bootcamper which path they would like to take.
 
-👉 **Which would you like to do: request through the MCP server (if available), request through the external channel, or apply a license you already have?**
+👉 **Which would you like to do? Reply with a number:**
+
+1. Request through the MCP server (if available).
+2. Request through the external channel.
+3. Apply a license you already have.
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -548,7 +561,10 @@ be organized properly throughout the bootcamp."
 
 ## Step 7: Configure Database
 
-Ask: 👉 **Which database would you like to use: SQLite (recommended for learning and evaluation) or PostgreSQL (better for production)?**
+Ask: 👉 **Which database would you like to use? Reply with a number:**
+
+1. **SQLite** — recommended for learning and evaluation.
+2. **PostgreSQL** — better for production.
 
 *(Internal: end the turn on this question and wait.)*
 

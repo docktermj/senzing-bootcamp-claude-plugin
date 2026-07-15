@@ -83,7 +83,8 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 ## Step 2: Build the production project
 
-If `production/` already exists, ask one 👉 question: overwrite, merge, or abort.
+If `production/` already exists, ask one 👉 question as a neutral lead plus a
+numbered list of the choices — (1) overwrite, (2) merge, (3) abort.
 Wait for the answer. On abort, skip to the graduation report noting the abort.
 
 Create `production/` and copy production-relevant files (skip any source that
@@ -152,6 +153,6 @@ Example (list only what exists):
 
 3. **End on the single closing question.** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 
-> 👉 **Is there anything else you would like to discuss or explore?**
+> 👉 **Is there anything else you would like to explore?**
 
 Then stop and wait. This is the single closing question for the whole bootcamp.

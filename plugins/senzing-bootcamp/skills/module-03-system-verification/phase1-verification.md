@@ -197,7 +197,7 @@ return `success`. Otherwise skip to Step 3.
    `non_deterministic` (never `passed`) and Module 3 is `incomplete`. Do NOT decide for the
    bootcamper.
 
-   👉 **Both TruthSet sources are unavailable. Would you like to run a non-deterministic CORD collection (Las Vegas, London, or Moscow) that exercises the pipeline but cannot be deterministically verified?**
+   👉 **Both TruthSet sources are unavailable. Would you like to run a non-deterministic CORD collection (Las Vegas, London, Moscow) that exercises the pipeline but cannot be deterministically verified?**
 
    *(Internal: end the turn on this question and wait for the bootcamper's input.)*
 

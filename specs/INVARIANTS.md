@@ -210,4 +210,4 @@ next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).
 
 -->
 
-_None yet._
+- **INV-051** — Every 👉 question to the Bootcamper that offers two or more choices MUST use a neutral lead question followed by a numbered list; the choices are never joined with "or" (a testable hardening of INV-009). Legitimate yes/no answer-format hints (e.g. "respond yes or no") are exempt. (Source: `interaction-or-questions`, 2026-07-15.)

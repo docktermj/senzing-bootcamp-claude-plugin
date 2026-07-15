@@ -60,3 +60,7 @@ reference model for this cleanup.
 - Audit: `migrate-kiro-power` verify/backfill audit (2026-07-15), invariants I4/I5.
 - Priority: Medium (interaction-quality; violates the plugin's own ground rule).
 - Related specs: `migrate-kiro-power.md`; preface portion already fixed.
+
+## Invariants introduced
+
+- `INV-051` — Every 👉 question to the Bootcamper that offers two or more choices MUST use a neutral lead question followed by a numbered list; choices are never joined with "or" (recorded in `specs/INVARIANTS.md`).
