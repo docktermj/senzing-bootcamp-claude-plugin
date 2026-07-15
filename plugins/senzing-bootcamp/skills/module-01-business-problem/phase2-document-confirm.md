@@ -126,11 +126,20 @@ problem, approach, data sources, key findings, next steps, and ROI consideration
 Module 1 context from `docs/business_problem.md`. (The Kiro `templates/stakeholder_summary.md`
 port is a later phase; compose the summary directly for now.) **Checkpoint:** write step 17.
 
-## 18. Transition to Module 4
+## 18. Module completion and transition to Module 2
 
-👉 **Module 1 complete. Ready to collect your data sources?**
+Run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md` (update progress, append the Module 1 recap
+section to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
+transition question.
 
-**Checkpoint:** write step 18.
+Modules run in ascending numeric order (Module 1 → Module 2 → … → Module 7). After the business
+problem is defined, the next module installs and configures the Senzing SDK:
+
+👉 **Module 1 complete. Ready to install and configure the Senzing SDK in Module 2?**
+
+**Checkpoint:** write step 18. On module completion set `current_step` to `null`.
 
 **Success indicator:** ✅ Clear problem statement + identified data sources + defined success
-metrics + bootcamper confirmation + `docs/business_problem.md` created.
+metrics + bootcamper confirmation + `docs/business_problem.md` created + Module 1 recap section
+appended.

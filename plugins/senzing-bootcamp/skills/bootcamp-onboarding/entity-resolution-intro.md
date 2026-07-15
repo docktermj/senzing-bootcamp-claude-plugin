@@ -1,6 +1,18 @@
 # Entity Resolution Introduction
 
-Used in onboarding Step 3. Teach the core concept before the bootcamper picks a language.
+Used in the onboarding preface (the entity-resolution concepts step). Teach the core concept
+before the WELCOME banner and the rest of the preface.
+
+## Banner (show first)
+
+Present this banner verbatim as the FIRST bootcamper-facing content of this step, before the
+description:
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧭🧭🧭  ENTITY RESOLUTION CONCEPTS  🧭🧭🧭
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ## Hard rule: facts come from MCP, not memory
 
@@ -50,8 +62,8 @@ the `⛔`/`🛑` glyphs). Do not advance until the bootcamper signals readiness.
 
 - **Follow-up question** (contains "?", asks for explanation): answer it via `search_docs`, then
   re-present the gate. Do NOT advance.
-- **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): advance to language
-  selection. Do not re-present the intro or the gate.
+- **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): advance to the WELCOME
+  banner and overview. Do not re-present the intro or the gate.
 - **Ambiguous:** treat as a follow-up.
 - **`search_docs` empty or failing:** tell the bootcamper no docs were found, suggest a
   rephrase, and re-present the gate.

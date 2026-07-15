@@ -78,10 +78,13 @@ source for the demo TruthSet DATA.
   SDK export code, never from direct SQL.
 - Kiro process control (`controlBashProcess`) maps here to running the web service as a
   background process and stopping it later in Phase 3.
-- Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`,
-  `scripts/generate_standalone_demo.py`) are later porting phases; where referenced, perform the
-  described action directly (write markers to `config/bootcamp_progress.json`, fetch/build
-  inline, etc.).
+- **Visualization (Step 9) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
+  Phase 2 runs it deterministically (build-only snapshot + live server), so the visualization is
+  guaranteed to be produced every run rather than hand-written each time. This supersedes the Kiro
+  `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
+- Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`) are
+  later porting phases; where referenced, perform the described action directly (write markers to
+  `config/bootcamp_progress.json`, fetch/build inline, etc.).
 
 ## Phases
 

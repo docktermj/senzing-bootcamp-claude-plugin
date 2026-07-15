@@ -42,9 +42,13 @@ The Kiro payload lives in the Kiro repo's `senzing-bootcamp/` directory (plus `.
 
 # Porting roadmap (Kiro Power -> Claude plugin)
 
-**Status:** the plugin is a v0.1.0 scaffold. Onboarding is condensed and only a simplified
-Module 1 exists. The Kiro payload has 116 steering files, 29+ hooks, ~100 Python scripts,
-9 config files, and 10 templates. The bulk of the curriculum is not yet ported.
+**Status:** the plugin is at v0.2.0. The full Core track is ported and wired end to end:
+onboarding preface (spec-ordered), Modules 1-7 (ascending numeric order), a shared
+module-completion flow (per-module recap accumulation + end-of-module summary), graduation
+(banner + always-on recap PDF trophy + `production/` project), and any-time feedback capture.
+Advanced Topics (Modules 8-11), the deployment/language reference skills, and most Kiro Python
+helper scripts remain unported. The Kiro payload has 116 steering files, 29+ hooks, ~100 Python
+scripts, 9 config files, and 10 templates.
 
 Each phase below is ordered so the plugin stays usable end-to-end for the modules covered.
 
@@ -177,12 +181,12 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 ### Phase 2/3 support - Module completion & graduation
 
-- [ ] `steering/completion-summary-offer.md` -> `skills/` completion flow + runtime scripts
-- [ ] `steering/graduation.md` -> `skills/` completion flow + runtime scripts
-- [ ] `steering/module-completion-artifacts.md` -> `skills/` completion flow + runtime scripts
-- [ ] `steering/module-completion-error-handling.md` -> `skills/` completion flow + runtime scripts
-- [ ] `steering/module-completion-next-steps.md` -> `skills/` completion flow + runtime scripts
-- [ ] `steering/module-completion-track.md` -> `skills/` completion flow + runtime scripts
+- [~] `steering/completion-summary-offer.md` -> folded into the graduation skill (recap + report)
+- [x] `steering/graduation.md` -> `skills/graduation/SKILL.md` + `scripts/generate_recap_pdf.py`
+- [x] `steering/module-completion-artifacts.md` -> `skills/bootcamp-onboarding/module-completion.md` (recap accumulation)
+- [~] `steering/module-completion-error-handling.md` -> non-blocking rules folded into `module-completion.md`
+- [x] `steering/module-completion-next-steps.md` -> end-of-module summary in `module-completion.md`
+- [x] `steering/module-completion-track.md` -> track-completion + graduation offer in `module-completion.md`
 - [ ] `steering/module-completion.md` -> `skills/` completion flow + runtime scripts
 
 ### Phase 4 - Runtime support (steering)
@@ -219,7 +223,7 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 - [ ] `steering/data-processing-reference.md` -> reference skill / folded into relevant module skill
 - [ ] `steering/design-patterns.md` -> reference skill / folded into relevant module skill
 - [ ] `steering/environment-setup.md` -> reference skill / folded into relevant module skill
-- [ ] `steering/feedback-workflow.md` -> reference skill / folded into relevant module skill
+- [x] `steering/feedback-workflow.md` -> `skills/bootcamp-onboarding/feedback.md` + `/bootcamp-feedback` command + `feedback-capture.sh` hook
 - [ ] `steering/lessons-learned.md` -> reference skill / folded into relevant module skill
 - [ ] `steering/qa-transcript.md` -> reference skill / folded into relevant module skill
 - [ ] `steering/security-privacy.md` -> reference skill / folded into relevant module skill
@@ -270,7 +274,7 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 - [ ] `hooks/error-recovery-context.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/gate-module3-visualization.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/module-completion-celebration.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
-- [ ] `hooks/review-bootcamper-input.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
+- [~] `hooks/review-bootcamper-input.json` -> `UserPromptSubmit` -> `scripts/feedback-capture.sh` (feedback + verbosity triggers; Q&A-log/status/repeat parts deferred)
 - [ ] `hooks/run-tests-after-change.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/security-scan-on-save.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/session-log-events.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
@@ -526,9 +530,101 @@ hook nagged for a 👉 closing question on unrelated turns; the write-gate would
 bootcamp is "active" when `config/bootcamp_progress.json` exists in the working directory.
 
 - `Stop` hook converted from `prompt` type to a `command` script (`scripts/stop-nudge.sh`):
-  emits nothing unless a bootcamp is active; when active, injects the closing-question
-  instruction via `hookSpecificOutput.additionalContext`.
+  emits nothing unless a bootcamp is active; when active, blocks the turn once
+  (`decision: block`) to request a forgotten closing 👉 question. It returns success while
+  `stop_hook_active` is true (so it can never loop on its own continuation) and stays silent
+  when the last assistant turn already ended with a 👉 question.
 - `scripts/write-gate.sh`: no-ops (allows the write) unless a bootcamp is active.
 
 This keeps the plugin from altering unrelated sessions. Verified both silent/allow outside a
 bootcamp and active inside one.
+
+---
+
+# Graduation, completion, feedback, and preface (v0.2.0)
+
+This round closed the largest remaining gaps against `specs/migrate-kiro-power.md`.
+
+**Module ordering fixed to strict ascending order.** Module 1 previously transitioned straight
+to Module 4 (a Kiro porting artifact). The spec, and the Kiro `module-prerequisites` doc
+("Modules run in ascending numeric order"), require 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7. Module 1
+now hands off to Module 2, and the whole chain runs in order.
+
+**Preface reordered to the spec.** The onboarding preface now follows the spec's sequence:
+(1) ENTITY RESOLUTION CONCEPTS banner + description + explore gate, (2) WELCOME banner +
+overview, (3) level of detail, (4) track, (5) programming language, (6) any questions.
+Previously the programming-language gate ran before the WELCOME banner. Added the missing
+"ENTITY RESOLUTION CONCEPTS" banner and a final "any questions" gate.
+
+**Shared module-completion flow.** `skills/bootcamp-onboarding/module-completion.md` is the
+port of the Kiro `module-completion*` steering. Every module (1-7) now runs it at its end:
+update progress, append a per-module recap section (Information Shared, Questions & Responses,
+Actions Taken, Journal) to `docs/bootcamp_recap.md`, and present the end-of-module summary
+(accomplished, files produced, why it matters, what's next). The final module offers graduation.
+
+**Graduation.** `skills/graduation/SKILL.md` + `/graduate` command: GRADUATION banner, recap
+reconciliation, always-on recap PDF trophy, and a populated `production/` project (src copy,
+`.env.example`, `docker-compose.yml`, `.gitignore`, production README, migration checklist,
+graduation report), ending with the guaranteed-recap announcement and the single closing 👉.
+
+**Recap PDF trophy.** `scripts/generate_recap_pdf.py` (bundled, self-contained) renders
+`docs/bootcamp_recap.md` -> `docs/bootcamp_recap.pdf`. Tiered strategy: a professionally
+designed `fpdf2` render (cover page + per-module pages with the four labeled sections), falling
+back to a stdlib-only PDF writer so a valid PDF is ALWAYS produced. Supports `--check` (verify
+required sections) and warns non-blockingly on incomplete content. Tested: rich render, stdlib
+fallback (fpdf2 shadowed), incomplete module, header-only recap, and missing input.
+
+**Any-time feedback + verbosity.** `skills/bootcamp-onboarding/feedback.md`, the
+`/bootcamp-feedback` command, and a `UserPromptSubmit` hook (`scripts/feedback-capture.sh`,
+"to capture bootcamp feedback") route feedback and verbosity-change requests anywhere in the
+bootcamp. Feedback appends to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` (note: the
+Claude plugin uses `_PLUGIN_` in the filename, not the Kiro `_POWER_`). The hook is gated on an
+active bootcamp, so unrelated sessions are untouched.
+
+**Hooks catalog.** `hooks/README.md` documents each hook with its purpose phrased beginning with
+"to" (the spec's hook-naming outcome): "to resume an in-progress bootcamp", "to capture bootcamp
+feedback", "to keep your files in the project", "to review what you said".
+
+**Deliberately deferred (not in the spec's module-by-module outcomes):** Advanced Topics
+(Modules 8-11), the Q&A-transcript / status / repeat parts of the input-review hook, and the
+per-module completion certificates. The recap PDF is the spec-required trophy and is complete.
+
+**Runtime-tested:** the recap PDF generator and all four hook scripts were exercised directly
+(see above). The conversational flow (onboarding -> modules -> graduation) has not been driven
+through a live `claude` session; that end-to-end smoke test remains the top follow-up.
+
+---
+
+# Module 3 visualization: bundled web app (v0.3.0)
+
+**Problem found in a live run:** Module 3's Step 9 asked the agent to hand-write a web server,
+`write_html.py`, and four builder modules every run. Being fully model-driven, it was fragile:
+the visualization could be skipped or degrade to a static file, so the bootcamper's "wow moment"
+(a dynamic web app showing the resolved TruthSet) sometimes never appeared.
+
+**Fix (same pattern as the recap PDF):** ship a bundled, tested, self-contained visualization
+web app and invoke it deterministically.
+
+- `scripts/senzing_viz_server.py` (bundled): builds an entity model from the loaded records
+  (one `get_entity_by_record_id` call per record with `SZ_ENTITY_DEFAULT_FLAGS`, which includes
+  all relations, so nodes AND relationship edges come from real ER, never direct SQL), then
+  serves a live D3 v7 web app (`/` + `/api/stats`, `/api/graph`, `/api/merges`, `/api/search`)
+  with four tabs (Entity Graph, Record Merges, Merge Statistics, Search/Probe). `--snapshot`
+  writes a self-contained standalone HTML (data embedded via a `fetch` shim) that renders with no
+  server; `--no-serve` builds the snapshot and exits. The graph's `source_entity_id`/
+  `target_entity_id` -> `source`/`target` edge-key mapping (a documented silent-failure trap) is
+  baked in, correct by construction. Fixed a Senzing lifecycle bug during testing: the factory
+  must be retained for the server's lifetime or the engine is destroyed and `/api/search` fails.
+- `skills/module-03-system-verification/phase2-visualization.md` rewritten: Step 9 now (9.2)
+  always writes the standalone snapshot first (the guaranteed deliverable), then (9.3) starts the
+  live app, (9.4) verifies the four endpoints, and (9.5) gives the guided tour. Hand-building is
+  demoted to an explicit fallback for when the bundled app cannot run.
+- `phase3-report-close.md` completion gate strengthened: Module 3 cannot complete unless the
+  snapshot artifact physically exists on disk (a progress checkpoint alone is not sufficient), so
+  the visualization is guaranteed to have happened.
+
+**Runtime-tested (live, against the real Senzing engine on this machine):** loaded the 159-record
+TruthSet, built the model (159 records -> 84 entities, 55 merged, 17 cross-source, 71
+relationships), served all four endpoints (verified with curl), rendered the live D3 page and the
+standalone snapshot (verified with headless-Chrome screenshots), and confirmed `/api/search`
+returns resolved entities with match keys and resolution rules.

@@ -5,15 +5,20 @@ directives, never rendered.
 
 > **Pre-advancement verification (agent self-check, internal directive):**
 >
-> Before offering to advance to Module 4 or marking Module 3 complete, the agent MUST read
-> `config/bootcamp_progress.json` and verify:
+> Before offering to advance to Module 4 or marking Module 3 complete, the agent MUST verify BOTH
+> the checkpoints and the artifact on disk:
 >
-> - `module_3_verification.checks.web_service.status` = `"passed"`
-> - `module_3_verification.checks.web_page.status` = `"passed"`
+> - In `config/bootcamp_progress.json`: `module_3_verification.checks.web_service.status` =
+>   `"passed"` and `module_3_verification.checks.web_page.status` = `"passed"`.
+> - **The visualization artifact actually exists on disk:** the standalone snapshot written by
+>   the bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty.
+>   This is the hard guarantee that the visualization always happened, a checkpoint alone is not
+>   sufficient.
 >
-> If these checkpoints are NOT present, the agent MUST execute Step 9 immediately (load
-> `phase2-visualization.md`). Do NOT offer advancement. Do NOT ask "Ready for Module 4?" Do NOT
-> save progress. Execute Step 9 first.
+> If the checkpoints are missing OR the snapshot file does not exist, the agent MUST execute
+> Step 9 immediately (load `phase2-visualization.md`) and, at minimum, run the bundled app's
+> build-only snapshot step (9.2) so the artifact exists. Do NOT offer advancement. Do NOT ask
+> "Ready for Module 4?" Do NOT save progress. Produce the visualization first.
 
 ## Step 10: Verification Report Generation
 
@@ -161,21 +166,23 @@ was started), skip this confirmation prompt entirely and proceed directly to cle
 
 ## Step 12: Module Close
 
-Complete the module using the standard module completion workflow. (The Kiro `module-completion.md`
-port is a later phase; perform the completion steps below directly.)
+Complete the module using the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md`:
 
-1. Standard module completion:
-   - Update the module status in `config/bootcamp_progress.json`.
-   - Update gate 3→4 status to "completed".
+1. Update progress state (add Module 3 to `modules_completed`, set gate 3→4 status to
+   "completed", set `current_step` to `null`).
+2. Append the Module 3 recap section to `docs/bootcamp_recap.md` (Information Shared, Questions &
+   Responses, Actions Taken, Journal). In the recap, capture the number of verification checks
+   passed and the completion timestamp. The consolidated recap replaces the separate journal
+   file: the narrative goes in the section's `### Journal` subsection.
+3. Present the end-of-module summary (accomplished, files produced, why it matters, what's next).
+4. **Transition to Module 4:** ask the single transition question; on an affirmative reply,
+   produce the Module 4 start banner, journey map, before/after framing, and step overview per
+   the ground rules.
 
-2. **Journal entry:** append a journal entry to `docs/bootcamp_journal.md` summarizing:
-   - Module 3 completed (System Verification)
-   - Number of checks passed
-   - Timestamp of completion
+👉 **Module 3 complete. Ready to identify and collect your data sources in Module 4?**
 
-3. **Transition to Module 4:** display the module transition message indicating Module 4 is now
-   available, following the standard transition pattern from the ground rules (banner + journey
-   map + before/after + step overview when Module 4 begins).
+*(Internal: end the turn on this question and wait.)*
 
 **Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
 

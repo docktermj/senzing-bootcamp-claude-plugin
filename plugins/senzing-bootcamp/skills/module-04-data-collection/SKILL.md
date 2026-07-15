@@ -426,12 +426,16 @@ apply the behavior directly for now.)*
 
 **Checkpoint:** write step 8b to `config/bootcamp_progress.json`.
 
-### 9. Transition to Module 5
+### 9. Module completion and transition to Module 5
+
+Run the standard **Module Completion** process in `../bootcamp-onboarding/module-completion.md`
+(update progress, append the Module 4 recap section to `docs/bootcamp_recap.md`, and present the
+end-of-module summary), then ask the single transition question:
 
 "Great! Now that we have the data files, let's evaluate each one to see if it needs mapping or
 if it's already in the right format for Senzing."
 
-👉 **Module 4 complete. Ready to evaluate your data sources for mapping?**
+👉 **Module 4 complete. Ready to evaluate your data sources for mapping in Module 5?**
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`. On module completion set
 `current_step` to `null`.

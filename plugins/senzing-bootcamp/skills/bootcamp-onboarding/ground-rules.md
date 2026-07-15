@@ -103,6 +103,24 @@ steering files.)
   time. (The full five-category verbosity system is condensed here; expand it when
   `verbosity-control` is ported.)
 
+## Any-time bootcamper controls
+
+These are available at every point in the bootcamp: onboarding, any module, and graduation. They
+never count against the one-question-per-turn rule and must not be treated as gates.
+
+- **Bootcamp feedback:** whenever the bootcamper says "bootcamp feedback", "I have feedback",
+  "report an issue", or similar, run the feedback workflow in `feedback.md` and append the entry
+  to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. Then return them to exactly where they
+  left off. Feedback is saved locally only, never submitted externally unless they explicitly
+  ask. (The plugin's `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
+- **Change verbosity:** whenever they ask for more or less detail, update the `verbosity` key in
+  `config/bootcamp_preferences.yaml`, confirm the new setting in one sentence, and continue.
+- **Repeat the question:** if they ask to hear the current question again ("repeat that", "what
+  was the question"), re-present the current pending 👉 question verbatim. Do not invent a new
+  one, and do not advance.
+- **Ask-once:** ask each question only once. Do not re-ask a question the bootcamper already
+  answered unless they request the repeat.
+
 ## Module start banners and transitions
 
 - At every module start, BEFORE any module work: read progress, then show the module start
