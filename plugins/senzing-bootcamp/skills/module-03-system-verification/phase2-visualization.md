@@ -3,352 +3,143 @@
 Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal directives, never
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
 
-**Purpose:** generate and verify a rich interactive visualization web service that demonstrates
-Senzing's entity resolution value, the bootcamper's first "wow moment."
+**Purpose:** stand up an interactive visualization **web app** that shows the bootcamper their
+resolved TruthSet, their first "wow moment" with entity resolution.
 
-**Prerequisites:** Phase 1 Steps 1–8 complete (all verification checks passed, TruthSet data
+**Prerequisites:** Phase 1 Steps 1-8 complete (all verification checks passed, TruthSet data
 loaded and validated).
-
-**Pattern sources:** follow the Web Service Delivery Sequence for server lifecycle, and the
-`m3_demo_results` offer/tracking flow. (In the Kiro Power these lived in `visualization-guide.md`;
-that reference is a later porting phase, so the lifecycle and offer steps are inlined below.)
-
-**Implementation constraints:**
-
-- Python stdlib HTTP server only (`http.server.HTTPServer` + `BaseHTTPRequestHandler`); no
-  Flask, FastAPI, or third-party HTTP frameworks.
-- D3.js v7 (loaded from a CDN in the generated artifact's HTML); no other external JavaScript
-  dependencies.
-- Single HTML file with embedded CSS and JavaScript (aside from the D3.js CDN import).
-- All artifacts reside in `src/system_verification/web_service/`.
-- All data derived from SDK calls (`export_json_entity_report`, `get_entity_by_entity_id`,
-  `search_by_attributes`, `find_network_by_entity_id`). These are Senzing SDK methods, not MCP
-  tools; generate the SDK code for them via `get_sdk_reference` + `sdk_guide`. Confirm exact
-  method and flag names via the MCP server; never assert them from training data. Never query
-  `database/G2C.db` with SQL.
-- Works with three TruthSet data sources: CUSTOMERS, REFERENCE, WATCHLIST.
-
-## Client-Rendering Constraints: Correct by Construction
-
-The client-side rendering specifics for the standalone force-directed graph are demonstrated,
-correct by construction, in the standalone demo artifact. (In the Kiro Power this artifact was
-emitted by `scripts/generate_standalone_demo.py`; the script port is a later phase. Until then,
-apply the constraints below directly when hand-building the graph.) The reference bakes in, in
-one executable place:
-
-- the Python stdlib HTTP server (`http.server`) and single self-contained page,
-- the D3.js v7 load, `function(){}` D3 callbacks (never arrow functions, which break `this`
-  binding to DOM elements), and explicit SVG `width`/`height` attributes,
-- the TruthSet source-color map and node-radius formula, and
-- the `source_entity_id`/`target_entity_id` → `source`/`target` **edge-key mapping**.
-
-**When hand-building the Step 9 dashboard graph**, apply the **same** edge-key mapping before
-`forceLink`: `/api/graph` returns edges keyed by `source_entity_id`/`target_entity_id`, but
-D3's `forceLink` resolves each edge against node ids via `source`/`target`. In `drawGraph`, map
-every edge to expose `source`/`target` (from `source_entity_id`/`target_entity_id`) **before**
-passing edges to `forceLink().links(...)`, and preserve node `id`/`entity_id` so those values
-resolve. Omitting this map is a **silent failure**: no console error is raised and the Entity
-Graph renders empty even though `/api/graph` returned nodes and edges. Verify with the render
-smoke check in Step 9.4 below.
-
-Generate the HTML via a **Python generator script** (`write_html.py`, see Step 9.1); never write
-HTML+JS content directly with file-write or string-replace tooling. Inside the triple-quoted HTML
-string, use `data-*` attributes with `querySelectorAll` listeners (not inline
-`onclick="fn('${value}')"`, which causes quote-escaping failures) and keep double quotes for
-JavaScript, single quotes for HTML attributes.
 
 ## Mandatory execution requirement (internal directive)
 
-Phase 2 visualization generation is MANDATORY and unconditional whenever Module 3 runs. Execute
-it in full. The agent must NEVER self-initiate a skip of this phase, and must NOT transition to
-Module 4 until Phase 2 is complete and the bootcamper has confirmed they explored the
-visualization. There is NO condition, threshold, or scenario under which the agent may skip this
-step. Prohibited rationalizations the agent must NEVER use as justification: session length,
-context or token-budget pressure, perceived redundancy, time constraints, or any other
-agent-internal reasoning. Only the bootcamper may attempt a skip, via the skip-step protocol,
-and that protocol itself refuses mandatory gates. Skipping Phase 2 deprives the bootcamper of
-their first "wow moment" with entity resolution results.
+Phase 2 visualization is MANDATORY and unconditional whenever Module 3 runs. The visualization
+MUST be produced; you must NOT transition to Module 4 until it exists and the bootcamper has been
+shown it. There is NO condition, threshold, or scenario under which you may skip it, no
+session-length, token-budget, redundancy, or time rationalization is ever valid. Only the
+bootcamper may opt out of the entire module at the Phase 1 Opt-Out Gate (before verification
+begins); once Module 3 is underway, Step 9 is unconditional. The completion gate in
+`phase3-report-close.md` re-checks that the visualization artifact exists and refuses to mark
+Module 3 complete if it does not.
 
-The only path that yields no in-module visualization is the bootcamper choosing to opt out of the
-entire Module 3 at the Phase 1 Opt-Out Gate, before verification begins: a whole-module decision
-the agent never initiates or suggests. Once Module 3 is underway, Step 9 is unconditional and the
-agent never presents it as optional.
+## Step 9: Run the bundled visualization web app
 
-## Step 9: Web Service + Visualization Page
+The plugin ships a tested, self-contained visualization web app,
+`scripts/senzing_viz_server.py`, so the visualization is produced **deterministically every
+time**. Do NOT hand-write a server or HTML page for the normal path: run the bundled app. It
+builds the entity model from the loaded records (one `get_entity_by_record_id` call per record,
+using `SZ_ENTITY_DEFAULT_FLAGS`, which includes all relations, so it never queries the database
+directly), then serves the live app plus the four APIs below.
 
-Generate and verify a web service with four API endpoints and a single-page visualization with
-four interactive tabs.
+### 9.1 Locate the bundled app
 
-### 9.1 Generate Web Service
+The generator ships with this plugin at `scripts/senzing_viz_server.py`. Resolve it in this
+order:
 
-Generate the web service artifacts in `src/system_verification/web_service/`. Use a **Python
-generator script** (`write_html.py`) to produce the visualization HTML; do NOT write HTML+JS
-content directly with file-write or string-replace tooling.
+- When Module 3 is reached via a command/hook context, use `${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`.
+- Otherwise resolve it relative to this skill directory (this file lives in
+  `skills/module-03-system-verification/`, so the script is at `../../scripts/senzing_viz_server.py`).
 
-**Generation approach:**
+The Senzing native library must be importable, so run it with the project env sourced (the
+`src/scripts/senzing-env.sh` created in Module 2). On Linux/macOS:
 
-1. Create `write_html.py` in `src/system_verification/web_service/` containing the complete
-   `index.html` content as a Python triple-quoted string, writing it to `index.html` in the same
-   directory.
-2. Run `python3 src/system_verification/web_service/write_html.py` to produce `index.html`.
-3. Create `server.py` using the Python stdlib HTTP server (`http.server.HTTPServer` +
-   `BaseHTTPRequestHandler`); no Flask, FastAPI, or third-party HTTP frameworks.
-4. Create builder modules (`stats_builder.py`, `graph_builder.py`, `merges_builder.py`,
-   `search_builder.py`) for data computation.
+```bash
+source src/scripts/senzing-env.sh
+```
 
-The generated `index.html` is a single file with embedded CSS and JavaScript. D3.js v7 is loaded
-from a CDN in that HTML (the exact CDN reference lives in the generated artifact's code); no
-other external JavaScript dependencies.
+### 9.2 Always produce the standalone snapshot first (the guarantee)
 
-**Required files:**
+Before starting the live server, run the app in build-only mode to (a) build the entity model
+and (b) write a **self-contained standalone HTML snapshot** the bootcamper keeps even if they
+never open the live server. This is the artifact the completion gate checks for, so the
+visualization is guaranteed to exist:
 
-| File | Purpose |
-|------|---------|
-| `src/system_verification/web_service/write_html.py` | Python generator script: triple-quoted HTML string → writes `index.html` |
-| `src/system_verification/web_service/server.py` | Python stdlib HTTP server (`http.server.HTTPServer` + `BaseHTTPRequestHandler`) with request routing |
-| `src/system_verification/web_service/stats_builder.py` | Statistics computation from `export_json_entity_report` |
-| `src/system_verification/web_service/graph_builder.py` | Graph node/edge construction from SDK. **Edges require explicit relationship discovery**: a default `export_json_entity_report` does NOT include relationships, so reading `RELATED_ENTITIES` off a plain export yields zero edges. Discover relationships by calling `find_network_by_entity_id` for multi-record/related entities (it returns the relationship network with match keys) AND/OR by requesting the entity export/report with the relationship-inclusion flag (confirm the exact flag name, e.g. `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, via the Senzing MCP server). Build one `edge` per relationship: `match_key` from the relationship match-key string, `relationship_type` from the relationship kind (possible match / disclosed / discovered); de-duplicate edges and only create an edge when both endpoints appear in the node set. |
-| `src/system_verification/web_service/merges_builder.py` | Multi-record entity extraction from SDK |
-| `src/system_verification/web_service/search_builder.py` | Search-by-attributes wrapper with entity enrichment: calls `search_by_attributes`, then `get_entity_by_entity_id` for each matched entity (up to 10) to retrieve match keys, feature scores, and resolution rules (full enrichment spec in `visualization-api-reference.md`) |
-| `src/system_verification/web_service/index.html` | Generated output from `write_html.py` (single-page visualization, D3.js v7 CDN, embedded CSS/JS) |
+```bash
+python3 <viz-server-path> \
+  --records "src/system_verification/customers.jsonl" \
+            "src/system_verification/reference.jsonl" \
+            "src/system_verification/watchlist.jsonl" \
+  --title "Senzing Truth Set - System Verification" \
+  --snapshot docs/visualizations/truthset_verification.html \
+  --no-serve
+```
 
-### 9.2 API Endpoints
+Success is a `Snapshot written: docs/visualizations/truthset_verification.html` line and exit 0.
+Confirm the file exists before continuing. If this build-only run fails (for example the engine
+cannot be reached), do not proceed to the live server: fix the underlying error (re-run Step 3
+SDK initialization; check `config/engine_config.json`) and retry. The snapshot is the guaranteed
+deliverable.
 
-The server SHALL expose four endpoints. Compact summaries follow; the full JSON response
-schemas, field tables, and the `search_builder.py` enrichment specification live in
-`visualization-api-reference.md`, loaded on demand.
+### 9.3 Start the live web app
 
-- **`GET /api/stats`**: Aggregate entity resolution statistics. Required fields:
-  `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`,
-  `relationships_total`, `histogram` (record-count buckets 1/2/3/4+ → entity counts).
-- **`GET /api/graph`**: Entity nodes and relationship edges. Each node: `entity_id`,
-  `entity_name`, `record_count`, `data_sources`, `records`. Each edge: `source_entity_id`,
-  `target_entity_id`, `match_key`, `relationship_type`. Edges are **discovered via relationship
-  discovery, not a default export**: call `find_network_by_entity_id` for multi-record/related
-  entities and/or request the entity export with the relationship-inclusion flag (e.g.
-  `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, confirmed via the Senzing MCP server). Edges are
-  de-duplicated and limited to entities present in the node set.
-- **`GET /api/merges`**: Multi-record entities (2+ records only) with constituent records. Each
-  entity: `entity_id`, `entity_name`, `match_key`, `records`; each record: `data_source`,
-  `record_id`, `name`, `address`, `phone`, `identifiers`.
-- **`GET /api/search`**: Search entities with enriched resolution reasoning. Each result has
-  base fields (`entity_id`, `entity_name`, `record_count`, `data_sources`) plus enrichment
-  fields: `match_keys` (`entity_level` + `per_record`), `feature_scores`, `resolution_rules`,
-  and `enrichment_error`. Enrichment is capped at 10 entities; on per-entity enrichment failure
-  the result carries null enrichment fields and a non-empty `enrichment_error`.
-- **Error response (all endpoints):** HTTP 500 with `{"error": "<description>"}` on SDK failure.
+Start the server as a background process you can stop later in Step 11:
 
-> **Full response schemas (all four endpoints), the `search_builder.py` enrichment specification
-> (enrichment flow, the 10-entity cap, extraction functions, and graceful degradation), and the
-> error-case / single-record response examples are in `visualization-api-reference.md`. Load it
-> on demand.**
+```bash
+python3 <viz-server-path> \
+  --records "src/system_verification/"*.jsonl \
+  --title "Senzing Truth Set - System Verification" \
+  --port 8080
+```
 
-### 9.3 Visualization Page Components
+It prints `Visualization running: http://localhost:8080`. If port 8080 is in use, pass a
+different `--port` and tell the bootcamper the chosen URL.
 
-The `src/system_verification/web_service/index.html` SHALL contain:
+### 9.4 Verify the endpoints
 
-**Summary_Banner**: 5 headline statistics displayed above the tab navigation:
+The app serves the live page at `/` plus four JSON APIs. Verify each (10-second timeout):
 
-1. Records Loaded
-2. Resolved Entities
-3. Multi-Record Entities
-4. Cross-Source Matches
-5. Relationships Discovered
+| Endpoint | Success criteria |
+|----------|-----------------|
+| `GET /api/stats` | HTTP 200; fields `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `histogram` |
+| `GET /api/graph` | HTTP 200; `nodes` (each: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`) and `edges` (each: `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`) |
+| `GET /api/merges` | HTTP 200; at least one multi-record entity (2+ records) |
+| `GET /api/search?q=Robert Smith` | HTTP 200; `results` array with resolved entities, each carrying `match_key` and `resolution_rule` |
 
-Presented left-to-right with arrow indicators conveying the resolution pipeline narrative.
-Fetches from `GET /api/stats` on page load.
+The live page renders four tabs, all populated from these APIs:
 
-**Tab Navigation**: Exactly 4 tabs, defaulting to Entity Graph on load:
+1. **Entity Graph** (default): D3 v7 force-directed graph. Nodes colored by data source
+   (CUSTOMERS blue, REFERENCE green, WATCHLIST amber), sized by record count, edges labeled with
+   match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (The
+   edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target` before
+   `forceLink`, is baked into the bundled app, correct by construction.)
+2. **Record Merges**: cards showing each multi-record entity's constituent records.
+3. **Merge Statistics**: records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
+4. **Search / Probe**: search by name; results show the resolved entity, its sources, and the
+   match key / resolution rule that linked it.
 
-1. **Entity_Graph**: D3.js force-directed graph
-   - Nodes colored by primary data source: CUSTOMERS=#3b82f6, REFERENCE=#22c55e,
-     WATCHLIST=#f59e0b
-   - Nodes sized proportionally to record count (radius = min(max(8 + record_count × 4, 8), 40))
-   - Edges labeled with Match_Key strings (e.g., +NAME+ADDRESS, +PHONE)
-   - Tooltip on hover: entity name, entity ID, record count, data sources
-   - Fetches from `GET /api/graph`
+### 9.5 Present it and give the guided tour
 
-   **Graph container height:** the `#graph-container` element SHALL use viewport-relative height:
+Tell the bootcamper the app is running and where the saved copy is:
 
-   ```css
-   #graph-container {
-     height: calc(100vh - 120px);
-     /* 120px offset = fixed header (~50px) + summary banner (~40px) + tab navigation (~30px) */
-   }
-   ```
+- "Your visualization is running at `http://localhost:8080`, open it in your browser."
+- "A saved copy is at `docs/visualizations/truthset_verification.html`, you can open that file
+  any time, even after we stop the server."
 
-   Do NOT use a fixed pixel height (e.g., `600px`) for the graph container. The graph must fill
-   the remaining viewport space below the fixed UI elements.
-
-   **Entity Graph UX Features:**
-
-   - **Node labels:** each node displays a text label showing the entity name, truncated to 20
-     characters maximum with ellipsis (e.g., "Robert Smith-Johnso…"). Labels are positioned below
-     the node circle.
-   - **Edge labels:** each edge displays a text label showing the match key string (e.g.,
-     +NAME+ADDRESS). Labels are positioned at the midpoint of the edge line.
-   - **Click-to-detail modal:** clicking a node opens a modal overlay displaying:
-     - Entity ID
-     - Primary name
-     - Data sources (list)
-     - Record count
-     - Constituent records (data_source + record_id for each)
-     The modal includes a close button and closes on overlay background click.
-   - **Zoom and pan:** implement D3.js zoom behavior (mouse wheel to zoom, drag to pan the graph
-     viewport). Apply the zoom transform to the SVG group containing nodes and edges.
-   - **Color legend:** display a color legend mapping data source names to node colors:
-     - CUSTOMERS = #3b82f6
-     - REFERENCE = #22c55e
-     - WATCHLIST = #f59e0b
-     The legend is positioned in the top-right corner of the graph container.
-   - **Responsive resize:** on window resize, update SVG dimensions and re-center the force
-     simulation. Use a `resize` event listener to recalculate width/height and restart the force
-     layout center.
-
-   > **Client-rendering reference:** the `function(){}` D3 callbacks, explicit SVG `width`/`height`
-   > attributes, and the edge-key mapping before `forceLink` are demonstrated correct by
-   > construction in the standalone demo artifact (see "Client-Rendering Constraints" above; the
-   > Kiro generator script is a later porting phase). Apply the same edge-key mapping when
-   > hand-building this graph, then run the Step 9.4 render smoke check.
-
-2. **Record_Merges_View**: Card-based display of multi-record entities
-   - One card per entity with side-by-side constituent records
-   - Each record labeled with data source and record ID
-   - Matching features highlighted (name, address, phone, identifiers)
-   - Match_Key chips indicating which feature combinations triggered the merge
-   - Fetches from `GET /api/merges`
-
-3. **Merge_Statistics**: D3.js histogram of records-per-entity distribution
-   - Buckets: 1 record, 2 records, 3 records, 4+ records
-   - Summary statement: "[X] records collapsed into [Y] entities, including [Z] multi-record
-     entities"
-   - Labeled axes and count annotations on bars
-   - Fetches from `GET /api/stats`
-
-4. **Probe_Panel**: One-click TruthSet entities and search with resolution reasoning
-   - Pre-configured buttons for canonical TruthSet entity pairs (e.g., Robert Smith / Bob Smith)
-   - Search input accepting name, address, or phone attributes
-   - On click/search: query `GET /api/search` and display the resolved entity with records,
-     relationships, and resolution reasoning
-   - "No matching entities found" message for empty results
-
-   **Resolution Reasoning Display:**
-
-   For each search result, the Probe_Panel SHALL display match keys, feature scores, and
-   resolution rules from the enriched `/api/search` response:
-
-   **Match Key Chips:**
-   - Display the entity-level match key string for each resolved entity (e.g., `+NAME+DOB+PHONE`)
-   - Each individual feature indicator within a match key (e.g., `+NAME`, `+DOB`, `+PHONE`) SHALL
-     be rendered as a separate inline `<span>` element with a visible border and background color
-     distinguishing it from adjacent indicators and surrounding text
-   - If a resolved entity contains multiple records, display per-record match keys indicating
-     which features linked each record into the entity
-   - If a resolved entity contains only one record, omit the per-record match key section for
-     that entity
-   - If an entity has no match key data available (i.e., `match_keys` is null), display a
-     placeholder label: "No match key information available"
-
-   **Feature Scores:**
-   - Display feature scores for the search match comparison as a structured list
-   - Each feature score SHALL show the feature name, numeric percentage, and classification label
-     (e.g., `NAME: 97% CLOSE`)
-   - When multiple features were compared, list all scored features in a structured format, one
-     per line
-
-   **Resolution Rules:**
-   - Display the resolution rule applied to each record within the entity (e.g.,
-     `CNAME_CFF_CEXCL`)
-   - Per-record rule strings SHALL be displayed in monospace/code-style format (e.g., `<code>` or
-     `font-family: monospace`) to distinguish them from natural language text
-   - When an entity contains multiple records, show the resolution rule next to each constituent
-     record with its data source and record ID
-
-Summary_Banner remains visible above tabs regardless of active tab. Tab switching without page
-reload.
-
-### 9.4 Start and Verify Web Service
-
-Follow the Web Service Delivery Sequence (inlined below; the Kiro `visualization-guide.md` port
-is a later phase):
-
-1. **Start the server** as a background process running
-   `src/system_verification/web_service/server.py` (e.g., `python3` followed by the server path).
-   (In the Kiro Power this used `controlBashProcess` with action `start`; here, run it as a
-   background process you can stop later in Step 11.)
-
-2. **Verify endpoints** (10-second timeout each):
-
-   | Endpoint | Success Criteria |
-   |----------|-----------------|
-   | `GET /api/stats` | HTTP 200, valid JSON with all required fields (`records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `histogram`) |
-   | `GET /api/graph` | HTTP 200, valid JSON with at least one node and one edge; this must hold on the loaded TruthSet data (relationship discovery, per `graph_builder.py` above, produces the edges) |
-   | `GET /api/merges` | HTTP 200, valid JSON with at least one multi-record entity (2+ records) |
-
-3. **Present to the bootcamper:**
-   - URL: "Your visualization is running: open `http://localhost:8080` in your browser"
-   - Manual restart: "If you need to restart, run the
-     `src/system_verification/web_service/server.py` entry point with python3"
-   - Stop: "To stop the server, I can stop the background process for you, or press Ctrl+C if
-     running manually"
-
-**Graph render smoke check** (run after `index.html` is generated, before the Guided Tour; do
-**not** present the graph until it passes):
-
-   - **Generated-code check (static, always runs):** inspect the generated `index.html`
-     `drawGraph` and confirm it maps each edge to expose `source`/`target` (set from
-     `source_entity_id`/`target_entity_id`) **before** `forceLink().links(...)`. If the mapping
-     is absent, fail.
-   - **Rendered/data check (dynamic):** using the `GET /api/graph` ≥1 node / ≥1 edge result above
-     as precondition, when `/api/graph` returns ≥1 node the rendered graph must show visible node
-     elements (SVG `circle`/node-group count > 0).
-
-   | Check | Success Criteria |
-   |---|---|
-   | Graph edge-key mapping | Generated `index.html` `drawGraph` maps `source_entity_id`/`target_entity_id` → `source`/`target` before `forceLink`; rendered graph shows visible nodes when `/api/graph` returns ≥1 node |
-
-   **Fix_Instruction (on failure):** add the edge-key mapping per the "Client-Rendering
-   Constraints" section above (using the standalone demo `drawGraph` as the reference), regenerate
-   `index.html`, and re-verify. Do not proceed to the Guided Tour until the graph passes.
-
-**Guided Tour: deliver the following as a single structured chat message (no interactive
-pauses):**
-
-Present this guided tour to the bootcamper immediately after confirming the URL is accessible:
+Then deliver this guided tour as one message (no interactive pauses):
 
 ---
 
-🗺️ **What You're Looking At: A Quick Tour**
+🗺️ **What you're looking at:**
 
-**Entity Graph tab (default view):**
-
-- **Cross-source matches:** nodes with multiple colors represent entities resolved across data
-  sources (e.g., a CUSTOMERS record matched to a REFERENCE record). These are Senzing's
-  highest-value findings.
-- **Name variations:** Senzing resolves name variants automatically; look for entities like
-  "Robert Smith" that merged records originally entered as "Bob Smith" or "R. Smith".
-- **Relationship edges:** lines between nodes show relationships. The labels (e.g., +NAME+ADDRESS,
-  +PHONE) are match keys; they tell you which features Senzing used to link those entities.
-
-**Merge Statistics tab:**
-
-- The **records-per-entity histogram** shows how many records collapsed into each entity. A tall
-  "1" bar means many unique entities; bars at "2", "3", "4+" show where Senzing found duplicates
-  across sources.
+- **Entity Graph:** each circle is a resolved entity. Multi-colored clusters and edges show
+  records that Senzing linked across data sources, a customer who is also on the watchlist, for
+  example. Edge labels (like `+NAME+ADDRESS`) are the match keys: the features Senzing used to
+  link them.
+- **Merge Statistics:** the histogram shows how many records collapsed into each entity, tall
+  bars at 2/3/4+ are where Senzing found duplicates.
+- **Search / Probe:** type a name (try "Robert Smith") to see the resolved entity and why it
+  matched.
 
 ---
 
-   👉 **Take your time exploring the visualization. Let me know when you're ready and I'll continue with cleanup.**
+👉 **Take your time exploring the visualization. Let me know when you're ready and I'll continue with cleanup.**
 
-   *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
-   exploring. Do not proceed to Phase 3 until they respond.)*
+*(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
+exploring. Do not proceed to Phase 3 until they respond.)*
 
-4. **On verification failure:** report the specific endpoint that failed, the HTTP status
-   received, and provide a Fix_Instruction:
-   - Port 8080 in use → suggest an alternative port or kill the existing process
-   - SDK error → re-run SDK initialization (Step 3)
-   - HTML file missing → regenerate web service artifacts
-   - Timeout → check the server process is running, check for import errors
+**On failure:** report the specific endpoint or step that failed and the fix:
+
+- Port in use → pass a different `--port` and share the new URL.
+- Engine/SDK error → re-run Step 3 SDK initialization; confirm `config/engine_config.json`.
+- Snapshot not written → the model build failed; read stderr, fix the cause, and re-run 9.2.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
 
@@ -357,13 +148,28 @@ Present this guided tour to the bootcamper immediately after confirming the URL 
   "module_3_verification": {
     "checks": {
       "web_service": {"status": "passed|failed", "port": 8080},
-      "web_page": {"status": "passed|failed", "url": "http://localhost:8080/"}
+      "web_page": {"status": "passed|failed", "url": "http://localhost:8080/",
+                   "snapshot": "docs/visualizations/truthset_verification.html"}
     }
   }
 }
 ```
 
-**Success indicator:** ✅ Web service running on port 8080 with the entity resolution
-visualization page accessible and rendering correctly.
+**Success indicator:** ✅ The standalone snapshot exists at
+`docs/visualizations/truthset_verification.html` AND the live app served the four endpoints and
+the entity-graph page.
+
+## Fallback: hand-build only if the bundled app cannot run
+
+Only if `scripts/senzing_viz_server.py` cannot be located or run (and cannot be repaired) may you
+hand-build an equivalent: a Python stdlib HTTP server (`http.server`) serving a single
+self-contained D3 v7 page with the same four endpoints and tabs. If you hand-build the graph, you
+MUST map each edge to expose `source`/`target` (from `source_entity_id`/`target_entity_id`)
+**before** `forceLink().links(...)`, preserving node `id`/`entity_id`, omitting this map is a
+silent failure that renders an empty graph. Generate the HTML via a Python generator script
+(never write HTML+JS directly with file-write tooling). The full response schemas and the
+search-enrichment specification are in `visualization-api-reference.md`. Even on the fallback
+path, still write a standalone snapshot to `docs/visualizations/truthset_verification.html` so
+the completion gate's guarantee holds.
 
 When the bootcamper confirms they are done exploring, load `phase3-report-close.md`.

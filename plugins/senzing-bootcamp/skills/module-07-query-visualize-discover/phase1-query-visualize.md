@@ -102,11 +102,11 @@ finding, document it.
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
 matching concepts from Module 3, a sentence or two each, not a full re-explanation:
 
-- **Features**: the categories of identifying information (NAME, ADDRESS, PHONE, etc.) Senzing
+- **Features:** the categories of identifying information (NAME, ADDRESS, PHONE, etc.) Senzing
   extracts and compares, and how to read match-key strings like `+NAME+ADDRESS+PHONE`.
-- **Confidence scores**: numeric indicators of match strength reflecting how many features
+- **Confidence scores:** numeric indicators of match strength reflecting how many features
   agreed (higher means more evidence), not absolute probabilities.
-- **Cross-source connections**: matches between records from different data sources, revealing
+- **Cross-source connections:** matches between records from different data sources, revealing
   the same entity exists in multiple systems.
 
 Adapt the reminders to the bootcamper's own data context, reference the feature types, scores,
@@ -228,27 +228,31 @@ phase completes or is skipped, return here for the Query Completeness Gate.
 
 Before wrapping up the module, confirm:
 
-1. **Query programs created and tested?**: at least one query program runs successfully
+1. **Query programs created and tested?** At least one query program runs successfully
    against the resolved data.
-2. **Visualizations offered?**: both the entity graph and the results dashboard were offered.
-3. **Discover phase status?**: the Discover phase was either completed (all steps 4a–4e
+2. **Visualizations offered?** Both the entity graph and the results dashboard were offered.
+3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4e
    checkpointed) or explicitly skipped by the bootcamper.
 4. **Ready to proceed?**
 
-Present the completion status and path options:
+Module 7 is the **end of the Core track**. Once the gate is satisfied, run the standard
+**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
+append the Module 7 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
+summary). Because this is the last module of the Core track, the completion process ends with
+the graduation offer rather than a next-module transition:
 
-- **Path A (full bootcamp):** proceed to Module 8 (Performance Testing).
-- **Paths B/C (shorter paths):** this is a natural stopping point. The bootcamper has working
-  query programs and can stop here.
-
-Module 7 is the end of the Core track. The bootcamper can continue to Module 8 (Performance
-Testing) or stop here if this is a good stopping point for their project.
-
-👉 **Module 7 complete. Would you like to continue to Module 8 (Performance Testing), or stop here?**
+👉 **Module 7 complete, and that is the end of the Core track. Would you like to graduate now and generate your production project and recap trophy?**
 
 *(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
-to `null` per the ground rules. If they continue, hand off to the Module 8 skill (later porting
-phase); if they stop, close out gracefully.
+to `null` per the ground rules.
+
+- **Affirmative:** invoke the `graduation` skill (GRADUATION banner, recap PDF, and `production/`
+  project). See `../graduation/SKILL.md`.
+- **Wants to keep exploring first:** stay available for more queries, visualizations, or Discover
+  work, and offer graduation again whenever they are ready.
+- **Advanced Topics track:** the bootcamper may instead continue to Module 8 (Performance
+  Testing). The advanced modules (8-11) are a later porting phase; until they land, offer
+  graduation as the close-out for both tracks.
 
 ## Integration patterns
 

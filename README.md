@@ -49,6 +49,20 @@ a hands-on, module-by-module tutorial.
 
       or just tell Claude "start the bootcamp".
 
+1. Other commands (available any time during a bootcamp):
+
+    - `/bootcamp-feedback` — share feedback about the bootcamp
+      (or just say "bootcamp feedback"). Saved to
+      `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
+    - `/graduate` — finish the Core track: generate your recap PDF trophy
+      (`docs/bootcamp_recap.pdf`) and a production-ready `production/` project.
+
+### What you finish with
+
+The bootcamp is a guided, module-by-module tutorial (Modules 1-7 in order). You end with working
+Senzing code and data in your project (`src/`, `data/`, `database/`), a professional recap PDF
+you can keep and share, and a `production/` starter project.
+
 ### Uninstall plugin
 
 1. Uninstall the plugin and marketplace.

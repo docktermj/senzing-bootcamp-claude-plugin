@@ -22,21 +22,23 @@ bootcamper through setup and into the numbered module skills, one guided step at
 
 ## Onboarding sequence (fresh start)
 
-Follow `onboarding-flow.md` for the detailed steps. The sequence is:
+Follow `onboarding-flow.md` for the detailed steps. Steps 1-2 are administrative; steps 3-8 are
+the bootcamper-facing preface, in this order:
 
 1. **MCP health check** - confirm the Senzing MCP server is reachable. It is required; the
    bootcamp cannot proceed without it.
 2. **Project setup** - create the working directory structure and `config/` files silently.
-3. **Entity resolution introduction** - teach the core idea using `entity-resolution-intro.md`
-   (facts come from the Senzing MCP server, never from memory). Ends on a mandatory
-   exploration gate.
-4. **Programming language selection** - present the languages the MCP server reports for the
-   bootcamper's platform. This is a gate: wait for their real choice.
-5. **Welcome + overview** - show the WELCOME banner, give the module overview, then capture a
-   verbosity preference and a light comprehension check.
+3. **Entity resolution concepts** - present the ENTITY RESOLUTION CONCEPTS banner, give the
+   description, and end on the explore gate. Use `entity-resolution-intro.md` (facts come from
+   the Senzing MCP server, never from memory).
+4. **Welcome + overview** - show the WELCOME banner and give the module overview.
+5. **Level of detail** - capture the verbosity preference.
 6. **Track selection** - Core Bootcamp (Modules 1-7) or Advanced Topics (Modules 1-11). This
    is a gate: wait for their choice.
-7. **Hand off to Module 1** - invoke the `module-01-business-problem` skill.
+7. **Programming language selection** - present the languages the MCP server reports for the
+   bootcamper's platform. This is a gate: wait for their real choice.
+8. **Any questions** - invite final questions before Module 1.
+9. **Hand off to Module 1** - invoke the `module-01-business-problem` skill.
 
 ## Ground rules you must never break during onboarding
 

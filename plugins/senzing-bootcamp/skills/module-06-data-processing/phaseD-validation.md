@@ -198,9 +198,12 @@ later phase; compose the summary directly for now.)
 (The Kiro multi-source reference `data-processing-reference.md` and the user reference
 `docs/modules/MODULE_6_DATA_PROCESSING.md` are later porting phases.)
 
-## Transition to Module 7
+## Module completion and transition to Module 7
 
-Follow the Decision Gate above to frame readiness. When results are ready, close the module:
+Follow the Decision Gate above to frame readiness. When results are ready, run the standard
+**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
+append the Module 6 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
+summary), then close the module:
 
 👉 **Module 6 complete. Ready to move on to Module 7?**
 

@@ -665,14 +665,16 @@ connects without errors.
 - Missing dependencies? A Kiro preflight script (`preflight.py`) is a later porting phase; for
   now, verify prerequisites directly and use `search_docs` for platform requirements.
 
-## Transition
+## Module completion and transition
 
-Once the SDK is installed and verified, proceed to:
+Once the SDK is installed and verified, run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md` (update progress, append the Module 2 recap section
+to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
+transition question.
 
-- **Module 3** (System Verification): verify the full setup end-to-end using the Senzing
-  TruthSet.
-- **Module 1** (Business Problem): start working with your own data.
+The next module (Module 3) verifies the full setup end-to-end using the Senzing TruthSet:
 
 👉 **Module 2 complete. Ready to verify your setup end-to-end in Module 3?**
 
-*(Internal: end the turn on this question and wait.)*
+*(Internal: end the turn on this question and wait.)* On module completion set `current_step` to
+`null`.

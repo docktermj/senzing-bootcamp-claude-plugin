@@ -1,6 +1,6 @@
 ---
 name: module-07-query-visualize-discover
-description: Bootcamp Module 7: Query, Visualize, and Discover. Use when the bootcamper starts or resumes Module 7, or needs to query resolved entities, visualize them, and explore results against the business problem.
+description: 'Bootcamp Module 7: Query, Visualize, and Discover. Use when the bootcamper starts or resumes Module 7, or needs to query resolved entities, visualize them, and explore results against the business problem.'
 ---
 
 # Module 7: Query, Visualize, and Discover

@@ -62,11 +62,11 @@ comparison tracking. Query the following counts through the Senzing SDK: never w
 against `database/G2C.db`. Per the ground-rules MCP routing, get counts/stats via
 `reporting_guide`, or generate SDK code with `generate_scaffold` / `find_examples` and run it:
 
-- **entity_count**: total resolved entities
-- **record_count**: total records loaded
-- **match_count**: number of matches (records that resolved together)
-- **possible_match_count**: number of possible matches flagged
-- **relationship_count**: number of disclosed relationships
+- **entity_count:** total resolved entities
+- **record_count:** total records loaded
+- **match_count:** number of matches (records that resolved together)
+- **possible_match_count:** number of possible matches flagged
+- **relationship_count:** number of disclosed relationships
 
 Save the statistics to `config/er_current_{datasource}.json` (datasource name lowercased):
 
@@ -142,9 +142,16 @@ results before proceeding.
 
 **Checkpoint:** write step 25.
 
-### 26. Shortcut path decision
+### 26. Module completion and shortcut path decision
 
-After all sources have completed (or skipped) Phase 3, present the decision gate:
+After all sources have completed (or skipped) Phase 3, run the standard **Module Completion**
+process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 5
+recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Then present
+the decision gate below.
+
+Modules run in ascending numeric order; Module 6 is next by default. The shortcut path is only
+taken when the bootcamper explicitly requests it (skipping a module requires a bootcamper
+request, per the ground rules):
 
 - **Shortcut path (→ Module 7):** For simple use cases: single data source, small dataset
   (≤1000 records), no production requirements: the Phase 3 test load results may be sufficient.

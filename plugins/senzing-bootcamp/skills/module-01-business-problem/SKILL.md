@@ -1,6 +1,6 @@
 ---
 name: module-01-business-problem
-description: Bootcamp Module 1: Discover the Business Problem. Use when the bootcamper starts or resumes Module 1, or wants to define their entity-resolution business problem, data sources, and success criteria.
+description: 'Bootcamp Module 1: Discover the Business Problem. Use when the bootcamper starts or resumes Module 1, or wants to define their entity-resolution business problem, data sources, and success criteria.'
 ---
 
 # Module 1: Discover the Business Problem
