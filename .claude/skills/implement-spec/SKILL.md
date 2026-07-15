@@ -1,6 +1,6 @@
 ---
 name: implement-spec
-description: 'Implement one or more specs from the specs/ directory. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-specs, which produces the specs this skill consumes.'
+description: 'Implement one or more specs from the specs/ directory. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md, and records any new invariant an implementation establishes in specs/INVARIANTS.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-specs, which produces the specs this skill consumes.'
 ---
 
 # Implement Spec
@@ -8,7 +8,9 @@ description: 'Implement one or more specs from the specs/ directory. With no arg
 This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It takes a spec under `specs/` — a terse, developer-facing description of
 a bug fix or improvement — and **implements it in the codebase**, then records
-that the spec is done so it is not offered again.
+that the spec is done so it is not offered again. When an implementation
+establishes a new durable rule, it also promotes that rule to an invariant in
+`specs/INVARIANTS.md`.
 
 It is the counterpart to the `feedback-to-specs` skill: that skill *writes*
 specs; this skill *implements* them.
@@ -34,7 +36,7 @@ entries; append new ones (newest first).
 Candidate specs are the `specs/*.md` files **excluding** these meta files, which
 are never implementable specs:
 
-- `invariants.md` — the ruleset every spec must respect (not a task).
+- `INVARIANTS.md` — the ruleset every spec must respect (not a task).
 - `todo.md` — the lightweight idea backlog (not yet specs).
 - `IMPLEMENTED.md` — the record this skill maintains.
 
@@ -44,8 +46,8 @@ are never implementable specs:
 2. **Read `specs/IMPLEMENTED.md`** (create it from the scaffold if missing) and
    collect the `## <name>` headings → the implemented set.
 3. **Unimplemented = candidates − implemented.**
-4. **Read `specs/invariants.md`.** Every spec begins "Maintain the invariant
-   conditions in @invariants.md" — the implementation must honor it (cross-platform
+4. **Read `specs/INVARIANTS.md`.** Every spec begins "Maintain the invariant
+   conditions in @INVARIANTS.md" — the implementation must honor it (cross-platform
    Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/
    complete, and the per-module outcomes).
 
@@ -79,7 +81,7 @@ For each name given:
 1. Strip any trailing `.md` and resolve `specs/<name>.md`.
 2. If the file does not exist, say so and list the available unimplemented spec
    names, then stop for that name.
-3. If it names a meta file (`invariants`, `todo`, `IMPLEMENTED`), explain it is
+3. If it names a meta file (`INVARIANTS`, `todo`, `IMPLEMENTED`), explain it is
    not an implementable spec and stop for that name.
 4. If it is **already implemented** (present in `IMPLEMENTED.md`), report that
    with the recorded date and ask whether to re-implement before proceeding —
@@ -142,7 +144,56 @@ Leave the spec file itself in place under `specs/` — the ledger, not the file'
 location, records completion. Do not commit unless the maintainer asks; if they
 do, reference the commit hash in the entry.
 
-## Step 5: Report
+## Step 5: Record any new invariants
+
+Some implementations establish a **new invariant** — a durable guarantee that all
+future specs and code must maintain, not merely a one-off fix. When that happens,
+promote it to `specs/INVARIANTS.md` so future work is bound by it. Judge it this
+way:
+
+- **Creates an invariant** — the change adds or hardens a standing rule that
+  future work could otherwise violate (e.g. "the write-gate must never block an
+  in-project path", "every module banner uses the `MODULE n: [title]` form").
+- **Does not create an invariant** — the change merely restores behavior an
+  existing invariant already requires, or is a one-off content/doc fix with no
+  ongoing constraint. Then skip this step.
+
+If the spec already names the invariant it introduces, use that wording;
+otherwise draft it. For each new invariant:
+
+1. **Compute the next ID.** Read `specs/INVARIANTS.md`, find the highest
+   `INV-NNN` anywhere in the file, add one, and zero-pad to three digits.
+   `specs/INVARIANTS.md`'s own "Maintaining this file" section is the authority
+   on the format and rules — follow it.
+2. **Confirm the wording with the maintainer.** Invariants are permanent and
+   bind every future spec, so show the drafted `INV-NNN — <statement>` and ask
+   one clear 👉 question before writing. Never record an invariant the maintainer
+   has not agreed to.
+3. **Append to `specs/INVARIANTS.md`** under `## Invariants added from
+   implemented specs`, directly beneath the `<!-- New invariants... -->` marker,
+   as a single testable MUST/ALWAYS condition with provenance (get the date with
+   `date +%F`):
+
+   ```markdown
+   - **INV-NNN** — <single testable MUST/ALWAYS condition.> (Source: `<spec-name>`, YYYY-MM-DD.)
+   ```
+
+   Remove the `_None yet._` placeholder if it is still present. **Never renumber
+   or delete an existing invariant** — only append.
+4. **Cross-reference the spec.** Append a note to the spec file under `specs/`
+   recording which invariant(s) its implementation introduced, so the link is
+   bidirectional:
+
+   ```markdown
+   ## Invariants introduced
+
+   - `INV-NNN` — <statement> (recorded in `specs/INVARIANTS.md`).
+   ```
+
+If one implementation establishes several invariants, add one entry per
+invariant using consecutive IDs.
+
+## Step 6: Report
 
 For each spec implemented, report:
 
@@ -150,6 +201,8 @@ For each spec implemented, report:
 - The files changed (as clickable `path:line` where useful).
 - How each acceptance criterion was verified.
 - The `IMPLEMENTED.md` entry that was added.
+- Any new invariant(s) recorded (`INV-NNN`) in `specs/INVARIANTS.md`, or a note
+  that the implementation introduced none.
 
 If several specs were requested, give a compact table:
 
@@ -167,6 +220,12 @@ remaining specs?"). Do not implement specs that were not requested.
   if verification fails, leave the spec off the record and say why.
 - **Never invent or edit spec content** to make it easier to implement. If a
   spec is wrong, report it — fixing/authoring specs is `feedback-to-specs`' job.
-- **Respect `@invariants.md`.** A change that would violate an invariant is not a
+  The one exception is the post-implementation `## Invariants introduced` note
+  from Step 5, which records (does not alter) the spec's outcome.
+- **Respect `@INVARIANTS.md`.** A change that would violate an invariant is not a
   valid implementation; surface the conflict instead.
+- **New invariants are confirmed and append-only.** Promote a rule to
+  `specs/INVARIANTS.md` only after the maintainer signs off on its wording; use
+  the next `INV-NNN`, append beneath the marker, and never renumber or delete an
+  existing invariant. Keep the link bidirectional (invariant ↔ source spec).
 - **Ledger is append/update only.** Never delete implementation history.

@@ -7,7 +7,7 @@ Maintainer request: analyze collected bootcamp feedback and turn it into
 improvement specs.
 
 Invoke the `feedback-to-specs` skill and follow it end to end: locate and read
-the feedback file, parse each item, triage it against `specs/invariants.md` and
+the feedback file, parse each item, triage it against `specs/INVARIANTS.md` and
 the existing `specs/*.md` (deduplicating), confirm root causes in the codebase,
 and write one or more `specs/<title>.md` files. Finish with the triage table and
 the list of specs created. Do not implement the fixes unless asked.
