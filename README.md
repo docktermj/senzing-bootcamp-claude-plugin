@@ -1,4 +1,4 @@
-# Senzing Bootcamp Claude Code plugin
+# Senzing Bootcamp Claude Code Plugin
 
 A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution,
 packaged as a Claude Code plugin.
@@ -13,15 +13,21 @@ a hands-on, module-by-module tutorial.
   looks up Senzing facts,
   and provides working examples.
 
-## Install Claude Code and plugin
+## Install Claude Code and Senzing Bootcamp Claude Plugin
 
 1. Download and install [Claude Code].
 
-1. Install Senzing Bootcamp Claude plugin.
+1. Install Senzing Bootcamp Claude Plugin.
 
     ```console
     claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
     claude plugin install senzing-bootcamp@senzing-bootcamp
+    ```
+
+1. If you already have the Senzing Bootcamp Claude Plugin installed, update it.
+
+    ```console
+    claude plugin update senzing-bootcamp@senzing-bootcamp
     ```
 
 ## Run Claude Code
@@ -36,7 +42,7 @@ a hands-on, module-by-module tutorial.
     ```
 
 1. *Note:* In addition to Claude Code,
-   the Senzing Bootcamp Claude plugin can also be run with:
+   the Senzing Bootcamp Claude Plugin can also be run with:
     - [Claude Code for VSCode]
 
 ## Start the Senzing Bootcamp
