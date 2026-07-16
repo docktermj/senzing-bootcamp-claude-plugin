@@ -16,6 +16,11 @@ a hands-on, module-by-module tutorial.
 ## Install Claude Code and Senzing Bootcamp Claude Plugin
 
 1. Download and install [Claude Code].
+    1. To install Claude CLI via commandline on macOS or Linux:
+
+        ```console
+        curl -fsSL https://claude.ai/install.sh | bash
+        ```
 
 1. Install Senzing Bootcamp Claude Plugin.
 
@@ -41,7 +46,7 @@ a hands-on, module-by-module tutorial.
     ```console
     mkdir senzing-bootcamp
     cd senzing-bootcamp
-    claude --model claude-sonnet-5 --effort high --permission-mode auto
+    claude --model claude-sonnet-5 --effort medium --permission-mode auto
     ```
 
    Before Modules 2 or 5 or graduation, switch the running session up with
