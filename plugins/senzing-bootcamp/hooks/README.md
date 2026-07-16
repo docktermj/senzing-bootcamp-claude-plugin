@@ -59,8 +59,30 @@ Code identically on all three platforms, including inside `args`.
   for stray paths or obvious secrets during a bootcamp. The `Stop` hook can block a turn
   from ending (`decision: block`) to request the one forgotten closing 👉 question, but
   only once: it returns success whenever `stop_hook_active` is true, so it can never loop
-  on its own continuation, and it stays silent when a 👉 question is already pending or the
-  session is not a bootcamp. The `UserPromptSubmit` hook injects guidance via
+  on its own continuation, and it stays silent when the session is not a bootcamp, when
+  the nudge is disabled (see [Disabling / quieting the Stop-hook nudge](#disabling--quieting-the-stop-hook-nudge)),
+  or when the current turn already ends with a 👉 question. Detection scans the whole
+  current turn and biases toward silence if the turn's text is not yet on disk, and the
+  block reason tells the model to repeat nothing it has already asked — so a false block
+  can never surface as a duplicate question. The `UserPromptSubmit` hook injects guidance via
   `additionalContext`; `SessionStart` emits resume context. Everything else emits nothing.
 - **Hooks ship with the plugin.** There is no hook-install step (this replaces the
   Kiro `install_hooks.py` / `.kiro/hooks/` workflow).
+
+## Disabling / quieting the Stop-hook nudge
+
+The `Stop` hook (`scripts/stop-nudge.py`) is a safety net for the single closing
+👉 question. It stays silent whenever the current turn already ends with a 👉
+question, and it biases toward silence when the transcript cannot be read
+decisively — a missed nudge is far cheaper than a duplicated question. If you still
+want to turn it off, there are two documented, opt-out switches (either one works;
+both are read cross-platform with no shell and no extra dependency):
+
+| Switch | Where | Effect |
+|--------|-------|--------|
+| `SENZING_BOOTCAMP_DISABLE_STOP_NUDGE` | environment variable | Set to `1`/`true`/`yes`/`on` to disable the nudge for the session. |
+| `disable_stop_nudge: true` | top-level key in `config/bootcamp_preferences.yaml` | Disables the nudge for the project. |
+
+When either switch is on, the hook returns success immediately (exit 0, no block),
+so a turn can never be re-opened to re-ask a closing question. Remove the env var or
+set `disable_stop_nudge: false` to re-enable it.
