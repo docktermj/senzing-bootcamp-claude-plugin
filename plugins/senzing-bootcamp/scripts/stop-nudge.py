@@ -21,11 +21,14 @@ gate passes:
 
 Gate 4 detection is deliberately biased toward silence. A blocking Stop hook forces
 the model to produce output again, so a false positive is how a bootcamper ends up
-seeing the same 👉 question twice — the #1 complaint (zero tolerance). Two defenses
-address it: (a) this gate scans the whole current turn (every assistant record since
-the last real user prompt), handles a string OR list ``message.content``, and stays
-silent when the turn's assistant text is not yet on disk (a flush/timing race) —
-a missed nudge is far cheaper than a duplicate; and (b) even if the hook does block,
+seeing the same 👉 question twice — the #1 complaint (zero tolerance). Three defenses
+address it: (a) the gate inspects the turn's FINAL assistant message (handling a
+string OR list ``message.content``) rather than a concatenation, so an unflushed
+closing line is not mistaken for a pointer-less turn; (b) it treats a turn that is
+still settling as undecided and stays silent — when the last transcript record is a
+tool call (an assistant record ending in ``tool_use``) or a tool result (a ``user``
+carrier inside the turn), the closing 👉 message has not been written yet, which is
+the partial-flush race seen on tool-using turns; and (c) even if the hook does block,
 the block reason tells the model to verify its own last message first and repeat
 nothing, so a false block can never surface as a duplicate question.
 
@@ -121,10 +124,9 @@ def bootcamp_complete():
     return pref_flag("bootcamp_complete")
 
 
-def current_turn_text(transcript_path):
-    """Return the concatenated assistant text produced since the last real user
-    prompt (the current turn), or None if the transcript cannot be read. Sidechain
-    (subagent) records are excluded — they are not the user-facing turn."""
+def current_turn_records(transcript_path):
+    """Return the transcript records produced since the last real user prompt (the
+    current turn), or None if the transcript cannot be read."""
     records = []
     try:
         with open(transcript_path, encoding="utf-8") as fh:
@@ -144,13 +146,48 @@ def current_turn_text(transcript_path):
     for idx, rec in enumerate(records):
         if is_real_user_prompt(rec):
             start = idx + 1
+    return records[start:]
 
-    texts = [
-        assistant_text(rec)
-        for rec in records[start:]
-        if rec.get("type") == "assistant" and not rec.get("isSidechain")
-    ]
-    return "\n".join(t for t in texts if t)
+
+def ends_with_tool_use(rec):
+    """True if an assistant record's final content block is a ``tool_use`` — i.e.
+    the model just invoked a tool and its post-tool message has not been produced
+    yet."""
+    content = content_of(rec)
+    if isinstance(content, list):
+        kinds = [
+            block.get("type")
+            for block in content
+            if isinstance(block, dict) and block.get("type") in ("text", "tool_use")
+        ]
+        return bool(kinds) and kinds[-1] == "tool_use"
+    return False
+
+
+def settled_final_text(records):
+    """The text of the turn's FINAL assistant message when the turn has settled (its
+    last action was final text), or None when the turn is still in progress — the
+    last record is a tool-result carrier (a ``user`` record inside the turn) or an
+    assistant record whose last block is a ``tool_use``, or nothing is flushed yet.
+    Sidechain (subagent) records are excluded — they are not the user-facing turn.
+
+    Returning None biases the caller to silence: on a tool-using turn the closing 👉
+    line races the transcript write, so treating an unsettled turn as "no decision ->
+    stay silent" prevents the partial-flush false nudge (INV-054)."""
+    turn = [rec for rec in records if not rec.get("isSidechain")]
+    if not turn:
+        return None
+    last = turn[-1]
+    # A trailing tool-result carrier (a ``user`` record within the turn) means the
+    # assistant's post-tool message is not written yet -> still in progress.
+    if last.get("type") == "user":
+        return None
+    if last.get("type") == "assistant":
+        # The model just invoked a tool; its final text is still pending.
+        if ends_with_tool_use(last):
+            return None
+        return assistant_text(last)
+    return None
 
 
 data = sys.stdin.read()
@@ -178,19 +215,24 @@ if nudge_disabled():
 if bootcamp_complete():
     sys.exit(0)
 
-# Gate 4: block ONLY when we can positively read the current turn and it ended
-# without a 👉 question. Every other case biases to silence, because a blocking Stop
-# hook forces another turn and a false block is how a duplicate 👉 question reaches
-# the bootcamper (the #1 complaint). Undecided -> silent covers: no transcript path,
-# a missing/unreadable file, and a turn whose assistant text is not yet flushed.
+# Gate 4: block ONLY when we can positively read the current turn AND its final
+# assistant message ended without a 👉 question. Every other case biases to silence,
+# because a blocking Stop hook forces another turn and a false block is how a
+# duplicate 👉 question reaches the bootcamper (the #1 complaint). Undecided ->
+# silent covers: no transcript path, a missing/unreadable file, a turn still
+# settling (a pending tool call/result — the partial-flush race on tool-using
+# turns), and a turn whose final assistant text is not yet flushed.
 transcript = payload.get("transcript_path", "")
-turn_text = current_turn_text(transcript) if transcript else None
-if turn_text is None:
+records = current_turn_records(transcript) if transcript else None
+if records is None:
     sys.exit(0)  # no readable transcript -> undecided -> stay silent
-if POINTER in turn_text:
-    sys.exit(0)  # a pointer question is already pending -> stay silent
-if not turn_text.strip():
-    sys.exit(0)  # nothing flushed for this turn yet -> stay silent
+final_text = settled_final_text(records)
+if final_text is None:
+    sys.exit(0)  # turn still settling (tool call/result pending, or nothing flushed) -> silent
+if POINTER in final_text:
+    sys.exit(0)  # the final message already carries a 👉 question -> stay silent
+if not final_text.strip():
+    sys.exit(0)  # final message empty -> stay silent
 
 # All gates passed: block once and ask for the single closing question. Gate 1
 # releases on the very next Stop, so this blocks at most one time. The reason makes
