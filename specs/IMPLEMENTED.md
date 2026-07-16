@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module-step-overview
+
+- **Implemented:** 2026-07-15
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-0{1..7}/SKILL.md` (the `First:` start instruction in all seven Core-track module SKILLs)
+- **Summary:** Enforced INV-031 ("at the beginning of each module, enumerate the steps") — which `ground-rules.md:126-128` mandates but each module's own `First:` instruction omitted (it listed only banner, journey map, and before/after framing). Appended the missing element to every module's start instruction so it now reads "…show the module start banner, journey map, before/after framing, **and a brief numbered overview of this module's steps**, before any module work." The wording is identical across all seven modules (module-01 … module-07) and keeps the existing "(per ground-rules)" reference, satisfying the consistency criterion. Verified: all seven `SKILL.md` files contain the new phrase; the sequence matches the `ground-rules.md` order (banner → journey map → before/after → numbered step overview). Doc-only change; trivially cross-platform and language-agnostic.
+- **Incidental:** editing `module-04-data-collection/SKILL.md` surfaced pre-existing CommonMark debt flagged by the repo's markdown hook; fixed in the same file to keep it compliant — 8 `**Label**:` → `**Label:**` list-item labels (format list + two blockquoted labels) and 5 MD032 blank-lines-before-lists (the Option A–D blocks and the smaller-slice block). No behavior change.
+- **Commit:** uncommitted
+
 ## cross-platform-hook-execution
 
 - **Implemented:** 2026-07-15

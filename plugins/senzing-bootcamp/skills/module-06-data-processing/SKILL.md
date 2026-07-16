@@ -11,7 +11,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question. Thi
 absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, and before/after framing before any module work.
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution
