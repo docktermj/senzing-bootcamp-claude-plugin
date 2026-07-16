@@ -31,6 +31,11 @@ finish. Show it at most once per graduation.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+After the banner, surface a one-line best-value nudge (non-blocking — a statement, not a 👉
+question, and never a gate): graduation is correctness-critical, so for best value run it on
+Opus 4.8 at high effort — `/model opus` then `/effort high` (skip if you are already there or
+prefer one model for everything). See `../../docs/model-selection.md`.
+
 ## Pre-checks
 
 Gather context before any step. Do this silently.
