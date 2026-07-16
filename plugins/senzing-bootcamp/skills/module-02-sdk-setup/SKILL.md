@@ -99,13 +99,21 @@ Proceed with Step 2.
 
 ## Step 2: Determine Platform
 
-Ask: 👉 **What operating system are you on? Reply with a number:**
+**Detect first, do not ask.** This gate is satisfied by *determining* the platform, not by asking
+a question. Read `os`/`arch` from `config/bootcamp_preferences.yaml` (persisted during onboarding);
+if absent, detect from the environment/system context (else run `uname`/`systeminfo`). State the
+detected platform in one line and proceed — e.g. "Detected macOS on Apple Silicon; say so if that's
+wrong." For macOS, also establish whether it is Apple Silicon (M1/M2/M3/M4) or Intel from the same
+source.
+
+**Fallback only** — when detection is genuinely unavailable or ambiguous, ask this pinned question
+and wait:
+
+👉 **What operating system are you on? Reply with a number:**
 
 1. Linux
 2. macOS
 3. Windows
-
-For macOS, also establish whether it is Apple Silicon (M1/M2/M3/M4) or Intel.
 
 *(Internal: end the turn on this question and wait.)*
 
