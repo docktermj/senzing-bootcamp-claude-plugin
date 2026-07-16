@@ -80,6 +80,21 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 | `module-07-query-visualize-discover` | Query SDK code, visualize, discovery | Sonnet 5 | Iterative query/exploration; Sonnet's speed suits it |
 | `graduation` | Recap reconcile, PDF, production project (code/config/docs), report | Opus 4.8 | Crown-jewel deliverable; production code/config correctness matters most |
 
+## Module-start commands (the nudge)
+
+`ground-rules.md` → "Module start banners and transitions" surfaces this per-stage recommendation
+as a non-blocking one-liner at the start of each module (and `graduation/SKILL.md` at the
+graduation banner), with the exact commands to run. Switching is optional; the session-level
+`/model` and `/effort` persist for the session (unlike per-skill frontmatter). Keep this table in
+sync with the mirror in `ground-rules.md`.
+
+| Stage | Recommended | Commands |
+|---|---|---|
+| Onboarding, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+| Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
+| Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
+| Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+
 ## Recommendation
 
 Because skill overrides reset per prompt, realize the evaluation through the
