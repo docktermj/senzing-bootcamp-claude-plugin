@@ -82,6 +82,12 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **Journal:** the four bold fields exactly as shown.
 
+Append the section as plain, functional Markdown. Do not spend effort on CommonMark
+prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
+graduation runs one normalization pass over the recap before the PDF renders (see
+`ground-rules.md` → "Markdown files" and `../graduation/SKILL.md`). What matters at this step is
+that the `## Module N:` heading and all four subsections are present and carry real content.
+
 ### 2c. Verify it landed
 
 Re-read `docs/bootcamp_recap.md` and confirm a `## Module N:` heading for the

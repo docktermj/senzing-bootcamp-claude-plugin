@@ -62,6 +62,18 @@ module interrupted before completion), fold its content into that module's
 narrative captured from an interrupted module and the PDF renders clean, completed
 sections.
 
+**Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
+Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
+`docs/bootcamp_recap.md`. During the bootcamp these files were written plain (see
+`../bootcamp-onboarding/ground-rules.md` → "Markdown files"); this is where they get prettified.
+Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031), and lists
+(MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
+the colon, none before). The pass is **purely cosmetic — structure- and content-preserving**: it
+must never reorder, remove, or rewrite the prose of a completed `## Module N:` section, nor drop
+any of its four subsections (Information Shared, Questions & Responses, Actions Taken, Journal).
+Like every graduation step it is non-blocking: if normalization fails or is uncertain, warn,
+leave the content as written, and continue — a formatting issue is never a reason to skip the PDF.
+
 ### 1b. Render the PDF
 
 Generate `docs/bootcamp_recap.pdf` with the bundled generator. It always produces
@@ -130,6 +142,12 @@ pre-checks. Use placeholder values only, never real secrets:
 
 - **`production/README.md`:** parameterized by language, database, and data sources. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the Core track does not cover Modules 8-11, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) were not covered during the Core track: complete these items before deploying," and mark those items with ⚠️.
+
+Author every `production/*.md` deliverable — this README, the migration checklist, and the
+Step 5 `GRADUATION_REPORT.md` — to the same CommonMark house rules applied to the recap in
+Step 1a (MD022/MD031/MD032 blank lines, MD040 fenced-block languages, `**Label:**` colon
+spacing), so the handed-over project reads clean. Best-effort and non-blocking, as everywhere in
+graduation.
 
 ## Step 5: Graduation report
 

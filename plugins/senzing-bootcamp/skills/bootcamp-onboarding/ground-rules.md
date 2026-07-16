@@ -88,6 +88,20 @@ steering files.)
 - The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
   placement is your responsibility.
 
+## Markdown files
+
+- **Write plain, functional Markdown during the bootcamp; defer CommonMark prettification to
+  graduation.** As you author `*.md` files (recap sections, docs under `docs/`), write for
+  correctness and readability — do NOT spend effort making them CommonMark-lint-clean as you go.
+  No fussing over `**Label:**` colon spacing, blank lines around headings/lists/fenced blocks
+  (MD022/MD031/MD032), or fenced-code info strings (MD040). There is no need for "pretty" Markdown
+  until the end: graduation runs a single normalization pass over the `.md` files before the trophy
+  PDF renders (see `../graduation/SKILL.md`). Keeping incremental writes plain reduces edit churn
+  (INV-058) and keeps the teaching flow uncluttered (INV-012).
+- Structure still matters even while formatting is deferred: recap sections keep their
+  `## Module N:` heading and the four required subsections (see `module-completion.md`), and the
+  placement rules above are unchanged.
+
 ## Progress and state
 
 - Progress -> `config/bootcamp_progress.json`. Preferences -> `config/bootcamp_preferences.yaml`.
