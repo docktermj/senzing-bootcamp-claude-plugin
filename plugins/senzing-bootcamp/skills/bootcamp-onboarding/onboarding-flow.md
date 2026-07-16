@@ -80,8 +80,10 @@ bootcamp begins. Follow `entity-resolution-intro.md`:
 1. Present the **ENTITY RESOLUTION CONCEPTS** banner (defined in `entity-resolution-intro.md`).
 2. Give the description of entity resolution, pulling all Senzing-specific facts from the MCP
    server (never from memory).
-3. End on the mandatory exploration gate: ask whether they want to explore entity resolution
-   before beginning. Do not advance until the bootcamper signals they are ready.
+3. End on the mandatory exploration gate using the pinned 👉 question defined in
+   `entity-resolution-intro.md` — verbatim: **"Are you ready to move on to the welcome?"** It is a
+   single yes/no with exactly one meaning for "yes" and one for "no", and no "or"-joined choices
+   (INV-008/INV-051). Do not advance until the bootcamper is ready.
 
 ## 4. Welcome and overview (preface item 4-5)
 
@@ -117,8 +119,9 @@ Then give the overview (cover naturally, do not ask a question yet):
 2. **standard** *(recommended)* — balanced what-and-why, block-level code summaries.
 3. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
 
-Wait for the answer, then persist it under the `verbosity` key in
-`config/bootcamp_preferences.yaml`:
+Wait for the answer, then **hold** the chosen verbosity for the consolidated preface write in
+step 8 — do not write it now (INV-012: one preface write, not one per gate). When persisted, the
+`verbosity` key will look like:
 
 ```yaml
 verbosity:
@@ -144,8 +147,8 @@ NOT a gate; if they skip, apply `standard` and tell them so.
    packaging/deployment.
 
 Tracks are not mutually exclusive; completed modules always carry forward. This is a ⛔ gate:
-wait for the real choice, do not assume one. Persist `track` to
-`config/bootcamp_preferences.yaml`.
+wait for the real choice, do not assume one. **Hold** the chosen `track` for the consolidated
+preface write in step 8 (do not write it now).
 
 (Advanced-track knowledge check, track switching, and the per-gate validation table are part of
 later porting phases.)
@@ -162,8 +165,8 @@ later porting phases.)
   👉 **Which programming language would you like to use for the bootcamp?**
 
 - This is a ⛔ gate: wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
-- Persist the choice to `config/bootcamp_preferences.yaml`. (Language-specific guidance -
-  `lang-*` - is a later porting phase.)
+- **Hold** the chosen programming language for the consolidated preface write in step 8 (do not
+  write it now). (Language-specific guidance - `lang-*` - is a later porting phase.)
 
 ## 8. Any questions (preface item 9)
 
@@ -176,6 +179,13 @@ Before starting Module 1, invite final questions:
 - A readiness signal ("no", "let's go", "ready", "start"): proceed to Module 1.
 
 This is NOT a hard gate: if they say they are ready, advance.
+
+**Consolidated preference write (once, quietly).** When the bootcamper signals readiness to begin
+Module 1, persist all preface choices collected in steps 5-7 — `verbosity`, `track`, programming
+language, and `name` if it was captured — to `config/bootcamp_preferences.yaml` in a **single**
+write. This is the only preference write of the preface; the earlier gates only held the answers,
+so the bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this
+administrative write. Then hand off to Module 1.
 
 ## 9. Hand off to Module 1
 

@@ -1,6 +1,6 @@
 # Module start: enumerate a numbered step overview
 
-Maintain the invariant conditions in @invariants.md and implement the following improvement:
+Maintain the invariant conditions in @INVARIANTS.md and implement the following improvement:
 
 ## Problem
 
@@ -29,7 +29,7 @@ before/after → **numbered step overview** before its first step.
 
 - [ ] Each module SKILL's start instruction (modules 01–07) explicitly includes presenting a brief numbered overview of that module's steps.
 - [ ] The wording is consistent across modules and references the existing `ground-rules.md:127` requirement.
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 

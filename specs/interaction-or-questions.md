@@ -1,6 +1,6 @@
 # Interaction: eliminate "or"-joined questions
 
-Maintain the invariant conditions in @invariants.md and implement the following improvement:
+Maintain the invariant conditions in @INVARIANTS.md and implement the following improvement:
 
 ## Problem
 
@@ -49,7 +49,7 @@ reference model for this cleanup.
 - [ ] No 👉 question **to the bootcamper** joins two or more choices with "or"; every multi-choice question uses a neutral lead question plus a numbered list per `ground-rules.md:22-24`.
 - [ ] Instruction/rule text and legitimate yes/no answer-format hints are unchanged.
 - [ ] A grep for `👉` lines containing " or " across `skills/` returns only rule/instruction text, not questions.
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 
@@ -60,3 +60,7 @@ reference model for this cleanup.
 - Audit: `migrate-kiro-power` verify/backfill audit (2026-07-15), invariants I4/I5.
 - Priority: Medium (interaction-quality; violates the plugin's own ground rule).
 - Related specs: `migrate-kiro-power.md`; preface portion already fixed.
+
+## Invariants introduced
+
+- `INV-051` — Every 👉 question to the Bootcamper that offers two or more choices MUST use a neutral lead question followed by a numbered list; choices are never joined with "or" (recorded in `specs/INVARIANTS.md`).

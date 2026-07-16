@@ -117,7 +117,10 @@ degraded, or unchanged). Explain what the changes mean:
 > **Only present this gate when a prior baseline existed** (i.e., this is not the first test
 > load). On the first test load, the baseline is saved automatically in step 24b without asking.
 
-👉 **Your mapping change resulted in [quality_assessment]. Would you like to accept these results as your new baseline, or iterate on the mapping and try again?**
+👉 **Your mapping change resulted in [quality_assessment]. What would you like to do? Reply with a number:**
+
+1. Accept these results as your new baseline.
+2. Iterate on the mapping and try again.
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -161,7 +164,10 @@ request, per the ground rules):
   exceeding 1000 records, or when the bootcamper wants to learn production-quality loading
   patterns: recommend the full Module 6 path.
 
-👉 **Would you like to take the shortcut path directly to Module 7 (Query, Visualize, and Discover), or the full path to Module 6 (Data Processing) for production-quality loading?**
+👉 **Which path would you like to take? Reply with a number:**
+
+1. Shortcut path — directly to Module 7 (Query, Visualize, and Discover).
+2. Full path — to Module 6 (Data Processing) for production-quality loading.
 
 *(Internal: end the turn on this question and wait.)*
 

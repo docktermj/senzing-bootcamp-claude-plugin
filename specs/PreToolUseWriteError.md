@@ -4,7 +4,7 @@
 rewritten to exempt the project directory before applying the temp/Downloads check
 (Option 1 below). Verified against all acceptance criteria.
 
-Maintain the invariant conditions in @invariants.md and fix the following issue:
+Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ● Write(config/bootcamp_preferences.yaml)
   ⎿  Error: PreToolUse:Write hook error: [${CLAUDE_PLUGIN_ROOT}/scripts/write-gate.sh]: Write blocked: use a project-relative path, not a system temp or Downloads
@@ -66,7 +66,7 @@ resolves it; prefer the one that stays portable across Linux, macOS, and Windows
 - [x] With the project rooted under a path containing `/tmp/` (e.g. `/home/user/tmp/proj`), onboarding's writes to `config/bootcamp_preferences.yaml` succeed with no PreToolUse block and no heredoc workaround.
 - [x] A write whose target is genuinely the system temp dir or Downloads is still blocked.
 - [x] The secret-detection branch is unchanged and still fires.
-- [x] Behavior holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [x] Behavior holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 - [x] Bonus: a `content` field that merely mentions `/tmp/` no longer trips the gate — only the resolved target path is inspected.
 
 ## Affected files

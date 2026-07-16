@@ -476,8 +476,9 @@ not glyphs); `#[[file:]]` replaced with relative references; license in-flow pat
 `business_case_offer.py` (scenario invariants validated directly), `templates/
 stakeholder_summary.md`, `design-patterns.md`, `common-pitfalls.md`.
 
-**Note:** Module 1 transitions to **Module 4** (data collection), not Module 2 - matches the
-Kiro track ordering.
+**Note:** Module 1 hands off to **Module 2**; the whole chain runs in strict ascending order
+(1 → 2 → 3 → 4 → 5 → 6 → 7). An earlier Kiro porting artifact skipped straight to Module 4;
+that was corrected in v0.2.0 (below).
 
 **Runtime-untested:** not yet exercised via a local plugin install.
 

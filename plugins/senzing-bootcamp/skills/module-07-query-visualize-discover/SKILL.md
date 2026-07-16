@@ -11,7 +11,7 @@ sub-step one at a time, in order. Never skip, combine, or abbreviate a step cont
 question. This has the same absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, and before/after framing before any module work.
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
 
 **Before/After:** Your data is loaded and entities are resolved, but you haven't examined the
 results yet. After this module you'll have query programs that answer your business questions,
