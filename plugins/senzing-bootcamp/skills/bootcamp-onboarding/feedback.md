@@ -20,6 +20,9 @@ source is missing:
 
 - **Time:** the current date and time.
 - **Plugin version:** the `version` field of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`.
+- **Workstation:** the operating system and platform the bootcamper is running on, from the environment/system context — OS name and version, and architecture if available.
+- **Model and effort:** the model name/ID and the reasoning-effort level in use, from the environment/system context.
+- **Context size:** the approximate size of the conversation context at the time of feedback — a token count and/or percentage of the context window in use. If only an estimate is available, label it as approximate rather than recording a precise-looking guess.
 - **Module and step:** `current_module`, `current_step`, and completed modules from `config/bootcamp_progress.json`.
 - **Recent questions and responses:** the last few 👉 questions asked and the bootcamper's answers, from the transcript.
 - **Behind the scenes:** what the plugin was doing — which hook fired, which skill/phase/gate was active, and any relevant config or state.
@@ -84,6 +87,9 @@ rewrite the file, so earlier entries are preserved.
 
 - **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
 - **Plugin version:** [from `.claude-plugin/plugin.json`, or "Unknown"]
+- **Workstation:** [OS name and version, and architecture; e.g. "Linux 6.17.0-35-generic (x86_64)", or "Unknown"]
+- **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-4-8[1m] / high", or "Unknown"]
+- **Context size:** [approximate tokens and/or % of context window in use; e.g. "~85k tokens (~42% of window)", or "Unknown"]
 - **Module / step:** [`current_module` / `current_step` from `config/bootcamp_progress.json`, or "Unknown"]
 - **Recent questions:** [the last few 👉 questions asked]
 - **Bootcamper responses:** [their answers to those questions]
