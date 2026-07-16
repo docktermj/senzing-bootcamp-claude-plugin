@@ -13,6 +13,9 @@ gate passes:
      sessions.
   3. The bootcamper opted out (env var or preferences key) -> stay silent. Gives a
      documented way to disable/quiet the nudge (see hooks/README.md).
+  3b. The bootcamp is complete (``bootcamp_complete: true`` in preferences, set by
+     graduation before the terminal "END OF SENZING BOOTCAMP" banner) -> stay silent,
+     so the net never nudges for a closing question after the bootcamp is over.
   4. The current turn already ended with a 👉 question -> the closing question
      exists, so add nothing (honors the "ask each question only once" invariant).
 
@@ -80,13 +83,10 @@ def truthy(value):
     return str(value).strip().strip("\"'").lower() in {"1", "true", "yes", "on"}
 
 
-def nudge_disabled():
-    """Honor an explicit opt-out: the SENZING_BOOTCAMP_DISABLE_STOP_NUDGE env var,
-    or a top-level ``disable_stop_nudge: true`` key in
+def pref_flag(key):
+    """True if a top-level ``key: <truthy>`` entry is set in
     config/bootcamp_preferences.yaml. The YAML is scanned line-by-line so no
     third-party parser is required (INV-052: python3-only)."""
-    if truthy(os.environ.get("SENZING_BOOTCAMP_DISABLE_STOP_NUDGE", "")):
-        return True
     prefs = os.path.join("config", "bootcamp_preferences.yaml")
     try:
         with open(prefs, encoding="utf-8") as fh:
@@ -94,13 +94,31 @@ def nudge_disabled():
                 stripped = line.strip()
                 if stripped.startswith("#") or ":" not in stripped:
                     continue
-                key, _, val = stripped.partition(":")
+                name, _, val = stripped.partition(":")
                 # top-level key only (no leading indentation)
-                if key == "disable_stop_nudge" and line[:1] not in (" ", "\t"):
+                if name == key and line[:1] not in (" ", "\t"):
                     return truthy(val)
     except OSError:
         pass
     return False
+
+
+def nudge_disabled():
+    """Honor an explicit opt-out: the SENZING_BOOTCAMP_DISABLE_STOP_NUDGE env var,
+    or a top-level ``disable_stop_nudge: true`` key in
+    config/bootcamp_preferences.yaml (INV-055)."""
+    if truthy(os.environ.get("SENZING_BOOTCAMP_DISABLE_STOP_NUDGE", "")):
+        return True
+    return pref_flag("disable_stop_nudge")
+
+
+def bootcamp_complete():
+    """True once graduation has ended the bootcamp. The graduation closing step
+    sets a top-level ``bootcamp_complete: true`` in config/bootcamp_preferences.yaml
+    right before it renders the terminal "END OF SENZING BOOTCAMP" banner (which
+    ends the turn with no 👉 question). Standing down here keeps the safety net from
+    nudging for a closing question after the bootcamp is over."""
+    return pref_flag("bootcamp_complete")
 
 
 def current_turn_text(transcript_path):
@@ -152,6 +170,12 @@ if not os.path.isfile(os.path.join("config", "bootcamp_progress.json")):
 
 # Gate 3: respect an explicit opt-out.
 if nudge_disabled():
+    sys.exit(0)
+
+# Gate 3b: stand down once the bootcamp is complete. Graduation's terminal
+# "END OF SENZING BOOTCAMP" banner ends the turn with no 👉 question on purpose;
+# without this the safety net would nudge for one after the bootcamp is over.
+if bootcamp_complete():
     sys.exit(0)
 
 # Gate 4: block ONLY when we can positively read the current turn and it ended

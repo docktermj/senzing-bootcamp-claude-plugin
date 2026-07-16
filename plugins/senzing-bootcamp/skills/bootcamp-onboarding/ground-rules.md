@@ -91,10 +91,29 @@ steering files.)
 ## Progress and state
 
 - Progress -> `config/bootcamp_progress.json`. Preferences -> `config/bootcamp_preferences.yaml`.
-- After each numbered step or sub-step, update progress: set `current_step` (an integer, or a
-  string like `"5.3"` or `"7a"` for sub-steps) and `step_history["<module>"]` to
+- **Batch administrative writes and keep them small (INV-012).** Every Write/Edit renders its diff
+  inline to the bootcamper, and no harness setting suppresses that today (see
+  `../../hooks/README.md`), so the only lever is to write **rarely** and **small**. Therefore:
+  update config at **step and module boundaries, not on every sub-step**; batch related fields into
+  a **single** write instead of one write per field; prefer a **minimal edit** of the changed key
+  over a full-file rewrite; and keep the config files small. Administrative writes are not narrated
+  — do them quietly (output that is not important to the bootcamper is suppressed, INV-012).
+- At each numbered-step boundary, update progress in one write: set `current_step` (an integer, or
+  a string like `"7a"`) and `step_history["<module>"]` to
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
-  `current_step` to `null`.
+  `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
+  cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
+- Preferences chosen during the onboarding preface (verbosity, track, programming language, name)
+  are collected across the gates and persisted in **one** consolidated write at the end of the
+  preface — not one write per gate (see `onboarding-flow.md`).
+- **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
+  `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
+  accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped
+  in `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` markers. This is what
+  survives a quit, compaction, or new session mid-module: the plugin's `PreCompact`, `SessionEnd`,
+  and `SessionStart` hooks fold it into `docs/bootcamp_recap.md` (append-only, idempotent). It is a
+  single small file updated at step boundaries (INV-012), not per sub-step, and it is finalized and
+  cleared on module completion (see `module-completion.md`).
 
 ## Verbosity
 

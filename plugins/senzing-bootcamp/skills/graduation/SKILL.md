@@ -54,6 +54,14 @@ following `../bootcamp-onboarding/module-completion.md` (append only, never rewr
 existing sections). If `docs/bootcamp_recap.md` does not exist at all, reconstruct
 it from `config/bootcamp_progress.json` and the files each module produced.
 
+If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
+module interrupted before completion), fold its content into that module's
+`## Module N:` section (append only), then remove the
+`<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block from
+`docs/bootcamp_recap.md` and clear the checkpoint. This ensures the trophy carries any
+narrative captured from an interrupted module and the PDF renders clean, completed
+sections.
+
 ### 1b. Render the PDF
 
 Generate `docs/bootcamp_recap.pdf` with the bundled generator. It always produces
@@ -156,3 +164,18 @@ Example (list only what exists):
 > 👉 **Is there anything else you would like to explore?**
 
 Then stop and wait. This is the single closing question for the whole bootcamp.
+
+4. **Terminal banner — only after the bootcamper declines.** Handle the reply to the closing question:
+
+   - **Wants to keep exploring** (asks a question, names a topic, or otherwise continues): help them, then offer the closing question again when they are ready. Do **not** show the terminal banner yet — it must never pre-empt continued exploration.
+   - **Declines** ("no", "I'm done", "that's all", "nothing else"): the bootcamp is complete. Do these two things, in order:
+     1. **Stand down the Stop-hook nudge, silently.** Set a top-level `bootcamp_complete: true` key in `config/bootcamp_preferences.yaml` (a single minimal edit; do not narrate it). The `Stop` hook (`../../scripts/stop-nudge.py`) reads this key and will not nudge for a closing 👉 question once the bootcamp is over — so the terminal banner, which ends the turn with no 👉, is not re-opened.
+     2. **Render the terminal banner, verbatim, exactly once** as the final output. It bookends the WELCOME banner that opened the bootcamp (start) and the GRADUATION banner (finish) with a clear end-of-bootcamp marker. No 👉 question follows it; the turn simply ends.
+
+     ```text
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     🎓🎓🎓  END OF SENZING BOOTCAMP  🎓🎓🎓
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ```
+
+     Show this banner at most **once** per bootcamp, and never while exploration is still continuing.

@@ -13,10 +13,12 @@ plugin never alters unrelated Claude Code sessions.
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module). |
+| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the trophy). |
 | `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback and verbosity changes at any time (routes "bootcamp feedback" and "change verbosity" requests to the right workflow). |
 | `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes to system temp / Downloads and obvious hardcoded secrets during a bootcamp). |
 | `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
+| `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the trophy). |
+| `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the trophy). |
 
 **Convention (INV-016 interpretation):** the "begin with the word 'to'" rule applies
 to each hook's **documented purpose** — the Purpose column above — not to the runtime
@@ -68,6 +70,17 @@ Code identically on all three platforms, including inside `args`.
   `additionalContext`; `SessionStart` emits resume context. Everything else emits nothing.
 - **Hooks ship with the plugin.** There is no hook-install step (this replaces the
   Kiro `install_hooks.py` / `.kiro/hooks/` workflow).
+- **Recap durability.** The recap trophy (`docs/bootcamp_recap.md`) is finalized per
+  module at completion, but an interrupted module (quit / compaction / new session) would
+  otherwise lose its in-progress narrative. To close that gap the guide keeps an
+  in-progress checkpoint at `docs/progress/recap_checkpoint.md` (refreshed at each step
+  boundary, wrapped in `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->`
+  markers), and three hooks — `PreCompact`, `SessionEnd`, and `SessionStart` — fold it into
+  `docs/bootcamp_recap.md`. The fold (in the shared, non-hook helper
+  `scripts/recap_checkpoint.py`) is deterministic, idempotent, and append-only with respect
+  to completed `## Module N:` sections: it only ever replaces the marker-fenced block, so
+  repeated folds never duplicate and a finalized section is never rewritten. Module
+  completion appends the final section and clears the checkpoint.
 
 ## Disabling / quieting the Stop-hook nudge
 
@@ -86,3 +99,33 @@ both are read cross-platform with no shell and no extra dependency):
 When either switch is on, the hook returns success immediately (exit 0, no block),
 so a turn can never be re-opened to re-ask a closing question. Remove the env var or
 set `disable_stop_nudge: false` to re-enable it.
+
+## Administrative write noise (no harness suppression)
+
+Every `Write`/`Edit` tool result renders its file content or diff inline in the
+transcript — including the small administrative config writes the bootcamp makes
+(`config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`). In a
+prose-driven guided experience this is visual noise, and it runs against the spirit of
+INV-012 (output that is not important to the bootcamper is suppressed).
+
+A `claude-code-guide` investigation (2026-07-16) confirmed that **no harness mechanism
+suppresses this today** — there is no `settings.json` setting, no output style, no
+environment variable, no CLI flag, and no keyboard shortcut that collapses or hides
+Write/Edit tool-result output. Rendering is controlled by the harness, not the plugin,
+so full suppression is **not achievable from the plugin**.
+
+The one controllable lever is write **frequency and size**, so the plugin minimizes
+administrative writes rather than trying to hide them:
+
+- Progress/preference writes are **batched to step and module boundaries**, not made on
+  every sub-step (`../skills/bootcamp-onboarding/ground-rules.md` → "Progress and state").
+- The onboarding preface collects all preface choices and persists them in **one**
+  consolidated write at the end, instead of one write per gate
+  (`../skills/bootcamp-onboarding/onboarding-flow.md`).
+- Module completion applies its progress update as a **single** batched write
+  (`../skills/bootcamp-onboarding/module-completion.md` → Step 1).
+- Config files are kept small, and minimal edits are preferred over full-file rewrites.
+
+If a harness-level way to collapse Write/Edit output would help, file a Claude Code
+feature request via `/feedback` in the CLI or at <https://claude.com/feedback>. This
+finding is recorded here so it is not re-investigated.
