@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## enrich-feedback-context
+
+- **Implemented:** 2026-07-15
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `plugins/senzing-bootcamp/scripts/feedback-capture.py`
+- **Summary:** Enriched bootcamp-feedback capture so each entry in `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` carries enough context for `feedback-to-specs` to reconstruct the specific situation. Expanded `feedback.md` Step 0 (silent capture) and the Step 3 "Context when reported" template from just current-module + free-text to nine fields: time, plugin version (from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`), module + step (`current_module`/`current_step` from `config/bootcamp_progress.json`), recent 👉 questions and the bootcamper's responses, behind-the-scenes state (active hook/skill/phase/gate), observed problem, expected behavior (per active hooks/skills/`ground-rules.md`), and the expected-vs-actual divergence. Capture is silent (no new 👉 question — INV-005/INV-012), append-only and local-only (INV-010/INV-015), with "Unknown"/"Unavailable" for missing sources (no fabrication). Updated the `feedback-capture.py` hook's injected workflow guidance to name the same enriched capture so hook and skill stay consistent. Verified: `feedback.md` Step 3 lists all nine fields; Step 0 states the silent/no-extra-question/Unknown rules; `feedback-capture.py` `py_compile`-clean and still emits `additionalContext` naming the enriched fields (plugin version, current_step, behind-the-scenes, expected behavior).
+- **Commit:** uncommitted
+
 ## hook-to-message-convention
 
 - **Implemented:** 2026-07-15

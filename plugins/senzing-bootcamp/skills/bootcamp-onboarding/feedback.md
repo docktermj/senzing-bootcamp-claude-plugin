@@ -12,11 +12,20 @@ an issue". Follow `ground-rules.md`: one 👉 question per turn, end the turn on
 
 ## Step 0: Capture context silently
 
-Before asking anything, capture the bootcamper's context so they never have to
-re-explain it:
+Before asking anything, silently capture as much relevant context as possible, so
+the bootcamper never has to re-explain it and so `feedback-to-specs` can later
+reconstruct the exact situation. Gather only from available sources — never ask an
+extra question for this — and record "Unknown"/"Unavailable" (never a guess) when a
+source is missing:
 
-- Read `config/bootcamp_progress.json` for the current module and completed modules (record "Unknown" if the file is missing).
-- Note what the bootcamper was doing in the last few turns.
+- **Time:** the current date and time.
+- **Plugin version:** the `version` field of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`.
+- **Module and step:** `current_module`, `current_step`, and completed modules from `config/bootcamp_progress.json`.
+- **Recent questions and responses:** the last few 👉 questions asked and the bootcamper's answers, from the transcript.
+- **Behind the scenes:** what the plugin was doing — which hook fired, which skill/phase/gate was active, and any relevant config or state.
+- **Observed problem:** what the bootcamper saw.
+- **Expected behavior:** what the active hooks, skills, and `ground-rules.md` imply should have happened.
+- **Divergence:** the best assessment of why the expected action did not occur.
 
 ## Step 1: Ensure the feedback file exists
 
@@ -73,8 +82,15 @@ rewrite the file, so earlier entries are preserved.
 
 ### Context when reported
 
-- **Current module:** [from config/bootcamp_progress.json, or "Unknown"]
-- **What they were doing:** [short summary]
+- **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
+- **Plugin version:** [from `.claude-plugin/plugin.json`, or "Unknown"]
+- **Module / step:** [`current_module` / `current_step` from `config/bootcamp_progress.json`, or "Unknown"]
+- **Recent questions:** [the last few 👉 questions asked]
+- **Bootcamper responses:** [their answers to those questions]
+- **Behind the scenes:** [active hook/skill/phase/gate and relevant state]
+- **Observed problem:** [what the bootcamper saw]
+- **Expected behavior:** [what the active hooks/skills/ground-rules imply should happen]
+- **Divergence:** [why expected did not match actual]
 ```
 
 ## Step 4: Confirm and return
