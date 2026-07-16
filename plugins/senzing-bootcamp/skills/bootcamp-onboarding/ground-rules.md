@@ -10,6 +10,11 @@ steering files.)
 - Check `config/bootcamp_progress.json`. If present, resume; if not, run onboarding.
 - Call the Senzing MCP `get_capabilities` tool once at session start, before other Senzing
   MCP calls.
+- **Model tuning (informational).** Model/effort is a session-level choice the bootcamper makes
+  at launch, not something you change mid-bootcamp. The heavier Modules 2 and 5 and graduation
+  benefit most from a stronger model (Opus 4.8); lighter modules run well on Sonnet 5 (see
+  `../../docs/model-selection.md`). Mention this only if the bootcamper asks about performance,
+  cost, or model choice — otherwise stay silent on it.
 
 ## Conversation protocol (the 👉 rules)
 
