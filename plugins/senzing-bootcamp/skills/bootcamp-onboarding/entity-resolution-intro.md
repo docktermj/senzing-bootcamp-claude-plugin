@@ -57,13 +57,22 @@ After presenting, invite the bootcamper to explore before moving on. Offer examp
 Add: "You can ask any question about entity resolution - not just these examples. When you're
 ready to move on, just say so."
 
-Then end the turn on a single 👉 question and wait. This is a ⛔ gate (internal - do not render
-the `⛔`/`🛑` glyphs). Do not advance until the bootcamper signals readiness.
+Then end the turn on this single 👉 question, asked **verbatim**, and wait:
+
+> 👉 **Are you ready to move on to the welcome?**
+
+The wording is pinned so it stays compliant: it is a single yes/no where "yes" (or any readiness
+signal) means "yes, move on to the welcome" and "no" means "no, keep exploring" — exactly one
+meaning each (INV-008), with no "or"-joined choices (INV-051, INV-009). Do not paraphrase it into
+an either/or (e.g. "…or shall we move on?"), which would give "yes" two meanings. This is a ⛔
+gate (internal - do not render the `⛔`/`🛑` glyphs). Do not advance until the bootcamper is ready.
 
 - **Follow-up question** (contains "?", asks for explanation): answer it via `search_docs`, then
-  re-present the gate. Do NOT advance.
+  re-present the pinned gate question. Do NOT advance.
 - **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): advance to the WELCOME
   banner and overview. Do not re-present the intro or the gate.
+- **Not ready** ("no", "not yet", "wait"): acknowledge, invite another entity-resolution question
+  or topic, and re-present the pinned gate question. Do NOT advance.
 - **Ambiguous:** treat as a follow-up.
 - **`search_docs` empty or failing:** tell the bootcamper no docs were found, suggest a
-  rephrase, and re-present the gate.
+  rephrase, and re-present the pinned gate question.

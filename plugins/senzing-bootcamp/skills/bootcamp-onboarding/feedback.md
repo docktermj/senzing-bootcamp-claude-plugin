@@ -12,11 +12,23 @@ an issue". Follow `ground-rules.md`: one 👉 question per turn, end the turn on
 
 ## Step 0: Capture context silently
 
-Before asking anything, capture the bootcamper's context so they never have to
-re-explain it:
+Before asking anything, silently capture as much relevant context as possible, so
+the bootcamper never has to re-explain it and so `feedback-to-specs` can later
+reconstruct the exact situation. Gather only from available sources — never ask an
+extra question for this — and record "Unknown"/"Unavailable" (never a guess) when a
+source is missing:
 
-- Read `config/bootcamp_progress.json` for the current module and completed modules (record "Unknown" if the file is missing).
-- Note what the bootcamper was doing in the last few turns.
+- **Time:** the current date and time.
+- **Plugin version:** the `version` field of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`.
+- **Workstation:** the operating system and platform the bootcamper is running on, from the environment/system context — OS name and version, and architecture if available.
+- **Model and effort:** the model name/ID and the reasoning-effort level in use, from the environment/system context.
+- **Context size:** the approximate size of the conversation context at the time of feedback — a token count and/or percentage of the context window in use. If only an estimate is available, label it as approximate rather than recording a precise-looking guess.
+- **Module and step:** `current_module`, `current_step`, and completed modules from `config/bootcamp_progress.json`.
+- **Recent questions and responses:** the last few 👉 questions asked and the bootcamper's answers, from the transcript.
+- **Behind the scenes:** what the plugin was doing — which hook fired, which skill/phase/gate was active, and any relevant config or state.
+- **Observed problem:** what the bootcamper saw.
+- **Expected behavior:** what the active hooks, skills, and `ground-rules.md` imply should have happened.
+- **Divergence:** the best assessment of why the expected action did not occur.
 
 ## Step 1: Ensure the feedback file exists
 
@@ -39,10 +51,10 @@ Ask these in order, each as its own turn (pre-fill the module from captured
 context so you do not ask the bootcamper to repeat it):
 
 1. 👉 **What would you like to give feedback about?**
-2. 👉 **What happened, or what would you change?**
+2. 👉 **What happened?**
 3. 👉 **Why does it matter to you?**
-4. 👉 **Do you have a suggested fix or improvement?**
-5. 👉 **What priority would you give this: high, medium, or low?**
+4. 👉 **Do you have a suggested fix?**
+5. 👉 **What priority would you give this? Reply with a number:** (1) High, (2) Medium, (3) Low.
 
 If the bootcamper gives everything in one message, do not re-ask: confirm what you
 captured and proceed.
@@ -73,8 +85,18 @@ rewrite the file, so earlier entries are preserved.
 
 ### Context when reported
 
-- **Current module:** [from config/bootcamp_progress.json, or "Unknown"]
-- **What they were doing:** [short summary]
+- **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
+- **Plugin version:** [from `.claude-plugin/plugin.json`, or "Unknown"]
+- **Workstation:** [OS name and version, and architecture; e.g. "Linux 6.17.0-35-generic (x86_64)", or "Unknown"]
+- **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-4-8[1m] / high", or "Unknown"]
+- **Context size:** [approximate tokens and/or % of context window in use; e.g. "~85k tokens (~42% of window)", or "Unknown"]
+- **Module / step:** [`current_module` / `current_step` from `config/bootcamp_progress.json`, or "Unknown"]
+- **Recent questions:** [the last few 👉 questions asked]
+- **Bootcamper responses:** [their answers to those questions]
+- **Behind the scenes:** [active hook/skill/phase/gate and relevant state]
+- **Observed problem:** [what the bootcamper saw]
+- **Expected behavior:** [what the active hooks/skills/ground-rules imply should happen]
+- **Divergence:** [why expected did not match actual]
 ```
 
 ## Step 4: Confirm and return

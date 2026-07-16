@@ -15,7 +15,8 @@ This is the Claude-plugin port of the Kiro `module-completion*` / `module-comple
 
 ## Step 1: Update progress state
 
-In `config/bootcamp_progress.json`:
+In `config/bootcamp_progress.json`, apply all of the following as a **single** batched write (one
+diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`):
 
 - Add this module's number to `modules_completed` (idempotent: do not duplicate).
 - Set `current_module` to the next module in the selected track (or leave it on this module if the bootcamper has not yet chosen to advance).
@@ -90,6 +91,20 @@ confirmation: `Recap updated for Module N: {Name}.`
 
 (The recap PDF is not rendered per-module: it is rendered once at graduation by
 `scripts/generate_recap_pdf.py`, which reads this file. See `../graduation/SKILL.md`.)
+
+### 2d. Finalize the in-progress checkpoint
+
+During the module you kept an in-progress recap at `docs/progress/recap_checkpoint.md`
+(see `ground-rules.md` → "Progress and state"), and the plugin's durability hooks may
+have folded it into `docs/bootcamp_recap.md` as a `<!-- RECAP-CHECKPOINT:START -->` …
+`<!-- RECAP-CHECKPOINT:END -->` block. Now that the finalized `## Module N:` section is
+appended (2b), that block is superseded. Do two things:
+
+- Remove any `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block
+  from `docs/bootcamp_recap.md` (the finalized section replaces it — this keeps the
+  trophy clean and never rewrites a completed `## Module N:` section).
+- Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
+  module starts a fresh checkpoint.
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 

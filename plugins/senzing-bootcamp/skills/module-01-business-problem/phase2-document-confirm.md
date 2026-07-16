@@ -119,7 +119,7 @@ integration targets exist, explain how Senzing fits alongside them as a foundati
 
 ## 17. Offer a stakeholder summary
 
-👉 **Would you like a one-page executive summary to share with your team or manager?**
+👉 **Would you like a one-page executive summary to share with your team?**
 
 *(Internal: end the turn and wait.)* If yes, produce `docs/stakeholder_summary.md` covering
 problem, approach, data sources, key findings, next steps, and ROI considerations, filled with

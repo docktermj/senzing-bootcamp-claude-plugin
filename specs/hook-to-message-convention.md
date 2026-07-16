@@ -1,6 +1,6 @@
 # Hook messages: resolve the "begin with 'to'" convention
 
-Maintain the invariant conditions in @invariants.md and fix the following issue:
+Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
@@ -40,7 +40,7 @@ ambiguous.
 - [ ] The chosen reading is applied to **every** hook consistently, with no hook left half-converted.
 - [ ] If Option B: each emitted hook message begins with "to" and still communicates the block/nudge clearly; `write-gate.sh` and `stop-nudge.sh` still block/allow exactly as before (re-run their existing verification scenarios).
 - [ ] The interpretation is recorded (in `hooks/README.md` or the invariants) so future hooks follow it.
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @invariants.md).
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 

@@ -134,7 +134,10 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      made."
 7. **Transition:**
 
-   👉 **Would you like to continue to the next demonstration (How Analysis, seeing how this entity was built step by step), or proceed to module completion?**
+   👉 **What would you like to do next? Reply with a number:**
+
+   1. Continue to the next demonstration — How Analysis (seeing how this entity was built step by step).
+   2. Proceed to module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to
@@ -186,7 +189,10 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
      decision."
 6. **Transition:**
 
-   👉 **Would you like to continue to the next demonstration (Relationship Networks, exploring how entities connect to each other), or proceed to module completion?**
+   👉 **What would you like to do next? Reply with a number:**
+
+   1. Continue to the next demonstration — Relationship Networks (exploring how entities connect to each other).
+   2. Proceed to module completion.
 
    *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
    write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to

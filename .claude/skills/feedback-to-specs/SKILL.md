@@ -20,7 +20,7 @@ It is unrelated to the bootcamper-facing `/bootcamp-feedback` flow, which only
 - **Write only under `specs/`.** Never modify plugin code, hooks, scripts, skills, or the feedback file itself. Generating specs is the deliverable; implementing them is a separate, later step.
 - **Never invent feedback.** Every spec must trace to a real entry in the feedback file. If an entry is too vague to spec, mark it *needs clarification* rather than guessing.
 - **Deduplicate.** If an existing spec already covers a feedback item, do not create a second one. Note it as already-tracked (and optionally enrich the existing spec).
-- **Respect the invariants.** Every generated spec references `@invariants.md` and must not propose anything that violates it (cross-platform Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/complete). If feedback conflicts with an invariant, say so in the spec instead of silently overriding it.
+- **Respect the invariants.** Every generated spec references `@INVARIANTS.md` and must not propose anything that violates it (cross-platform Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/complete). If feedback conflicts with an invariant, say so in the spec instead of silently overriding it.
 
 ## Step 1: Locate and read the feedback file
 
@@ -49,7 +49,7 @@ Feedback" heading with no content).
 
 ## Step 3: Load triage context (do this before writing anything)
 
-- **Read `specs/invariants.md`.** This is the ruleset every spec must respect.
+- **Read `specs/INVARIANTS.md`.** This is the ruleset every spec must respect.
 - **List and skim every existing `specs/*.md`.** Record each spec's title and the problem it covers so you can deduplicate. (For example, a feedback item about the write-gate blocking `/tmp/` paths is already covered by `specs/PreToolUseWriteError.md`.)
 - **Skim `specs/todo.md`** — the lightweight idea backlog, so you can route minor items there instead of into a full spec.
 
