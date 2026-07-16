@@ -10,6 +10,12 @@ steering files.)
 - Check `config/bootcamp_progress.json`. If present, resume; if not, run onboarding.
 - Call the Senzing MCP `get_capabilities` tool once at session start, before other Senzing
   MCP calls.
+- **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
+  `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
+  `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
+  best-value recommendation as a non-blocking nudge (see "Module start banners and transitions"
+  below); the heavier Modules 2 and 5 and graduation warrant Opus 4.8 + high effort, lighter
+  modules Sonnet 5. Do not change the session yourself — only the bootcamper can.
 
 ## Conversation protocol (the 👉 rules)
 
@@ -88,6 +94,20 @@ steering files.)
 - The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
   placement is your responsibility.
 
+## Markdown files
+
+- **Write plain, functional Markdown during the bootcamp; defer CommonMark prettification to
+  graduation.** As you author `*.md` files (recap sections, docs under `docs/`), write for
+  correctness and readability — do NOT spend effort making them CommonMark-lint-clean as you go.
+  No fussing over `**Label:**` colon spacing, blank lines around headings/lists/fenced blocks
+  (MD022/MD031/MD032), or fenced-code info strings (MD040). There is no need for "pretty" Markdown
+  until the end: graduation runs a single normalization pass over the `.md` files before the trophy
+  PDF renders (see `../graduation/SKILL.md`). Keeping incremental writes plain reduces edit churn
+  (INV-058) and keeps the teaching flow uncluttered (INV-012).
+- Structure still matters even while formatting is deferred: recap sections keep their
+  `## Module N:` heading and the four required subsections (see `module-completion.md`), and the
+  placement rules above are unchanged.
+
 ## Progress and state
 
 - Progress -> `config/bootcamp_progress.json`. Preferences -> `config/bootcamp_preferences.yaml`.
@@ -146,6 +166,22 @@ never count against the one-question-per-turn rule and must not be treated as ga
   banner, a journey map (modules in the selected track marked ✅ complete / 🔄 current / ⬜
   upcoming), before/after framing, and a brief numbered step overview. Never skip these - they
   orient the bootcamper.
+- **Best-value model/effort nudge (non-blocking).** After the step overview and BEFORE Step 1,
+  surface one concise line with this stage's recommended model + effort and the exact commands. It
+  is a STATEMENT — never a 👉 question, never a ⛔ gate, never blocks progress, and is never repeated
+  mid-module. Encourage the switch **only when the recommendation changes** from the module just
+  completed (e.g. entering a heavier module → "for best value, switch up: `/model opus` then
+  `/effort high`"); when it is unchanged, keep it to a one-line reminder or omit it (INV-012).
+  Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
+  recommendation (keep in sync with `../../docs/model-selection.md`):
+
+  | Stage | Recommended | Commands |
+  |---|---|---|
+  | Onboarding, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
+  | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
+  | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+
 - Module start banner:
 
   ```text
@@ -155,8 +191,8 @@ never count against the one-question-per-turn rule and must not be treated as ga
   ```
 
 - After an affirmative module-transition ("Ready for Module X?"), immediately produce the
-  banner + journey map + before/after + step overview + Step 1. Never reply with just "." or
-  fewer than 50 characters.
+  banner + journey map + before/after + step overview + best-value model/effort nudge + Step 1.
+  Never reply with just "." or fewer than 50 characters.
 
 ## Closing questions
 

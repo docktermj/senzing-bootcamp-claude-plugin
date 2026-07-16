@@ -16,6 +16,11 @@ a hands-on, module-by-module tutorial.
 ## Install Claude Code and Senzing Bootcamp Claude Plugin
 
 1. Download and install [Claude Code].
+    1. To install Claude CLI via commandline on macOS or Linux:
+
+        ```console
+        curl -fsSL https://claude.ai/install.sh | bash
+        ```
 
 1. Install Senzing Bootcamp Claude Plugin.
 
@@ -32,14 +37,23 @@ a hands-on, module-by-module tutorial.
 
 ## Run Claude Code
 
-1. For "smoothest ride", run Claude with "auto".
-   Example:
+1. For the smoothest ride, run Claude with `--permission-mode auto`.
+
+1. *Choosing a model (recommended):* run most of the bootcamp on **Sonnet 5** —
+   the best value — and switch up to **Opus 4.8** for the correctness-critical
+   stretches: Modules 2 and 5, and graduation.
 
     ```console
     mkdir senzing-bootcamp
     cd senzing-bootcamp
-    claude --effort high --model claude-opus-4-8 --permission-mode auto
+    claude --model claude-sonnet-5 --effort medium --permission-mode auto
     ```
+
+   Before Modules 2 or 5 or graduation, switch the running session up with
+   `/model claude-opus-4-8`, then back afterward with `/model claude-sonnet-5`.
+   Prefer one model and no switching? Run `--model claude-opus-4-8` throughout —
+   simplest, at higher cost on the lighter modules. Full per-skill breakdown:
+   [`plugins/senzing-bootcamp/docs/model-selection.md`](plugins/senzing-bootcamp/docs/model-selection.md).
 
 1. *Note:* In addition to Claude Code,
    the Senzing Bootcamp Claude Plugin can also be run with:
