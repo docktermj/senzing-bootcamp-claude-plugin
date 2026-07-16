@@ -18,6 +18,34 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module-start-model-nudge
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/model-selection.md`
+- **Summary:** Added a non-blocking best-value model/effort nudge at each module start and at graduation, operationalizing `skill-model-selection`. In `ground-rules.md` → "Module start banners and transitions", added a nudge bullet (a STATEMENT, never a 👉 question or ⛔ gate, never blocking, never repeated mid-module; actively encouraged only when the recommendation changes from the prior module, else a one-liner/omitted per INV-012) plus a per-stage table with the exact `/model`/`/effort` commands (Sonnet 5 + medium for onboarding/M1/M3/M4/M7; Opus 4.8 + high for M2/M5; Sonnet 5 + high for M6; Opus 4.8 + high for graduation). Added the nudge to the "After an affirmative module-transition" sequence, and flipped the Session-start "Model tuning" note from passive ("mention only if asked") to proactive. Added the same one-line nudge at the graduation banner in `graduation/SKILL.md`, and a mirrored "Module-start commands" table in `docs/model-selection.md` (kept in sync). Commands verified real against the Claude Code `model-config` docs (`/model <alias|id>` persists for the session; `/effort <level>`). Verified by inspection: nudge bullet + table present; commands present; Session-start note proactive; graduation nudge present; doc table present; no 👉 added; all SKILL.md frontmatter intact. Introduces INV-062 (behavior-level; specific model/effort values advisory).
+- **Commit:** `56f797f`
+
+## license-request-option
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Surfaced the in-flow evaluation-license request as a selectable choice on the Module 2 Step 5b license question. Step 5b now does a `get_capabilities`/`submit_feedback` availability check and presents a four-option form when available (adding "(4) No — request a free evaluation license now through the bootcamp", with option 3 reworded to the general no-license path for distinctness) or the original three-option form when unavailable; both forms are pinned verbatim (INV-056) and keep the neutral-lead + numbered-list format (INV-051). Option 4 routes to the existing Step 5c no-license `submit_feedback` `license_request` handling (`SKILL.md:441-496`) — no new mechanism. Verified by inspection: both forms present, availability-gated, distinct/mutually-exclusive options, routing note present, graceful three-option fallback. Introduces no invariant.
+- **Commit:** `84be7a6`
+
+## auto-detect-platform
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Merged the two OS-handling feedback items. Onboarding step 7 now detects the OS/arch deterministically (environment, else `uname`/`systeminfo`), states it, annotates each presented programming language with its per-platform install path (e.g. macOS ARM: Python→Docker, Java/C#→native) sourced from the Module 2 routing rules, and the step-8 consolidated preface write now persists `os`/`arch` (INV-058). Module 2 Step 2 switched from a mandatory numbered OS question to detect-then-confirm: it reads the persisted `os`/`arch` (or re-detects), states the platform and proceeds; the platform-determination gate is satisfied by detection (not skipped), and the original numbered question is kept as a **fallback** only, pinned verbatim (INV-056) in the neutral-lead + numbered-list format (INV-051). Routing rules unchanged. Verified by inspection: step-7 detect-first + annotation + os/arch persistence present; Step 2 detect-first with the pinned fallback question retained verbatim. Introduces INV-061.
+- **Commit:** `b417507`
+
+## stop-nudge-partial-flush
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/scripts/stop-nudge.py`
+- **Summary:** Closed the INV-054 residual where the Stop hook falsely nudged on tool-using turns. Root cause confirmed at `stop-nudge.py:148-153` (concatenated all turn text) + Gate 4 (`:190-193`, only silenced the fully-empty case): on a tool-using turn the pre-tool narration flushes but the final 👉 line races, so the concatenation was non-empty-without-pointer → false block. Replaced `current_turn_text` with `current_turn_records` + `settled_final_text`/`ends_with_tool_use`: Gate 4 now inspects the turn's FINAL assistant message and treats a still-settling turn (last record is a trailing `tool_use`, or a `tool_result` carrier, or nothing flushed) as undecided → stay silent, per INV-054. Kept Gate 1 (loop breaker), Gates 2/3/3b, string-or-list content handling, and the block-reason wording. `py_compile` clean. Verified with a synthetic-transcript harness matching Claude Code JSONL shapes: 6/6 cases pass — trailing `tool_use` → silent, trailing `tool_result` → silent, tool-turn that ended with a 👉 once flushed → silent, pointer-present final → silent, nothing-flushed → silent, and a genuine settled no-pointer turn still → block. Note: verified against synthetic fixtures (no live bootcamp transcript was available to capture). Introduces no invariant (completes INV-054). INV-052 preserved (python3 exec-form, no shell).
+- **Commit:** `b94ec55`
+
 ## skill-model-selection
 
 - **Implemented:** 2026-07-16
