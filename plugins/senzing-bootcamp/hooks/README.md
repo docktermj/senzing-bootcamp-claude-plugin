@@ -18,6 +18,15 @@ plugin never alters unrelated Claude Code sessions.
 | `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes to system temp / Downloads and obvious hardcoded secrets during a bootcamp). |
 | `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
 
+**Convention (INV-016 interpretation):** the "begin with the word 'to'" rule applies
+to each hook's **documented purpose** — the Purpose column above — not to the runtime
+text a hook emits (block reasons, injected context, resume notes), which is written
+for clarity and is delivered to Claude rather than shown directly to the bootcamper.
+Every hook MUST carry a "to …" purpose entry in this table, and new hooks follow the
+same rule. This is the settled reading of INV-016 (whose own examples — "to process
+your request", "to review what you said" — are purposes), resolving the earlier
+ambiguity between the purpose-phrasing and emitted-message readings.
+
 ## Runtime prerequisites (per platform)
 
 The hooks are **Python 3** scripts, invoked in Claude Code **exec form**

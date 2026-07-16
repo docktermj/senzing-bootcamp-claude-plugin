@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## hook-to-message-convention
+
+- **Implemented:** 2026-07-15
+- **Files changed:** `plugins/senzing-bootcamp/hooks/README.md`
+- **Summary:** Resolved the INV-016 ambiguity ("all hooks begin with the word 'to'") by adopting the maintainer-selected **purpose reading** (Option A): the convention applies to each hook's documented **purpose** (the README Purpose column), not the runtime text a hook emits. All four hooks already carry "to …" purposes (to resume / to capture / to keep / to review), so no hook code changed and there is no UX/behavior change. Recorded the interpretation explicitly as a note under the hooks table in `hooks/README.md` — mandating a "to …" purpose entry for every current and future hook, and citing INV-016's own examples ("to process your request", "to review what you said") as evidence for the purpose reading (acceptance criterion #3: recorded in `hooks/README.md`). Verified: all four Purpose rows begin with "to"; the interpretation note is present. Doc-only; cross-platform and language-agnostic. (The hook files are now `.py` after `cross-platform-hook-execution`, so the spec's `write-gate.sh:NN` line references are stale — moot under Option A, which touches no hook code.)
+- **Commit:** uncommitted
+
 ## doc-consistency-audit
 
 - **Implemented:** 2026-07-15
