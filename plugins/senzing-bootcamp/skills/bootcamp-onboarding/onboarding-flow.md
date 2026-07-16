@@ -155,12 +155,20 @@ later porting phases.)
 
 ## 7. Programming language selection (preface item 8, gate)
 
-- Detect the platform, then call `get_capabilities` or `sdk_guide` on the Senzing MCP server for
-  the supported programming languages on that platform.
+- **Detect the platform first (do not ask).** Determine the OS and architecture from the
+  environment/system context (else run `uname`/`systeminfo`), and state it in one line
+  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the step-8 consolidated
+  write so Module 2 can reuse it instead of re-asking.
+- Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
+  languages on that platform.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned list. If the MCP server flags a language as discouraged/unsupported
-  on the platform, relay that and suggest alternatives.
+- Present the MCP-returned list, and **annotate each option with its install path for the detected
+  platform** so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
+  "Python — runs via Docker (the SDK is Linux-only); Java / C# — native." Use the Module 2 routing
+  rules (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") as the source of the per-platform
+  paths. If the MCP server flags a language as discouraged/unsupported on the platform, relay that
+  and suggest alternatives.
 
   👉 **Which programming language would you like to use for the bootcamp?**
 
@@ -182,7 +190,8 @@ This is NOT a hard gate: if they say they are ready, advance.
 
 **Consolidated preference write (once, quietly).** When the bootcamper signals readiness to begin
 Module 1, persist all preface choices collected in steps 5-7 — `verbosity`, `track`, programming
-language, and `name` if it was captured — to `config/bootcamp_preferences.yaml` in a **single**
+language, `name` if it was captured, and the detected `os`/`arch` — to
+`config/bootcamp_preferences.yaml` in a **single**
 write. This is the only preference write of the preface; the earlier gates only held the answers,
 so the bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this
 administrative write. Then hand off to Module 1.
