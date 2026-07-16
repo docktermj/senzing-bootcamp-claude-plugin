@@ -79,7 +79,7 @@ steering files.)
   Override MCP-suggested paths (e.g. `/tmp/`, `ExampleEnvironment`) to project-relative ones.
   Never modify global shell config.
 - Layout: source -> `src/`; scripts -> `src/scripts/`; docs and all `*.md` (except
-  `README.md`) -> `docs/`; data -> `data/`; SQLite DB -> `database/G2C.db`; config ->
+  `README.md` and the generated `production/` project's own `.md` files) -> `docs/`; data -> `data/`; SQLite DB -> `database/G2C.db`; config ->
   `config/`; temp -> `data/temp/`; downloaded Senzing resources -> `src/resources/`; mapping
   working data -> `data/mapping/`.
 - Project root whitelist ONLY: `.gitignore`, `.env`, `.env.example`, `README.md`,

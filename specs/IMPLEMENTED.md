@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## doc-consistency-audit
+
+- **Implemented:** 2026-07-15
+- **Files changed:** `MIGRATION.md`, `specs/INVARIANTS.md` (INV-050 tree + INV-017), `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
+- **Summary:** Reconciled three documentation inconsistencies (INV-003). (1) Fixed the stale `MIGRATION.md` note that said "Module 1 transitions to Module 4" — it now states Module 1 hands off to Module 2 with the chain in strict ascending order 1→…→7, noting the earlier Kiro artifact was corrected in v0.2.0, so the doc no longer contradicts itself. (2) With maintainer confirmation, renamed the feedback file in the INV-050 project-layout tree from `SENZING_BOOTCAMP_POWER_FEEDBACK.md` (a Kiro-heritage typo) to `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`, so INV-050 now matches INV-015 and every read/write in the plugin. (3) Added a `production/` carve-out to the `.md`-under-`docs/` rule in `ground-rules.md:81` (the generated production project legitimately writes `README.md`/`MIGRATION_CHECKLIST.md`/`GRADUATION_REPORT.md` outside `docs/`), and — with maintainer confirmation — added the matching exception to INV-017 so the invariant and the operational rule stay coherent. Both INVARIANTS.md edits are clarifications/corrections of existing invariants (no renumbering, no new IDs). Verified: no remaining Module 1→4 contradiction in `MIGRATION.md`; `INVARIANTS.md` and the plugin are uniformly `_PLUGIN_`; the production/ exception is present in both `ground-rules.md` and INV-017.
+- **Out of scope (noted):** the historical `specs/migrate-kiro-power.md` layout snapshot still shows `_POWER_`; left untouched as an implemented-spec record (editing spec content is `feedback-to-specs`' job), and it is not one of this spec's targeted files.
+- **Commit:** uncommitted
+
 ## module-step-overview
 
 - **Implemented:** 2026-07-15
