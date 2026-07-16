@@ -46,3 +46,7 @@ Windows, not merely assumed to be.
 - Audit: `migrate-kiro-power` verify/backfill audit (2026-07-15), invariant T1.
 - Priority: Medium (cross-platform invariant; currently implicit on Windows).
 - Related specs: `migrate-kiro-power.md`.
+
+## Invariants introduced
+
+- `INV-052` — All plugin hooks MUST be Python 3 scripts invoked in Claude Code exec form (`command: "python3"` + script path in `args`), so hook execution has no shell dependency on any platform; only `python3` on `PATH` may be required, and any other runtime MUST be optional with a graceful fallback (recorded in `specs/INVARIANTS.md`).

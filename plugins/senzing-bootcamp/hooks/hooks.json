@@ -5,7 +5,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh"
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/session-start.py"]
           }
         ]
       }
@@ -15,7 +16,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.sh"
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.py"]
           }
         ]
       }
@@ -26,7 +28,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/write-gate.sh"
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/write-gate.py"]
           }
         ]
       }
@@ -36,7 +39,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/stop-nudge.sh"
+            "command": "python3",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/stop-nudge.py"]
           }
         ]
       }

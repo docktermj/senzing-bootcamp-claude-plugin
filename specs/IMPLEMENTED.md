@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## cross-platform-hook-execution
+
+- **Implemented:** 2026-07-15
+- **Files changed:** `plugins/senzing-bootcamp/hooks/hooks.json`, `plugins/senzing-bootcamp/hooks/README.md`; **added** `plugins/senzing-bootcamp/scripts/{session-start,feedback-capture,write-gate,stop-nudge}.py`; **removed** the four corresponding `.sh` scripts.
+- **Summary:** Removed the hooks' shell dependency entirely (spec Option 2, "make the hooks portable, avoiding a hard bash dependency") by porting all four hooks from POSIX-sh to **Python** and invoking them in Claude Code **exec form** (`{"command":"python3","args":["${CLAUDE_PLUGIN_ROOT}/scripts/<hook>.py"]}`). Authoritative Claude Code doc research established that exec form spawns the interpreter **directly with no shell on any platform** (documented), and that stdin, `${CLAUDE_PLUGIN_ROOT}` substitution in `args`, and exit-code/stdout/stderr semantics are all identical across forms — so exec-form Python eliminates the Windows "needs Git Bash/WSL" requirement that a shell-form (`.sh`) hook has. Python is **not a new dependency**: the bootcamp already requires `python3` (Module 3's always-shown viz server `senzing_viz_server.py` and the graduation recap `generate_recap_pdf.py`). Native `json` parsing also made `write-gate`/`stop-nudge` cleaner and more robust than the prior grep/sed extraction; hook *behavior* (messages, exit codes, gates) is preserved verbatim. `hooks/README.md` rewritten to document the exec-form/Python model and per-platform prerequisites (`python3` on PATH; the one caveat — Claude Code does not guarantee the `python3` command name on Windows, matching the rest of the plugin's `python3` convention). Verified: `hooks.json` valid JSON; `py_compile` clean; all four hooks pass their behavior scenarios via the exact `python3 <script.py>` exec-form invocation — write-gate allows in-project (relative/absolute), blocks system-temp/Downloads/`%TEMP%`/`$TMPDIR`/AKIA-key/PEM-marker and fails open on unparseable input; stop-nudge honors all three gates (stop_hook_active, no-bootcamp, 👉-already-pending) and blocks once otherwise; session-start/feedback-capture emit/stay-silent correctly; all hooks no-op outside a bootcamp.
+- **Note:** Superseded the initial in-session attempt (explicit `sh "<path>"` + `bash`→`sh` shebangs) after the maintainer asked whether Python could cover *all* platforms — it can, and better, because exec-form Python needs no shell at all on Windows.
+- **Commit:** uncommitted
+
 ## interaction-or-questions
 
 - **Implemented:** 2026-07-15
