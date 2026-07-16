@@ -72,7 +72,7 @@ When the Bootcamper runs the SBCP, these MUST hold across the entire Bootcamp.
 ## INV-016 – INV-018: Bootcamp administration outcomes
 
 - **INV-016** — All hooks begin with the word "to" (e.g. "to process your request", "to review what you said").
-- **INV-017** — All Markdown files (`.md`) are kept in appropriate places in the `docs/` directory.
+- **INV-017** — All Markdown files (`.md`) are kept in appropriate places in the `docs/` directory. Exception: the generated `production/` project deliverable carries its own Markdown files (e.g. `README.md`, `MIGRATION_CHECKLIST.md`, `GRADUATION_REPORT.md`).
 - **INV-018** — All code files (e.g. `.py`, `.java`, etc.) are kept in appropriate places in the `src/` directory.
 
 ## INV-019 – INV-027: Bootcamp preface outcomes
@@ -188,7 +188,7 @@ These hold at the boundaries of every module.
   │   ├── progress/
   │   ├── visualizations/                # Generated HTML visualizations
   │   └── feedback/
-  │       └── SENZING_BOOTCAMP_POWER_FEEDBACK.md
+  │       └── SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md
   ├── licenses/
   │   └── g2.lic                         # Senzing license
   ├── logs/                              # Run logs & result summaries
