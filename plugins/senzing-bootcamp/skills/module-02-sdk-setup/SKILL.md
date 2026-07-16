@@ -377,6 +377,22 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 
 ### 5b. Ask about the bootcamper's license situation
 
+**Availability check first.** Call `get_capabilities` on the Senzing MCP server to determine
+whether the `submit_feedback` tool is reported available (the same in-flow `license_request` path
+introduced in Step 5a and handled at Step 5c). Present the **four-option** form when it is
+available, otherwise the **three-option** form. Pin whichever form you present verbatim.
+
+Four-option form (when `submit_feedback` is available):
+
+👉 **Do you have a Senzing license? Reply with a number:**
+
+1. Yes — a license file (`.lic`).
+2. Yes — a Base64-encoded license key.
+3. No — I'll obtain one another way (a license I get elsewhere, or Senzing support).
+4. No — request a free evaluation license now through the bootcamp.
+
+Three-option form (when `submit_feedback` is unavailable):
+
 👉 **Do you have a Senzing license? Reply with a number:**
 
 1. Yes — a license file (`.lic`).
@@ -385,6 +401,11 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*
+
+**Routing.** Options 1–2 → the corresponding Step 5c apply-a-license branch; option 3 → the Step 5c
+no-license branch. Option 4 (four-option form only) → the Step 5c no-license branch, proceeding
+directly with the in-flow `submit_feedback` `license_request` path (re-verify availability and
+invoke once, per the existing Step 5c handling) rather than re-presenting the 5c sub-menu.
 
 ### 5c. Handle the response
 
