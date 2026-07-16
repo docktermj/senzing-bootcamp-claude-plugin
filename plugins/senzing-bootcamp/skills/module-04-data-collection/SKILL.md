@@ -11,7 +11,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question: thi
 absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, and before/after framing before any module work. Read `current_step` and
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work. Read `current_step` and
 resume at the right step.
 
 > **User reference:** Detailed background for this module lives in the Kiro Power at
@@ -111,33 +111,37 @@ Use `get_sample_data(dataset='list')` to show available CORD datasets. Present t
 **If the bootcamper declines CORD data** or needs something different, offer secondary options:
 
 > "If CORD doesn't meet your needs, there are other options:
-> - **Free raw data**: A curated collection of 35+ free data sources at
+> - **Free raw data:** A curated collection of 35+ free data sources at
 >   <https://github.com/docktermj/senzing-bootcamp-free-data>: these include raw samples
 >   (great for practicing mapping) and pre-mapped files.
-> - **Synthesized test data**: I can generate custom test data tailored to your specific
+> - **Synthesized test data:** I can generate custom test data tailored to your specific
 >   scenario."
 
 Then proceed with the appropriate option:
 
 **Option A: Bootcamper uploads files**
+
 - Ask for data files (CSV, JSON, Excel, etc.).
 - Files can be dragged into the chat or uploaded.
 - Save uploaded files to `data/raw/[datasource_name].[extension]`.
 - Example: `data/raw/customer_crm.csv`, `data/raw/vendor_api.json`.
 
 **Option B: Bootcamper provides URL/location**
+
 - Ask for the URL or file path where data resides.
 - Document the location in `docs/data_source_locations.md`.
 - If accessible, download/copy data to `data/raw/`.
 - If not accessible (requires credentials, VPN, etc.), document the access method.
 
 **Option C: Database connection**
+
 - Ask for database connection details.
 - Document the connection string (without passwords) in `docs/data_source_locations.md`.
 - Store sample query results in `data/raw/[datasource_name]_sample.csv`.
 - Document the query used to extract data.
 
 **Option D: API endpoint**
+
 - Ask for the API endpoint URL and authentication method.
 - Document API details in `docs/data_source_locations.md`.
 - Store a sample API response in `data/raw/[datasource_name]_sample.json`.
@@ -147,18 +151,18 @@ Then proceed with the appropriate option:
 
 Not all data arrives as CSV. Common formats and how to handle them:
 
-- **Excel (.xlsx)**: Convert to CSV first. Most languages have libraries for this (e.g.,
+- **Excel (.xlsx):** Convert to CSV first. Most languages have libraries for this (e.g.,
   `openpyxl` for Python, Apache POI for Java). Save the CSV to `data/raw/`.
-- **Parquet / Avro**: Use language-appropriate libraries to read and convert to CSV or JSON.
+- **Parquet / Avro:** Use language-appropriate libraries to read and convert to CSV or JSON.
   These formats are common in data lake exports.
-- **XML**: Parse and flatten to JSON or CSV. Use `find_examples(query='XML data loading')` for
+- **XML:** Parse and flatten to JSON or CSV. Use `find_examples(query='XML data loading')` for
   patterns.
-- **Database exports (SQL dump)**: Extract the relevant tables to CSV using the database's
+- **Database exports (SQL dump):** Extract the relevant tables to CSV using the database's
   export tools.
-- **API pagination**: If the API returns paginated results, document the pagination strategy
+- **API pagination:** If the API returns paginated results, document the pagination strategy
   and write a collection script in `src/scripts/` that fetches all pages and saves to
   `data/raw/`.
-- **Real-time streams (Kafka, etc.)**: For the bootcamp, capture a snapshot to a file. Document
+- **Real-time streams (Kafka, etc.):** For the bootcamp, capture a snapshot to a file. Document
   the stream details for production use in Module 11.
 
 For any non-CSV/JSON format, the goal is to get the data into a flat file in `data/raw/` that
@@ -322,6 +326,7 @@ flow (Steps 6a–6e in `../module-01-business-problem/phase1-discovery.md`) and 
 server.
 
 **If the bootcamper chooses to work with a smaller slice:**
+
 - Create smaller sample files (sampling, a CORD subset, or a smaller substitute dataset).
 - Save samples to `data/samples/[datasource_name]_sample.[extension]`.
 - Document the sampling method (first N records, random sample, etc.).

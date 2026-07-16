@@ -12,7 +12,7 @@ mandatory gate. This has absolute precedence: no internal reasoning or token-bud
 overrides it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, and before/after framing before any module work. Resume at
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work. Resume at
 `current_step` if progress already exists.
 
 Install and configure the Senzing SDK natively on the bootcamper's machine. This is the first

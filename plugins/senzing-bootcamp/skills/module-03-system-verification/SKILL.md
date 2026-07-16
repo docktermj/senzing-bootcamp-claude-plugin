@@ -12,7 +12,7 @@ absolute precedence as a mandatory gate, and no internal reasoning (session leng
 or token budget) can override it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, and before/after framing before any module work.
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
 
 **Language:** Use the bootcamper's chosen language for all code generation and verification
 scripts.
