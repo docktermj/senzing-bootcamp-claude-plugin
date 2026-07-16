@@ -38,7 +38,7 @@ a hands-on, module-by-module tutorial.
     ```console
     mkdir senzing-bootcamp
     cd senzing-bootcamp
-    claude --permission-mode auto
+    claude --effort high --model claude-opus-4-8 --permission-mode auto
     ```
 
 1. *Note:* In addition to Claude Code,
