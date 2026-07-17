@@ -23,7 +23,7 @@ scripts.
 system is verified: SDK initialization, code generation, compilation, data loading, entity
 resolution, database operations, and web service scaffolding all confirmed working.
 
-**Success indicator:** ✅ All 10 verification checks report "passed", the Verification Report
+**Success indicator:** ✅ All 11 verification checks report "passed", the Verification Report
 is persisted to `config/bootcamp_progress.json`, the web service and database are cleaned up,
 and gate 3→4 is marked completed (full criteria in `phase1-verification.md`).
 

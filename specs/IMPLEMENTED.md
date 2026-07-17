@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module3-register-truthset-data-sources
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase3-report-close.md`
+- **Summary:** Added "Step 5a: Register TruthSet Data Sources" to `phase1-verification.md`, between Build (Step 5) and Data Loading (Step 6). The step derives the source codes from the acquired TruthSet data (CUSTOMERS/REFERENCE/WATCHLIST for the standard set), generates the registration code via the MCP server (`sdk_guide(topic='configure')`/`generate_scaffold`) into `src/system_verification/register_data_sources.[ext]` (INV-018/Rule 5), registers each code via `SzConfig.register_data_source`, commits the updated config as the new default via `SzConfigManager`, is idempotent on re-run, records the outcome in `config/bootcamp_progress.json` (`data_source_registration` check) and `config/data_sources.yaml` (INV-050). Step 6 gains a one-line note that codes were registered in Step 5a and keeps its generic SENZ handling as a fallback. The new `data_source_registration` check is threaded consistently (INV-003): Success Criteria "10 → 11" and ordered list in `phase1-verification.md`, `SKILL.md` success indicator, and `phase3-report-close.md` (compile list, JSON template, closing success indicator). Acceptance criteria verified by inspection of the runtime instructions — a live Senzing/MCP Module 3 run is required to exercise it end-to-end, which this environment cannot run; the instructions now register + commit the default config before the load (no first-attempt SENZ2207), are MCP-generated and language-agnostic across Python/Java/C#/Rust/TypeScript, idempotent, checkpointed, and preserve the mandatory TruthSet visualization (INV-038).
+- **Commit:** uncommitted
+
 ## feedback-file-durability
 
 - **Implemented:** 2026-07-17

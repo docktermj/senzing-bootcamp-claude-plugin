@@ -309,9 +309,62 @@ all build commands.
 }
 ```
 
+### Step 5a: Register TruthSet Data Sources
+
+Register the TruthSet's data source codes in the Senzing configuration **before**
+loading, so Step 6 does not fail with `SENZ2207: Data source code [...] does not
+exist`. The default config seeded in Module 2 has no data sources registered, yet
+the TruthSet load below references fixed source codes that must exist first — so
+without this step every Module 3 run hits SENZ2207 on the first load attempt.
+
+1. **Determine the source codes to register.** Collect the distinct `DATA_SOURCE`
+   values present in the acquired TruthSet data
+   (`src/system_verification/truthset_data.jsonl` from Step 2). For the standard
+   Senzing TruthSet these are **CUSTOMERS**, **REFERENCE**, and **WATCHLIST**; the
+   Step 2a non-deterministic substitute uses whatever codes its records carry.
+   Never register a code that is not present in the data.
+2. **Generate the registration code from the MCP server** (Agent Rule 7 — never
+   hand-write it): call `sdk_guide(topic='configure')` (and `generate_scaffold` if
+   it exposes a data-source registration workflow) in the bootcamper's chosen
+   language. Save the result to
+   `src/system_verification/register_data_sources.[ext]` (Agent Rule 5 — artifact
+   isolation; INV-018). The generated code MUST:
+   - Load the current default config via `SzConfigManager`.
+   - Call `SzConfig.register_data_source` for each code from step 1.
+   - Register the updated config and set it as the new default via
+     `SzConfigManager`, so `verify_pipeline` and every later SDK session see the
+     codes.
+   - Be **idempotent:** a code that is already registered is treated as success,
+     not an error, so re-running Module 3 or resuming mid-module still passes.
+3. **Build the registration code if the language requires it** (compiled languages
+   — Java, C#, Rust, TypeScript), using the same per-language build command as
+   Step 5. Enforce a 120-second build timeout.
+4. **Execute** `register_data_sources.[ext]` with a 60-second timeout.
+5. **If it completes with exit code 0:** report pass listing the source codes now
+   registered, and record them in `config/data_sources.yaml` (INV-050).
+6. **If it fails:** capture the error output, call `explain_error_code` for any
+   SENZ codes, and report fail with remediation. Per Agent Rule 4, continue to
+   Step 6 regardless; Step 6 keeps its generic SENZ handling as a fallback.
+7. **If it does not complete within 60 seconds:** terminate the process and report
+   fail with a timeout note.
+
+**Checkpoint:** write to `config/bootcamp_progress.json`:
+
+```json
+{
+  "module_3_verification": {
+    "checks": {
+      "data_source_registration": {"status": "passed|failed", "sources_registered": ["CUSTOMERS", "REFERENCE", "WATCHLIST"]}
+    }
+  }
+}
+```
+
 ### Step 6: Data Loading
 
-Execute the verification script to load TruthSet data into Senzing.
+Execute the verification script to load TruthSet data into Senzing. The TruthSet
+data source codes were registered in Step 5a, so the load runs against a config
+that already knows them; the SENZ handling below remains as a fallback.
 
 1. Execute the generated `verify_pipeline.[ext]` script with a 120-second timeout.
 2. **While executing:** display a progress indicator updated at least every 5 seconds showing
@@ -420,9 +473,10 @@ bootcamper wants to continue; Step 9 is mandatory and unconditional.
 
 Module 3 is successfully complete when ALL of the following are true:
 
-- All 10 verification checkpoint entries report "passed" status (`mcp_connectivity`,
+- All 11 verification checkpoint entries report "passed" status (`mcp_connectivity`,
   `truthset_acquisition`, `sdk_initialization`, `code_generation`, `build_compilation`,
-  `data_loading`, `results_validation`, `database_operations`, `web_service`, `web_page`).
+  `data_source_registration`, `data_loading`, `results_validation`, `database_operations`,
+  `web_service`, `web_page`).
 - The Verification Report is persisted to `config/bootcamp_progress.json` with a valid ISO 8601
   timestamp.
 - The web service process is terminated and the port is released.

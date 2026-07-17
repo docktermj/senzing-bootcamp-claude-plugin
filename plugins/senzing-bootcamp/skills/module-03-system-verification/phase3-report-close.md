@@ -33,9 +33,10 @@ under `module_3_verification.checks`. If either entry is missing or has `"status
 
 Generate a structured summary of all verification checks.
 
-1. Compile the results from all 10 verification checkpoint entries (`mcp_connectivity`,
+1. Compile the results from all 11 verification checkpoint entries (`mcp_connectivity`,
    `truthset_acquisition`, `sdk_initialization`, `code_generation`, `build_compilation`,
-   `data_loading`, `results_validation`, `database_operations`, `web_service`, `web_page`) into a
+   `data_source_registration`, `data_loading`, `results_validation`, `database_operations`,
+   `web_service`, `web_page`) into a
    single Verification Report.
 
 2. For each check, record:
@@ -83,6 +84,7 @@ Generate a structured summary of all verification checks.
          "sdk_initialization": {"status": "passed|failed", "duration_ms": 0},
          "code_generation": {"status": "passed|failed", "file": "verify_pipeline.[ext]"},
          "build_compilation": {"status": "passed|failed", "duration_ms": 0},
+         "data_source_registration": {"status": "passed|failed", "sources_registered": []},
          "data_loading": {"status": "passed|failed", "records_loaded": 0},
          "results_validation": {"status": "passed|failed", "entities": 0, "matches_verified": 0},
          "database_operations": {"status": "passed|failed", "ops_tested": ["write", "read", "search"]},
@@ -187,5 +189,5 @@ Complete the module using the standard **Module Completion** process in
 **Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All
-10 verification checks passed + database purged of TruthSet data + web service terminated +
+11 verification checks passed + database purged of TruthSet data + web service terminated +
 Module 3 completion recorded in the progress file.
