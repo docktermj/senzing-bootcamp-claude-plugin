@@ -1,6 +1,6 @@
 # Senzing Bootcamp Claude Code Plugin
 
-A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution,
+A guided bootcamp for learning [Senzing] entity resolution,
 packaged as a Claude Code plugin.
 Install it, then say **"start the bootcamp"** to be guided through
 a hands-on, module-by-module tutorial.
@@ -101,7 +101,8 @@ and a `production/` starter project.
     claude plugin marketplace remove senzing-bootcamp
     ```
 
-[bootcamp_recap.pdf]: docs/bootcamp_recap.pdf
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/docs/bootcamp_recap.pdf
 [Claude Code]: https://claude.com/product/claude-code
 [Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp
+[Senzing]: https://senzing.com
