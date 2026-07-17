@@ -87,7 +87,7 @@ a hands-on, module-by-module tutorial.
 
 The bootcamp is a guided, module-by-module tutorial.
 You end with working Senzing code and data in your project (`src/`, `data/`, `database/`),
-a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf]),
+a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf], but yours will differ),
 and a `production/` starter project.
 
 ## Uninstall plugin
