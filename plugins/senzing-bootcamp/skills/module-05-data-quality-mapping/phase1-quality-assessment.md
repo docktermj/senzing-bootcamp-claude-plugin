@@ -175,10 +175,14 @@ Source: VENDORS_LEGACY
 
 **Checkpoint:** write step 6.
 
-**Visualization checkpoint:** Offer to create a visual of the quality assessment (coverage bars
-per source, per-field completeness). If the bootcamper accepts, generate a self-contained HTML
-page and save it to `docs/mapping/`. (The full Visualization Protocol / `visualization-guide`
-is a later porting phase; offer directly for now.)
+**Visualization checkpoint:** Offer a visual of the quality assessment (coverage bars per
+source, per-field completeness). Pin the offer verbatim:
+
+> 👉 **Would you like a visual of the quality assessment (coverage bars and per-field completeness)?**
+
+If the bootcamper accepts, generate a self-contained HTML page and save it to
+`docs/visualizations/`. (The full Visualization Protocol / `visualization-guide` is a later
+porting phase; offer directly for now.)
 
 ## 7. Summarize findings and save the evaluation report
 

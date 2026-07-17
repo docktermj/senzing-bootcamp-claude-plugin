@@ -33,8 +33,8 @@ the bootcamper-facing preface, in this order:
    the Senzing MCP server, never from memory).
 4. **Welcome + overview** - show the WELCOME banner and give the module overview.
 5. **Level of detail** - capture the verbosity preference.
-6. **Track selection** - Core Bootcamp (Modules 1-7) or Advanced Topics (Modules 1-11). This
-   is a gate: wait for their choice.
+6. **Track selection** - Core Bootcamp (Modules 1-7) or Advanced Topics (the same Modules 1-7
+   plus production-hardening follow-ups at graduation). This is a gate: wait for their choice.
 7. **Programming language selection** - present the languages the MCP server reports for the
    bootcamper's platform. This is a gate: wait for their real choice.
 8. **Any questions** - invite final questions before Module 1.

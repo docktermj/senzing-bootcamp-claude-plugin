@@ -55,9 +55,10 @@ Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 
 ## Deployment Target
 [If `deployment_target` present in preferences: Platform / Category (Cloud/Container/Local/
-Undecided) / Note "development proceeds locally first; infra configured in Module 11". If
-"not sure yet": Platform "To be determined", Category "Undecided". If absent: "Not applicable
-: current track does not include Module 11."]
+Undecided) / Note "development proceeds locally first; infrastructure is a production follow-up
+covered by the graduation production project and migration checklist". If "not sure yet":
+Platform "To be determined", Category "Undecided". If absent: "Not applicable: deployment target
+not captured for this track."]
 
 ## Timeline
 **Target completion** / **Key milestones**
@@ -121,7 +122,7 @@ integration targets exist, explain how Senzing fits alongside them as a foundati
 
 👉 **Would you like a one-page executive summary to share with your team?**
 
-*(Internal: end the turn and wait.)* If yes, produce `docs/stakeholder_summary.md` covering
+*(Internal: end the turn and wait.)* If yes, produce `docs/stakeholder_summary_module1.md` covering
 problem, approach, data sources, key findings, next steps, and ROI considerations, filled with
 Module 1 context from `docs/business_problem.md`. (The Kiro `templates/stakeholder_summary.md`
 port is a later phase; compose the summary directly for now.) **Checkpoint:** write step 17.

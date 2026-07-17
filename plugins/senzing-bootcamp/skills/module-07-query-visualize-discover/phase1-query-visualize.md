@@ -169,9 +169,12 @@ If accepted:
 
 ### 3c. Entity graph visualization checkpoint
 
-Follow the Visualization Protocol and offer a visualization for checkpoint
-`m7_exploratory_queries` (an entity graph of the resolved results). The visualization data
-comes from `reporting_guide(topic='graph', ...)` (network export) and
+Offer a visualization for checkpoint `m7_exploratory_queries` (an entity graph of the resolved
+results). Pin the offer verbatim:
+
+> 👉 **Would you like a visualization of the resolved entities as an entity graph?**
+
+The visualization data comes from `reporting_guide(topic='graph', ...)` (network export) and
 `reporting_guide(topic='dashboard', ...)` (visualization concepts and data sources); generate
 the rendering code in the bootcamper's chosen language.
 
@@ -179,8 +182,8 @@ Inline guidance until the visualization files are ported (later porting phase, t
 `visualization-guide.md` and `visualization-web-service.md` are not yet available):
 
 - Offer the visualization; do not force it. If the bootcamper declines, acknowledge and move on.
-- Keep all generated code and output inside the working directory (`src/` for code, `docs/` or
-  `data/` for output). Never `/tmp/`.
+- Keep all generated code and output inside the working directory (`src/` for code, HTML
+  visualizations → `docs/visualizations/`, other output → `docs/` or `data/`). Never `/tmp/`.
 - Pull the entity/relationship data through generated SDK code and `reporting_guide`, never
   direct SQL.
 
@@ -196,11 +199,15 @@ for now update the progress key directly.)
 
 ### 3d. Results dashboard visualization checkpoint
 
-Follow the Visualization Protocol and offer a visualization for checkpoint
-`m7_findings_documented` (a results dashboard). Source the dashboard data via
-`reporting_guide(topic='dashboard', ...)` and `reporting_guide(topic='reports', ...)`; generate
-the rendering code in the chosen language. Same inline guidance and file-placement rules as
-step 3c apply (visualization files are a later porting phase).
+Offer a visualization for checkpoint `m7_findings_documented` (a results dashboard). Pin the
+offer verbatim:
+
+> 👉 **Would you like a results dashboard visualizing the findings?**
+
+Source the dashboard data via `reporting_guide(topic='dashboard', ...)` and
+`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language.
+Same inline guidance and file-placement rules as step 3c apply (visualization files are a later
+porting phase).
 
 **Checkpoint:** write step 3d.
 
@@ -250,9 +257,9 @@ to `null` per the ground rules.
   project). See `../graduation/SKILL.md`.
 - **Wants to keep exploring first:** stay available for more queries, visualizations, or Discover
   work, and offer graduation again whenever they are ready.
-- **Advanced Topics track:** the bootcamper may instead continue to Module 8 (Performance
-  Testing). The advanced modules (8-11) are a later porting phase; until they land, offer
-  graduation as the close-out for both tracks.
+- **Advanced Topics track:** graduation is the close-out for both tracks. Advanced Topics
+  production-hardening (performance, security, monitoring, deployment) is delivered through the
+  graduation production project and migration checklist, not as separate numbered modules.
 
 ## Integration patterns
 

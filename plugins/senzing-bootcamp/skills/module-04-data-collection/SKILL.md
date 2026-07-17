@@ -163,7 +163,7 @@ Not all data arrives as CSV. Common formats and how to handle them:
   and write a collection script in `src/scripts/` that fetches all pages and saves to
   `data/raw/`.
 - **Real-time streams (Kafka, etc.):** For the bootcamp, capture a snapshot to a file. Document
-  the stream details for production use in Module 11.
+  the stream details for production use (a production follow-up; see the graduation migration checklist).
 
 For any non-CSV/JSON format, the goal is to get the data into a flat file in `data/raw/` that
 Module 5 can evaluate.

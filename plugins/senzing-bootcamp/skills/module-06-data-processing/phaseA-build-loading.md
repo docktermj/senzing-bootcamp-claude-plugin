@@ -157,7 +157,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    present two choices, then end the turn and wait (internal stop), do not start the load yet:
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
      "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
-     guidance (Module 8 covers PostgreSQL). Do not restate migration steps here.
+     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
    - **Proceed on SQLite:** record `sqlite_volume_prompt` = `{decided: true, choice: "proceed",
      tier, raw_value}` in preferences, then continue to the Phase B load. Do not re-present this
      prompt for the same load.
@@ -165,7 +165,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 *(Internal: when this heads-up fires, end the turn on the two-choice question and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro
 helpers `volume_utils.py`, `preferences_utils.py`, `load_time_warning.py`, and the migration
-guide are later porting phases; apply the logic inline and refer to Module 8 for migration for
+guide are later porting phases; apply the logic inline and refer to the graduation migration checklist for PostgreSQL migration for
 now.)
 
 Proceed to Phase B (`phaseB-load-first-source.md`).

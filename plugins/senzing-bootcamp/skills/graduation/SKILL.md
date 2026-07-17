@@ -165,8 +165,14 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 ## Step 2: Build the production project
 
-If `production/` already exists, ask one 👉 question as a neutral lead plus a
-numbered list of the choices — (1) overwrite, (2) merge, (3) abort.
+If `production/` already exists, pin this 👉 question verbatim (neutral lead + numbered list):
+
+👉 **`production/` already exists — how should I proceed? Reply with a number:**
+
+1. **Overwrite** — replace the existing `production/` contents.
+2. **Merge** — keep existing files and add or update the generated ones.
+3. **Abort** — leave `production/` untouched and skip to the graduation report.
+
 Wait for the answer. On abort, skip to the graduation report noting the abort.
 
 Create `production/` and copy production-relevant files (skip any source that
@@ -189,7 +195,9 @@ eval database itself).
 `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
 
 Present a short summary of what was copied, what was excluded, and the directories
-created, then ask one 👉 question to confirm before generating config files.
+created, then pin this 👉 question verbatim:
+
+> 👉 **Ready to generate the production configuration files (`.env.example`, `docker-compose.yml`, `.gitignore`)?**
 
 ## Step 3: Production configuration files
 
@@ -203,7 +211,7 @@ pre-checks. Use placeholder values only, never real secrets:
 ## Step 4: Production README and migration checklist
 
 - **`production/README.md`:** parameterized by language, database, and data sources. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
-- **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the Core track does not cover Modules 8-11, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) were not covered during the Core track: complete these items before deploying," and mark those items with ⚠️.
+- **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
 
 Author every `production/*.md` deliverable — this README, the migration checklist, and the
 Step 5 `GRADUATION_REPORT.md` — to the same CommonMark house rules applied to the recap in

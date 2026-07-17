@@ -63,7 +63,7 @@ progressively slower as the database grows. For the bootcamp learning experience
 loading ≤1,000 records initially, enough to see meaningful entity resolution without long
 waits. If the bootcamper has more data, suggest: "Let's start with the first 1,000 records so we
 can see results quickly. Once we validate the results here, we can load the full dataset, or
-switch to PostgreSQL for better performance with larger volumes (Module 8 covers this)."
+switch to PostgreSQL for better performance with larger volumes (a production follow-up; see the graduation migration checklist)."
 
 **Checkpoint:** write step 7.
 
