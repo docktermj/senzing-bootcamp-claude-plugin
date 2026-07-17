@@ -99,8 +99,17 @@ rewrite the file, so earlier entries are preserved.
 - **Divergence:** [why expected did not match actual]
 ```
 
+## Step 3b: Verify it landed (durability)
+
+Immediately re-read `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` and confirm
+the `## Improvement:` entry you just appended is present. If it is missing — a lost or
+partial write, or a session/compaction boundary — append it again and re-read to
+confirm. Only continue once the entry is confirmed on disk. This mirrors the recap's
+"verify it landed" step (`module-completion.md` Step 2c) so submitted feedback is
+never silently lost (INV-015).
+
 ## Step 4: Confirm and return
 
-- Confirm: "Saved your feedback to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
+- Only after Step 3b confirms the entry is on disk, confirm to the bootcamper: "Saved your feedback to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
 - Do NOT submit feedback to the Senzing MCP server or anywhere external unless the bootcamper explicitly asks.
 - Return the bootcamper to exactly where they left off, resuming the pending step or question. Do not make them re-navigate.

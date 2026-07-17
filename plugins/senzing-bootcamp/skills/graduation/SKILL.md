@@ -84,7 +84,10 @@ sections.
 
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
 Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
-`docs/bootcamp_recap.md`. During the bootcamp these files were written plain (see
+`docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
+`docs/feedback/`, and never rewrite, empty, or delete the bootcamper's feedback file**
+(`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
+During the bootcamp these files were written plain (see
 `../bootcamp-onboarding/ground-rules.md` → "Markdown files"); this is where they get prettified.
 Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031), and lists
 (MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
@@ -101,21 +104,44 @@ a valid PDF (a professionally designed one when `fpdf2` is installed, a plainer
 stdlib-rendered one otherwise), so a missing `fpdf2` is never a reason to skip.
 
 **Prefer the professionally designed renderer.** Before rendering, check whether
-`fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install
-it (`pip install fpdf2` — a small, pure-Python package) so the designed renderer is
-used: a cover page, a table of contents with page numbers, color-coded per-module
-sections, and page footers (INV-048 — the trophy should look professional). If the
-bootcamper declines or the install fails, proceed with the stdlib fallback; it still
-produces a valid, complete PDF, so this never blocks graduation. (Maintainers can
-visually verify a render by rasterizing pages to PNG — e.g. with `pymupdf` — to
-confirm the TOC page numbers, and the absence of overlaps or blank pages; `pymupdf`
-is a dev-only aid and is never required at bootcamper runtime.)
+`fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install it
+so the designed renderer is used (a cover page, a table of contents with page
+numbers, color-coded per-module sections, and page footers — INV-048, the trophy
+should look professional). Install it **robustly**, never with a bare `pip`:
 
-Locate and run the bundled script (it ships with this plugin):
+- **Prefer a project-local virtualenv.** This sidesteps PEP 668
+  "externally-managed-environment" Python (common on macOS/Homebrew and many Linux
+  distros) and never touches the global/system Python:
+
+  ```bash
+  python3 -m venv data/temp/recap-venv
+  # Linux/macOS:
+  data/temp/recap-venv/bin/python -m pip install fpdf2
+  # Windows:
+  data\temp\recap-venv\Scripts\python -m pip install fpdf2
+  ```
+
+  Then run the generator with **that venv's** Python (below) so it imports `fpdf2`.
+- **Never call bare `pip`** — a stale shim on PATH may point at a deleted
+  interpreter. Always go through an explicit interpreter: `python3 -m pip` (or
+  `py -3 -m pip` on Windows). `--user` / `--break-system-packages` are last-resort
+  opt-ins only, never the default.
+- **Degrade gracefully.** If the bootcamper declines, or venv creation / the install
+  fails (offline, no `ensurepip`, etc.), proceed with the stdlib fallback — it still
+  produces a valid, complete PDF, so this never blocks graduation.
+
+(Maintainers can visually verify a render by rasterizing pages to PNG — e.g. with
+`pymupdf` — to confirm the TOC page numbers and the absence of overlaps or blank
+pages; `pymupdf` is a dev-only aid, never required at bootcamper runtime.)
+
+Locate and run the bundled script (it ships with this plugin). Use the venv's Python
+if you created one above; otherwise `python3`:
 
 ```bash
-# When invoked via the /graduate command, the plugin root is available:
+# fpdf2 already importable, or using the stdlib fallback:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
+# Or, when you installed fpdf2 into the project-local venv above:
+data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
 ```
 
 If `${CLAUDE_PLUGIN_ROOT}` is not set in the current context, resolve the script
