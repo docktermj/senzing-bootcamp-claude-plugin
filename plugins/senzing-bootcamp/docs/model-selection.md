@@ -83,10 +83,10 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 ## Module-start commands (the nudge)
 
 `ground-rules.md` → "Module start banners and transitions" surfaces this per-stage recommendation
-as a non-blocking one-liner at the start of each module (and `graduation/SKILL.md` at the
-graduation banner), with the exact commands to run. Switching is optional; the session-level
-`/model` and `/effort` persist for the session (unlike per-skill frontmatter). Keep this table in
-sync with the mirror in `ground-rules.md`.
+at the start of each module (and `graduation/SKILL.md` at the graduation banner): a single 👉
+switch question when the recommendation changes from the current stage, otherwise a brief
+statement. Switching is optional; the session-level `/model` and `/effort` persist for the session
+(unlike per-skill frontmatter). Keep this table in sync with the mirror in `ground-rules.md`.
 
 | Stage | Recommended | Commands |
 |---|---|---|

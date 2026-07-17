@@ -13,9 +13,10 @@ steering files.)
 - **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
-  best-value recommendation as a non-blocking nudge (see "Module start banners and transitions"
-  below); the heavier Modules 2 and 5 and graduation warrant Opus 4.8 + high effort, lighter
-  modules Sonnet 5. Do not change the session yourself — only the bootcamper can.
+  best-value recommendation (see "Module start banners and transitions" below): a single 👉 switch
+  question when the recommendation changes from the current stage, otherwise a brief statement. The
+  heavier Modules 2 and 5 and graduation warrant Opus 4.8 + high effort, lighter modules Sonnet 5.
+  Do not change the session yourself — only the bootcamper can.
 
 ## Conversation protocol (the 👉 rules)
 
@@ -166,12 +167,20 @@ never count against the one-question-per-turn rule and must not be treated as ga
   banner, a journey map (modules in the selected track marked ✅ complete / 🔄 current / ⬜
   upcoming), before/after framing, and a brief numbered step overview. Never skip these - they
   orient the bootcamper.
-- **Best-value model/effort nudge (non-blocking).** After the step overview and BEFORE Step 1,
-  surface one concise line with this stage's recommended model + effort and the exact commands. It
-  is a STATEMENT — never a 👉 question, never a ⛔ gate, never blocks progress, and is never repeated
-  mid-module. Encourage the switch **only when the recommendation changes** from the module just
-  completed (e.g. entering a heavier module → "for best value, switch up: `/model opus` then
-  `/effort high`"); when it is unchanged, keep it to a one-line reminder or omit it (INV-012).
+- **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
+  model + effort with the exact commands. Two cases:
+  - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
+    end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
+    Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
+
+    > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
+
+    On **yes**, tell the bootcamper to run those two commands and continue once they confirm; on
+    **no**, proceed. You never change the session yourself — only the bootcamper can. Produce
+    Step 1 on the next turn.
+  - **Recommendation unchanged** → a brief one-line statement (or omit); no question, so the
+    bootcamp never asks a pointless "switch?" every module (INV-012).
+
   Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
   recommendation (keep in sync with `../../docs/model-selection.md`):
 
@@ -191,8 +200,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
   ```
 
 - After an affirmative module-transition ("Ready for Module X?"), immediately produce the
-  banner + journey map + before/after + step overview + best-value model/effort nudge + Step 1.
-  Never reply with just "." or fewer than 50 characters.
+  banner + journey map + before/after + step overview + best-value model/effort prompt. When that
+  prompt is a 👉 switch question (recommendation changed), the turn ends there and Step 1 follows
+  after the reply; otherwise (unchanged) continue straight into Step 1 the same turn. Never reply
+  with just "." or fewer than 50 characters.
 
 ## Closing questions
 
