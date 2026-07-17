@@ -18,6 +18,48 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## fix-truthset-snapshot-empty
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase2-visualization.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase3-report-close.md`
+- **Summary:** The Step 9.2 "guaranteed" snapshot read three hardcoded files (`customers/reference/watchlist.jsonl`) that no step creates, so it built an empty (0-entity) page that still passed the completion gate. Changed 9.2 to `--records "src/system_verification/"*.jsonl` — the same glob the live server (9.3) uses, matching Step 2's `truthset_data.jsonl` — and hardened the phase3 completion gate to also require the snapshot reflect `records_total > 0` (consistent with the `data_loading` checkpoint), so a zero-record snapshot no longer satisfies INV-038. Verified: 9.2 and 9.3 now use the identical glob; no hardcoded per-source filenames remain.
+- **Commit:** uncommitted
+
+## advanced-modules-8-11-scope
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `specs/INVARIANTS.md` (INV-013), `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/SKILL.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+- **Summary:** Maintainer chose Option 2 (reframe). Clarified INV-013 in place to "Module 1 → … → 7", with Advanced Topics (performance/security/monitoring/deployment) delivered as production-hardening follow-ups at graduation rather than numbered Modules 8-11. Rewrote every "Modules 8-11 / Modules 1-11 / Module 8 / Module 11 / next advanced module" reference across onboarding, module-completion, modules 1/4/6/7, and graduation so advertised scope matches what ships; the two-track choice (INV-025) is preserved. Residual (intentional): one "Module 8" mention remains in the fictional shipped example recap as illustrative narrative.
+- **Commit:** uncommitted
+
+## layout-tree-reconciliation
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `specs/INVARIANTS.md` (INV-050 tree), `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Maintainer chose "add to the tree." Added `src/resources/` and `data/mapping/` to the INV-050 tree; annotated the reserved/unused entries (`config/session_log.jsonl`, `config/visualization_tracker.json`, `data/backups/`, `docs/completion_summary.md`, `src/server/`, `monitoring/`, `tests/`) and corrected the `production/` comment to "generated at graduation." Standardized all generated HTML visualizations to `docs/visualizations/` (Module 5 quality pages, Module 6 dashboards, Module 7 output guidance) — no more `docs/`-root or `docs/mapping/` HTML dashboards. Renamed Module 1's stakeholder summary to `stakeholder_summary_module1.md` to fit the `stakeholder_summary_module{n}.md` family (tree side already resolved by the maintainer; Module 6 already conformed). Module 2 Step 6's layout-creation list is now all tree-valid (no change needed). Verified: zero `docs/`-root/`docs/mapping/` HTML dashboards remain.
+- **Commit:** uncommitted
+
+## pin-visualization-offer-questions
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+- **Summary:** Pinned every previously-unpinned choice/visualization offer verbatim with a leading 👉 (INV-005/051/056). Reformatted Module 1 Step 5 from a prose "offer exactly one of" three-path list into a neutral-lead 👉 numbered-choice question; pinned the two Module 5 viz offers, the two Module 6 viz offers (cross-source + mandatory dashboard), and the two Module 7 viz offers (entity graph + results dashboard); pinned the two graduation decision questions (production overwrite/merge/abort as a neutral-lead numbered list; config-confirm as a pinned yes/no). Verified the pinned 👉 questions are present at each site.
+- **Commit:** uncommitted
+
+## reconcile-action-taken-wording
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `specs/INVARIANTS.md` (INV-048)
+- **Summary:** Changed INV-048's recap section name "Action Taken" → "Actions Taken" (in-place wording clarification, no new invariant ID) to match every implementation surface (`generate_recap_pdf.py` `REQUIRED_SECTIONS`, `module-completion.md`, `graduation/SKILL.md`, `ground-rules.md`, `phase3-report-close.md`, and the shipped example recap). No code change needed; the generator already uses the plural and normalizes the singular.
+- **Commit:** uncommitted
+
+## vendor-d3-offline-visualization
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/scripts/vendor/d3.v7.min.js` (new)
+- **Summary:** Vendored D3 v7.9.0 and made `senzing_viz_server.py` inline it into both the live page and the snapshot via a new `_d3_script()` helper (the `d3js.org` CDN tag is kept only as a fallback when the vendored asset is missing). `render_page` now fills `__D3_SCRIPT__`/`__DATA_SHIM__` placeholders, and `write_snapshot` passes the data shim through `render_page` instead of string-replacing the CDN tag; its docstring now says "fully self-contained (D3 and data embedded, no server or network)." Verified: module compiles; rendered page inlines D3 with no external `d3js.org` `<script src>`; snapshot renders offline; no broken `</script>`.
+- **Commit:** uncommitted
+
 ## model-effort-switch-done-confirmation
 
 - **Implemented:** 2026-07-17
