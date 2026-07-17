@@ -82,8 +82,6 @@ a hands-on, module-by-module tutorial.
     - `/bootcamp-feedback` — share feedback about the bootcamp
       (or just say "bootcamp feedback"). Saved to
       `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
-    - `/graduate` — finish the Core track: generate the Bootcamp recap PDF
-      (`docs/bootcamp_recap.pdf`) and a production-ready `production/` project.
 
 ## What you finish with
 
