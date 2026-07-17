@@ -38,9 +38,12 @@ with another 👉:
 
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-On **yes**, have the bootcamper run those two commands and continue once they confirm; on **no**,
-proceed. You never change the session yourself. Then continue to Pre-checks. See
-`../../docs/model-selection.md`.
+The switch question ends this turn. On the reply turn — either answer — continue straight into the
+graduation work: run the Pre-checks and proceed to the first step, ending that turn on its own 👉
+question. On **yes**, preface the reply turn with a one-line statement telling the bootcamper to
+run those two commands; do **not** insert a separate "ready to start graduation?" confirmation
+gate — running the commands and continuing is the go-ahead. On **no**, proceed the same way. You
+never change the session yourself. See `../../docs/model-selection.md`.
 
 ## Pre-checks
 

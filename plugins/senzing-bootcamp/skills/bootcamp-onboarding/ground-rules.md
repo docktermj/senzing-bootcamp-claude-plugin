@@ -175,9 +175,13 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
     > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
 
-    On **yes**, tell the bootcamper to run those two commands and continue once they confirm; on
-    **no**, proceed. You never change the session yourself — only the bootcamper can. Produce
-    Step 1 on the next turn.
+    Step 1 comes on the **reply** turn (this switch turn ends at the 👉). On **yes**, open the
+    reply turn with a one-line statement telling the bootcamper to run those two commands, then
+    present Step 1 that same turn — ending on Step 1's single 👉 question. Do **not** insert a
+    separate "ready to start?" confirmation gate: running the commands and answering Step 1 is the
+    go-ahead. On **no**, acknowledge and present Step 1 the same turn. Either way Step 1 lands on
+    the one reply turn — never a turn later. You never change the session yourself — only the
+    bootcamper can.
   - **Recommendation unchanged** → a brief one-line statement (or omit); no question, so the
     bootcamp never asks a pointless "switch?" every module (INV-012).
 
@@ -201,9 +205,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 - After an affirmative module-transition ("Ready for Module X?"), immediately produce the
   banner + journey map + before/after + step overview + best-value model/effort prompt. When that
-  prompt is a 👉 switch question (recommendation changed), the turn ends there and Step 1 follows
-  after the reply; otherwise (unchanged) continue straight into Step 1 the same turn. Never reply
-  with just "." or fewer than 50 characters.
+  prompt is a 👉 switch question (recommendation changed), the turn ends there and Step 1 is
+  produced on the very next turn — the reply turn — for either answer (on "yes" prefaced by the
+  one-line run-commands statement, with no separate confirmation gate); otherwise (unchanged)
+  continue straight into Step 1 the same turn. Never reply with just "." or fewer than 50
+  characters.
 
 ## Closing questions
 
