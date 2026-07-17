@@ -58,6 +58,12 @@ Gather context before any step. Do this silently.
 The recap is the crown-jewel deliverable. Produce it before the `production/`
 project so the trophy always exists.
 
+A finished-recap sample ships with the plugin at
+`${CLAUDE_PLUGIN_ROOT}/docs/examples/bootcamp_recap.example.pdf` (skill-relative
+fallback: `../../docs/examples/bootcamp_recap.example.pdf`). You may point the
+bootcamper to it so they see what theirs is about to look like — a non-blocking
+statement, never a 👉 question or gate, and it adds no turn.
+
 ### 1a. Reconcile the recap
 
 Confirm `docs/bootcamp_recap.md` has a `## Module N:` section for every module in

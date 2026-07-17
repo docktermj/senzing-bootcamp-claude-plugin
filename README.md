@@ -99,7 +99,7 @@ and a `production/` starter project.
     claude plugin marketplace remove senzing-bootcamp
     ```
 
-[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/docs/bootcamp_recap.pdf
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Code]: https://claude.com/product/claude-code
 [Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp

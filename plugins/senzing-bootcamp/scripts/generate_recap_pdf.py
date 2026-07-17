@@ -236,6 +236,36 @@ SLATE = (71, 85, 105)
 LIGHT = (241, 245, 249)
 ACCENT = (200, 146, 42)
 INK = (30, 41, 59)
+GREEN = (22, 128, 82)
+
+# Per-section accent colors for the module page tabs/headings.
+_SECTION_ACCENT = {
+    "information shared": BLUE,
+    "questions & responses": ACCENT,
+    "actions taken": GREEN,
+    "journal": NAVY,
+}
+
+_MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+]
+
+
+def _section_accent(name: str) -> Tuple[int, int, int]:
+    """Return the accent color for a module sub-section (default navy)."""
+    return _SECTION_ACCENT.get(_normalize_heading(name), NAVY)
+
+
+def _format_date(date: str) -> str:
+    """Format an ISO ``YYYY-MM-DD`` date as ``Month D, YYYY``; pass others through."""
+    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", date.strip())
+    if not m:
+        return date
+    year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+    if not 1 <= month <= 12:
+        return date
+    return f"{_MONTHS[month - 1]} {day}, {year}"
 
 
 def _md_inline_to_text(s: str) -> str:
@@ -333,20 +363,35 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
 
 def _render_cover(pdf, epw: float, recap: Recap) -> None:
     pdf.add_page()
+    # Navy header band with a gold accent rule.
     pdf.set_fill_color(*NAVY)
     pdf.rect(0, 0, pdf.w, 78, style="F")
     pdf.set_fill_color(*ACCENT)
     pdf.rect(0, 78, pdf.w, 3, style="F")
 
-    pdf.set_xy(pdf.l_margin, 26)
+    # "SZ" badge: a gold ring centered in the band.
+    cx, cy, r = pdf.w / 2.0, 22.0, 11.0
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(1.4)
+    pdf.ellipse(cx - r, cy - r, 2 * r, 2 * r, style="D")
+    pdf.set_line_width(0.2)
+    pdf.set_xy(cx - r, cy - 4.5)
+    pdf.set_text_color(*ACCENT)
+    pdf.set_font("Helvetica", "B", 15)
+    pdf.cell(2 * r, 9, "SZ", align="C")
+
+    # Wordmark inside the band; sub-title below it.
+    pdf.set_xy(pdf.l_margin, 42)
     pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 30)
+    pdf.set_font("Helvetica", "B", 28)
     pdf.cell(epw, 14, "Senzing Bootcamp", align="C")
-    pdf.set_xy(pdf.l_margin, 44)
+
+    pdf.set_xy(pdf.l_margin, 90)
+    pdf.set_text_color(*NAVY)
     pdf.set_font("Helvetica", "B", 20)
     pdf.cell(epw, 12, "Completion Recap", align="C")
 
-    pdf.set_xy(pdf.l_margin, 96)
+    pdf.set_xy(pdf.l_margin, 106)
     pdf.set_text_color(*INK)
     pdf.set_font("Helvetica", "", 12)
     pdf.multi_cell(
@@ -357,39 +402,60 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
         align="C",
     )
 
-    # Metadata card.
-    pdf.ln(8)
-    card_x = pdf.l_margin + 18
-    card_w = epw - 36
-    y0 = pdf.get_y()
+    # Two-column labeled metadata card, driven by the recap's meta rows.
     rows = recap.meta or [("Bootcamper", "Bootcamper")]
-    card_h = 12 + len(rows) * 9 + 6
+    card_x = pdf.l_margin + 15
+    card_w = epw - 30
+    col_w = card_w / 2.0
+    y0 = 132.0
+    per_col = (len(rows) + 1) // 2
+    card_h = 9 + per_col * 16 + 3
     pdf.set_fill_color(*LIGHT)
     pdf.set_draw_color(210, 218, 228)
     pdf.rect(card_x, y0, card_w, card_h, style="DF")
-    pdf.set_xy(card_x + 8, y0 + 6)
-    pdf.set_text_color(*NAVY)
-    pdf.set_font("Helvetica", "B", 13)
-    pdf.cell(card_w - 16, 8, "Bootcamp Summary")
-    pdf.ln(11)
-    for key, val in rows:
-        pdf.set_x(card_x + 8)
+    for i, (key, val) in enumerate(rows):
+        col, pos = i % 2, i // 2
+        x = card_x + 10 + col * (col_w - 4)
+        y = y0 + 8 + pos * 16
+        pdf.set_xy(x, y)
         pdf.set_text_color(*SLATE)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(48, 8, _safe(f"{key}:"))
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.cell(col_w - 14, 5, _safe(key.upper().rstrip(":")))
+        pdf.set_xy(x, y + 5.5)
         pdf.set_text_color(*INK)
-        pdf.set_font("Helvetica", "", 11)
-        pdf.multi_cell(card_w - 16 - 48, 8, _safe(_md_inline_to_text(val)))
+        pdf.set_font("Helvetica", "", 12)
+        pdf.cell(col_w - 14, 7, _safe(_md_inline_to_text(val)))
 
-    # Modules-completed line.
-    pdf.set_xy(card_x + 8, y0 + card_h + 8)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "", 11)
-    completed = ", ".join(
-        f"Module {m.number}" for m in recap.modules if m.number is not None
-    )
-    if completed:
-        pdf.multi_cell(card_w - 16, 7, _safe(f"Modules completed: {completed}"))
+    # "Modules in this recap" chips (one per module, flowed into rows).
+    if recap.modules:
+        yh = y0 + card_h + 12
+        pdf.set_xy(pdf.l_margin, yh)
+        pdf.set_text_color(*NAVY)
+        pdf.set_font("Helvetica", "B", 13)
+        pdf.cell(epw, 8, "Modules in this recap")
+        x = pdf.l_margin
+        y = yh + 12
+        pdf.set_font("Helvetica", "", 10)
+        for mod in recap.modules:
+            label = _clip(
+                _safe(
+                    f"{mod.number}. {mod.title}"
+                    if mod.number is not None
+                    else mod.title
+                ),
+                46,
+            )
+            w = pdf.get_string_width(label) + 8
+            if x + w > pdf.l_margin + epw:
+                x = pdf.l_margin
+                y += 11
+            pdf.set_fill_color(*LIGHT)
+            pdf.set_draw_color(210, 218, 228)
+            pdf.rect(x, y, w, 8.5, style="DF")
+            pdf.set_xy(x, y)
+            pdf.set_text_color(*INK)
+            pdf.cell(w, 8.5, label, align="C")
+            x += w + 4
 
 
 def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> None:
@@ -437,7 +503,7 @@ def _render_module_page(pdf, epw: float, mod) -> int:
     if mod.date:
         pdf.set_xy(pdf.l_margin, 15)
         pdf.set_font("Helvetica", "", 9)
-        pdf.cell(epw, 5, _safe(f"Completed {mod.date}"))
+        pdf.cell(epw, 5, _safe(f"Completed {_format_date(mod.date)}"))
     pdf.ln(24)
 
     for name in REQUIRED_SECTIONS:
@@ -455,9 +521,15 @@ def _render_module_page(pdf, epw: float, mod) -> int:
 def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> None:
     from_missing = content is None
     pdf.ln(1)
-    pdf.set_text_color(*NAVY)
+    # Colored accent tab + matching heading color per sub-section.
+    accent = _section_accent(name)
+    y = pdf.get_y()
+    pdf.set_fill_color(*accent)
+    pdf.rect(pdf.l_margin, y + 0.5, 2.6, 7, style="F")
+    pdf.set_xy(pdf.l_margin + 5.5, y)
+    pdf.set_text_color(*accent)
     pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(epw, 8, _safe(name))
+    pdf.cell(epw - 5.5, 8, _safe(name))
     pdf.ln(9)
     pdf.set_text_color(*INK)
     pdf.set_font("Helvetica", "", 10.5)

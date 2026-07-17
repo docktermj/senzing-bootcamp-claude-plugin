@@ -101,6 +101,11 @@ Then give the overview (cover naturally, do not ask a question yet):
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.
 - Goal: get comfortable generating Senzing SDK code, finishing with running code you can build on.
+- You finish with a professional **recap PDF** trophy — a keepsake of everything you built, module by
+  module, to keep and share with your team. A sample of a finished recap ships with the plugin at
+  `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
+  the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
+  a non-blocking mention, not a question or a gate.
 - A brief Module 1-7 overview (Core track): (1) business problem, (2) SDK setup, (3) system
   verification, (4) data collection, (5) data quality and mapping, (6) data processing, (7)
   query, visualize, and discover. The Advanced Topics track adds Modules 8-11 (performance,
