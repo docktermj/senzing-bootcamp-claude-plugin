@@ -91,7 +91,7 @@ Run on the complete dataset. Monitor per-source progress, error rates, overall c
 elapsed/estimated time. If slow, suggest reducing parallelism.
 
 **⚠️ SQLite note:** if total records exceed 1,000, recommend loading a subset first to validate
-cross-source matching, then load more or switch to PostgreSQL (Module 8).
+cross-source matching, then load more or switch to PostgreSQL (a production follow-up; see the graduation migration checklist).
 
 **Checkpoint:** write step 19.
 

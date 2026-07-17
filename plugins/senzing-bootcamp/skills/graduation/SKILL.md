@@ -38,9 +38,17 @@ with another 👉:
 
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-On **yes**, have the bootcamper run those two commands and continue once they confirm; on **no**,
-proceed. You never change the session yourself. Then continue to Pre-checks. See
-`../../docs/model-selection.md`.
+The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
+telling the bootcamper to run those two commands, then end the turn on this pinned confirmation
+gate (verbatim, INV-056) — do NOT start the graduation work yet:
+
+> 👉 **Are you done modifying the model and effort?** (Reply yes once you've run the commands; reply no if you need more time.)
+
+Run the Pre-checks and the first graduation step on the turn **after** the bootcamper confirms; if
+they need more time, acknowledge and wait, then continue — do not re-ask this gate (ask-once,
+INV-006). On **no**, continue straight into the graduation work the same reply turn: run the
+Pre-checks and proceed to the first step, ending that turn on its own 👉 question. You never change
+the session yourself. See `../../docs/model-selection.md`.
 
 ## Pre-checks
 
@@ -54,6 +62,12 @@ Gather context before any step. Do this silently.
 
 The recap is the crown-jewel deliverable. Produce it before the `production/`
 project so the trophy always exists.
+
+A finished-recap sample ships with the plugin at
+`${CLAUDE_PLUGIN_ROOT}/docs/examples/bootcamp_recap.example.pdf` (skill-relative
+fallback: `../../docs/examples/bootcamp_recap.example.pdf`). You may point the
+bootcamper to it so they see what theirs is about to look like — a non-blocking
+statement, never a 👉 question or gate, and it adds no turn.
 
 ### 1a. Reconcile the recap
 
@@ -75,7 +89,10 @@ sections.
 
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
 Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
-`docs/bootcamp_recap.md`. During the bootcamp these files were written plain (see
+`docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
+`docs/feedback/`, and never rewrite, empty, or delete the bootcamper's feedback file**
+(`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
+During the bootcamp these files were written plain (see
 `../bootcamp-onboarding/ground-rules.md` → "Markdown files"); this is where they get prettified.
 Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031), and lists
 (MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
@@ -92,21 +109,44 @@ a valid PDF (a professionally designed one when `fpdf2` is installed, a plainer
 stdlib-rendered one otherwise), so a missing `fpdf2` is never a reason to skip.
 
 **Prefer the professionally designed renderer.** Before rendering, check whether
-`fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install
-it (`pip install fpdf2` — a small, pure-Python package) so the designed renderer is
-used: a cover page, a table of contents with page numbers, color-coded per-module
-sections, and page footers (INV-048 — the trophy should look professional). If the
-bootcamper declines or the install fails, proceed with the stdlib fallback; it still
-produces a valid, complete PDF, so this never blocks graduation. (Maintainers can
-visually verify a render by rasterizing pages to PNG — e.g. with `pymupdf` — to
-confirm the TOC page numbers, and the absence of overlaps or blank pages; `pymupdf`
-is a dev-only aid and is never required at bootcamper runtime.)
+`fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install it
+so the designed renderer is used (a cover page, a table of contents with page
+numbers, color-coded per-module sections, and page footers — INV-048, the trophy
+should look professional). Install it **robustly**, never with a bare `pip`:
 
-Locate and run the bundled script (it ships with this plugin):
+- **Prefer a project-local virtualenv.** This sidesteps PEP 668
+  "externally-managed-environment" Python (common on macOS/Homebrew and many Linux
+  distros) and never touches the global/system Python:
+
+  ```bash
+  python3 -m venv data/temp/recap-venv
+  # Linux/macOS:
+  data/temp/recap-venv/bin/python -m pip install fpdf2
+  # Windows:
+  data\temp\recap-venv\Scripts\python -m pip install fpdf2
+  ```
+
+  Then run the generator with **that venv's** Python (below) so it imports `fpdf2`.
+- **Never call bare `pip`** — a stale shim on PATH may point at a deleted
+  interpreter. Always go through an explicit interpreter: `python3 -m pip` (or
+  `py -3 -m pip` on Windows). `--user` / `--break-system-packages` are last-resort
+  opt-ins only, never the default.
+- **Degrade gracefully.** If the bootcamper declines, or venv creation / the install
+  fails (offline, no `ensurepip`, etc.), proceed with the stdlib fallback — it still
+  produces a valid, complete PDF, so this never blocks graduation.
+
+(Maintainers can visually verify a render by rasterizing pages to PNG — e.g. with
+`pymupdf` — to confirm the TOC page numbers and the absence of overlaps or blank
+pages; `pymupdf` is a dev-only aid, never required at bootcamper runtime.)
+
+Locate and run the bundled script (it ships with this plugin). Use the venv's Python
+if you created one above; otherwise `python3`:
 
 ```bash
-# When invoked via the /graduate command, the plugin root is available:
+# fpdf2 already importable, or using the stdlib fallback:
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
+# Or, when you installed fpdf2 into the project-local venv above:
+data/temp/recap-venv/bin/python "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py"
 ```
 
 If `${CLAUDE_PLUGIN_ROOT}` is not set in the current context, resolve the script
@@ -125,8 +165,14 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 ## Step 2: Build the production project
 
-If `production/` already exists, ask one 👉 question as a neutral lead plus a
-numbered list of the choices — (1) overwrite, (2) merge, (3) abort.
+If `production/` already exists, pin this 👉 question verbatim (neutral lead + numbered list):
+
+👉 **`production/` already exists — how should I proceed? Reply with a number:**
+
+1. **Overwrite** — replace the existing `production/` contents.
+2. **Merge** — keep existing files and add or update the generated ones.
+3. **Abort** — leave `production/` untouched and skip to the graduation report.
+
 Wait for the answer. On abort, skip to the graduation report noting the abort.
 
 Create `production/` and copy production-relevant files (skip any source that
@@ -149,7 +195,9 @@ eval database itself).
 `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
 
 Present a short summary of what was copied, what was excluded, and the directories
-created, then ask one 👉 question to confirm before generating config files.
+created, then pin this 👉 question verbatim:
+
+> 👉 **Ready to generate the production configuration files (`.env.example`, `docker-compose.yml`, `.gitignore`)?**
 
 ## Step 3: Production configuration files
 
@@ -163,7 +211,7 @@ pre-checks. Use placeholder values only, never real secrets:
 ## Step 4: Production README and migration checklist
 
 - **`production/README.md`:** parameterized by language, database, and data sources. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
-- **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the Core track does not cover Modules 8-11, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) were not covered during the Core track: complete these items before deploying," and mark those items with ⚠️.
+- **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
 
 Author every `production/*.md` deliverable — this README, the migration checklist, and the
 Step 5 `GRADUATION_REPORT.md` — to the same CommonMark house rules applied to the recap in

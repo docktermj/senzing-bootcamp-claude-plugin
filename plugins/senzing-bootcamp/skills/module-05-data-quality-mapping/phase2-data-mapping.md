@@ -265,9 +265,12 @@ matching, any issues found.
 >   warnings only (e.g., "Quality: 85/100. 8 mapped, 3 unmapped. ⚠️ Low address coverage may
 >   affect matching.").
 
-**Offer visualization:** "Would you like me to create a web page showing the quality analysis?
-It'll have coverage charts and the field mapping summary." If yes, generate a self-contained
-HTML page and save it to `docs/mapping/mapping_[name]_quality.html`.
+**Offer visualization:** Pin the offer verbatim:
+
+> 👉 **Would you like a web page showing the quality analysis (coverage charts and the field mapping summary)?**
+
+If yes, generate a self-contained HTML page and save it to
+`docs/visualizations/mapping_[name]_quality.html`.
 
 **Checkpoint:** write step 15.
 

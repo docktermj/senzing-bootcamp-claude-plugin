@@ -156,6 +156,6 @@ next-module transition, offer graduation:
 
 On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants
 to keep exploring first, stay available and offer graduation again whenever they
-are ready. (If the bootcamper chose the Advanced Topics track, hand off to the
-next advanced module instead; the advanced modules are a later porting phase, so
-until then, offer graduation as the close-out.)
+are ready. (Both tracks end at Module 7; Advanced Topics adds production-hardening
+follow-ups at graduation, not further numbered modules, so graduation is the
+close-out for both.)

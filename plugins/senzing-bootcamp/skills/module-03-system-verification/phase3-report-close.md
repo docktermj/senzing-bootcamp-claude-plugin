@@ -14,11 +14,17 @@ directives, never rendered.
 >   the bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty.
 >   This is the hard guarantee that the visualization always happened, a checkpoint alone is not
 >   sufficient.
+> - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
+>   build-only run (9.2) MUST have reported `records_total > 0` on its `Entity model built: …`
+>   line, consistent with `module_3_verification.checks.data_loading.records_loaded`. A snapshot
+>   built from zero records is a blank page and does NOT satisfy INV-038.
 >
-> If the checkpoints are missing OR the snapshot file does not exist, the agent MUST execute
-> Step 9 immediately (load `phase2-visualization.md`) and, at minimum, run the bundled app's
-> build-only snapshot step (9.2) so the artifact exists. Do NOT offer advancement. Do NOT ask
-> "Ready for Module 4?" Do NOT save progress. Produce the visualization first.
+> If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built
+> from zero records, the agent MUST execute Step 9 immediately (load `phase2-visualization.md`)
+> and run the bundled app's build-only snapshot step (9.2) — whose `--records` glob
+> (`src/system_verification/`*.jsonl`) matches the Truth Set written in Step 2 — so the artifact
+> exists AND is non-empty. Do NOT offer advancement. Do NOT ask "Ready for Module 4?" Do NOT save
+> progress. Produce the visualization first.
 
 ## Step 10: Verification Report Generation
 
@@ -33,9 +39,10 @@ under `module_3_verification.checks`. If either entry is missing or has `"status
 
 Generate a structured summary of all verification checks.
 
-1. Compile the results from all 10 verification checkpoint entries (`mcp_connectivity`,
+1. Compile the results from all 11 verification checkpoint entries (`mcp_connectivity`,
    `truthset_acquisition`, `sdk_initialization`, `code_generation`, `build_compilation`,
-   `data_loading`, `results_validation`, `database_operations`, `web_service`, `web_page`) into a
+   `data_source_registration`, `data_loading`, `results_validation`, `database_operations`,
+   `web_service`, `web_page`) into a
    single Verification Report.
 
 2. For each check, record:
@@ -83,6 +90,7 @@ Generate a structured summary of all verification checks.
          "sdk_initialization": {"status": "passed|failed", "duration_ms": 0},
          "code_generation": {"status": "passed|failed", "file": "verify_pipeline.[ext]"},
          "build_compilation": {"status": "passed|failed", "duration_ms": 0},
+         "data_source_registration": {"status": "passed|failed", "sources_registered": []},
          "data_loading": {"status": "passed|failed", "records_loaded": 0},
          "results_validation": {"status": "passed|failed", "entities": 0, "matches_verified": 0},
          "database_operations": {"status": "passed|failed", "ops_tested": ["write", "read", "search"]},
@@ -187,5 +195,5 @@ Complete the module using the standard **Module Completion** process in
 **Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All
-10 verification checks passed + database purged of TruthSet data + web service terminated +
+11 verification checks passed + database purged of TruthSet data + web service terminated +
 Module 3 completion recorded in the progress file.

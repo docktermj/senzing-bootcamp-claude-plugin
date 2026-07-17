@@ -65,7 +65,7 @@ When the Bootcamper runs the SBCP, these MUST hold across the entire Bootcamp.
 - **INV-010** — At any time, a Bootcamper can submit "Bootcamp feedback:".
 - **INV-011** — At any time, a Bootcamper can change the verbosity of the Bootcamp.
 - **INV-012** — All output MUST be relative to the Bootcamper's point of view. Output that is not important to the Bootcamper is suppressed.
-- **INV-013** — All modules are performed in order: Module 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11.
+- **INV-013** — All shipped modules are performed in order: Module 1 → 2 → 3 → 4 → 5 → 6 → 7. (Advanced Topics — performance, security, monitoring, deployment — ship as production-hardening follow-ups delivered at graduation, not as separate numbered Modules 8-11.)
 - **INV-014** — Modules are not skipped unless requested by the Bootcamper.
 - **INV-015** — Submitted bootcamp feedback is captured in `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
 
@@ -142,7 +142,7 @@ These hold at the boundaries of every module.
 ## INV-047 – INV-049: Graduation outcomes
 
 - **INV-047** — A banner is presented, "GRADUATION".
-- **INV-048** — A trophy document, `docs/bootcamp_recap.pdf`, is **always** created. It must be very professional looking (iterate to make it look professional) and contains "Information Shared", "Questions & Responses", "Action Taken", and "Journal".
+- **INV-048** — A trophy document, `docs/bootcamp_recap.pdf`, is **always** created. It must be very professional looking (iterate to make it look professional) and contains "Information Shared", "Questions & Responses", "Actions Taken", and "Journal".
 - **INV-049** — The `production/` directory is populated.
 
 ## INV-050: Project layout
@@ -157,22 +157,24 @@ These hold at the boundaries of every module.
   │   ├── bootcamp_progress.json         # Current module + completed modules
   │   ├── data_sources.yaml              # Registered data source definitions
   │   ├── engine_config.json             # Senzing engine configuration
-  │   ├── session_log.jsonl              # Session activity log
-  │   └── visualization_tracker.json     # Visualization run tracking
+  │   ├── session_log.jsonl              # Session activity log (reserved)
+  │   └── visualization_tracker.json     # Visualization run tracking (reserved)
   ├── data/                              # All data artifacts
   │   ├── raw/                           # Source data as received
   │   ├── transformed/                   # Senzing-mapped JSONL output
+  │   ├── mapping/                        # Mapping working data (specs, samples, intermediates)
   │   ├── samples/                       # Sample fixtures
   │   ├── temp/                          # Scratch/intermediate working files
-  │   └── backups/                       # Data backups
+  │   └── backups/                       # Data backups (reserved)
   ├── database/                          # SQLite Senzing repository
   ├── src/                               # Source code
   │   ├── transform/                     # Source-to-Senzing mappers
   │   ├── load/                          # Loading & redo processing
   │   ├── query/                         # Query, search & discovery
-  │   ├── server/                        # Visualization web server
+  │   ├── server/                        # Visualization web server (reserved; the viz server ships with the plugin)
   │   ├── system_verification/           # Pipeline verification (truth set)
   │   ├── scripts/                       # Setup & data-generation utilities
+  │   ├── resources/                     # Downloaded Senzing resources
   │   └── utils/                         # Shared helpers
   ├── docs/                              # Documentation
   │   ├── README.md
@@ -181,8 +183,8 @@ These hold at the boundaries of every module.
   │   ├── bootcamp_journal.md
   │   ├── bootcamp_recap.md
   │   ├── bootcamp_recap.pdf
-  │   ├── completion_summary.md
-  │   ├── stakeholder_summary_module1.md
+  │   ├── completion_summary.md          # (reserved)
+  │   ├── stakeholder_summary_module{n}.md
   │   ├── mapping/                       # Per-source mapping docs
   │   ├── reference/
   │   ├── progress/
@@ -192,10 +194,10 @@ These hold at the boundaries of every module.
   ├── licenses/
   │   └── g2.lic                         # Senzing license
   ├── logs/                              # Run logs & result summaries
-  ├── backups/                           # Project backups/archives
-  ├── monitoring/                        # Monitoring assets
-  ├── tests/                             # Test suite
-  └── production/                        # Production hardening (Modules 8-11)
+  ├── backups/                           # Project backups/archives (reserved)
+  ├── monitoring/                        # Monitoring assets (reserved; Advanced Topics follow-up)
+  ├── tests/                             # Test suite (reserved)
+  └── production/                        # Production project (generated at graduation)
   ```
 
 ## Invariants added from implemented specs
@@ -223,3 +225,11 @@ next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).
 - **INV-061** — The bootcamp MUST auto-detect the operating system and architecture (from the environment, else `uname`/`systeminfo`), persist them during onboarding, and reuse them in later modules rather than re-asking; a platform question may be presented only as a fallback when detection is genuinely unavailable or ambiguous, and its wording stays pinned verbatim (INV-056). (Source: `auto-detect-platform`, 2026-07-16.)
 - **INV-062** — At every module start, and at graduation start, the guide MUST surface the recommended session model and reasoning effort as a concise, non-blocking suggestion carrying the exact `/model` and `/effort` commands — never as a 👉 question or ⛔ gate, and never blocking progress. The specific per-stage model/effort values are advisory (maintained in `docs/model-selection.md`) and are not part of the invariant. (Source: `module-start-model-nudge`, 2026-07-16.) (Superseded by INV-063.)
 - **INV-063** — At every module start and graduation start, the guide MUST surface the recommended session model and reasoning effort with the exact `/model` and `/effort` commands. When the recommendation **changes** from the current stage, it MUST pause with a single 👉 yes/no question offering the switch — its own yielding turn, never combined with another 👉 question; when unchanged, it remains a concise, non-blocking statement. The guide MUST never change the session itself and MUST never block beyond that one optional question. The specific per-stage model/effort values are advisory (maintained in `docs/model-selection.md`) and are not part of the invariant. (Supersedes INV-062.) (Source: `model-effort-change-prompt`, 2026-07-16.)
+- **INV-064** — When the Bootcamper accepts a recommended model/effort switch at a module start or graduation start, the guide MUST continue the accepted path in a **single** turn: a one-line statement instructing the `/model`/`/effort` commands, immediately followed by the stage's first step, ending that turn on that step's single 👉 question. It MUST NOT insert a separate confirmation-only gate between the switch and the first step, and MUST NOT defer the first step to a later turn. (Hardens INV-005/INV-054 for the accepted-switch continuation; complements INV-063.) (Source: `model-switch-single-turn-continuation`, 2026-07-16.) (Superseded by INV-069.)
+- **INV-065** — A sanitized, non-PII example recap MUST ship inside the plugin — a source `.md` fixture at `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` and its rendered `bootcamp_recap.example.pdf` — the PDF MUST remain regenerable from the `.md` via `generate_recap_pdf.py`, and neither MUST contain real personal data. (Complements INV-048; hardens INV-004 for shipped example assets.) (Source: `example-recap-reference`, 2026-07-17.)
+- **INV-066** — Any Python package install the plugin instructs MUST use an explicit interpreter (`python3 -m pip`, never bare `pip`) and be robust to PEP 668 externally-managed environments (prefer a project-local virtualenv), and MUST NOT modify the global/system Python; where a working fallback exists (e.g. the recap PDF's stdlib renderer), an install failure MUST degrade to it rather than block. (Hardens INV-052/INV-048 and the file-placement rules.) (Source: `robust-fpdf2-install`, 2026-07-17.)
+- **INV-067** — When bootcamp feedback is appended to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`, the write MUST be verified to have landed (re-read and confirm the entry is present, re-appending if not) before the bootcamper is told it was saved, and no later bootcamp step (CommonMark normalization, production build, cleanup) may delete or empty that file. (Hardens INV-015; mirrors the recap verify of INV-059.) (Source: `feedback-file-durability`, 2026-07-17.)
+- **INV-068** — Module 3 MUST register the TruthSet data source codes (CUSTOMERS, REFERENCE, WATCHLIST for the standard TruthSet, or the codes present in the acquired data for the Step 2a substitute) and commit them as the default engine config **before** the Step 6 data load runs, so the load never fails with SENZ2207 for those codes on the first attempt. (Upholds INV-038.) (Source: `module3-register-truthset-data-sources`, 2026-07-17.)
+- **INV-069** — When the Bootcamper accepts a recommended model/effort switch at a module start or graduation start, the guide MUST end that reply turn on a single confirmation gate whose wording is pinned verbatim (INV-056) — "👉 Are you done modifying the model and effort?" — presented after the one-line `/model`/`/effort` run-commands statement, and MUST defer the stage's first step to the turn after the Bootcamper confirms. The gate is asked only once (INV-006); the switch-offer question remains its own prior yielding turn (INV-063). On a declined switch, the first step lands on the reply turn with no gate. (Supersedes INV-064.) (Source: `model-effort-switch-done-confirmation`, 2026-07-17.)
+- **INV-070** — Every generated HTML visualization the bootcamp produces MUST be written under the generated project's `docs/visualizations/` directory, never the `docs/` root or another `docs/` subdirectory. (Hardens INV-050.) (Source: `layout-tree-reconciliation`, 2026-07-17.)
+- **INV-071** — The bundled visualization (`scripts/senzing_viz_server.py`) MUST render with no network access: D3 is vendored inside the plugin (`scripts/vendor/d3.v7.min.js`) and inlined into both the live page and the standalone snapshot, with the `d3js.org` CDN referenced only as a fallback when the vendored asset is missing. (Hardens INV-004/INV-038; complements INV-052.) (Source: `vendor-d3-offline-visualization`, 2026-07-17.)

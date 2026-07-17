@@ -198,8 +198,14 @@ Once the bootcamper responds, act on their answer:
 
 **Phase 3: Install language bindings (only after EULA acceptance):**
 
-3. Install the language-specific SDK bindings (e.g., `pip install senzing` for Python, or the
-   equivalent for the chosen language).
+3. Install the language-specific SDK bindings. For Python, never use a bare `pip` (a stale shim on
+   PATH may point at a deleted interpreter): use `python3 -m pip install senzing`, and if an
+   externally-managed environment (PEP 668, common on macOS/Homebrew and many Linux distros)
+   rejects it, install into a project-local virtualenv (`python3 -m venv <project-relative dir>`
+   then `<dir>/bin/python -m pip install senzing`; on Windows `<dir>\Scripts\python -m pip install
+   senzing`) and use that interpreter for the bootcamp's Python code. Never modify the global/system
+   Python. For other languages, use that ecosystem's package manager (Maven/Gradle for Java, NuGet
+   for C#, etc.).
 
 **TypeScript/Node.js warning:** The TypeScript SDK (`sz-napi`) may require building from source
 if prebuilt binaries are not available for the user's platform. This involves installing the

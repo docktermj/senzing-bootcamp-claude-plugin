@@ -53,8 +53,11 @@ Sample 15–25 entities that contain records from multiple data sources and veri
 the same real-world person or organization. Check cross-source matches and spot-check
 single-source entities to confirm no cross-source matches were missed.
 
-Offer to visualize the cross-source entity relationships as a web page. If accepted, save to
-`docs/multi_source_results.html`.
+Offer to visualize the cross-source entity relationships as a web page. Pin the offer verbatim:
+
+> 👉 **Would you like a web page visualizing the cross-source entity relationships?**
+
+If accepted, save to `docs/visualizations/multi_source_results.html`.
 
 **Checkpoint:** write step 23.
 
@@ -110,11 +113,11 @@ Record the validation findings:
 - This becomes the baseline for comparison
 
 **Mandatory visualization offer (internal gate).** You MUST offer the results dashboard before
-proceeding to the Decision Gate, do not skip it. Present the offer: a results dashboard showing
-entity resolution results with entity counts, match statistics, and sample resolved entities,
-saved as `docs/results_dashboard.html`.
+proceeding to the Decision Gate, do not skip it. Pin the offer verbatim:
 
-- **Yes:** generate the HTML dashboard and save to `docs/results_dashboard.html`.
+> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
+
+- **Yes:** generate the HTML dashboard and save to `docs/visualizations/results_dashboard.html`.
 - **No / not now:** acknowledge and proceed.
 - **Unsure:** briefly explain the value, then wait for their decision.
 

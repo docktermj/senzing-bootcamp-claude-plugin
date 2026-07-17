@@ -101,10 +101,16 @@ Then give the overview (cover naturally, do not ask a question yet):
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.
 - Goal: get comfortable generating Senzing SDK code, finishing with running code you can build on.
+- You finish with a professional **recap PDF** trophy — a keepsake of everything you built, module by
+  module, to keep and share with your team. A sample of a finished recap ships with the plugin at
+  `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
+  the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
+  a non-blocking mention, not a question or a gate.
 - A brief Module 1-7 overview (Core track): (1) business problem, (2) SDK setup, (3) system
   verification, (4) data collection, (5) data quality and mapping, (6) data processing, (7)
-  query, visualize, and discover. The Advanced Topics track adds Modules 8-11 (performance,
-  security, monitoring, deployment).
+  query, visualize, and discover. The Advanced Topics track covers the same Modules 1-7 and adds
+  deeper production-hardening guidance (performance, security, monitoring, deployment) as
+  follow-ups at graduation rather than as separate numbered modules.
 - Tracks let you focus on what matters.
 - Licensing: a built-in evaluation license covers the bootcamp's demos; more capacity options
   exist and Module 2 walks through them.
@@ -142,16 +148,16 @@ NOT a gate; if they skip, apply `standard` and tell them so.
 👉 **Which track would you like? Reply with a number:**
 
 1. **Core Bootcamp** *(recommended)* — Modules 1-7. Foundation from problem definition through
-   query/visualize.
-2. **Advanced Topics** — Modules 1-11. Adds performance, security hardening, monitoring, and
-   packaging/deployment.
+   query/visualize, then graduation.
+2. **Advanced Topics** — the same Modules 1-7, plus deeper production-hardening guidance
+   (performance, security hardening, monitoring, packaging/deployment) delivered through the
+   graduation production project and migration checklist rather than as separate numbered modules.
 
 Tracks are not mutually exclusive; completed modules always carry forward. This is a ⛔ gate:
 wait for the real choice, do not assume one. **Hold** the chosen `track` for the consolidated
 preface write in step 8 (do not write it now).
 
-(Advanced-track knowledge check, track switching, and the per-gate validation table are part of
-later porting phases.)
+(Track switching and the per-gate validation table are part of later porting phases.)
 
 ## 7. Programming language selection (preface item 8, gate)
 

@@ -48,18 +48,19 @@ adapt to their context). If none fit, they can accept the Business Case Offer in
 
 ## 5. Discovery prompt: three selectable paths
 
-Offer exactly one of:
+Present the neutral lead question, then the numbered choices, ending the turn on the 👉:
 
-1. **Describe a real business case:** "Tell me about the problem you're solving: what data you
-   have, where it comes from, and what success looks like."
-2. **Adopt a design pattern** (if they picked one in Step 4): "You picked [pattern]. How does
-   that apply: what data, from where, and what does success look like?"
-3. **Accept the Business Case Offer:** "Don't have a case in mind, or would rather not share
-   one? I can generate a realistic, multi-source scenario so you can complete the full bootcamp
-   without supplying your own."
+👉 **How would you like to define the business problem? Reply with a number:**
 
-*(Internal: end the turn on this choice and wait. Do NOT generate a scenario before the
-bootcamper explicitly accepts.)*
+1. **Describe a real business case** — tell me about the problem you're solving: what data you
+   have, where it comes from, and what success looks like.
+2. **Adopt a design pattern** (if you picked one in Step 4) — how does it apply: what data, from
+   where, and what does success look like?
+3. **Accept the Business Case Offer** — I'll generate a realistic, multi-source scenario so you
+   can complete the full bootcamp without supplying your own.
+
+*(Internal: end the turn on this 👉 choice and wait. Do NOT generate a scenario before the
+bootcamper explicitly accepts option 3.)*
 
 **Checkpoint:** write step 5.
 
@@ -222,7 +223,7 @@ Read `track` from `config/bootcamp_preferences.yaml`.
 3. Local / on-premises.
 4. Not sure yet.
 
-Reassure: "We'll develop everything locally first; deployment code comes in Module 11." Persist
+Reassure: "We'll develop everything locally first; deployment is addressed in the graduation production project and migration checklist." Persist
 `deployment_target` (`aws`/`azure`/`gcp`: also set `cloud_provider`; `kubernetes`/
 `docker_swarm`; `local`/`on_premises`; or `undecided`). **Checkpoint:** step 9 "completed".
 

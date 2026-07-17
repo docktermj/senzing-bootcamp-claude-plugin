@@ -214,7 +214,8 @@ PAGE = r"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
-<script src="https://d3js.org/d3.v7.min.js"></script>
+__D3_SCRIPT__
+__DATA_SHIM__
 <style>
 :root{--navy:#0c2340;--blue:#175ca8;--gold:#c8922a;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc}
 *{box-sizing:border-box}
@@ -377,10 +378,28 @@ window.addEventListener("resize",function(){if(d3.select("#tab-graph").classed("
 """
 
 
-def render_page(title):
+def _d3_script():
+    """Return an inline <script> carrying the vendored D3, so the visualization
+    renders with no network access. Fall back to the CDN tag only if the vendored
+    asset is missing."""
+    vendored = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "vendor", "d3.v7.min.js"
+    )
+    try:
+        with open(vendored, encoding="utf-8") as fh:
+            return "<script>" + fh.read() + "</script>"
+    except OSError:
+        return '<script src="https://d3js.org/d3.v7.min.js"></script>'
+
+
+def render_page(title, data_shim=""):
+    # Replace D3 and the data shim LAST so their contents are never rescanned for
+    # the other placeholders.
     return (
         PAGE.replace("__TITLE__", title)
         .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
+        .replace("__DATA_SHIM__", data_shim)
+        .replace("__D3_SCRIPT__", _d3_script())
     )
 
 
@@ -437,14 +456,15 @@ def build_model(settings, patterns):
 
 
 def write_snapshot(model, engine, flags, title, out_path):
-    """Write a self-contained HTML snapshot with data embedded (no server needed)."""
+    """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
+    renders with no server and no network access."""
     payload = {
         "stats": model.stats(),
         "graph": model.graph(),
         "merges": model.merges(),
     }
-    page = render_page(title)
-    # Replace the fetch-based bootstrap with an embedded-data shim.
+    # The embedded-data shim runs after D3 and before the page bootstrap, replacing
+    # the fetch-based bootstrap with the inlined data.
     shim = (
         "<script>const __DATA__=" + json.dumps(payload) + ";"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
@@ -452,8 +472,7 @@ def write_snapshot(model, engine, flags, title, out_path):
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
-    page = page.replace('<script src="https://d3js.org/d3.v7.min.js"></script>',
-                        '<script src="https://d3js.org/d3.v7.min.js"></script>' + shim)
+    page = render_page(title, data_shim=shim)
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         fh.write(page)
