@@ -1,18 +1,18 @@
-# Module 1, Phase 2: Document and Confirm (steps 10–18)
+# Module 1, Phase 2: Document and Confirm (steps 9–17)
 
 Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal directives.
 
-## 10. Encourage visual explanations
+## 9. Encourage visual explanations
 
 Ask for diagrams of data architecture, data flows, or example records. If an image contains
-placeholders like `[variable]`, ask what each represents. **Checkpoint:** write step 10.
+placeholders like `[variable]`, ask what each represents. **Checkpoint:** write step 9.
 
-## 11. Identify the scenario
+## 10. Identify the scenario
 
 Categorize as Customer 360, Fraud Detection, Data Migration, Compliance, Marketing, etc. If a
-pattern was selected, it's already identified. **Checkpoint:** write step 11.
+pattern was selected, it's already identified. **Checkpoint:** write step 10.
 
-## 12. Create the problem statement document
+## 11. Create the problem statement document
 
 Save to `docs/business_problem.md` using this template:
 
@@ -51,7 +51,7 @@ Save to `docs/business_problem.md` using this template:
 Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 
 ## Integration Requirements
-**Downstream systems** / **Integration method** / **Systems mentioned** (from Step 8)
+**Downstream systems** / **Integration method** / **Systems mentioned** (from Step 7)
 
 ## Deployment Target
 [If `deployment_target` present in preferences: Platform / Category (Cloud/Container/Local/
@@ -82,14 +82,14 @@ would, plus:
 until the bootcamper is told. **If artifacts are later missing/unreadable:** tell the
 bootcamper the generated data is unavailable and let them supply real data.
 
-**Checkpoint:** write step 12.
+**Checkpoint:** write step 11.
 
-## 13. Update README.md
+## 12. Update README.md
 
 Fill the Overview and Business Problem sections with what was gathered; mention the design
-pattern if one was selected. **Checkpoint:** write step 13.
+pattern if one was selected. **Checkpoint:** write step 12.
 
-## 14. Propose the solution approach
+## 13. Propose the solution approach
 
 Explain how Senzing solves this and which modules are most relevant. If a pattern was selected,
 reference how the bootcamp implements it.
@@ -98,36 +98,36 @@ reference how the bootcamp implements it.
   entity resolution, THEN a search index (Elasticsearch/OpenSearch) over resolved entities.
   This prevents a common architecture mistake. (Full `design-patterns` reference is a later
   porting phase; use `search_docs` for specifics.)
-- **If integration targets were identified in Step 8:** reference them and use `search_docs`
+- **If integration targets were identified in Step 7:** reference them and use `search_docs`
   for Senzing's guidance on integrating with those systems.
 
-**Checkpoint:** write step 14.
+**Checkpoint:** write step 13.
 
-## 15. Senzing value restatement
+## 14. Senzing value restatement
 
 Before confirming, reinforce why Senzing ER is valuable for THIS problem. Use
 `search_docs(query='value proposition <use_case_category>', version='current')` and tie the
 value to the bootcamper's specific data, sources, and outcomes (not generic marketing). If
 integration targets exist, explain how Senzing fits alongside them as a foundational layer.
 
-**Checkpoint:** write step 15.
+**Checkpoint:** write step 14.
 
-## 16. Get confirmation
+## 15. Get confirmation
 
 👉 **Does this accurately capture your problem and approach?**
 
-*(Internal: end the turn and wait.)* **Checkpoint:** write step 16.
+*(Internal: end the turn and wait.)* **Checkpoint:** write step 15.
 
-## 17. Offer a stakeholder summary
+## 16. Offer a stakeholder summary
 
 👉 **Would you like a one-page executive summary to share with your team?**
 
 *(Internal: end the turn and wait.)* If yes, produce `docs/stakeholder_summary_module1.md` covering
 problem, approach, data sources, key findings, next steps, and ROI considerations, filled with
 Module 1 context from `docs/business_problem.md`. (The Kiro `templates/stakeholder_summary.md`
-port is a later phase; compose the summary directly for now.) **Checkpoint:** write step 17.
+port is a later phase; compose the summary directly for now.) **Checkpoint:** write step 16.
 
-## 18. Module completion and transition to Module 2
+## 17. Module completion and transition to Module 2
 
 Run the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 1 recap
@@ -139,7 +139,7 @@ problem is defined, the next module installs and configures the Senzing SDK:
 
 👉 **Module 1 complete. Ready to install and configure the Senzing SDK in Module 2?**
 
-**Checkpoint:** write step 18. On module completion set `current_step` to `null`.
+**Checkpoint:** write step 17. On module completion set `current_step` to `null`.
 
 **Success indicator:** ✅ Clear problem statement + identified data sources + defined success
 metrics + bootcamper confirmation + `docs/business_problem.md` created + Module 1 recap section

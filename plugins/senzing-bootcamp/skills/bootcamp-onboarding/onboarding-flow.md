@@ -171,6 +171,32 @@ preface write in step 7 (do not write it now).
 - **Hold** the chosen programming language for the consolidated preface write in step 7 (do not
   write it now). (Language-specific guidance - `lang-*` - is a later porting phase.)
 
+## 6b. Initialize version control (optional)
+
+Group this setup-adjacent decision with the programming-language choice, before the guided
+modules begin. Do the detection quietly (administrative, not narrated).
+
+Check whether the working directory is already a git repository. `git` behaves identically on
+Linux, macOS, and Windows; rely on the command's **exit status**, not a shell-specific stderr
+redirect:
+
+```bash
+git rev-parse --is-inside-work-tree
+```
+
+- **Already a repo** (command succeeds / prints `true`): skip the question. **Hold**
+  `git_init: existing` for the step-7 consolidated write; proceed to step 7.
+- **Not a repo** (command fails / non-zero exit): ask the pinned 👉 question, verbatim (INV-056):
+
+  👉 **If you don't know what "git" is, just skip this. It's optional: would you like me to initialize a git repository for version control?**
+
+  *(Internal: end the turn on this single 👉 question and wait — INV-005.)* On **yes**, run
+  `git init` as a quiet administrative action and **hold** `git_init: true`; on **no**, skip and
+  **hold** `git_init: false`. Either way, proceed to step 7.
+
+Do not write preferences here: `git init` is an action (run it now), but the `git_init` value is
+**held** for the single consolidated preface write in step 7 — no separate write (INV-058).
+
 ## 7. Any questions (preface item 6)
 
 Before continuing, invite final questions:
@@ -184,8 +210,8 @@ Before continuing, invite final questions:
 This is NOT a hard gate: if they say they are ready, advance.
 
 **Consolidated preference write (once, quietly).** When the bootcamper signals readiness to
-continue, persist all preface choices collected in steps 4-6 — `verbosity`, `track`, programming
-language, `name` if it was captured, and the detected `os`/`arch` — to
+continue, persist all preface choices collected in steps 4-6b — `verbosity`, `track`, programming
+language, `name` if it was captured, the detected `os`/`arch`, and the `git_init` outcome — to
 `config/bootcamp_preferences.yaml` in a **single**
 write. This is the only preference write of the preface; the earlier gates only held the answers,
 so the bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this

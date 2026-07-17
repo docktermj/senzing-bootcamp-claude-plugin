@@ -63,7 +63,7 @@ forward.
 
 - **Keep the full dataset and expand:** route to the Module 1 licensing paths: apply an
   existing license, request one through the external channel, or (when available) request one
-  in-flow via the Senzing MCP server. Use the Module 1 Phase 1 discovery flow (Steps 6a–6e in
+  in-flow via the Senzing MCP server. Use the Module 1 Phase 1 discovery flow (Steps 5a–5e in
   `../module-01-business-problem/phase1-discovery.md`) for the tool-availability checks and
   branching; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
@@ -322,7 +322,7 @@ the Senzing MCP server. When the dataset genuinely exceeds the effective limit, 
 can keep their full dataset and expand capacity via the Module 1 licensing paths, or work with
 a smaller slice. Do not steer them to a smaller substitute as the only path. Defer the
 licensing-path availability checks and any capacity figure to the Module 1 Phase 1 discovery
-flow (Steps 6a–6e in `../module-01-business-problem/phase1-discovery.md`) and the Senzing MCP
+flow (Steps 5a–5e in `../module-01-business-problem/phase1-discovery.md`) and the Senzing MCP
 server.
 
 **If the bootcamper chooses to work with a smaller slice:**

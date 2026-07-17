@@ -34,7 +34,7 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase 1: Discovery** (steps 1–9): `phase1-discovery.md`
-- **Phase 2: Document and Confirm** (steps 10–18): `phase2-document-confirm.md`
+- **Phase 1: Discovery** (steps 1–8): `phase1-discovery.md`
+- **Phase 2: Document and Confirm** (steps 9–17): `phase2-document-confirm.md`
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.
