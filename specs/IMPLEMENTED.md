@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## recap-pdf-professional-design
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+- **Summary:** Made the recap trophy PDF reach a professionally designed render and ported the proven redesign into the bundled generator. **Graduation Step 1b** now checks whether `fpdf2` is importable and, if not, offers `pip install fpdf2` so the designed renderer runs instead of the plain stdlib fallback (declining/failure still yields a valid PDF — INV-048 non-blocking). **`render_with_fpdf2`** was refactored: a `RecapPDF(FPDF)` subclass moves all bottom-anchored content into `footer()` (exempt from auto-page-break → no spurious blank pages; page 1 shows the credit, later pages a page number), and a **two-pass (measure/final) render** adds a table of contents with correct page numbers — the measure pass renders identical content (TOC with placeholder numbers) to record each module's real start page, the final pass renders the TOC with those numbers; this is deterministic and avoids fpdf2's `insert_toc_placeholder` 2-pass render that had ghosted text. Cover/module rendering was factored into `_render_cover`/`_render_toc`/`_render_module_page` (reusing the existing `_safe()` Latin-1 sanitizer and `_render_subsection`/`_render_line`, which already give the four required subsections and Latin-1-safe bullets). **Verified with fpdf2 + pymupdf in a scratch venv:** a 7-module recap renders to 9 pages with TOC numbers exactly matching actual module start pages, no blank/near-empty pages, no duplicate TOC labels, cover title/subtitle not overlapping, footer page numbers on every content page (none on the cover); a stress recap with a multi-page module (10 pages, module 3 spanning 5-6) still had TOC numbers exactly tracking the auto-page-break starts (module 4 → page 7). `py_compile` clean; `--check` still passes; with `fpdf2` forced absent, `render_with_fpdf2` returns False and `main()` falls back to a valid stdlib PDF (rc 0). No bootcamper runtime dependency added (`pymupdf` used only for maintainer verification). Upholds INV-048; introduces no new invariant.
+- **Commit:** `78f56d5`
+
 ## model-effort-change-prompt
 
 - **Implemented:** 2026-07-16
