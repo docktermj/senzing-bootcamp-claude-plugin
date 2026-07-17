@@ -1,19 +1,21 @@
 # Onboarding Flow (fresh bootcamp)
 
 Follow these steps in order. Follow `ground-rules.md` throughout. Do not narrate administrative
-work in detail: do the setup quietly, then present the ENTITY RESOLUTION CONCEPTS banner, and
-later the WELCOME banner.
+work in detail: do the setup quietly, then present the WELCOME banner.
 
 The bootcamper-facing preface follows this order:
 
-1. **Entity resolution concepts** (banner + description + explore gate) — steps 3.
-2. **Welcome + overview** (WELCOME banner + overview) — step 4.
-3. **Level of detail** (verbosity) — step 5.
-4. **Track** — step 6.
-5. **Programming language** — step 7.
-6. **Any questions** — step 8.
+1. **Welcome + overview** (WELCOME banner + overview) — step 3.
+2. **Level of detail** (verbosity) — step 4.
+3. **Track** — step 5.
+4. **Programming language** — step 6.
+5. **Any questions** — step 7.
 
-Steps 0-2 are administrative and mostly silent; they run before the concepts banner.
+Steps 0-2 are administrative and mostly silent; they run before the WELCOME banner.
+
+Entity resolution concepts are **not** part of the preface. They are an optional **Module 0**
+(`../module-00-entity-resolution-concepts/SKILL.md`) presented after the preface and before
+Module 1; step 8 hands off to it.
 
 ## 0. Setup preamble
 
@@ -72,20 +74,7 @@ If the Senzing SDK is not yet installed, note that Module 2 covers installation 
 
 (A full preflight script is a later porting phase; keep this check lightweight for now.)
 
-## 3. Entity resolution concepts (preface item 1-3)
-
-Teach the core idea of entity resolution first, so the bootcamper has context before the guided
-bootcamp begins. Follow `entity-resolution-intro.md`:
-
-1. Present the **ENTITY RESOLUTION CONCEPTS** banner (defined in `entity-resolution-intro.md`).
-2. Give the description of entity resolution, pulling all Senzing-specific facts from the MCP
-   server (never from memory).
-3. End on the mandatory exploration gate using the pinned 👉 question defined in
-   `entity-resolution-intro.md` — verbatim: **"Are you ready to move on to the welcome?"** It is a
-   single yes/no with exactly one meaning for "yes" and one for "no", and no "or"-joined choices
-   (INV-008/INV-051). Do not advance until the bootcamper is ready.
-
-## 4. Welcome and overview (preface item 4-5)
+## 3. Welcome and overview (preface item 1-2)
 
 State that setup is complete ("Administrative setup is complete. The bootcamp is starting."),
 then display the WELCOME banner:
@@ -117,7 +106,7 @@ Then give the overview (cover naturally, do not ask a question yet):
 - If you hit unfamiliar terms (Entity Specification, DATA_SOURCE, entity resolution), ask and
   I'll look up the current definition from the Senzing docs on demand.
 
-## 5. Level of detail (preface item 6)
+## 4. Level of detail (preface item 3)
 
 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 
@@ -126,7 +115,7 @@ Then give the overview (cover naturally, do not ask a question yet):
 3. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
 
 Wait for the answer, then **hold** the chosen verbosity for the consolidated preface write in
-step 8 — do not write it now (INV-012: one preface write, not one per gate). When persisted, the
+step 7 — do not write it now (INV-012: one preface write, not one per gate). When persisted, the
 `verbosity` key will look like:
 
 ```yaml
@@ -143,7 +132,7 @@ verbosity:
 Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
 NOT a gate; if they skip, apply `standard` and tell them so.
 
-## 6. Track selection (preface item 7, gate)
+## 5. Track selection (preface item 4, gate)
 
 👉 **Which track would you like? Reply with a number:**
 
@@ -155,15 +144,15 @@ NOT a gate; if they skip, apply `standard` and tell them so.
 
 Tracks are not mutually exclusive; completed modules always carry forward. This is a ⛔ gate:
 wait for the real choice, do not assume one. **Hold** the chosen `track` for the consolidated
-preface write in step 8 (do not write it now).
+preface write in step 7 (do not write it now).
 
 (Track switching and the per-gate validation table are part of later porting phases.)
 
-## 7. Programming language selection (preface item 8, gate)
+## 6. Programming language selection (preface item 5, gate)
 
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
-  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the step-8 consolidated
+  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the step-7 consolidated
   write so Module 2 can reuse it instead of re-asking.
 - Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
   languages on that platform.
@@ -179,32 +168,34 @@ preface write in step 8 (do not write it now).
   👉 **Which programming language would you like to use for the bootcamp?**
 
 - This is a ⛔ gate: wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
-- **Hold** the chosen programming language for the consolidated preface write in step 8 (do not
+- **Hold** the chosen programming language for the consolidated preface write in step 7 (do not
   write it now). (Language-specific guidance - `lang-*` - is a later porting phase.)
 
-## 8. Any questions (preface item 9)
+## 7. Any questions (preface item 6)
 
-Before starting Module 1, invite final questions:
+Before continuing, invite final questions:
 
-👉 **Do you have any questions before we begin Module 1?**
+👉 **Do you have any questions before we get started?**
 
 - A clarification question: answer it at their verbosity level (using the MCP server for any
   Senzing facts), then ask once more whether they have other questions before continuing.
-- A readiness signal ("no", "let's go", "ready", "start"): proceed to Module 1.
+- A readiness signal ("no", "let's go", "ready", "start"): proceed to Module 0.
 
 This is NOT a hard gate: if they say they are ready, advance.
 
-**Consolidated preference write (once, quietly).** When the bootcamper signals readiness to begin
-Module 1, persist all preface choices collected in steps 5-7 — `verbosity`, `track`, programming
+**Consolidated preference write (once, quietly).** When the bootcamper signals readiness to
+continue, persist all preface choices collected in steps 4-6 — `verbosity`, `track`, programming
 language, `name` if it was captured, and the detected `os`/`arch` — to
 `config/bootcamp_preferences.yaml` in a **single**
 write. This is the only preference write of the preface; the earlier gates only held the answers,
 so the bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this
-administrative write. Then hand off to Module 1.
+administrative write. Then hand off to Module 0.
 
-## 9. Hand off to Module 1
+## 8. Hand off to Module 0
 
-Invoke the `module-01-business-problem` skill to begin Module 1, applying the module-start
-banner and journey map from `ground-rules.md`. Modules then run in ascending numeric order
-(Module 1 → Module 2 → … → Module 7), each ending with the standard module completion process
-in `module-completion.md`.
+Invoke the `module-00-entity-resolution-concepts` skill. Module 0 is the **optional**
+entity-resolution concepts primer: it offers the primer via a pinned skip/keep 👉 gate, runs it
+if the bootcamper wants it (ENTITY RESOLUTION CONCEPTS banner + MCP-sourced description + explore
+gate), and then hands off to Module 1. If the bootcamper skips it, Module 0 proceeds straight to
+Module 1. The numbered modules then run in ascending order (Module 1 → Module 2 → … → Module 7),
+each ending with the standard module completion process in `module-completion.md`.

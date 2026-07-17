@@ -167,6 +167,14 @@ never count against the one-question-per-turn rule and must not be treated as ga
   banner, a journey map (modules in the selected track marked ✅ complete / 🔄 current / ⬜
   upcoming), before/after framing, and a brief numbered step overview. Never skip these - they
   orient the bootcamper.
+- **Module 0 is an optional, non-counted preamble.** The entity-resolution concepts primer
+  (`../module-00-entity-resolution-concepts/SKILL.md`) runs after the onboarding preface and
+  before Module 1. It is not one of the mandatory numbered Modules 1–7 (INV-013), is skippable via
+  its pinned 👉 skip/keep gate (INV-014), and does NOT run the per-module apparatus above (no
+  journey map, no before/after, no step overview, no `docs/bootcamp_recap.md` section, and it is
+  not added to `modules_completed`). When run, it presents only its ENTITY RESOLUTION CONCEPTS
+  banner, the MCP-sourced description, and its explore gate. The numbered journey map covers
+  Modules 1–7 only.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →

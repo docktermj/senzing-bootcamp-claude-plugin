@@ -1,11 +1,12 @@
-# Entity Resolution Introduction
+# Entity Resolution Concepts (Module 0 content)
 
-Used in the onboarding preface (the entity-resolution concepts step). Teach the core concept
-before the WELCOME banner and the rest of the preface.
+Used by Module 0 (the optional entity-resolution concepts primer). Teach the core concept before
+Module 1, only when the bootcamper chose the primer at the Module 0 skip/keep gate
+(`SKILL.md` Step 1).
 
 ## Banner (show first)
 
-Present this banner verbatim as the FIRST bootcamper-facing content of this step, before the
+Present this banner verbatim as the FIRST bootcamper-facing content of the primer, before the
 description:
 
 ```text
@@ -59,18 +60,18 @@ ready to move on, just say so."
 
 Then end the turn on this single 👉 question, asked **verbatim**, and wait:
 
-> 👉 **Are you ready to move on to the welcome?**
+> 👉 **Are you ready to move on to Module 1?**
 
 The wording is pinned so it stays compliant: it is a single yes/no where "yes" (or any readiness
-signal) means "yes, move on to the welcome" and "no" means "no, keep exploring" — exactly one
+signal) means "yes, move on to Module 1" and "no" means "no, keep exploring" — exactly one
 meaning each (INV-008), with no "or"-joined choices (INV-051, INV-009). Do not paraphrase it into
 an either/or (e.g. "…or shall we move on?"), which would give "yes" two meanings. This is a ⛔
 gate (internal - do not render the `⛔`/`🛑` glyphs). Do not advance until the bootcamper is ready.
 
 - **Follow-up question** (contains "?", asks for explanation): answer it via `search_docs`, then
   re-present the pinned gate question. Do NOT advance.
-- **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): advance to the WELCOME
-  banner and overview. Do not re-present the intro or the gate.
+- **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): hand off to Module 1
+  (`SKILL.md` Step 3). Do not re-present the primer or the gate.
 - **Not ready** ("no", "not yet", "wait"): acknowledge, invite another entity-resolution question
   or topic, and re-present the pinned gate question. Do NOT advance.
 - **Ambiguous:** treat as a follow-up.

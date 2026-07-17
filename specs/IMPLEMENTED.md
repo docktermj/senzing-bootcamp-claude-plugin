@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## entity-resolution-module-zero
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md` (new), `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md` (new), `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/entity-resolution-intro.md` (deleted; relocated to Module 0), `specs/INVARIANTS.md`
+- **Summary:** Carved the entity-resolution primer out of the onboarding preface into a discrete, optional **Module 0** (Option A — after the preface, before Module 1). Created the `module-00-entity-resolution-concepts` skill: `SKILL.md` offers the primer via a pinned skip/keep gate ("👉 Would you like to go through the Entity Resolution Concepts primer before Module 1?") and, when kept, runs `concepts.md` (ENTITY RESOLUTION CONCEPTS banner + MCP-sourced description + pinned explore gate, now "👉 Are you ready to move on to Module 1?"), then hands off to Module 1; on skip it goes straight to Module 1 with no primer. Removed the inline concepts step from `onboarding-flow.md`, renumbered the preface (WELCOME now first; steps 3–8) and its consolidated-write references, and pointed step 8 at Module 0; updated the onboarding `SKILL.md` sequence list; added the optional-non-counted-Module-0 note to `ground-rules.md`; deleted the relocated `entity-resolution-intro.md`. Reconciled invariants (maintainer-approved): added INV-072 (optional non-counted Module 0, exempt from INV-013/INV-014) and INV-073 (Module 0 content, supersedes INV-019/020/021), annotated INV-013/INV-014 with the exemption cross-refs, marked INV-019/020/021 superseded, and updated the INV-019–027 section intro. AC verified: primer is discrete/skippable, INV-019–021 outcomes preserved in Module 0, both new 👉 gates are single-meaning yes/no with no "or", changes are Markdown-only (cross-platform, language-agnostic), and no dangling refs to the old file or gate wording remain.
+- **Commit:** uncommitted
+
 ## fix-truthset-snapshot-empty
 
 - **Implemented:** 2026-07-17
