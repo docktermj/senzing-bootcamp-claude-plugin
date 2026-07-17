@@ -31,10 +31,16 @@ finish. Show it at most once per graduation.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-After the banner, surface a one-line best-value nudge (non-blocking — a statement, not a 👉
-question, and never a gate): graduation is correctness-critical, so for best value run it on
-Opus 4.8 at high effort — `/model opus` then `/effort high` (skip if you are already there or
-prefer one model for everything). See `../../docs/model-selection.md`.
+After the banner, prompt for the best-value model/effort before the heavier graduation work.
+Graduation is correctness-critical (Opus 4.8 + high effort) and steps up from the Module 7
+recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
+with another 👉:
+
+> 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
+
+On **yes**, have the bootcamper run those two commands and continue once they confirm; on **no**,
+proceed. You never change the session yourself. Then continue to Pre-checks. See
+`../../docs/model-selection.md`.
 
 ## Pre-checks
 
@@ -84,6 +90,17 @@ leave the content as written, and continue — a formatting issue is never a rea
 Generate `docs/bootcamp_recap.pdf` with the bundled generator. It always produces
 a valid PDF (a professionally designed one when `fpdf2` is installed, a plainer
 stdlib-rendered one otherwise), so a missing `fpdf2` is never a reason to skip.
+
+**Prefer the professionally designed renderer.** Before rendering, check whether
+`fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install
+it (`pip install fpdf2` — a small, pure-Python package) so the designed renderer is
+used: a cover page, a table of contents with page numbers, color-coded per-module
+sections, and page footers (INV-048 — the trophy should look professional). If the
+bootcamper declines or the install fails, proceed with the stdlib fallback; it still
+produces a valid, complete PDF, so this never blocks graduation. (Maintainers can
+visually verify a render by rasterizing pages to PNG — e.g. with `pymupdf` — to
+confirm the TOC page numbers, and the absence of overlaps or blank pages; `pymupdf`
+is a dev-only aid and is never required at bootcamper runtime.)
 
 Locate and run the bundled script (it ships with this plugin):
 

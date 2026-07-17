@@ -1,6 +1,6 @@
 # Senzing Bootcamp Claude Code Plugin
 
-A guided bootcamp for learning [Senzing](https://senzing.com) entity resolution,
+A guided bootcamp for learning [Senzing] entity resolution,
 packaged as a Claude Code plugin.
 Install it, then say **"start the bootcamp"** to be guided through
 a hands-on, module-by-module tutorial.
@@ -29,7 +29,7 @@ a hands-on, module-by-module tutorial.
     claude plugin install senzing-bootcamp@senzing-bootcamp
     ```
 
-1. If you already have the Senzing Bootcamp Claude Plugin installed, update it.
+1. If the Senzing Bootcamp Claude Plugin is already installed, update it.
 
     ```console
     claude plugin update senzing-bootcamp@senzing-bootcamp
@@ -37,23 +37,31 @@ a hands-on, module-by-module tutorial.
 
 ## Run Claude Code
 
-1. For the smoothest ride, run Claude with `--permission-mode auto`.
-
-1. *Choosing a model (recommended):* run most of the bootcamp on **Sonnet 5** —
-   the best value — and switch up to **Opus 4.8** for the correctness-critical
-   stretches: Modules 2 and 5, and graduation.
+1. Create a new directory for the bootcamp.
+   Example:
 
     ```console
     mkdir senzing-bootcamp
     cd senzing-bootcamp
-    claude --model claude-sonnet-5 --effort medium --permission-mode auto
     ```
+
+1. *Choosing a model (recommended):* run most of the bootcamp on **Sonnet 5** —
+   the best value — and switch up to **Opus 4.8** for the correctness-critical
+   stretches: Modules 2 and 5, and graduation.
 
    Before Modules 2 or 5 or graduation, switch the running session up with
    `/model claude-opus-4-8`, then back afterward with `/model claude-sonnet-5`.
    Prefer one model and no switching? Run `--model claude-opus-4-8` throughout —
    simplest, at higher cost on the lighter modules. Full per-skill breakdown:
    [`plugins/senzing-bootcamp/docs/model-selection.md`](plugins/senzing-bootcamp/docs/model-selection.md).
+
+   For the smoothest ride, run Claude with `--permission-mode auto`.
+
+    Example command:
+
+    ```console
+    claude --model claude-sonnet-5 --effort medium --permission-mode auto
+    ```
 
 1. *Note:* In addition to Claude Code,
    the Senzing Bootcamp Claude Plugin can also be run with:
@@ -74,16 +82,15 @@ a hands-on, module-by-module tutorial.
     - `/bootcamp-feedback` — share feedback about the bootcamp
       (or just say "bootcamp feedback"). Saved to
       `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
-    - `/graduate` — finish the Core track: generate your recap PDF trophy
-      (`docs/bootcamp_recap.pdf`) and a production-ready `production/` project.
 
-### What you finish with
+## What you finish with
 
-The bootcamp is a guided, module-by-module tutorial (Modules 1-7 in order). You end with working
-Senzing code and data in your project (`src/`, `data/`, `database/`), a professional recap PDF
-you can keep and share, and a `production/` starter project.
+The bootcamp is a guided, module-by-module tutorial.
+You end with working Senzing code and data in your project (`src/`, `data/`, `database/`),
+a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf]),
+and a `production/` starter project.
 
-### Uninstall plugin
+## Uninstall plugin
 
 1. Uninstall the plugin and marketplace.
 
@@ -92,6 +99,8 @@ you can keep and share, and a `production/` starter project.
     claude plugin marketplace remove senzing-bootcamp
     ```
 
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/docs/bootcamp_recap.pdf
 [Claude Code]: https://claude.com/product/claude-code
 [Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp
+[Senzing]: https://senzing.com
