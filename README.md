@@ -85,14 +85,14 @@ a hands-on, module-by-module tutorial.
     - `/graduate` — finish the Core track: generate the Bootcamp recap PDF
       (`docs/bootcamp_recap.pdf`) and a production-ready `production/` project.
 
-### What you finish with
+## What you finish with
 
 The bootcamp is a guided, module-by-module tutorial.
 You end with working Senzing code and data in your project (`src/`, `data/`, `database/`),
 a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf]),
 and a `production/` starter project.
 
-### Uninstall plugin
+## Uninstall plugin
 
 1. Uninstall the plugin and marketplace.
 
