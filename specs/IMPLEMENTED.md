@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## model-effort-change-prompt
+
+- **Implemented:** 2026-07-16
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/model-selection.md`
+- **Summary:** Turned the module-start best-value model/effort nudge from a non-blocking statement into a change-triggered pause, per bootcamper feedback. In `ground-rules.md` → "Module start banners and transitions", the nudge now has two cases: when the recommendation **changes** from the stage just completed, the turn ends with a **single** 👉 yes/no switch question ("Would you like to switch to `/model opus` + `/effort high` for this module?") as its own yielding turn (Step 1 follows next turn, preserving one-👉-per-turn — INV-008/INV-009); when **unchanged**, a brief statement or nothing (no per-module nagging — INV-012). On "yes" the guide instructs the bootcamper to run the commands and waits; it never changes the session itself. Updated the "After an affirmative module-transition" sequence and the Session-start "Model/effort tuning" note to match; applied the same change-triggered 👉 prompt at the graduation banner (`graduation/SKILL.md`); updated the mirrored description in `docs/model-selection.md`. This **reverses the non-blocking design of INV-062** — per the INVARIANTS.md maintenance rules a meaning change is a new invariant, so recorded **INV-063** (change-triggered single 👉 switch prompt) with maintainer sign-off and marked **INV-062 superseded by INV-063** (kept in place). Verified by inspection: change/unchanged cases present; switch question present; sequence + session-start note updated; graduation switch question present; doc updated; no stale "non-blocking, never a 👉" text remains; one 👉 per turn preserved. Supersedes INV-062; introduces INV-063.
+- **Commit:** `7da1d56`
+
 ## module-start-model-nudge
 
 - **Implemented:** 2026-07-16
