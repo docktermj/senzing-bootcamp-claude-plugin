@@ -18,6 +18,21 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## feedback-flow-boundary-banner
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** Bracketed the feedback workflow with pinned-verbatim bookend banners so it is visually distinct from the bootcamp. Added `feedback.md` **Step 1b** (entry): present a pinned "📝 BOOTCAMP FEEDBACK" banner as the first bootcamper-facing content, before Step 2's first 👉 question (a statement, not counted against one-👉-per-turn). Rewrote **Step 4** (exit): after Step 3b confirms the entry is saved, present a pinned "✅ FEEDBACK SAVED — BACK TO THE BOOTCAMP" banner + a one-line save confirmation, then re-present the exact pending bootcamp 👉 question verbatim (INV-006) so exactly one 👉 ends the turn (INV-005) — feedback questions never merge with the resumed question. Noted the entry/exit banners in the ground-rules any-time "Bootcamp feedback" control. Recorded new invariant INV-074 (maintainer-approved). AC verified: distinct pinned entry + exit banners present, exit is a statement followed by the resumed pending 👉 question, wording pinned verbatim in `feedback.md`, capture behavior/location unchanged (INV-015), and all changes are Markdown-only (cross-platform, language-agnostic).
+- **Invariants introduced:** INV-074.
+- **Commit:** uncommitted
+
+## verbosity-minimal-preset
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
+- **Summary:** Added a fourth verbosity preset **minimal** below "concise" for near-zero explanatory output. In onboarding step 4 (level of detail), minimal is now option 1 (concise/standard/detailed shifted to 2/3/4; standard stays *(recommended)* and the skip default); documented the category-level mapping (minimal=0, concise=1, standard=2, detailed=3, all five categories) and added an explicit note that minimal reduces only *explanatory* output and never suppresses required output (👉 questions INV-005, gates, module banners INV-028, end-of-module summaries INV-032, recap trophy INV-048). Mirrored the preset and the never-suppress-required-output guarantee in the ground-rules Verbosity section so "change verbosity" (INV-011) can select it any time. AC verified: fourth preset present below concise, persistable under `verbosity` with a defined categories mapping and selectable via "change verbosity", standard remains the default, list uses a neutral lead + numbered list with no "or" (INV-051/008), and changes are Markdown-only (cross-platform, language-agnostic). No new invariant (the never-suppress guarantee is already carried by existing invariants).
+- **Commit:** uncommitted
+
 ## relocate-git-init-to-onboarding
 
 - **Implemented:** 2026-07-17

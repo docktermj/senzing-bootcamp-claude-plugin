@@ -138,10 +138,13 @@ steering files.)
 
 ## Verbosity
 
-- Presets: **concise**, **standard** (default), **detailed**. Persist under a `verbosity` key
-  in preferences. The bootcamper can say "change verbosity" or "more code walkthroughs" at any
-  time. (The full five-category verbosity system is condensed here; expand it when
-  `verbosity-control` is ported.)
+- Presets: **minimal**, **concise**, **standard** (default), **detailed** (category levels
+  0/1/2/3). Persist under a `verbosity` key in preferences. The bootcamper can say "change
+  verbosity" or "more code walkthroughs" at any time. **minimal** is near-zero explanatory output
+  (all five categories at 0) for experts who want to move fast; it reduces only explanatory output
+  and NEVER suppresses required output — 👉 questions, gates, module banners, end-of-module
+  summaries, and the recap trophy always appear. (The full five-category verbosity system is
+  condensed here; expand it when `verbosity-control` is ported.)
 
 ## Any-time bootcamper controls
 
@@ -150,9 +153,12 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 - **Bootcamp feedback:** whenever the bootcamper says "bootcamp feedback", "I have feedback",
   "report an issue", or similar, run the feedback workflow in `feedback.md` and append the entry
-  to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. Then return them to exactly where they
-  left off. Feedback is saved locally only, never submitted externally unless they explicitly
-  ask. (The plugin's `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
+  to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. The workflow opens with a pinned
+  **BOOTCAMP FEEDBACK** entry banner and closes with a pinned **FEEDBACK SAVED — BACK TO THE
+  BOOTCAMP** exit banner (a statement) before the pending 👉 question resumes, so feedback mode is
+  visually distinct from the bootcamp. Then return them to exactly where they left off. Feedback
+  is saved locally only, never submitted externally unless they explicitly ask. (The plugin's
+  `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
 - **Change verbosity:** whenever they ask for more or less detail, update the `verbosity` key in
   `config/bootcamp_preferences.yaml`, confirm the new setting in one sentence, and continue.
 - **Repeat the question:** if they ask to hear the current question again ("repeat that", "what

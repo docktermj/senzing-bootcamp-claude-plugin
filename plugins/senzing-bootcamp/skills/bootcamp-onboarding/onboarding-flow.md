@@ -110,13 +110,15 @@ Then give the overview (cover naturally, do not ask a question yet):
 
 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 
-1. **concise** — minimal explanations, brief recaps. Best for experienced developers.
-2. **standard** *(recommended)* — balanced what-and-why, block-level code summaries.
-3. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
+1. **minimal** — near-zero output: only questions, results, and required banners/summaries; no explanations, code walkthroughs, or step recaps. Best for experts who want to move fast.
+2. **concise** — minimal explanations, brief recaps. Best for experienced developers.
+3. **standard** *(recommended)* — balanced what-and-why, block-level code summaries.
+4. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
 
 Wait for the answer, then **hold** the chosen verbosity for the consolidated preface write in
-step 7 — do not write it now (INV-012: one preface write, not one per gate). When persisted, the
-`verbosity` key will look like:
+step 7 — do not write it now (INV-012: one preface write, not one per gate). Each preset maps its
+five `categories` to a single level — `minimal` = 0, `concise` = 1, `standard` = 2, `detailed` = 3.
+When persisted, the `verbosity` key will look like (here, `standard`):
 
 ```yaml
 verbosity:
@@ -128,6 +130,10 @@ verbosity:
     technical_details: 2
     code_execution_framing: 2
 ```
+
+For `minimal`, every category is `0`. `minimal` reduces only *explanatory* output; it NEVER
+suppresses required output — every 👉 question (INV-005), gate, module banner (INV-028),
+end-of-module summary (INV-032), and the recap trophy (INV-048) still appear.
 
 Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
 NOT a gate; if they skip, apply `standard` and tell them so.
