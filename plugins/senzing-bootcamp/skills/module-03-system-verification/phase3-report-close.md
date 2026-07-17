@@ -14,11 +14,17 @@ directives, never rendered.
 >   the bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty.
 >   This is the hard guarantee that the visualization always happened, a checkpoint alone is not
 >   sufficient.
+> - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
+>   build-only run (9.2) MUST have reported `records_total > 0` on its `Entity model built: …`
+>   line, consistent with `module_3_verification.checks.data_loading.records_loaded`. A snapshot
+>   built from zero records is a blank page and does NOT satisfy INV-038.
 >
-> If the checkpoints are missing OR the snapshot file does not exist, the agent MUST execute
-> Step 9 immediately (load `phase2-visualization.md`) and, at minimum, run the bundled app's
-> build-only snapshot step (9.2) so the artifact exists. Do NOT offer advancement. Do NOT ask
-> "Ready for Module 4?" Do NOT save progress. Produce the visualization first.
+> If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built
+> from zero records, the agent MUST execute Step 9 immediately (load `phase2-visualization.md`)
+> and run the bundled app's build-only snapshot step (9.2) — whose `--records` glob
+> (`src/system_verification/`*.jsonl`) matches the Truth Set written in Step 2 — so the artifact
+> exists AND is non-empty. Do NOT offer advancement. Do NOT ask "Ready for Module 4?" Do NOT save
+> progress. Produce the visualization first.
 
 ## Step 10: Verification Report Generation
 

@@ -54,9 +54,7 @@ visualization is guaranteed to exist:
 
 ```bash
 python3 <viz-server-path> \
-  --records "src/system_verification/customers.jsonl" \
-            "src/system_verification/reference.jsonl" \
-            "src/system_verification/watchlist.jsonl" \
+  --records "src/system_verification/"*.jsonl \
   --title "Senzing Truth Set - System Verification" \
   --snapshot docs/visualizations/truthset_verification.html \
   --no-serve
@@ -100,9 +98,9 @@ The live page renders four tabs, all populated from these APIs:
    match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (The
    edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target` before
    `forceLink`, is baked into the bundled app, correct by construction.)
-2. **Record Merges**: cards showing each multi-record entity's constituent records.
-3. **Merge Statistics**: records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
-4. **Search / Probe**: search by name; results show the resolved entity, its sources, and the
+2. **Record Merges:** cards showing each multi-record entity's constituent records.
+3. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
+4. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
    match key / resolution rule that linked it.
 
 ### 9.5 Present it and give the guided tour
