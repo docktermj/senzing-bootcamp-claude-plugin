@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## model-effort-switch-done-confirmation
+
+- **Implemented:** 2026-07-17
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `specs/INVARIANTS.md`
+- **Summary:** Maintainer chose Option 2 (adopt the gate, supersede INV-064). On an accepted model/effort switch, the guide now runs the one-line `/model`/`/effort` statement and ends the reply turn on the pinned gate "👉 Are you done modifying the model and effort?" (verbatim, INV-056), deferring the stage's first step to the turn after the Bootcamper confirms; the gate is asked once (INV-006) and the switch-offer question stays its own prior turn (INV-063). On a declined switch the first step stays on the reply turn with no gate. Applied identically in `ground-rules.md` ("Best-value model/effort prompt" + "After an affirmative module-transition") and `graduation/SKILL.md`; `docs/model-selection.md` needed no change (its nudge section is neutral on the continuation). INV-064 marked superseded by the new INV-069 in `specs/INVARIANTS.md`. Acceptance criteria met: exactly one pinned 👉 gate on its own yielding turn before the first step; switch-offer question unchanged (INV-063); consistent wording across both skill files (INV-003); yes/no unambiguous (INV-008) with one 👉 per yielding turn (INV-005/INV-054); interaction-flow-only change, so cross-platform and language-agnostic.
+- **Commit:** uncommitted
+
 ## module3-register-truthset-data-sources
 
 - **Implemented:** 2026-07-17
