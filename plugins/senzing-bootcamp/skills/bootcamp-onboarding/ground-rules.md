@@ -224,11 +224,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ```text
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🚀🚀🚀  MODULE N: [MODULE NAME IN CAPS]  🚀🚀🚀
+  🚀🚀🚀  MODULE: [MODULE NAME IN CAPS]  🚀🚀🚀
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
 
-- After an affirmative module-transition ("Ready for Module X?"), immediately produce the
+- After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
   banner + journey map + before/after + step overview + best-value model/effort prompt. When that
   prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands

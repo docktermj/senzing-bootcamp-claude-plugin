@@ -89,7 +89,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
 4. **If Senzing-ready: present the fast-path offer:**
 
-   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in Module 6?**
+   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data Processing module?**
 
    *(Internal: end the turn on this question and wait.)*
 

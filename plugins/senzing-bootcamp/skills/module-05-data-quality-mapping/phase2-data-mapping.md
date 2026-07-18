@@ -387,7 +387,7 @@ Once all sources are mapped, choose the next module by whether the Senzing SDK i
 
 Close the turn on the transition question, for example:
 
-👉 **Module 5 complete. Ready to move on to [Module 2 (SDK Setup) / Module 6 (Data Processing)]?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)*
 

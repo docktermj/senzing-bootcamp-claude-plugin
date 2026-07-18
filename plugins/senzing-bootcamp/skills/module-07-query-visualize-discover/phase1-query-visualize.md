@@ -153,7 +153,7 @@ Based on the assessment:
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
-👉 **Would you like to return to Module 5 to refine your data mapping? Your loaded data and query programs will be preserved, after remapping, you'll reload the affected sources and re-evaluate here.**
+👉 **Would you like to return to the Data Quality & Mapping module to refine your data mapping? Your loaded data and query programs will be preserved, after remapping, you'll reload the affected sources and re-evaluate here.**
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -249,7 +249,7 @@ to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because thi
 content module, the completion process ends with the graduation offer rather than a next-module
 transition:
 
-👉 **Module 7 complete. Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Would you like to graduate now and generate your production project and recap trophy?**
 
 *(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
 to `null` per the ground rules.

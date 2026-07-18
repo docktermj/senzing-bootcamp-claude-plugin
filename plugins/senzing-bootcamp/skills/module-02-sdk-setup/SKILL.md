@@ -258,10 +258,10 @@ the inline pointers here.
 
 **4. Offer targeted options.** After the summary, always offer, at minimum, these three:
 
-- **Fix the common cause**: apply the fix for the matched cause (see sourcing in the next
+- **Fix the common cause:** apply the fix for the matched cause (see sourcing in the next
   item), then retry.
-- **Retry the build**: re-run the from-source build sequence.
-- **Fallback path**: proceed without a successful from-source build (see item 6). One fallback
+- **Retry the build:** re-run the from-source build sequence.
+- **Fallback path:** proceed without a successful from-source build (see item 6). One fallback
   is switching to a language with a simpler install path (Java or C# typically have simpler
   paths); another is any prebuilt/alternative install route the MCP server reports as available.
 
@@ -350,7 +350,7 @@ to 30 seconds for a response; if the tool does not return a value, or the MCP se
 reached within that time, omit the specific figure and tell the bootcamper the current value is
 unavailable from the MCP server. Never substitute a hardcoded or remembered figure.
 
-If a larger or temporary evaluation license is needed, **consult the Senzing MCP server**: call
+If a larger or temporary evaluation license is needed, **consult the Senzing MCP server:** call
 `search_docs(query='request a larger or temporary evaluation license')` and present the
 returned guidance; this avoids waiting for email responses.
 
@@ -358,7 +358,7 @@ returned guidance; this avoids waiting for email responses.
 obtain a license. This is informational only: you'll choose and carry out a path later, at the
 no-license branch of Step 5c; nothing needs to be selected here.
 
-1. **Request a temporary evaluation license through the MCP server (in-flow)**: the bootcamp
+1. **Request a temporary evaluation license through the MCP server (in-flow):** the bootcamp
    can ask the Senzing MCP server to generate a temporary evaluation license by invoking the
    `submit_feedback` tool with the `license_request` category, which avoids waiting for email.
    This path depends on the `submit_feedback` tool being enabled and reported as available by
@@ -366,9 +366,9 @@ no-license branch of Step 5c; nothing needs to be selected here.
    Kiro Power this tool was disabled by default in `mcp.json`; in the Claude plugin, ensure the
    senzing MCP server's `submit_feedback` tool is enabled in Claude Code, and reconcile this
    when finalizing the plugin's MCP config.)
-2. **Apply a license you already have**: if you already hold a `.lic` file or a Base64-encoded
+2. **Apply a license you already have:** if you already hold a `.lic` file or a Base64-encoded
    license key, you can place it at `licenses/g2.lic`.
-3. **Request a license through Senzing support**: request an evaluation license through
+3. **Request a license through Senzing support:** request an evaluation license through
    Senzing support's external channel.
 
 Selecting and carrying out one of these paths happens at the Step 5c no-license branch, not
@@ -460,7 +460,7 @@ Confirm: "No problem, the built-in 500-record evaluation license is active autom
 That's enough for the bootcamp demo modules."
 
 If the bootcamper wants a license for larger datasets, present the licensing paths below.
-**Consult the Senzing MCP server first**: call
+**Consult the Senzing MCP server first:** call
 `search_docs(query='larger evaluation license for datasets over 500 records')` and present the
 returned guidance. (A `licenses/README.md` reference doc is a later porting phase; teach the
 paths directly for now.)
@@ -479,17 +479,17 @@ apply this decision:
 
 Present the available paths as distinct, individually selectable options:
 
-1. **Request an evaluation license through the MCP server (in-flow)**: *present this option
+1. **Request an evaluation license through the MCP server (in-flow):** *present this option
    only when `submit_feedback` is reported available.* This path asks the Senzing MCP server to
    generate an evaluation license by invoking the `submit_feedback` tool with the
    `license_request` category. The evaluation license is delivered by email, and the email
    contains a download link. This option requires the `submit_feedback` tool; in the Claude
    plugin, ensure it is enabled in Claude Code (reconcile with the plugin's MCP config).
-2. **Request a license through the external channel**: Contact <support@senzing.com> to
+2. **Request a license through the external channel:** Contact <support@senzing.com> to
    request an evaluation license. Mention that you are using the Senzing Bootcamp and provide
    your name, organization, expected record count, and use case description. Expect a response
    within 1-2 business days. For production licenses, contact <sales@senzing.com>.
-3. **Apply an existing license**: if you already have, or later obtain, a `.lic` file or
+3. **Apply an existing license:** if you already have, or later obtain, a `.lic` file or
    Base64-encoded license string, follow the Step 5d configuration steps to save and wire it.
 
 When presenting the evaluation license's validity period or record capacity, retrieve those
@@ -725,7 +725,7 @@ transition question.
 
 The next module (Module 3) verifies the full setup end-to-end using the Senzing TruthSet:
 
-👉 **Module 2 complete. Ready to verify your setup end-to-end in Module 3?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)* On module completion set `current_step` to
 `null`.

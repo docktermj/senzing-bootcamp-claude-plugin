@@ -26,7 +26,7 @@ directives, never rendered.
 > from zero records, the agent MUST execute Step 9 immediately (load `phase2-visualization.md`)
 > and run the bundled app's build-only snapshot step (9.2) — whose `--records` glob
 > (`src/system_verification/`*.jsonl`) matches the Truth Set written in Step 2 — so the artifact
-> exists AND is non-empty. Do NOT offer advancement. Do NOT ask "Ready for Module 4?" Do NOT save
+> exists AND is non-empty. Do NOT offer advancement. Do NOT ask the module-transition question. Do NOT save
 > progress. Produce the visualization first.
 
 ## Step 10: Verification Report Generation
@@ -195,7 +195,7 @@ Complete the module using the standard **Module Completion** process in
    produce the Module 4 start banner, journey map, before/after framing, and step overview per
    the ground rules.
 
-👉 **Module 3 complete. Ready to identify and collect your data sources in Module 4?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)*
 

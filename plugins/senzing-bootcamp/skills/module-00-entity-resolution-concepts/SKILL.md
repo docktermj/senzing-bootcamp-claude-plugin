@@ -29,7 +29,8 @@ Follow `concepts.md` in this skill directory:
 2. Give the description of entity resolution, pulling all Senzing-specific facts from the Senzing
    MCP server, never from memory (MCP-first invariant / INV-073).
 3. End on the mandatory exploration gate using the pinned 👉 question defined in `concepts.md` —
-   verbatim: **"Are you ready to move on to Module 1?"** (INV-073 explore-gate outcome). It is a
+   verbatim: **"Are you ready to move on to the next module: Discover the Business Problem?"**
+   (INV-073 explore-gate outcome; Module 1 always follows Module 0). It is a
    single yes/no with exactly one meaning for "yes" and one for "no", and no "or"-joined choices
    (INV-008 / INV-051). Answer any entity-resolution follow-up via `search_docs`, then re-present
    the gate; do not advance until the bootcamper is ready.

@@ -90,3 +90,9 @@ that numbers break once modules are reorderable/skippable.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Drop fixed module numbers from banners/transition questions once modules are customizable" (2026-07-18, Module 1); "Drop module number from the end-of-module completion line, and lightly highlight it" (Module 1); "Module-completion transition question should use module titles, not numbers" (Module 2).
 - Priority: Medium.
 - Related specs: `customizable-module-selection.md` (the customizable-modules feature this follows from), `module-step-overview.md` / `end-of-bootcamp-banner.md` (banner/step framing), `onboarding-explore-gate-wording.md` (INV-056 pinned gate wording).
+
+## Invariants introduced
+
+- `INV-079` — Bootcamper-facing module references use the module name, not a number: banner "MODULE: [NAME]", transition/readiness questions name the next module, and the completion line "✅ Module complete: {Name}" is lightly highlighted (bold + thin `─` rule). Internal references may still use numbers. Supersedes INV-028. (recorded in `specs/INVARIANTS.md`)
+
+Also updated: INV-028 supersede marker appended; INV-073's quoted Module 0 gate wording updated to the name-based form.

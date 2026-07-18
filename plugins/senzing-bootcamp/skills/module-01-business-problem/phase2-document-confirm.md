@@ -137,7 +137,7 @@ transition question.
 Modules run in ascending numeric order (Module 1 → Module 2 → … → Module 7). After the business
 problem is defined, the next module installs and configures the Senzing SDK:
 
-👉 **Module 1 complete. Ready to install and configure the Senzing SDK in Module 2?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 **Checkpoint:** write step 17. On module completion set `current_step` to `null`.
 

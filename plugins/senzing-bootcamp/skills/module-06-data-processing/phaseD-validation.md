@@ -208,7 +208,7 @@ Follow the Decision Gate above to frame readiness. When results are ready, run t
 append the Module 6 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
 summary), then close the module:
 
-👉 **Module 6 complete. Ready to move on to Module 7?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)* On completion, set `current_step` to
 `null` in `config/bootcamp_progress.json` and, on an affirmative reply, produce the Module 7

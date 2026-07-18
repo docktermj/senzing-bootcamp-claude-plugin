@@ -60,10 +60,11 @@ ready to move on, just say so."
 
 Then end the turn on this single 👉 question, asked **verbatim**, and wait:
 
-> 👉 **Are you ready to move on to Module 1?**
+> 👉 **Are you ready to move on to the next module: Discover the Business Problem?**
 
 The wording is pinned so it stays compliant: it is a single yes/no where "yes" (or any readiness
-signal) means "yes, move on to Module 1" and "no" means "no, keep exploring" — exactly one
+signal) means "yes, move on to the next module (Discover the Business Problem)" and "no" means
+"no, keep exploring" — exactly one
 meaning each (INV-008), with no "or"-joined choices (INV-051, INV-009). Do not paraphrase it into
 an either/or (e.g. "…or shall we move on?"), which would give "yes" two meanings. This is a ⛔
 gate (internal - do not render the `⛔`/`🛑` glyphs). Do not advance until the bootcamper is ready.

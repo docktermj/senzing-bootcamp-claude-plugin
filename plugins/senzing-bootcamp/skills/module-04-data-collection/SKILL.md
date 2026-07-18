@@ -444,7 +444,7 @@ end-of-module summary), then ask the single transition question:
 "Great! Now that we have the data files, let's evaluate each one to see if it needs mapping or
 if it's already in the right format for Senzing."
 
-👉 **Module 4 complete. Ready to evaluate your data sources for mapping in Module 5?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`. On module completion set
 `current_step` to `null`.

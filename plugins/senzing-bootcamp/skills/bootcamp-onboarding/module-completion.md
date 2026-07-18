@@ -115,11 +115,16 @@ appended (2b), that block is superseded. Do two things:
 ## Step 3: End-of-module summary (shown to the bootcamper)
 
 Present a short, skimmable summary from the bootcamper's point of view. This is a
-required outcome of every module. Use this shape (adapt wording to verbosity):
+required outcome of every module. **Lead with the lightly-highlighted completion line** — a bold
+line wrapped in a thin rule of `─` characters above and below (more visible than plain prose,
+lighter than the module-start banner's `━━━`/emoji triplet) — then the summary details. Render the
+completion line as shown (bold, no module number), the rest as a plain summary:
+
+─────────────────────────────────────────────
+**✅ Module complete: {Module name}**
+─────────────────────────────────────────────
 
 ```text
-✅ Module N complete: {Module name}
-
 What you accomplished:
 - {plain-language accomplishment 1}
 - {accomplishment 2}
@@ -141,8 +146,10 @@ bookkeeping.
 
 ## Step 4: Transition question
 
-Return to the module and ask its single transition 👉 question (e.g. "Module N
-complete. Ready to …?"). That question ends the turn. Do not combine it with the
+Return to the module and ask its single transition 👉 question — "Are you ready to move on to the
+next module: {next module name}?" (fill {next module name} with the next module in
+`selected_modules`; after the last content module, use the graduation offer below instead). That
+question ends the turn. Do not combine it with the
 summary content above into multiple questions: the summary is statements, the
 transition is the one 👉 question.
 
@@ -153,7 +160,7 @@ When the module just completed is the **last content module before Graduation in
 required in every path — do Steps 1-3 as usual, then, instead of a next-module
 transition, offer graduation (the mandatory terminal module):
 
-👉 **Module 7 complete. Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Would you like to graduate now and generate your production project and recap trophy?**
 
 On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
 keep exploring first, stay available and offer graduation again whenever they are
