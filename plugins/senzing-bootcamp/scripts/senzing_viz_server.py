@@ -49,12 +49,34 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
-SOURCE_COLORS = {
-    "CUSTOMERS": "#3b82f6",
-    "REFERENCE": "#22c55e",
-    "WATCHLIST": "#f59e0b",
-}
-FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#14b8a6", "#ef4444", "#0ea5e9", "#a3a34a"]
+# Brand tokens ship in this same directory. Import them so the visualization shares
+# the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
+# of the same values if the module is ever unavailable, so this script keeps working
+# in isolation (mirrors the vendored-D3 offline fallback).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import brand_tokens as _bt
+
+    SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
+    FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
+    _BRAND = {
+        "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
+        "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
+        "accent_hot": _bt.EMBER_HOT, "accent_soft": _bt.EMBER_SOFT,
+        "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
+        "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
+    }
+except Exception:  # defensive fallback — keep values in sync with brand_tokens.py
+    SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
+    FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+    _BRAND = {
+        "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
+        "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
+        "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
+        "line": "#E5DFD3", "green": "#1D9E75",
+        "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
+        "code_font": "'Fira Code', 'Courier New', Courier, monospace",
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -217,9 +239,9 @@ PAGE = r"""<!doctype html>
 __D3_SCRIPT__
 __DATA_SHIM__
 <style>
-:root{--navy:#0c2340;--blue:#175ca8;--gold:#c8922a;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc}
+:root{__ROOT_VARS__}
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+body{margin:0;font-family:__FONT_STACK__;color:var(--ink);background:var(--bg)}
 header{background:var(--navy);color:#fff;padding:12px 20px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:10}
 header h1{margin:0;font-size:18px}
 .banner{display:flex;gap:10px;flex-wrap:wrap;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line)}
@@ -240,19 +262,19 @@ main{padding:0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{stroke:#fff;stroke-width:1.5px;cursor:pointer}
 .node text{font-size:10px;fill:var(--ink);pointer-events:none}
-.edge line{stroke:#cbd5e1;stroke-width:1.5px}
+.edge line{stroke:var(--line);stroke-width:1.5px}
 .edge text{font-size:9px;fill:var(--muted)}
 .tooltip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;padding:6px 9px;border-radius:6px;font-size:12px;opacity:0;max-width:240px}
 .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px}
 .card h4{margin:0 0 6px;font-size:15px}
 .recs{display:flex;gap:10px;flex-wrap:wrap}
-.rec{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:150px;background:#f8fafc}
-.chip{display:inline-block;border:1px solid var(--blue);color:var(--blue);background:#eff6ff;border-radius:12px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;font-family:monospace}
-.mk span{display:inline-block;border:1px solid var(--gold);background:#fdf6e9;color:#8a6d1f;border-radius:4px;padding:0 5px;margin:1px;font-family:monospace;font-size:11px}
+.rec{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:150px;background:var(--bg)}
+.chip{display:inline-block;border:1px solid var(--blue);color:var(--blue);background:var(--accent-soft);border-radius:12px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;font-family:__CODE_FONT__}
+.mk span{display:inline-block;border:1px solid var(--gold);background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:0 5px;margin:1px;font-family:__CODE_FONT__;font-size:11px}
 #search-in{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;width:min(420px,100%)}
 button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
 .muted{color:var(--muted)}
-.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.modal-bg{position:fixed;inset:0;background:rgba(15,13,12,.5);display:none;align-items:center;justify-content:center;z-index:50}
 .modal{background:#fff;border-radius:10px;padding:18px 20px;max-width:420px;width:90%}
 .modal h3{margin:0 0 8px}
 .modal button{margin-top:10px;border:none;background:var(--blue);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
@@ -354,7 +376,7 @@ async function drawHist(){const s=await getJSON("/api/stats");const box=d3.selec
   svg.append("g").attr("transform","translate("+m.l+",0)").call(d3.axisLeft(y).ticks(5));
   svg.selectAll("rect").data(data).join("rect").attr("x",function(d){return x(d[0]);}).attr("y",function(d){return y(d[1]);})
     .attr("width",x.bandwidth()).attr("height",function(d){return y(0)-y(d[1]);}).attr("rx",4)
-    .attr("fill",function(d,i){return i===0?"#175ca8":"#c8922a";});
+    .attr("fill",function(d,i){return i===0?"__ACCENT__":"__ACCENT_HOT__";});
   svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(d){return x(d[0])+x.bandwidth()/2;})
     .attr("y",function(d){return y(d[1])-6;}).attr("text-anchor","middle").attr("font-size",13).attr("font-weight",600).text(function(d){return d[1];});}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
@@ -401,9 +423,19 @@ def _d3_script():
 def render_page(title, data_shim="", probe_body=None):
     # Replace D3 and the data shim LAST so their contents are never rescanned for
     # the other placeholders.
+    root_vars = (
+        "--navy:%(dark)s;--blue:%(accent)s;--gold:%(accent_hot)s;--ink:%(ink)s;"
+        "--muted:%(muted)s;--line:%(line)s;--bg:%(bg)s;--accent-soft:%(accent_soft)s;"
+        "--green:%(green)s" % _BRAND
+    )
     return (
         PAGE.replace("__TITLE__", title)
         .replace("__PROBE_BODY__", probe_body if probe_body is not None else PROBE_BODY_LIVE)
+        .replace("__ROOT_VARS__", root_vars)
+        .replace("__FONT_STACK__", _BRAND["font"])
+        .replace("__CODE_FONT__", _BRAND["code_font"])
+        .replace("__ACCENT_HOT__", _BRAND["accent_hot"])
+        .replace("__ACCENT__", _BRAND["accent"])
         .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())

@@ -35,13 +35,18 @@ Follow `concepts.md` in this skill directory:
 1. Present the **ENTITY RESOLUTION CONCEPTS** banner (defined in `concepts.md`) — this is the
    INV-073 banner outcome, delivered here in Module 0.
 2. Give the description of entity resolution, pulling all Senzing-specific facts from the Senzing
-   MCP server, never from memory (MCP-first invariant / INV-073).
-3. End on the mandatory exploration gate using the pinned 👉 question defined in `concepts.md` —
+   MCP server, never from memory (MCP-first invariant / INV-073). Verify substantive claims with a
+   second confirming MCP call before presenting them (see `concepts.md`).
+3. Offer the **optional knowledge-check quiz** (`concepts.md`) as its own pinned 👉 question before
+   the readiness gate. On accept, pose a short series of MCP-sourced/verified questions at moderate
+   difficulty, one 👉 per turn, letting the bootcamper exit at any time; on decline, go straight to
+   the gate. The quiz never blocks and never replaces the gate.
+4. End on the mandatory exploration gate using the pinned 👉 question defined in `concepts.md` —
    verbatim: **"Are you ready to move on to the next module: Discover the Business Problem?"**
    (INV-073 explore-gate outcome; Module 1 always follows Module 0). It is a
    single yes/no with exactly one meaning for "yes" and one for "no", and no "or"-joined choices
-   (INV-008 / INV-051). Answer any entity-resolution follow-up via `search_docs`, then re-present
-   the gate; do not advance until the bootcamper is ready.
+   (INV-008 / INV-051). Answer any entity-resolution follow-up via `search_docs`, verified with a
+   second MCP call, then re-present the gate; do not advance until the bootcamper is ready.
 
 ## 2. Hand off to Module 1
 

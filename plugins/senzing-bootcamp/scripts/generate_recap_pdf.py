@@ -13,9 +13,11 @@ A valid PDF is ALWAYS produced, via a tiered strategy:
    paginated PDF rendered from the same parsed content, with no third-party
    dependency.
 
-The script is self-contained: it imports nothing from sibling scripts, so it
-works when bundled inside the Claude plugin and invoked from a bootcamp
-working directory.
+The script is dependency-light: its only optional sibling import is ``brand_tokens``
+(the shared Senzing brand palette that ships next to it in ``scripts/``), and it
+falls back to an inlined copy of those values if that module is unavailable — so it
+still works when bundled inside the Claude plugin and invoked from a bootcamp
+working directory, and always produces a valid PDF.
 
 Success signal (matches the graduation skill's contract): on success it prints
 a line beginning ``PDF generated:`` and exits 0. Any other outcome means no PDF
@@ -229,14 +231,32 @@ def verify_recap(recap: Recap) -> List[str]:
 # --------------------------------------------------------------------------- #
 # Rich renderer (fpdf2)
 # --------------------------------------------------------------------------- #
-# Senzing-flavored palette (deep blue + slate + a warm accent).
-NAVY = (12, 35, 64)
-BLUE = (23, 92, 168)
-SLATE = (71, 85, 105)
-LIGHT = (241, 245, 249)
-ACCENT = (200, 146, 42)
-INK = (30, 41, 59)
-GREEN = (22, 128, 82)
+# Senzing "Obsidian & Ember" brand palette, sourced from the shared brand tokens that
+# ship alongside this script (`brand_tokens.py`) so the recap PDF matches the Truth-Set
+# visualization. Falls back to an inlined copy of the same values if that module is
+# unavailable, so a valid PDF is still always produced (INV-048/INV-066).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    import brand_tokens as _bt
+
+    _h2rgb = _bt.hex_to_rgb
+    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / journal accent
+    BLUE = _h2rgb(_bt.EMBER_CORE)    # primary accent
+    SLATE = _h2rgb(_bt.BODY_INK)     # body text
+    LIGHT = _h2rgb(_bt.WARM_OFF_WHITE)  # warm off-white fills
+    ACCENT = _h2rgb(_bt.EMBER_HOT)   # hot ember accent / rules
+    INK = _h2rgb(_bt.DARK_INK)       # headline ink
+    GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
+    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+except Exception:  # defensive fallback — keep in sync with brand_tokens.py
+    NAVY = (24, 22, 15)
+    BLUE = (245, 120, 38)
+    SLATE = (74, 70, 64)
+    LIGHT = (250, 248, 243)
+    ACCENT = (255, 78, 31)
+    INK = (24, 22, 15)
+    GREEN = (29, 158, 117)
+    LINE = (229, 223, 214)
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -411,7 +431,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
     per_col = (len(rows) + 1) // 2
     card_h = 9 + per_col * 16 + 3
     pdf.set_fill_color(*LIGHT)
-    pdf.set_draw_color(210, 218, 228)
+    pdf.set_draw_color(*LINE)
     pdf.rect(card_x, y0, card_w, card_h, style="DF")
     for i, (key, val) in enumerate(rows):
         col, pos = i % 2, i // 2
@@ -450,7 +470,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
                 x = pdf.l_margin
                 y += 11
             pdf.set_fill_color(*LIGHT)
-            pdf.set_draw_color(210, 218, 228)
+            pdf.set_draw_color(*LINE)
             pdf.rect(x, y, w, 8.5, style="DF")
             pdf.set_xy(x, y)
             pdf.set_text_color(*INK)

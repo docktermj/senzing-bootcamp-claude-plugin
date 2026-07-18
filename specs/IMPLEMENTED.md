@@ -18,6 +18,21 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## apply-senzing-style-guide-to-deliverables
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/scripts/brand_tokens.py` (new), `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** Extracted the Senzing "Obsidian & Ember" brand system from `resources/senzing-style-reference.pdf` into a new shipped `scripts/brand_tokens.py` (colors, typography/font stacks, data-source node colors, `hex_to_rgb` helper) — the single source of truth, since the PDF is a maintainer asset not shipped with the plugin. Both generators consume it: `senzing_viz_server.py` imports it (with an inlined fallback mirroring the vendored-D3 pattern) and injects the CSS `:root` vars, font stack, code font, accent colors, and `SOURCE_COLORS` via `render_page` placeholders — recoloring the live app + snapshot to the brand (warm off-white light bg, Deep dark header/chrome, ember accents, warm borders) while keeping the four tabs / four APIs / D3 v7 graph behavior and offline vendored D3 unchanged. `generate_recap_pdf.py` sources its palette constants (NAVY/BLUE/SLATE/LIGHT/ACCENT/INK/GREEN + a new warm `LINE`) from the tokens (with fallback), re-coloring the cover/section/journal styling to the brand and routing the two cold-grey dividers through the warm `LINE` token; Helvetica stays as the offline, dependency-free stand-in for Roboto. Added a global "Visual deliverables (Senzing brand)" directive to `ground-rules.md`. The reference PDF is not read at runtime (only `brand_tokens.py` names it, as the extraction source). AC verified: `py_compile` on all three scripts; viz `render_page` has no leftover placeholders and emits brand colors + the Roboto-preferring stack, with the brand module actually imported; recap palette constants resolve to the brand values, no `set_*_color` literals bypass the palette (the remaining whites are on-brand text-on-dark), `--check` passes and the sample renders (exit 0) via fpdf2 with the stdlib fallback intact; offline render preserved (D3 vendored/inlined, no web-font import). INV-038/INV-048/INV-066/INV-071 all hold. Cross-platform, language-agnostic.
+- **Invariants introduced:** INV-081 (maintainer-approved).
+- **Commit:** uncommitted
+
+## concepts-module-verified-qa-and-quiz
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md`, `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`
+- **Summary:** Added MCP-verified Q&A and an optional knowledge-check quiz to Module 0. In `concepts.md`, added a "Verify substantive answers before presenting" rule to the facts-from-MCP section (draft from an initial `search_docs` call, then make a **second confirming MCP call** to cross-check before presenting; MCP-only, no training-data fallback; scoped to substantive claims), and updated the follow-up handling to require that second call. Added an "Optional knowledge-check quiz" section before the mandatory exploration gate: a pinned-verbatim (INV-056), single-meaning (INV-008) 👉 offer ("Would you like to test your knowledge of entity resolution with a short quiz?") with no "or"-joined choices (INV-051); on accept, a short (3-5) series of MCP-sourced/verified questions at **moderate** difficulty, one 👉 per turn, evaluated each turn, with **exit-at-any-time** back to the gate; on decline it proceeds straight to the gate. The quiz never blocks and never replaces the readiness gate (INV-073 preserved). Reflected both in the module `SKILL.md` step outline. AC verified by grep: verification rule + second-call follow-up present; quiz section with pinned offer, moderate difficulty, and exit-anytime present; readiness gate unchanged; section order is Banner → primer → quiz → exploration gate. No new invariant (module-specific feature behaviors upholding INV-073 and the MCP-first invariant). Markdown-only — cross-platform, language-agnostic.
+- **Commit:** uncommitted
+
 ## mcp-grounding-in-every-skill
 
 - **Implemented:** 2026-07-18

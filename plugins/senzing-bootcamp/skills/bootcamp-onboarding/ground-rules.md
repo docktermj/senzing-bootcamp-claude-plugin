@@ -116,6 +116,20 @@ steering files.)
   `## Module N:` heading and the four required subsections (see `module-completion.md`), and the
   placement rules above are unchanged.
 
+## Visual deliverables (Senzing brand)
+
+- **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
+  deliverable the bootcamp produces — the Truth-Set visualization web app and its standalone
+  snapshot, the recap PDF trophy, and any future charts/dashboards/HTML — should follow the
+  Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
+  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
+  palette. The bundled generators (`senzing_viz_server.py`, `generate_recap_pdf.py`) already
+  consume those tokens; any new generator should too. Key rules: dark backgrounds are
+  Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
+  live/resolved states (never decorative), light sections are warm off-white (never cold grey),
+  and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
+  INV-071). "Where appropriate" leaves plain functional/dev output unbranded.
+
 ## Progress and state
 
 - Progress -> `config/bootcamp_progress.json`. Preferences -> `config/bootcamp_preferences.yaml`.

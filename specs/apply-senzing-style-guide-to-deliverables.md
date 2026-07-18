@@ -83,3 +83,7 @@ render fallbacks (INV-048/INV-066).
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Global rule — apply the Senzing style guide to every visualization the bootcamp produces" (2026-07-18, General/all deliverables), consolidating "Style the Module 3 visualization web app per the Senzing style guide" (Module 3), "Style the standalone snapshot per the style guide …" (Module 3, styling part), and "Render the recap PDF trophy using the Senzing style guide" (Graduation).
 - Priority: Medium.
 - Related specs: `recap-pdf-professional-design.md` (recap PDF design/renderer — this adds the brand-guide source of truth on top), `vendor-d3-offline-visualization.md` (INV-071 offline render), `snapshot-static-search-results.md` (the snapshot's dead-search-UI fix, done in the same snapshot pass — distinct concern).
+
+## Invariants introduced
+
+- `INV-081` — Bootcamper-facing visual deliverables (viz web app + snapshot, recap PDF, future charts/HTML/PDF) MUST take palette/typography from the shared shipped `scripts/brand_tokens.py` (single source, extracted from the reference PDF, not required at runtime), never an ad hoc palette; consumers fall back gracefully and keep rendering offline (INV-071). (recorded in `specs/INVARIANTS.md`)
