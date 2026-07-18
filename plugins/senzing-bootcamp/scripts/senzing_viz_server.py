@@ -265,10 +265,7 @@ button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;pad
   <section class="tab active" id="tab-graph"><div id="graph-container"><div class="tooltip" id="tt"></div></div></section>
   <section class="tab" id="tab-merges"><div id="merges"></div></section>
   <section class="tab" id="tab-stats"><div id="hist"></div></section>
-  <section class="tab" id="tab-probe">
-    <div style="margin-bottom:10px"><input id="search-in" placeholder="Search a name (e.g. Robert Smith)"> <button class="probe" onclick="doSearch()">Search</button></div>
-    <div id="probe-btns"></div><div id="results"></div>
-  </section>
+  <section class="tab" id="tab-probe">__PROBE_BODY__</section>
 </main>
 <div class="modal-bg" id="modal-bg" onclick="if(event.target.id==='modal-bg')closeModal()"><div class="modal" id="modal"></div></div>
 <script>
@@ -378,6 +375,15 @@ window.addEventListener("resize",function(){if(d3.select("#tab-graph").classed("
 """
 
 
+# The live Search/Probe tab: an interactive search box backed by /api/search.
+PROBE_BODY_LIVE = (
+    '<div style="margin-bottom:10px">'
+    '<input id="search-in" placeholder="Search a name (e.g. Robert Smith)"> '
+    '<button class="probe" onclick="doSearch()">Search</button></div>'
+    '<div id="probe-btns"></div><div id="results"></div>'
+)
+
+
 def _d3_script():
     """Return an inline <script> carrying the vendored D3, so the visualization
     renders with no network access. Fall back to the CDN tag only if the vendored
@@ -392,11 +398,12 @@ def _d3_script():
         return '<script src="https://d3js.org/d3.v7.min.js"></script>'
 
 
-def render_page(title, data_shim=""):
+def render_page(title, data_shim="", probe_body=None):
     # Replace D3 and the data shim LAST so their contents are never rescanned for
     # the other placeholders.
     return (
         PAGE.replace("__TITLE__", title)
+        .replace("__PROBE_BODY__", probe_body if probe_body is not None else PROBE_BODY_LIVE)
         .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())
@@ -455,6 +462,107 @@ def build_model(settings, patterns):
     return factory, model, engine, flags
 
 
+def _esc_html(s):
+    return (
+        str("" if s is None else s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def _match_key_chips(match_key):
+    """Split a Senzing match key (e.g. '+NAME+ADDRESS-DOB') into <span> chips,
+    mirroring the live app's doSearch() rendering."""
+    mk = match_key or ""
+    parts, cur = [], ""
+    for ch in mk:
+        if ch in "+-":
+            if cur:
+                parts.append(cur)
+            cur = ch
+        else:
+            cur += ch
+    if cur:
+        parts.append(cur)
+    return "".join("<span>" + _esc_html(p) + "</span>" for p in parts if p)
+
+
+def _result_card(searched, res):
+    """Render one pre-rendered example search-result card (mirrors doSearch())."""
+    rc = res.get("record_count")
+    html = ['<div class="card">']
+    html.append(
+        '<div class="muted" style="margin-bottom:4px">Searched: <b>'
+        + _esc_html(searched)
+        + "</b></div>"
+    )
+    html.append("<h4>" + _esc_html(res.get("entity_name", "?")) + "</h4>")
+    html.append(
+        '<div class="muted">Entity '
+        + _esc_html(res.get("entity_id"))
+        + " · "
+        + _esc_html(rc if rc is not None else "?")
+        + " record(s) · "
+        + _esc_html(", ".join(res.get("data_sources") or []))
+        + "</div>"
+    )
+    if res.get("match_key"):
+        html.append('<div class="mk">' + _match_key_chips(res["match_key"]) + "</div>")
+    if res.get("resolution_rule"):
+        html.append("<div><code>" + _esc_html(res["resolution_rule"]) + "</code></div>")
+    html.append("</div>")
+    return "".join(html)
+
+
+def _snapshot_probe_html(model, engine, flags):
+    """Build the static snapshot's Search/Probe tab: a note plus a fixed set of
+    pre-rendered example search results (no live search box, which cannot work in a
+    static file). Examples are drawn from this snapshot's own multi-record entities
+    and enriched via a real search so the match keys are truthful; if a search
+    cannot run, the card falls back to the merge data (no match key)."""
+    merges = model.merges().get("entities", [])
+    # Prefer cross-source merges (the most interesting), then the rest, by size.
+    ordered = sorted(
+        merges,
+        key=lambda e: (len(e.get("data_sources", [])) < 2, -e.get("record_count", 0)),
+    )
+    cards = []
+    for ent in ordered:
+        if len(cards) >= 5:
+            break
+        name = ent.get("entity_name") or ""
+        if not name:
+            continue
+        res = None
+        try:
+            hits = model.search(engine, flags, name).get("results", [])
+            res = next(
+                (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
+                hits[0] if hits else None,
+            )
+        except Exception:
+            res = None
+        if res is None:  # search unavailable — render from the merge data itself
+            res = {
+                "entity_id": ent.get("entity_id"),
+                "entity_name": name,
+                "record_count": ent.get("record_count"),
+                "data_sources": ent.get("data_sources", []),
+                "match_key": "",
+                "resolution_rule": "",
+            }
+        cards.append(_result_card(name, res))
+    note = (
+        '<p class="muted">This is a saved snapshot, so live search is disabled. Below are '
+        "example searches run against this Truth Set. In the live app "
+        "(<code>http://localhost:8080</code>) you can search any name.</p>"
+    )
+    if not cards:
+        return note + '<p class="muted">No multi-record entities to show.</p>'
+    return note + '<div id="results">' + "".join(cards) + "</div>"
+
+
 def write_snapshot(model, engine, flags, title, out_path):
     """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
     renders with no server and no network access."""
@@ -472,7 +580,9 @@ def write_snapshot(model, engine, flags, title, out_path):
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
-    page = render_page(title, data_shim=shim)
+    page = render_page(
+        title, data_shim=shim, probe_body=_snapshot_probe_html(model, engine, flags)
+    )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         fh.write(page)

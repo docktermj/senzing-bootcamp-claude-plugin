@@ -18,6 +18,20 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module2-license-clarity
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Disambiguated the runtime license from the EULA and documented the full post-request install flow in Module 2 Step 5. Added a "'Senzing License Key' vs. the EULA" blockquote at the top of Step 5; renamed the bootcamper-facing question to "Do you have a Senzing License Key?" (both the four- and three-option forms, single-meaning INV-008 / numbered INV-051); updated the Step 5a explanation lead-in and the Step 5c reveal-existing-license line to "Senzing License Key". Added an explicit post-request numbered sequence after the Step 5c request bullets — wait for email → download the key → provide the path to the Base-64 file → decode to `licenses/g2.lic` using the Step 5c platform command (Linux/macOS `base64 --decode`, Windows `FromBase64String`) → wire `LICENSEFILE` (Step 5d) → detect the record limit (Step 5e) — and stated the bootcamp continues on the built-in evaluation license until the emailed key is applied; the in-flow and external request bullets now point to this sequence (closing the 5c→5d Base-64 gap). AC verified by grep: no bare "Senzing license" remains (question + reveal line now "License Key"); the post-request sequence and disambiguation blockquote are present. INV-036 preserved (license still established via eval / existing / in-flow MCP request); no hardcoded record limits added (the 500 figure stays MCP-caveated). Markdown-only — cross-platform, language-agnostic.
+- **Commit:** uncommitted
+
+## snapshot-static-search-results
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** Replaced the standalone snapshot's non-functional Search/Probe controls with pre-rendered example results. Extracted the probe-tab body behind a `__PROBE_BODY__` placeholder (`PROBE_BODY_LIVE` keeps the live app's interactive input+button+`#probe-btns`+`#results` unchanged), added a `probe_body` parameter to `render_page()`, and added `_snapshot_probe_html()` plus `_esc_html`/`_match_key_chips`/`_result_card` helpers that build a static probe tab: an intro note plus up to five example result cards drawn from the snapshot's own multi-record entities (cross-source first), each enriched via a real `model.search()` so the match keys are truthful, falling back to the merge data when search is unavailable. `write_snapshot()` passes this probe body; the live served page (`do_GET → render_page(title)`) is unchanged. AC verified: `python3 -m py_compile` OK; isolated behavior tests (real `Model` + fake engine) confirm the live page keeps the search input+button, the snapshot page has neither (no dead controls) and embeds example cards for multi-record entities only, and match-key chips + resolution rule render like the live `doSearch()`. INV-038 (guaranteed visualization) and INV-071 (offline render — D3 still vendored/inlined, no new network references) preserved. Cross-platform, language-agnostic (stdlib only).
+- **Commit:** uncommitted
+
 ## pin-visual-explanations-question
 
 - **Implemented:** 2026-07-18

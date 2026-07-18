@@ -318,6 +318,12 @@ troubleshooting.
 > `licenses/g2.lic` → `SENZING_LICENSE_PATH` env var → system CONFIGPATH → built-in evaluation
 > (500 records).
 
+> **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
+> *runtime-capacity* license (it sets how many records Senzing will resolve) — supplied as a `.lic`
+> file or a Base64-encoded key, or the built-in evaluation license by default. It is distinct from
+> the **Senzing End User License Agreement (EULA)** accepted during SDK install in Step 3. When
+> this step says "License Key", it means the runtime license, never the EULA.
+
 ### 5a. Explain the built-in evaluation license
 
 **Custom-license guard (check first).** Read `config/bootcamp_progress.json`. If a
@@ -334,7 +340,7 @@ active), proceed with the explanation below.
 
 Before checking for license files or asking the bootcamper anything, proactively present this:
 
-"Here's what you need to know about Senzing licensing before we continue. Senzing includes a
+"Here's what you need to know about your Senzing License Key before we continue. Senzing includes a
 **built-in evaluation license limited to 500 records**. No license file is needed: the SDK uses
 this automatically when no custom license is present. This is enough for the bootcamp's demo
 modules and small datasets.
@@ -390,7 +396,7 @@ available, otherwise the **three-option** form. Pin whichever form you present v
 
 Four-option form (when `submit_feedback` is available):
 
-👉 **Do you have a Senzing license? Reply with a number:**
+👉 **Do you have a Senzing License Key? Reply with a number:**
 
 1. Yes — a license file (`.lic`).
 2. Yes — a Base64-encoded license key.
@@ -399,7 +405,7 @@ Four-option form (when `submit_feedback` is available):
 
 Three-option form (when `submit_feedback` is unavailable):
 
-👉 **Do you have a Senzing license? Reply with a number:**
+👉 **Do you have a Senzing License Key? Reply with a number:**
 
 1. Yes — a license file (`.lic`).
 2. Yes — a Base64-encoded license key.
@@ -516,16 +522,32 @@ Once the bootcamper responds, act on their choice:
   `get_capabilities` again before invoking. If they decline to enable it, present only the
   remaining paths (external request and apply existing). When availability is confirmed, invoke
   `submit_feedback` exactly once with the `license_request` category. On a response with no
-  error, instruct the bootcamper to check the email associated with their request for the
-  evaluation license and its download link; once they confirm receipt, follow the Step 5d
-  configuration steps. If the invocation returns an error or no response within 30 seconds, tell
+  error, tell the bootcamper the request was submitted, then walk them through the post-request
+  sequence below. If the invocation returns an error or no response within 30 seconds, tell
   the bootcamper the license request did not complete, present the remaining paths (external
   request and apply existing), and do not automatically re-invoke `submit_feedback`.
-- **External request:** request via the external channel above; follow the Step 5d
-  configuration steps once you have the license file.
+- **External request:** request via the external channel above; follow the post-request
+  sequence below once you have the license file.
 - **Apply an existing license:** follow the configuration steps in Step 5d.
 
-If at any point the bootcamper reveals they already have a Senzing license (or indicated in
+**After an evaluation-License-Key request (in-flow or external), walk the bootcamper through the
+full post-request sequence** — and make clear the bootcamp **continues on the built-in evaluation
+license** in the meantime, so they are never blocked waiting for the email:
+
+1. **Wait for the email.** The Senzing License Key arrives by email at the address tied to the
+   request; it can take some time.
+2. **Download the key.** Save the attached/linked file from the email — it contains the
+   Base-64-encoded License Key text.
+3. **Provide the path.** Ask the bootcamper for the path to that downloaded file. Do NOT ask them
+   to paste the key into chat.
+4. **Decode to `licenses/g2.lic`.** Decode the Base-64 text from that file into the binary license
+   using the platform command from Step 5c above (Linux/macOS `base64 --decode`, Windows
+   `[System.Convert]::FromBase64String(...)`), reading from the provided file instead of an inline
+   string, then verify it is binary with `file licenses/g2.lic`.
+5. **Wire and detect.** Follow Step 5d (add `LICENSEFILE`) and Step 5e (detect the record limit).
+   The emailed key can be applied whenever it arrives, even in a later session.
+
+If at any point the bootcamper reveals they already have a Senzing License Key (or indicated in
 Step 5b that they have a `.lic` file or Base64-encoded license key), omit the in-flow MCP
 request option and route them to the apply-an-existing-license path in Step 5d.
 
