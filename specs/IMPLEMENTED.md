@@ -18,6 +18,27 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## pin-visual-explanations-question
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`
+- **Summary:** Pinned Module 1 Step 9 ("Encourage visual explanations") as a single-purpose, verbatim 👉 question — "Do you have any diagrams of your data architecture or flows you'd like to share?" — replacing the unpinned prose that let the model improvise an ambiguous "or"-joined question at runtime. "No" alone means proceed with the scenario as described; the "proceed" branch is not folded into the question (single-meaning, INV-008; no "or"-joined choices, INV-009/INV-051), and the wording is now pinned so it can't drift (INV-056). Verified by grep: the pinned 👉 question is present and there is no "or should I proceed" branch. Markdown-only — cross-platform, language-agnostic.
+- **Commit:** uncommitted
+
+## omit-empty-recap-takeaway
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`
+- **Summary:** The recap PDF no longer prints "Bootcamper's takeaway: N/A". Added a shared `_is_empty_takeaway()` helper to `generate_recap_pdf.py` and used it to skip the takeaway line entirely (empty / "N/A" / "none", case-insensitive, trailing-punctuation tolerant) in both render paths — `_render_line` (fpdf2) and `_stdlib_subsection` (stdlib fallback). Updated the authoring convention in `module-completion.md` to omit the takeaway line when the bootcamper gave none (never write "N/A") and reflected the takeaway being an optional Journal field in the four-fields rule. Verified: `_is_empty_takeaway` unit-tested (7/7 cases incl. real takeaway, "N/A", empty, "none"); end-to-end render of a two-module sample (Module 1 N/A takeaway, Module 2 real takeaway) — `generate_recap_pdf.py --check` passes (all four subsections intact), render prints `PDF generated:` and exits 0 (fpdf2 path), and pdftotext extraction confirms only the real takeaway appears and no "N/A" line anywhere. Upholds INV-048; fpdf2 stays optional with the stdlib fallback intact (INV-066), cross-platform and language-agnostic.
+- **Commit:** uncommitted
+
+## drop-deliverable-generation-gates
+
+- **Implemented:** 2026-07-18
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+- **Summary:** Removed two low-value yes/no gates in front of auto-generated deliverables. Module 1 Step 16 now **always** produces `docs/stakeholder_summary_module1.md` (no 👉 gate) and announces it as a statement in the end-of-module summary (via the module-completion "Files produced" list). Graduation Step 2 flows directly into Step 3, generating `.env.example` / `docker-compose.yml` / `.gitignore` without the "Ready to generate the production configuration files?" gate. The graduation `production/` overwrite/merge/abort **safety** gate is intentionally kept (a genuine data-safety decision, not a low-stakes confirmation). Note: this supersedes the pinning of the graduation config-confirm question established by `pin-visualization-offer-questions`. Verified by grep: both removed gates are gone, the deliverables are still generated, and no new 👉 question was introduced (INV-005 intact). Advances INV-012 (fewer low-value confirmations); Markdown-only — cross-platform, language-agnostic.
+- **Commit:** uncommitted
+
 ## module-references-by-name-not-number
 
 - **Implemented:** 2026-07-18

@@ -195,10 +195,9 @@ eval database itself).
 `config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `data/samples/`,
 `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
 
-Present a short summary of what was copied, what was excluded, and the directories
-created, then pin this 👉 question verbatim:
-
-> 👉 **Ready to generate the production configuration files (`.env.example`, `docker-compose.yml`, `.gitignore`)?**
+Present a short, one-line statement of what was copied, what was excluded, and the directories
+created, then continue directly to Step 3 — generate the production configuration files
+automatically. Do not gate this behind a 👉 question (one fewer low-stakes confirmation).
 
 ## Step 3: Production configuration files
 

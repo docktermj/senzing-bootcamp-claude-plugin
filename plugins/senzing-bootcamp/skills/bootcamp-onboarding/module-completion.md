@@ -70,7 +70,7 @@ the bootcamper's point of view:
 **What we did:** {1-2 sentence summary of what was accomplished}
 **What was produced:** {comma-separated artifact paths created or modified}
 **Why it matters:** {how this module enables the modules that follow}
-**Bootcamper's takeaway:** {the bootcamper's stated takeaway, or N/A}
+**Bootcamper's takeaway:** {the bootcamper's stated takeaway — omit this whole line if the bootcamper gave no takeaway; never write "N/A"}
 
 ---
 ```
@@ -80,7 +80,7 @@ graduation PDF renders exactly these four labeled sections per module):
 
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
-- **Journal:** the four bold fields exactly as shown.
+- **Journal:** the bold fields as shown; the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
 
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):

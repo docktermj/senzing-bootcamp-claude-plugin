@@ -544,10 +544,26 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     pdf.ln(2)
 
 
+def _is_empty_takeaway(text: str) -> bool:
+    """True for a '**Bootcamper's takeaway:**' line with no real value (empty or "N/A").
+
+    The takeaway is an optional field within the Journal subsection; when the bootcamper
+    gave none, the line is omitted rather than rendered as an "N/A" placeholder.
+    """
+    m = re.match(r"^\*\*(.+?):\*\*\s*(.*)$", text.strip())
+    return bool(
+        m
+        and m.group(1).strip().lower() == "bootcamper's takeaway"
+        and m.group(2).strip(" .").lower() in ("", "n/a", "none")
+    )
+
+
 def _render_line(pdf, epw, line: str) -> None:
     stripped = line.strip()
     if not stripped:
         pdf.ln(3)
+        return
+    if _is_empty_takeaway(stripped):
         return
     indent = 0
     bullet = ""
@@ -683,6 +699,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         s = line.strip()
         if not s:
             add("", "F1", 4, 0)
+            continue
+        if _is_empty_takeaway(s):
             continue
         indent = 6.0
         m = re.match(r"^(\s*)([-*])\s+(.*)$", line)

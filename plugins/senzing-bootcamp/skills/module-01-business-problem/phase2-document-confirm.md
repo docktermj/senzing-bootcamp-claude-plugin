@@ -4,8 +4,16 @@ Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal direc
 
 ## 9. Encourage visual explanations
 
-Ask for diagrams of data architecture, data flows, or example records. If an image contains
-placeholders like `[variable]`, ask what each represents. **Checkpoint:** write step 9.
+Invite the bootcamper to share any diagrams. Ask this single, pinned 👉 question, verbatim
+(INV-056), and end the turn on it:
+
+👉 **Do you have any diagrams of your data architecture or flows you'd like to share?**
+
+It has exactly one meaning each (INV-008): "yes" means they will share diagrams (data
+architecture, data flows, or example records); "no" alone means proceed with the scenario as
+described. Do NOT fold the "proceed" branch into the question — no "or"-joined choices
+(INV-009/INV-051). If they share an image containing placeholders like `[variable]`, ask what
+each represents. **Checkpoint:** write step 9.
 
 ## 10. Identify the scenario
 
@@ -118,14 +126,14 @@ integration targets exist, explain how Senzing fits alongside them as a foundati
 
 *(Internal: end the turn and wait.)* **Checkpoint:** write step 15.
 
-## 16. Offer a stakeholder summary
+## 16. Generate the stakeholder summary
 
-👉 **Would you like a one-page executive summary to share with your team?**
-
-*(Internal: end the turn and wait.)* If yes, produce `docs/stakeholder_summary_module1.md` covering
-problem, approach, data sources, key findings, next steps, and ROI considerations, filled with
-Module 1 context from `docs/business_problem.md`. (The Kiro `templates/stakeholder_summary.md`
-port is a later phase; compose the summary directly for now.) **Checkpoint:** write step 16.
+Always produce `docs/stakeholder_summary_module1.md` — no gate, no 👉 question. It covers problem,
+approach, data sources, key findings, next steps, and ROI considerations, filled with Module 1
+context from `docs/business_problem.md`. (The Kiro `templates/stakeholder_summary.md` port is a
+later phase; compose the summary directly for now.) Do not ask whether to create it; announce it
+as a statement in the end-of-module summary (Step 17) — noting the file was created and where to
+find it — via the module-completion "Files produced" list. **Checkpoint:** write step 16.
 
 ## 17. Module completion and transition to Module 2
 
