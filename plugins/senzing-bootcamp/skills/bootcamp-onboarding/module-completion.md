@@ -19,7 +19,7 @@ In `config/bootcamp_progress.json`, apply all of the following as a **single** b
 diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`):
 
 - Add this module's number to `modules_completed` (idempotent: do not duplicate).
-- Set `current_module` to the next module in the selected track (or leave it on this module if the bootcamper has not yet chosen to advance).
+- Set `current_module` to the next module in `selected_modules` (or leave it on this module if the bootcamper has not yet chosen to advance).
 - Set top-level `current_step` to `null`.
 - Under `step_history["<module>"]`, set `{ "last_completed_step": "<final step>", "updated_at": "<ISO 8601>" }`.
 
@@ -33,7 +33,7 @@ sections: append only.
 
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
-also include the chosen programming language and track when present):
+also include the chosen programming language and path (Core/Customized) when present):
 
 ```markdown
 # Senzing Bootcamp Recap
@@ -41,7 +41,7 @@ also include the chosen programming language and track when present):
 **Bootcamper:** {name}
 **Started:** {ISO 8601 timestamp with timezone offset}
 **Programming language:** {language}
-**Track:** {track}
+**Path:** {path}
 
 ---
 ```
@@ -132,7 +132,7 @@ Why it matters:
 {1-2 sentences tying this module's output to the bootcamper's goal.}
 
 What's next:
-Module N+1: {next module name} — {one line on what it does}.
+Next: {next module name in your selected sequence} — {one line on what it does}.
 ```
 
 If the module produced no new files (rare), say so plainly rather than inventing
@@ -146,16 +146,17 @@ complete. Ready to …?"). That question ends the turn. Do not combine it with t
 summary content above into multiple questions: the summary is statements, the
 transition is the one 👉 question.
 
-## Track completion (after the final module of the track)
+## Reaching graduation (after the last content module)
 
-When the module just completed is the **last module of the selected track**
-(Core Bootcamp: Module 7), do Steps 1-3 as usual, then instead of a
-next-module transition, offer graduation:
+When the module just completed is the **last content module before Graduation in
+`selected_modules`** — always **Query, Visualize and Discover** (Module 7), which is
+required in every path — do Steps 1-3 as usual, then, instead of a next-module
+transition, offer graduation (the mandatory terminal module):
 
-👉 **Module 7 complete, and that is the end of the Core track. Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Module 7 complete. Would you like to graduate now and generate your production project and recap trophy?**
 
-On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants
-to keep exploring first, stay available and offer graduation again whenever they
-are ready. (Both tracks end at Module 7; Advanced Topics adds production-hardening
-follow-ups at graduation, not further numbered modules, so graduation is the
-close-out for both.)
+On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
+keep exploring first, stay available and offer graduation again whenever they are
+ready. Graduation is the required close-out module; its production project and
+migration checklist deliver the production-hardening guidance (performance,
+security, monitoring, deployment) for every bootcamper.

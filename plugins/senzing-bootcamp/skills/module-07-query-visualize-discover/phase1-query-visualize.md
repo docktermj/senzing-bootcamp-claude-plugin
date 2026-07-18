@@ -242,13 +242,14 @@ Before wrapping up the module, confirm:
    checkpointed) or explicitly skipped by the bootcamper.
 4. **Ready to proceed?**
 
-Module 7 is the **end of the Core track**. Once the gate is satisfied, run the standard
-**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
-append the Module 7 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
-summary). Because this is the last module of the Core track, the completion process ends with
-the graduation offer rather than a next-module transition:
+Module 7 is the **last content module before graduation** (required in every path). Once the gate
+is satisfied, run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap section
+to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because this is the last
+content module, the completion process ends with the graduation offer rather than a next-module
+transition:
 
-👉 **Module 7 complete, and that is the end of the Core track. Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Module 7 complete. Would you like to graduate now and generate your production project and recap trophy?**
 
 *(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
 to `null` per the ground rules.
@@ -257,9 +258,9 @@ to `null` per the ground rules.
   project). See `../graduation/SKILL.md`.
 - **Wants to keep exploring first:** stay available for more queries, visualizations, or Discover
   work, and offer graduation again whenever they are ready.
-- **Advanced Topics track:** graduation is the close-out for both tracks. Advanced Topics
-  production-hardening (performance, security, monitoring, deployment) is delivered through the
-  graduation production project and migration checklist, not as separate numbered modules.
+- **Production-hardening:** graduation is the close-out for everyone. Production-hardening
+  (performance, security, monitoring, deployment) is delivered through the graduation production
+  project and migration checklist, not as separate numbered modules.
 
 ## Integration patterns
 

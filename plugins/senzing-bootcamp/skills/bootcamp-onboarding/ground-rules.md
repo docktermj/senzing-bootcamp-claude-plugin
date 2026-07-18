@@ -124,9 +124,10 @@ steering files.)
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
-- Preferences chosen during the onboarding preface (verbosity, track, programming language, name)
-  are collected across the gates and persisted in **one** consolidated write at the end of the
-  preface — not one write per gate (see `onboarding-flow.md`).
+- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language,
+  `git_init`, name) are asked in the **Bootcamp preparation** module and persisted in **one**
+  consolidated write at the end of that module — not one write per gate (see
+  `../bootcamp-preparation/SKILL.md`).
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
   accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped
@@ -170,17 +171,23 @@ never count against the one-question-per-turn rule and must not be treated as ga
 ## Module start banners and transitions
 
 - At every module start, BEFORE any module work: read progress, then show the module start
-  banner, a journey map (modules in the selected track marked ✅ complete / 🔄 current / ⬜
-  upcoming), before/after framing, and a brief numbered step overview. Never skip these - they
-  orient the bootcamper.
-- **Module 0 is an optional, non-counted preamble.** The entity-resolution concepts primer
-  (`../module-00-entity-resolution-concepts/SKILL.md`) runs after the onboarding preface and
-  before Module 1. It is not one of the mandatory numbered Modules 1–7 (INV-013), is skippable via
-  its pinned 👉 skip/keep gate (INV-014), and does NOT run the per-module apparatus above (no
-  journey map, no before/after, no step overview, no `docs/bootcamp_recap.md` section, and it is
-  not added to `modules_completed`). When run, it presents only its ENTITY RESOLUTION CONCEPTS
-  banner, the MCP-sourced description, and its explore gate. The numbered journey map covers
-  Modules 1–7 only.
+  banner, a journey map (the **selected** modules — from `selected_modules` in
+  `config/bootcamp_preferences.yaml` — marked ✅ complete / 🔄 current / ⬜ upcoming), before/after
+  framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
+- **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
+  in the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): **Core** includes
+  every module in order; **Customized** includes the required modules plus whichever optional
+  modules the bootcamper chose. Required modules always run; a deselected optional module is a
+  requested skip (INV-014). The journey map shows exactly the selected modules, in order, by name —
+  not a fixed 1–7 range.
+- **Bootcamp preparation and Module 0 are lightweight setup/preamble modules.** The Bootcamp
+  preparation module (setup + module selection, always first) and the optional entity-resolution
+  concepts primer (`../module-00-entity-resolution-concepts/SKILL.md`, run **only when selected** —
+  its old skip/keep gate is retired; inclusion is driven by the Bootcamp preparation selection,
+  INV-072) do NOT run the per-module apparatus above (no journey map, no before/after, no step
+  overview, no `docs/bootcamp_recap.md` section, and they are not added to `modules_completed`).
+  Keep them lightweight. When Module 0 runs it presents only its ENTITY RESOLUTION CONCEPTS banner,
+  the MCP-sourced description, and its explore gate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
@@ -208,7 +215,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   | Stage | Recommended | Commands |
   |---|---|---|
-  | Onboarding, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
   | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
   | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |

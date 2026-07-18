@@ -194,11 +194,11 @@ the closing question).
 Record specific systems (e.g. Elasticsearch, Salesforce) for the problem statement and solution
 approach. *(Internal: end the turn and wait.)* **Checkpoint:** write step 7.
 
-## 8. Deployment target (Advanced Topics track only)
+## 8. Deployment target (optional)
 
-Read `track` from `config/bootcamp_preferences.yaml`.
-
-**If `advanced_topics`:** ask (separate question):
+Deployment is addressed for every bootcamper in the graduation production project and migration
+checklist, so capturing a target now is optional — it just helps tailor that output. Ask this as
+a single, separate question:
 
 👉 **Where do you plan to deploy the final solution? Reply with a number:**
 
@@ -209,7 +209,5 @@ Read `track` from `config/bootcamp_preferences.yaml`.
 
 Reassure: "We'll develop everything locally first; deployment is addressed in the graduation production project and migration checklist." Persist
 `deployment_target` (`aws`/`azure`/`gcp`: also set `cloud_provider`; `kubernetes`/
-`docker_swarm`; `local`/`on_premises`; or `undecided`). **Checkpoint:** step 8 "completed".
-
-**If not `advanced_topics` (or unset):** skip; do not persist `deployment_target`.
-**Checkpoint:** step 8 "skipped_not_applicable". Proceed to Phase 2.
+`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4). **Checkpoint:** step 8.
+Proceed to Phase 2.

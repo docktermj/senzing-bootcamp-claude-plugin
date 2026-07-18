@@ -1,14 +1,15 @@
 ---
 name: graduation
-description: 'Bootcamp graduation: generate the recap PDF trophy and a production-ready project. Use when the bootcamper finishes the Core track (Module 7) and accepts the graduation offer, or says "graduate", "run graduation", or "finish the bootcamp".'
+description: 'Bootcamp graduation: generate the recap PDF trophy and a production-ready project. Use when the bootcamper finishes the last module (Module 7) and accepts the graduation offer, or says "graduate", "run graduation", or "finish the bootcamp".'
 ---
 
 # Graduation
 
 Graduation turns a completed bootcamp into two things the bootcamper keeps: a
 professional **recap PDF trophy** and a clean **`production/` project** they can
-build on. Load this skill when the bootcamper accepts the graduation offer at the
-end of the Core track, or asks to "graduate" / "run graduation".
+build on. Graduation is the required, terminal module of the bootcamp. Load this
+skill when the bootcamper accepts the graduation offer after the last module
+(Module 7), or asks to "graduate" / "run graduation".
 
 Follow `../bootcamp-onboarding/ground-rules.md` throughout: `🛑`/`⛔` are internal
 directives (never rendered); one 👉 question ends each yielding turn; keep all
@@ -54,9 +55,9 @@ the session yourself. See `../../docs/model-selection.md`.
 
 Gather context before any step. Do this silently.
 
-1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract `name`, `language`, `track`, `database` (SQLite/PostgreSQL), and `data_sources` if present.
+1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract `name`, `language`, `path` (Core/Customized; older sessions may store this as `track`), `selected_modules`, `database` (SQLite/PostgreSQL), and `data_sources` if present.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
-3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (track unknown, data sources none).
+3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
 
 ## Step 1: Finalize the recap and render the PDF trophy
 
@@ -222,7 +223,7 @@ graduation.
 ## Step 5: Graduation report
 
 Always generate `production/GRADUATION_REPORT.md`, even if earlier steps had
-errors. Include: completion timestamp, track completed, modules finished,
+errors. Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
 language, database type, a files-generated table, a files-excluded table, and
 next steps (fill in secrets, obtain a production license, work through the
 checklist, configure CI/CD, test with production data). If any step failed, add a

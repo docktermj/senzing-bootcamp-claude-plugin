@@ -5,8 +5,11 @@ directives, never rendered.
 
 > **Pre-advancement verification (agent self-check, internal directive):**
 >
-> Before offering to advance to Module 4 or marking Module 3 complete, the agent MUST verify BOTH
-> the checkpoints and the artifact on disk:
+> **This check applies only when the Truth Set visualization is selected** (`truthset_visualization`
+> in `selected_modules`; always true in Core). When it is **not** selected, Phase 2 was skipped:
+> `web_service`/`web_page` are `"skipped"`, no snapshot is required, and you may advance once the
+> non-visualization checks pass (Step 10). Otherwise, before offering to advance to Module 4 or
+> marking Module 3 complete, the agent MUST verify BOTH the checkpoints and the artifact on disk:
 >
 > - In `config/bootcamp_progress.json`: `module_3_verification.checks.web_service.status` =
 >   `"passed"` and `module_3_verification.checks.web_page.status` = `"passed"`.
@@ -28,14 +31,18 @@ directives, never rendered.
 
 ## Step 10: Verification Report Generation
 
-**Pre-report validation:** before compiling the Verification Report, confirm that
-`config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint entries
-under `module_3_verification.checks`. If either entry is missing or has `"status": "failed"`:
+**Pre-report validation:** when the **Truth Set visualization is selected** (`truthset_visualization`
+in `selected_modules`; always true in Core), confirm that `config/bootcamp_progress.json` contains
+BOTH `web_service` and `web_page` checkpoint entries under `module_3_verification.checks`. If either
+entry is missing or has `"status": "failed"`:
 
 - If missing: STOP. Do not generate the report. Return to Step 9 and execute it fully by loading
   `phase2-visualization.md`.
 - If failed: include the failure in the report and proceed (failed is different from
   skipped/missing; it means the step was attempted).
+
+When the Truth Set visualization is **not** selected, `web_service`/`web_page` are `"skipped"`
+(neither missing nor failed): record them as skipped and proceed with the report.
 
 Generate a structured summary of all verification checks.
 
@@ -195,5 +202,7 @@ Complete the module using the standard **Module Completion** process in
 **Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All
-11 verification checks passed + database purged of TruthSet data + web service terminated +
-Module 3 completion recorded in the progress file.
+verification checks passed — the two visualization checks (`web_service`/`web_page`) count only when
+the Truth Set visualization is selected, otherwise they are `"skipped"` — database purged of
+TruthSet data + web service terminated (when it ran) + Module 3 completion recorded in the progress
+file.

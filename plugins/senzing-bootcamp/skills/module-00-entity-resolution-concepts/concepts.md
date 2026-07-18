@@ -1,8 +1,8 @@
 # Entity Resolution Concepts (Module 0 content)
 
 Used by Module 0 (the optional entity-resolution concepts primer). Teach the core concept before
-Module 1, only when the bootcamper chose the primer at the Module 0 skip/keep gate
-(`SKILL.md` Step 1).
+Module 1. This module runs only when "Entity Resolution Concepts" was selected during Bootcamp
+preparation (its old skip/keep gate has been retired — see `SKILL.md`).
 
 ## Banner (show first)
 

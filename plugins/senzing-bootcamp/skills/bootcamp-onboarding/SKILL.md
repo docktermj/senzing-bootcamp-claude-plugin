@@ -22,23 +22,22 @@ bootcamper through setup and into the numbered module skills, one guided step at
 
 ## Onboarding sequence (fresh start)
 
-Follow `onboarding-flow.md` for the detailed steps. Steps 1-2 are administrative; steps 3-7 are
-the bootcamper-facing preface, in this order:
+Follow `onboarding-flow.md` for the detailed steps. Steps 1-2 are administrative; steps 3-4 are
+the short bootcamper-facing preface; step 5 hands off to the first module. **All setup questions
+live in the Bootcamp preparation module, not the preface.**
 
 1. **MCP health check** - confirm the Senzing MCP server is reachable. It is required; the
    bootcamp cannot proceed without it.
 2. **Project setup** - create the working directory structure and `config/` files silently.
-3. **Welcome + overview** - show the WELCOME banner and give the module overview.
-4. **Level of detail** - capture the verbosity preference.
-5. **Track selection** - Core Bootcamp (Modules 1-7) or Advanced Topics (the same Modules 1-7
-   plus production-hardening follow-ups at graduation). This is a gate: wait for their choice.
-6. **Programming language selection** - present the languages the MCP server reports for the
-   bootcamper's platform. This is a gate: wait for their real choice.
-7. **Any questions** - invite final questions before continuing.
-8. **Hand off to Module 0** - invoke the `module-00-entity-resolution-concepts` skill: the
-   **optional** entity-resolution concepts primer (ENTITY RESOLUTION CONCEPTS banner +
-   MCP-sourced description + explore gate), skippable via a pinned 👉 gate, which then hands off
-   to Module 1. Entity resolution concepts are no longer taught inline in the preface.
+3. **Welcome + overview** - show the WELCOME banner and give the overview: the named module
+   sequence and the Core-vs-Customized choice the first module will offer.
+4. **Any questions** - invite final questions before continuing.
+5. **Hand off to Bootcamp preparation** - invoke the `bootcamp-preparation` skill: the first,
+   mandatory module. It asks the Core-vs-Customized path choice, per-module selection, level of
+   detail (verbosity), programming language, and version control; persists them in one
+   consolidated write; then hands off to the first selected content module (the **optional**
+   Entity Resolution Concepts primer if selected, otherwise Module 1). Entity resolution concepts
+   and the setup questions are no longer asked in the preface.
 
 ## Ground rules you must never break during onboarding
 

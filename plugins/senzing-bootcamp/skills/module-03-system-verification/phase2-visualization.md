@@ -9,16 +9,25 @@ resolved TruthSet, their first "wow moment" with entity resolution.
 **Prerequisites:** Phase 1 Steps 1-8 complete (all verification checks passed, TruthSet data
 loaded and validated).
 
-## Mandatory execution requirement (internal directive)
+## Execution requirement (internal directive)
 
-Phase 2 visualization is MANDATORY and unconditional whenever Module 3 runs. The visualization
-MUST be produced; you must NOT transition to Module 4 until it exists and the bootcamper has been
-shown it. There is NO condition, threshold, or scenario under which you may skip it, no
-session-length, token-budget, redundancy, or time rationalization is ever valid. Only the
-bootcamper may opt out of the entire module at the Phase 1 Opt-Out Gate (before verification
-begins); once Module 3 is underway, Step 9 is unconditional. The completion gate in
-`phase3-report-close.md` re-checks that the visualization artifact exists and refuses to mark
-Module 3 complete if it does not.
+Phase 2 runs when the **Truth Set visualization** is selected — i.e. `truthset_visualization` is in
+`selected_modules` (`config/bootcamp_preferences.yaml`). This is **always true in Core**; in
+Customized it is true only if the bootcamper chose it during Bootcamp preparation.
+
+- **When selected:** the visualization is MANDATORY within Module 3. It MUST be produced; you must
+  NOT transition to Module 4 until it exists and the bootcamper has been shown it. There is NO
+  condition, threshold, or scenario under which you may then skip it — no session-length,
+  token-budget, redundancy, or time rationalization is ever valid. Once Module 3 is underway and
+  the visualization is selected, Step 9 is unconditional, and the completion gate in
+  `phase3-report-close.md` re-checks that the visualization artifact exists and refuses to mark
+  Module 3 complete if it does not (INV-038).
+- **When not selected:** skip Phase 2 entirely. Mark `web_service` and `web_page` as `"skipped"` in
+  the Verification Report and proceed straight to Phase 3. No workstation-verification
+  visualization is produced (the bootcamper deselected it), and the Phase 3 completion gate does
+  NOT require the snapshot artifact.
+
+(The Phase 1 Opt-Out Gate — skipping the whole of Module 3 — is separate and still applies.)
 
 ## Step 9: Run the bundled visualization web app
 

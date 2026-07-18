@@ -23,9 +23,11 @@ scripts.
 system is verified: SDK initialization, code generation, compilation, data loading, entity
 resolution, database operations, and web service scaffolding all confirmed working.
 
-**Success indicator:** ✅ All 11 verification checks report "passed", the Verification Report
-is persisted to `config/bootcamp_progress.json`, the web service and database are cleaned up,
-and gate 3→4 is marked completed (full criteria in `phase1-verification.md`).
+**Success indicator:** ✅ All verification checks report "passed" (the two visualization checks,
+`web_service`/`web_page`, count only when the **Truth Set visualization** is selected — otherwise
+they are `"skipped"`), the Verification Report is persisted to `config/bootcamp_progress.json`, the
+web service and database are cleaned up, and gate 3→4 is marked completed (full criteria in
+`phase1-verification.md`).
 
 > **User reference:** for detailed background on this module, see
 > `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md`.
@@ -90,7 +92,11 @@ source for the demo TruthSet DATA.
 
 - **Phase 1: Verification Pipeline** (steps 1–8, plus opt-out gate and graceful degradation):
   `phase1-verification.md`
-- **Phase 2: Visualization** (step 9, mandatory gate): `phase2-visualization.md`
+- **Phase 2: Visualization** (step 9) — the **Truth Set visualization**, a selectable optional
+  module: `phase2-visualization.md`. Run it when `truthset_visualization` is in `selected_modules`
+  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. When it
+  is **not** selected, skip Phase 2 (mark `web_service`/`web_page` as `"skipped"`) and go straight
+  to Phase 3. When it **is** selected, Phase 2 is mandatory within the module (INV-038).
 - **Phase 3: Report and Close** (steps 10–12): `phase3-report-close.md`
 - **Visualization API reference** (loaded on demand from Phase 2):
   `visualization-api-reference.md`

@@ -70,6 +70,6 @@ already checkpointed.
 
 ## Module position
 
-Module 7 is the end of the Core track. The Query Completeness Gate at the end of Phase 1 is the
+Module 7 is the last content module before graduation. The Query Completeness Gate at the end of Phase 1 is the
 module transition: Path A (full bootcamp) proceeds to graduation; Paths B/C
 (shorter paths) may stop here with working query programs. Preserve that gate exactly.

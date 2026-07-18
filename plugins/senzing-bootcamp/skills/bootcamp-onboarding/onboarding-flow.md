@@ -3,28 +3,29 @@
 Follow these steps in order. Follow `ground-rules.md` throughout. Do not narrate administrative
 work in detail: do the setup quietly, then present the WELCOME banner.
 
-The bootcamper-facing preface follows this order:
+The bootcamper-facing preface is deliberately short — it welcomes the bootcamper and orients them,
+then hands off to the first module. It follows this order:
 
 1. **Welcome + overview** (WELCOME banner + overview) — step 3.
-2. **Level of detail** (verbosity) — step 4.
-3. **Track** — step 5.
-4. **Programming language** — step 6.
-5. **Any questions** — step 7.
+2. **Any questions** — step 4.
 
 Steps 0-2 are administrative and mostly silent; they run before the WELCOME banner.
 
-Entity resolution concepts are **not** part of the preface. They are an optional **Module 0**
-(`../module-00-entity-resolution-concepts/SKILL.md`) presented after the preface and before
-Module 1; step 8 hands off to it.
+**All setup questions live in the Bootcamp preparation module, not the preface.** The
+Core-vs-Customized path choice, per-module selection, level of detail (verbosity), programming
+language, and version control are asked in the first module — **Bootcamp preparation**
+(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. Entity resolution
+concepts are also **not** part of the preface: they are an optional module
+(`../module-00-entity-resolution-concepts/SKILL.md`) run only when selected during Bootcamp
+preparation.
 
 ## 0. Setup preamble
 
 Tell the bootcamper, in your own words:
 
 "I'm going to do some quick administrative setup: creating your project directory and checking
-your environment. Then I'll introduce entity resolution, and you'll see a big **WELCOME TO THE
-SENZING BOOTCAMP** banner: that's when the guided bootcamp officially starts and I'll begin
-asking you questions."
+your environment. Then you'll see a big **WELCOME TO THE SENZING BOOTCAMP** banner: that's when
+the guided bootcamp officially starts and I'll begin asking you questions."
 
 Optionally show the plugin version (from `.claude-plugin/plugin.json`): `Senzing Bootcamp vX.Y.Z`.
 
@@ -74,7 +75,7 @@ If the Senzing SDK is not yet installed, note that Module 2 covers installation 
 
 (A full preflight script is a later porting phase; keep this check lightweight for now.)
 
-## 3. Welcome and overview (preface item 1-2)
+## 3. Welcome and overview (preface item 1)
 
 State that setup is complete ("Administrative setup is complete. The bootcamp is starting."),
 then display the WELCOME banner:
@@ -95,139 +96,43 @@ Then give the overview (cover naturally, do not ask a question yet):
   `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
   the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
   a non-blocking mention, not a question or a gate.
-- A brief Module 1-7 overview (Core track): (1) business problem, (2) SDK setup, (3) system
-  verification, (4) data collection, (5) data quality and mapping, (6) data processing, (7)
-  query, visualize, and discover. The Advanced Topics track covers the same Modules 1-7 and adds
-  deeper production-hardening guidance (performance, security, monitoring, deployment) as
-  follow-ups at graduation rather than as separate numbered modules.
-- Tracks let you focus on what matters.
+- The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
+  Concepts* (optional), **Business problem**, **SDK setup**, *System verification* (optional),
+  *Truth Set visualization* (optional), **Data collection**, **Data quality & mapping**, **Data
+  processing**, **Query, Visualize and Discover**, and **Graduation**.
+- Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
+  the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
+  modules to include). It also sets your level of detail, programming language, and version
+  control. Required modules always run; the optional ones are yours to include or skip.
+- One thing to know if you customize: *Truth Set visualization* is the interactive web app that
+  shows Senzing working on your machine — if you deselect it, you won't see that visual
+  verification.
 - Licensing: a built-in evaluation license covers the bootcamp's demos; more capacity options
   exist and Module 2 walks through them.
 - If you hit unfamiliar terms (Entity Specification, DATA_SOURCE, entity resolution), ask and
   I'll look up the current definition from the Senzing docs on demand.
 
-## 4. Level of detail (preface item 3)
-
-👉 **How much detail would you like in the bootcamp output? Reply with a number:**
-
-1. **minimal** — near-zero output: only questions, results, and required banners/summaries; no explanations, code walkthroughs, or step recaps. Best for experts who want to move fast.
-2. **concise** — minimal explanations, brief recaps. Best for experienced developers.
-3. **standard** *(recommended)* — balanced what-and-why, block-level code summaries.
-4. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
-
-Wait for the answer, then **hold** the chosen verbosity for the consolidated preface write in
-step 7 — do not write it now (INV-012: one preface write, not one per gate). Each preset maps its
-five `categories` to a single level — `minimal` = 0, `concise` = 1, `standard` = 2, `detailed` = 3.
-When persisted, the `verbosity` key will look like (here, `standard`):
-
-```yaml
-verbosity:
-  preset: standard
-  categories:
-    explanations: 2
-    code_walkthroughs: 2
-    step_recaps: 2
-    technical_details: 2
-    code_execution_framing: 2
-```
-
-For `minimal`, every category is `0`. `minimal` reduces only *explanatory* output; it NEVER
-suppresses required output — every 👉 question (INV-005), gate, module banner (INV-028),
-end-of-module summary (INV-032), and the recap trophy (INV-048) still appear.
-
-Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
-NOT a gate; if they skip, apply `standard` and tell them so.
-
-## 5. Track selection (preface item 4, gate)
-
-👉 **Which track would you like? Reply with a number:**
-
-1. **Core Bootcamp** *(recommended)* — Modules 1-7. Foundation from problem definition through
-   query/visualize, then graduation.
-2. **Advanced Topics** — the same Modules 1-7, plus deeper production-hardening guidance
-   (performance, security hardening, monitoring, packaging/deployment) delivered through the
-   graduation production project and migration checklist rather than as separate numbered modules.
-
-Tracks are not mutually exclusive; completed modules always carry forward. This is a ⛔ gate:
-wait for the real choice, do not assume one. **Hold** the chosen `track` for the consolidated
-preface write in step 7 (do not write it now).
-
-(Track switching and the per-gate validation table are part of later porting phases.)
-
-## 6. Programming language selection (preface item 5, gate)
-
-- **Detect the platform first (do not ask).** Determine the OS and architecture from the
-  environment/system context (else run `uname`/`systeminfo`), and state it in one line
-  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the step-7 consolidated
-  write so Module 2 can reuse it instead of re-asking.
-- Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
-  languages on that platform.
-- Always say "**programming language**", never the bare word "language" (avoids confusion with
-  spoken languages).
-- Present the MCP-returned list, and **annotate each option with its install path for the detected
-  platform** so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
-  "Python — runs via Docker (the SDK is Linux-only); Java / C# — native." Use the Module 2 routing
-  rules (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") as the source of the per-platform
-  paths. If the MCP server flags a language as discouraged/unsupported on the platform, relay that
-  and suggest alternatives.
-
-  👉 **Which programming language would you like to use for the bootcamp?**
-
-- This is a ⛔ gate: wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
-- **Hold** the chosen programming language for the consolidated preface write in step 7 (do not
-  write it now). (Language-specific guidance - `lang-*` - is a later porting phase.)
-
-## 6b. Initialize version control (optional)
-
-Group this setup-adjacent decision with the programming-language choice, before the guided
-modules begin. Do the detection quietly (administrative, not narrated).
-
-Check whether the working directory is already a git repository. `git` behaves identically on
-Linux, macOS, and Windows; rely on the command's **exit status**, not a shell-specific stderr
-redirect:
-
-```bash
-git rev-parse --is-inside-work-tree
-```
-
-- **Already a repo** (command succeeds / prints `true`): skip the question. **Hold**
-  `git_init: existing` for the step-7 consolidated write; proceed to step 7.
-- **Not a repo** (command fails / non-zero exit): ask the pinned 👉 question, verbatim (INV-056):
-
-  👉 **If you don't know what "git" is, just skip this. It's optional: would you like me to initialize a git repository for version control?**
-
-  *(Internal: end the turn on this single 👉 question and wait — INV-005.)* On **yes**, run
-  `git init` as a quiet administrative action and **hold** `git_init: true`; on **no**, skip and
-  **hold** `git_init: false`. Either way, proceed to step 7.
-
-Do not write preferences here: `git init` is an action (run it now), but the `git_init` value is
-**held** for the single consolidated preface write in step 7 — no separate write (INV-058).
-
-## 7. Any questions (preface item 6)
+## 4. Any questions (preface item 2)
 
 Before continuing, invite final questions:
 
 👉 **Do you have any questions before we get started?**
 
-- A clarification question: answer it at their verbosity level (using the MCP server for any
-  Senzing facts), then ask once more whether they have other questions before continuing.
-- A readiness signal ("no", "let's go", "ready", "start"): proceed to Module 0.
+- A clarification question: answer it (using the MCP server for any Senzing facts), then ask once
+  more whether they have other questions before continuing.
+- A readiness signal ("no", "let's go", "ready", "start"): proceed to step 5.
 
 This is NOT a hard gate: if they say they are ready, advance.
 
-**Consolidated preference write (once, quietly).** When the bootcamper signals readiness to
-continue, persist all preface choices collected in steps 4-6b — `verbosity`, `track`, programming
-language, `name` if it was captured, the detected `os`/`arch`, and the `git_init` outcome — to
-`config/bootcamp_preferences.yaml` in a **single**
-write. This is the only preference write of the preface; the earlier gates only held the answers,
-so the bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this
-administrative write. Then hand off to Module 0.
+(No preferences are written in the preface. All setup choices — path, module selection, verbosity,
+programming language, git — are captured and persisted in the Bootcamp preparation module in a
+single consolidated write, INV-058.)
 
-## 8. Hand off to Module 0
+## 5. Hand off to the Bootcamp preparation module
 
-Invoke the `module-00-entity-resolution-concepts` skill. Module 0 is the **optional**
-entity-resolution concepts primer: it offers the primer via a pinned skip/keep 👉 gate, runs it
-if the bootcamper wants it (ENTITY RESOLUTION CONCEPTS banner + MCP-sourced description + explore
-gate), and then hands off to Module 1. If the bootcamper skips it, Module 0 proceeds straight to
-Module 1. The numbered modules then run in ascending order (Module 1 → Module 2 → … → Module 7),
-each ending with the standard module completion process in `module-completion.md`.
+Invoke the `bootcamp-preparation` skill. Bootcamp preparation is the **first, mandatory module**:
+it asks the Core-vs-Customized path choice, per-module selection, verbosity, programming language,
+and version control, persists them in one consolidated write, then hands off to the first selected
+content module (the optional Entity Resolution Concepts primer if selected, otherwise Module 1).
+The selected modules then run in the order recorded in `selected_modules`, each ending with the
+standard module completion process in `module-completion.md`.
