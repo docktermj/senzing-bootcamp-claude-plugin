@@ -5,6 +5,14 @@ description: 'Bootcamp Module 7: Query, Visualize, and Discover. Use when the bo
 
 # Module 7: Query, Visualize, and Discover
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, no direct SQL, file placement, checkpointing). Execute every numbered step and
 sub-step one at a time, in order. Never skip, combine, or abbreviate a step containing a 👉

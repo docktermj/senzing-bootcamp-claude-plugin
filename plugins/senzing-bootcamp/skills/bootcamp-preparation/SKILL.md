@@ -5,6 +5,14 @@ description: 'Bootcamp preparation (first, mandatory module): choose Core vs Cus
 
 # Bootcamp Preparation (first module, mandatory)
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). This is the **first, mandatory module**. The
 onboarding preface (`../bootcamp-onboarding/onboarding-flow.md`) hands off here after the WELCOME

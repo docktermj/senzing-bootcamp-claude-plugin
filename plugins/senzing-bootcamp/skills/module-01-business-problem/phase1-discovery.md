@@ -23,6 +23,13 @@ Present an entity-resolution design-pattern gallery (recognized use-case categor
 pull real-world examples via `search_docs`: the full pattern gallery is a later porting
 phase). For each: the problem it solves, the goal, typical data sources, business value.
 
+Because this content is MCP-sourced, make that visible so the bootcamper can trust it is real,
+not fabricated: add a brief inline attribution to the gallery — e.g. a one-line "*Sourced from
+Senzing docs via the MCP server.*" note (or a per-item "(via Senzing docs)") — per the
+visible-attribution convention in `../bootcamp-onboarding/ground-rules.md`. Keep it lightweight,
+honor verbosity (suppress it at the `minimal` preset), and attribute to the MCP server only what
+an MCP tool actually produced.
+
 👉 **Do any of these patterns match your situation?**
 
 If they pick one, use it as a template (pre-fill source types, suggest matching criteria,

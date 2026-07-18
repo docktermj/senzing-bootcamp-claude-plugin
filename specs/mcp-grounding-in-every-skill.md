@@ -63,3 +63,7 @@ called this turn"). `ground-rules.md:52-70` stays the canonical source of truth.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Add an explicit MCP-grounding / no-speculation requirement to EVERY skill" (2026-07-18, General/all skills).
 - Priority: High.
 - Related specs: `visible-mcp-source-attribution.md` (surfacing grounding to the bootcamper, distinct), `concepts-module-verified-qa-and-quiz.md` (per-answer MCP verification in Module 0, distinct). Upholds the MCP-first invariant at `ground-rules.md:52-70`.
+
+## Invariants introduced
+
+- `INV-080` — Every bootcamp skill that can produce bootcamper-facing Senzing content MUST carry an explicit MCP-grounding / no-speculation clause (with the pre-response checklist) near the top of its `SKILL.md`, not merely a passing "MCP-first" reference; the canonical rule stays the MCP-first invariant in `ground-rules.md`. (recorded in `specs/INVARIANTS.md`)

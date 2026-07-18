@@ -5,6 +5,14 @@ description: 'Bootcamp graduation: generate the recap PDF trophy and a productio
 
 # Graduation
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Graduation turns a completed bootcamp into two things the bootcamper keeps: a
 professional **recap PDF trophy** and a clean **`production/` project** they can
 build on. Graduation is the required, terminal module of the bootcamp. Load this

@@ -68,6 +68,13 @@ steering files.)
 - **Flags:** before an SDK call that accepts flags, look them up with
   `get_sdk_reference(topic='flags')`, pick the flags matching the bootcamper's intent, explain
   the choice in one sentence, and reuse that knowledge within the module.
+- **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
+  bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
+  examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via
+  Senzing docs" or a one-line "Sourced from Senzing docs via the MCP server." This is a trust
+  signal, not a replacement for MCP sourcing; keep it lightweight and honor verbosity
+  (INV-011/INV-012) — suppress it at the `minimal` preset. Attribute to the MCP server only what
+  an MCP tool actually produced this turn (attribution must be truthful).
 
 ## No direct SQL against the Senzing database
 
