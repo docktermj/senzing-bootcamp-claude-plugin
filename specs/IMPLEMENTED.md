@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## refresh-example-recap
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf` (re-rendered), `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.truthset.png` (new sample screenshot)
+- **Summary:** Rewrote the shipped example recap so it models a current Core graduation. All eight section headers are now name-based `## {Module name} — {ISO 8601 timestamp}` (INV-085; renderer confirms `number=None`). The old Truth-Set-based "Module 3: System Verification" (10 checks incl. truthset_acquisition/web_service/web_page, "Downloaded the 159-record TruthSet", `PurgeTruthSet.java`) was split into two correct sections: **System verification** (synthetic `VERIFY` records, 8 checks, register-before-load, no Truth Set — INV-082/083) and a standalone **Truth Set visualization** section (acquires/loads/visualizes the 159-record Truth Set, embeds a screenshot). Also: dropped-gate questions removed (stakeholder summary, data-collection checklist, Module 6 exec summary are now auto-created and noted as such); "Senzing License Key" terminology + arrival gate reflected in SDK setup; phantom "Module 8" replaced with the graduation production-project framing; all "**Bootcamper's takeaway:** N/A" lines removed (omit-empty-recap-takeaway); ISO 8601 timestamps in headers; `.bat`/`.sh` env scripts both mentioned. A new brand-colored, non-PII sample entity-graph PNG (`bootcamp_recap.example.truthset.png`, generated from `scripts/brand_tokens.py` source colors) is embedded to demonstrate the screenshot feature. AC verified: `generate_recap_pdf.py --check` passes; the PDF re-rendered from the plugin dir (fpdf2) and embeds a real `/Image` XObject; grep finds no residual `## Module N`/Module 8/TruthSet-acquisition/N-A-takeaway/`data/transformed`; no PII (synthetic person + public company names, as before). INV-065 holds (ships + regenerable + no PII); regenerate with CWD = `plugins/senzing-bootcamp/` so the example-relative PNG resolves (it degrades gracefully otherwise, INV-048). Cross-platform, language-agnostic. No new invariant.
+- **Commit:** uncommitted
+
 ## module2-transition-staleness
 
 - **Implemented:** 2026-07-19
