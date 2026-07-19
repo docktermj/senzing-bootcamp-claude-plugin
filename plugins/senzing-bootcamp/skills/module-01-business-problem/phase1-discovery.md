@@ -39,7 +39,12 @@ adapt to their context). If none fit, they can accept the Business Case Offer in
 
 ## 4. Discovery prompt: three selectable paths
 
-Present the neutral lead question, then the numbered choices, ending the turn on the 👉:
+First state a one-line recommendation (a statement, not part of the lead question; honor
+verbosity — suppress it at the `minimal` preset), then present the neutral lead question and the
+numbered choices, ending the turn on the 👉:
+
+For the most relevant bootcamp, I recommend describing your own business problem if you have one —
+you'll work through *your* real data. If you don't, I can generate a realistic scenario instead.
 
 👉 **How would you like to define the business problem? Reply with a number:**
 
@@ -47,8 +52,8 @@ Present the neutral lead question, then the numbered choices, ending the turn on
    have, where it comes from, and what success looks like.
 2. **Adopt a design pattern** (if you picked one in Step 3) — how does it apply: what data, from
    where, and what does success look like?
-3. **Accept the Business Case Offer** — I'll generate a realistic, multi-source scenario so you
-   can complete the full bootcamp without supplying your own.
+3. **I don't have my own data — generate a scenario for me** — I'll create a realistic,
+   multi-source scenario so you can complete the full bootcamp (the Business Case Offer).
 
 *(Internal: end the turn on this 👉 choice and wait. Do NOT generate a scenario before the
 bootcamper explicitly accepts option 3.)*

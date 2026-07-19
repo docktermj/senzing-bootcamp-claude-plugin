@@ -24,8 +24,7 @@ preparation.
 Tell the bootcamper, in your own words:
 
 "I'm going to do some quick administrative setup: creating your project directory and checking
-your environment. Then you'll see a big **WELCOME TO THE SENZING BOOTCAMP** banner: that's when
-the guided bootcamp officially starts and I'll begin asking you questions."
+your environment."
 
 Optionally show the plugin version (from `.claude-plugin/plugin.json`): `Senzing Bootcamp vX.Y.Z`.
 
@@ -91,7 +90,7 @@ Then give the overview (cover naturally, do not ask a question yet):
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.
 - Goal: get comfortable generating Senzing SDK code, finishing with running code you can build on.
-- You finish with a professional **recap PDF** trophy — a keepsake of everything you built, module by
+- You finish with a professional **recap PDF** — a keepsake of everything you built, module by
   module, to keep and share with your team. A sample of a finished recap ships with the plugin at
   `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
   the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is

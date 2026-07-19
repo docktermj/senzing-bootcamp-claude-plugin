@@ -164,10 +164,10 @@ If a source fails during orchestration, present three options:
 
 ## Stakeholder summary
 
-After validation, offer: "Would you like a one-page executive summary for your team?" If yes,
-follow the Module 6 guidance to produce a one-page summary and save it to
-`docs/stakeholder_summary_module6.md`. (The Kiro `templates/stakeholder_summary.md` port is a
-later phase; compose the summary directly for now.)
+After validation, always produce a one-page executive summary — no question (INV-012) —
+following the Module 6 guidance, and save it to `docs/stakeholder_summary_module6.md`. Announce
+it as a produced file in the end-of-module summary's "Files produced" list (INV-032). (The Kiro
+`templates/stakeholder_summary.md` port is a later phase; compose the summary directly for now.)
 
 ## Success criteria
 

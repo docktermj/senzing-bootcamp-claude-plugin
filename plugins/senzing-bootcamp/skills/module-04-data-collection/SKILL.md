@@ -236,16 +236,13 @@ Get-Content data\raw\vendor_api.json -TotalCount 5
 
 ### 4. Document data source locations
 
-**Data Collection Checklist:** Before the bootcamper starts documenting sources, offer to copy
-a structured checklist into their project:
-
-👉 **I have a data collection checklist that helps you document all your data sources in a structured way. Want me to add it to `docs/data_collection_checklist.md`?**
-
-*(Internal: end the turn on this question and wait.)* If yes, create
-`docs/data_collection_checklist.md` with a Data Inventory Table (one row per data source) and a
-Validation Checklist, and guide the bootcamper to fill in one row per source and complete the
-checklist before Module 5. *(The Kiro `templates/data_collection_checklist.md` port is a later
-porting phase; compose the checklist directly for now.)*
+**Data Collection Checklist:** Always create a structured checklist in the project — no question
+(INV-012). Create `docs/data_collection_checklist.md` with a Data Inventory Table (one row per
+data source) and a Validation Checklist, and guide the bootcamper to fill in one row per source
+and complete the checklist before Module 5. Announce it as a produced file in the Step 9
+end-of-module summary's "Files produced" list (INV-032). *(The Kiro
+`templates/data_collection_checklist.md` port is a later porting phase; compose the checklist
+directly for now.)*
 
 Also create or update `docs/data_source_locations.md`:
 
