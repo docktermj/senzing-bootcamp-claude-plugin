@@ -18,7 +18,7 @@ This is the Claude-plugin port of the Kiro `module-completion*` / `module-comple
 In `config/bootcamp_progress.json`, apply all of the following as a **single** batched write (one
 diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`):
 
-- Add this module's number to `modules_completed` (idempotent: do not duplicate).
+- Add this module's **name token** (e.g. `system_verification`, `truthset_visualization`, `data_collection`) to `modules_completed` — never a catalog number, so graduation's name-based reconcile matches (INV-085). Idempotent: do not duplicate. A skill that hosts more than one selectable module (e.g. Module 3's System verification + Truth Set visualization) adds one entry per module it completed.
 - Set `current_module` to the next module in `selected_modules` (or leave it on this module if the bootcamper has not yet chosen to advance).
 - Set top-level `current_step` to `null`.
 - Under `step_history["<module>"]`, set `{ "last_completed_step": "<final step>", "updated_at": "<ISO 8601>" }`.

@@ -85,11 +85,13 @@ in `modules_completed` — match by module **name**, not a catalog number. Itera
 `modules_completed` list in its recorded (experienced) order and, for any completed module with no
 matching section, append one now from the module's artifacts and progress data, following
 `../bootcamp-onboarding/module-completion.md` (append only, never rewrite existing sections, never
-re-sort into catalog order). Watch for modules that share a skill directory but are separate
-`modules_completed` entries — e.g. `system_verification` and `truthset_visualization` both live in
-`module-03-system-verification/` yet each needs its own section, so synthesize the missing one
-(e.g. `truthset_visualization`) here. If `docs/bootcamp_recap.md` does not exist at all,
-reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
+re-sort into catalog order). The module flow records each module it completes — including both
+`system_verification` and `truthset_visualization` when the Truth Set visualization ran (they share
+`module-03-system-verification/` but are separate `modules_completed` entries, each with its own
+section, INV-086) — so this reconcile is normally a **no-op**; its job is to **recover** a section
+missing because a module was interrupted before its completion step ran (e.g. synthesize a missing
+`truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
+all, reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
 If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
 module interrupted before completion), fold its content into that module's

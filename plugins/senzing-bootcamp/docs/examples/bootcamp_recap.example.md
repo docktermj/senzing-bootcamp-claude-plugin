@@ -232,7 +232,7 @@
 - Senzing anti-patterns for loading: initialize the factory/environment once per process; always drain the redo queue using getRedoRecord() as the loop sentinel (never countRedoRecords(), which does a full table scan); SQLite is dev/test only, not for medium/large production volume.
 - Production volume tiers and the license framing: the bootcamper's Senzing License Key covers the bootcamp's volumes, so no capacity concerns regardless of stated production volume.
 - The SQLite-at-scale trade-off for a stated medium production tier: proceed on SQLite for the bootcamp now, and migrate to PostgreSQL before real production load (the migration is covered by the graduation production project and migration checklist).
-- Why the bootcamp saw 0 PPP_LOANS-to-reference matches: independently-sampled small slices of much larger source files have low odds of specific-company overlap — a sampling-scale artifact, not a pipeline defect — versus the 37 real GLEIF-OPEN-OWNERSHIP matches found (both grounded in the same underlying company registries).
+- Why the bootcamp saw 0 PPP_LOANS-to-reference matches: independently-sampled small slices of much larger source files have low odds of specific-company overlap — a sampling-scale artifact, not a pipeline defect — versus the 36 real GLEIF-OPEN-OWNERSHIP matches found (of 37 cross-source matches total; both grounded in the same underlying company registries).
 
 ### Questions & Responses
 

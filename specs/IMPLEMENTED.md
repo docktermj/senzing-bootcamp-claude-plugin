@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## record-truthset-visualization-completion
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase3-report-close.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` (+ re-rendered `.pdf`), `specs/INVARIANTS.md`
+- **Summary:** Resolved the second deep-dive audit's MAJOR coherence/completeness gap (maintainer chose "full module"). The Truth Set visualization module was treated as first-class by the example recap and graduation but was never recorded by the flow. Module 3 close (`phase3-report-close.md` Step 12) now records BOTH modules in experienced order: `system_verification` always, and `truthset_visualization` when the viz ran — each added to `modules_completed` as a **name token** and each getting its own name-based recap section (`## System verification`, `## Truth Set visualization` with the embedded screenshot). `module-completion.md` Step 1 now says add the module's **name token** (not "number"), fixing the number-vs-name inconsistency graduation matches on. Graduation's Step 1a reconcile is reframed as a normally-no-op **recovery** backfill (for interrupted modules), no longer premised on the flow never recording `truthset_visualization`. Bundled minor: fixed the example recap's count slip (`:235` "37 real GLEIF-OPEN-OWNERSHIP" → "36 … of 37 cross-source total", consistent with the `:275` breakdown). AC verified: `generate_recap_pdf.py --check` passes and the `.example.pdf` re-rendered; grep confirms the dual-record, name-token wording, and reframed reconcile; the example count is now internally consistent. Markdown-only (+ re-rendered PDF), cross-platform, language-agnostic.
+- **Invariants introduced:** INV-086 (maintainer-approved).
+- **Commit:** uncommitted
+
 ## audit-polish-cleanup
 
 - **Implemented:** 2026-07-19

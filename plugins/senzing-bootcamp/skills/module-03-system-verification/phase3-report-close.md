@@ -160,18 +160,30 @@ nothing to confirm.)
 
 ## Step 12: Module Close
 
-Complete the module using the standard **Module Completion** process in
-`../bootcamp-onboarding/module-completion.md`:
+Complete the module(s) using the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md`. This skill directory hosts **two** selectable
+modules — **System verification** (Phase 1/3, always recorded) and, when it ran, **Truth Set
+visualization** (Phase 2). Record BOTH as first-class modules, in the order the bootcamper
+experienced them (System verification first, then Truth Set visualization), so neither depends on
+graduation's reconcile backfill (INV-085/INV-086):
 
-1. Update progress state (add Module 3 to `modules_completed`, set gate 3→4 status to
-   "completed", set `current_step` to `null`).
-2. Append the Module 3 recap section to `docs/bootcamp_recap.md` (Information Shared, Questions &
-   Responses, Actions Taken, Journal). In the recap, capture the number of verification checks
-   passed and the completion timestamp. The consolidated recap replaces the separate journal
-   file: the narrative goes in the section's `### Journal` subsection.
+1. **Update progress state.** Add `system_verification` to `modules_completed` (a module name
+   token, not a number). **When the Truth Set visualization ran** (`truthset_visualization` in
+   `selected_modules` and Phase 2 executed), also add `truthset_visualization` to
+   `modules_completed`, placed after `system_verification`. Set gate 3→4 status to "completed" and
+   `current_step` to `null`. All idempotent (do not duplicate).
+2. **Append the recap section(s)** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085);
+   the narrative goes in each section's `### Journal` subsection (the consolidated recap replaces
+   the separate journal file):
+   - `## System verification — {timestamp}` (Information Shared, Questions & Responses, Actions
+     Taken, Journal): capture that all 8 checks passed against the synthetic `VERIFY` data.
+   - **When the Truth Set visualization ran:** also `## Truth Set visualization — {timestamp}` (same
+     four subsections): capture the Truth Set acquisition/load, the interactive visualization and
+     standalone snapshot, and — if screenshots were captured — the embedded
+     `![…](docs/visualizations/…png)` image(s) in Actions Taken.
 3. Present the end-of-module summary (accomplished, files produced, why it matters, what's next).
-4. **Transition to Module 4:** ask the single transition question; on an affirmative reply,
-   produce the Module 4 start banner, journey map, before/after framing, and step overview per
+4. **Transition to the next module:** ask the single transition question; on an affirmative reply,
+   produce the next module's start banner, journey map, before/after framing, and step overview per
    the ground rules.
 
 👉 **Are you ready to move on to the next module: {next module name}?**
