@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## truthset-visualization-full-apparatus
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase2-visualization.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase3-report-close.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/SKILL.md`, `specs/INVARIANTS.md`
+- **Summary:** Resolved the third deep-dive's apparatus gap (maintainer chose "Give it the full apparatus"). Recording Truth Set visualization as first-class (INV-086) had left it presented like a sub-step. Now Phase 2 opens with a full module-start apparatus block for `truthset_visualization` — set `current_module`, `🚀🚀🚀 MODULE: TRUTH SET VISUALIZATION 🚀🚀🚀` banner, journey refresh (it `🔄` current), before/after, step overview (INV-028–031/INV-079), model/effort nudge (INV-063) — before Step 9 setup. `module-completion.md` Steps 3–4 generalized for a skill that completed more than one module this turn: a completion line + four-part summary per module (experienced order), transition question asked once after the last. `phase3-report-close.md` Step 12 presents `✅ Module complete: System verification` then (when the viz ran) `✅ Module complete: Truth Set visualization`, each with its own summary, one transition after both. `phase1-verification.md` handoff and `SKILL.md` Phase 2 bullet reflect first-class status. INV-086 clarified in place: a first-class module receives the full per-module apparatus and is NOT apparatus-exempt (contrast Bootcamp preparation INV-075 / Module 0 INV-078); no meaning change. AC verified by grep of each apparatus item + `generate_recap_pdf.py --check`. Markdown-only, cross-platform, language-agnostic. Clarifies INV-086 in place (no new invariant).
+- **Commit:** 98ade95
+
 ## record-truthset-visualization-completion
 
 - **Implemented:** 2026-07-19
