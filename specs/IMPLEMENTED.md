@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## python3-compile-and-example-recap-mechanism
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` (+ re-rendered `.pdf`)
+- **Summary:** Two shipped-artifact fixes from the fourth deep-dive. (E1/INV-001) Module 3's Step-5 build table used bare `python -m py_compile`, which fails on python3-only hosts (a false compile failure for Python bootcampers) — changed to `python3 -m py_compile`, matching every other interpreter invocation and `hooks/README.md`. (E2/INV-065/071/077) The shipped example recap credited a nonexistent `src/scripts/senzing_viz_fallback.py` as the viz mechanism and as "What was produced," contradicting Phase 2's "do NOT hand-write a server" rule; reworded to attribute the visualization to the bundled Senzing viz server and removed the fabricated script from both the narrative and the Journal list. Re-rendered `bootcamp_recap.example.pdf` (fpdf2, valid 15-page PDF); `generate_recap_pdf.py --check` passes; no PII. Markdown/table-only, cross-platform, language-agnostic.
+- **Commit:** 7ab166b
+
 ## cord-fastpath-load-readiness
 
 - **Implemented:** 2026-07-19
