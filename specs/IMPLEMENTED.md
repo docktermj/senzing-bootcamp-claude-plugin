@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module2-transition-staleness
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Fixed two stale references surfaced by the deep-dive audit. `:756` no longer tells the bootcamper "The next module (Module 3) verifies … using the Senzing TruthSet" (contradicted INV-082) — it now reads "The next module (System verification) verifies the full setup end-to-end with synthetic records — and, when the Truth Set visualization is selected, visualizes the Senzing Truth Set:". `:589` dropped the phantom "Module 8" ("(Modules 1, 4, 6, and 8)" → "(Modules 1, 4, and 6)"). AC verified by grep: no "using the Senzing TruthSet" for Module 3 and no "Module 8" remain; the following transition 👉 question is unchanged. Markdown-only, cross-platform. No new invariant.
+- **Commit:** uncommitted
+
 ## pin-iterate-proceed-decision-gate
 
 - **Implemented:** 2026-07-19

@@ -586,7 +586,7 @@ no custom license was placed, skip 5e entirely: the built-in evaluation license 
 detection, and later modules fall back to the evaluation capacity automatically.
 
 When a custom license is active, read its real record limit now so every later capacity or
-sampling decision (Modules 1, 4, 6, and 8) uses the license the bootcamper actually supplied
+sampling decision (Modules 1, 4, and 6) uses the license the bootcamper actually supplied
 instead of the built-in evaluation figure.
 
 **Confirm the SDK facts from the Senzing MCP server first.** Do not rely on training data for
@@ -753,7 +753,7 @@ Once the SDK is installed and verified, run the standard **Module Completion** p
 to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
 transition question.
 
-The next module (Module 3) verifies the full setup end-to-end using the Senzing TruthSet:
+The next module (System verification) verifies the full setup end-to-end with synthetic records — and, when the Truth Set visualization is selected, visualizes the Senzing Truth Set:
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 
