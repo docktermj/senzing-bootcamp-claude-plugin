@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## cord-fastpath-load-readiness
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+- **Summary:** Fixed the fourth deep-dive's CORD fast-path load-readiness gap. Module 5's fast-path (INV-040/041) sets `mapping_status: complete` + `fast_pathed: true` and keeps `file_path` in `data/raw/`, but Module 6 assumed every load-ready file lives in `data/senzing-ready/` — so Phase C step-16 validation falsely flagged a fast-pathed CORD source as missing. Phase A step 2 and Phase C step 16 now resolve each source's load file from its registry `file_path` (`data/senzing-ready/` for mapped, `data/raw/` for `fast_pathed: true`). Bundled C2: dropped the backwards "Module 2 (SDK setup)" reference in Module 5's compliance classification and scoped the direct-to-loading promise to CORD/fast-pathed sources. AC verified by grep (Module 6 now references `fast_pathed`/`data/raw`) — a fast-pathed CORD source is no longer falsely flagged. Brings Module 6 into line with existing INV-040 (no new invariant). Markdown-only, cross-platform, language-agnostic.
+- **Commit:** c6c7516
+
 ## audit3-minor-fixes
 
 - **Implemented:** 2026-07-19
