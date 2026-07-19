@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## align-invariants-cord-and-optin
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `specs/INVARIANTS.md`
+- **Summary:** Aligned four invariants with exemptions they already implied but never restated (maintainer chose "amend the invariant wording"; all in-place clarifications, no meaning change, no ID reuse). INV-041/042/043 now name the CORD / already-Senzing-ready fast-path exemption and cite INV-040 (such sources route directly to loading with no mapping/transform/transform-code). INV-046 now states query code is always created while visualization and discovery are offered — a decline is a requested skip per INV-014. Each amendment carries a dated "Clarified 2026-07-19 … no meaning change" provenance note per the invariant-maintenance rules. AC verified: the amended invariants no longer read as contradicting INV-040/INV-014; no invariant renumbered or deleted. Clarifies existing invariants (no new invariant).
+- **Commit:** bb8c90f
+
 ## truthset-visualization-full-apparatus
 
 - **Implemented:** 2026-07-19
