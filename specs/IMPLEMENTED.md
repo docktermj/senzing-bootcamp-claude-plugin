@@ -23,21 +23,21 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
 - **Summary:** Removed two low-value yes/no gates (same pattern as `drop-deliverable-generation-gates`). Module 4 Step 4 no longer asks "👉 …Want me to add it to `docs/data_collection_checklist.md`?" — it always creates `docs/data_collection_checklist.md` (Data Inventory Table + Validation Checklist) and announces it in the Step 9 end-of-module summary's "Files produced" list (INV-032). Module 6 Phase D no longer offers "Would you like a one-page executive summary…?" — it always produces `docs/stakeholder_summary_module6.md` and announces it in the end-of-module summary (INV-032). AC verified by grep: both prompts gone; module 4's other 👉 questions (loading-strategy, transition) and module 6's genuine visualization offers (cross-source graph, results dashboard) untouched; no new 👉 introduced (INV-005/INV-012). Markdown-only, cross-platform, language-agnostic.
-- **Commit:** uncommitted
+- **Commit:** d2a7a50
 
 ## encourage-own-business-case
 
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`
 - **Summary:** Module 1 Step 4 now leads with a one-line recommendation (a statement, suppressed at the `minimal` verbosity preset) to describe your own business problem, and reframes option 3 from the neutral "Accept the Business Case Offer" to the explicit fallback "I don't have my own data — generate a scenario for me" (keeping "(the Business Case Offer)" so the internal Step 3/4a references stay coherent). AC verified by grep: nudge present before the 👉; option 3 reframed as fallback with option 1 the encouraged default; the neutral lead question and numbered list are unchanged (INV-008/INV-051); the bootcamper still chooses (INV-007) and Step 4a/4b branching on option 3 still applies. Markdown-only, cross-platform, language-agnostic.
-- **Commit:** uncommitted
+- **Commit:** d2a7a50
 
 ## onboarding-preface-copy-trim
 
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`
 - **Summary:** Trimmed two preface copy nits. Dropped the step-0 foreshadowing sentence ("Then you'll see a big WELCOME… banner: that's when the guided bootcamp officially starts and I'll begin asking you questions.") so the preamble is brief administrative narration only (INV-012). Removed the word "trophy" from the step-3 recap-PDF description ("a professional **recap PDF** — a keepsake…"), keeping the sample-recap pointer intact. INV-048's internal "trophy document" naming and the graduation 🏆 reveal were left unchanged (out of scope). AC verified by grep: no foreshadowing/"recap PDF…trophy" remains in the preface; the sample pointer stays; no 👉 added or removed. Markdown-only, cross-platform, language-agnostic.
-- **Commit:** uncommitted
+- **Commit:** d2a7a50
 
 ## module3-synthetic-verification-data
 
