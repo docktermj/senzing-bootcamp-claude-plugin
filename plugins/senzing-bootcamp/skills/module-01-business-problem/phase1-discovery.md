@@ -230,9 +230,9 @@ what they already covered.
 
 ### 6b–6d. Ask only about "not yet determined" items, one per turn
 
-- 7b (record types): 👉 **Which records are you working with? Reply with a number:** (1) people, (2) organizations, (3) both.
-- 7c (source count): 👉 **How many distinct data sources will we work with?**
-- 7d (desired outcome): 👉 **What does the end result look like? Reply with a number:** (1) a clean master list, (2) an API, (3) reports, (4) something else.
+- 6b (record types): 👉 **Which records are you working with? Reply with a number:** (1) people, (2) organizations, (3) both.
+- 6c (source count): 👉 **How many distinct data sources will we work with?**
+- 6d (desired outcome): 👉 **What does the end result look like? Reply with a number:** (1) a clean master list, (2) an API, (3) reports, (4) something else.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, proceed immediately to Step 7 in the same turn (Step 7's question is

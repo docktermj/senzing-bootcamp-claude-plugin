@@ -78,7 +78,11 @@ matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 ## 25. Execute UAT with business users
 
-Offer to involve business users in testing the cross-source results.
+Offer to involve business users in testing the cross-source results — pin the question verbatim:
+
+👉 **Would you like to involve business users in testing the cross-source results?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)*
 
 - **Yes:** share cross-source match examples, collect feedback, document in
   `docs/uat_results.md`.

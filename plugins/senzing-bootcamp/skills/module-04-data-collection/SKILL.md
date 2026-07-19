@@ -98,8 +98,13 @@ complete list.
 
 ### 2. For each data source, collect the data
 
-First, ask how the bootcamper wants to provide the data for a given source: upload a file,
-provide a URL/file path, connect to a database, or use an API endpoint.
+First, ask how the bootcamper wants to provide the data for a given source — pin this question
+verbatim (INV-051), never joining the choices with "or":
+
+👉 **How would you like to provide the data for this source? Reply with a number:** (1) upload a
+file, (2) provide a URL or file path, (3) connect to a database, (4) use an API endpoint.
+
+*(Internal: end the turn on this question and wait.)*
 
 **If the bootcamper doesn't have their own data** or wants free data to practice with,
 recommend CORD data as the primary alternative:

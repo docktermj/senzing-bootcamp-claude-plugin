@@ -136,8 +136,12 @@ correct project subdirectories per the file-placement guidance in `phase2-data-m
 ### 25. Present results and decision gate
 
 Present the Phase 3 results summary for this data source: records loaded, entities created,
-deduplication rate, quality assessment, and any issues found. Ask the bootcamper to review the
-results before proceeding.
+deduplication rate, quality assessment, and any issues found. Then pin the decision-gate question
+verbatim:
+
+👉 **Are you ready to proceed?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)*
 
 > **Data source registry:** Update the source's `test_load_status` to `complete` and
 > `test_entity_count` to the entity count from the test load in `config/data_sources.yaml`. Set

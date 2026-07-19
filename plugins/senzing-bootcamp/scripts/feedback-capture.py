@@ -41,6 +41,8 @@ if FEEDBACK.search(lower):
     ctx = (
         "The bootcamper is submitting bootcamp feedback. Follow the bootcamp "
         "feedback workflow (the feedback.md file in the bootcamp-onboarding skill): "
+        "begin with the pinned BOOTCAMP FEEDBACK entry banner and end with the "
+        "FEEDBACK SAVED exit banner (see feedback.md for the verbatim banner wording); "
         "silently capture as much relevant context as possible (the time; the plugin "
         "version from .claude-plugin/plugin.json; current_module, current_step, and "
         "completed modules from config/bootcamp_progress.json; the recent questions "
