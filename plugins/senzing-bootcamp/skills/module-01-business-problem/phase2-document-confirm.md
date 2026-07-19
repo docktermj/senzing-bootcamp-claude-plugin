@@ -142,8 +142,8 @@ Run the standard **Module Completion** process in
 section to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
 transition question.
 
-Modules run in ascending numeric order (Module 1 → Module 2 → … → Module 7). After the business
-problem is defined, the next module installs and configures the Senzing SDK:
+After the business problem is defined, the next module — SDK setup — installs and configures the
+Senzing SDK:
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 

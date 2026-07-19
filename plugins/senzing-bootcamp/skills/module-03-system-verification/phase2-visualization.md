@@ -99,11 +99,13 @@ order:
   `skills/module-03-system-verification/`, so the script is at `../../scripts/senzing_viz_server.py`).
 
 The Senzing native library must be importable, so run it with the project env sourced (the
-`src/scripts/senzing-env.sh` created in Module 2). On Linux/macOS:
+`src/scripts/senzing-env.sh` / `senzing-env.bat` created in Module 2). On Linux/macOS:
 
 ```bash
 source src/scripts/senzing-env.sh
 ```
+
+On Windows, run `src\scripts\senzing-env.bat` first instead.
 
 ### 9.2 Always produce the standalone snapshot first (the guarantee)
 
@@ -195,7 +197,7 @@ Then deliver this guided tour as one message (no interactive pauses):
 
 ---
 
-👉 **Take your time exploring the visualization. Let me know when you're ready and I'll continue with cleanup.**
+👉 **Take your time exploring the visualization. Let me know when you're ready to continue.**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
 exploring. Do not proceed to Phase 3 until they respond.)*

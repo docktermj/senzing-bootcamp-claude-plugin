@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stop hook: a safety net that nudges for a single closing 👉 question. It fires
+"""Stop hook: to nudge for a single closing 👉 question (a safety net). It fires
 ONLY when a bootcamp is active AND the model actually forgot the question, and it can
 NEVER loop.
 

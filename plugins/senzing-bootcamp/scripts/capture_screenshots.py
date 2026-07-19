@@ -14,7 +14,7 @@ URLs are ever opened. A non-local ``http(s)`` host is refused — this helper
 never fetches from the network.
 
 Backends tried, in order (each optional):
-  1. Playwright (``playwright`` + a browser) — ``pip install playwright``.
+  1. Playwright (``playwright`` + a browser) — ``python3 -m pip install playwright``.
   2. Selenium (``selenium`` + a headless Chrome/Firefox driver).
   3. Headless Chrome/Chromium CLI (``--headless --screenshot``).
   4. ``wkhtmltoimage`` CLI.

@@ -240,10 +240,11 @@ the closing question).
 
 ## 7. Software integration (separate question)
 
-👉 **Will the results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)? If so, which systems?**
+👉 **Will the results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
 
-Record specific systems (e.g. Elasticsearch, Salesforce) for the problem statement and solution
-approach. *(Internal: end the turn and wait.)* **Checkpoint:** write step 7.
+*(Internal: end the turn and wait.)* On **yes**, ask one follow-up on the next turn — "👉 **Which
+systems?**" — and record the specific systems named (e.g. Elasticsearch, Salesforce) for the
+problem statement and solution approach. On **no**, record none and continue. **Checkpoint:** write step 7.
 
 ## 8. Deployment target (optional)
 

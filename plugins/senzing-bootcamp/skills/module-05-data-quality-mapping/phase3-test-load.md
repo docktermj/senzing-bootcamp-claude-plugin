@@ -152,22 +152,22 @@ process in `../bootcamp-onboarding/module-completion.md` (update progress, appen
 recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Then present
 the decision gate below.
 
-Modules run in ascending numeric order; Module 6 is next by default. The shortcut path is only
+Data processing is the next module by default. The shortcut path is only
 taken when the bootcamper explicitly requests it (skipping a module requires a bootcamper
 request, per the ground rules):
 
-- **Shortcut path (→ Module 7):** For simple use cases: single data source, small dataset
+- **Shortcut path (→ Query, Visualize and Discover):** For simple use cases: single data source, small dataset
   (≤1000 records), no production requirements: the Phase 3 test load results may be sufficient.
-  The bootcamper can proceed directly to Module 7 (Query, Visualize, and Discover) and skip
-  Module 6.
-- **Full path (→ Module 6):** For production requirements, multiple data sources, datasets
+  The bootcamper can proceed directly to Query, Visualize and Discover and skip
+  Data processing.
+- **Full path (→ Data processing):** For production requirements, multiple data sources, datasets
   exceeding 1000 records, or when the bootcamper wants to learn production-quality loading
-  patterns: recommend the full Module 6 path.
+  patterns: recommend the full Data processing path.
 
 👉 **Which path would you like to take? Reply with a number:**
 
-1. Shortcut path — directly to Module 7 (Query, Visualize, and Discover).
-2. Full path — to Module 6 (Data Processing) for production-quality loading.
+1. Shortcut path — go directly to Query, Visualize and Discover.
+2. Full path — continue to Data processing for production-quality loading.
 
 *(Internal: end the turn on this question and wait.)*
 

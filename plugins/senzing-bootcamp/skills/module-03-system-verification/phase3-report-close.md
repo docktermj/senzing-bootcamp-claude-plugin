@@ -123,18 +123,10 @@ Generate a structured summary of the System Verification checks.
 
 Terminate test services and clean up verification data from the database.
 
-**Pre-cleanup confirmation gate:**
-
-Before terminating, confirm the bootcamper has finished exploring the visualization. Ask before
-terminating the web service or performing any cleanup:
-
-👉 **Have you finished exploring the visualization? Let me know when you're ready and I'll clean up the server.**
-
-*(Internal: end the turn on this question and wait. Do NOT proceed with termination until the
-bootcamper confirms they are done exploring.)*
-
-**Skip condition:** if the bootcamper skipped Step 9 via the skip-step protocol (no web server
-was started), skip this confirmation prompt entirely and proceed directly to cleanup.
+**No separate confirmation gate:** the bootcamper already confirmed they were done exploring at the
+end of the Truth Set visualization (Phase 2, Step 9.5), so proceed directly to cleanup — do NOT
+re-ask (INV-006). (When the Truth Set visualization did not run, there was no web server and
+nothing to confirm.)
 
 1. **Terminate the web service:**
    - Send a termination signal to the verification web service process.

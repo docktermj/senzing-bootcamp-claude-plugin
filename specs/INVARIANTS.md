@@ -71,7 +71,7 @@ When the Bootcamper runs the SBCP, these MUST hold across the entire Bootcamp.
 
 ## INV-016 – INV-018: Bootcamp administration outcomes
 
-- **INV-016** — All hooks begin with the word "to" (e.g. "to process your request", "to review what you said").
+- **INV-016** — Every hook's documented purpose begins with the word "to" (e.g. "to process your request", "to review what you said"), as recorded in the hooks' README Purpose column (the Kiro named-hook convention). This governs the hook's stated purpose/name, not necessarily the runtime string a hook emits to the model. (Wording clarified in place, no meaning change; Source: `audit-polish-cleanup`, 2026-07-19.)
 - **INV-017** — All Markdown files (`.md`) are kept in appropriate places in the `docs/` directory. Exception: the generated `production/` project deliverable carries its own Markdown files (e.g. `README.md`, `MIGRATION_CHECKLIST.md`, `GRADUATION_REPORT.md`).
 - **INV-018** — All code files (e.g. `.py`, `.java`, etc.) are kept in appropriate places in the `src/` directory.
 
