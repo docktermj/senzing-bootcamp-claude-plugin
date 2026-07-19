@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module1-license-flow-parity
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`
+- **Summary:** Brought Module 1's license flow (Steps 5b–5e) to parity with the implemented Module 2 flow. Terminology is now "Senzing License Key" throughout; the Step 5b gate reads "👉 Do you already have a Senzing License Key?" (pinned verbatim, INV-056) and its stale `6c/6d` routing typo was fixed to `5c/5d`. Step 5c now offers both capture options via a neutral numbered question (INV-051) — paste the Base64 string, or give the path to a downloaded license file (hinting the likely default name `senzing-license.txt`) — decoding/copying to `licenses/g2.lic` either way. A new pinned confirmation gate (Step 5d-i, "👉 Has your Senzing License Key email arrived yet?") runs after an in-flow `submit_feedback` request before any later step, stating the bootcamp continues on the built-in evaluation license until the key is applied. AC verified by grep: License Key terminology consistent, dual capture + filename hint present, 5d-i gate present; single-meaning questions (INV-008), no hardcoded capacity figures (still MCP-sourced), INV-036 still satisfied. Cross-platform, language-agnostic. No new invariant.
+- **Commit:** uncommitted
+
 ## drop-checklist-and-summary-gates
 
 - **Implemented:** 2026-07-19

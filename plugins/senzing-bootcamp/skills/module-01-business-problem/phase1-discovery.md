@@ -119,17 +119,31 @@ Compute the total record count across mentioned sources. Read `license_record_li
 ### 5b. License guidance trigger (only if total exceeds the evaluation limit)
 
 Explain that the built-in evaluation license processes a limited number of records (confirm the
-figure via MCP), so a full license is needed for more.
+figure via MCP), so a full Senzing License Key is needed for more.
 
-👉 **Do you already have a Senzing license?**
+👉 **Do you already have a Senzing License Key?**
 
-*(Internal: end the turn and wait.)* Yes → 6c; No → 6d.
+*(Internal: end the turn and wait; pinned verbatim, INV-056.)* Yes → 5c; No → 5d.
 
-### 5c. Already has a license
+### 5c. Already has a Senzing License Key
 
-1. Ask for the Base64-encoded license string.
-2. Decode to `licenses/g2.lic`: `echo "<string>" | base64 --decode > licenses/g2.lic`
-3. Add `LICENSEFILE` to the engine config PIPELINE section pointing at the file.
+Offer both ways to provide the key — a neutral lead question with a numbered list (INV-051):
+
+👉 **How would you like to provide your Senzing License Key? Reply with a number:**
+
+1. Paste the Base64-encoded license string.
+2. Give the path to a downloaded license file (often named `senzing-license.txt`).
+
+*(Internal: end the turn and wait.)* Then, based on the choice:
+
+- **Base64 string:** decode to `licenses/g2.lic`: `echo "<string>" | base64 --decode > licenses/g2.lic`
+- **File path:** locate the file at the given path — hint the likely default name
+  `senzing-license.txt` if they need to find it — then place it at `licenses/g2.lic`: decode it if
+  it holds a Base64 string, or copy it if it is already a `.lic` file.
+
+Then:
+
+3. Add `LICENSEFILE` to the engine config PIPELINE section pointing at `licenses/g2.lic`.
 4. Record `license: custom` in `config/bootcamp_preferences.yaml`. Proceed to Step 6.
 
 **Checkpoint:** write step 5c.
@@ -152,7 +166,7 @@ Paths:
    Claude Code: reconcile this when finalizing the plugin's MCP config.)
 2. **External channel:** email <support@senzing.com>, mention the Senzing Bootcamp, include
    name, org, expected record count, use case. Response in 1–2 business days.
-3. **Apply an existing license:** follow Step 5c.
+3. **Apply an existing Senzing License Key:** follow Step 5c.
 
 Retrieve any validity period / capacity figures from MCP at runtime; never substitute a
 remembered figure.
@@ -161,12 +175,37 @@ remembered figure.
 
 1. Request via the MCP server (if available).
 2. Request through the external channel.
-3. Apply a license you already have.
+3. Apply a Senzing License Key you already have.
 4. Defer for now.
 
-*(Internal: end the turn and wait.)* Act on the choice; defer → Step 5e.
+*(Internal: end the turn and wait.)* Then act on the choice:
+
+- **Path 1 (MCP request):** invoke `submit_feedback` (`license_request`), then go to Step 5d-i.
+- **Path 2 (external channel):** give the email guidance; proceed to Step 6 (the bootcamp
+  continues on the built-in evaluation license and applies the emailed key via Step 5c whenever
+  it arrives).
+- **Path 3 (apply existing):** follow Step 5c.
+- **Path 4 (defer):** Step 5e.
 
 **Checkpoint:** write step 5d.
+
+### 5d-i. Confirm the requested Senzing License Key arrived (after path 1)
+
+The evaluation License Key arrives by email with a download link, so don't strand the bootcamper
+by moving on before it lands. The bootcamp can continue on the built-in evaluation license
+meanwhile and apply the emailed key whenever it arrives.
+
+👉 **Has your Senzing License Key email arrived yet?**
+
+*(Internal: end the turn and wait; pinned verbatim, INV-056.)*
+
+- **Yes:** apply the key now via Step 5c (paste the Base64 string, or give the downloaded file's
+  path), then proceed to Step 6.
+- **No / not yet:** state that the bootcamp will continue on the built-in evaluation license and
+  the key can be applied later (Module 2 Step 5 also handles license configuration as a mandatory
+  gate). Proceed to Step 6.
+
+**Checkpoint:** write step 5d-i.
 
 ### 5e. Deferral
 
