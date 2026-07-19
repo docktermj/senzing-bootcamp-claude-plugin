@@ -20,13 +20,7 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
    {"module_3_verification": {"status": "skipped", "reason": "bootcamper_opted_out"}}
    ```
 
-2. Record that a first visualization is still owed: write a `first_visualization: owed` marker
-   to `config/bootcamp_progress.json`. The write is idempotent and monotonic; never regress an
-   already-`satisfied` marker back to `owed`. (In the Kiro Power this was
-   `mark_first_visualization_owed(reason="module_3_opt_out")` in `scripts/progress_utils.py`;
-   the script port is a later phase, so write the marker directly for now.)
-
-3. Display this warning:
+2. Display this warning:
 
    ```text
    ⚠️ Skipping system verification. If you encounter issues in later modules
@@ -34,76 +28,46 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
    Say "run verification" at any time to come back.
    ```
 
-4. **Offer the Standalone Demo Visualization (an offer, NOT a forced step).** Because the
-   bootcamper is skipping Module 3, Step 9 will not run, so offer a minimal TruthSet-backed "wow
-   moment" here. Present it as a question and wait. The Standalone Demo Visualization reuses the
-   **Step 9 web-service constraints** exactly; no new visualization mechanism is introduced:
+3. Update gate 3→4 to "skipped" and proceed to the next selected module.
 
-   - Python stdlib HTTP server (`http.server.HTTPServer` + `BaseHTTPRequestHandler`).
-   - D3.js v7 loaded from the D3 CDN; no other external JS.
-   - A single self-contained HTML file produced by a `write_html.py` generator script.
-   - All artifacts created inside the working directory.
+> **The visualization is a separate module.** System Verification produces **no** visualization —
+> the guaranteed Truth Set web-app "wow moment" is delivered by the selectable **Truth Set
+> visualization** module (`truthset_visualization`, run here as Phase 2). It runs on its own
+> whenever selected (always in Core; in Customized only if chosen). Skipping System Verification
+> does NOT skip that module, and System Verification does not offer a standalone TruthSet demo of
+> its own.
 
-   Offer prompt:
-
-   ```text
-   You're skipping verification, so you won't see the Module 3 visualization.
-   Would you like me to create a quick standalone visualization of the Senzing
-   TruthSet entity resolution results instead? It's optional, just say the word.
-   ```
-
-   👉 **Would you like me to create a quick standalone visualization of the Senzing TruthSet entity resolution results?**
-
-   *(Internal: end the turn on this question and wait for the bootcamper's input.)*
-
-   - **If accepted:** generate the Standalone Demo Visualization using the Step 9 web-service
-     pattern above (a single graph or results view is sufficient). On success, clear the owed
-     marker by writing `first_visualization: satisfied` with `satisfied_by: "standalone_demo"`
-     to `config/bootcamp_progress.json`. (In Kiro this was
-     `clear_first_visualization_owed(satisfied_by="standalone_demo")`; write the marker directly
-     for now. The Kiro `scripts/generate_standalone_demo.py` generator is a later porting phase;
-     build the single self-contained page directly using the Step 9 constraints.)
-   - **If declined:** acknowledge in a single sentence and do NOT re-offer here. The owed marker
-     persists and the **deferred guarantee** takes over: the first later module with resolved
-     data (Module 6 results dashboard, or Module 7 entity graph) treats its existing
-     visualization offer as the guaranteed first visualization and clears the owed marker when it
-     is generated.
-
-5. Update gate 3→4 to "skipped" and proceed to Module 4.
-
-> **Journey-level guarantee vs. Step 9 (keep this distinction explicit):** Step 9 is an
-> unconditional mandatory gate **whenever Module 3 runs**; this opt-out flow does NOT weaken,
-> alter, or replace it. The journey-level first-visualization guarantee covers the **opt-out
-> case only**, where Step 9 never executes. The two mechanisms are separate.
-
-**If NOT triggered:** proceed with Module 3 normally (default path). Step 9 remains the
-unconditional mandatory gate and produces the first visualization in-module.
+**If NOT triggered:** proceed with Module 3 normally (default path).
 
 ## Agent Rules
 
 The following rules are mandatory for the agent executing this module:
 
-1. **TruthSet only:** use the Senzing TruthSet exclusively. Offer no dataset choice to the
-   bootcamper. Do not use CORD, Las Vegas, London, Moscow, or any other dataset (except the
-   explicitly labeled non-deterministic substitute in Step 2a).
+1. **Synthetic verification data only:** verify with a small set of **synthetic records** you
+   generate in Step 2 — designed to resolve deterministically into a known number of entities.
+   System Verification MUST NOT acquire, load, or visualize the Senzing TruthSet, nor use CORD,
+   Las Vegas, London, or Moscow. (The TruthSet belongs exclusively to the separate **Truth Set
+   visualization** module — Phase 2.) Offer no dataset choice to the bootcamper.
 2. **Database path:** the Senzing database is at `database/G2C.db`. All SDK initialization and
    database operations MUST reference this path.
 3. **No dataset choice:** do not present any dataset selection prompt, menu, or question. The
-   TruthSet is the only dataset used in this module.
+   generated synthetic data is the only data used for verification in this phase.
 4. **All checks execute regardless of failures:** if any step fails, continue executing all
    subsequent steps. No short-circuiting. The Verification Report MUST include the status of
    every check.
-5. **Artifact isolation:** all verification artifacts (scripts, data files, web service code)
-   MUST be created within `src/system_verification/`. No verification files outside it.
+5. **Artifact isolation:** all verification artifacts (scripts and data files) MUST be created
+   within `src/system_verification/`. No verification files outside it.
 6. **Timeouts enforced:** every step MUST enforce its defined timeout. If a process exceeds its
    timeout, terminate it immediately and record a fail.
-7. **MCP as source of truth:** all Senzing facts, expected results, and code generation come
-   from the MCP server tools. Never use training data or hardcoded values for TruthSet expected
-   outcomes.
+7. **MCP as source of truth:** all Senzing facts (SDK method/attribute names, config options,
+   error codes) and all generated SDK/loading/query code come from the MCP server tools, never
+   from training data. The synthetic records' expected resolution is known **by construction**
+   (you design them to merge), so Step 7 validates against that design, not against an MCP
+   expected-results set.
 8. **Overwrite on re-run:** if the module is re-run, overwrite all existing artifacts in
    `src/system_verification/`. The database cleanup ensures a clean slate.
-9. **Web service lifecycle:** the web service started in Step 9 MUST be terminated in Step 11.
-   Do not leave orphaned processes.
+9. **No orphaned processes:** System Verification starts no web service. If the Truth Set
+   visualization module (Phase 2) started one, it MUST be terminated in Step 11.
 10. **Progress persistence:** every step MUST write its checkpoint to
     `config/bootcamp_progress.json` immediately upon completion, before proceeding.
 
@@ -139,82 +103,37 @@ Verify MCP server connectivity before code generation operations.
 }
 ```
 
-### Step 2: TruthSet Acquisition
+### Step 2: Generate Synthetic Verification Records
 
-**The primary MCP path takes precedence**; the sanctioned fallback source is used ONLY when the
-MCP server exposes no usable TruthSet.
+Generate a small set of **synthetic** records designed to resolve deterministically into a known
+number of entities, so verification proves entity resolution works **without touching the Senzing
+TruthSet**. The records are the agent's own composition — no MCP TruthSet fetch, no sanctioned
+fallback source, no CORD substitute. Keep them obviously synthetic and PII-free (invented
+names/addresses).
 
-1. Call `get_sample_data`; inspect the response for a named TruthSet reference (Req 1.1).
-   **Classify and record BEFORE picking a path** (Req 1.2–1.4): `available` = a named TruthSet
-   reference (name matches "TruthSet", or `type: truthset`) with retrievable records;
-   `unavailable` = the response does not include a named TruthSet, holding only the CORD
-   collections (Las Vegas, London, Moscow). Write `primary_available` and `classification_reason`
-   (`truthset_found`/`cord_only`) to `config/bootcamp_progress.json`.
-2. **Primary path: `available` (precedence; Req 2.1–2.3):** save the MCP records to
-   `src/system_verification/truthset_data.jsonl` (overwrite existing, one JSON object per line),
-   set `source_provenance` to `mcp_primary`, and pass the MCP Expected_Results to Step 7
-   unchanged (30-second timeout).
-3. **Fallback path: `unavailable` (Req 3.1–3.3, 5.3, 9.3):** fetch the demo TruthSet **DATA
-   only** from the sanctioned fallback source (all Senzing SDK facts still come from the MCP
-   server). Resolve source id `senzing_truthset_demo` from `config/fallback_sources.yaml`, never
-   a raw URL. Fetch over HTTPS within the registry timeout, write `truthset_data.jsonl` in
-   `src/system_verification/` (overwriting existing), and derive Fallback_Expected_Results. On
-   `success`, set `source_provenance` to `github_fallback`, record `records_written`, and pass
-   its `expected_results` to Step 7 in place of the MCP results; otherwise record the `error` in
-   `fallback_error` and do NOT proceed.
+1. **Compose the records (by construction).** Write at least 4 records to
+   `src/system_verification/verification_data.jsonl` (one JSON object per line, overwrite any
+   existing file), using **Senzing Entity Specification** attribute names. If unsure of the exact
+   attribute names, confirm them via the MCP server (`search_docs` / `mapping_workflow`) — never
+   guess (INV-080). Design them so resolution is deterministic and known in advance:
+   - **A merge cluster:** 2–3 records for the **same** synthetic person, sharing enough features
+     (matching full name + date of birth + address, with only trivial variation) that Senzing
+     resolves them into **one** entity.
+   - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
+     **singleton** (its own entity).
+   - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a
+     unique `RECORD_ID`.
+2. **Record the expected outcome** (by construction) for Step 7 to validate against — e.g. "4
+   records → 2 entities, one entity with 3 constituent records". These figures come from the
+   records you just wrote; never fetch them from anywhere.
 
-   *(The Kiro `scripts/fetch_fallback_truthset.py` and the `config/fallback_sources.yaml`
-   registry are later porting phases. For now, if the registry file is present, follow it; if it
-   is absent, treat the fallback as unavailable and run Step 2a. Do the fetch directly against
-   the registry entry; do not embed a raw URL in this skill.)*
-
-If both the MCP TruthSet and the fallback fail, run Step 2a; do NOT improvise a CORD substitute
-here. Store the expected record count (MCP response, or `records_written`) for later validation.
-
-**Checkpoint:** write to `config/bootcamp_progress.json` (on fallback success set
-`source_provenance: github_fallback`, `primary_available: false`,
-`classification_reason: cord_only`):
+**Checkpoint:** write to `config/bootcamp_progress.json` (a data-prep marker, not one of the
+report's verification checks):
 
 ```json
-{"module_3_verification": {"checks": {"truthset_acquisition": {
-  "status": "passed", "records": <record_count>, "source_provenance": "mcp_primary",
-  "primary_available": true, "classification_reason": "truthset_found",
-  "fallback_attempted": false, "fallback_error": null}}}}
-```
-
-### Step 2a: Graceful Degradation: both TruthSet sources unavailable
-
-Run ONLY when Step 2 classified the Primary_TruthSet `unavailable` AND the fallback did NOT
-return `success`. Otherwise skip to Step 3.
-
-1. **Report both failures with remediation (Req 7.1):** name the MCP TruthSet failure AND the
-   sanctioned fallback failure (reference the fallback by registry id `senzing_truthset_demo` in
-   `config/fallback_sources.yaml`, never a raw URL), then remediation: verify MCP connectivity,
-   verify the fallback source is reachable, and say "retry" to re-run Step 2.
-2. **Offer a clearly labeled NON-DETERMINISTIC substitute, then WAIT (Req 7.2):** offer a
-   CORD_Collection (Las Vegas, London, or Moscow) that exercises the pipeline but has no
-   known-good expected results, a non-deterministic substitute, so Step 7 is recorded
-   `non_deterministic` (never `passed`) and Module 3 is `incomplete`. Do NOT decide for the
-   bootcamper.
-
-   👉 **Both TruthSet sources are unavailable. Would you like to run a non-deterministic CORD collection (Las Vegas, London, Moscow) that exercises the pipeline but cannot be deterministically verified?**
-
-   *(Internal: end the turn on this question and wait for the bootcamper's input.)*
-
-3. **If ACCEPTED (Req 7.3):** proceed with the chosen CORD_Collection, set `source_provenance`
-   to `cord_substitute`, mark the Deterministic_Verification check `non_deterministic` (never
-   `passed`).
-4. **If DECLINED (Req 7.4):** mark the check `blocked` and record the remediation.
-5. **Either way (Req 7.5):** a `non_deterministic` or `blocked` check sets overall Module 3
-   status to `incomplete`.
-
-**Checkpoint:** write to `config/bootcamp_progress.json` (accepted → below; declined →
-`deterministic_verification: "blocked"`, `status: "blocked"`, `source_provenance: null`):
-
-```json
-{"module_3_verification": {"checks": {"truthset_acquisition": {
-  "status": "non_deterministic", "source_provenance": "cord_substitute",
-  "deterministic_verification": "non_deterministic"}}, "status": "incomplete"}}
+{"module_3_verification": {"synthetic_data": {
+  "status": "generated", "records": <record_count>, "data_source": "VERIFY",
+  "expected_entities": <entity_count>, "expected_merge_record_count": <largest_cluster_size>}}}
 ```
 
 ### Step 3: SDK Initialization
@@ -309,24 +228,23 @@ all build commands.
 }
 ```
 
-### Step 5a: Register TruthSet Data Sources
+### Step 5a: Register the Synthetic Data Source Code
 
-Register the TruthSet's data source codes in the Senzing configuration **before**
-loading, so Step 6 does not fail with `SENZ2207: Data source code [...] does not
+Register the synthetic verification data's source code(s) in the Senzing configuration
+**before** loading, so Step 6 does not fail with `SENZ2207: Data source code [...] does not
 exist`. The default config seeded in Module 2 has no data sources registered, yet
-the TruthSet load below references fixed source codes that must exist first — so
-without this step every Module 3 run hits SENZ2207 on the first load attempt.
+the load below references the code(s) the Step 2 records carry, which must exist
+first — so without this step every Module 3 run hits SENZ2207 on the first load attempt.
 
 1. **Determine the source codes to register.** Collect the distinct `DATA_SOURCE`
-   values present in the acquired TruthSet data
-   (`src/system_verification/truthset_data.jsonl` from Step 2). For the standard
-   Senzing TruthSet these are **CUSTOMERS**, **REFERENCE**, and **WATCHLIST**; the
-   Step 2a non-deterministic substitute uses whatever codes its records carry.
-   Never register a code that is not present in the data.
+   values present in the synthetic verification data
+   (`src/system_verification/verification_data.jsonl` from Step 2) — normally just
+   **VERIFY**. Never register a code that is not present in the data.
 2. **Generate the registration code from the MCP server** (Agent Rule 7 — never
    hand-write it): call `sdk_guide(topic='configure')` (and `generate_scaffold` if
-   it exposes a data-source registration workflow) in the bootcamper's chosen
-   language. Save the result to
+   it exposes a data-source registration workflow) in the language read from
+   `programming_language` in `config/bootcamp_preferences.yaml` (never a hardcoded
+   default). Save the result to
    `src/system_verification/register_data_sources.[ext]` (Agent Rule 5 — artifact
    isolation; INV-018). The generated code MUST:
    - Load the current default config via `SzConfigManager`.
@@ -354,7 +272,7 @@ without this step every Module 3 run hits SENZ2207 on the first load attempt.
 {
   "module_3_verification": {
     "checks": {
-      "data_source_registration": {"status": "passed|failed", "sources_registered": ["CUSTOMERS", "REFERENCE", "WATCHLIST"]}
+      "data_source_registration": {"status": "passed|failed", "sources_registered": ["VERIFY"]}
     }
   }
 }
@@ -362,20 +280,22 @@ without this step every Module 3 run hits SENZ2207 on the first load attempt.
 
 ### Step 6: Data Loading
 
-Execute the verification script to load TruthSet data into Senzing. The TruthSet
-data source codes were registered in Step 5a, so the load runs against a config
-that already knows them; the SENZ handling below remains as a fallback.
+Execute the verification script to load the synthetic verification data
+(`src/system_verification/verification_data.jsonl` from Step 2) into Senzing. The `VERIFY`
+data source code was registered in Step 5a, so the load runs against a config that already
+knows it; the SENZ handling below remains as a fallback.
 
-1. Execute the generated `verify_pipeline.[ext]` script with a 120-second timeout.
+1. Execute the generated `verify_pipeline.[ext]` script with a 120-second timeout, pointing it
+   at `src/system_verification/verification_data.jsonl`.
 2. **While executing:** display a progress indicator updated at least every 5 seconds showing
    records processed out of total expected.
 3. **If the script completes with exit code 0:** confirm the number of records loaded exactly
-   matches the expected TruthSet record count from Step 2.
+   matches the synthetic record count generated in Step 2.
 4. **If the record count matches:** report pass with the number of records loaded.
 5. **If the script encounters an error:** capture error output, call `explain_error_code` for
    any SENZ codes, and report fail with remediation guidance.
 6. **If fewer records load than expected without error:** report fail identifying records loaded
-   versus expected. Instruct the bootcamper to check TruthSet data file integrity.
+   versus expected. Instruct the bootcamper to check the synthetic data file integrity.
 7. **If the script does not complete within 120 seconds:** terminate the process. Report fail
    indicating execution timed out.
 
@@ -393,29 +313,33 @@ that already knows them; the SENZ handling below remains as a fallback.
 
 ### Step 7: Deterministic Results Validation
 
-Validate that entity resolution produced the expected outcomes from the TruthSet. Each
-validation check has a 30-second timeout.
+Validate that entity resolution produced the outcome you defined **by construction** in Step 2.
+Each validation check has a 30-second timeout.
 
-1. Retrieve the Expected_Results for the TruthSet from the MCP server.
+1. Recall the expected outcome recorded in Step 2 (`module_3_verification.synthetic_data`): the
+   expected entity count, the record IDs designed to **merge** into one entity, and the
+   distractor record(s) designed to stay **singletons**. These come from the records you wrote,
+   not from the MCP server.
 2. Query the resolved entities (generate the query/report SDK code via `get_sdk_reference` +
    `sdk_guide`, or use `reporting_guide` for counts; never direct SQL) and perform the following
    validation checks. Execute ALL checks regardless of whether earlier checks pass or fail:
 
-   **a) Entity count tolerance:**
-   - Verify the total number of resolved entities falls within ±5% of the expected entity count
-     from the Expected_Results.
+   **a) Entity count:**
+   - Verify the total number of resolved entities equals the expected entity count from Step 2.
 
-   **b) Known matches (at least 3):**
-   - Verify that at least 3 known entity matches defined in the Expected_Results are correctly
-     resolved: the specific records designated as matching resolve to the same entity ID.
+   **b) Merge cluster resolves to one entity:**
+   - Verify the 2–3 records designed to match resolve to the **same** single entity ID.
 
    **c) Cross-record resolution:**
    - Verify the resolved entity count is strictly less than the total record count loaded,
-     confirming that at least some records merged rather than all loading as singletons.
+     confirming that the merge cluster collapsed rather than every record loading as a singleton.
 
-3. **If all checks pass:** report pass with entity count and number of matches verified.
+   **d) Distractor stays a singleton:**
+   - Verify the distractor record(s) resolve to their own entity, separate from the merge cluster.
+
+3. **If all checks pass:** report pass with the entity count and confirmation of the merge.
 4. **If any check fails:** report fail listing each failed check with expected versus actual
-   values. Suggest re-running data loading or checking that the TruthSet file was loaded
+   values. Suggest re-running data loading or checking that the synthetic data file was loaded
    completely.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
@@ -437,15 +361,15 @@ Verify read, write, and search operations against the Senzing database. Each ope
 `get_sdk_reference` + `sdk_guide`), never direct SQL against `database/G2C.db`.
 
 1. **Verify write count:**
-   - Confirm the record count returned by the Senzing engine matches the TruthSet record count
+   - Confirm the record count returned by the Senzing engine matches the synthetic record count
      established during data loading (Step 6).
 2. **Verify read by entity ID:**
-   - Retrieve a known entity from the Expected_Results by entity ID.
+   - Retrieve the merge-cluster entity (from Step 7) by its entity ID.
    - Confirm the response contains at least: the entity ID, one constituent record key (data
-     source and record ID pair), and one name attribute from the original TruthSet input.
+     source and record ID pair), and one name attribute from the original synthetic input.
 3. **Verify search by attributes:**
-   - Perform a search-by-attributes query using name and address attributes from a known
-     TruthSet record.
+   - Perform a search-by-attributes query using name and address attributes from one of the
+     synthetic records.
    - Confirm the expected entity appears in the search results.
 4. **If all operations succeed within 30 seconds each:** report pass with operations tested.
 5. **If any operation fails or times out:** report fail identifying which operation failed
@@ -464,22 +388,30 @@ Verify read, write, and search operations against the Senzing database. Each ope
 }
 ```
 
-**Agent behavior:** after Step 8 completes, proceed DIRECTLY to Step 9. Do not ask whether the
-bootcamper wants to continue; Step 9 is mandatory and unconditional.
+**Agent behavior:** after Step 8 completes, proceed to the next phase without asking whether the
+bootcamper wants to continue:
 
-> **Step 9 is mandatory. Load `phase2-visualization.md` and execute it in full.**
+- **If the Truth Set visualization is selected** (`truthset_visualization` in `selected_modules`;
+  always true in Core): load `phase2-visualization.md` and execute it in full. That module
+  acquires and loads the Senzing TruthSet itself, then visualizes it — System Verification does
+  not touch the TruthSet.
+- **If it is not selected:** skip Phase 2 and load `phase3-report-close.md` (Report and Close).
 
 ## Success Criteria
 
 Module 3 is successfully complete when ALL of the following are true:
 
-- All 11 verification checkpoint entries report "passed" status (`mcp_connectivity`,
-  `truthset_acquisition`, `sdk_initialization`, `code_generation`, `build_compilation`,
-  `data_source_registration`, `data_loading`, `results_validation`, `database_operations`,
-  `web_service`, `web_page`).
+- All 8 System Verification checkpoint entries report "passed" status (`mcp_connectivity`,
+  `sdk_initialization`, `code_generation`, `build_compilation`, `data_source_registration`,
+  `data_loading`, `results_validation`, `database_operations`).
+- When the Truth Set visualization is selected, its `web_service`/`web_page` checks also pass and
+  the standalone snapshot artifact exists (see `phase2-visualization.md` and
+  `phase3-report-close.md`).
 - The Verification Report is persisted to `config/bootcamp_progress.json` with a valid ISO 8601
   timestamp.
-- The web service process is terminated and the port is released.
-- TruthSet records are purged from the database (zero TruthSet entities remain).
+- The web service process (started only by the Truth Set visualization module, when selected) is
+  terminated and the port is released.
+- The synthetic verification records are purged from the database (zero `VERIFY` entities remain);
+  when the Truth Set visualization ran, its TruthSet records are purged too.
 - The gate 3→4 status is updated to "completed".
 - A journal entry is appended to `docs/bootcamp_journal.md`.

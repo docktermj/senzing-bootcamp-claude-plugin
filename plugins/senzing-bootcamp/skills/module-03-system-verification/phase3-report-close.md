@@ -19,46 +19,45 @@ directives, never rendered.
 >   sufficient.
 > - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
 >   build-only run (9.2) MUST have reported `records_total > 0` on its `Entity model built: …`
->   line, consistent with `module_3_verification.checks.data_loading.records_loaded`. A snapshot
->   built from zero records is a blank page and does NOT satisfy INV-038.
+>   line, consistent with the Truth Set record count loaded in Step 9 setup (9s.2). A snapshot
+>   built from zero records is a blank page and does NOT satisfy INV-077.
 >
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built
 > from zero records, the agent MUST execute Step 9 immediately (load `phase2-visualization.md`)
-> and run the bundled app's build-only snapshot step (9.2) — whose `--records` glob
-> (`src/system_verification/`*.jsonl`) matches the Truth Set written in Step 2 — so the artifact
-> exists AND is non-empty. Do NOT offer advancement. Do NOT ask the module-transition question. Do NOT save
-> progress. Produce the visualization first.
+> and run the bundled app's build-only snapshot step (9.2) — whose `--records` file
+> (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 9 setup
+> (9s.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
+> module-transition question. Do NOT save progress. Produce the visualization first.
 
 ## Step 10: Verification Report Generation
 
-**Pre-report validation:** when the **Truth Set visualization is selected** (`truthset_visualization`
-in `selected_modules`; always true in Core), confirm that `config/bootcamp_progress.json` contains
-BOTH `web_service` and `web_page` checkpoint entries under `module_3_verification.checks`. If either
-entry is missing or has `"status": "failed"`:
+**Visualization completeness (when selected):** when the **Truth Set visualization is selected**
+(`truthset_visualization` in `selected_modules`; always true in Core), confirm that
+`config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint entries
+under `module_3_verification.checks` — the visualization module's own checks, tracked **separately
+from** the System Verification report below. If either entry is missing or has `"status": "failed"`:
 
-- If missing: STOP. Do not generate the report. Return to Step 9 and execute it fully by loading
+- If missing: STOP. Do not close the module. Return to Step 9 and execute it fully by loading
   `phase2-visualization.md`.
-- If failed: include the failure in the report and proceed (failed is different from
-  skipped/missing; it means the step was attempted).
+- If failed: note the failure and proceed (failed is different from skipped/missing; it means the
+  step was attempted).
 
-When the Truth Set visualization is **not** selected, `web_service`/`web_page` are `"skipped"`
-(neither missing nor failed): record them as skipped and proceed with the report.
+When the Truth Set visualization is **not** selected, no `web_service`/`web_page` entries are
+expected: proceed with the report.
 
-Generate a structured summary of all verification checks.
+Generate a structured summary of the System Verification checks.
 
-1. Compile the results from all 11 verification checkpoint entries (`mcp_connectivity`,
-   `truthset_acquisition`, `sdk_initialization`, `code_generation`, `build_compilation`,
-   `data_source_registration`, `data_loading`, `results_validation`, `database_operations`,
-   `web_service`, `web_page`) into a
-   single Verification Report.
+1. Compile the results from the 8 System Verification checkpoint entries (`mcp_connectivity`,
+   `sdk_initialization`, `code_generation`, `build_compilation`, `data_source_registration`,
+   `data_loading`, `results_validation`, `database_operations`) into a single Verification Report.
+   (The Truth Set visualization is a separate module; its `web_service`/`web_page` checks and the
+   visualization artifact are guaranteed by the pre-advancement self-check above, not compiled
+   into this report.)
 
 2. For each check, record:
    - Pass or fail status
    - Duration in milliseconds (where applicable)
    - Any relevant metadata (record counts, entity counts, file paths, ports)
-   - For `truthset_acquisition`, the `source_provenance` value (`mcp_primary`, `github_fallback`,
-     or `cord_substitute`) carried from the Step 2/2a acquisition check; do NOT re-derive it,
-     mirror what Step 2/2a wrote
 
 3. **If ALL checks passed:** display a success banner:
 
@@ -93,16 +92,13 @@ Generate a structured summary of all verification checks.
        "status": "passed|failed",
        "checks": {
          "mcp_connectivity": {"status": "passed|failed", "duration_ms": 0},
-         "truthset_acquisition": {"status": "passed|failed", "records": 0, "source_provenance": "mcp_primary|github_fallback|cord_substitute"},
          "sdk_initialization": {"status": "passed|failed", "duration_ms": 0},
          "code_generation": {"status": "passed|failed", "file": "verify_pipeline.[ext]"},
          "build_compilation": {"status": "passed|failed", "duration_ms": 0},
-         "data_source_registration": {"status": "passed|failed", "sources_registered": []},
+         "data_source_registration": {"status": "passed|failed", "sources_registered": ["VERIFY"]},
          "data_loading": {"status": "passed|failed", "records_loaded": 0},
          "results_validation": {"status": "passed|failed", "entities": 0, "matches_verified": 0},
-         "database_operations": {"status": "passed|failed", "ops_tested": ["write", "read", "search"]},
-         "web_service": {"status": "passed|failed", "port": 8080},
-         "web_page": {"status": "passed|failed", "url": "http://localhost:8080/"}
+         "database_operations": {"status": "passed|failed", "ops_tested": ["write", "read", "search"]}
        },
        "fix_instructions": []
      }
@@ -113,19 +109,9 @@ Generate a structured summary of all verification checks.
    - The `fix_instructions` array SHALL contain one entry per failed check, each with the check
      name and remediation text.
    - If verification was interrupted, mark unexecuted checks as `"status": "skipped"`.
-   - The `source_provenance` field on the `truthset_acquisition` check mirrors the value written
-     by Step 2/2a (one of `mcp_primary`, `github_fallback`, or `cord_substitute`). Do NOT
-     re-derive it; carry the acquisition result forward (Req 8.1, 8.3).
 
-   **State the TruthSet source provenance (Req 8.1, 8.2):** the Verification Report SHALL state
-   the `source_provenance` for the run alongside the `truthset_acquisition` result:
-
-   - `mcp_primary`: deterministic verification used the MCP-provided TruthSet (primary path).
-   - `github_fallback`: the report SHALL state that deterministic verification used the
-     sanctioned fallback source (registry id `senzing_truthset_demo`) rather than an MCP-provided
-     TruthSet. Reference the source by its registry identifier only; never embed a raw URL.
-   - `cord_substitute`: deterministic verification did NOT run against known-good expected
-     results; a non-deterministic CORD substitute was used and Module 3 is `incomplete`.
+   Verification runs against synthetic data that is deterministic **by construction** (Step 2), so
+   there is no external Truth Set provenance to record for System Verification.
 
 6. **If all checks passed:** proceed to Step 11 (Cleanup).
 7. **If any checks failed:** do NOT proceed to cleanup. Advise the bootcamper to fix the issues
@@ -164,12 +150,13 @@ was started), skip this confirmation prompt entirely and proceed directly to cle
       These files are retained for reference.
    ```
 
-3. **Purge TruthSet data from the database:**
-   - Remove all records loaded from the TruthSet data source from the Senzing database, using
-     generated Senzing SDK code (via `get_sdk_reference` + `sdk_guide`); never direct SQL against
-     `database/G2C.db`.
-   - After purge, verify zero TruthSet entities remain while preserving any non-TruthSet database
-     state.
+3. **Purge verification data from the database:**
+   - Remove the synthetic `VERIFY` records loaded in Phase 1 — and, when the Truth Set
+     visualization ran, its Truth Set records (CUSTOMERS/REFERENCE/WATCHLIST, or the CORD
+     substitute's codes) — from the Senzing database, using generated Senzing SDK code (via
+     `get_sdk_reference` + `sdk_guide`); never direct SQL against `database/G2C.db`.
+   - After purge, verify zero `VERIFY` (and, if applicable, Truth Set) entities remain while
+     preserving any other database state.
    - If the purge fails: report a fail status identifying which records could not be removed.
      Provide a Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the
      database.
@@ -201,8 +188,8 @@ Complete the module using the standard **Module Completion** process in
 
 **Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
 
-**Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All
-verification checks passed — the two visualization checks (`web_service`/`web_page`) count only when
-the Truth Set visualization is selected, otherwise they are `"skipped"` — database purged of
-TruthSet data + web service terminated (when it ran) + Module 3 completion recorded in the progress
-file.
+**Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All 8
+System Verification checks passed — the visualization checks (`web_service`/`web_page`) belong to
+the separate Truth Set visualization module and count only when it is selected — database purged of
+the synthetic `VERIFY` data (and the Truth Set data when the visualization ran) + web service
+terminated (when it ran) + Module 3 completion recorded in the progress file.

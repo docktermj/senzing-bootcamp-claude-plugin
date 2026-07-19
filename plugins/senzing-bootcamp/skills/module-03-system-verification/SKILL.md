@@ -22,19 +22,21 @@ or token budget) can override it.
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
 
-**Language:** Use the bootcamper's chosen language for all code generation and verification
-scripts.
+**Language:** Use the bootcamper's chosen language — read `programming_language` from
+`config/bootcamp_preferences.yaml` (persisted in Bootcamp preparation) at each code-generation
+step — for all code generation and verification scripts. Never fall back to a hardcoded language.
 
 **Prerequisites:** Module 2 complete (SDK installed and configured).
 
 **Before/After:** Before, the SDK is installed but untested end to end. After, your entire
-system is verified: SDK initialization, code generation, compilation, data loading, entity
-resolution, database operations, and web service scaffolding all confirmed working.
+system is verified against **synthetic records**: SDK initialization, code generation,
+compilation, data loading, entity resolution, and database operations all confirmed working. (The
+interactive Truth Set web-app visualization is a separate module — Phase 2 — run when selected.)
 
-**Success indicator:** ✅ All verification checks report "passed" (the two visualization checks,
-`web_service`/`web_page`, count only when the **Truth Set visualization** is selected — otherwise
-they are `"skipped"`), the Verification Report is persisted to `config/bootcamp_progress.json`, the
-web service and database are cleaned up, and gate 3→4 is marked completed (full criteria in
+**Success indicator:** ✅ All 8 System Verification checks report "passed" (against synthetic data);
+the **Truth Set visualization** module's `web_service`/`web_page` checks pass too when it is
+selected; the Verification Report is persisted to `config/bootcamp_progress.json`; the web service
+(when it ran) and the database are cleaned up; and gate 3→4 is marked completed (full criteria in
 `phase1-verification.md`).
 
 > **User reference:** for detailed background on this module, see
@@ -58,26 +60,28 @@ When the bootcamper hits an error during this module:
    record a fail with a timeout Fix_Instruction, and continue to the next check (no
    short-circuit).
 
-## TruthSet source (MCP-first, with sanctioned fallback)
+## TruthSet source (used by the Truth Set visualization module — Phase 2)
 
-The Senzing MCP server is the primary and preferred TruthSet source; it always takes
-precedence. Only when `get_sample_data` exposes no named TruthSet (the response holds only the
-CORD collections: Las Vegas, London, Moscow) does Step 2 fall back to a sanctioned external
-source for the demo TruthSet DATA.
+System Verification (Phase 1) uses **synthetic records** and never touches the Truth Set. The
+Truth Set is acquired only by the **Truth Set visualization** module (Phase 2). For that module,
+the Senzing MCP server is the primary and preferred TruthSet source; it always takes precedence.
+Only when `get_sample_data` exposes no named TruthSet (the response holds only the CORD
+collections: Las Vegas, London, Moscow) does Phase 2 (Step 9 setup) fall back to a sanctioned
+external source for the demo TruthSet DATA.
 
 - **Sanctioned source:** reference it only by its registry identifier `senzing_truthset_demo`,
   declared in `config/fallback_sources.yaml`. Never embed a raw URL. The registry is the single
   reviewed place this source is defined. (The `config/fallback_sources.yaml` registry and its
   fetch script are a later porting phase; for now, if the registry file is absent, treat the
-  fallback as unavailable and run the Step 2a graceful-degradation path.)
+  fallback as unavailable and run the Phase 2 graceful-degradation path (Step 9 setup, 9s.1).)
 - **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
   endpoint. This exception exists because the source is the official Senzing-published
   deterministic data with a ground-truth key, needed to preserve deterministic verification
   when the MCP TruthSet is unavailable.
 - **Scope limit:** the fallback fetches TruthSet DATA only. All Senzing SDK facts, method
   signatures, and expected-behavior definitions continue to come from the MCP server.
-- Full detection, provenance recording, and graceful degradation live in the Step 2 flow in
-  `phase1-verification.md`.
+- Full detection, provenance recording, and graceful degradation live in the Step 9 setup flow in
+  `phase2-visualization.md`.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
 
@@ -98,13 +102,15 @@ source for the demo TruthSet DATA.
 
 ## Phases
 
-- **Phase 1: Verification Pipeline** (steps 1–8, plus opt-out gate and graceful degradation):
-  `phase1-verification.md`
-- **Phase 2: Visualization** (step 9) — the **Truth Set visualization**, a selectable optional
-  module: `phase2-visualization.md`. Run it when `truthset_visualization` is in `selected_modules`
-  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. When it
-  is **not** selected, skip Phase 2 (mark `web_service`/`web_page` as `"skipped"`) and go straight
-  to Phase 3. When it **is** selected, Phase 2 is mandatory within the module (INV-038).
+- **Phase 1: Verification Pipeline** (steps 1–8, plus the opt-out gate): `phase1-verification.md`.
+  Verifies against **synthetic records** generated in Step 2 — System Verification does not touch
+  the Truth Set.
+- **Phase 2: Truth Set visualization** (Step 9 setup + step 9) — a selectable optional module:
+  `phase2-visualization.md`. Run it when `truthset_visualization` is in `selected_modules`
+  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. It
+  **acquires and loads the Truth Set itself**, then visualizes it. When it is **not** selected,
+  skip Phase 2 and go straight to Phase 3. When it **is** selected, Phase 2 is mandatory within
+  the module (INV-077).
 - **Phase 3: Report and Close** (steps 10–12): `phase3-report-close.md`
 - **Visualization API reference** (loaded on demand from Phase 2):
   `visualization-api-reference.md`
