@@ -23,21 +23,21 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
 - **Summary:** Fixed two stale references surfaced by the deep-dive audit. `:756` no longer tells the bootcamper "The next module (Module 3) verifies … using the Senzing TruthSet" (contradicted INV-082) — it now reads "The next module (System verification) verifies the full setup end-to-end with synthetic records — and, when the Truth Set visualization is selected, visualizes the Senzing Truth Set:". `:589` dropped the phantom "Module 8" ("(Modules 1, 4, 6, and 8)" → "(Modules 1, 4, and 6)"). AC verified by grep: no "using the Senzing TruthSet" for Module 3 and no "Module 8" remain; the following transition 👉 question is unchanged. Markdown-only, cross-platform. No new invariant.
-- **Commit:** uncommitted
+- **Commit:** 808bcbc
 
 ## pin-iterate-proceed-decision-gate
 
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
 - **Summary:** Reworked the Module 6 "Iterate vs. proceed decision gate". The 80–89% branch previously read "Most tests pass but there are gaps. Iterate or move forward?" — no 👉, `or`-joined, ambiguous, unpinned (violated INV-005/008/009/051/056). It is now a single pinned 👉 question with a neutral lead and a numbered list ("👉 Most tests pass but there are gaps. What would you like to do? Reply with a number: 1. Iterate now… 2. Move forward…"); the ≥90% and <80% branches are statements that route to the transition, now naming modules instead of numbers (INV-079 polish). AC verified by grep: no "Iterate or move forward" remains; the numbered 👉 is present; no residual "proceed to Module 7"/"going back to Module 5". Markdown-only, cross-platform. No new invariant.
-- **Commit:** uncommitted
+- **Commit:** 5104d16
 
 ## remove-orphaned-first-visualization-guarantee
 
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
 - **Summary:** Removed the dead "Deferred first-visualization guarantee" blocks from Modules 6 and 7. The `module3-synthetic-verification-data` rework removed the setter (the opt-out gate's `first_visualization: owed` marker write) and the standalone-demo the precondition referenced, leaving these clearers orphaned — nothing set the marker and the "standalone demo declined" precondition described removed functionality. Whether a workstation-verification visualization is produced is now governed solely by Truth Set visualization module selection (INV-077); the guarantee is obsolete. The modules' normal visualization offers (results dashboard, entity graph) are untouched. AC verified: a plugin-wide grep for `first_visualization`/`owed`/`module_6_deferred`/`module_7_deferred`/"standalone demo declined" returns nothing. Markdown-only, cross-platform. No new invariant (upholds INV-077).
-- **Commit:** uncommitted
+- **Commit:** 2fa3009
 
 ## capture-visualization-screenshots-for-recap
 
