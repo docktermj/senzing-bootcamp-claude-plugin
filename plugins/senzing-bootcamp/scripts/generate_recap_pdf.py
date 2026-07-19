@@ -263,7 +263,7 @@ except Exception:  # defensive fallback — keep in sync with brand_tokens.py
     ACCENT = (255, 78, 31)
     INK = (24, 22, 15)
     GREEN = (29, 158, 117)
-    LINE = (229, 223, 214)
+    LINE = (229, 223, 211)
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {

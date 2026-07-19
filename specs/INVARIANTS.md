@@ -159,6 +159,8 @@ These hold at the boundaries of every module.
   │   ├── bootcamp_progress.json         # Current module + completed modules
   │   ├── data_sources.yaml              # Registered data source definitions
   │   ├── engine_config.json             # Senzing engine configuration
+  │   ├── license.json                   # Detected Senzing license capacity (written in Module 2)
+  │   ├── cord_metadata.yaml             # CORD dataset provenance snapshot (written in Module 4)
   │   ├── session_log.jsonl              # Session activity log (reserved)
   │   └── visualization_tracker.json     # Visualization run tracking (reserved)
   ├── data/                              # All data artifacts

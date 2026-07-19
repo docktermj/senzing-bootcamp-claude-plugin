@@ -45,7 +45,7 @@ run unless its prerequisite is also included.
 |---|---|---|---|
 | 1 | Bootcamp preparation | Required | this module |
 | 2 | Entity Resolution Concepts | Optional | `module-00-entity-resolution-concepts` |
-| 3 | Business problem | Required | `module-01-business-problem` |
+| 3 | Discover the Business Problem | Required | `module-01-business-problem` |
 | 4 | SDK setup | Required | `module-02-sdk-setup` |
 | 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` (Phase 1 + Phase 3) |
 | 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03-system-verification` Phase 2 (step 9) |
@@ -125,7 +125,7 @@ verbosity:
 ```
 
 For `minimal`, every category is `0`. `minimal` reduces only *explanatory* output; it NEVER
-suppresses required output — every 👉 question (INV-005), gate, module banner (INV-028),
+suppresses required output — every 👉 question (INV-005), gate, module banner (INV-079),
 end-of-module summary (INV-032), and the recap trophy (INV-048) still appear.
 
 Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is

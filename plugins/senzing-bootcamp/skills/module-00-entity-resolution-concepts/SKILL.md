@@ -21,7 +21,7 @@ entity resolution so the bootcamper has context before the guided modules begin.
 decided once, during the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): Core
 always includes it; Customized includes it only if the bootcamper chose it. When this skill is
 invoked, the bootcamper has already opted in — so **run the primer directly**; do NOT ask a
-skip/keep question (that gate has been retired to avoid asking the same decision twice — INV-072).
+skip/keep question (that gate has been retired to avoid asking the same decision twice — INV-078).
 
 Module 0 is a **preamble, not a numbered module**: it is not counted among the mandatory
 Modules 1–7 (INV-013), skipping it (by not selecting it) is a permitted, requested skip (INV-014),

@@ -89,9 +89,9 @@ for entity resolution scenarios')` to learn which datasets exist and what they c
 values exactly as returned. Wait up to 30s; retry once.
 
 - **Fitting CORD dataset returned:** back the scenario with it, provenance `cord`.
-- **None fit:** synthetic data, provenance `generated`.
+- **None fit:** synthetic data, provenance `synthesized`.
 - **Timeout/unreachable after one retry:** omit CORD facts, tell the bootcamper they're
-  unavailable, use synthetic data (`generated`).
+  unavailable, use synthetic data (`synthesized`).
 
 Either way the data must satisfy the Step 4a invariants.
 

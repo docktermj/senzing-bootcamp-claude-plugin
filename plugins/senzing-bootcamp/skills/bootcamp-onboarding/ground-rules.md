@@ -193,7 +193,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 - At every module start, BEFORE any module work: read progress, then show the module start
   banner, a journey map (the **selected** modules — from `selected_modules` in
-  `config/bootcamp_preferences.yaml` — marked ✅ complete / 🔄 current / ⬜ upcoming), before/after
+  `config/bootcamp_preferences.yaml` — marked by position relative to `current_module`: ✅ for
+  modules already experienced, i.e. those before `current_module` in the list, including the
+  apparatus-exempt Bootcamp preparation and Module 0 which are never in `modules_completed`;
+  🔄 for the current module; ⬜ for upcoming), before/after
   framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
 - **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
   in the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): **Core** includes
@@ -205,7 +208,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
   preparation module (setup + module selection, always first) and the optional entity-resolution
   concepts primer (`../module-00-entity-resolution-concepts/SKILL.md`, run **only when selected** —
   its old skip/keep gate is retired; inclusion is driven by the Bootcamp preparation selection,
-  INV-072) do NOT run the per-module apparatus above (no journey map, no before/after, no step
+  INV-078) do NOT run the per-module apparatus above (no journey map, no before/after, no step
   overview, no `docs/bootcamp_recap.md` section, and they are not added to `modules_completed`).
   Keep them lightweight. When Module 0 runs it presents only its ENTITY RESOLUTION CONCEPTS banner,
   the MCP-sourced description, and its explore gate.

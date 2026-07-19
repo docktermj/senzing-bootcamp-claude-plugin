@@ -39,8 +39,9 @@ selected; the Verification Report is persisted to `config/bootcamp_progress.json
 (when it ran) and the database are cleaned up; and gate 3→4 is marked completed (full criteria in
 `phase1-verification.md`).
 
-> **User reference:** for detailed background on this module, see
-> `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md`.
+> **User reference:** detailed background on this module lives in the walkthrough above; a
+> standalone `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference is a later porting phase and
+> is not created yet.
 
 ## Error handling
 
