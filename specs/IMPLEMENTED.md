@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## pin-remaining-interaction-questions
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`, `plugins/senzing-bootcamp/scripts/feedback-capture.py`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`
+- **Summary:** Pinned the last un-pinned Bootcamper questions from the fourth deep-dive. (A1/INV-051) Module 4's data-provision question is now a pinned `👉 … Reply with a number:` (1–4) with no `or`-joined choices. (B1/INV-076/079) Module 2's transition lead-in is now generic ("The next module in your selected sequence…"), so it never names a module a Customized path deselected. (A2/INV-005/056) Pinned the Module 6 UAT offer and the Module 5 Phase-3 decision gate as `👉` yes/no questions. (A3/INV-074) `feedback-capture.py`'s injected context now references the pinned BOOTCAMP FEEDBACK / FEEDBACK SAVED banners (file still parses). (A4) Renumbered `phase1-discovery.md` items `7b/7c/7d`→`6b/6c/6d`. AC verified by grep + Python parse. Markdown/string-only, cross-platform, language-agnostic.
+- **Commit:** f56323d
+
 ## python3-compile-and-example-recap-mechanism
 
 - **Implemented:** 2026-07-19
