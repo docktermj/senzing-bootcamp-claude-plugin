@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## final-review-doc-coherence
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `specs/INVARIANTS.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`
+- **Summary:** Cleared the fourth deep-dive's coherence nits. (D1/INV-081) `generate_recap_pdf.py` `LINE` fallback `(229,223,214)`→`(229,223,211)` to match `brand_tokens.WARM_LINE #E5DFD3`. (D2/INV-050) Added `config/license.json` and `config/cord_metadata.yaml` (runtime-created in Modules 2/4) to the layout tree. (D3/INV-050) Reworded the dangling `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference as a not-yet-created later port. (E3/INV-003) Fixed stale citations: INV-072→INV-078 (ground-rules, module-00) and INV-028→INV-079 (bootcamp-preparation). (E4/INV-079) Journey-list label "Business problem"→"Discover the Business Problem" to match the module + INV-073 gate. (C3) `generated`→`synthesized` provenance token to match Module 4's enum. (B3/INV-029) Made the journey-map ✅/🔄/⬜ derivation explicit (position relative to `current_module`) so the apparatus-exempt Bootcamp preparation and Module 0 — never in `modules_completed` — render ✅ once passed rather than ⬜ forever. AC verified by grep + `--check`. All in-place clarifications (no new invariant). Cross-platform, language-agnostic.
+- **Commit:** 61c6eab
+
 ## pin-remaining-interaction-questions
 
 - **Implemented:** 2026-07-19
