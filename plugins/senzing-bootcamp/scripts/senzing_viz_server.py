@@ -24,7 +24,7 @@ Usage:
     python3 senzing_viz_server.py --records src/system_verification/*.jsonl
 
     # Also write a persistent standalone snapshot (no server needed to view):
-    python3 senzing_viz_server.py --records data/transformed/*.jsonl \\
+    python3 senzing_viz_server.py --records data/senzing-ready/*.jsonl \\
         --snapshot docs/visualizations/results.html --serve-once-check
 
     # Just build the snapshot and exit (no server), used by the completion gate:

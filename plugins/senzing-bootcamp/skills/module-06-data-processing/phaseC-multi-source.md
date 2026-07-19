@@ -45,7 +45,7 @@ resources), **Hybrid** (sequential for dependent sources, parallel for independe
 
 ## 16. Pre-load validation checklist
 
-Verify before orchestration: all JSONL files exist in `data/transformed/` and are non-empty;
+Verify before orchestration: all JSONL files exist in `data/senzing-ready/` and are non-empty;
 unique DATA_SOURCE names match the Module 2 config; RECORD_IDs unique within each source; a
 database backup of `database/G2C.db` exists; sufficient disk space (~2x per source); the
 Module 6 loading program works as a template. Fix failures before proceeding.

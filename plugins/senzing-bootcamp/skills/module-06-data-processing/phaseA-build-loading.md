@@ -83,7 +83,7 @@ licensing as a default the bootcamper already has, never as a hard cap:
 
 Determine where the Senzing-formatted JSON records are for the first data source:
 
-- Output from a transformation program (Module 5), in `data/transformed/`
+- Output from a transformation program (Module 5), in `data/senzing-ready/`
 - Direct Entity Specification-compliant data files
 - Database query results or API responses
 

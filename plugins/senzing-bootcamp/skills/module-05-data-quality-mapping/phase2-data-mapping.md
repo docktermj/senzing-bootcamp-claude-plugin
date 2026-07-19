@@ -81,7 +81,7 @@ ground-rules file-placement contract:
   transient artifacts to their durable homes:** mapping-phase Markdown (`profile_report.md`,
   `schema_hints.md`, `JOURNAL.md`) → `docs/mapping/`; mapping working data
   (`*_mapping_spec.json`, the per-source `{source}_sample.jsonl`, intermediate analyzer JSONL)
-  → `data/mapping/`. Final transformed, load-ready JSONL stays in `data/transformed/`.
+  → `data/mapping/`. Final transformed, load-ready JSONL stays in `data/senzing-ready/`.
 - If a downloaded file matches no placement rule, leave it in the workspace and surface it as a
   warning rather than inventing a destination. If the plugin write-gate blocks a write, leave
   the file in the workspace and report it: do not retry against a different location.
@@ -218,11 +218,11 @@ output format.
 >   (which fields became which Senzing attributes, how DATA_SOURCE and RECORD_ID are set, nested
 >   vs. flat layout).
 > - **Concise:** State the output file path and format only (e.g., "Output:
->   data/transformed/customers.jsonl: one JSON record per line").
+>   data/senzing-ready/customers.jsonl: one JSON record per line").
 
 After `mapping_workflow` generates output files into the workspace, place them into the correct
 project subdirectories per the file-placement guidance above (`.py` → `src/`, transformed JSONL
-→ `data/transformed/`, mapping docs → `docs/mapping/`, etc.). Regenerating a `docs/README.md`
+→ `data/senzing-ready/`, mapping docs → `docs/mapping/`, etc.). Regenerating a `docs/README.md`
 docs index is a later porting phase: skip it for now.
 
 **Checkpoint:** write step 12.
@@ -246,7 +246,7 @@ pass/fail, output file path, sample record, any observations.
 > - **Verbose:** Show pass/fail result, the output file path, a sample transformed record, and
 >   any observations (warnings, skipped records, format issues).
 > - **Concise:** Show pass/fail result and the output file path only (e.g., "✅ Pass: output:
->   data/transformed/customers_sample.jsonl").
+>   data/senzing-ready/customers_sample.jsonl").
 
 **Checkpoint:** write step 14.
 
@@ -308,7 +308,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 > **Data source registry:** Update the source's `mapping_status` to `complete` in
 > `config/data_sources.yaml` and set `updated_at`. If a transformed file was created, update
-> `file_path` to the `data/transformed/` output.
+> `file_path` to the `data/senzing-ready/` output.
 
 **Checkpoint:** write step 17.
 
@@ -316,7 +316,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 - Program in `src/transform/`.
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
-- Sample output in `data/transformed/[name]_sample.jsonl`.
+- Sample output in `data/senzing-ready/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this
   data source, covering source file info, transformation program, output file info, field
   mappings, format changes, filters, quality improvements, and before/after record counts. (The
@@ -359,7 +359,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 Each source gets its own transformation program and its own `mapping_workflow` run.
 
 > **Mandatory internal gate (do not render to the bootcamper):** BEFORE writing the module
-> completion checkpoint, list ALL files in `data/transformed/` and verify that EACH has a
+> completion checkpoint, list ALL files in `data/senzing-ready/` and verify that EACH has a
 > corresponding `docs/mapping/{source_name}_mapper.md`. If any are missing, create them NOW. Do
 > NOT write the module completion checkpoint until all mapping specs exist. This is a hard
 > requirement: the module is not complete without a per-source mapping specification for every

@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## rename-transformed-to-senzing-ready
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `specs/INVARIANTS.md`
+- **Summary:** Renamed the mapping-output directory `data/transformed` → `data/senzing-ready` across all 6 path occurrences (Module 5 mapping output ×7 refs, Module 6 loaders, graduation, the viz server) and updated the INV-050 layout tree (comment column re-aligned; viz server still `py_compile`-clean). Prose adjectives ("transformed JSONL/data") left as-is. AC verified: repo-wide `grep 'data/transformed'` returns nothing; `data/senzing-ready` present in all 6 files; INV-050 tree shows `senzing-ready/`. Cross-platform, language-agnostic.
+- **Invariants introduced:** INV-084 (maintainer-approved).
+- **Commit:** uncommitted
+
 ## module1-license-flow-parity
 
 - **Implemented:** 2026-07-19

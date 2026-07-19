@@ -193,7 +193,7 @@ does not exist; on a copy failure, log and continue):
 | `src/load/**` | `production/src/load/` | Loading code |
 | `src/query/**` | `production/src/query/` | Query/discovery code |
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
-| `data/transformed/**` | `production/data/` | Senzing-ready data |
+| `data/senzing-ready/**` | `production/data/` | Senzing-ready data |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
 
 Create `production/database/.gitkeep` as an empty placeholder (never copy the

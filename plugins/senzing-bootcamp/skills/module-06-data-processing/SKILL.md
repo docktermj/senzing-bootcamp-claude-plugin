@@ -25,13 +25,13 @@ banner, journey map, before/after framing, and a brief numbered overview of this
 load all data sources into Senzing, process redo records, and validate entity resolution
 results (from first load through cross-source validation).
 
-**Before/After:** You have Senzing-formatted JSON files in `data/transformed/` (and possibly
+**Before/After:** You have Senzing-formatted JSON files in `data/senzing-ready/` (and possibly
 test-load results from Module 5 Phase 3). After this module, all your data is loaded, redo
 records are processed, and entity resolution results are validated, duplicates matched,
 cross-source connections found.
 
 **Prerequisites:** Module 5 complete (at least one transformed data source in
-`data/transformed/`), SDK installed and configured (Module 2), database configured (SQLite at
+`data/senzing-ready/`), SDK installed and configured (Module 2), database configured (SQLite at
 `database/G2C.db`, or PostgreSQL), transformation validated with the linter.
 
 **Success indicator:** ✅ All data sources loaded into Senzing + redo records processed + no
