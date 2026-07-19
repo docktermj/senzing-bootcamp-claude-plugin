@@ -48,13 +48,14 @@ also include the chosen programming language and path (Core/Customized) when pre
 
 ### 2b. Append this module's section
 
-Append the section below at the end of the file. Use the module number and name
-(names come from the module skills / `../bootcamp-onboarding/onboarding-flow.md`
-overview). Gather the content from what actually happened in this module, from
-the bootcamper's point of view:
+Append the section below at the end of the file, in module-completion order — the order the
+bootcamper actually experienced the modules; never re-sort by catalog number. Use the module
+**name** (from the module skills / `../bootcamp-onboarding/onboarding-flow.md` overview), not a
+catalog number. Gather the content from what actually happened in this module, from the
+bootcamper's point of view:
 
 ```markdown
-## Module N: {Name} — {ISO 8601 timestamp}
+## {Name} — {ISO 8601 timestamp}
 
 ### Information Shared
 - {key concepts, explanations, and reference material presented this module}
@@ -86,14 +87,14 @@ Append the section as plain, functional Markdown. Do not spend effort on CommonM
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
 graduation runs one normalization pass over the recap before the PDF renders (see
 `ground-rules.md` → "Markdown files" and `../graduation/SKILL.md`). What matters at this step is
-that the `## Module N:` heading and all four subsections are present and carry real content.
+that the `## {Name}` heading (name-based, no catalog number) and all four subsections are present and carry real content.
 
 ### 2c. Verify it landed
 
-Re-read `docs/bootcamp_recap.md` and confirm a `## Module N:` heading for the
+Re-read `docs/bootcamp_recap.md` and confirm a `## {Name}` heading for the
 just-completed module is present. If it is missing (a lost write or session
 boundary), append it again before continuing. Only then display the one-line
-confirmation: `Recap updated for Module N: {Name}.`
+confirmation: `Recap updated: {Name}.`
 
 (The recap PDF is not rendered per-module: it is rendered once at graduation by
 `scripts/generate_recap_pdf.py`, which reads this file. See `../graduation/SKILL.md`.)
@@ -103,12 +104,12 @@ confirmation: `Recap updated for Module N: {Name}.`
 During the module you kept an in-progress recap at `docs/progress/recap_checkpoint.md`
 (see `ground-rules.md` → "Progress and state"), and the plugin's durability hooks may
 have folded it into `docs/bootcamp_recap.md` as a `<!-- RECAP-CHECKPOINT:START -->` …
-`<!-- RECAP-CHECKPOINT:END -->` block. Now that the finalized `## Module N:` section is
+`<!-- RECAP-CHECKPOINT:END -->` block. Now that the finalized `## {Name}` section is
 appended (2b), that block is superseded. Do two things:
 
 - Remove any `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block
   from `docs/bootcamp_recap.md` (the finalized section replaces it — this keeps the
-  trophy clean and never rewrites a completed `## Module N:` section).
+  trophy clean and never rewrites a completed `## {Name}` section).
 - Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
   module starts a fresh checkpoint.
 

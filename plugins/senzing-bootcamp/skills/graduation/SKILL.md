@@ -80,17 +80,20 @@ statement, never a 👉 question or gate, and it adds no turn.
 
 ### 1a. Reconcile the recap
 
-Confirm `docs/bootcamp_recap.md` has a `## Module N:` section for every module in
-`modules_completed`, each carrying the four labeled subsections (Information
-Shared, Questions & Responses, Actions Taken, Journal). If any completed module's
-section is missing, append it now from the module's artifacts and progress data,
-following `../bootcamp-onboarding/module-completion.md` (append only, never rewrite
-existing sections). If `docs/bootcamp_recap.md` does not exist at all, reconstruct
-it from `config/bootcamp_progress.json` and the files each module produced.
+Confirm `docs/bootcamp_recap.md` has a name-based `## {Module name}` section for **every** module
+in `modules_completed` — match by module **name**, not a catalog number. Iterate the full
+`modules_completed` list in its recorded (experienced) order and, for any completed module with no
+matching section, append one now from the module's artifacts and progress data, following
+`../bootcamp-onboarding/module-completion.md` (append only, never rewrite existing sections, never
+re-sort into catalog order). Watch for modules that share a skill directory but are separate
+`modules_completed` entries — e.g. `system_verification` and `truthset_visualization` both live in
+`module-03-system-verification/` yet each needs its own section, so synthesize the missing one
+(e.g. `truthset_visualization`) here. If `docs/bootcamp_recap.md` does not exist at all,
+reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
 If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
 module interrupted before completion), fold its content into that module's
-`## Module N:` section (append only), then remove the
+`## {Module name}` section (append only), then remove the
 `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block from
 `docs/bootcamp_recap.md` and clear the checkpoint. This ensures the trophy carries any
 narrative captured from an interrupted module and the PDF renders clean, completed
@@ -106,8 +109,8 @@ During the bootcamp these files were written plain (see
 Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031), and lists
 (MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
 the colon, none before). The pass is **purely cosmetic — structure- and content-preserving**: it
-must never reorder, remove, or rewrite the prose of a completed `## Module N:` section, nor drop
-any of its four subsections (Information Shared, Questions & Responses, Actions Taken, Journal).
+must never reorder, remove, or rewrite the prose of a completed `## {Module name}` section, nor
+drop any of its four subsections (Information Shared, Questions & Responses, Actions Taken, Journal).
 Like every graduation step it is non-blocking: if normalization fails or is uncertain, warn,
 leave the content as written, and continue — a formatting issue is never a reason to skip the PDF.
 

@@ -112,9 +112,9 @@ steering files.)
   until the end: graduation runs a single normalization pass over the `.md` files before the trophy
   PDF renders (see `../graduation/SKILL.md`). Keeping incremental writes plain reduces edit churn
   (INV-058) and keeps the teaching flow uncluttered (INV-012).
-- Structure still matters even while formatting is deferred: recap sections keep their
-  `## Module N:` heading and the four required subsections (see `module-completion.md`), and the
-  placement rules above are unchanged.
+- Structure still matters even while formatting is deferred: recap sections keep their name-based
+  `## {Module name}` heading and the four required subsections (see `module-completion.md`), and
+  the placement rules above are unchanged.
 
 ## Visual deliverables (Senzing brand)
 

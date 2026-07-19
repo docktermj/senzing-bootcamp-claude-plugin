@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## recap-sections-name-based-and-complete
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/scripts/recap_checkpoint.py`, `plugins/senzing-bootcamp/hooks/README.md`, `specs/INVARIANTS.md`
+- **Summary:** Recap section headers are now name-based (`## {Module name} — {timestamp}`, no catalog number). Template in `module-completion.md` updated (plus an append-in-experienced-order, never-re-sort note) and all its verify/reconcile references keyed on `## {Name}`; `ground-rules.md` and the durability-hook comments (`recap_checkpoint.py`, `hooks/README.md`) reconciled. Graduation Step 1a now reconciles by module **name** against the full `modules_completed` list, explicitly synthesizing a section for any completed module lacking one — including `truthset_visualization` when it shares the `module-03-system-verification/` skill with `system_verification`. `generate_recap_pdf.py`: the parser now treats every post-preamble H2 as a section (name-based → `number=None`) while a new `_legacy_module_re` still parses legacy `## Module N:` headers; renderer/verify/`--check`/chips all fall back to the title when `number is None` (fixed the chips filter that dropped number-less modules; also fixed a latent recap-title clobbering bug via a distinct `mtitle`). AC verified: `--check` passes on both the shipped legacy example (numbers 1–7) and a name-based test recap (number=None, correct titles, 4 subsections), and both render; grep shows no bootcamper-facing `## Module N:` recap refs remain except the intentional legacy-tolerance ones. Cross-platform, language-agnostic.
+- **Invariants introduced:** INV-085 (maintainer-approved); INV-079's recap-heading clause marked superseded.
+- **Commit:** uncommitted
+
 ## rename-transformed-to-senzing-ready
 
 - **Implemented:** 2026-07-19

@@ -62,7 +62,9 @@ REQUIRED_SECTIONS = [
 # --------------------------------------------------------------------------- #
 @dataclass
 class ModuleSection:
-    """One ``## Module N: ...`` block from the recap."""
+    """One recap section: a name-based ``## <Name> — <date>`` block (legacy
+    ``## Module N: ...`` headers are also parsed). ``number`` is None for
+    name-based headers."""
 
     number: Optional[int]
     title: str
@@ -133,8 +135,8 @@ def parse_recap(text: str) -> Recap:
     current_sub: Optional[Tuple[str, List[str]]] = None
     seen_first_module = False
 
-    module_re = re.compile(r"^##\s+Module\s+(\d+)\s*[:\-—]?\s*(.*)$", re.IGNORECASE)
     generic_h2_re = re.compile(r"^##\s+(.*)$")
+    _legacy_module_re = re.compile(r"^Module\s+(\d+)\s*[:\-—]?\s*(.*)$", re.IGNORECASE)
     h1_re = re.compile(r"^#\s+(.*)$")
     h3_re = re.compile(r"^###\s+(.*)$")
     meta_re = re.compile(r"^\*\*(.+?)\*\*:?\s*(.*)$")
@@ -155,15 +157,25 @@ def parse_recap(text: str) -> Recap:
     for raw in lines:
         line = raw.rstrip("\n")
 
-        m = module_re.match(line)
-        if m:
+        # An H2 heading starts a new recap section (one per module). Name-based
+        # headers ("## Business problem — <date>") are the current form; legacy
+        # numbered headers ("## Module 3: System Verification — <date>") are still
+        # parsed for older recaps. ``number`` is None for name-based headers.
+        h2 = generic_h2_re.match(line)
+        if h2:
             close_module()
-            num = int(m.group(1))
-            rest = m.group(2).strip().lstrip(":-— ").strip()
-            title, date = _split_title_date(rest)
-            current_module = ModuleSection(
-                number=num, title=title or f"Module {num}", date=date
-            )
+            header = h2.group(1).strip()
+            legacy = _legacy_module_re.match(header)
+            if legacy:
+                num = int(legacy.group(1))
+                rest = legacy.group(2).strip().lstrip(":-— ").strip()
+                mtitle, date = _split_title_date(rest)
+                current_module = ModuleSection(
+                    number=num, title=mtitle or f"Module {num}", date=date
+                )
+            else:
+                mtitle, date = _split_title_date(header)
+                current_module = ModuleSection(number=None, title=mtitle, date=date)
             seen_first_module = True
             continue
 
@@ -172,11 +184,6 @@ def parse_recap(text: str) -> Recap:
             if hm:
                 close_sub()
                 current_sub = (hm.group(1).strip(), [])
-                continue
-            # A new H2 that is not a module ends the module block.
-            gm = generic_h2_re.match(line)
-            if gm:
-                close_module()
                 continue
             if line.strip() == "---":
                 # Separator between modules; keep it out of content.
@@ -219,7 +226,7 @@ def verify_recap(recap: Recap) -> List[str]:
     """Return a list of human-readable problems; empty means complete."""
     problems: List[str] = []
     if not recap.modules:
-        problems.append("recap contains no '## Module N:' sections")
+        problems.append("recap contains no module ('## …') sections")
     for mod in recap.modules:
         missing = mod.missing_required()
         if missing:
@@ -655,7 +662,8 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         for key, val in recap.meta:
             add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 11, 0)
         completed = ", ".join(
-            f"Module {m.number}" for m in recap.modules if m.number is not None
+            (f"Module {m.number}" if m.number is not None else m.title)
+            for m in recap.modules
         )
         if completed:
             add("", "F1", 4, 0)

@@ -78,7 +78,7 @@ Code identically on all three platforms, including inside `args`.
   markers), and three hooks — `PreCompact`, `SessionEnd`, and `SessionStart` — fold it into
   `docs/bootcamp_recap.md`. The fold (in the shared, non-hook helper
   `scripts/recap_checkpoint.py`) is deterministic, idempotent, and append-only with respect
-  to completed `## Module N:` sections: it only ever replaces the marker-fenced block, so
+  to completed `## {module}` sections: it only ever replaces the marker-fenced block, so
   repeated folds never duplicate and a finalized section is never rewritten. Module
   completion appends the final section and clears the checkpoint.
 
