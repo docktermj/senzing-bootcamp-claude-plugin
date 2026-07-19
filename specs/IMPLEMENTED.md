@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## audit3-minor-fixes
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`
+- **Summary:** Fixed the third deep-dive's clear minors. (1) Rewrote the requirements-gate else-branch in `phase1-query-visualize.md` so the garbled `ask , ` line is gone and both the "Rejects all" and ELSE branches route to the single `👉 What questions do you need to answer with your data?` question (fixes F1 unmarked-question + F2 garble; one turn-ending question). (2) `Set current_module to 5` → `data_quality_mapping` (name token, INV-086 — `current_module` never holds a catalog number). (3) Added "Bootcamp preparation" to `model-selection.md`'s Sonnet/medium stage row to match the authoritative `ground-rules.md:239` mirror. (4) INV-050 tree: reworded `system_verification/` comment from "(truth set)" to "(synthetic VERIFY data) + Truth Set viz artifacts" (System verification runs on synthetic data, INV-086/INV-077) and annotated `bootcamp_journal.md` as "(legacy; superseded by the consolidated bootcamp_recap.md, INV-085)". **Explicitly not changed:** the "hardcoded 500-record" flag — module-02's figure is already MCP-grounded ("current published value; confirm it against the Senzing MCP server… Never substitute a hardcoded or remembered figure," lines 341/361) and module-06's `<500` is an illustrative "Example range"; the flag did not survive verification. AC verified by grep + `generate_recap_pdf.py --check`. Markdown-only, cross-platform, language-agnostic. Clarifies INV-050 in place (no new invariant).
+- **Commit:** f800cd8
+
 ## align-invariants-cord-and-optin
 
 - **Implemented:** 2026-07-19
