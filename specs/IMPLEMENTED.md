@@ -23,7 +23,7 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py` (new), `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase2-visualization.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
 - **Summary:** Added optional visualization-screenshot capture that embeds curated shots into the recap trophy. New bundled helper `scripts/capture_screenshots.py` renders a **local** HTML file (or a `localhost` URL) to PNGs via the first available headless backend (Playwright → Selenium → headless Chrome/Chromium CLI → `wkhtmltoimage`), writing to `docs/visualizations/` (INV-070); it refuses non-local URLs (offline, INV-071 — verified exit 1), and exits 2 when no backend exists so callers skip gracefully (verified). `generate_recap_pdf.py` now embeds `![alt](path)` local images in the fpdf2 path via a new `_render_image` (remote URLs refused, any failure/missing file skipped silently — INV-048), and `_md_inline_to_text` reduces image syntax to its alt text so the stdlib fallback shows a caption instead of raw Markdown. `module-completion.md` gained a canonical "Capturing visualization screenshots" procedure (non-blocking, graceful) and an image-embed note in the recap template; the three visualization steps (Module 3 Truth Set snapshot, Module 6 cross-source graph + results dashboard, Module 7 entity graph) each point to it with their `{html}`/`{name}`. AC verified: end-to-end capture→embed→PDF produced a real `/Image` XObject; a missing image was skipped and `--check` still passed; helper + renderer `py_compile` clean; no network fetch; helpers are `python3` with optional deps (INV-052/INV-066); cross-platform (shutil.which/subprocess/pathlib, no OS-specific paths). No new invariant (upholds INV-048/070/071/052/066).
-- **Commit:** uncommitted
+- **Commit:** 5a60c06
 
 ## recap-sections-name-based-and-complete
 
@@ -31,7 +31,7 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/scripts/recap_checkpoint.py`, `plugins/senzing-bootcamp/hooks/README.md`, `specs/INVARIANTS.md`
 - **Summary:** Recap section headers are now name-based (`## {Module name} — {timestamp}`, no catalog number). Template in `module-completion.md` updated (plus an append-in-experienced-order, never-re-sort note) and all its verify/reconcile references keyed on `## {Name}`; `ground-rules.md` and the durability-hook comments (`recap_checkpoint.py`, `hooks/README.md`) reconciled. Graduation Step 1a now reconciles by module **name** against the full `modules_completed` list, explicitly synthesizing a section for any completed module lacking one — including `truthset_visualization` when it shares the `module-03-system-verification/` skill with `system_verification`. `generate_recap_pdf.py`: the parser now treats every post-preamble H2 as a section (name-based → `number=None`) while a new `_legacy_module_re` still parses legacy `## Module N:` headers; renderer/verify/`--check`/chips all fall back to the title when `number is None` (fixed the chips filter that dropped number-less modules; also fixed a latent recap-title clobbering bug via a distinct `mtitle`). AC verified: `--check` passes on both the shipped legacy example (numbers 1–7) and a name-based test recap (number=None, correct titles, 4 subsections), and both render; grep shows no bootcamper-facing `## Module N:` recap refs remain except the intentional legacy-tolerance ones. Cross-platform, language-agnostic.
 - **Invariants introduced:** INV-085 (maintainer-approved); INV-079's recap-heading clause marked superseded.
-- **Commit:** uncommitted
+- **Commit:** eb397ea
 
 ## rename-transformed-to-senzing-ready
 
@@ -39,14 +39,14 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `specs/INVARIANTS.md`
 - **Summary:** Renamed the mapping-output directory `data/transformed` → `data/senzing-ready` across all 6 path occurrences (Module 5 mapping output ×7 refs, Module 6 loaders, graduation, the viz server) and updated the INV-050 layout tree (comment column re-aligned; viz server still `py_compile`-clean). Prose adjectives ("transformed JSONL/data") left as-is. AC verified: repo-wide `grep 'data/transformed'` returns nothing; `data/senzing-ready` present in all 6 files; INV-050 tree shows `senzing-ready/`. Cross-platform, language-agnostic.
 - **Invariants introduced:** INV-084 (maintainer-approved).
-- **Commit:** uncommitted
+- **Commit:** 524497f
 
 ## module1-license-flow-parity
 
 - **Implemented:** 2026-07-19
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`
 - **Summary:** Brought Module 1's license flow (Steps 5b–5e) to parity with the implemented Module 2 flow. Terminology is now "Senzing License Key" throughout; the Step 5b gate reads "👉 Do you already have a Senzing License Key?" (pinned verbatim, INV-056) and its stale `6c/6d` routing typo was fixed to `5c/5d`. Step 5c now offers both capture options via a neutral numbered question (INV-051) — paste the Base64 string, or give the path to a downloaded license file (hinting the likely default name `senzing-license.txt`) — decoding/copying to `licenses/g2.lic` either way. A new pinned confirmation gate (Step 5d-i, "👉 Has your Senzing License Key email arrived yet?") runs after an in-flow `submit_feedback` request before any later step, stating the bootcamp continues on the built-in evaluation license until the key is applied. AC verified by grep: License Key terminology consistent, dual capture + filename hint present, 5d-i gate present; single-meaning questions (INV-008), no hardcoded capacity figures (still MCP-sourced), INV-036 still satisfied. Cross-platform, language-agnostic. No new invariant.
-- **Commit:** uncommitted
+- **Commit:** 7e25db8
 
 ## drop-checklist-and-summary-gates
 
