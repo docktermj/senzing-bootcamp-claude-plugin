@@ -81,11 +81,13 @@ licensing as a default the bootcamper already has, never as a hard cap:
 
 ## 2. Identify the input data
 
-Determine where the Senzing-formatted JSON records are for the first data source:
+Determine where each source's Senzing-formatted JSON records are — read the source's `file_path`
+from `config/data_sources.yaml` rather than assuming a fixed directory:
 
-- Output from a transformation program (Module 5), in `data/senzing-ready/`
-- Direct Entity Specification-compliant data files
-- Database query results or API responses
+- Mapped sources: transformation output from Module 5, in `data/senzing-ready/`
+- Fast-pathed CORD / already-Senzing-ready sources (`fast_pathed: true`): the original file in
+  `data/raw/`, which Module 5's fast-path kept as the source's `file_path` (no transformation)
+- Direct Entity Specification-compliant data files; database query results or API responses
 
 Update the source's `load_status` to `loading` in `config/data_sources.yaml` and set
 `updated_at`.

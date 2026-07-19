@@ -54,8 +54,9 @@ fields against the specification's attribute names. For each data source provide
 compliant attribute names.)
 
 - **Entity Specification-compliant:** Data already uses attribute names and structures that
-  match the Entity Specification. Can proceed directly to Module 2 (SDK setup) and Module 6
-  (loading).
+  match the Entity Specification. CORD / already-Senzing-ready sources are eligible for the
+  fast-path (Step 5a) — route directly to Module 6 (loading), skipping mapping. Other compliant
+  sources continue to Phase 2, which confirms compliance and records lineage before loading.
 - **Needs mapping:** Data uses different field names or structures than those defined in the
   Entity Specification. Continue to Phase 2 (data mapping).
 - **Needs enrichment:** Data is missing critical attributes. Discuss with the user whether
