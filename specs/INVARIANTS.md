@@ -174,7 +174,7 @@ These hold at the boundaries of every module.
   │   ├── load/                          # Loading & redo processing
   │   ├── query/                         # Query, search & discovery
   │   ├── server/                        # Visualization web server (reserved; the viz server ships with the plugin)
-  │   ├── system_verification/           # Pipeline verification (truth set)
+  │   ├── system_verification/           # Pipeline verification (synthetic VERIFY data) + Truth Set viz artifacts
   │   ├── scripts/                       # Setup & data-generation utilities
   │   ├── resources/                     # Downloaded Senzing resources
   │   └── utils/                         # Shared helpers
@@ -182,7 +182,7 @@ These hold at the boundaries of every module.
   │   ├── README.md
   │   ├── business_problem.md
   │   ├── data_source_evaluation.md
-  │   ├── bootcamp_journal.md
+  │   ├── bootcamp_journal.md            # (legacy; superseded by the consolidated bootcamp_recap.md, INV-085)
   │   ├── bootcamp_recap.md
   │   ├── bootcamp_recap.pdf
   │   ├── completion_summary.md          # (reserved)

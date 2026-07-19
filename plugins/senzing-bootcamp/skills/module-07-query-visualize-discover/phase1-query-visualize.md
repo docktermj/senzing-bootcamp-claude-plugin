@@ -30,11 +30,11 @@ least one non-empty desired-output field:
 *(Internal: end the turn on this question and wait.)*
 
 - **Accepts or modifies:** proceed with the confirmed requirements.
-- **Rejects all derived requirements:** ask a fresh open-ended question without referencing the
-  rejected items: "What questions do you need to answer with your data?"
+- **Rejects all derived requirements:** ask the fresh open-ended question below (the same 👉
+  question as the ELSE branch), without referencing the rejected items.
 
 **ELSE** (file missing, OR both success-criteria and desired-outputs sections are missing or
-empty): ask , 
+empty): ask the fresh open-ended question:
 
 👉 **What questions do you need to answer with your data?**
 
@@ -161,7 +161,8 @@ If accepted:
 
 1. Note which data sources need remapping in `config/bootcamp_progress.json` under a
    `quality_iteration` key.
-2. Set `current_module` to 5 and `current_step` to the Phase 2 start step.
+2. Set `current_module` to `data_quality_mapping` (Module 5's name token — `current_module` holds
+   a name token, never a catalog number, per INV-086) and `current_step` to the Phase 2 start step.
 3. Load the Module 5 skill and begin at its Phase 2. (Module 5 port is a later phase; when it
    lands, route to its Phase 2 entry point.)
 
