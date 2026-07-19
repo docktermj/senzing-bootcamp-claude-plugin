@@ -31,6 +31,35 @@ Customized it is true only if the bootcamper chose it during Bootcamp preparatio
 
 (The Phase 1 Opt-Out Gate — skipping the whole of Module 3 — is separate and still applies.)
 
+## Module start: Truth Set visualization (present when selected, before Step 9 setup)
+
+The Truth Set visualization is a **first-class module** (INV-086), run here as Module 3's Phase 2 —
+so it opens with the standard module-start apparatus (INV-028–031/079, INV-063), exactly like any
+module start, per `../bootcamp-onboarding/ground-rules.md`. Present it **once**, when the module is
+selected, immediately before Step 9 setup:
+
+1. **Set `current_module`** to `truthset_visualization` in `config/bootcamp_progress.json` (a single
+   quiet write, INV-058), so a resume mid-visualization re-opens the right module.
+2. **Module-start banner (INV-079):** name only, no number —
+
+   ```text
+   🚀🚀🚀  MODULE: TRUTH SET VISUALIZATION  🚀🚀🚀
+   ```
+
+3. **Journey map (INV-029):** refresh it with `truthset_visualization` now `🔄` current — `System
+   verification` `✅`, the remaining `selected_modules` `⬜` upcoming.
+4. **Before/After (INV-030):** *Before,* entity resolution is proven on synthetic data but unseen;
+   *after,* the bootcamper has watched the Senzing Truth Set resolve in an interactive web app —
+   their "wow moment".
+5. **Step overview (INV-031):** briefly enumerate this module's steps — acquire the Truth Set →
+   register the codes + load → build and serve the visualization → explore it → clean up.
+6. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
+   unchanged from System verification (Module 3 tier), so a concise statement (or omit).
+
+Then proceed to Step 9 setup below. (Its end-of-module summary and `✅ Module complete: Truth Set
+visualization` line are presented at Module close — `phase3-report-close.md` Step 12 — alongside
+System verification's, one per module.)
+
 ## Step 9 setup: Acquire, register, and load the Truth Set (self-contained)
 
 This module owns the Truth Set end to end — System Verification (Phase 1) no longer acquires or

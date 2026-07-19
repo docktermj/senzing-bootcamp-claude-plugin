@@ -105,12 +105,17 @@ external source for the demo TruthSet DATA.
 - **Phase 1: Verification Pipeline** (steps 1–8, plus the opt-out gate): `phase1-verification.md`.
   Verifies against **synthetic records** generated in Step 2 — System Verification does not touch
   the Truth Set.
-- **Phase 2: Truth Set visualization** (Step 9 setup + step 9) — a selectable optional module:
+- **Phase 2: Truth Set visualization** (Step 9 setup + step 9) — a **first-class selectable
+  module** (`truthset_visualization`), not a sub-step of System verification:
   `phase2-visualization.md`. Run it when `truthset_visualization` is in `selected_modules`
-  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. It
-  **acquires and loads the Truth Set itself**, then visualizes it. When it is **not** selected,
-  skip Phase 2 and go straight to Phase 3. When it **is** selected, Phase 2 is mandatory within
-  the module (INV-077).
+  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. As a
+  first-class module it opens with its **own full per-module apparatus** — module-start banner,
+  journey-map refresh, before/after, step overview, model/effort nudge (INV-086; it is **not**
+  apparatus-exempt) — acquires and loads the Truth Set itself, visualizes it, and is recorded
+  under its own `truthset_visualization` name token in `modules_completed` with its own recap
+  section and end-of-module summary at Module 3 close (INV-085/INV-086). When it is **not**
+  selected, skip Phase 2 and go straight to Phase 3. When it **is** selected, Phase 2 is mandatory
+  within the module (INV-077).
 - **Phase 3: Report and Close** (steps 10–12): `phase3-report-close.md`
 - **Visualization API reference** (loaded on demand from Phase 2):
   `visualization-api-reference.md`

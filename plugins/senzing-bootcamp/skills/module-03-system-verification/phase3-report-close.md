@@ -181,8 +181,14 @@ graduation's reconcile backfill (INV-085/INV-086):
      four subsections): capture the Truth Set acquisition/load, the interactive visualization and
      standalone snapshot, and — if screenshots were captured — the embedded
      `![…](docs/visualizations/…png)` image(s) in Actions Taken.
-3. Present the end-of-module summary (accomplished, files produced, why it matters, what's next).
-4. **Transition to the next module:** ask the single transition question; on an affirmative reply,
+3. **Present a completion line + end-of-module summary for EACH recorded module** (INV-032), in
+   experienced order — `✅ Module complete: System verification` and its four-part summary, then
+   (when the visualization ran) `✅ Module complete: Truth Set visualization` and its four-part
+   summary — per `module-completion.md` Step 3. (Truth Set visualization's module-start
+   banner/journey/before-after/step-overview were already shown at its module start in Phase 2, so
+   only its close is presented here.)
+4. **Transition to the next module:** ask the single transition question (once, after both
+   completions); on an affirmative reply,
    produce the next module's start banner, journey map, before/after framing, and step overview per
    the ground rules.
 

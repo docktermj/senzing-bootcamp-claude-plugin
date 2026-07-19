@@ -392,9 +392,10 @@ Verify read, write, and search operations against the Senzing database. Each ope
 bootcamper wants to continue:
 
 - **If the Truth Set visualization is selected** (`truthset_visualization` in `selected_modules`;
-  always true in Core): load `phase2-visualization.md` and execute it in full. That module
-  acquires and loads the Senzing TruthSet itself, then visualizes it — System Verification does
-  not touch the TruthSet.
+  always true in Core): load `phase2-visualization.md` and execute it in full. That is a
+  first-class module (INV-086): it opens with its own module-start apparatus (banner, journey map,
+  before/after, step overview), then acquires and loads the Senzing Truth Set itself and visualizes
+  it — System Verification does not touch the Truth Set.
 - **If it is not selected:** skip Phase 2 and load `phase3-report-close.md` (Report and Close).
 
 ## Success Criteria
@@ -414,4 +415,7 @@ Module 3 is successfully complete when ALL of the following are true:
 - The synthetic verification records are purged from the database (zero `VERIFY` entities remain);
   when the Truth Set visualization ran, its TruthSet records are purged too.
 - The gate 3→4 status is updated to "completed".
-- A journal entry is appended to `docs/bootcamp_journal.md`.
+- The Module 3 recap section(s) are appended to `docs/bootcamp_recap.md` — `## System verification`
+  and, when the visualization ran, `## Truth Set visualization` (the consolidated recap replaced the
+  separate `docs/bootcamp_journal.md`; the narrative lives in each section's `### Journal`
+  subsection).
