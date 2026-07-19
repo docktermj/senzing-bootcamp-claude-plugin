@@ -57,7 +57,10 @@ Offer to visualize the cross-source entity relationships as a web page. Pin the 
 
 > 👉 **Would you like a web page visualizing the cross-source entity relationships?**
 
-If accepted, save to `docs/visualizations/multi_source_results.html`.
+If accepted, save to `docs/visualizations/multi_source_results.html`, then capture screenshots for
+the recap (`{html}` = `multi_source_results.html`, `{name}` = `multi_source_results`) per
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
+silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
 
 **Checkpoint:** write step 23.
 
@@ -117,7 +120,10 @@ proceeding to the Decision Gate, do not skip it. Pin the offer verbatim:
 
 > 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
 
-- **Yes:** generate the HTML dashboard and save to `docs/visualizations/results_dashboard.html`.
+- **Yes:** generate the HTML dashboard and save to `docs/visualizations/results_dashboard.html`,
+  then capture screenshots for the recap (`{html}` = `results_dashboard.html`, `{name}` =
+  `results_dashboard`) per `../bootcamp-onboarding/module-completion.md` → "Capturing visualization
+  screenshots" — skip silently if no headless capability, otherwise embed the 2-3 best in the recap.
 - **No / not now:** acknowledge and proceed.
 - **Unsure:** briefly explain the value, then wait for their decision.
 

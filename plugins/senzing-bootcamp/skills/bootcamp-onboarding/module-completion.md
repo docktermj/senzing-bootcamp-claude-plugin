@@ -82,6 +82,7 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **Journal:** the bold fields as shown; the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
+- **Visualization screenshots (optional):** when this module produced a visualization, its **Actions Taken** may embed 2-3 curated screenshots as Markdown images — `![caption](docs/visualizations/<name>.png)`. Capture them at the visualization step (see "Capturing visualization screenshots" below). The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the trophy.
 
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
@@ -112,6 +113,33 @@ appended (2b), that block is superseded. Do two things:
   trophy clean and never rewrites a completed `## {Name}` section).
 - Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
   module starts a fresh checkpoint.
+
+## Capturing visualization screenshots (optional)
+
+Whenever a module generates a visualization (an HTML page under `docs/visualizations/`), capture a
+few screenshots of it so the recap trophy shows what the bootcamper actually built, not just a
+link. This runs at the visualization step, right after the page exists, and is **non-blocking with
+graceful degradation** — never a 👉 question, and never a reason to stall.
+
+Procedure (parameterized by the visualization's `{html}` file and a short `{name}`):
+
+1. Run the bundled helper on the **local** HTML file (or the `localhost` URL of the live app):
+
+   ```bash
+   python3 <helper> --html docs/visualizations/{html} --out-dir docs/visualizations --name {name}
+   ```
+
+   Resolve `<helper>` as `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (command/hook
+   context) or `../../scripts/capture_screenshots.py` relative to a module skill. It tries several
+   headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
+   fetches a remote URL (offline — INV-071).
+2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
+   keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
+   the `minimal` preset).
+3. **If it succeeds** (prints the PNG paths it wrote under `docs/visualizations/`): review the
+   shots, keep the **2-3 most representative** (delete the rest), and embed them in **this module's
+   recap `Actions Taken`** as `![caption](docs/visualizations/{name}-1.png)`. The graduation PDF
+   embeds these local images and skips any that are missing (INV-048).
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 

@@ -94,3 +94,7 @@ number:
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Recap sections shouldn't use module numbers, should follow experienced order, and must cover every completed module" (2026-07-19, Module: graduation).
 - Priority: Medium.
 - Related specs: `module-references-by-name-not-number.md` (INV-079 — this extends its scope into recap headers), `recap-durability.md` (INV-059 recap reconciliation), `defer-commonmark-to-graduation.md` / `recap-pdf-professional-design.md` (recap normalization/rendering), `module3-synthetic-verification-data.md` (the `system_verification` / `truthset_visualization` split that surfaced the missing section).
+
+## Invariants introduced
+
+- `INV-085` — Recap section headers are name-based (`## {Module name} — {timestamp}`, no catalog number), in experienced order, with a section for every `modules_completed` entry by graduation; the PDF renderer parses name-based headers and tolerates legacy numbered ones. Amends the recap-heading clause of INV-079 (recorded in `specs/INVARIANTS.md`).

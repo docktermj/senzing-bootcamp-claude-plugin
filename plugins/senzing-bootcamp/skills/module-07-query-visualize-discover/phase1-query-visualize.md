@@ -186,6 +186,10 @@ Inline guidance until the visualization files are ported (later porting phase, t
   visualizations → `docs/visualizations/`, other output → `docs/` or `data/`). Never `/tmp/`.
 - Pull the entity/relationship data through generated SDK code and `reporting_guide`, never
   direct SQL.
+- After generating the HTML visualization, capture screenshots for the recap (`{html}` = the
+  entity-graph HTML file, `{name}` = `entity_graph`) per
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
+  silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
 
 **Deferred first-visualization guarantee:** if a visualization is generated here AND
 `first_visualization` is `owed` in `config/bootcamp_progress.json` (Module 3 was opted out and

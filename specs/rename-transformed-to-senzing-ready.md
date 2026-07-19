@@ -68,3 +68,7 @@ the directory name into line with existing terminology.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Rename `data/transformed` to `data/senzing-ready`" (2026-07-18, Module: data_quality_mapping).
 - Priority: Medium.
 - Related specs: `layout-tree-reconciliation.md` (INV-050/INV-070 layout work). Supersedes the `specs/todo.md` line "Rename /docs/transformed/ to docs/senzing-ready/".
+
+## Invariants introduced
+
+- `INV-084` — Module 5's Senzing-ready mapping output is written to `data/senzing-ready/` and read from there by all consumers, never the former `data/transformed/`; the INV-050 tree is updated to match (recorded in `specs/INVARIANTS.md`).

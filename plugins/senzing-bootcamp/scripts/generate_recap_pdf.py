@@ -297,6 +297,9 @@ def _format_date(date: str) -> str:
 
 def _md_inline_to_text(s: str) -> str:
     """Strip the small subset of inline Markdown we emit, for plain text."""
+    # Reduce an embedded image ![alt](path) to its alt text — used as a caption
+    # by renderers that cannot embed the image (e.g. the stdlib fallback).
+    s = re.sub(r"!\[(.*?)\]\([^)]*\)", r"\1", s)
     s = re.sub(r"\*\*(.+?)\*\*", r"\1", s)
     s = re.sub(r"`(.+?)`", r"\1", s)
     return s
@@ -585,12 +588,47 @@ def _is_empty_takeaway(text: str) -> bool:
     )
 
 
+def _render_image(pdf, epw, path: str, alt: str = "") -> None:
+    """Embed a local visualization screenshot into the recap, best-effort and non-fatal.
+
+    A missing/unreadable image, an fpdf2 build without image support, or a bad
+    file is skipped silently — an optional decoration must never break the
+    trophy PDF (INV-048). Remote URLs are never fetched (offline — INV-071).
+    """
+    if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
+        return  # never fetch a remote URL (offline guarantee)
+    p = Path(path)
+    if not p.is_absolute():
+        p = Path.cwd() / p
+    if not p.is_file():
+        return
+    try:
+        pdf.ln(1)
+        pdf.set_x(pdf.l_margin)
+        pdf.image(str(p), w=min(epw, 130.0))
+        pdf.ln(1)
+        if alt:
+            pdf.set_font("Helvetica", "I", 8.5)
+            pdf.set_text_color(*SLATE)
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(epw, 4.5, _safe(alt))
+            pdf.set_text_color(*INK)
+        pdf.ln(2)
+    except Exception:
+        return  # any embedding failure → skip the image, keep the PDF valid
+
+
 def _render_line(pdf, epw, line: str) -> None:
     stripped = line.strip()
     if not stripped:
         pdf.ln(3)
         return
     if _is_empty_takeaway(stripped):
+        return
+    # Embedded visualization screenshot: ![alt](path) on its own line.
+    img = re.match(r"^!\[(.*?)\]\((.+?)\)$", stripped)
+    if img:
+        _render_image(pdf, epw, img.group(2).strip(), img.group(1).strip())
         return
     indent = 0
     bullet = ""

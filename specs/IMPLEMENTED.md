@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## capture-visualization-screenshots-for-recap
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py` (new), `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase2-visualization.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Added optional visualization-screenshot capture that embeds curated shots into the recap trophy. New bundled helper `scripts/capture_screenshots.py` renders a **local** HTML file (or a `localhost` URL) to PNGs via the first available headless backend (Playwright → Selenium → headless Chrome/Chromium CLI → `wkhtmltoimage`), writing to `docs/visualizations/` (INV-070); it refuses non-local URLs (offline, INV-071 — verified exit 1), and exits 2 when no backend exists so callers skip gracefully (verified). `generate_recap_pdf.py` now embeds `![alt](path)` local images in the fpdf2 path via a new `_render_image` (remote URLs refused, any failure/missing file skipped silently — INV-048), and `_md_inline_to_text` reduces image syntax to its alt text so the stdlib fallback shows a caption instead of raw Markdown. `module-completion.md` gained a canonical "Capturing visualization screenshots" procedure (non-blocking, graceful) and an image-embed note in the recap template; the three visualization steps (Module 3 Truth Set snapshot, Module 6 cross-source graph + results dashboard, Module 7 entity graph) each point to it with their `{html}`/`{name}`. AC verified: end-to-end capture→embed→PDF produced a real `/Image` XObject; a missing image was skipped and `--check` still passed; helper + renderer `py_compile` clean; no network fetch; helpers are `python3` with optional deps (INV-052/INV-066); cross-platform (shutil.which/subprocess/pathlib, no OS-specific paths). No new invariant (upholds INV-048/070/071/052/066).
+- **Commit:** uncommitted
+
 ## recap-sections-name-based-and-complete
 
 - **Implemented:** 2026-07-19

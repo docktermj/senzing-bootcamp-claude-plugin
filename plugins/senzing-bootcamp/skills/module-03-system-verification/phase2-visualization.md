@@ -126,6 +126,13 @@ cannot be reached), do not proceed to the live server: fix the underlying error 
 SDK initialization; check `config/engine_config.json`) and retry. The snapshot is the guaranteed
 deliverable.
 
+**Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
+`docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap trophy —
+`{html}` = `truthset_verification.html`, `{name}` = `truthset_verification` — per
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots". If no
+headless capability is available it skips silently; otherwise keep the 2-3 best and embed them in
+this module's recap `Actions Taken`. This is never a 👉 question and never blocks the visualization.
+
 ### 9.3 Start the live web app
 
 Start the server as a background process you can stop later in Step 11:
