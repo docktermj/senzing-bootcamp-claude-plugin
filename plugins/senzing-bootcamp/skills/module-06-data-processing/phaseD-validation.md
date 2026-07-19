@@ -129,14 +129,6 @@ proceeding to the Decision Gate, do not skip it. Pin the offer verbatim:
 
 *(Internal: end the turn on the dashboard offer question and wait.)*
 
-**Deferred first-visualization guarantee:** after generating the dashboard, if
-`first_visualization` is `owed` in `config/bootcamp_progress.json` (Module 3 was opted out and
-the standalone demo declined), also clear that owed marker (set it to satisfied by
-`module_6_deferred`). Check whether it is owed first; the clear is idempotent. This is the
-journey-level guarantee only, it does not change the Module 3 gate. (The Kiro helper
-`scripts/progress_utils.py` and `visualization-guide.md` are later porting phases; apply the
-clear inline for now.)
-
 **Checkpoint:** write step 28.
 
 ## Recovery from failed load

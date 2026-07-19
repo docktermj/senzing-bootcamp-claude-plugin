@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## remove-orphaned-first-visualization-guarantee
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Removed the dead "Deferred first-visualization guarantee" blocks from Modules 6 and 7. The `module3-synthetic-verification-data` rework removed the setter (the opt-out gate's `first_visualization: owed` marker write) and the standalone-demo the precondition referenced, leaving these clearers orphaned — nothing set the marker and the "standalone demo declined" precondition described removed functionality. Whether a workstation-verification visualization is produced is now governed solely by Truth Set visualization module selection (INV-077); the guarantee is obsolete. The modules' normal visualization offers (results dashboard, entity graph) are untouched. AC verified: a plugin-wide grep for `first_visualization`/`owed`/`module_6_deferred`/`module_7_deferred`/"standalone demo declined" returns nothing. Markdown-only, cross-platform. No new invariant (upholds INV-077).
+- **Commit:** uncommitted
+
 ## capture-visualization-screenshots-for-recap
 
 - **Implemented:** 2026-07-19
