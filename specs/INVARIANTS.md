@@ -128,9 +128,9 @@ These hold at the boundaries of every module.
 **Module 5**
 
 - **INV-040** — The "raw" data is analyzed to see if mapping and transformation is needed. (CORD data does not require mapping nor transformation.)
-- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data.
-- **INV-042** — Code is created to transform data according to mapping rules.
-- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data.
+- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data. (CORD / already-Senzing-ready fast-pathed sources are exempt — they route directly to loading with no mapping, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
+- **INV-042** — Code is created to transform data according to mapping rules. (CORD / already-Senzing-ready fast-pathed sources need no transformation, so no transform code is created for them, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
+- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data. (CORD / fast-pathed sources are already Senzing-ready and route directly to loading with no transformation, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
 
 **Module 6**
 
@@ -139,7 +139,7 @@ These hold at the boundaries of every module.
 
 **Module 7**
 
-- **INV-046** — Code is created to query, visualize, and discover the results of Senzing Entity Resolution.
+- **INV-046** — Code is created to query, visualize, and discover the results of Senzing Entity Resolution. Query code is always created; visualization and discovery are **offered**, and their code/artifacts are created when the Bootcamper accepts — a Bootcamper's decline is a requested skip (INV-014). (Clarified 2026-07-19 to reflect the offered/opt-in reality permitted by INV-014; no meaning change.)
 
 ## INV-047 – INV-049: Graduation outcomes
 
