@@ -156,9 +156,21 @@ If a source fails during orchestration, present three options:
 
 ## Iterate vs. proceed decision gate
 
-- **UAT ≥90% and match accuracy ≥90%:** "Results look strong. Ready to proceed to Module 7."
-- **UAT 80–89%:** "Most tests pass but there are gaps. Iterate or move forward?"
-- **UAT <80%:** "Results need improvement, suggest going back to Module 5."
+Route on the UAT / match-accuracy results:
+
+- **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
+  transition question.
+- **UAT <80%:** state "Results need improvement — I recommend going back to Data quality & mapping
+  to refine the mapping." and proceed to the transition question.
+- **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
+  (neutral lead + numbered list, INV-051):
+
+  👉 **Most tests pass but there are gaps. What would you like to do? Reply with a number:**
+
+  1. Iterate now to improve the results before moving on.
+  2. Move forward to the next module.
+
+  *(Internal: end the turn on this question and wait.)*
 
 ## Stakeholder summary
 

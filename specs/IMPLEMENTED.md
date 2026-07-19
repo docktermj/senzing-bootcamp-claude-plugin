@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## pin-iterate-proceed-decision-gate
+
+- **Implemented:** 2026-07-19
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+- **Summary:** Reworked the Module 6 "Iterate vs. proceed decision gate". The 80–89% branch previously read "Most tests pass but there are gaps. Iterate or move forward?" — no 👉, `or`-joined, ambiguous, unpinned (violated INV-005/008/009/051/056). It is now a single pinned 👉 question with a neutral lead and a numbered list ("👉 Most tests pass but there are gaps. What would you like to do? Reply with a number: 1. Iterate now… 2. Move forward…"); the ≥90% and <80% branches are statements that route to the transition, now naming modules instead of numbers (INV-079 polish). AC verified by grep: no "Iterate or move forward" remains; the numbered 👉 is present; no residual "proceed to Module 7"/"going back to Module 5". Markdown-only, cross-platform. No new invariant.
+- **Commit:** uncommitted
+
 ## remove-orphaned-first-visualization-guarantee
 
 - **Implemented:** 2026-07-19
