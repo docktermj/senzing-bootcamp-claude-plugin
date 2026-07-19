@@ -201,7 +201,7 @@ all build commands.
 
 | Language | Build Command |
 |----------|--------------|
-| Python | `python -m py_compile src/system_verification/verify_pipeline.py` |
+| Python | `python3 -m py_compile src/system_verification/verify_pipeline.py` |
 | Java | `javac src/system_verification/verify_pipeline.java` |
 | C# | `dotnet build src/system_verification/` |
 | Rust | `cargo build --manifest-path src/system_verification/Cargo.toml` |

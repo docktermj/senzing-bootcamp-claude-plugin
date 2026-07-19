@@ -143,7 +143,7 @@
 - Acquired the 159-record Truth Set (customers.jsonl, reference.jsonl, watchlist.jsonl) via the MCP server.
 - Registered the CUSTOMERS/REFERENCE/WATCHLIST data source codes as the default config before loading.
 - Loaded all 159 records (0 failures); they resolved into 84 entities with 71 relationships.
-- Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization (src/scripts/senzing_viz_fallback.py): standalone snapshot docs/visualizations/truthset_verification.html plus a live server, all four API endpoints verified.
+- Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization with the bundled Senzing viz server: standalone snapshot docs/visualizations/truthset_verification.html plus a live server, all four API endpoints verified.
 - Captured screenshots of the entity graph and kept the most representative one for this recap.
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
@@ -154,7 +154,7 @@
 
 **What we did:** Acquired, loaded, and visualized the Senzing Truth Set — the first interactive "wow moment" — confirming entity resolution works on the workstation, then cleaned up.
 
-**What was produced:** docs/visualizations/truthset_verification.html, docs/visualizations/truthset_verification-1.png, src/system_verification/ExportEntityModel.java, src/scripts/senzing_viz_fallback.py
+**What was produced:** docs/visualizations/truthset_verification.html, docs/visualizations/truthset_verification-1.png, src/system_verification/ExportEntityModel.java
 
 **Why it matters:** Seeing the resolved Truth Set — clusters, merges, and cross-source links — makes entity resolution concrete before the bootcamper works with their own data.
 
