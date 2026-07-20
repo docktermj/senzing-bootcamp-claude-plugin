@@ -19,10 +19,10 @@ resolution:
 - Data Quality & Mapping
 - Data Processing
 - Query, Visualize, and Discover
-- Graduation — a recap PDF and a `production/` starter project
+- Graduation
 
 You finish with working Senzing code and data in your project, a professional
-recap PDF you can keep and share, and a production starter — see
+recap PDF you can keep and share, and a production starter. See
 [What you finish with](#what-you-finish-with) for details.
 
 ## Requirements
@@ -70,10 +70,6 @@ and starting the Bootcamp.
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5**".
     1. Choose the Effort: "**medium**".
-    1. *Recommended:* run most modules on **Sonnet 5**, but switch the Model to
-       **Opus 4.8** for the correctness-critical stretches — Modules 2 and 5, and
-       graduation — then back to **Sonnet 5** afterward. Full per-module breakdown:
-       [`plugins/senzing-bootcamp/docs/model-selection.md`](plugins/senzing-bootcamp/docs/model-selection.md).
 1. In the Claude app near the bottom in the agentic chat, enter:
 
     ```console
@@ -114,19 +110,13 @@ and starting the Bootcamp.
     cd senzing-bootcamp
     ```
 
-1. *Choosing a model (recommended):* run most of the bootcamp on **Sonnet 5** —
-   the best value — and switch up to **Opus 4.8** for the correctness-critical
+1. *Command line options:* run most of the bootcamp on **Sonnet 5** for
+   the best value and switch up to **Opus 4.8** for the correctness-critical
    stretches: Modules 2 and 5, and graduation.
-
-   Before Modules 2 or 5 or graduation, switch the running session up with
-   `/model claude-opus-4-8`, then back afterward with `/model claude-sonnet-5`.
-   Prefer one model and no switching? Run `--model claude-opus-4-8` throughout —
-   simplest, at higher cost on the lighter modules. Full per-skill breakdown:
-   [`plugins/senzing-bootcamp/docs/model-selection.md`](plugins/senzing-bootcamp/docs/model-selection.md).
 
    For the smoothest ride, run Claude with `--permission-mode auto`.
 
-    Example command:
+1. Example command:
 
     ```console
     claude --model claude-sonnet-5 --effort medium --permission-mode auto
@@ -145,7 +135,7 @@ and starting the Bootcamp.
 
 1. Other commands (available any time during a bootcamp):
 
-    - `/bootcamp-feedback` — share feedback about the bootcamp
+    - `/bootcamp-feedback` - share feedback about the bootcamp
       (or just say "bootcamp feedback"). Saved to
       `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
 
