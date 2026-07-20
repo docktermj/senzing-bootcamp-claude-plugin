@@ -20,31 +20,36 @@ a hands-on, module-by-module tutorial.
 
 ### Using Claude app
 
+In this section are instructions for
+installing the Claude app,
+installing the Senzing Bootcamp plugin,
+and starting the Bootcamp.
+
 1. Download and install [Claude Code].
 1. Start Claude app.
 1. In the Claude app,
-    1. In the left-hand panel, choose **</> Code**.
-    1. In the *Code* panel, click **New session**.
+    1. In the left-hand pane, choose "**</> Code**".
+    1. In the *Code* pane, click "**New session**".
 1. In the Claude app, near the bottom, choose the "Working directory" (it might say "Select folder...")
     1. Create and use a new folder for the Senzing Bootcamp.
 1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
-    1. In the *Directory* panel, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
-    1. In the *Add marketplace* panel, enter **URL:**
+    1. In the *Directory* pane, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
+    1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
         https://github.com/docktermj/senzing-bootcamp-claude-plugin
         ```
 
-    1. Click the **Sync** button.
-    1. In the *Directory* panel,
-        1. Select **Code** tab.
-        1. Select **Senzing bootcamp**.
-        1. Click on **Install**.
-        1. Close *Directory* panel.
+    1. Click the "**Sync**" button.
+    1. In the *Directory* pane,
+        1. Select "**Code**" tab.
+        1. Select "**Senzing bootcamp**".
+        1. Click on "**Install**".
+        1. Close *Directory* pane.
 1. In the Claude app, on the bottom,
-    1. Choose the Mode: **auto** for a smooth ride.
-    1. Choose the Model **Sonnet 5**.
-    1. Choose the Effort: **medium**.
+    1. Choose the Mode: "**auto**" for a smooth ride.
+    1. Choose the Model "**Sonnet 5**".
+    1. Choose the Effort: "**medium**".
 1. In the Claude App near the bottem in the agentic chat, enter:
 
     ```console
@@ -52,6 +57,11 @@ a hands-on, module-by-module tutorial.
     ```
 
 ### Using Claude Code
+
+In this section are instructions for
+installing Claude Code,
+installing the Senzing Bootcamp plugin,
+and starting the Bootcamp.
 
 1. To install Claude CLI via commandline on macOS or Linux:
 
