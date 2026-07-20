@@ -25,8 +25,6 @@
     - **R:** 3 — I don't have my own data, generate a scenario for me
 - **Q:** Does that summary capture your situation accurately?
     - **R:** Yes
-- **Q:** Will the results need to interface with other software?
-    - **R:** No
 
 ### Actions Taken
 
