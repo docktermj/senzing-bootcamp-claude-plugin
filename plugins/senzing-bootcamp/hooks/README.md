@@ -38,7 +38,7 @@ Code behavior), so the hooks do **not** depend on `bash`, Git Bash, or WSL — e
 Windows.
 
 The only requirement is a `python3` on `PATH`, and it is **not a new dependency** —
-the bootcamp already requires `python3` for the Module 3 visualization server
+the bootcamp already requires `python3` for the Truth Set visualization module's server
 (`scripts/senzing_viz_server.py`) and the graduation recap PDF
 (`scripts/generate_recap_pdf.py`), so any machine that can run the bootcamp can run
 the hooks.

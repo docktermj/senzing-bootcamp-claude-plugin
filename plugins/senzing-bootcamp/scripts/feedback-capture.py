@@ -44,7 +44,7 @@ if FEEDBACK.search(lower):
         "begin with the pinned BOOTCAMP FEEDBACK entry banner and end with the "
         "FEEDBACK SAVED exit banner (see feedback.md for the verbatim banner wording); "
         "silently capture as much relevant context as possible (the time; the plugin "
-        "version from .claude-plugin/plugin.json; current_module, current_step, and "
+        "version from ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json; current_module, current_step, and "
         "completed modules from config/bootcamp_progress.json; the recent questions "
         "asked and the bootcamper's responses; what the plugin was doing behind the "
         "scenes; the observed problem; the expected behavior per the active "

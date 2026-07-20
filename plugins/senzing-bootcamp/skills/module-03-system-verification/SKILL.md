@@ -56,8 +56,8 @@ When the bootcamper hits an error during this module:
 3. **Cross-module resources:** SDK install/config issues -> Module 2 remediation; MCP issues ->
    connectivity troubleshooting; language toolchains -> platform-specific SDK guide via
    `sdk_guide`.
-4. **Timeouts:** each step has an explicit timeout (MCP 10s, TruthSet 30s, SDK init 30s, build
-   120s, data loading 120s, web service 10s per endpoint). On timeout, terminate the process,
+4. **Timeouts:** each step has an explicit timeout (MCP 10s, SDK init 30s, build 120s, data
+   loading 120s). On timeout, terminate the process,
    record a fail with a timeout Fix_Instruction, and continue to the next check (no
    short-circuit).
 

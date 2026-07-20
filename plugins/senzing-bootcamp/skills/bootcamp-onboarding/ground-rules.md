@@ -231,7 +231,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
     (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
     turn, ending on Step 1's single 👉 question. You never change the session yourself — only the
     bootcamper can.
-  - **Recommendation unchanged** → a brief one-line statement (or omit); no question, so the
+  - **Recommendation unchanged** → a brief one-line statement; no question, so the
     bootcamp never asks a pointless "switch?" every module (INV-012).
 
   Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
@@ -239,7 +239,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   | Stage | Recommended | Commands |
   |---|---|---|
-  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
   | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
   | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |

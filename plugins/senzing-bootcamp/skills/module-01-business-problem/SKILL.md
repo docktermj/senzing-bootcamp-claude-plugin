@@ -42,7 +42,10 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase 1: Discovery** (steps 1–8): `phase1-discovery.md`
+- **Phase 1: Discovery** (steps 1–6): `phase1-discovery.md`
 - **Phase 2: Document and Confirm** (steps 9–17): `phase2-document-confirm.md`
+
+(Steps 7–8 — the former software-integration and deployment-target questions — were relocated to
+Bootcamp preparation (INV-088), so Phase 2 intentionally resumes at step 9.)
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.

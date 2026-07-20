@@ -155,16 +155,25 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    AND the database is SQLite AND it was not already decided. For demo/small tiers, any
    non-SQLite engine, indeterminate inputs, or an already-recorded choice: say nothing new about
    volume/SQLite and proceed to the Phase B load.
-4. **When prompting**, explain that SQLite entity resolution slows as the database grows and
-   present two choices, then end the turn and wait (internal stop), do not start the load yet:
-   - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
-     "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
-     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
+4. **When prompting**, explain that SQLite entity resolution slows as the database grows, then end
+   the turn on this pinned question (INV-056), verbatim — a neutral lead + numbered list (INV-051) —
+   and wait (internal stop); do not start the load yet:
+
+   👉 **Loading this data volume into SQLite may slow entity resolution as the database grows. How would you like to proceed? Reply with a number:**
+
+   1. Proceed on SQLite.
+   2. Migrate to PostgreSQL.
+
+   *(Internal: end the turn on this question and wait.)* Then act on the choice:
+
    - **Proceed on SQLite:** record `sqlite_volume_prompt` = `{decided: true, choice: "proceed",
      tier, raw_value}` in preferences, then continue to the Phase B load. Do not re-present this
      prompt for the same load.
+   - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
+     "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
+     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
 
-*(Internal: when this heads-up fires, end the turn on the two-choice question and wait.)* Use
+*(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro
 helpers `volume_utils.py`, `preferences_utils.py`, `load_time_warning.py`, and the migration
 guide are later porting phases; apply the logic inline and refer to the graduation migration checklist for PostgreSQL migration for

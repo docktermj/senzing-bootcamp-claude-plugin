@@ -100,7 +100,7 @@ Module 5 data-quality score above 70%? If the data genuinely has no duplicates, 
 finding, document it.
 
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
-matching concepts from Module 3, a sentence or two each, not a full re-explanation:
+matching concepts introduced earlier in the bootcamp, a sentence or two each, not a full re-explanation:
 
 - **Features:** the categories of identifying information (NAME, ADDRESS, PHONE, etc.) Senzing
   extracts and compares, and how to read match-key strings like `+NAME+ADDRESS+PHONE`.

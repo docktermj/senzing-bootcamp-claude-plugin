@@ -90,7 +90,7 @@ always included), then end the turn on this single pinned 👉 question, verbati
 
 Apply the prerequisite rules when recording the selection:
 
-- All Required modules (Bootcamp preparation, Business problem, SDK setup, Data collection, Data
+- All Required modules (Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, Data
   quality & mapping, Data processing, Query/Visualize/Discover, Graduation) are always included.
 - If the bootcamper chooses **Truth Set visualization** (3) without **System verification** (2),
   tell them Truth Set visualization requires System verification, and include System verification

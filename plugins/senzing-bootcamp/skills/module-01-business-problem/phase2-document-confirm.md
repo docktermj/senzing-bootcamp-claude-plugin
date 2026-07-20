@@ -142,8 +142,8 @@ Run the standard **Module Completion** process in
 section to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
 transition question.
 
-After the business problem is defined, the next module — SDK setup — installs and configures the
-Senzing SDK:
+After the business problem is defined, the next module in your selected sequence continues the
+bootcamp:
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 

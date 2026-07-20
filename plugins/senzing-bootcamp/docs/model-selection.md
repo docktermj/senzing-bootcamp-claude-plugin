@@ -91,7 +91,7 @@ statement. Switching is optional; the session-level `/model` and `/effort` persi
 
 | Stage | Recommended | Commands |
 |---|---|---|
-| Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+| Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
 | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
 | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
 | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |

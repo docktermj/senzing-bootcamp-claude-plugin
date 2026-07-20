@@ -24,7 +24,7 @@ invoked, the bootcamper has already opted in — so **run the primer directly**;
 skip/keep question (that gate has been retired to avoid asking the same decision twice — INV-078).
 
 Module 0 is a **preamble, not a numbered module**: it is not counted among the mandatory
-Modules 1–7 (INV-013), skipping it (by not selecting it) is a permitted, requested skip (INV-014),
+Modules 1–7 (INV-076/INV-078), skipping it (by not selecting it) is a permitted, requested skip (INV-014),
 and it does **not** run the per-module completion apparatus (no journey map, no
 `docs/bootcamp_recap.md` section, and it is not added to `modules_completed`). Keep it lightweight.
 

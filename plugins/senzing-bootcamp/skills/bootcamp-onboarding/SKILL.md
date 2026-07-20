@@ -41,8 +41,9 @@ live in the Bootcamp preparation module, not the preface.**
 4. **Any questions** - invite final questions before continuing.
 5. **Hand off to Bootcamp preparation** - invoke the `bootcamp-preparation` skill: the first,
    mandatory module. It asks the Core-vs-Customized path choice, per-module selection, level of
-   detail (verbosity), programming language, and version control; persists them in one
-   consolidated write; then hands off to the first selected content module (the **optional**
+   detail (verbosity), programming language, version control, and the software-integration and
+   deployment-target questions; persists them in one consolidated write; then hands off to the first
+   selected content module (the **optional**
    Entity Resolution Concepts primer if selected, otherwise Module 1). Entity resolution concepts
    and the setup questions are no longer asked in the preface.
 

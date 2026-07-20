@@ -13,7 +13,8 @@ Steps 0-2 are administrative and mostly silent; they run before the WELCOME bann
 
 **All setup questions live in the Bootcamp preparation module, not the preface.** The
 Core-vs-Customized path choice, per-module selection, level of detail (verbosity), programming
-language, and version control are asked in the first module — **Bootcamp preparation**
+language, version control, and the software-integration and deployment-target questions are asked in
+the first module — **Bootcamp preparation**
 (`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. Entity resolution
 concepts are also **not** part of the preface: they are an optional module
 (`../module-00-entity-resolution-concepts/SKILL.md`) run only when selected during Bootcamp
@@ -96,7 +97,7 @@ Then give the overview (cover naturally, do not ask a question yet):
   the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
   a non-blocking mention, not a question or a gate.
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
-  Concepts* (optional), **Business problem**, **SDK setup**, *System verification* (optional),
+  Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
   *Truth Set visualization* (optional), **Data collection**, **Data quality & mapping**, **Data
   processing**, **Query, Visualize and Discover**, and **Graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
@@ -131,7 +132,8 @@ single consolidated write, INV-058.)
 
 Invoke the `bootcamp-preparation` skill. Bootcamp preparation is the **first, mandatory module**:
 it asks the Core-vs-Customized path choice, per-module selection, verbosity, programming language,
-and version control, persists them in one consolidated write, then hands off to the first selected
+version control, and the software-integration and deployment-target questions, persists them in one
+consolidated write, then hands off to the first selected
 content module (the optional Entity Resolution Concepts primer if selected, otherwise Module 1).
 The selected modules then run in the order recorded in `selected_modules`, each ending with the
 standard module completion process in `module-completion.md`.

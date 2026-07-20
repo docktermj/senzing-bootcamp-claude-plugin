@@ -103,10 +103,13 @@ sections.
 
 **Backfill orphaned screenshots (before rendering).** Scan `docs/visualizations/*.png`. For any PNG
 **not already referenced** by an `![...](...)` image line in `docs/bootcamp_recap.md`, embed it into
-the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module, grouped by
-filename prefix (`truthset_verification-*` → Truth Set visualization; `multi_source_results-*` and
-`results_dashboard-*` → the module that produced them; `entity_graph-*` → Query, Visualize &
-Discover). This is a **safety net** for captures whose embed step was skipped mid-bootcamp
+the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module. Map each PNG to
+its module by the visualization it came from: match the PNG's base name against the `<name>.html`
+referenced in a module's recap section (e.g. `truthset_verification-*` → Truth Set visualization;
+`multi_source_results-*`/`results_dashboard-*` → the module that produced them; `entity_graph-*`,
+`due_diligence_results-*`, or any other `<name>-*` → the module whose section references
+`<name>.html`). If a PNG matches no section, place it in the nearest preceding module section. This
+is a **safety net** for captures whose embed step was skipped mid-bootcamp
 (`../bootcamp-onboarding/module-completion.md` makes the embed a required step, but this guarantees
 the recap PDF still shows captured screenshots if one was missed). Append-only and **idempotent** —
 never rewrite a completed section's prose (INV-085), never add a reference that already exists, and
@@ -270,7 +273,7 @@ This runs exactly once, after the report, before graduation is reported finished
 
 Example (list only what exists):
 
-> 🏆 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and Journal for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
+> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and Journal for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
 
 3. **End on the single closing question.** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 

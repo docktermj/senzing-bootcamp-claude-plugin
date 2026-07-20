@@ -128,9 +128,9 @@ uses. A bootcamper who wants to see it in their own language can opt in at Step 
 The generator ships with this plugin at `scripts/senzing_viz_server.py`. Resolve it in this
 order:
 
-- When Module 3 is reached via a command/hook context, use `${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`.
+- When the Truth Set visualization module is reached via a command/hook context, use `${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`.
 - Otherwise resolve it relative to this skill directory (this file lives in
-  `skills/module-03-system-verification/`, so the script is at `../../scripts/senzing_viz_server.py`).
+  `skills/module-03b-truthset-visualization/`, so the script is at `../../scripts/senzing_viz_server.py`).
 
 The Senzing native library must be importable, so run it with the project env sourced (the
 `src/scripts/senzing-env.sh` / `senzing-env.bat` created in Module 2). On Linux/macOS:
@@ -234,7 +234,7 @@ Then deliver this guided tour as one message (no interactive pauses):
 👉 **Take your time exploring the visualization. Let me know when you're ready to continue.**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
-exploring. Do not proceed to Phase 3 until they respond.)*
+exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 
 **On failure:** report the specific endpoint or step that failed and the fix:
 
