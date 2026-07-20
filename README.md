@@ -13,14 +13,48 @@ a hands-on, module-by-module tutorial.
   looks up Senzing facts,
   and provides working examples.
 
-## Install Claude Code and Senzing Bootcamp Claude Plugin
+## Install and run Claude Code with the Senzing Bootcamp Claude Plugin
+
+1. For Claude App on Mac or Windows: [Using Claude app](#using-claude-app)
+1. For Claude Code on Linux or Mac: [Using Claude Code](#using-claude-code)
+
+### Using Claude app
 
 1. Download and install [Claude Code].
-    1. To install Claude CLI via commandline on macOS or Linux:
+1. Start Claude app.
+1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
+    1. In the *Directory* panel, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
+    1. In the *Add marketplace* panel, enter URL: enter the following and click "Sync":
 
         ```console
-        curl -fsSL https://claude.ai/install.sh | bash
+        https://github.com/docktermj/senzing-bootcamp-claude-plugin
         ```
+
+    1. Click the **Sync** button.
+    1. In the *Directory* panel,
+        1. Select **Code** tab.
+        1. Select **Senzing bootcamp**
+        1. Click on **Install**
+        1. Close *Directory* panel.
+1. In the Claude app, near the bottom, click on **Select folder...**
+    1. Create and use a new folder for the Senzing Bootcamp.
+1. In the Claude app, near the bottom right-hand side,
+    1. Choose the model **Sonnet 5**
+    1. Choose the effort: **medium**
+1. For a smooth ride, in the Claude app, on the bottom, choose the "Mode" **auto**.
+1. In the Claude App agentic chat, enter:
+
+    ```console
+    Start the bootcamp
+    ```
+
+### Using Claude Code
+
+1. To install Claude CLI via commandline on macOS or Linux:
+
+    ```console
+    curl -fsSL https://claude.ai/install.sh | bash
+    ```
 
 1. Install Senzing Bootcamp Claude Plugin.
 
@@ -34,8 +68,6 @@ a hands-on, module-by-module tutorial.
     ```console
     claude plugin update senzing-bootcamp@senzing-bootcamp
     ```
-
-## Run Claude Code
 
 1. Create a new directory for the bootcamp.
    Example:
@@ -76,6 +108,8 @@ a hands-on, module-by-module tutorial.
     ```
 
       or just tell Claude "start the bootcamp".
+
+## Additional bootcamp commands
 
 1. Other commands (available any time during a bootcamp):
 
