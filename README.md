@@ -10,17 +10,16 @@ a hands-on, module-by-module tutorial.
 A guided sequence of hands-on modules takes you from zero to working entity
 resolution:
 
-- **Module 0** *(optional)* — Entity Resolution Concepts primer
-- **Module 1** — Discover the Business Problem
-- **Module 2** — SDK Installation and Configuration
-- **Module 3** — System Verification
-- **Truth Set Visualization** — stand up an interactive web app of the resolved
-  data (the "wow moment")
-- **Module 4** — Identify and Collect Data Sources
-- **Module 5** — Data Quality & Mapping
-- **Module 6** — Data Processing
-- **Module 7** — Query, Visualize, and Discover
-- **Graduation** — a recap PDF and a `production/` starter project
+- Entity Resolution Concepts primer *(optional)*
+- Discover the Business Problem
+- SDK Installation and Configuration
+- System Verification
+- An interactive web app of the resolved Truth Set data. *(optional)*
+- Identify and Collect Data Sources
+- Data Quality & Mapping
+- Data Processing
+- Query, Visualize, and Discover
+- Graduation — a recap PDF and a `production/` starter project
 
 You finish with working Senzing code and data in your project, a professional
 recap PDF you can keep and share, and a production starter — see
