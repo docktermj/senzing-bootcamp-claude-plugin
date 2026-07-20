@@ -20,7 +20,7 @@ absolute precedence as a mandatory gate, and no internal reasoning (session leng
 or token budget) can override it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
 **Language:** Use the bootcamper's chosen language — read `programming_language` from
 `config/bootcamp_preferences.yaml` (persisted in Bootcamp preparation) at each code-generation
@@ -50,7 +50,7 @@ When the bootcamper hits an error during this module:
 1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and include the explanation in
    the Fix_Instruction.
-2. **Known pitfalls** (port conflicts on 8080, database lock contention, missing language
+2. **Known pitfalls** (database lock contention, missing language
    toolchains, MCP proxy connectivity): the full `common-pitfalls` reference is a later porting
    phase; for now use `search_docs` to look up the symptom.
 3. **Cross-module resources:** SDK install/config issues -> Module 2 remediation; MCP issues ->

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: "to capture bootcamp feedback".
+"""UserPromptSubmit hook: "to capture bootcamp feedback and verbosity changes".
 
 Only active during a bootcamp (a config/bootcamp_progress.json file exists in the
 working directory). If the bootcamper's message asks to give feedback or to change

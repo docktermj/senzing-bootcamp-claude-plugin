@@ -19,10 +19,15 @@ can review and confirm the list is complete.
 
 ## 13. Analyze dependencies
 
-Ask about data source dependencies. Common patterns: parent-child (load parents first),
-reference data first, temporal ordering, or no dependencies. If a circular dependency is
-detected, explain that Senzing resolves entities as records arrive, load the higher-quality
-source first. Save the dependency map to `docs/loading_strategy.md`.
+Explain the common dependency patterns: parent-child (load parents first), reference data first,
+temporal ordering, or none. If a circular dependency is detected, explain that Senzing resolves
+entities as records arrive, load the higher-quality source first. Then ask a single pinned 👉
+question (INV-056) and end the turn on it:
+
+👉 **Are there load-order dependencies between your data sources?**
+
+*(Internal: end the turn on this question and wait.)* On **yes**, capture the dependency map; on
+**no**, record that there are none. Save the dependency map to `docs/loading_strategy.md`.
 
 **Checkpoint:** write step 13.
 
@@ -38,8 +43,16 @@ the bootcamper to review.
 
 ## 15. Select loading strategy
 
-Present the options: **Sequential** (safer, easier to debug), **Parallel** (faster, more
-resources), **Hybrid** (sequential for dependent sources, parallel for independent).
+Present the strategy choices as a neutral lead + numbered list (INV-051), pinned verbatim
+(INV-056), and end the turn on the 👉 question:
+
+👉 **Which loading strategy would you like? Reply with a number:**
+
+1. **Sequential** — safer, easier to debug.
+2. **Parallel** — faster, uses more resources.
+3. **Hybrid** — sequential for dependent sources, parallel for independent.
+
+*(Internal: end the turn on this question and wait.)*
 
 **Checkpoint:** write step 15.
 

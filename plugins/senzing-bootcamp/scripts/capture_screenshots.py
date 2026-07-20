@@ -131,8 +131,18 @@ def _capture_chrome_cli(url: str, outs: list) -> bool:
         "chromium",
         "chromium-browser",
         "chrome",
+        "msedge",
+        "microsoft-edge",
+        "microsoft-edge-stable",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     ):
-        if shutil.which(cand):
+        if "/" in cand:
+            if os.path.exists(cand):
+                exe = cand
+                break
+        elif shutil.which(cand):
             exe = cand
             break
     if exe is None:

@@ -20,7 +20,7 @@ mandatory gate. This has absolute precedence: no internal reasoning or token-bud
 overrides it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Resume at
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Resume at
 `current_step` if progress already exists.
 
 Install and configure the Senzing SDK natively on the bootcamper's machine. This is the first
@@ -85,7 +85,7 @@ straight to configuration verification."
 - Skip Steps 2 and 3 entirely.
 - Jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (Configure License). This step is mandatory and must
-  always run regardless of SDK installation status. After Step 5, proceed to Step 7 (database).
+  always run regardless of SDK installation status. After Step 5, proceed to Step 6 (create the project directory structure), then Step 7 (database).
 - Mark Module 2 as complete once verification passes.
 
 > **Required stops:** These steps are NEVER skipped, even when the SDK is already installed:

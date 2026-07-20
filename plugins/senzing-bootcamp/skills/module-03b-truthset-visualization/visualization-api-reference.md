@@ -49,8 +49,8 @@ Each node: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`
 `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`.
 
 > `source_entity_id`/`target_entity_id` are the unchanged API contract; mapping to D3's
-> `source`/`target` is a client-side concern handled in `drawGraph` (see the Client-Rendering
-> Constraints in `phase1-visualization.md`).
+> `source`/`target` is a client-side concern handled in `drawGraph` (see the edge-mapping note
+> in the "Fallback: hand-build only if the bundled app cannot run" section of `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
 from a default export. `graph_builder.py` SHALL discover relationships explicitly (a plain

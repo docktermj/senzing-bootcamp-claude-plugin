@@ -770,6 +770,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
             continue
         if _is_empty_takeaway(s):
             continue
+        if s.startswith("<!--") and s.endswith("-->"):
+            continue  # HTML comment (e.g. a maintainer note): never rendered
         indent = 6.0
         m = re.match(r"^(\s*)([-*])\s+(.*)$", line)
         if m:

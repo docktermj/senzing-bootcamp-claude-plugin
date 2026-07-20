@@ -153,7 +153,7 @@ Based on the assessment:
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
-👉 **Would you like to return to the Data Quality & Mapping module to refine your data mapping? Your loaded data and query programs will be preserved, after remapping, you'll reload the affected sources and re-evaluate here.**
+👉 **Would you like to return to the Data quality & mapping module to refine your data mapping? Your loaded data and query programs will be preserved, after remapping, you'll reload the affected sources and re-evaluate here.**
 
 *(Internal: end the turn on this question and wait.)*
 

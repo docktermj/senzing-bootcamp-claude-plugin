@@ -74,7 +74,7 @@ Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
 This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 
 - **Core** → all modules are selected, in order. **Hold** `path: core` and the full ordered
-  `selected_modules` list for the consolidated write in Step 5; skip Step 2.
+  `selected_modules` list for the consolidated write in Step 6; skip Step 2.
 - **Customized** → go to Step 2.
 
 ## 2. Select modules (Customized only)
@@ -82,7 +82,7 @@ This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 Show the full module list above (as statements, so the bootcamper sees everything and what is
 always included), then end the turn on this single pinned 👉 question, verbatim (INV-056):
 
-> 👉 **Which optional modules would you like to include? Reply with the numbers, comma-separated, or "none":**
+> 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated (or reply none):**
 >
 > 1. **Entity Resolution Concepts** — a short primer on how entity resolution works.
 > 2. **System verification** — end-to-end checks that Senzing works on your machine.
@@ -98,7 +98,7 @@ Apply the prerequisite rules when recording the selection:
 - "none" → include only the Required modules.
 
 **Hold** `path: customized` and the resolved ordered `selected_modules` list for the consolidated
-write in Step 5. Keep the list in module order so the journey map and transitions follow it.
+write in Step 6. Keep the list in module order so the journey map and transitions follow it.
 
 ## 3. Level of detail (verbosity)
 
@@ -109,7 +109,7 @@ write in Step 5. Keep the list in module order so the journey map and transition
 > 3. **standard** *(recommended)* — balanced what-and-why, block-level code summaries.
 > 4. **detailed** — full explanations, line-by-line walkthroughs, SDK internals.
 
-Wait for the answer, then **hold** the chosen verbosity for the consolidated write in Step 5 — do
+Wait for the answer, then **hold** the chosen verbosity for the consolidated write in Step 6 — do
 not write it now (INV-058: one setup write, not one per gate). Each preset maps its five
 `categories` to a single level — `minimal` = 0, `concise` = 1, `standard` = 2, `detailed` = 3.
 When persisted, the `verbosity` key will look like (here, `standard`):
@@ -138,7 +138,7 @@ as choosing the recommended `standard` and say so — never assume a level befor
 
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
-  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the Step 5 consolidated
+  ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the Step 6 consolidated
   write so Module 2 can reuse it instead of re-asking (INV-061).
 - Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
   languages on that platform.
@@ -154,7 +154,7 @@ as choosing the recommended `standard` and say so — never assume a level befor
   👉 **Which programming language would you like to use for the bootcamp?**
 
 - This is a ⛔ gate: wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
-- **Hold** the chosen programming language for the Step 5 consolidated write (do not write it now).
+- **Hold** the chosen programming language for the Step 6 consolidated write (do not write it now).
 
 ## 4a. Software integration (optional)
 

@@ -30,7 +30,7 @@ complete if it does not (INV-077).
 ## Module start: Truth Set visualization (present at module start, before Step 1)
 
 The Truth Set visualization is a **first-class, standalone module** (INV-086/INV-087) — so it opens
-with the standard module-start apparatus (INV-028–031/079, INV-063), exactly like any module start,
+with the standard module-start apparatus (INV-079/INV-029–031, INV-063), exactly like any module start,
 per `../bootcamp-onboarding/ground-rules.md`. Present it **once**, at the start of the module,
 immediately before Step 1:
 
@@ -158,8 +158,7 @@ python3 <viz-server-path> \
 
 Success is a `Snapshot written: docs/visualizations/truthset_verification.html` line and exit 0.
 Confirm the file exists before continuing. If this build-only run fails (for example the engine
-cannot be reached), do not proceed to the live server: fix the underlying error (re-run Step 3
-SDK initialization; check `config/engine_config.json`) and retry. The snapshot is the guaranteed
+cannot be reached), do not proceed to the live server: fix the underlying error (re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`) and retry. The snapshot is the guaranteed
 deliverable.
 
 **Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
@@ -171,7 +170,7 @@ this module's recap `Actions Taken`. This is never a 👉 question and never blo
 
 ### 2.3 Start the live web app
 
-Start the server as a background process you can stop later in Step 11:
+Start the server as a background process you can stop later in Step 5 (Cleanup):
 
 ```bash
 python3 <viz-server-path> \
@@ -197,7 +196,7 @@ The app serves the live page at `/` plus four JSON APIs. Verify each (10-second 
 The live page renders four tabs, all populated from these APIs:
 
 1. **Entity Graph** (default): D3 v7 force-directed graph. Nodes colored by data source
-   (CUSTOMERS blue, REFERENCE green, WATCHLIST amber), sized by record count, edges labeled with
+   (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by record count, edges labeled with
    match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (The
    edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target` before
    `forceLink`, is baked into the bundled app, correct by construction.)
@@ -239,7 +238,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 **On failure:** report the specific endpoint or step that failed and the fix:
 
 - Port in use → pass a different `--port` and share the new URL.
-- Engine/SDK error → re-run Step 3 SDK initialization; confirm `config/engine_config.json`.
+- Engine/SDK error → re-run SDK initialization (Module 2 / System Verification); confirm `config/engine_config.json`.
 - Snapshot not written → the model build failed; read stderr, fix the cause, and re-run 2.2.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:

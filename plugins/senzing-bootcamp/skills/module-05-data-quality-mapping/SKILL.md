@@ -19,7 +19,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question: thi
 absolute precedence as a ⛔ mandatory gate, and no internal reasoning can override it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** You have raw data files but don't know if Senzing can use them directly.
 After this module, each source is scored for quality, categorized, and transformed into
