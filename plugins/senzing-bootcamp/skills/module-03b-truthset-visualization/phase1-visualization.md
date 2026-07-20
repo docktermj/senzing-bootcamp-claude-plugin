@@ -1,42 +1,38 @@
-# Module 3, Phase 2: Entity Resolution Visualization (step 9)
+# Truth Set Visualization, Phase 1: Visualization (step 9)
 
 Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal directives, never
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
 
 **Purpose:** stand up an interactive visualization **web app** that shows the bootcamper a
 resolved Senzing **Truth Set**, their "wow moment" with entity resolution. This module owns the
-Truth Set end to end — System Verification (Phase 1) does not acquire, load, or visualize it.
+Truth Set end to end — System Verification does not acquire, load, or visualize it.
 
 **Prerequisites:** the Senzing SDK is installed and initialized (Module 2) and the engine is
-reachable. This module **acquires and loads the Truth Set itself** (Step 9 setup below); it does
-NOT depend on Phase 1 having loaded any data.
+reachable, and System Verification has run immediately before. This module **acquires and loads the
+Truth Set itself** (Step 9 setup below); it does NOT depend on System Verification having loaded any
+data.
 
 ## Execution requirement (internal directive)
 
-Phase 2 runs when the **Truth Set visualization** is selected — i.e. `truthset_visualization` is in
-`selected_modules` (`config/bootcamp_preferences.yaml`). This is **always true in Core**; in
-Customized it is true only if the bootcamper chose it during Bootcamp preparation.
+This module runs when the **Truth Set visualization** is selected — i.e. `truthset_visualization` is
+in `selected_modules` (`config/bootcamp_preferences.yaml`). This is **always true in Core**; in
+Customized it is true only if the bootcamper chose it (see `SKILL.md`). This phase file is loaded
+only when the module is selected; when it is not selected the module does not run at all and System
+Verification transitions straight to Data collection.
 
-- **When selected:** the visualization is MANDATORY within Module 3. It MUST be produced; you must
-  NOT transition to Module 4 until it exists and the bootcamper has been shown it. There is NO
-  condition, threshold, or scenario under which you may then skip it — no session-length,
-  token-budget, redundancy, or time rationalization is ever valid. Once Module 3 is underway and
-  the visualization is selected, Step 9 is unconditional, and the completion gate in
-  `phase3-report-close.md` re-checks that the visualization artifact exists and refuses to mark
-  Module 3 complete if it does not (INV-077).
-- **When not selected:** skip Phase 2 entirely. Mark `web_service` and `web_page` as `"skipped"` in
-  the Verification Report and proceed straight to Phase 3. No workstation-verification
-  visualization is produced (the bootcamper deselected it), and the Phase 3 completion gate does
-  NOT require the snapshot artifact.
+The visualization is MANDATORY here: it MUST be produced; you must NOT transition to the next module
+until it exists and the bootcamper has been shown it. There is NO condition, threshold, or scenario
+under which you may then skip it — no session-length, token-budget, redundancy, or time
+rationalization is ever valid. Step 9 is unconditional, and this module's completion gate in
+`phase2-close.md` re-checks that the visualization artifact exists and refuses to mark the module
+complete if it does not (INV-077).
 
-(The Phase 1 Opt-Out Gate — skipping the whole of Module 3 — is separate and still applies.)
+## Module start: Truth Set visualization (present at module start, before Step 9 setup)
 
-## Module start: Truth Set visualization (present when selected, before Step 9 setup)
-
-The Truth Set visualization is a **first-class module** (INV-086), run here as Module 3's Phase 2 —
-so it opens with the standard module-start apparatus (INV-028–031/079, INV-063), exactly like any
-module start, per `../bootcamp-onboarding/ground-rules.md`. Present it **once**, when the module is
-selected, immediately before Step 9 setup:
+The Truth Set visualization is a **first-class, standalone module** (INV-086/INV-087) — so it opens
+with the standard module-start apparatus (INV-028–031/079, INV-063), exactly like any module start,
+per `../bootcamp-onboarding/ground-rules.md`. Present it **once**, at the start of the module,
+immediately before Step 9 setup:
 
 1. **Set `current_module`** to `truthset_visualization` in `config/bootcamp_progress.json` (a single
    quiet write, INV-058), so a resume mid-visualization re-opens the right module.
@@ -57,8 +53,7 @@ selected, immediately before Step 9 setup:
    unchanged from System verification (Module 3 tier), so a concise statement (or omit).
 
 Then proceed to Step 9 setup below. (Its end-of-module summary and `✅ Module complete: Truth Set
-visualization` line are presented at Module close — `phase3-report-close.md` Step 12 — alongside
-System verification's, one per module.)
+visualization` line are presented at this module's close — `phase2-close.md`.)
 
 ## Step 9 setup: Acquire, register, and load the Truth Set (self-contained)
 
@@ -268,4 +263,4 @@ search-enrichment specification are in `visualization-api-reference.md`. Even on
 path, still write a standalone snapshot to `docs/visualizations/truthset_verification.html` so
 the completion gate's guarantee holds.
 
-When the bootcamper confirms they are done exploring, load `phase3-report-close.md`.
+When the bootcamper confirms they are done exploring, load `phase2-close.md`.

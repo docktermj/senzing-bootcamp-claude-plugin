@@ -32,7 +32,7 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
 
 > **The visualization is a separate module.** System Verification produces **no** visualization —
 > the guaranteed Truth Set web-app "wow moment" is delivered by the selectable **Truth Set
-> visualization** module (`truthset_visualization`, run here as Phase 2). It runs on its own
+> visualization** module (`truthset_visualization`), a separate, standalone module run **next**
 > whenever selected (always in Core; in Customized only if chosen). Skipping System Verification
 > does NOT skip that module, and System Verification does not offer a standalone TruthSet demo of
 > its own.
@@ -46,8 +46,8 @@ The following rules are mandatory for the agent executing this module:
 1. **Synthetic verification data only:** verify with a small set of **synthetic records** you
    generate in Step 2 — designed to resolve deterministically into a known number of entities.
    System Verification MUST NOT acquire, load, or visualize the Senzing TruthSet, nor use CORD,
-   Las Vegas, London, or Moscow. (The TruthSet belongs exclusively to the separate **Truth Set
-   visualization** module — Phase 2.) Offer no dataset choice to the bootcamper.
+   Las Vegas, London, or Moscow. (The TruthSet belongs exclusively to the separate, standalone
+   **Truth Set visualization** module.) Offer no dataset choice to the bootcamper.
 2. **Database path:** the Senzing database is at `database/G2C.db`. All SDK initialization and
    database operations MUST reference this path.
 3. **No dataset choice:** do not present any dataset selection prompt, menu, or question. The
@@ -66,8 +66,8 @@ The following rules are mandatory for the agent executing this module:
    expected-results set.
 8. **Overwrite on re-run:** if the module is re-run, overwrite all existing artifacts in
    `src/system_verification/`. The database cleanup ensures a clean slate.
-9. **No orphaned processes:** System Verification starts no web service. If the Truth Set
-   visualization module (Phase 2) started one, it MUST be terminated in Step 11.
+9. **No orphaned processes:** System Verification starts no web service; the separate Truth Set
+   visualization module starts and terminates its own web service within its own phases.
 10. **Progress persistence:** every step MUST write its checkpoint to
     `config/bootcamp_progress.json` immediately upon completion, before proceeding.
 
@@ -388,34 +388,30 @@ Verify read, write, and search operations against the Senzing database. Each ope
 }
 ```
 
-**Agent behavior:** after Step 8 completes, proceed to the next phase without asking whether the
-bootcamper wants to continue:
-
-- **If the Truth Set visualization is selected** (`truthset_visualization` in `selected_modules`;
-  always true in Core): load `phase2-visualization.md` and execute it in full. That is a
-  first-class module (INV-086): it opens with its own module-start apparatus (banner, journey map,
-  before/after, step overview), then acquires and loads the Senzing Truth Set itself and visualizes
-  it — System Verification does not touch the Truth Set.
-- **If it is not selected:** skip Phase 2 and load `phase3-report-close.md` (Report and Close).
+**Agent behavior:** after Step 8 completes, proceed to Phase 2 (Report and Close) without asking
+whether the bootcamper wants to continue: load `phase2-report-close.md`. That phase records System
+Verification, purges the synthetic `VERIFY` data, and asks the single transition question to the next
+selected module. When the **Truth Set visualization** is selected (`truthset_visualization` in
+`selected_modules`; always true in Core), that next module is the separate, standalone Truth Set
+visualization module (`../module-03b-truthset-visualization/`) — a first-class module (INV-086/INV-087)
+that opens with its own module-start apparatus, then acquires and loads the Senzing Truth Set itself
+and visualizes it. When it is not selected, the next module is Data collection.
 
 ## Success Criteria
 
-Module 3 is successfully complete when ALL of the following are true:
+System Verification is successfully complete when ALL of the following are true:
 
 - All 8 System Verification checkpoint entries report "passed" status (`mcp_connectivity`,
   `sdk_initialization`, `code_generation`, `build_compilation`, `data_source_registration`,
   `data_loading`, `results_validation`, `database_operations`).
-- When the Truth Set visualization is selected, its `web_service`/`web_page` checks also pass and
-  the standalone snapshot artifact exists (see `phase2-visualization.md` and
-  `phase3-report-close.md`).
 - The Verification Report is persisted to `config/bootcamp_progress.json` with a valid ISO 8601
   timestamp.
-- The web service process (started only by the Truth Set visualization module, when selected) is
-  terminated and the port is released.
-- The synthetic verification records are purged from the database (zero `VERIFY` entities remain);
-  when the Truth Set visualization ran, its TruthSet records are purged too.
+- The synthetic verification records are purged from the database (zero `VERIFY` entities remain).
 - The gate 3→4 status is updated to "completed".
-- The Module 3 recap section(s) are appended to `docs/bootcamp_recap.md` — `## System verification`
-  and, when the visualization ran, `## Truth Set visualization` (the consolidated recap replaced the
-  separate `docs/bootcamp_journal.md`; the narrative lives in each section's `### Journal`
-  subsection).
+- The `## System verification` recap section is appended to `docs/bootcamp_recap.md` (the
+  consolidated recap replaced the separate `docs/bootcamp_journal.md`; the narrative lives in the
+  section's `### Journal` subsection).
+
+(The Truth Set visualization module — run next when selected — owns its own `web_service`/`web_page`
+checks, standalone snapshot, web-service termination, TruthSet purge, and `## Truth Set
+visualization` recap section; see `../module-03b-truthset-visualization/`.)

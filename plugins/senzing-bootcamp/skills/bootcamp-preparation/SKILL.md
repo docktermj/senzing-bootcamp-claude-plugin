@@ -47,8 +47,8 @@ run unless its prerequisite is also included.
 | 2 | Entity Resolution Concepts | Optional | `module-00-entity-resolution-concepts` |
 | 3 | Discover the Business Problem | Required | `module-01-business-problem` |
 | 4 | SDK setup | Required | `module-02-sdk-setup` |
-| 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` (Phase 1 + Phase 3) |
-| 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03-system-verification` Phase 2 (step 9) |
+| 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` |
+| 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03b-truthset-visualization` |
 | 7 | Data collection | Required | `module-04-data-collection` |
 | 8 | Data quality & mapping | Required — Requires "Data collection" | `module-05-data-quality-mapping` |
 | 9 | Data processing | Required — Requires "Data quality & mapping" | `module-06-data-processing` |

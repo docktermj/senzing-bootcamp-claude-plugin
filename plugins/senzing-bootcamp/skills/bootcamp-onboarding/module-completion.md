@@ -18,7 +18,7 @@ This is the Claude-plugin port of the Kiro `module-completion*` / `module-comple
 In `config/bootcamp_progress.json`, apply all of the following as a **single** batched write (one
 diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`):
 
-- Add this module's **name token** (e.g. `system_verification`, `truthset_visualization`, `data_collection`) to `modules_completed` — never a catalog number, so graduation's name-based reconcile matches (INV-085). Idempotent: do not duplicate. A skill that hosts more than one selectable module (e.g. Module 3's System verification + Truth Set visualization) adds one entry per module it completed.
+- Add this module's **name token** (e.g. `system_verification`, `truthset_visualization`, `data_collection`) to `modules_completed` — never a catalog number, so graduation's name-based reconcile matches (INV-085). Idempotent: do not duplicate. Each module records its own single name token at its own close — System verification and the separate Truth Set visualization module each record themselves (INV-086/INV-087).
 - Set `current_module` to the next module in `selected_modules` (or leave it on this module if the bootcamper has not yet chosen to advance).
 - Set top-level `current_step` to `null`.
 - Under `step_history["<module>"]`, set `{ "last_completed_step": "<final step>", "updated_at": "<ISO 8601>" }`.
@@ -144,10 +144,8 @@ Procedure (parameterized by the visualization's `{html}` file and a short `{name
 ## Step 3: End-of-module summary (shown to the bootcamper)
 
 Present a short, skimmable summary from the bootcamper's point of view. This is a
-required outcome of every module (INV-032). When a skill completed **more than one** module this
-turn (e.g. Module 3's System verification + Truth Set visualization, per Step 1), present a
-completion line **and** its own four-part summary **per completed module**, in the experienced order
-recorded in Step 1 — each module gets its own `✅ Module complete: {Module name}` line. **Lead with the lightly-highlighted completion line** — a bold
+required outcome of every module (INV-032) — one completion line and one four-part summary per
+module, at that module's own close. **Lead with the lightly-highlighted completion line** — a bold
 line wrapped in a thin rule of `─` characters above and below (more visible than plain prose,
 lighter than the module-start banner's `━━━`/emoji triplet) — then the summary details. Render the
 completion line as shown (bold, no module number), the rest as a plain summary:
@@ -181,10 +179,9 @@ bookkeeping.
 Return to the module and ask its single transition 👉 question — "Are you ready to move on to the
 next module: {next module name}?" (fill {next module name} with the next module in
 `selected_modules`; after the last content module, use the graduation offer below instead). Ask it
-**once** — when a skill completed more than one module, after the **last** completed module's
-summary. That question ends the turn. Do not combine it with the
-summary content above into multiple questions: the summary is statements, the
-transition is the one 👉 question.
+**once**, after the module's summary. That question ends the turn. Do not combine it with the
+summary content above into multiple questions: the summary is statements, the transition is the one
+👉 question.
 
 ## Reaching graduation (after the last content module)
 

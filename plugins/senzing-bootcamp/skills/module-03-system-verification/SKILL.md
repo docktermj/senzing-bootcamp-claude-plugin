@@ -1,6 +1,6 @@
 ---
 name: module-03-system-verification
-description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, or needs to verify the Senzing system works, visualize results, and produce a verification report.'
+description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, or needs to verify the Senzing system works end-to-end and produce a verification report. (The Truth Set visualization is a separate, standalone module run next.)'
 ---
 
 # Module 3: System Verification
@@ -31,13 +31,13 @@ step — for all code generation and verification scripts. Never fall back to a 
 **Before/After:** Before, the SDK is installed but untested end to end. After, your entire
 system is verified against **synthetic records**: SDK initialization, code generation,
 compilation, data loading, entity resolution, and database operations all confirmed working. (The
-interactive Truth Set web-app visualization is a separate module — Phase 2 — run when selected.)
+interactive Truth Set web-app visualization is a separate, standalone module, run next when selected.)
 
 **Success indicator:** ✅ All 8 System Verification checks report "passed" (against synthetic data);
-the **Truth Set visualization** module's `web_service`/`web_page` checks pass too when it is
-selected; the Verification Report is persisted to `config/bootcamp_progress.json`; the web service
-(when it ran) and the database are cleaned up; and gate 3→4 is marked completed (full criteria in
-`phase1-verification.md`).
+the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic `VERIFY` data
+is purged from the database; and gate 3→4 is marked completed (full criteria in
+`phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
+own `web_service`/`web_page` checks, snapshot, and cleanup.)
 
 > **User reference:** detailed background on this module lives in the walkthrough above; a
 > standalone `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference is a later porting phase and
@@ -61,42 +61,20 @@ When the bootcamper hits an error during this module:
    record a fail with a timeout Fix_Instruction, and continue to the next check (no
    short-circuit).
 
-## TruthSet source (used by the Truth Set visualization module — Phase 2)
-
-System Verification (Phase 1) uses **synthetic records** and never touches the Truth Set. The
-Truth Set is acquired only by the **Truth Set visualization** module (Phase 2). For that module,
-the Senzing MCP server is the primary and preferred TruthSet source; it always takes precedence.
-Only when `get_sample_data` exposes no named TruthSet (the response holds only the CORD
-collections: Las Vegas, London, Moscow) does Phase 2 (Step 9 setup) fall back to a sanctioned
-external source for the demo TruthSet DATA.
-
-- **Sanctioned source:** reference it only by its registry identifier `senzing_truthset_demo`,
-  declared in `config/fallback_sources.yaml`. Never embed a raw URL. The registry is the single
-  reviewed place this source is defined. (The `config/fallback_sources.yaml` registry and its
-  fetch script are a later porting phase; for now, if the registry file is absent, treat the
-  fallback as unavailable and run the Phase 2 graceful-degradation path (Step 9 setup, 9s.1).)
-- **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
-  endpoint. This exception exists because the source is the official Senzing-published
-  deterministic data with a ground-truth key, needed to preserve deterministic verification
-  when the MCP TruthSet is unavailable.
-- **Scope limit:** the fallback fetches TruthSet DATA only. All Senzing SDK facts, method
-  signatures, and expected-behavior definitions continue to come from the MCP server.
-- Full detection, provenance recording, and graceful degradation live in the Step 9 setup flow in
-  `phase2-visualization.md`.
+System Verification uses **synthetic records** and never touches the Truth Set. The Truth Set is
+acquired, loaded, and visualized exclusively by the separate, standalone **Truth Set visualization**
+module (`../module-03b-truthset-visualization/`), which documents its own TruthSet source and
+fallback.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
 
 - Entity operations (query, read by entity ID, search by attributes, why/how, relationship
   network, export) are NOT direct tools on this MCP server. Generate the SDK code for them via
   `get_sdk_reference` + `sdk_guide` and run it. Never generate SQL against `database/G2C.db`.
-- Counts, statistics, and visualization data come from `reporting_guide` and from the generated
-  SDK export code, never from direct SQL.
-- Kiro process control (`controlBashProcess`) maps here to running the web service as a
-  background process and stopping it later in Phase 3.
-- **Visualization (Step 9) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
-  Phase 2 runs it deterministically (build-only snapshot + live server), so the visualization is
-  guaranteed to be produced every run rather than hand-written each time. This supersedes the Kiro
-  `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
+- Counts and statistics come from `reporting_guide` and from the generated SDK export code, never
+  from direct SQL.
+- System Verification starts **no** web service (Agent Rule 9). Any web service belongs to the
+  separate Truth Set visualization module, which starts and stops it within its own phases.
 - Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`) are
   later porting phases; where referenced, perform the described action directly (write markers to
   `config/bootcamp_progress.json`, fetch/build inline, etc.).
@@ -106,19 +84,14 @@ external source for the demo TruthSet DATA.
 - **Phase 1: Verification Pipeline** (steps 1–8, plus the opt-out gate): `phase1-verification.md`.
   Verifies against **synthetic records** generated in Step 2 — System Verification does not touch
   the Truth Set.
-- **Phase 2: Truth Set visualization** (Step 9 setup + step 9) — a **first-class selectable
-  module** (`truthset_visualization`), not a sub-step of System verification:
-  `phase2-visualization.md`. Run it when `truthset_visualization` is in `selected_modules`
-  (`config/bootcamp_preferences.yaml`) — always true in Core; in Customized only if chosen. As a
-  first-class module it opens with its **own full per-module apparatus** — module-start banner,
-  journey-map refresh, before/after, step overview, model/effort nudge (INV-086; it is **not**
-  apparatus-exempt) — acquires and loads the Truth Set itself, visualizes it, and is recorded
-  under its own `truthset_visualization` name token in `modules_completed` with its own recap
-  section and end-of-module summary at Module 3 close (INV-085/INV-086). When it is **not**
-  selected, skip Phase 2 and go straight to Phase 3. When it **is** selected, Phase 2 is mandatory
-  within the module (INV-077).
-- **Phase 3: Report and Close** (steps 10–12): `phase3-report-close.md`
-- **Visualization API reference** (loaded on demand from Phase 2):
-  `visualization-api-reference.md`
+- **Phase 2: Report and Close** (steps 10–12): `phase2-report-close.md`. Records
+  `system_verification`, purges the synthetic `VERIFY` data, and transitions to the next selected
+  module.
+
+The **Truth Set visualization** is a separate, standalone module
+(`../module-03b-truthset-visualization/`, `truthset_visualization`) that runs **after** this one when
+selected (always in Core; in Customized only if chosen). System Verification hands off to it after
+Phase 2 closes; when it is not selected, the next module is Data collection. It is **not** a sub-step
+of System Verification (INV-086/INV-087).
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.

@@ -1,8 +1,8 @@
-# Module 3 Visualization: API Reference
+# Truth Set Visualization: API Reference
 
 **Purpose:** full API response schemas and the `search_builder.py` enrichment specification for
-the Module 3 Phase 2 visualization web service. This is reference material, loaded on demand from
-`phase2-visualization.md` (Step 9). See that file for the executable generation and verification
+the Truth Set visualization web service. This is reference material, loaded on demand from
+`phase1-visualization.md` (Step 9). See that file for the executable generation and verification
 steps.
 
 All endpoint data derives from Senzing SDK methods (`export_json_entity_report`,
@@ -15,7 +15,7 @@ with SQL.
 
 The server SHALL expose these endpoints:
 
-**`GET /api/stats`**: Aggregate entity resolution statistics
+**`GET /api/stats`:** Aggregate entity resolution statistics
 
 ```json
 {
@@ -32,7 +32,7 @@ Required fields: `records_total`, `entities_total`, `multi_record_entities`,
 `cross_source_entities`, `relationships_total`, `histogram`. The `histogram` maps record-count
 buckets (1, 2, 3, 4+) to entity counts.
 
-**`GET /api/graph`**: Entity nodes and relationship edges
+**`GET /api/graph`:** Entity nodes and relationship edges
 
 ```json
 {
@@ -50,7 +50,7 @@ Each node: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`
 
 > `source_entity_id`/`target_entity_id` are the unchanged API contract; mapping to D3's
 > `source`/`target` is a client-side concern handled in `drawGraph` (see the Client-Rendering
-> Constraints in `phase2-visualization.md`).
+> Constraints in `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
 from a default export. `graph_builder.py` SHALL discover relationships explicitly (a plain
@@ -58,10 +58,10 @@ from a default export. `graph_builder.py` SHALL discover relationships explicitl
 `RELATED_ENTITIES` from it yields an empty `edges` array). Obtain relationships using either or
 both of:
 
-- **`find_network_by_entity_id`**: for multi-record/related entities, call
+- **`find_network_by_entity_id`:** for multi-record/related entities, call
   `find_network_by_entity_id` to retrieve the relationship network and derive edges from the
   returned links.
-- **Relationship-inclusion export flag**: request the entity export/report with the flag that
+- **Relationship-inclusion export flag:** request the entity export/report with the flag that
   includes all relations (`SZ_ENTITY_INCLUDE_ALL_RELATIONS`, confirmed via the Senzing MCP
   server) so `RELATED_ENTITIES` is populated, then build edges from it.
 
@@ -74,7 +74,7 @@ entities that both appear in the node set above.
 > `sdk_guide` / `get_sdk_reference`) when generating code; do not assert them from training data.
 > Refer to the MCP server by name only; no URL.
 
-**`GET /api/merges`**: Multi-record entities with constituent records
+**`GET /api/merges`:** Multi-record entities with constituent records
 
 ```json
 [
@@ -91,7 +91,7 @@ Each entity: `entity_id`, `entity_name`, `match_key`, `records`. Each record: `d
 `record_id`, `name`, `address`, `phone`, `identifiers`. Only entities with 2+ records are
 returned.
 
-**`GET /api/search`**: Search entities with enriched resolution reasoning
+**`GET /api/search`:** Search entities with enriched resolution reasoning
 
 ```json
 {
@@ -137,7 +137,7 @@ Each result includes the base fields (`entity_id`, `entity_name`, `record_count`
 | `resolution_rules` | `list[object]` | Each entry: `data_source` (string), `record_id` (string), `rule` (string) |
 | `enrichment_error` | `string \| null` | Non-null if `get_entity_by_entity_id` failed; contains exception type + message |
 
-**Error case response**: when enrichment fails for a specific entity, return the basic result
+**Error case response:** when enrichment fails for a specific entity, return the basic result
 with null enrichment fields and an `enrichment_error` string:
 
 ```json
@@ -153,7 +153,7 @@ with null enrichment fields and an `enrichment_error` string:
 }
 ```
 
-**Single-record entity response**: when an entity has only one record (no inter-record
+**Single-record entity response:** when an entity has only one record (no inter-record
 resolution occurred), return an empty `per_record` list and empty `resolution_rules` list:
 
 ```json
