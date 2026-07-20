@@ -22,9 +22,14 @@ a hands-on, module-by-module tutorial.
 
 1. Download and install [Claude Code].
 1. Start Claude app.
+1. In the Claude app,
+    1. In the left-hand panel, choose **</> Code**.
+    1. In the *Code* panel, click **New session**.
+1. In the Claude app, near the bottom, choose the "Working directory" (it might say "Select folder...")
+    1. Create and use a new folder for the Senzing Bootcamp.
 1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
     1. In the *Directory* panel, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
-    1. In the *Add marketplace* panel, enter URL: enter the following and click "Sync":
+    1. In the *Add marketplace* panel, enter **URL:**
 
         ```console
         https://github.com/docktermj/senzing-bootcamp-claude-plugin
@@ -33,16 +38,14 @@ a hands-on, module-by-module tutorial.
     1. Click the **Sync** button.
     1. In the *Directory* panel,
         1. Select **Code** tab.
-        1. Select **Senzing bootcamp**
-        1. Click on **Install**
+        1. Select **Senzing bootcamp**.
+        1. Click on **Install**.
         1. Close *Directory* panel.
-1. In the Claude app, near the bottom, click on **Select folder...**
-    1. Create and use a new folder for the Senzing Bootcamp.
-1. In the Claude app, near the bottom right-hand side,
-    1. Choose the model **Sonnet 5**
-    1. Choose the effort: **medium**
-1. For a smooth ride, in the Claude app, on the bottom, choose the "Mode" **auto**.
-1. In the Claude App agentic chat, enter:
+1. In the Claude app, on the bottom,
+    1. Choose the Mode: **auto** for a smooth ride.
+    1. Choose the Model **Sonnet 5**.
+    1. Choose the Effort: **medium**.
+1. In the Claude App near the bottem in the agentic chat, enter:
 
     ```console
     Start the bootcamp
@@ -98,16 +101,11 @@ a hands-on, module-by-module tutorial.
 1. *Note:* In addition to Claude Code,
    the Senzing Bootcamp Claude Plugin can also be run with:
     - [Claude Code for VSCode]
-
-## Start the Senzing Bootcamp
-
-1. Start the bootcamp.
+1. Start the bootcamp. Tell Claude:
 
     ```console
-    /start-bootcamp
+    Start the bootcamp
     ```
-
-      or just tell Claude "start the bootcamp".
 
 ## Additional bootcamp commands
 
