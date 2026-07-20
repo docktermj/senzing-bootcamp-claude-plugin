@@ -78,7 +78,15 @@ matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 ## 25. Execute UAT with business users
 
-Offer to involve business users in testing the cross-source results — pin the question verbatim:
+**First, check whether there are real stakeholders.** Read `docs/business_problem.md`. If it carries
+the bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
+accepted in Module 1), or otherwise records no real stakeholders, there are no business users to
+involve — so **do not ask** the involvement question (INV-006/INV-012). State briefly that the
+scenario is bootcamp-generated, so you will self-direct the UAT: spot-check 5–10 cross-source
+entities and document findings in `docs/uat_results.md`, then proceed to step 26.
+
+Otherwise (a real business problem with stakeholders), offer to involve business users — pin the
+question verbatim:
 
 👉 **Would you like to involve business users in testing the cross-source results?** (respond yes or no)
 
@@ -110,7 +118,7 @@ cross-source match summary, issues and resolutions, recommendations for future l
 
 ## Document results and complete (always)
 
-## 28. Document results and offer visualization
+## 28. Document results
 
 Record the validation findings:
 
@@ -119,19 +127,10 @@ Record the validation findings:
   resolution
 - This becomes the baseline for comparison
 
-**Mandatory visualization offer (internal gate).** You MUST offer the results dashboard before
-proceeding to the Decision Gate, do not skip it. Pin the offer verbatim:
-
-> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
-
-- **Yes:** generate the HTML dashboard and save to `docs/visualizations/results_dashboard.html`,
-  then capture screenshots for the recap (`{html}` = `results_dashboard.html`, `{name}` =
-  `results_dashboard`) per `../bootcamp-onboarding/module-completion.md` → "Capturing visualization
-  screenshots" — skip silently if no headless capability, otherwise embed the 2-3 best in the recap.
-- **No / not now:** acknowledge and proceed.
-- **Unsure:** briefly explain the value, then wait for their decision.
-
-*(Internal: end the turn on the dashboard offer question and wait.)*
+The **results dashboard** (entity counts, match statistics, and sample resolved entities) is offered
+in the **Query, Visualize & Discover** module (Module 7, Step 3d), where all results visualization
+lives — Module 6 does not offer it, to avoid a duplicate offer. (The cross-source relationship
+visualization in step 23 is a distinct offer and is unaffected.)
 
 **Checkpoint:** write step 28.
 

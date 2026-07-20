@@ -1,6 +1,6 @@
 ---
 name: graduation
-description: 'Bootcamp graduation: generate the recap PDF trophy and a production-ready project. Use when the bootcamper finishes the last module (Module 7) and accepts the graduation offer, or says "graduate", "run graduation", or "finish the bootcamp".'
+description: 'Bootcamp graduation: generate the recap PDF and a production-ready project. Use when the bootcamper finishes the last module (Module 7) and accepts the graduation offer, or says "graduate", "run graduation", or "finish the bootcamp".'
 ---
 
 # Graduation
@@ -14,7 +14,7 @@ description: 'Bootcamp graduation: generate the recap PDF trophy and a productio
 > `../bootcamp-onboarding/ground-rules.md`.
 
 Graduation turns a completed bootcamp into two things the bootcamper keeps: a
-professional **recap PDF trophy** and a clean **`production/` project** they can
+professional **recap PDF** and a clean **`production/` project** they can
 build on. Graduation is the required, terminal module of the bootcamp. Load this
 skill when the bootcamper accepts the graduation offer after the last module
 (Module 7), or asks to "graduate" / "run graduation".
@@ -67,10 +67,10 @@ Gather context before any step. Do this silently.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
 3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
 
-## Step 1: Finalize the recap and render the PDF trophy
+## Step 1: Finalize the recap and render the recap PDF
 
 The recap is the crown-jewel deliverable. Produce it before the `production/`
-project so the trophy always exists.
+project so the recap PDF always exists.
 
 A finished-recap sample ships with the plugin at
 `${CLAUDE_PLUGIN_ROOT}/docs/examples/bootcamp_recap.example.pdf` (skill-relative
@@ -97,9 +97,21 @@ If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md
 module interrupted before completion), fold its content into that module's
 `## {Module name}` section (append only), then remove the
 `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block from
-`docs/bootcamp_recap.md` and clear the checkpoint. This ensures the trophy carries any
+`docs/bootcamp_recap.md` and clear the checkpoint. This ensures the recap carries any
 narrative captured from an interrupted module and the PDF renders clean, completed
 sections.
+
+**Backfill orphaned screenshots (before rendering).** Scan `docs/visualizations/*.png`. For any PNG
+**not already referenced** by an `![...](...)` image line in `docs/bootcamp_recap.md`, embed it into
+the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module, grouped by
+filename prefix (`truthset_verification-*` → Truth Set visualization; `multi_source_results-*` and
+`results_dashboard-*` → the module that produced them; `entity_graph-*` → Query, Visualize &
+Discover). This is a **safety net** for captures whose embed step was skipped mid-bootcamp
+(`../bootcamp-onboarding/module-completion.md` makes the embed a required step, but this guarantees
+the recap PDF still shows captured screenshots if one was missed). Append-only and **idempotent** —
+never rewrite a completed section's prose (INV-085), never add a reference that already exists, and
+skip any image that is missing or unreadable (INV-048). Like every graduation step it is
+non-blocking: if it is uncertain, warn and continue — never block the PDF on a screenshot.
 
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
 Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
@@ -125,7 +137,7 @@ stdlib-rendered one otherwise), so a missing `fpdf2` is never a reason to skip.
 **Prefer the professionally designed renderer.** Before rendering, check whether
 `fpdf2` is importable (`python3 -c "import fpdf"`). If it is not, offer to install it
 so the designed renderer is used (a cover page, a table of contents with page
-numbers, color-coded per-module sections, and page footers — INV-048, the trophy
+numbers, color-coded per-module sections, and page footers — INV-048, the recap PDF
 should look professional). Install it **robustly**, never with a bare `pip`:
 
 - **Prefer a project-local virtualenv.** This sidesteps PEP 668
@@ -253,12 +265,12 @@ line: "Say \"bootcamp feedback\" anytime if you'd like to share your experience.
 
 This runs exactly once, after the report, before graduation is reported finished.
 
-1. **Guarantee the trophy exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
+1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
 2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and Journal, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
 
 Example (list only what exists):
 
-> 🏆 **Here's your bootcamp trophy.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and Journal for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
+> 🏆 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and Journal for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
 
 3. **End on the single closing question.** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 

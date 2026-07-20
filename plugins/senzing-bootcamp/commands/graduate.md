@@ -1,5 +1,5 @@
 ---
-description: 'Graduate the Senzing bootcamp: generate the recap PDF trophy and a production-ready project.'
+description: 'Graduate the Senzing bootcamp: generate the recap PDF and a production-ready project.'
 ---
 
 The bootcamper wants to graduate the Senzing bootcamp.

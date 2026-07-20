@@ -18,6 +18,34 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## consolidate-results-dashboard-offer-in-module7
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Removed the Module 6 Phase D Step 28 results-dashboard offer (renamed the step to "Document results"; kept the `docs/results_validation.md` documentation and the Iterate-vs-proceed Decision Gate intact). Enriched Module 7 Step 3d into the bootcamp's single results-dashboard offer — pinned verbatim, covering entity counts, match statistics, and sample resolved entities — writing `docs/visualizations/results_dashboard.html` (INV-070) with screenshot capture per module-completion. Module 6's cross-source relationship offer (step 23) is unaffected; Module 7's completeness gate/success criteria (both viz offered) still hold. No invariant mandated the Module 6 offer; the historical specs `drop-checklist-and-summary-gates.md` and `remove-orphaned-first-visualization-guarantee.md` reference the former Module 6 offer and are left as point-in-time records (no-edit-spec-content guardrail). No new invariant.
+- **Commit:** uncommitted
+
+## skip-business-user-uat-for-generated-scenario
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`
+- **Summary:** Step 25 now reads `docs/business_problem.md` first; when the `> 🤖 Bootcamp-generated business case` marker is present (or no real stakeholders are recorded), it does **not** ask the "involve business users" question — it states the scenario is bootcamp-generated and self-directs the UAT (spot-check 5–10 cross-source entities → `docs/uat_results.md`), then proceeds to step 26. A real business problem still gets the pinned verbatim question (INV-056). Consistent with INV-006/INV-012 (skipping an inapplicable question is not "assuming an answer" — INV-007). AC verified by grep of the marker guard. No new invariant.
+- **Commit:** uncommitted
+
+## enforce-screenshot-embed-and-backfill
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+- **Summary:** Made the post-capture embed a **required** step (not optional) in the shared "Capturing visualization screenshots" procedure and the recap template: on a successful `capture_screenshots.py` run, the 2–3 curated `![caption](docs/visualizations/<name>-N.png)` lines MUST be written into that module's recap Actions Taken in the same turn, recorded at the step checkpoint (graceful skip when no headless capability is unchanged). Added a graduation Step 1 backfill safety-net (before the PDF render, after reconcile): scans `docs/visualizations/*.png` and embeds any PNG not already referenced into its matching `## {Module name}` section, grouped by filename prefix, append-only/idempotent (INV-085), skipping missing/unreadable images (INV-048), non-blocking. `generate_recap_pdf.py` already embeds `![](...)` local images (`_render_image`, line 591) — no code change needed. Hardens INV-048; no new invariant.
+- **Commit:** uncommitted
+
+## drop-trophy-wording
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/hooks/README.md`, `plugins/senzing-bootcamp/commands/graduate.md`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/scripts/session-start.py`, `plugins/senzing-bootcamp/scripts/capture_screenshots.py`, `plugins/senzing-bootcamp/scripts/brand_tokens.py`, `specs/INVARIANTS.md`
+- **Summary:** Replaced the word "trophy" throughout bootcamper-facing and internal skill/script/hook text with neutral terms — "recap PDF" for the PDF, "recap" for the accumulating `.md`. `grep -rni "trophy" plugins/ scripts/` now returns none. INV-048 ("A trophy document" → "A recap PDF") and INV-081 ("the recap PDF trophy" → "the recap PDF") reworded in place, no meaning change (maintenance rule 2). The 🏆 emoji at the graduation announce line was retained (feedback targeted the word, not the emoji) — flagged for the maintainer. No new invariant.
+- **Commit:** uncommitted
+
 ## split-truthset-visualization-into-standalone-module
 
 - **Implemented:** 2026-07-20

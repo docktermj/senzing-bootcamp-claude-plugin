@@ -126,7 +126,7 @@ verbosity:
 
 For `minimal`, every category is `0`. `minimal` reduces only *explanatory* output; it NEVER
 suppresses required output — every 👉 question (INV-005), gate, module banner (INV-079),
-end-of-module summary (INV-032), and the recap trophy (INV-048) still appear.
+end-of-module summary (INV-032), and the recap (INV-048) still appear.
 
 Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
 NOT a gate; if they skip, apply `standard` and tell them so.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the bootcamp recap Markdown into a professional PDF trophy.
+"""Render the bootcamp recap Markdown into a professional recap PDF.
 
 Reads ``docs/bootcamp_recap.md`` and writes ``docs/bootcamp_recap.pdf``.
 
@@ -46,7 +46,7 @@ DEFAULT_INPUT = "docs/bootcamp_recap.md"
 DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
 
 # The labeled sub-sections a complete per-module recap section carries. The
-# graduation "trophy" requirement names Information Shared, Questions &
+# graduation recap requirement names Information Shared, Questions &
 # Responses, Actions Taken, and Journal. "Actions Taken" / "Action Taken" are
 # both accepted on parse.
 REQUIRED_SECTIONS = [
@@ -593,7 +593,7 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
 
     A missing/unreadable image, an fpdf2 build without image support, or a bad
     file is skipped silently — an optional decoration must never break the
-    trophy PDF (INV-048). Remote URLs are never fetched (offline — INV-071).
+    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-071).
     """
     if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
         return  # never fetch a remote URL (offline guarantee)

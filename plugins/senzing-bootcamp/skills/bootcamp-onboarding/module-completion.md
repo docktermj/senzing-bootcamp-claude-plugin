@@ -4,7 +4,7 @@ Every module skill runs this process at its end, immediately **before** its
 transition 👉 question. It does three things, in this fixed order:
 
 1. Update progress state.
-2. Append this module's recap section to `docs/bootcamp_recap.md` (the trophy
+2. Append this module's recap section to `docs/bootcamp_recap.md` (the recap
    the bootcamper keeps).
 3. Present the end-of-module summary to the bootcamper.
 
@@ -25,8 +25,8 @@ diff, not one write per field), done quietly (INV-012 — see `ground-rules.md`)
 
 ## Step 2: Append the recap section
 
-The recap is the single accumulating record that becomes the graduation PDF
-trophy. Append one section per completed module. Do **not** rewrite existing
+The recap is the single accumulating record that becomes the graduation recap
+PDF. Append one section per completed module. Do **not** rewrite existing
 sections: append only.
 
 ### 2a. Create the recap on first module completion
@@ -82,7 +82,7 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **Journal:** the bold fields as shown; the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
-- **Visualization screenshots (optional):** when this module produced a visualization, its **Actions Taken** may embed 2-3 curated screenshots as Markdown images — `![caption](docs/visualizations/<name>.png)`. Capture them at the visualization step (see "Capturing visualization screenshots" below). The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the trophy.
+- **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding the 2-3 curated screenshots is required**, not optional: add them to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>.png)` — in the same turn the capture ran. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
 
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
@@ -110,14 +110,14 @@ appended (2b), that block is superseded. Do two things:
 
 - Remove any `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block
   from `docs/bootcamp_recap.md` (the finalized section replaces it — this keeps the
-  trophy clean and never rewrites a completed `## {Name}` section).
+  recap clean and never rewrites a completed `## {Name}` section).
 - Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
   module starts a fresh checkpoint.
 
 ## Capturing visualization screenshots (optional)
 
 Whenever a module generates a visualization (an HTML page under `docs/visualizations/`), capture a
-few screenshots of it so the recap trophy shows what the bootcamper actually built, not just a
+few screenshots of it so the recap shows what the bootcamper actually built, not just a
 link. This runs at the visualization step, right after the page exists, and is **non-blocking with
 graceful degradation** — never a 👉 question, and never a reason to stall.
 
@@ -137,9 +137,12 @@ Procedure (parameterized by the visualization's `{html}` file and a short `{name
    keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
    the `minimal` preset).
 3. **If it succeeds** (prints the PNG paths it wrote under `docs/visualizations/`): review the
-   shots, keep the **2-3 most representative** (delete the rest), and embed them in **this module's
-   recap `Actions Taken`** as `![caption](docs/visualizations/{name}-1.png)`. The graduation PDF
-   embeds these local images and skips any that are missing (INV-048).
+   shots, keep the **2-3 most representative** (delete the rest), and — **as a required step, in the
+   same turn** — embed them in **this module's recap `Actions Taken`** as
+   `![caption](docs/visualizations/{name}-1.png)`. Writing the image lines is not optional once a
+   capture succeeded; record it at the step checkpoint. The graduation PDF embeds these local images
+   and skips any that are missing (INV-048), and graduation backfills any that were captured but
+   never embedded (see `../graduation/SKILL.md` Step 1).
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 
@@ -190,7 +193,7 @@ When the module just completed is the **last content module before Graduation in
 required in every path — do Steps 1-3 as usual, then, instead of a next-module
 transition, offer graduation (the mandatory terminal module):
 
-👉 **Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Would you like to graduate now and generate your production project and recap?**
 
 On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
 keep exploring first, stay available and offer graduation again whenever they are

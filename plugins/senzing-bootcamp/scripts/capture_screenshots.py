@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture screenshots of a bootcamp visualization for the recap trophy.
+"""Capture screenshots of a bootcamp visualization for the recap.
 
 Best-effort and dependency-optional (INV-052/INV-066): this helper renders a
 **local** HTML file (or a localhost URL served by the bundled visualization app)

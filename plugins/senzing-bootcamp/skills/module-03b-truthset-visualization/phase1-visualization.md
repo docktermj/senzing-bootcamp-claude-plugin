@@ -153,7 +153,7 @@ SDK initialization; check `config/engine_config.json`) and retry. The snapshot i
 deliverable.
 
 **Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
-`docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap trophy —
+`docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap —
 `{html}` = `truthset_verification.html`, `{name}` = `truthset_verification` — per
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots". If no
 headless capability is available it skips silently; otherwise keep the 2-3 best and embed them in

@@ -196,15 +196,20 @@ Inline guidance until the visualization files are ported (later porting phase, t
 
 ### 3d. Results dashboard visualization checkpoint
 
-Offer a visualization for checkpoint `m7_findings_documented` (a results dashboard). Pin the
-offer verbatim:
+Offer a visualization for checkpoint `m7_findings_documented` — a results dashboard showing
+**entity counts, match statistics, and sample resolved entities**. This is the bootcamp's single
+results-dashboard offer (Module 6 no longer offers one; it lives here, where results visualization
+belongs). Pin the offer verbatim:
 
-> 👉 **Would you like a results dashboard visualizing the findings?**
+> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
 
 Source the dashboard data via `reporting_guide(topic='dashboard', ...)` and
-`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language.
-Same inline guidance and file-placement rules as step 3c apply (visualization files are a later
-porting phase).
+`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language and save
+the HTML to `docs/visualizations/results_dashboard.html` (INV-070). Then capture screenshots for the
+recap (`{html}` = `results_dashboard.html`, `{name}` = `results_dashboard`) per
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip silently
+if no headless capability, otherwise embed the 2-3 best in this module's recap. Same inline guidance
+and file-placement rules as step 3c apply.
 
 **Checkpoint:** write step 3d.
 
@@ -246,7 +251,7 @@ to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because thi
 content module, the completion process ends with the graduation offer rather than a next-module
 transition:
 
-👉 **Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Would you like to graduate now and generate your production project and recap?**
 
 *(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
 to `null` per the ground rules.

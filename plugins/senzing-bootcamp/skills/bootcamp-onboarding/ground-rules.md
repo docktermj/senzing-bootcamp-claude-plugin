@@ -109,7 +109,7 @@ steering files.)
   correctness and readability — do NOT spend effort making them CommonMark-lint-clean as you go.
   No fussing over `**Label:**` colon spacing, blank lines around headings/lists/fenced blocks
   (MD022/MD031/MD032), or fenced-code info strings (MD040). There is no need for "pretty" Markdown
-  until the end: graduation runs a single normalization pass over the `.md` files before the trophy
+  until the end: graduation runs a single normalization pass over the `.md` files before the recap
   PDF renders (see `../graduation/SKILL.md`). Keeping incremental writes plain reduces edit churn
   (INV-058) and keeps the teaching flow uncluttered (INV-012).
 - Structure still matters even while formatting is deferred: recap sections keep their name-based
@@ -120,7 +120,7 @@ steering files.)
 
 - **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
   deliverable the bootcamp produces — the Truth-Set visualization web app and its standalone
-  snapshot, the recap PDF trophy, and any future charts/dashboards/HTML — should follow the
+  snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
   Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
   `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
   palette. The bundled generators (`senzing_viz_server.py`, `generate_recap_pdf.py`) already
@@ -165,7 +165,7 @@ steering files.)
   verbosity" or "more code walkthroughs" at any time. **minimal** is near-zero explanatory output
   (all five categories at 0) for experts who want to move fast; it reduces only explanatory output
   and NEVER suppresses required output — 👉 questions, gates, module banners, end-of-module
-  summaries, and the recap trophy always appear. (The full five-category verbosity system is
+  summaries, and the recap always appear. (The full five-category verbosity system is
   condensed here; expand it when `verbosity-control` is ported.)
 
 ## Any-time bootcamper controls
