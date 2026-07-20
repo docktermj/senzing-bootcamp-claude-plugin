@@ -146,6 +146,7 @@
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
 
+<!-- Path is plugin-root-relative so generate_recap_pdf.py (run from the plugin root) embeds it in the rendered PDF; it will not display in GitHub's raw Markdown view. The PDF is the intended artifact — INV-065. -->
 ![Truth Set entity graph — 159 records resolved into 84 entities across CUSTOMERS, REFERENCE, and WATCHLIST](docs/examples/bootcamp_recap.example.truthset.png)
 
 ### Journal

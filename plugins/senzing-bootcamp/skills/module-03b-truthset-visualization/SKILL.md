@@ -24,7 +24,7 @@ Verification, in its own skill directory — with its own full per-module appara
 (INV-086/INV-087). It is **not** apparatus-exempt.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module-start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps,
+banner, journey map, before/after framing, and a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063),
 before any module work. (The module-start apparatus block is specified in `phase1-visualization.md`.)
 
 **Language:** Read `programming_language` from `config/bootcamp_preferences.yaml` (persisted in

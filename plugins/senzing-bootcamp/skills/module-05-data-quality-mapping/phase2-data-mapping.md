@@ -74,7 +74,7 @@ ground-rules file-placement contract:
 - Reusable resources at download time: transformation/workflow `.py` scripts → `src/`; the
   entity specification (`senzing_entity_specification.md`) → `docs/reference/`; other reference
   `.md` → `docs/`; config JSON → `config/`; data → `data/`.
-- **Transient run artifacts stay in the workspace while the run is in progress**: the workflow
+- **Transient run artifacts stay in the workspace while the run is in progress:** the workflow
   reads and writes them for its own use. Do NOT relocate, delete, or redirect these mid-run:
   `profile_report.md`, `schema_hints.md`, `JOURNAL.md`, and generated JSONL output.
 - **After the run for a source completes (after the iterate/finalize step), relocate the
@@ -185,25 +185,25 @@ the mapping table with reasoning for each decision and a confidence score.
 >
 > **`mapping_workflow` Steps 5–8 are optional sandbox validation** (Phase 3). They let you
 > trial-load the mapped source into a throwaway sandbox to preview entity resolution. They are
-> NOT the production load: the real load happens in **Module 6**. The four options are:
+> NOT the production load: the real load happens in **Data processing**. The four options are:
 >
-> - **skip**: skip the per-source sandbox test load and move on. **Recommended when one or
+> - **skip:** skip the per-source sandbox test load and move on. **Recommended when one or
 >   more unmapped sources remain.**
-> - **test_load**: run the optional sandbox test load (enters Phase 3) for this source.
-> - **load+resolve**: run the optional sandbox test load and resolve entities (enters Phase 3)
+> - **test_load:** run the optional sandbox test load (enters Phase 3) for this source.
+> - **load+resolve:** run the optional sandbox test load and resolve entities (enters Phase 3)
 >   for this source.
-> - **done**: finish the mapping workflow for this source without a sandbox test load.
+> - **done:** finish the mapping workflow for this source without a sandbox test load.
 >
 > **Multi-source continuation (recommended path):** When one or more unmapped sources remain,
-> recommend **skip**: the real load is deferred to Module 6, so a per-source sandbox test load
+> recommend **skip**: the real load is deferred to Data processing, so a per-source sandbox test load
 > adds little here: and automatically continue to the next unmapped source by starting its own
 > `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sandbox preview; since
-> you still have sources to map and the real load happens in Module 6, I'll skip the per-source
+> you still have sources to map and the real load happens in Data processing, I'll skip the per-source
 > test load and move on to the next unmapped source."
 >
 > **Explicit choice is preserved:** If the bootcamper explicitly chooses **test_load** or
 > **load+resolve**, follow that path into Phase 3 (`phase3-test-load.md`) unchanged. The real
-> production load still happens in Module 6 regardless.
+> production load still happens in Data processing regardless.
 
 **Checkpoint:** write step 11.
 
@@ -283,7 +283,7 @@ adjustment.
 close the turn on one 👉 question:
 
 - **Quality ≥80% and all critical fields mapped:** "Quality looks strong. Ready to proceed to
-  loading (Module 6)."
+  loading (Data processing)."
 - **Quality 70-79%:**
 
   👉 **Quality is acceptable. What would you like to do? Reply with a number:**

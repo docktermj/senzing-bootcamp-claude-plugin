@@ -4,21 +4,21 @@ Continues from Phase 2. Follow the ground rules; `🛑`/`⛔` are internal direc
 render them. Signal a stop by ending the turn on the single 👉 question and waiting.
 
 > **This phase is optional.** Bootcampers who prefer to write custom loading programs can skip
-> Phase 3 and proceed directly to Module 6. Phase 3 uses `mapping_workflow` steps 5–8 to give
-> immediate feedback on ER quality without leaving Module 5.
+> Phase 3 and proceed directly to Data processing. Phase 3 uses `mapping_workflow` steps 5–8 to give
+> immediate feedback on ER quality without leaving Data quality & mapping.
 
 > **Entry from the Step 5 `detect_environment` menu:** Phase 3 is entered from the
 > `detect_environment` menu handled in `phase2-data-mapping.md` (step 11). When the bootcamper
 > explicitly chooses **test_load** or **load+resolve** at that menu, follow the workflow below
 > (`mapping_workflow` steps 5–8, Steps 21–26) unchanged. When sources remain unmapped, the
 > Phase 2 guidance instead recommends **skip** and continues to the next source: the real
-> production load is still deferred to Module 6 in either case.
+> production load is still deferred to Data processing in either case.
 
-**Before starting Phase 3:** The Senzing SDK must be installed and configured (Module 2). If it
-is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (Module 2). You can
-skip Phase 3 and proceed to Module 6, or complete Module 2 first and return here." If the
+**Before starting Phase 3:** The Senzing SDK must be installed and configured (SDK setup). If it
+is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (from SDK setup). You can
+skip Phase 3 and proceed to Data processing, or complete SDK setup first and return here." If the
 bootcamper chooses to skip, update the data source registry with `test_load_status: skipped`
-for each source and proceed to Module 6.
+for each source and proceed to Data processing.
 
 ## Workflow (per data source that completed Phase 2)
 
@@ -221,7 +221,7 @@ re-run evaluation without reloading. If the session was interrupted before the d
 
 - ✅ Test load completed for each data source (or explicitly skipped).
 - ✅ Entity resolution results reviewed (deduplication rate, quality assessment).
-- ✅ Decision gate completed (shortcut path or proceed to Module 6).
+- ✅ Decision gate completed (shortcut path or proceed to Data processing).
 
 ## Interpreting `analyze_record` results
 

@@ -13,7 +13,7 @@ Complete these three checks before starting step 1.
 Read `config/data_sources.yaml` and check `test_load_status` per source:
 
 - **`complete`**, Phase 3 was done in Module 5. Acknowledge: "You already test-loaded this
-  source in Module 5 Phase 3 and saw [entity_count] entities. Module 6 builds on that with
+  source during Data quality & mapping (Phase 3) and saw [entity_count] entities. Data processing builds on that with
   production-quality loading, error handling, progress tracking, throughput optimization, redo
   processing, and incremental strategies." Skip the basic test-load step and go straight to the
   production loading workflow.

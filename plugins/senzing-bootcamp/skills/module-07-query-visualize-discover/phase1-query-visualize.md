@@ -20,7 +20,7 @@ least one non-empty desired-output field:
 - Derive between 1 and 10 query requirements from the success criteria and desired outputs in
   the document. Each derived requirement must reference the specific success criterion or
   desired output it addresses.
-- Present them with this attribution: "Based on your business problem from Module 1, here are
+- Present them with this attribution: "Based on your business problem, here are
   the query requirements I've derived:"
 - List each requirement with its source (e.g. "From your success criterion about [X]..." or
   "From your desired output format of [Y]...").
@@ -95,8 +95,8 @@ something is broken. Tell the bootcamper: "Entity resolution found very few matc
 mean: (a) your records are genuinely distinct with no duplicates, (b) the matching criteria
 need adjustment, perhaps key fields weren't mapped or data quality is too low, or (c) you're
 working with a single source that has no internal duplicates. Let's investigate which one."
-Check: are name/address/phone fields populated? Were they mapped correctly in Module 5? Is the
-Module 5 data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
+Check: are name/address/phone fields populated? Were they mapped correctly during Data quality &
+mapping? Is the data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
 finding, document it.
 
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
@@ -110,7 +110,7 @@ matching concepts introduced earlier in the bootcamp, a sentence or two each, no
   the same entity exists in multiple systems.
 
 Adapt the reminders to the bootcamper's own data context, reference the feature types, scores,
-and data sources present in their current results, not the Module 3 sample data. Then tell
+and data sources present in their current results, not the earlier sample data. Then tell
 them: "If you'd like a deeper refresher on how Senzing matching works, features, scoring, or
 cross-source connections, just ask and I'll walk through it again."
 

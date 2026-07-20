@@ -623,6 +623,8 @@ def _render_line(pdf, epw, line: str) -> None:
     if not stripped:
         pdf.ln(3)
         return
+    if stripped.startswith("<!--") and stripped.endswith("-->"):
+        return  # HTML comment (e.g. a maintainer note in the source): never rendered
     if _is_empty_takeaway(stripped):
         return
     # Embedded visualization screenshot: ![alt](path) on its own line.
