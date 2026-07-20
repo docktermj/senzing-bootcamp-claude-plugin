@@ -130,7 +130,9 @@ suppresses required output — every 👉 question (INV-005), gate, module banne
 end-of-module summary (INV-032), and the recap (INV-048) still appear.
 
 Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
-NOT a gate; if they skip, apply `standard` and tell them so.
+not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007): wait for their reply.
+If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
+as choosing the recommended `standard` and say so — never assume a level before they have replied.
 
 ## 4. Programming language selection (gate)
 

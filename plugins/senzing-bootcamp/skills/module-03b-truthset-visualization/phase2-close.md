@@ -14,37 +14,37 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >   bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
 >   the hard guarantee that the visualization always happened; a checkpoint alone is not sufficient.
 > - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
->   build-only run (Phase 1, 9.2) MUST have reported `records_total > 0` on its
->   `Entity model built: …` line, consistent with the Truth Set record count loaded in Step 9 setup
->   (9s.2). A snapshot built from zero records is a blank page and does NOT satisfy INV-077.
+>   build-only run (Phase 1, 2.2) MUST have reported `records_total > 0` on its
+>   `Entity model built: …` line, consistent with the Truth Set record count loaded in Step 1
+>   (1.2). A snapshot built from zero records is a blank page and does NOT satisfy INV-077.
 >
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built from
-> zero records, the agent MUST execute Step 9 immediately (load `phase1-visualization.md`) and run
-> the bundled app's build-only snapshot step (9.2) — whose `--records` file
-> (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 9 setup
-> (9s.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
+> zero records, the agent MUST execute Steps 1–2 immediately (load `phase1-visualization.md`) and run
+> the bundled app's build-only snapshot step (2.2) — whose `--records` file
+> (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 1
+> (1.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
 > module-transition question. Do NOT save progress. Produce the visualization first.
 
-## Step 1: Visualization completeness check
+## Step 4: Visualization completeness check
 
 Confirm that `config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint
 entries under `module_3_verification.checks` (this module's own checks). If either entry is missing
 or has `"status": "failed"`:
 
-- If missing: STOP. Do not close the module. Return to Phase 1 and execute Step 9 fully by loading
+- If missing: STOP. Do not close the module. Return to Phase 1 and execute Steps 1–2 fully by loading
   `phase1-visualization.md`.
 - If failed: note the failure and proceed (failed is different from skipped/missing; it means the
   step was attempted).
 
-## Step 2: Cleanup
+## Step 5: Cleanup
 
 Terminate the web service and purge the Truth Set data from the database.
 
 **No separate confirmation gate:** the bootcamper already confirmed they were done exploring at the
-end of Phase 1 (Step 9.5), so proceed directly to cleanup — do NOT re-ask (INV-006).
+end of Phase 1 (Step 2.5), so proceed directly to cleanup — do NOT re-ask (INV-006).
 
 1. **Terminate the web service:**
-   - Send a termination signal to the visualization web service process started in Phase 1 (9.3).
+   - Send a termination signal to the visualization web service process started in Phase 1 (2.3).
    - Wait up to 5 seconds for the process to exit and release the bound port.
    - If it does not terminate within 5 seconds: force-stop the process and warn the bootcamper that
      the port may need manual release.
@@ -63,7 +63,7 @@ end of Phase 1 (Step 9.5), so proceed directly to cleanup — do NOT re-ask (INV
 
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
-## Step 3: Module Close
+## Step 6: Module Close
 
 Complete this module using the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`. Record it as a first-class module in the order the

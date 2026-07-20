@@ -2,7 +2,7 @@
 
 **Purpose:** full API response schemas and the `search_builder.py` enrichment specification for
 the Truth Set visualization web service. This is reference material, loaded on demand from
-`phase1-visualization.md` (Step 9). See that file for the executable generation and verification
+`phase1-visualization.md` (Step 2). See that file for the executable generation and verification
 steps.
 
 All endpoint data derives from Senzing SDK methods (`export_json_entity_report`,

@@ -84,7 +84,7 @@ fallback.
 - **Phase 1: Verification Pipeline** (steps 1–8, plus the opt-out gate): `phase1-verification.md`.
   Verifies against **synthetic records** generated in Step 2 — System Verification does not touch
   the Truth Set.
-- **Phase 2: Report and Close** (steps 10–12): `phase2-report-close.md`. Records
+- **Phase 2: Report and Close** (steps 9–11): `phase2-report-close.md`. Records
   `system_verification`, purges the synthetic `VERIFY` data, and transitions to the next selected
   module.
 

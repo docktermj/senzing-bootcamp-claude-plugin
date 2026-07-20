@@ -1,4 +1,4 @@
-# Truth Set Visualization, Phase 1: Visualization (step 9)
+# Truth Set Visualization, Phase 1: Visualization (steps 1–3)
 
 Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal directives, never
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
@@ -9,7 +9,7 @@ Truth Set end to end — System Verification does not acquire, load, or visualiz
 
 **Prerequisites:** the Senzing SDK is installed and initialized (Module 2) and the engine is
 reachable, and System Verification has run immediately before. This module **acquires and loads the
-Truth Set itself** (Step 9 setup below); it does NOT depend on System Verification having loaded any
+Truth Set itself** (Step 1 below); it does NOT depend on System Verification having loaded any
 data.
 
 ## Execution requirement (internal directive)
@@ -23,16 +23,16 @@ Verification transitions straight to Data collection.
 The visualization is MANDATORY here: it MUST be produced; you must NOT transition to the next module
 until it exists and the bootcamper has been shown it. There is NO condition, threshold, or scenario
 under which you may then skip it — no session-length, token-budget, redundancy, or time
-rationalization is ever valid. Step 9 is unconditional, and this module's completion gate in
+rationalization is ever valid. Step 2 is unconditional, and this module's completion gate in
 `phase2-close.md` re-checks that the visualization artifact exists and refuses to mark the module
 complete if it does not (INV-077).
 
-## Module start: Truth Set visualization (present at module start, before Step 9 setup)
+## Module start: Truth Set visualization (present at module start, before Step 1)
 
 The Truth Set visualization is a **first-class, standalone module** (INV-086/INV-087) — so it opens
 with the standard module-start apparatus (INV-028–031/079, INV-063), exactly like any module start,
 per `../bootcamp-onboarding/ground-rules.md`. Present it **once**, at the start of the module,
-immediately before Step 9 setup:
+immediately before Step 1:
 
 1. **Set `current_module`** to `truthset_visualization` in `config/bootcamp_progress.json` (a single
    quiet write, INV-058), so a resume mid-visualization re-opens the right module.
@@ -52,17 +52,17 @@ immediately before Step 9 setup:
 6. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
    unchanged from System verification (Module 3 tier), so a concise statement (or omit).
 
-Then proceed to Step 9 setup below. (Its end-of-module summary and `✅ Module complete: Truth Set
+Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)
 
-## Step 9 setup: Acquire, register, and load the Truth Set (self-contained)
+## Step 1: Acquire, register, and load the Truth Set (self-contained)
 
 This module owns the Truth Set end to end — System Verification (Phase 1) no longer acquires or
 loads it. Run these sub-steps **before** starting the web app, so the visualization always has
 resolved Truth Set data to show. (Full source/fallback rationale is in `SKILL.md` → "Truth Set
 source".)
 
-### 9s.1 Acquire the Truth Set (MCP-first, sanctioned fallback)
+### 1.1 Acquire the Truth Set (MCP-first, sanctioned fallback)
 
 The Senzing MCP server is the primary and preferred source; it always takes precedence.
 
@@ -88,7 +88,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
 Record the source provenance (`mcp_primary` / `github_fallback` / `cord_substitute`) and the
 expected record count for the report.
 
-### 9s.2 Register the Truth Set data source codes and load
+### 1.2 Register the Truth Set data source codes and load
 
 1. Collect the distinct `DATA_SOURCE` values present in `truthset_data.jsonl` (for the standard
    Truth Set: CUSTOMERS, REFERENCE, WATCHLIST; a CORD substitute uses whatever codes its records
@@ -102,9 +102,9 @@ expected record count for the report.
    before load" guarantee so the load never fails with `SENZ2207`.
 
 Save the load artifacts under `src/system_verification/` (Agent Rule 5). Once the Truth Set is
-loaded, continue to Step 9 below to visualize it.
+loaded, continue to Step 2 below to visualize it.
 
-## Step 9: Run the bundled visualization web app
+## Step 2: Run the bundled visualization web app
 
 The plugin ships a tested, self-contained visualization web app,
 `scripts/senzing_viz_server.py`, so the visualization is produced **deterministically every
@@ -121,9 +121,9 @@ and the Senzing brand look (INV-081) on every workstation; a freshly generated p
 not promise those. Your actual bootcamp deliverables — transform, load, and query code — are still
 generated in your chosen programming language. (Honor verbosity: keep this brief or omit it at the
 `minimal` preset, and surface it especially if the bootcamper asks what language the visualization
-uses. A bootcamper who wants to see it in their own language can opt in at Step 9.6.)
+uses. A bootcamper who wants to see it in their own language can opt in at Step 3.)
 
-### 9.1 Locate the bundled app
+### 2.1 Locate the bundled app
 
 The generator ships with this plugin at `scripts/senzing_viz_server.py`. Resolve it in this
 order:
@@ -141,7 +141,7 @@ source src/scripts/senzing-env.sh
 
 On Windows, run `src\scripts\senzing-env.bat` first instead.
 
-### 9.2 Always produce the standalone snapshot first (the guarantee)
+### 2.2 Always produce the standalone snapshot first (the guarantee)
 
 Before starting the live server, run the app in build-only mode to (a) build the entity model
 and (b) write a **self-contained standalone HTML snapshot** the bootcamper keeps even if they
@@ -169,7 +169,7 @@ deliverable.
 headless capability is available it skips silently; otherwise keep the 2-3 best and embed them in
 this module's recap `Actions Taken`. This is never a 👉 question and never blocks the visualization.
 
-### 9.3 Start the live web app
+### 2.3 Start the live web app
 
 Start the server as a background process you can stop later in Step 11:
 
@@ -183,7 +183,7 @@ python3 <viz-server-path> \
 It prints `Visualization running: http://localhost:8080`. If port 8080 is in use, pass a
 different `--port` and tell the bootcamper the chosen URL.
 
-### 9.4 Verify the endpoints
+### 2.4 Verify the endpoints
 
 The app serves the live page at `/` plus four JSON APIs. Verify each (10-second timeout):
 
@@ -206,7 +206,7 @@ The live page renders four tabs, all populated from these APIs:
 4. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
    match key / resolution rule that linked it.
 
-### 9.5 Present it and give the guided tour
+### 2.5 Present it and give the guided tour
 
 Tell the bootcamper the app is running and where the saved copy is:
 
@@ -240,7 +240,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 
 - Port in use → pass a different `--port` and share the new URL.
 - Engine/SDK error → re-run Step 3 SDK initialization; confirm `config/engine_config.json`.
-- Snapshot not written → the model build failed; read stderr, fix the cause, and re-run 9.2.
+- Snapshot not written → the model build failed; read stderr, fix the cause, and re-run 2.2.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
 
@@ -273,12 +273,12 @@ search-enrichment specification are in `visualization-api-reference.md`. Even on
 path, still write a standalone snapshot to `docs/visualizations/truthset_verification.html` so
 the completion gate's guarantee holds.
 
-## Step 9.6: Optional — see the visualization server in your chosen language (learning exercise)
+## Step 3: Optional — see the visualization server in your chosen language (learning exercise)
 
-The bundled server is plugin infrastructure (see the note at Step 9's start), but a bootcamper who
+The bundled server is plugin infrastructure (see the note at Step 2's start), but a bootcamper who
 is curious how it would look in **their** programming language can opt in to a minimal, illustrative
 stub — purely a learning exercise, never a replacement. After the bootcamper confirms they are done
-exploring (Step 9.5), present this pinned 👉 offer, verbatim (INV-056), on its own turn (INV-005):
+exploring (Step 2.5), present this pinned 👉 offer, verbatim (INV-056), on its own turn (INV-005):
 
 👉 **Would you like me to also generate a minimal version of this visualization server in your chosen programming language, as a learning exercise?**
 
@@ -294,7 +294,7 @@ exploring (Step 9.5), present this pinned 👉 offer, verbatim (INV-056), on its
   deliverable (INV-077/INV-071/INV-081) — the stub does not replace it and is not required to run.
 - **No / not now:** acknowledge and proceed. This offer is optional and never blocks the module.
 
-**Checkpoint:** write step 9.6 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 3 to `config/bootcamp_progress.json`.
 
-When the bootcamper has finished exploring and the optional Step 9.6 offer has been handled, load
+When the bootcamper has finished exploring and the optional Step 3 offer has been handled, load
 `phase2-close.md`.

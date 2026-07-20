@@ -1,10 +1,10 @@
-# Module 3, Phase 2: Report and Close (steps 10–12)
+# Module 3, Phase 2: Report and Close (steps 9–11)
 
 Continues from Phase 1 (`phase1-verification.md`). Follow `../bootcamp-onboarding/ground-rules.md`;
 `🛑`/`⛔` are internal directives, never rendered. This closes **System Verification** only; the Truth
 Set visualization is a separate, standalone module that runs next when selected and has its own close.
 
-## Step 10: Verification Report Generation
+## Step 9: Verification Report Generation
 
 Generate a structured summary of the System Verification checks.
 
@@ -73,13 +73,13 @@ Generate a structured summary of the System Verification checks.
    Verification runs against synthetic data that is deterministic **by construction** (Step 2), so
    there is no external Truth Set provenance to record for System Verification.
 
-6. **If all checks passed:** proceed to Step 11 (Cleanup).
+6. **If all checks passed:** proceed to Step 10 (Cleanup).
 7. **If any checks failed:** do NOT proceed to cleanup. Advise the bootcamper to fix the issues
    and re-run Module 3 from the beginning.
 
-**Checkpoint:** write step 10 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 9 to `config/bootcamp_progress.json`.
 
-## Step 11: Cleanup
+## Step 10: Cleanup
 
 Clean up the synthetic verification data from the database. System Verification starts no web service,
 so there is nothing to terminate here (any web service belongs to the separate Truth Set
@@ -105,9 +105,9 @@ visualization module, which stops its own at its close).
 3. **Retain verification artifacts:** all generated files in `src/system_verification/` remain in
    place for reference.
 
-**Checkpoint:** write step 11 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 10 to `config/bootcamp_progress.json`.
 
-## Step 12: Module Close
+## Step 11: Module Close
 
 Complete **System Verification** using the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`. This module records only itself; the Truth Set
@@ -132,7 +132,7 @@ visualization is a separate, standalone module that records itself at its own cl
 
 *(Internal: end the turn on this question and wait.)*
 
-**Checkpoint:** write step 12 to `config/bootcamp_progress.json`.
+**Checkpoint:** write step 11 to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ System verification passed or explicitly skipped by the bootcamper. All 8
 System Verification checks passed + database purged of the synthetic `VERIFY` data +

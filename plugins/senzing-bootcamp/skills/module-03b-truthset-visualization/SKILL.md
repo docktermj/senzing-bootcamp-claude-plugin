@@ -43,7 +43,7 @@ System Verification, which runs immediately before it.
 - **When selected:** the visualization is MANDATORY. It MUST be produced; you must NOT transition to
   the next module until it exists and the bootcamper has been shown it. There is NO condition,
   threshold, or scenario under which you may then skip it — no session-length, token-budget,
-  redundancy, or time rationalization is ever valid. Step 9 is unconditional, and this module's
+  redundancy, or time rationalization is ever valid. Step 2 is unconditional, and this module's
   completion gate (`phase2-close.md`) re-checks that the visualization artifact exists and refuses
   to mark the module complete if it does not (INV-077).
 - **When not selected:** this module does not run at all. System Verification transitions straight
@@ -52,7 +52,7 @@ System Verification, which runs immediately before it.
 
 **Prerequisites:** the Senzing SDK is installed and initialized (Module 2), the engine is reachable,
 and System Verification has completed (or was run) — this module does NOT depend on System
-Verification having loaded any data; it **acquires and loads the Truth Set itself** (Step 9 setup in
+Verification having loaded any data; it **acquires and loads the Truth Set itself** (Step 1 in
 `phase1-visualization.md`).
 
 ## Error handling
@@ -72,21 +72,21 @@ When the bootcamper hits an error during this module:
 
 The Senzing MCP server is the primary and preferred TruthSet source; it always takes precedence.
 Only when `get_sample_data` exposes no named TruthSet (the response holds only the CORD collections:
-Las Vegas, London, Moscow) does this module (Step 9 setup) fall back to a sanctioned external source
+Las Vegas, London, Moscow) does this module (Step 1) fall back to a sanctioned external source
 for the demo TruthSet DATA.
 
 - **Sanctioned source:** reference it only by its registry identifier `senzing_truthset_demo`,
   declared in `config/fallback_sources.yaml`. Never embed a raw URL. The registry is the single
   reviewed place this source is defined. (The `config/fallback_sources.yaml` registry and its fetch
   script are a later porting phase; for now, if the registry file is absent, treat the fallback as
-  unavailable and run the graceful-degradation path in `phase1-visualization.md`, Step 9 setup, 9s.1.)
+  unavailable and run the graceful-degradation path in `phase1-visualization.md`, Step 1, 1.1.)
 - **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
   endpoint. This exception exists because the source is the official Senzing-published deterministic
   data with a ground-truth key, needed to preserve a deterministic "wow moment" when the MCP TruthSet
   is unavailable.
 - **Scope limit:** the fallback fetches TruthSet DATA only. All Senzing SDK facts, method
   signatures, and expected-behavior definitions continue to come from the MCP server.
-- Full detection, provenance recording, and graceful degradation live in the Step 9 setup flow in
+- Full detection, provenance recording, and graceful degradation live in the Step 1 flow in
   `phase1-visualization.md`.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
@@ -98,18 +98,18 @@ for the demo TruthSet DATA.
   entity-model build (one `get_entity_by_record_id` per record), never from direct SQL.
 - Kiro process control (`controlBashProcess`) maps here to running the web service as a background
   process and stopping it later at this module's close.
-- **Visualization (Step 9) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
+- **Visualization (Step 2) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
   This module runs it deterministically (build-only snapshot + live server), so the visualization is
   guaranteed to be produced every run rather than hand-written each time. This supersedes the Kiro
   `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
 
 ## Phases
 
-- **Phase 1: Visualization** (Step 9 setup + step 9), including the module-start apparatus:
+- **Phase 1: Visualization** (Steps 1–3), including the module-start apparatus:
   `phase1-visualization.md`. Acquires and loads the Truth Set itself, then stands up the
   interactive web app and the standalone snapshot. It also frames the bundled viz server as plugin
   infrastructure (not the bootcamper's generated code) and offers an optional language-native stub as
-  a learning exercise (Step 9.6) — the bundled snapshot stays the guaranteed deliverable.
+  a learning exercise (Step 3) — the bundled snapshot stays the guaranteed deliverable.
 - **Phase 2: Report and Close** (self-check + cleanup + module completion): `phase2-close.md`.
 - **Visualization API reference** (loaded on demand from Phase 1): `visualization-api-reference.md`
 
