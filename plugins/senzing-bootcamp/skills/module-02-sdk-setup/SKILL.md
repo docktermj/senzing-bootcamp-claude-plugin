@@ -375,11 +375,9 @@ no-license branch of Step 5c; nothing needs to be selected here.
 1. **Request a temporary evaluation license through the MCP server (in-flow):** the bootcamp
    can ask the Senzing MCP server to generate a temporary evaluation license by invoking the
    `submit_feedback` tool with the `license_request` category, which avoids waiting for email.
-   This path depends on the `submit_feedback` tool being enabled and reported as available by
-   the MCP server, so it may be unavailable in a given session and is not guaranteed. (In the
-   Kiro Power this tool was disabled by default in `mcp.json`; in the Claude plugin, ensure the
-   senzing MCP server's `submit_feedback` tool is enabled in Claude Code, and reconcile this
-   when finalizing the plugin's MCP config.)
+   This path depends on the `submit_feedback` tool being reported as available by the MCP server
+   (checked at runtime via `get_capabilities`), so it may be unavailable in a given session and is
+   not guaranteed.
 2. **Apply a license you already have:** if you already hold a `.lic` file or a Base64-encoded
    license key, you can place it at `licenses/g2.lic`.
 3. **Request a license through Senzing support:** request an evaluation license through
@@ -497,8 +495,8 @@ Present the available paths as distinct, individually selectable options:
    only when `submit_feedback` is reported available.* This path asks the Senzing MCP server to
    generate an evaluation license by invoking the `submit_feedback` tool with the
    `license_request` category. The evaluation license is delivered by email, and the email
-   contains a download link. This option requires the `submit_feedback` tool; in the Claude
-   plugin, ensure it is enabled in Claude Code (reconcile with the plugin's MCP config).
+   contains a download link. This option requires the `submit_feedback` tool, which the flow
+   verifies is available before presenting it.
 2. **Request a license through the external channel:** Contact <support@senzing.com> to
    request an evaluation license. Mention that you are using the Senzing Bootcamp and provide
    your name, organization, expected record count, and use case description. Expect a response

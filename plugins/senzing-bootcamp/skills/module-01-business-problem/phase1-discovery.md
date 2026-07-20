@@ -161,9 +161,7 @@ Paths:
 
 1. **Request via MCP (in-flow):** *only if `submit_feedback` is available.* Invoke
    `submit_feedback` once with the `license_request` category; the license arrives by email
-   with a download link. (In the Kiro Power this tool was disabled by default in `mcp.json`; in
-   the Claude plugin, ensure the senzing MCP server's `submit_feedback` tool is enabled in
-   Claude Code: reconcile this when finalizing the plugin's MCP config.)
+   with a download link.
 2. **External channel:** email <support@senzing.com>, mention the Senzing Bootcamp, include
    name, org, expected record count, use case. Response in 1–2 business days.
 3. **Apply an existing Senzing License Key:** follow Step 5c.

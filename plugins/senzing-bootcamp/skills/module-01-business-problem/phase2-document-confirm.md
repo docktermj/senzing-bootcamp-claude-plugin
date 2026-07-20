@@ -7,7 +7,7 @@ Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal direc
 Invite the bootcamper to share any diagrams. Ask this single, pinned 👉 question, verbatim
 (INV-056), and end the turn on it:
 
-👉 **Do you have any diagrams of your data architecture or flows you'd like to share?**
+👉 **Do you have any diagrams of your data architecture and flows you'd like to share?**
 
 It has exactly one meaning each (INV-008): "yes" means they will share diagrams (data
 architecture, data flows, or example records); "no" alone means proceed with the scenario as
