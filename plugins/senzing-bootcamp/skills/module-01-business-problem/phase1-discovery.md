@@ -1,4 +1,4 @@
-# Module 1, Phase 1: Discovery (steps 1–8)
+# Module 1, Phase 1: Discovery (steps 1–6)
 
 Discovery and gap-filling. Follow the ground rules. `🛑`/`⛔` are internal directives: do not
 render them; signal a stop by ending the turn on the single 👉 question and waiting.
@@ -235,31 +235,11 @@ what they already covered.
 - 6d (desired outcome): 👉 **What does the end result look like? Reply with a number:** (1) a clean master list, (2) an API, (3) reports, (4) something else.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
-undetermined items remain, proceed immediately to Step 7 in the same turn (Step 7's question is
-the closing question).
+undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load
+`phase2-document-confirm.md`).
 
-## 7. Software integration (separate question)
-
-👉 **Will the results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
-
-*(Internal: end the turn and wait.)* On **yes**, ask one follow-up on the next turn — "👉 **Which
-systems?**" — and record the specific systems named (e.g. Elasticsearch, Salesforce) for the
-problem statement and solution approach. On **no**, record none and continue. **Checkpoint:** write step 7.
-
-## 8. Deployment target (optional)
-
-Deployment is addressed for every bootcamper in the graduation production project and migration
-checklist, so capturing a target now is optional — it just helps tailor that output. Ask this as
-a single, separate question:
-
-👉 **Where do you plan to deploy the final solution? Reply with a number:**
-
-1. A cloud hyperscaler (AWS/Azure/GCP).
-2. A container platform (Kubernetes/Docker Swarm).
-3. Local / on-premises.
-4. Not sure yet.
-
-Reassure: "We'll develop everything locally first; deployment is addressed in the graduation production project and migration checklist." Persist
-`deployment_target` (`aws`/`azure`/`gcp`: also set `cloud_provider`; `kubernetes`/
-`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4). **Checkpoint:** step 8.
-Proceed to Phase 2.
+(The software-integration and deployment-target questions were relocated to **Bootcamp
+preparation** — see `../bootcamp-preparation/SKILL.md` — where all setup questions live (INV-088).
+Their answers are persisted in `config/bootcamp_preferences.yaml` (`integration_targets`,
+`deployment_target`/`cloud_provider`) and read from there by the problem statement (Phase 2) and by
+graduation; do not re-ask them here (INV-006).)

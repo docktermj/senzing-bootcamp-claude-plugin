@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## relocate-setup-questions-to-bootcamp-preparation
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `specs/INVARIANTS.md`
+- **Summary:** Moved the software-integration and deployment-target questions out of Module 1 Phase 1 (removed Steps 7–8; Phase 1 is now steps 1–6 and flows straight to Phase 2) into Bootcamp preparation as new Steps 4a (software integration) and 4b (deployment target), each a pinned-verbatim 👉 question ending its own turn (INV-005/INV-051/INV-056). Their answers (`integration_targets`, `deployment_target`/`cloud_provider`) are held for the single consolidated write (INV-058) and persisted to `config/bootcamp_preferences.yaml`; the Module 1 problem statement (`phase2-document-confirm.md`) and graduation already read `deployment_target` from preferences and now read `integration_targets` from there too (dangling "from Step 7" references reconciled). Maintainer chose to move both (dependency tension resolved by phrasing them as forward-looking intent). Verified: no `Step 7/8` refs remain in Module 1; the two questions appear only in Bootcamp preparation; consumers read from preferences. Follow-up noted: the shipped example recap still shows the integration Q under a module section (fixture refresh, out of scope). Introduced **INV-088** (maintainer-approved).
+- **Commit:** uncommitted
+
 ## consolidate-results-dashboard-offer-in-module7
 
 - **Implemented:** 2026-07-20
