@@ -113,6 +113,16 @@ builds the entity model from the loaded records (one `get_entity_by_record_id` c
 using `SZ_ENTITY_DEFAULT_FLAGS`, which includes all relations, so it never queries the database
 directly), then serves the live app plus the four APIs below.
 
+**Why this is a bundled Python app and not your chosen programming language.** The visualization
+server is **plugin infrastructure** — a shipped, tested tool like the bootcamp's Python hooks
+(INV-052) — not part of the code *you* generate in this bootcamp. Shipping it once is what
+guarantees the deterministic "wow moment" (INV-077), offline rendering with vendored D3 (INV-071),
+and the Senzing brand look (INV-081) on every workstation; a freshly generated per-run server could
+not promise those. Your actual bootcamp deliverables — transform, load, and query code — are still
+generated in your chosen programming language. (Honor verbosity: keep this brief or omit it at the
+`minimal` preset, and surface it especially if the bootcamper asks what language the visualization
+uses. A bootcamper who wants to see it in their own language can opt in at Step 9.6.)
+
 ### 9.1 Locate the bundled app
 
 The generator ships with this plugin at `scripts/senzing_viz_server.py`. Resolve it in this
@@ -263,4 +273,28 @@ search-enrichment specification are in `visualization-api-reference.md`. Even on
 path, still write a standalone snapshot to `docs/visualizations/truthset_verification.html` so
 the completion gate's guarantee holds.
 
-When the bootcamper confirms they are done exploring, load `phase2-close.md`.
+## Step 9.6: Optional — see the visualization server in your chosen language (learning exercise)
+
+The bundled server is plugin infrastructure (see the note at Step 9's start), but a bootcamper who
+is curious how it would look in **their** programming language can opt in to a minimal, illustrative
+stub — purely a learning exercise, never a replacement. After the bootcamper confirms they are done
+exploring (Step 9.5), present this pinned 👉 offer, verbatim (INV-056), on its own turn (INV-005):
+
+👉 **Would you like me to also generate a minimal version of this visualization server in your chosen programming language, as a learning exercise?**
+
+*(Internal: end the turn and wait.)*
+
+- **Yes:** generate a small stub in `programming_language` (from `config/bootcamp_preferences.yaml`)
+  under `src/server/` (INV-050) — a tiny HTTP server exposing the `/api/stats` and `/api/graph`
+  response shapes from `visualization-api-reference.md`, modeled on the MCP resource
+  `@plugin:senzing-bootcamp:senzing:senzing://privacy-policy` and on `sdk_guide` / `generate_scaffold`.
+  Every Senzing SDK specific (method/attribute names, flags) MUST come from the Senzing MCP tools,
+  never training data (INV-080). Make clear it is a learning artifact: the **bundled** snapshot at
+  `docs/visualizations/truthset_verification.html` remains the guaranteed, brand-consistent, offline
+  deliverable (INV-077/INV-071/INV-081) — the stub does not replace it and is not required to run.
+- **No / not now:** acknowledge and proceed. This offer is optional and never blocks the module.
+
+**Checkpoint:** write step 9.6 to `config/bootcamp_progress.json`.
+
+When the bootcamper has finished exploring and the optional Step 9.6 offer has been handled, load
+`phase2-close.md`.

@@ -107,7 +107,9 @@ for the demo TruthSet DATA.
 
 - **Phase 1: Visualization** (Step 9 setup + step 9), including the module-start apparatus:
   `phase1-visualization.md`. Acquires and loads the Truth Set itself, then stands up the
-  interactive web app and the standalone snapshot.
+  interactive web app and the standalone snapshot. It also frames the bundled viz server as plugin
+  infrastructure (not the bootcamper's generated code) and offers an optional language-native stub as
+  a learning exercise (Step 9.6) — the bundled snapshot stays the guaranteed deliverable.
 - **Phase 2: Report and Close** (self-check + cleanup + module completion): `phase2-close.md`.
 - **Visualization API reference** (loaded on demand from Phase 1): `visualization-api-reference.md`
 

@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## visualization-server-in-chosen-language
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/SKILL.md`
+- **Summary:** Maintainer chose **reframe + opt-in stub** (not replacing the bundled server). Added a Step 9 framing note explaining the bundled `senzing_viz_server.py` is plugin infrastructure — a shipped, tested tool like the Python hooks (INV-052), not the bootcamper's generated code — which is what guarantees the deterministic (INV-077), offline (INV-071), brand-consistent (INV-081) "wow moment," while their transform/load/query deliverables stay in the chosen language. Added optional **Step 9.6**: a pinned-verbatim (INV-056), one-question-per-turn (INV-005) offer to generate a minimal language-native viz-server stub under `src/server/` (INV-050) as a learning exercise, MCP-sourced (INV-080), with the bundled snapshot remaining the guaranteed deliverable and the offer never blocking. Did **not** replace the bundled server (would break INV-071/081/077 — spec marks that out of scope). The module SKILL.md already framed the server as infrastructure; its Phase 1 bullet now also notes the opt-in. AC verified: framing note + Step 9.6 present; bundled path unchanged; stub is opt-in, MCP-sourced, snapshot-guaranteed. No new invariant (honors INV-071/077/081/080/052).
+- **Commit:** uncommitted
+
 ## relocate-setup-questions-to-bootcamp-preparation
 
 - **Implemented:** 2026-07-20
