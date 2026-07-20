@@ -5,6 +5,27 @@ packaged as a Claude Code plugin.
 Install it, then say **"start the bootcamp"** to be guided through
 a hands-on, module-by-module tutorial.
 
+## What the bootcamp covers
+
+A guided sequence of hands-on modules takes you from zero to working entity
+resolution:
+
+- **Module 0** *(optional)* — Entity Resolution Concepts primer
+- **Module 1** — Discover the Business Problem
+- **Module 2** — SDK Installation and Configuration
+- **Module 3** — System Verification
+- **Truth Set Visualization** — stand up an interactive web app of the resolved
+  data (the "wow moment")
+- **Module 4** — Identify and Collect Data Sources
+- **Module 5** — Data Quality & Mapping
+- **Module 6** — Data Processing
+- **Module 7** — Query, Visualize, and Discover
+- **Graduation** — a recap PDF and a `production/` starter project
+
+You finish with working Senzing code and data in your project, a professional
+recap PDF you can keep and share, and a production starter — see
+[What you finish with](#what-you-finish-with) for details.
+
 ## Requirements
 
 - Network access to the [Senzing MCP server].
@@ -25,7 +46,7 @@ installing the Claude app,
 installing the Senzing Bootcamp plugin,
 and starting the Bootcamp.
 
-1. Download and install [Claude Code].
+1. Download and install the [Claude app].
 1. Start Claude app.
 1. In the Claude app,
     1. In the left-hand pane, choose "**</> Code**".
@@ -50,7 +71,11 @@ and starting the Bootcamp.
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5**".
     1. Choose the Effort: "**medium**".
-1. In the Claude App near the bottem in the agentic chat, enter:
+    1. *Recommended:* run most modules on **Sonnet 5**, but switch the Model to
+       **Opus 4.8** for the correctness-critical stretches — Modules 2 and 5, and
+       graduation — then back to **Sonnet 5** afterward. Full per-module breakdown:
+       [`plugins/senzing-bootcamp/docs/model-selection.md`](plugins/senzing-bootcamp/docs/model-selection.md).
+1. In the Claude app near the bottom in the agentic chat, enter:
 
     ```console
     Start the bootcamp
@@ -142,7 +167,7 @@ and a `production/` starter project.
     ```
 
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
-[Claude Code]: https://claude.com/product/claude-code
+[Claude app]: https://claude.ai/download
 [Claude Code for VSCode]: https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp
 [Senzing]: https://senzing.com
