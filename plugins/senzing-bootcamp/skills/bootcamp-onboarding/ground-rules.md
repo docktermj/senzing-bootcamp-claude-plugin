@@ -192,6 +192,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 ## Module start banners and transitions
 
+- **Never show a module number to the bootcamper (INV-079).** In *every* bootcamper-facing line — the module-start banner, the journey map, transition questions, and especially casual acknowledgments such as "Great, moving on to …" — refer to a module by its **name** ("Discover the Business Problem"), never its number ("Module 1"). Module numbers are internal only (skill directory names, prerequisites, section headings, `config/*` keys) and MUST NOT appear in anything the bootcamper reads. When acknowledging a transition, use the next module's **name** — the same name shown in the journey map and the "…next module: {name}?" question.
 - At every module start, BEFORE any module work: read progress, then show the module start
   banner, a journey map (the **selected** modules — from `selected_modules` in
   `config/bootcamp_preferences.yaml` — marked by position relative to `current_module`: ✅ for

@@ -266,7 +266,7 @@ Hand off to the first module in `selected_modules` after `bootcamp_preparation`:
 - If **Entity Resolution Concepts** is selected → invoke `module-00-entity-resolution-concepts`
   (it runs the primer directly; its skip/keep gate has been retired — inclusion is driven by this
   selection).
-- Otherwise → invoke `module-01-business-problem` to begin Module 1.
+- Otherwise → invoke `module-01-business-problem` to begin Module 1 — **Discover the Business Problem** (name it to the bootcamper, never "Module 1").
 
 The selected numbered modules then run in order per `selected_modules`, each ending with the
 standard module completion process in `../bootcamp-onboarding/module-completion.md`, and the

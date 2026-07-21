@@ -217,7 +217,7 @@ Create `docs/data_source_evaluation.md`:
 
 **Reason:** [Why it needs mapping or is compliant]
 
-**Next step:** [Phase 2 (mapping) / Module 6 (loading)]
+**Next step:** [Phase 2 (mapping) / Data processing (loading)]
 
 ### Data Source 2: [Name]
 [Same structure]

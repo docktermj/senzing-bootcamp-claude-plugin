@@ -24,7 +24,7 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
 
    ```text
    ⚠️ Skipping system verification. If you encounter issues in later modules
-   (data loading failures, SDK errors), Module 3 can help diagnose them.
+   (data loading failures, SDK errors), system verification can help diagnose them.
    Say "run verification" at any time to come back.
    ```
 

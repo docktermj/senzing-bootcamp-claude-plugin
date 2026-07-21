@@ -57,6 +57,7 @@ Follow `concepts.md` in this skill directory:
 ## 2. Hand off to Module 1
 
 When the bootcamper signals they are ready to move on (Step 1's gate), invoke the
-`module-01-business-problem` skill to begin Module 1, applying the module-start banner and journey
+`module-01-business-problem` skill to begin Module 1 — **Discover the Business Problem** (name the
+module to the bootcamper, never "Module 1") — applying the module-start banner and journey
 map from `ground-rules.md`. The selected numbered modules then run in the order recorded in
 `selected_modules` (Module 1 is the next module after Module 0 in every path).
