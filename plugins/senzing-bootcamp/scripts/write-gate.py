@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse gate for Write/Edit: block writes into the system temp or Downloads
+"""PreToolUse gate for Write/Edit: to block writes into the system temp or Downloads
 directory, and block obvious secrets -- DURING a bootcamp only.
 
 Cross-platform: invoked in exec form (``python3 <path>``) so no shell is required.

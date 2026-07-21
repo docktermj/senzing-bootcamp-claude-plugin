@@ -5,13 +5,21 @@ description: 'Bootcamp Module 1: Discover the Business Problem. Use when the boo
 
 # Module 1: Discover the Business Problem
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). Execute every numbered step one at a time, in
 order. Never skip, combine, or abbreviate a step containing a 👉 question: this has the same
 absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** You may have seen a demo, but you don't yet have a defined problem or plan.
 After this module you'll have a documented business problem, identified data sources, and clear
@@ -34,7 +42,10 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase 1: Discovery** (steps 1–9): `phase1-discovery.md`
-- **Phase 2: Document and Confirm** (steps 10–18): `phase2-document-confirm.md`
+- **Phase 1: Discovery** (steps 1–6): `phase1-discovery.md`
+- **Phase 2: Document and Confirm** (steps 9–17): `phase2-document-confirm.md`
+
+(Steps 7–8 — the former software-integration and deployment-target questions — were relocated to
+Bootcamp preparation (INV-088), so Phase 2 intentionally resumes at step 9.)
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.

@@ -1,4 +1,4 @@
-# Module 6, Phase A: Build Loading Program (steps 1–4)
+# Module 6, Phase A: Build Loading Program (steps 1–4a)
 
 Follow the ground rules. `🛑`/`⛔` are internal control directives, never render them; signal
 a stop by ending the turn on the single 👉 question and waiting. All loading, redo, and query
@@ -13,7 +13,7 @@ Complete these three checks before starting step 1.
 Read `config/data_sources.yaml` and check `test_load_status` per source:
 
 - **`complete`**, Phase 3 was done in Module 5. Acknowledge: "You already test-loaded this
-  source in Module 5 Phase 3 and saw [entity_count] entities. Module 6 builds on that with
+  source during Data quality & mapping (Phase 3) and saw [entity_count] entities. Data processing builds on that with
   production-quality loading, error handling, progress tracking, throughput optimization, redo
   processing, and incremental strategies." Skip the basic test-load step and go straight to the
   production loading workflow.
@@ -81,11 +81,13 @@ licensing as a default the bootcamper already has, never as a hard cap:
 
 ## 2. Identify the input data
 
-Determine where the Senzing-formatted JSON records are for the first data source:
+Determine where each source's Senzing-formatted JSON records are — read the source's `file_path`
+from `config/data_sources.yaml` rather than assuming a fixed directory:
 
-- Output from a transformation program (Module 5), in `data/transformed/`
-- Direct Entity Specification-compliant data files
-- Database query results or API responses
+- Mapped sources: transformation output from Module 5, in `data/senzing-ready/`
+- Fast-pathed CORD / already-Senzing-ready sources (`fast_pathed: true`): the original file in
+  `data/raw/`, which Module 5's fast-path kept as the source's `file_path` (no transformation)
+- Direct Entity Specification-compliant data files; database query results or API responses
 
 Update the source's `load_status` to `loading` in `config/data_sources.yaml` and set
 `updated_at`.
@@ -137,6 +139,41 @@ SDK code. Call `sdk_guide(topic='load')` for platform-specific loading patterns.
 
 **Checkpoint:** write step 4.
 
+## 4a. Register the data source codes (before loading)
+
+Register every `DATA_SOURCE` code present in the data about to be loaded into the Senzing
+configuration **before** the Phase B load, so the first load does not fail with
+`SENZ2207: Data source code [...] does not exist`. Senzing does not auto-create data source
+codes — they must be registered in the active config first — and the default config seeded in
+Module 2 (SDK setup) knows none of the bootcamper's codes, because the data was collected
+afterward (Module 4). This mirrors the register-before-load step that System Verification and the
+Truth Set visualization module already run.
+
+1. **Determine the codes to register.** Collect the distinct `DATA_SOURCE` values present in the
+   record(s) about to be loaded — from the Senzing-ready JSONL in `data/senzing-ready/` for mapped
+   sources, and from the original file in `data/raw/` for `fast_pathed: true` CORD /
+   already-Senzing-ready sources — cross-checked against the source's entry in
+   `config/data_sources.yaml`. Never register a code that is not present in the data.
+2. **Generate the registration code from the MCP server** (never hand-write it): call
+   `sdk_guide(topic='configure')` (and `generate_scaffold` if it exposes a data-source
+   registration workflow) in the language read from `programming_language` in
+   `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it to
+   `src/load/register_data_sources.[ext]` (INV-018). The generated code MUST load the current
+   default config, register each code from step 1, set the updated config as the new default, and
+   be **idempotent** — a code already registered is treated as success, not an error, so re-runs
+   and multi-source orchestration stay safe.
+3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
+   Rust, TypeScript), using the same per-language build command as the loader.
+4. **Execute it before the Phase B load.** On success, record the registered codes in
+   `config/data_sources.yaml`. On failure, capture the output, call `explain_error_code` for any
+   SENZ codes, and report with remediation; the loading program's generic SENZ handling remains a
+   fallback.
+
+In Phase C (multiple sources), register each additional source's code the same way before its
+load — idempotently, so re-registering an existing code is a no-op.
+
+**Checkpoint:** write step 4a to `config/bootcamp_progress.json`.
+
 ## SQLite volume pre-load check (stop-and-confirm heads-up, not a mandatory gate)
 
 Run this once at the end of Phase A, immediately before the Phase B load begins. This is a
@@ -153,16 +190,25 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    AND the database is SQLite AND it was not already decided. For demo/small tiers, any
    non-SQLite engine, indeterminate inputs, or an already-recorded choice: say nothing new about
    volume/SQLite and proceed to the Phase B load.
-4. **When prompting**, explain that SQLite entity resolution slows as the database grows and
-   present two choices, then end the turn and wait (internal stop), do not start the load yet:
-   - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
-     "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
-     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
+4. **When prompting**, explain that SQLite entity resolution slows as the database grows, then end
+   the turn on this pinned question (INV-056), verbatim — a neutral lead + numbered list (INV-051) —
+   and wait (internal stop); do not start the load yet:
+
+   👉 **Loading this data volume into SQLite may slow entity resolution as the database grows. How would you like to proceed? Reply with a number:**
+
+   1. Proceed on SQLite.
+   2. Migrate to PostgreSQL.
+
+   *(Internal: end the turn on this question and wait.)* Then act on the choice:
+
    - **Proceed on SQLite:** record `sqlite_volume_prompt` = `{decided: true, choice: "proceed",
      tier, raw_value}` in preferences, then continue to the Phase B load. Do not re-present this
      prompt for the same load.
+   - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
+     "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
+     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
 
-*(Internal: when this heads-up fires, end the turn on the two-choice question and wait.)* Use
+*(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro
 helpers `volume_utils.py`, `preferences_utils.py`, `load_time_warning.py`, and the migration
 guide are later porting phases; apply the logic inline and refer to the graduation migration checklist for PostgreSQL migration for

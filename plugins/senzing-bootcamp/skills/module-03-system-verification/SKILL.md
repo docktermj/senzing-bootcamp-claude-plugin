@@ -1,9 +1,17 @@
 ---
 name: module-03-system-verification
-description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, or needs to verify the Senzing system works, visualize results, and produce a verification report.'
+description: 'Bootcamp Module 3: System Verification. Use when the bootcamper starts or resumes Module 3, or needs to verify the Senzing system works end-to-end and produce a verification report. (The Truth Set visualization is a separate, standalone module run next.)'
 ---
 
 # Module 3: System Verification
+
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
 
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). Execute every numbered step one at a time, in
@@ -12,23 +20,28 @@ absolute precedence as a mandatory gate, and no internal reasoning (session leng
 or token budget) can override it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
-**Language:** Use the bootcamper's chosen language for all code generation and verification
-scripts.
+**Language:** Use the bootcamper's chosen language — read `programming_language` from
+`config/bootcamp_preferences.yaml` (persisted in Bootcamp preparation) at each code-generation
+step — for all code generation and verification scripts. Never fall back to a hardcoded language.
 
 **Prerequisites:** Module 2 complete (SDK installed and configured).
 
 **Before/After:** Before, the SDK is installed but untested end to end. After, your entire
-system is verified: SDK initialization, code generation, compilation, data loading, entity
-resolution, database operations, and web service scaffolding all confirmed working.
+system is verified against **synthetic records**: SDK initialization, code generation,
+compilation, data loading, entity resolution, and database operations all confirmed working. (The
+interactive Truth Set web-app visualization is a separate, standalone module, run next when selected.)
 
-**Success indicator:** ✅ All 11 verification checks report "passed", the Verification Report
-is persisted to `config/bootcamp_progress.json`, the web service and database are cleaned up,
-and gate 3→4 is marked completed (full criteria in `phase1-verification.md`).
+**Success indicator:** ✅ All 8 System Verification checks report "passed" (against synthetic data);
+the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic `VERIFY` data
+is purged from the database; and gate 3→4 is marked completed (full criteria in
+`phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
+own `web_service`/`web_page` checks, snapshot, and cleanup.)
 
-> **User reference:** for detailed background on this module, see
-> `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md`.
+> **User reference:** detailed background on this module lives in the walkthrough above; a
+> standalone `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference is a later porting phase and
+> is not created yet.
 
 ## Error handling
 
@@ -37,62 +50,48 @@ When the bootcamper hits an error during this module:
 1. **SENZ error code** (message contains `SENZ` + digits, e.g. `SENZ2027`): call
    `explain_error_code(error_code="<code>", version="current")` and include the explanation in
    the Fix_Instruction.
-2. **Known pitfalls** (port conflicts on 8080, database lock contention, missing language
+2. **Known pitfalls** (database lock contention, missing language
    toolchains, MCP proxy connectivity): the full `common-pitfalls` reference is a later porting
    phase; for now use `search_docs` to look up the symptom.
 3. **Cross-module resources:** SDK install/config issues -> Module 2 remediation; MCP issues ->
    connectivity troubleshooting; language toolchains -> platform-specific SDK guide via
    `sdk_guide`.
-4. **Timeouts:** each step has an explicit timeout (MCP 10s, TruthSet 30s, SDK init 30s, build
-   120s, data loading 120s, web service 10s per endpoint). On timeout, terminate the process,
+4. **Timeouts:** each step has an explicit timeout (MCP 10s, SDK init 30s, build 120s, data
+   loading 120s). On timeout, terminate the process,
    record a fail with a timeout Fix_Instruction, and continue to the next check (no
    short-circuit).
 
-## TruthSet source (MCP-first, with sanctioned fallback)
-
-The Senzing MCP server is the primary and preferred TruthSet source; it always takes
-precedence. Only when `get_sample_data` exposes no named TruthSet (the response holds only the
-CORD collections: Las Vegas, London, Moscow) does Step 2 fall back to a sanctioned external
-source for the demo TruthSet DATA.
-
-- **Sanctioned source:** reference it only by its registry identifier `senzing_truthset_demo`,
-  declared in `config/fallback_sources.yaml`. Never embed a raw URL. The registry is the single
-  reviewed place this source is defined. (The `config/fallback_sources.yaml` registry and its
-  fetch script are a later porting phase; for now, if the registry file is absent, treat the
-  fallback as unavailable and run the Step 2a graceful-degradation path.)
-- **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
-  endpoint. This exception exists because the source is the official Senzing-published
-  deterministic data with a ground-truth key, needed to preserve deterministic verification
-  when the MCP TruthSet is unavailable.
-- **Scope limit:** the fallback fetches TruthSet DATA only. All Senzing SDK facts, method
-  signatures, and expected-behavior definitions continue to come from the MCP server.
-- Full detection, provenance recording, and graceful degradation live in the Step 2 flow in
-  `phase1-verification.md`.
+System Verification uses **synthetic records** and never touches the Truth Set. The Truth Set is
+acquired, loaded, and visualized exclusively by the separate, standalone **Truth Set visualization**
+module (`../module-03b-truthset-visualization/`), which documents its own TruthSet source and
+fallback.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
 
 - Entity operations (query, read by entity ID, search by attributes, why/how, relationship
   network, export) are NOT direct tools on this MCP server. Generate the SDK code for them via
   `get_sdk_reference` + `sdk_guide` and run it. Never generate SQL against `database/G2C.db`.
-- Counts, statistics, and visualization data come from `reporting_guide` and from the generated
-  SDK export code, never from direct SQL.
-- Kiro process control (`controlBashProcess`) maps here to running the web service as a
-  background process and stopping it later in Phase 3.
-- **Visualization (Step 9) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
-  Phase 2 runs it deterministically (build-only snapshot + live server), so the visualization is
-  guaranteed to be produced every run rather than hand-written each time. This supersedes the Kiro
-  `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
+- Counts and statistics come from `reporting_guide` and from the generated SDK export code, never
+  from direct SQL.
+- System Verification starts **no** web service (Agent Rule 9). Any web service belongs to the
+  separate Truth Set visualization module, which starts and stops it within its own phases.
 - Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`) are
   later porting phases; where referenced, perform the described action directly (write markers to
   `config/bootcamp_progress.json`, fetch/build inline, etc.).
 
 ## Phases
 
-- **Phase 1: Verification Pipeline** (steps 1–8, plus opt-out gate and graceful degradation):
-  `phase1-verification.md`
-- **Phase 2: Visualization** (step 9, mandatory gate): `phase2-visualization.md`
-- **Phase 3: Report and Close** (steps 10–12): `phase3-report-close.md`
-- **Visualization API reference** (loaded on demand from Phase 2):
-  `visualization-api-reference.md`
+- **Phase 1: Verification Pipeline** (steps 1–8, plus the opt-out gate): `phase1-verification.md`.
+  Verifies against **synthetic records** generated in Step 2 — System Verification does not touch
+  the Truth Set.
+- **Phase 2: Report and Close** (steps 9–11): `phase2-report-close.md`. Records
+  `system_verification`, purges the synthetic `VERIFY` data, and transitions to the next selected
+  module.
+
+The **Truth Set visualization** is a separate, standalone module
+(`../module-03b-truthset-visualization/`, `truthset_visualization`) that runs **after** this one when
+selected (always in Core; in Customized only if chosen). System Verification hands off to it after
+Phase 2 closes; when it is not selected, the next module is Data collection. It is **not** a sub-step
+of System Verification (INV-086/INV-087).
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.

@@ -68,6 +68,13 @@ steering files.)
 - **Flags:** before an SDK call that accepts flags, look them up with
   `get_sdk_reference(topic='flags')`, pick the flags matching the bootcamper's intent, explain
   the choice in one sentence, and reuse that knowledge within the module.
+- **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
+  bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
+  examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via
+  Senzing docs" or a one-line "Sourced from Senzing docs via the MCP server." This is a trust
+  signal, not a replacement for MCP sourcing; keep it lightweight and honor verbosity
+  (INV-011/INV-012) — suppress it at the `minimal` preset. Attribute to the MCP server only what
+  an MCP tool actually produced this turn (attribution must be truthful).
 
 ## No direct SQL against the Senzing database
 
@@ -102,12 +109,26 @@ steering files.)
   correctness and readability — do NOT spend effort making them CommonMark-lint-clean as you go.
   No fussing over `**Label:**` colon spacing, blank lines around headings/lists/fenced blocks
   (MD022/MD031/MD032), or fenced-code info strings (MD040). There is no need for "pretty" Markdown
-  until the end: graduation runs a single normalization pass over the `.md` files before the trophy
+  until the end: graduation runs a single normalization pass over the `.md` files before the recap
   PDF renders (see `../graduation/SKILL.md`). Keeping incremental writes plain reduces edit churn
   (INV-058) and keeps the teaching flow uncluttered (INV-012).
-- Structure still matters even while formatting is deferred: recap sections keep their
-  `## Module N:` heading and the four required subsections (see `module-completion.md`), and the
-  placement rules above are unchanged.
+- Structure still matters even while formatting is deferred: recap sections keep their name-based
+  `## {Module name}` heading and the four required subsections (see `module-completion.md`), and
+  the placement rules above are unchanged.
+
+## Visual deliverables (Senzing brand)
+
+- **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
+  deliverable the bootcamp produces — the Truth-Set visualization web app and its standalone
+  snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
+  Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
+  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
+  palette. The bundled generators (`senzing_viz_server.py`, `generate_recap_pdf.py`) already
+  consume those tokens; any new generator should too. Key rules: dark backgrounds are
+  Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
+  live/resolved states (never decorative), light sections are warm off-white (never cold grey),
+  and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
+  INV-071). "Where appropriate" leaves plain functional/dev output unbranded.
 
 ## Progress and state
 
@@ -124,9 +145,11 @@ steering files.)
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
-- Preferences chosen during the onboarding preface (verbosity, track, programming language, name)
-  are collected across the gates and persisted in **one** consolidated write at the end of the
-  preface — not one write per gate (see `onboarding-flow.md`).
+- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language,
+  `git_init`, `os`/`arch`, `integration_targets`, `deployment_target`/`cloud_provider`) are asked in the **Bootcamp preparation** module and persisted in **one**
+  consolidated write at the end of that module — not one write per gate (see
+  `../bootcamp-preparation/SKILL.md`). The bootcamper's `name` is **detected** there (from
+  `git config user.name` or the environment), not asked, and persisted in that same write.
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
   accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped
@@ -138,10 +161,13 @@ steering files.)
 
 ## Verbosity
 
-- Presets: **concise**, **standard** (default), **detailed**. Persist under a `verbosity` key
-  in preferences. The bootcamper can say "change verbosity" or "more code walkthroughs" at any
-  time. (The full five-category verbosity system is condensed here; expand it when
-  `verbosity-control` is ported.)
+- Presets: **minimal**, **concise**, **standard** (default), **detailed** (category levels
+  0/1/2/3). Persist under a `verbosity` key in preferences. The bootcamper can say "change
+  verbosity" or "more code walkthroughs" at any time. **minimal** is near-zero explanatory output
+  (all five categories at 0) for experts who want to move fast; it reduces only explanatory output
+  and NEVER suppresses required output — 👉 questions, gates, module banners, end-of-module
+  summaries, and the recap always appear. (The full five-category verbosity system is
+  condensed here; expand it when `verbosity-control` is ported.)
 
 ## Any-time bootcamper controls
 
@@ -150,9 +176,12 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 - **Bootcamp feedback:** whenever the bootcamper says "bootcamp feedback", "I have feedback",
   "report an issue", or similar, run the feedback workflow in `feedback.md` and append the entry
-  to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. Then return them to exactly where they
-  left off. Feedback is saved locally only, never submitted externally unless they explicitly
-  ask. (The plugin's `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
+  to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. The workflow opens with a pinned
+  **BOOTCAMP FEEDBACK** entry banner and closes with a pinned **FEEDBACK SAVED — BACK TO THE
+  BOOTCAMP** exit banner (a statement) before the pending 👉 question resumes, so feedback mode is
+  visually distinct from the bootcamp. Then return them to exactly where they left off. Feedback
+  is saved locally only, never submitted externally unless they explicitly ask. (The plugin's
+  `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
 - **Change verbosity:** whenever they ask for more or less detail, update the `verbosity` key in
   `config/bootcamp_preferences.yaml`, confirm the new setting in one sentence, and continue.
 - **Repeat the question:** if they ask to hear the current question again ("repeat that", "what
@@ -164,9 +193,26 @@ never count against the one-question-per-turn rule and must not be treated as ga
 ## Module start banners and transitions
 
 - At every module start, BEFORE any module work: read progress, then show the module start
-  banner, a journey map (modules in the selected track marked ✅ complete / 🔄 current / ⬜
-  upcoming), before/after framing, and a brief numbered step overview. Never skip these - they
-  orient the bootcamper.
+  banner, a journey map (the **selected** modules — from `selected_modules` in
+  `config/bootcamp_preferences.yaml` — marked by position relative to `current_module`: ✅ for
+  modules already experienced, i.e. those before `current_module` in the list, including the
+  apparatus-exempt Bootcamp preparation and Module 0 which are never in `modules_completed`;
+  🔄 for the current module; ⬜ for upcoming), before/after
+  framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
+- **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
+  in the **Bootcamp preparation** module (`../bootcamp-preparation/SKILL.md`): **Core** includes
+  every module in order; **Customized** includes the required modules plus whichever optional
+  modules the bootcamper chose. Required modules always run; a deselected optional module is a
+  requested skip (INV-014). The journey map shows exactly the selected modules, in order, by name —
+  not a fixed 1–7 range.
+- **Bootcamp preparation and Module 0 are lightweight setup/preamble modules.** The Bootcamp
+  preparation module (setup + module selection, always first) and the optional entity-resolution
+  concepts primer (`../module-00-entity-resolution-concepts/SKILL.md`, run **only when selected** —
+  its old skip/keep gate is retired; inclusion is driven by the Bootcamp preparation selection,
+  INV-078) do NOT run the per-module apparatus above (no journey map, no before/after, no step
+  overview, no `docs/bootcamp_recap.md` section, and they are not added to `modules_completed`).
+  Keep them lightweight. When Module 0 runs it presents only its ENTITY RESOLUTION CONCEPTS banner,
+  the MCP-sourced description, and its explore gate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
@@ -186,7 +232,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
     (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
     turn, ending on Step 1's single 👉 question. You never change the session yourself — only the
     bootcamper can.
-  - **Recommendation unchanged** → a brief one-line statement (or omit); no question, so the
+  - **Recommendation unchanged** → a brief one-line statement; no question, so the
     bootcamp never asks a pointless "switch?" every module (INV-012).
 
   Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
@@ -194,7 +240,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   | Stage | Recommended | Commands |
   |---|---|---|
-  | Onboarding, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
   | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
   | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
@@ -203,11 +249,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ```text
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🚀🚀🚀  MODULE N: [MODULE NAME IN CAPS]  🚀🚀🚀
+  🚀🚀🚀  MODULE: [MODULE NAME IN CAPS]  🚀🚀🚀
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
 
-- After an affirmative module-transition ("Ready for Module X?"), immediately produce the
+- After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
   banner + journey map + before/after + step overview + best-value model/effort prompt. When that
   prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands

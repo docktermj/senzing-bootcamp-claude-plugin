@@ -4,21 +4,21 @@ Continues from Phase 2. Follow the ground rules; `🛑`/`⛔` are internal direc
 render them. Signal a stop by ending the turn on the single 👉 question and waiting.
 
 > **This phase is optional.** Bootcampers who prefer to write custom loading programs can skip
-> Phase 3 and proceed directly to Module 6. Phase 3 uses `mapping_workflow` steps 5–8 to give
-> immediate feedback on ER quality without leaving Module 5.
+> Phase 3 and proceed directly to Data processing. Phase 3 uses `mapping_workflow` steps 5–8 to give
+> immediate feedback on ER quality without leaving Data quality & mapping.
 
 > **Entry from the Step 5 `detect_environment` menu:** Phase 3 is entered from the
 > `detect_environment` menu handled in `phase2-data-mapping.md` (step 11). When the bootcamper
 > explicitly chooses **test_load** or **load+resolve** at that menu, follow the workflow below
 > (`mapping_workflow` steps 5–8, Steps 21–26) unchanged. When sources remain unmapped, the
 > Phase 2 guidance instead recommends **skip** and continues to the next source: the real
-> production load is still deferred to Module 6 in either case.
+> production load is still deferred to Data processing in either case.
 
-**Before starting Phase 3:** The Senzing SDK must be installed and configured (Module 2). If it
-is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (Module 2). You can
-skip Phase 3 and proceed to Module 6, or complete Module 2 first and return here." If the
+**Before starting Phase 3:** The Senzing SDK must be installed and configured (SDK setup). If it
+is not yet set up, inform the bootcamper: "Phase 3 requires the Senzing SDK (from SDK setup). You can
+skip Phase 3 and proceed to Data processing, or complete SDK setup first and return here." If the
 bootcamper chooses to skip, update the data source registry with `test_load_status: skipped`
-for each source and proceed to Module 6.
+for each source and proceed to Data processing.
 
 ## Workflow (per data source that completed Phase 2)
 
@@ -30,6 +30,19 @@ fails, offer to skip Phase 3 or return to Module 2. (Pass the exact `mapping_wor
 from Phase 2 unchanged; checkpoint to `config/mapping_state_[datasource].json` after this step.)
 
 **Checkpoint:** write step 21 to `config/bootcamp_progress.json`.
+
+### 21a. Register the data source code (before the test load)
+
+Before the step 22 test load, ensure the source's `DATA_SOURCE` code is registered in the Senzing
+engine config, so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
+the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
+`DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
+registers the code as part of loading, this is already satisfied; otherwise generate the
+registration via `sdk_guide(topic='configure')` (in the `programming_language`) — it loads the
+current default config, registers the code, and sets it as the new default, idempotently — and run
+it first. Never rely on Module 2's default config, which predates data collection.
+
+**Checkpoint:** write step 21a.
 
 ### 22. Test data loading
 
@@ -136,8 +149,12 @@ correct project subdirectories per the file-placement guidance in `phase2-data-m
 ### 25. Present results and decision gate
 
 Present the Phase 3 results summary for this data source: records loaded, entities created,
-deduplication rate, quality assessment, and any issues found. Ask the bootcamper to review the
-results before proceeding.
+deduplication rate, quality assessment, and any issues found. Then pin the decision-gate question
+verbatim:
+
+👉 **Are you ready to proceed?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)*
 
 > **Data source registry:** Update the source's `test_load_status` to `complete` and
 > `test_entity_count` to the entity count from the test load in `config/data_sources.yaml`. Set
@@ -149,25 +166,27 @@ results before proceeding.
 
 After all sources have completed (or skipped) Phase 3, run the standard **Module Completion**
 process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 5
-recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Then present
-the decision gate below.
+recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary) — this is Module
+5's completion site on the Phase 3 path. Run it **exactly once**: if Phase 2 step 20 already
+completed the module (`data_quality_mapping` in `modules_completed`), do not repeat it. Then
+present the decision gate below.
 
-Modules run in ascending numeric order; Module 6 is next by default. The shortcut path is only
+Data processing is the next module by default. The shortcut path is only
 taken when the bootcamper explicitly requests it (skipping a module requires a bootcamper
 request, per the ground rules):
 
-- **Shortcut path (→ Module 7):** For simple use cases: single data source, small dataset
+- **Shortcut path (→ Query, Visualize and Discover):** For simple use cases: single data source, small dataset
   (≤1000 records), no production requirements: the Phase 3 test load results may be sufficient.
-  The bootcamper can proceed directly to Module 7 (Query, Visualize, and Discover) and skip
-  Module 6.
-- **Full path (→ Module 6):** For production requirements, multiple data sources, datasets
+  The bootcamper can proceed directly to Query, Visualize and Discover and skip
+  Data processing.
+- **Full path (→ Data processing):** For production requirements, multiple data sources, datasets
   exceeding 1000 records, or when the bootcamper wants to learn production-quality loading
-  patterns: recommend the full Module 6 path.
+  patterns: recommend the full Data processing path.
 
 👉 **Which path would you like to take? Reply with a number:**
 
-1. Shortcut path — directly to Module 7 (Query, Visualize, and Discover).
-2. Full path — to Module 6 (Data Processing) for production-quality loading.
+1. Shortcut path — go directly to Query, Visualize and Discover.
+2. Full path — continue to Data processing for production-quality loading.
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -217,7 +236,7 @@ re-run evaluation without reloading. If the session was interrupted before the d
 
 - ✅ Test load completed for each data source (or explicitly skipped).
 - ✅ Entity resolution results reviewed (deduplication rate, quality assessment).
-- ✅ Decision gate completed (shortcut path or proceed to Module 6).
+- ✅ Decision gate completed (shortcut path or proceed to Data processing).
 
 ## Interpreting `analyze_record` results
 

@@ -13,12 +13,12 @@ plugin never alters unrelated Claude Code sessions.
 
 | Event | Script | Purpose |
 |-------|--------|---------|
-| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the trophy). |
+| `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). |
 | `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback and verbosity changes at any time (routes "bootcamp feedback" and "change verbosity" requests to the right workflow). |
 | `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes to system temp / Downloads and obvious hardcoded secrets during a bootcamp). |
 | `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
-| `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the trophy). |
-| `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the trophy). |
+| `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the recap). |
+| `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the recap). |
 
 **Convention (INV-016 interpretation):** the "begin with the word 'to'" rule applies
 to each hook's **documented purpose** — the Purpose column above — not to the runtime
@@ -38,7 +38,7 @@ Code behavior), so the hooks do **not** depend on `bash`, Git Bash, or WSL — e
 Windows.
 
 The only requirement is a `python3` on `PATH`, and it is **not a new dependency** —
-the bootcamp already requires `python3` for the Module 3 visualization server
+the bootcamp already requires `python3` for the Truth Set visualization module's server
 (`scripts/senzing_viz_server.py`) and the graduation recap PDF
 (`scripts/generate_recap_pdf.py`), so any machine that can run the bootcamp can run
 the hooks.
@@ -70,7 +70,7 @@ Code identically on all three platforms, including inside `args`.
   `additionalContext`; `SessionStart` emits resume context. Everything else emits nothing.
 - **Hooks ship with the plugin.** There is no hook-install step (this replaces the
   Kiro `install_hooks.py` / `.kiro/hooks/` workflow).
-- **Recap durability.** The recap trophy (`docs/bootcamp_recap.md`) is finalized per
+- **Recap durability.** The recap (`docs/bootcamp_recap.md`) is finalized per
   module at completion, but an interrupted module (quit / compaction / new session) would
   otherwise lose its in-progress narrative. To close that gap the guide keeps an
   in-progress checkpoint at `docs/progress/recap_checkpoint.md` (refreshed at each step
@@ -78,7 +78,7 @@ Code identically on all three platforms, including inside `args`.
   markers), and three hooks — `PreCompact`, `SessionEnd`, and `SessionStart` — fold it into
   `docs/bootcamp_recap.md`. The fold (in the shared, non-hook helper
   `scripts/recap_checkpoint.py`) is deterministic, idempotent, and append-only with respect
-  to completed `## Module N:` sections: it only ever replaces the marker-fenced block, so
+  to completed `## {module}` sections: it only ever replaces the marker-fenced block, so
   repeated folds never duplicate and a finalized section is never rewritten. Module
   completion appends the final section and clears the checkpoint.
 

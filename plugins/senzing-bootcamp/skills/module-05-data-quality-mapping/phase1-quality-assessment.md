@@ -54,8 +54,11 @@ fields against the specification's attribute names. For each data source provide
 compliant attribute names.)
 
 - **Entity Specification-compliant:** Data already uses attribute names and structures that
-  match the Entity Specification. Can proceed directly to Module 2 (SDK setup) and Module 6
-  (loading).
+  match the Entity Specification. CORD sources (the already-Senzing-ready fast-path class) are
+  eligible for the fast-path (Step 5a, offered only for `provenance: cord`) — route directly to
+  Module 6 (loading), skipping mapping. Other compliant sources, including non-CORD data that
+  looks Senzing-ready, continue to Phase 2, which confirms compliance and records lineage before
+  loading.
 - **Needs mapping:** Data uses different field names or structures than those defined in the
   Entity Specification. Continue to Phase 2 (data mapping).
 - **Needs enrichment:** Data is missing critical attributes. Discuss with the user whether
@@ -89,7 +92,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
 4. **If Senzing-ready: present the fast-path offer:**
 
-   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in Module 6?**
+   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data Processing module?**
 
    *(Internal: end the turn on this question and wait.)*
 

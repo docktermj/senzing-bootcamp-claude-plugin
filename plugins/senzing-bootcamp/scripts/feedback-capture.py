@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: "to capture bootcamp feedback".
+"""UserPromptSubmit hook: "to capture bootcamp feedback and verbosity changes".
 
 Only active during a bootcamp (a config/bootcamp_progress.json file exists in the
 working directory). If the bootcamper's message asks to give feedback or to change
@@ -41,8 +41,10 @@ if FEEDBACK.search(lower):
     ctx = (
         "The bootcamper is submitting bootcamp feedback. Follow the bootcamp "
         "feedback workflow (the feedback.md file in the bootcamp-onboarding skill): "
+        "begin with the pinned BOOTCAMP FEEDBACK entry banner and end with the "
+        "FEEDBACK SAVED exit banner (see feedback.md for the verbatim banner wording); "
         "silently capture as much relevant context as possible (the time; the plugin "
-        "version from .claude-plugin/plugin.json; current_module, current_step, and "
+        "version from ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json; current_module, current_step, and "
         "completed modules from config/bootcamp_progress.json; the recent questions "
         "asked and the bootcamper's responses; what the plugin was doing behind the "
         "scenes; the observed problem; the expected behavior per the active "

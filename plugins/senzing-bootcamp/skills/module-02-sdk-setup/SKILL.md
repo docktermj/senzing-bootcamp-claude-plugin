@@ -5,6 +5,14 @@ description: 'Bootcamp Module 2: SDK Installation and Configuration. Use when th
 
 # Module 2: SDK Installation and Configuration
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). Execute every numbered step one at a time, in
 order. Never skip, combine, or abbreviate a step containing a 👉 question, and never skip a
@@ -12,7 +20,7 @@ mandatory gate. This has absolute precedence: no internal reasoning or token-bud
 overrides it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work. Resume at
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Resume at
 `current_step` if progress already exists.
 
 Install and configure the Senzing SDK natively on the bootcamper's machine. This is the first
@@ -77,7 +85,7 @@ straight to configuration verification."
 - Skip Steps 2 and 3 entirely.
 - Jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (Configure License). This step is mandatory and must
-  always run regardless of SDK installation status. After Step 5, proceed to Step 7 (database).
+  always run regardless of SDK installation status. After Step 5, proceed to Step 6 (create the project directory structure), then Step 7 (database).
 - Mark Module 2 as complete once verification passes.
 
 > **Required stops:** These steps are NEVER skipped, even when the SDK is already installed:
@@ -258,10 +266,10 @@ the inline pointers here.
 
 **4. Offer targeted options.** After the summary, always offer, at minimum, these three:
 
-- **Fix the common cause**: apply the fix for the matched cause (see sourcing in the next
+- **Fix the common cause:** apply the fix for the matched cause (see sourcing in the next
   item), then retry.
-- **Retry the build**: re-run the from-source build sequence.
-- **Fallback path**: proceed without a successful from-source build (see item 6). One fallback
+- **Retry the build:** re-run the from-source build sequence.
+- **Fallback path:** proceed without a successful from-source build (see item 6). One fallback
   is switching to a language with a simpler install path (Java or C# typically have simpler
   paths); another is any prebuilt/alternative install route the MCP server reports as available.
 
@@ -318,6 +326,12 @@ troubleshooting.
 > `licenses/g2.lic` → `SENZING_LICENSE_PATH` env var → system CONFIGPATH → built-in evaluation
 > (500 records).
 
+> **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
+> *runtime-capacity* license (it sets how many records Senzing will resolve) — supplied as a `.lic`
+> file or a Base64-encoded key, or the built-in evaluation license by default. It is distinct from
+> the **Senzing End User License Agreement (EULA)** accepted during SDK install in Step 3. When
+> this step says "License Key", it means the runtime license, never the EULA.
+
 ### 5a. Explain the built-in evaluation license
 
 **Custom-license guard (check first).** Read `config/bootcamp_progress.json`. If a
@@ -325,7 +339,7 @@ troubleshooting.
 limit was detected in Step 5e, this session or a prior one). In that case, present the detected
 `recordLimit` as the authoritative limit ("Your license allows up to N records," or "Your
 license has no record cap (unlimited)" when it is `0`) and do NOT restate the 500-record figure
-or the "SENZ9000 error at record 501" claim as the authoritative limit. Skip the built-in
+or the over-limit error-code claim as the authoritative limit. Skip the built-in
 evaluation explanation below; it applies only when no custom license is active. Confirm any SDK
 facts against the Senzing MCP server rather than training data.
 
@@ -334,23 +348,24 @@ active), proceed with the explanation below.
 
 Before checking for license files or asking the bootcamper anything, proactively present this:
 
-"Here's what you need to know about Senzing licensing before we continue. Senzing includes a
+"Here's what you need to know about your Senzing License Key before we continue. Senzing includes a
 **built-in evaluation license limited to 500 records**. No license file is needed: the SDK uses
 this automatically when no custom license is present. This is enough for the bootcamp's demo
 modules and small datasets.
 
-If you load more than 500 records, the SDK returns a **SENZ9000 error at record 501**. For
+If you load beyond that limit, the load stops with a licensing error at the cap. For
 larger datasets, you need a custom license file placed at `licenses/g2.lic`."
 
 When presenting the evaluation license's record capacity or validity period, retrieve those
 values from a Senzing MCP server tool during this session and present exactly what the tool
-returns. The **500 records** figure above is the current published value; confirm it against
-the Senzing MCP server rather than presenting it as authoritative from training data. Wait up
+returns. The **500 records** figure, and the exact over-limit error code and behavior, are published
+values that change: confirm them against the Senzing MCP server (use `explain_error_code` for the
+error code) rather than presenting them as authoritative from training data. Wait up
 to 30 seconds for a response; if the tool does not return a value, or the MCP server cannot be
 reached within that time, omit the specific figure and tell the bootcamper the current value is
 unavailable from the MCP server. Never substitute a hardcoded or remembered figure.
 
-If a larger or temporary evaluation license is needed, **consult the Senzing MCP server**: call
+If a larger or temporary evaluation license is needed, **consult the Senzing MCP server:** call
 `search_docs(query='request a larger or temporary evaluation license')` and present the
 returned guidance; this avoids waiting for email responses.
 
@@ -358,17 +373,15 @@ returned guidance; this avoids waiting for email responses.
 obtain a license. This is informational only: you'll choose and carry out a path later, at the
 no-license branch of Step 5c; nothing needs to be selected here.
 
-1. **Request a temporary evaluation license through the MCP server (in-flow)**: the bootcamp
+1. **Request a temporary evaluation license through the MCP server (in-flow):** the bootcamp
    can ask the Senzing MCP server to generate a temporary evaluation license by invoking the
    `submit_feedback` tool with the `license_request` category, which avoids waiting for email.
-   This path depends on the `submit_feedback` tool being enabled and reported as available by
-   the MCP server, so it may be unavailable in a given session and is not guaranteed. (In the
-   Kiro Power this tool was disabled by default in `mcp.json`; in the Claude plugin, ensure the
-   senzing MCP server's `submit_feedback` tool is enabled in Claude Code, and reconcile this
-   when finalizing the plugin's MCP config.)
-2. **Apply a license you already have**: if you already hold a `.lic` file or a Base64-encoded
+   This path depends on the `submit_feedback` tool being reported as available by the MCP server
+   (checked at runtime via `get_capabilities`), so it may be unavailable in a given session and is
+   not guaranteed.
+2. **Apply a license you already have:** if you already hold a `.lic` file or a Base64-encoded
    license key, you can place it at `licenses/g2.lic`.
-3. **Request a license through Senzing support**: request an evaluation license through
+3. **Request a license through Senzing support:** request an evaluation license through
    Senzing support's external channel.
 
 Selecting and carrying out one of these paths happens at the Step 5c no-license branch, not
@@ -383,6 +396,11 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 
 ### 5b. Ask about the bootcamper's license situation
 
+**Already-have-a-license guard (check first).** If a license was already established earlier —
+`license_record_limit` in `config/bootcamp_progress.json`, or a `license` entry in
+`config/bootcamp_preferences.yaml` (e.g. the bootcamper supplied a key during Module 1) — do not
+re-ask (INV-006): acknowledge the existing license and skip ahead to the connection test.
+
 **Availability check first.** Call `get_capabilities` on the Senzing MCP server to determine
 whether the `submit_feedback` tool is reported available (the same in-flow `license_request` path
 introduced in Step 5a and handled at Step 5c). Present the **four-option** form when it is
@@ -390,7 +408,7 @@ available, otherwise the **three-option** form. Pin whichever form you present v
 
 Four-option form (when `submit_feedback` is available):
 
-👉 **Do you have a Senzing license? Reply with a number:**
+👉 **Do you have a Senzing License Key? Reply with a number:**
 
 1. Yes — a license file (`.lic`).
 2. Yes — a Base64-encoded license key.
@@ -399,7 +417,7 @@ Four-option form (when `submit_feedback` is available):
 
 Three-option form (when `submit_feedback` is unavailable):
 
-👉 **Do you have a Senzing license? Reply with a number:**
+👉 **Do you have a Senzing License Key? Reply with a number:**
 
 1. Yes — a license file (`.lic`).
 2. Yes — a Base64-encoded license key.
@@ -460,7 +478,7 @@ Confirm: "No problem, the built-in 500-record evaluation license is active autom
 That's enough for the bootcamp demo modules."
 
 If the bootcamper wants a license for larger datasets, present the licensing paths below.
-**Consult the Senzing MCP server first**: call
+**Consult the Senzing MCP server first:** call
 `search_docs(query='larger evaluation license for datasets over 500 records')` and present the
 returned guidance. (A `licenses/README.md` reference doc is a later porting phase; teach the
 paths directly for now.)
@@ -479,17 +497,17 @@ apply this decision:
 
 Present the available paths as distinct, individually selectable options:
 
-1. **Request an evaluation license through the MCP server (in-flow)**: *present this option
+1. **Request an evaluation license through the MCP server (in-flow):** *present this option
    only when `submit_feedback` is reported available.* This path asks the Senzing MCP server to
    generate an evaluation license by invoking the `submit_feedback` tool with the
    `license_request` category. The evaluation license is delivered by email, and the email
-   contains a download link. This option requires the `submit_feedback` tool; in the Claude
-   plugin, ensure it is enabled in Claude Code (reconcile with the plugin's MCP config).
-2. **Request a license through the external channel**: Contact <support@senzing.com> to
+   contains a download link. This option requires the `submit_feedback` tool, which the flow
+   verifies is available before presenting it.
+2. **Request a license through the external channel:** Contact <support@senzing.com> to
    request an evaluation license. Mention that you are using the Senzing Bootcamp and provide
    your name, organization, expected record count, and use case description. Expect a response
    within 1-2 business days. For production licenses, contact <sales@senzing.com>.
-3. **Apply an existing license**: if you already have, or later obtain, a `.lic` file or
+3. **Apply an existing license:** if you already have, or later obtain, a `.lic` file or
    Base64-encoded license string, follow the Step 5d configuration steps to save and wire it.
 
 When presenting the evaluation license's validity period or record capacity, retrieve those
@@ -516,16 +534,32 @@ Once the bootcamper responds, act on their choice:
   `get_capabilities` again before invoking. If they decline to enable it, present only the
   remaining paths (external request and apply existing). When availability is confirmed, invoke
   `submit_feedback` exactly once with the `license_request` category. On a response with no
-  error, instruct the bootcamper to check the email associated with their request for the
-  evaluation license and its download link; once they confirm receipt, follow the Step 5d
-  configuration steps. If the invocation returns an error or no response within 30 seconds, tell
+  error, tell the bootcamper the request was submitted, then walk them through the post-request
+  sequence below. If the invocation returns an error or no response within 30 seconds, tell
   the bootcamper the license request did not complete, present the remaining paths (external
   request and apply existing), and do not automatically re-invoke `submit_feedback`.
-- **External request:** request via the external channel above; follow the Step 5d
-  configuration steps once you have the license file.
+- **External request:** request via the external channel above; follow the post-request
+  sequence below once you have the license file.
 - **Apply an existing license:** follow the configuration steps in Step 5d.
 
-If at any point the bootcamper reveals they already have a Senzing license (or indicated in
+**After an evaluation-License-Key request (in-flow or external), walk the bootcamper through the
+full post-request sequence** — and make clear the bootcamp **continues on the built-in evaluation
+license** in the meantime, so they are never blocked waiting for the email:
+
+1. **Wait for the email.** The Senzing License Key arrives by email at the address tied to the
+   request; it can take some time.
+2. **Download the key.** Save the attached/linked file from the email — it contains the
+   Base-64-encoded License Key text.
+3. **Provide the path.** Ask the bootcamper for the path to that downloaded file. Do NOT ask them
+   to paste the key into chat.
+4. **Decode to `licenses/g2.lic`.** Decode the Base-64 text from that file into the binary license
+   using the platform command from Step 5c above (Linux/macOS `base64 --decode`, Windows
+   `[System.Convert]::FromBase64String(...)`), reading from the provided file instead of an inline
+   string, then verify it is binary with `file licenses/g2.lic`.
+5. **Wire and detect.** Follow Step 5d (add `LICENSEFILE`) and Step 5e (detect the record limit).
+   The emailed key can be applied whenever it arrives, even in a later session.
+
+If at any point the bootcamper reveals they already have a Senzing License Key (or indicated in
 Step 5b that they have a `.lic` file or Base64-encoded license key), omit the in-flow MCP
 request option and route them to the apply-an-existing-license path in Step 5d.
 
@@ -556,7 +590,7 @@ no custom license was placed, skip 5e entirely: the built-in evaluation license 
 detection, and later modules fall back to the evaluation capacity automatically.
 
 When a custom license is active, read its real record limit now so every later capacity or
-sampling decision (Modules 1, 4, 6, and 8) uses the license the bootcamper actually supplied
+sampling decision (Modules 1, 4, and 6) uses the license the bootcamper actually supplied
 instead of the built-in evaluation figure.
 
 **Confirm the SDK facts from the Senzing MCP server first.** Do not rely on training data for
@@ -723,9 +757,9 @@ Once the SDK is installed and verified, run the standard **Module Completion** p
 to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
 transition question.
 
-The next module (Module 3) verifies the full setup end-to-end using the Senzing TruthSet:
+The next module in your selected sequence continues the bootcamp — when it is System verification, it verifies the full setup end-to-end with synthetic records (and, when the Truth Set visualization is selected, visualizes the Senzing Truth Set):
 
-👉 **Module 2 complete. Ready to verify your setup end-to-end in Module 3?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)* On module completion set `current_step` to
 `null`.

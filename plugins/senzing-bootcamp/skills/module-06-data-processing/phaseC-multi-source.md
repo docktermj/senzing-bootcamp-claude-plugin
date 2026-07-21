@@ -19,10 +19,15 @@ can review and confirm the list is complete.
 
 ## 13. Analyze dependencies
 
-Ask about data source dependencies. Common patterns: parent-child (load parents first),
-reference data first, temporal ordering, or no dependencies. If a circular dependency is
-detected, explain that Senzing resolves entities as records arrive, load the higher-quality
-source first. Save the dependency map to `docs/loading_strategy.md`.
+Explain the common dependency patterns: parent-child (load parents first), reference data first,
+temporal ordering, or none. If a circular dependency is detected, explain that Senzing resolves
+entities as records arrive, load the higher-quality source first. Then ask a single pinned 👉
+question (INV-056) and end the turn on it:
+
+👉 **Are there load-order dependencies between your data sources?**
+
+*(Internal: end the turn on this question and wait.)* On **yes**, capture the dependency map; on
+**no**, record that there are none. Save the dependency map to `docs/loading_strategy.md`.
 
 **Checkpoint:** write step 13.
 
@@ -38,15 +43,27 @@ the bootcamper to review.
 
 ## 15. Select loading strategy
 
-Present the options: **Sequential** (safer, easier to debug), **Parallel** (faster, more
-resources), **Hybrid** (sequential for dependent sources, parallel for independent).
+Present the strategy choices as a neutral lead + numbered list (INV-051), pinned verbatim
+(INV-056), and end the turn on the 👉 question:
+
+👉 **Which loading strategy would you like? Reply with a number:**
+
+1. **Sequential** — safer, easier to debug.
+2. **Parallel** — faster, uses more resources.
+3. **Hybrid** — sequential for dependent sources, parallel for independent.
+
+*(Internal: end the turn on this question and wait.)*
 
 **Checkpoint:** write step 15.
 
 ## 16. Pre-load validation checklist
 
-Verify before orchestration: all JSONL files exist in `data/transformed/` and are non-empty;
-unique DATA_SOURCE names match the Module 2 config; RECORD_IDs unique within each source; a
+Verify before orchestration: each source's load file exists at its registry `file_path`
+(`data/senzing-ready/` for mapped sources; `data/raw/` for `fast_pathed: true` CORD /
+already-Senzing-ready sources, which skipped mapping in Module 5) and is non-empty;
+each source's DATA_SOURCE code is registered in the engine config (register any not yet
+registered, idempotently — per Phase A step 4a; do not rely on Module 2's default config, which
+predates data collection); RECORD_IDs unique within each source; a
 database backup of `database/G2C.db` exists; sufficient disk space (~2x per source); the
 Module 6 loading program works as a template. Fix failures before proceeding.
 

@@ -5,25 +5,33 @@ description: 'Bootcamp Module 6: Data Processing. Use when the bootcamper starts
 
 # Module 6: Data Processing
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). Execute every numbered step one at a time, in
 order. Never skip, combine, or abbreviate a step containing a 👉 question. This has the same
 absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
 **Purpose:** Guide the Data Processing workflow: build a production-quality loading program,
 load all data sources into Senzing, process redo records, and validate entity resolution
 results (from first load through cross-source validation).
 
-**Before/After:** You have Senzing-formatted JSON files in `data/transformed/` (and possibly
+**Before/After:** You have Senzing-formatted JSON files in `data/senzing-ready/` (and possibly
 test-load results from Module 5 Phase 3). After this module, all your data is loaded, redo
 records are processed, and entity resolution results are validated, duplicates matched,
 cross-source connections found.
 
 **Prerequisites:** Module 5 complete (at least one transformed data source in
-`data/transformed/`), SDK installed and configured (Module 2), database configured (SQLite at
+`data/senzing-ready/`), SDK installed and configured (Module 2), database configured (SQLite at
 `database/G2C.db`, or PostgreSQL), transformation validated with the linter.
 
 **Success indicator:** ✅ All data sources loaded into Senzing + redo records processed + no
@@ -56,7 +64,7 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase A, Build Loading Program** (steps 1–4): `phaseA-build-loading.md`
+- **Phase A, Build Loading Program** (steps 1–4a): `phaseA-build-loading.md`
 - **Phase B, Load First Source** (steps 5–11): `phaseB-load-first-source.md`
 - **Phase C, Multi-Source Orchestration** (conditional, 2+ sources, steps 12–20):
   `phaseC-multi-source.md`

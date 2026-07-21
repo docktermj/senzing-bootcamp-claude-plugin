@@ -7,7 +7,7 @@ This module folds that checkpoint into ``docs/bootcamp_recap.md`` so an interrup
 module (quit / compaction / new session) never loses its in-progress narrative.
 
 The fold is deterministic, idempotent, and append-only with respect to completed
-``## Module N:`` sections: it only ever replaces the marker-fenced checkpoint block,
+``## {module}`` sections: it only ever replaces the marker-fenced checkpoint block,
 never a finalized section. Pure Python 3 stdlib, no third-party dependency (INV-052).
 
 This is NOT a hook itself. It is imported by the PreCompact, SessionEnd, and
@@ -39,7 +39,7 @@ def _read(path):
 def _strip_block(text):
     """Remove every checkpoint block (START..END) from recap text so a re-fold
     replaces the prior checkpoint instead of duplicating it. Completed
-    ``## Module N:`` sections carry no markers and are never touched."""
+    ``## {module}`` sections carry no markers and are never touched."""
     while True:
         i = text.find(START)
         if i == -1:

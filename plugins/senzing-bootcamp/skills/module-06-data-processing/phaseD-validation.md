@@ -57,7 +57,10 @@ Offer to visualize the cross-source entity relationships as a web page. Pin the 
 
 > 👉 **Would you like a web page visualizing the cross-source entity relationships?**
 
-If accepted, save to `docs/visualizations/multi_source_results.html`.
+If accepted, save to `docs/visualizations/multi_source_results.html`, then capture screenshots for
+the recap (`{html}` = `multi_source_results.html`, `{name}` = `multi_source_results`) per
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
+silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
 
 **Checkpoint:** write step 23.
 
@@ -75,7 +78,19 @@ matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 ## 25. Execute UAT with business users
 
-Offer to involve business users in testing the cross-source results.
+**First, check whether there are real stakeholders.** Read `docs/business_problem.md`. If it carries
+the bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
+accepted in Module 1), or otherwise records no real stakeholders, there are no business users to
+involve — so **do not ask** the involvement question (INV-006/INV-012). State briefly that the
+scenario is bootcamp-generated, so you will self-direct the UAT: spot-check 5–10 cross-source
+entities and document findings in `docs/uat_results.md`, then proceed to step 26.
+
+Otherwise (a real business problem with stakeholders), offer to involve business users — pin the
+question verbatim:
+
+👉 **Would you like to involve business users in testing the cross-source results?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)*
 
 - **Yes:** share cross-source match examples, collect feedback, document in
   `docs/uat_results.md`.
@@ -103,7 +118,7 @@ cross-source match summary, issues and resolutions, recommendations for future l
 
 ## Document results and complete (always)
 
-## 28. Document results and offer visualization
+## 28. Document results
 
 Record the validation findings:
 
@@ -112,24 +127,10 @@ Record the validation findings:
   resolution
 - This becomes the baseline for comparison
 
-**Mandatory visualization offer (internal gate).** You MUST offer the results dashboard before
-proceeding to the Decision Gate, do not skip it. Pin the offer verbatim:
-
-> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
-
-- **Yes:** generate the HTML dashboard and save to `docs/visualizations/results_dashboard.html`.
-- **No / not now:** acknowledge and proceed.
-- **Unsure:** briefly explain the value, then wait for their decision.
-
-*(Internal: end the turn on the dashboard offer question and wait.)*
-
-**Deferred first-visualization guarantee:** after generating the dashboard, if
-`first_visualization` is `owed` in `config/bootcamp_progress.json` (Module 3 was opted out and
-the standalone demo declined), also clear that owed marker (set it to satisfied by
-`module_6_deferred`). Check whether it is owed first; the clear is idempotent. This is the
-journey-level guarantee only, it does not change the Module 3 gate. (The Kiro helper
-`scripts/progress_utils.py` and `visualization-guide.md` are later porting phases; apply the
-clear inline for now.)
+The **results dashboard** (entity counts, match statistics, and sample resolved entities) is offered
+in the **Query, Visualize and Discover** module (Module 7, Step 3d), where all results visualization
+lives — Module 6 does not offer it, to avoid a duplicate offer. (The cross-source relationship
+visualization in step 23 is a distinct offer and is unaffected.)
 
 **Checkpoint:** write step 28.
 
@@ -158,16 +159,28 @@ If a source fails during orchestration, present three options:
 
 ## Iterate vs. proceed decision gate
 
-- **UAT ≥90% and match accuracy ≥90%:** "Results look strong. Ready to proceed to Module 7."
-- **UAT 80–89%:** "Most tests pass but there are gaps. Iterate or move forward?"
-- **UAT <80%:** "Results need improvement, suggest going back to Module 5."
+Route on the UAT / match-accuracy results:
+
+- **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
+  transition question.
+- **UAT <80%:** state "Results need improvement — I recommend going back to Data quality & mapping
+  to refine the mapping." and proceed to the transition question.
+- **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
+  (neutral lead + numbered list, INV-051):
+
+  👉 **Most tests pass but there are gaps. What would you like to do? Reply with a number:**
+
+  1. Iterate now to improve the results before moving on.
+  2. Move forward to the next module.
+
+  *(Internal: end the turn on this question and wait.)*
 
 ## Stakeholder summary
 
-After validation, offer: "Would you like a one-page executive summary for your team?" If yes,
-follow the Module 6 guidance to produce a one-page summary and save it to
-`docs/stakeholder_summary_module6.md`. (The Kiro `templates/stakeholder_summary.md` port is a
-later phase; compose the summary directly for now.)
+After validation, always produce a one-page executive summary — no question (INV-012) —
+following the Module 6 guidance, and save it to `docs/stakeholder_summary_module6.md`. Announce
+it as a produced file in the end-of-module summary's "Files produced" list (INV-032). (The Kiro
+`templates/stakeholder_summary.md` port is a later phase; compose the summary directly for now.)
 
 ## Success criteria
 
@@ -208,7 +221,7 @@ Follow the Decision Gate above to frame readiness. When results are ready, run t
 append the Module 6 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
 summary), then close the module:
 
-👉 **Module 6 complete. Ready to move on to Module 7?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)* On completion, set `current_step` to
 `null` in `config/bootcamp_progress.json` and, on an affirmative reply, produce the Module 7

@@ -65,35 +65,37 @@ When the Bootcamper runs the SBCP, these MUST hold across the entire Bootcamp.
 - **INV-010** — At any time, a Bootcamper can submit "Bootcamp feedback:".
 - **INV-011** — At any time, a Bootcamper can change the verbosity of the Bootcamp.
 - **INV-012** — All output MUST be relative to the Bootcamper's point of view. Output that is not important to the Bootcamper is suppressed.
-- **INV-013** — All shipped modules are performed in order: Module 1 → 2 → 3 → 4 → 5 → 6 → 7. (Advanced Topics — performance, security, monitoring, deployment — ship as production-hardening follow-ups delivered at graduation, not as separate numbered Modules 8-11.)
-- **INV-014** — Modules are not skipped unless requested by the Bootcamper.
+- **INV-013** — All shipped modules are performed in order: Module 1 → 2 → 3 → 4 → 5 → 6 → 7. (Advanced Topics — performance, security, monitoring, deployment — ship as production-hardening follow-ups delivered at graduation, not as separate numbered Modules 8-11.) (An optional, non-counted Module 0 preamble is exempt from this ordering — see INV-072.) (Superseded by INV-076: Core runs all modules in order; Customized runs the selected subset in prerequisite order.)
+- **INV-014** — Modules are not skipped unless requested by the Bootcamper. (Skipping the optional Module 0 preamble is a permitted, requested skip — see INV-072.) (Customized module selection is such a request: an optional module the Bootcamper does not select is a requested skip — see INV-076.)
 - **INV-015** — Submitted bootcamp feedback is captured in `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
 
 ## INV-016 – INV-018: Bootcamp administration outcomes
 
-- **INV-016** — All hooks begin with the word "to" (e.g. "to process your request", "to review what you said").
+- **INV-016** — Every hook's documented purpose begins with the word "to" (e.g. "to process your request", "to review what you said"), as recorded in the hooks' README Purpose column (the Kiro named-hook convention). This governs the hook's stated purpose/name, not necessarily the runtime string a hook emits to the model. (Wording clarified in place, no meaning change; Source: `audit-polish-cleanup`, 2026-07-19.)
 - **INV-017** — All Markdown files (`.md`) are kept in appropriate places in the `docs/` directory. Exception: the generated `production/` project deliverable carries its own Markdown files (e.g. `README.md`, `MIGRATION_CHECKLIST.md`, `GRADUATION_REPORT.md`).
 - **INV-018** — All code files (e.g. `.py`, `.java`, etc.) are kept in appropriate places in the `src/` directory.
 
 ## INV-019 – INV-027: Bootcamp preface outcomes
 
-The preface presents these in order.
+INV-019–INV-021 (the entity-resolution concepts outcomes) have been relocated out of the preface
+into the optional **Module 0** (superseded by INV-073; see INV-072). The preface proper now begins
+at INV-022 and presents INV-022–INV-027 in order.
 
-- **INV-019** — A banner is presented, "ENTITY RESOLUTION CONCEPTS".
-- **INV-020** — A description of Entity Resolution is given.
-- **INV-021** — The Bootcamper is asked if they want to discuss/explore Entity Resolution before beginning.
+- **INV-019** — A banner is presented, "ENTITY RESOLUTION CONCEPTS". (superseded by INV-073.)
+- **INV-020** — A description of Entity Resolution is given. (superseded by INV-073.)
+- **INV-021** — The Bootcamper is asked if they want to discuss/explore Entity Resolution before beginning. (superseded by INV-073.)
 - **INV-022** — A banner is presented, "WELCOME TO THE SENZING BOOTCAMP!".
 - **INV-023** — An overview of the Bootcamp is given.
-- **INV-024** — The Bootcamper is asked what level of detail they would like in the Bootcamp output.
-- **INV-025** — The Bootcamper is asked to choose a track.
-- **INV-026** — The Bootcamper is asked which programming language they would like to use.
+- **INV-024** — The Bootcamper is asked what level of detail they would like in the Bootcamp output. (Superseded by INV-075: now asked in the Bootcamp preparation module, not the preface.)
+- **INV-025** — The Bootcamper is asked to choose a track. (Superseded by INV-076: the track question is replaced by the Core-vs-Customized path choice plus module selection, asked in the Bootcamp preparation module.)
+- **INV-026** — The Bootcamper is asked which programming language they would like to use. (Superseded by INV-075: now asked in the Bootcamp preparation module, not the preface.)
 - **INV-027** — The Bootcamper is asked if they have any questions at this point.
 
 ## INV-028 – INV-032: Per-module outcomes
 
 These hold at the boundaries of every module.
 
-- **INV-028** — At the beginning of each module, a banner is presented "MODULE n: [title]".
+- **INV-028** — At the beginning of each module, a banner is presented "MODULE n: [title]". (Superseded by INV-079: the banner is "MODULE: [title]", name only, no number.)
 - **INV-029** — At the beginning of each module, show modules completed, the current module, and upcoming modules.
 - **INV-030** — At the beginning of each module, explain what is true before the module and what will be true after completing the module.
 - **INV-031** — At the beginning of each module, enumerate the steps that will be taken in the module.
@@ -117,7 +119,7 @@ These hold at the boundaries of every module.
 
 **Module 3**
 
-- **INV-038** — The Bootcamper **ALWAYS** sees a dynamic web-app visualization of the Truth Set to verify that Senzing works on the Bootcamper's workstation.
+- **INV-038** — The Bootcamper **ALWAYS** sees a dynamic web-app visualization of the Truth Set to verify that Senzing works on the Bootcamper's workstation. (Superseded by INV-077: the visualization is delivered by the selectable Truth Set visualization module — guaranteed when selected, always in Core.)
 
 **Module 4**
 
@@ -126,9 +128,9 @@ These hold at the boundaries of every module.
 **Module 5**
 
 - **INV-040** — The "raw" data is analyzed to see if mapping and transformation is needed. (CORD data does not require mapping nor transformation.)
-- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data.
-- **INV-042** — Code is created to transform data according to mapping rules.
-- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data.
+- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data. (CORD fast-pathed sources are exempt — they route directly to loading with no mapping, per INV-040; the already-Senzing-ready fast-path class is CORD, offered only for `provenance: cord`, so a non-CORD source that looks Senzing-ready still goes through mapping. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
+- **INV-042** — Code is created to transform data according to mapping rules. (CORD fast-pathed sources need no transformation, so no transform code is created for them, per INV-040; the fast-path class is CORD, offered only for `provenance: cord`. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
+- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data. (CORD fast-pathed sources are already Senzing-ready and route directly to loading with no transformation, per INV-040; the fast-path class is CORD, offered only for `provenance: cord`. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
 
 **Module 6**
 
@@ -137,12 +139,12 @@ These hold at the boundaries of every module.
 
 **Module 7**
 
-- **INV-046** — Code is created to query, visualize, and discover the results of Senzing Entity Resolution.
+- **INV-046** — Code is created to query, visualize, and discover the results of Senzing Entity Resolution. Query code is always created; visualization and discovery are **offered**, and their code/artifacts are created when the Bootcamper accepts — a Bootcamper's decline is a requested skip (INV-014). (Clarified 2026-07-19 to reflect the offered/opt-in reality permitted by INV-014; no meaning change.)
 
 ## INV-047 – INV-049: Graduation outcomes
 
 - **INV-047** — A banner is presented, "GRADUATION".
-- **INV-048** — A trophy document, `docs/bootcamp_recap.pdf`, is **always** created. It must be very professional looking (iterate to make it look professional) and contains "Information Shared", "Questions & Responses", "Actions Taken", and "Journal".
+- **INV-048** — A recap PDF, `docs/bootcamp_recap.pdf`, is **always** created. It must be very professional looking (iterate to make it look professional) and contains "Information Shared", "Questions & Responses", "Actions Taken", and "Journal". (Wording clarified in place 2026-07-20; no meaning change. Source: `drop-trophy-wording`.)
 - **INV-049** — The `production/` directory is populated.
 
 ## INV-050: Project layout
@@ -157,12 +159,14 @@ These hold at the boundaries of every module.
   │   ├── bootcamp_progress.json         # Current module + completed modules
   │   ├── data_sources.yaml              # Registered data source definitions
   │   ├── engine_config.json             # Senzing engine configuration
+  │   ├── license.json                   # Detected Senzing license capacity (written in Module 2)
+  │   ├── cord_metadata.yaml             # CORD dataset provenance snapshot (written in Module 4)
   │   ├── session_log.jsonl              # Session activity log (reserved)
   │   └── visualization_tracker.json     # Visualization run tracking (reserved)
   ├── data/                              # All data artifacts
   │   ├── raw/                           # Source data as received
-  │   ├── transformed/                   # Senzing-mapped JSONL output
-  │   ├── mapping/                        # Mapping working data (specs, samples, intermediates)
+  │   ├── senzing-ready/                 # Senzing-mapped JSONL output
+  │   ├── mapping/                       # Mapping working data (specs, samples, intermediates)
   │   ├── samples/                       # Sample fixtures
   │   ├── temp/                          # Scratch/intermediate working files
   │   └── backups/                       # Data backups (reserved)
@@ -172,7 +176,7 @@ These hold at the boundaries of every module.
   │   ├── load/                          # Loading & redo processing
   │   ├── query/                         # Query, search & discovery
   │   ├── server/                        # Visualization web server (reserved; the viz server ships with the plugin)
-  │   ├── system_verification/           # Pipeline verification (truth set)
+  │   ├── system_verification/           # Pipeline verification (synthetic VERIFY data) + Truth Set viz artifacts
   │   ├── scripts/                       # Setup & data-generation utilities
   │   ├── resources/                     # Downloaded Senzing resources
   │   └── utils/                         # Shared helpers
@@ -180,7 +184,7 @@ These hold at the boundaries of every module.
   │   ├── README.md
   │   ├── business_problem.md
   │   ├── data_source_evaluation.md
-  │   ├── bootcamp_journal.md
+  │   ├── bootcamp_journal.md            # (legacy; superseded by the consolidated bootcamp_recap.md, INV-085)
   │   ├── bootcamp_recap.md
   │   ├── bootcamp_recap.pdf
   │   ├── completion_summary.md          # (reserved)
@@ -199,6 +203,13 @@ These hold at the boundaries of every module.
   ├── tests/                             # Test suite (reserved)
   └── production/                        # Production project (generated at graduation)
   ```
+
+  The tree lists the canonical/primary artifacts, not an exhaustive whitelist: additional
+  per-source and per-module working files the flow creates — e.g. `config/mapping_state_*.json`,
+  `config/er_current_*.json` / `config/er_baseline_*.json`, `config/fallback_sources.yaml`, and the
+  per-module `docs/*.md` write-ups (`docs/data_source_locations.md`, `docs/loading_strategy.md`,
+  `docs/results_validation.md`, etc.) — live under the enumerated directories and are consistent
+  with this layout. (Clarified 2026-07-20 per the final-review audit; no meaning change.)
 
 ## Invariants added from implemented specs
 
@@ -229,7 +240,25 @@ next unused `INV-NNN` (see [Maintaining this file](#maintaining-this-file)).
 - **INV-065** — A sanitized, non-PII example recap MUST ship inside the plugin — a source `.md` fixture at `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` and its rendered `bootcamp_recap.example.pdf` — the PDF MUST remain regenerable from the `.md` via `generate_recap_pdf.py`, and neither MUST contain real personal data. (Complements INV-048; hardens INV-004 for shipped example assets.) (Source: `example-recap-reference`, 2026-07-17.)
 - **INV-066** — Any Python package install the plugin instructs MUST use an explicit interpreter (`python3 -m pip`, never bare `pip`) and be robust to PEP 668 externally-managed environments (prefer a project-local virtualenv), and MUST NOT modify the global/system Python; where a working fallback exists (e.g. the recap PDF's stdlib renderer), an install failure MUST degrade to it rather than block. (Hardens INV-052/INV-048 and the file-placement rules.) (Source: `robust-fpdf2-install`, 2026-07-17.)
 - **INV-067** — When bootcamp feedback is appended to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`, the write MUST be verified to have landed (re-read and confirm the entry is present, re-appending if not) before the bootcamper is told it was saved, and no later bootcamp step (CommonMark normalization, production build, cleanup) may delete or empty that file. (Hardens INV-015; mirrors the recap verify of INV-059.) (Source: `feedback-file-durability`, 2026-07-17.)
-- **INV-068** — Module 3 MUST register the TruthSet data source codes (CUSTOMERS, REFERENCE, WATCHLIST for the standard TruthSet, or the codes present in the acquired data for the Step 2a substitute) and commit them as the default engine config **before** the Step 6 data load runs, so the load never fails with SENZ2207 for those codes on the first attempt. (Upholds INV-038.) (Source: `module3-register-truthset-data-sources`, 2026-07-17.)
+- **INV-068** — Module 3 MUST register the TruthSet data source codes (CUSTOMERS, REFERENCE, WATCHLIST for the standard TruthSet, or the codes present in the acquired data for the Step 2a substitute) and commit them as the default engine config **before** the Step 6 data load runs, so the load never fails with SENZ2207 for those codes on the first attempt. (Upholds INV-038.) (Superseded by INV-083.) (Source: `module3-register-truthset-data-sources`, 2026-07-17.)
 - **INV-069** — When the Bootcamper accepts a recommended model/effort switch at a module start or graduation start, the guide MUST end that reply turn on a single confirmation gate whose wording is pinned verbatim (INV-056) — "👉 Are you done modifying the model and effort?" — presented after the one-line `/model`/`/effort` run-commands statement, and MUST defer the stage's first step to the turn after the Bootcamper confirms. The gate is asked only once (INV-006); the switch-offer question remains its own prior yielding turn (INV-063). On a declined switch, the first step lands on the reply turn with no gate. (Supersedes INV-064.) (Source: `model-effort-switch-done-confirmation`, 2026-07-17.)
 - **INV-070** — Every generated HTML visualization the bootcamp produces MUST be written under the generated project's `docs/visualizations/` directory, never the `docs/` root or another `docs/` subdirectory. (Hardens INV-050.) (Source: `layout-tree-reconciliation`, 2026-07-17.)
 - **INV-071** — The bundled visualization (`scripts/senzing_viz_server.py`) MUST render with no network access: D3 is vendored inside the plugin (`scripts/vendor/d3.v7.min.js`) and inlined into both the live page and the standalone snapshot, with the `d3js.org` CDN referenced only as a fallback when the vendored asset is missing. (Hardens INV-004/INV-038; complements INV-052.) (Source: `vendor-d3-offline-visualization`, 2026-07-17.)
+- **INV-072** — Entity Resolution Concepts is delivered as an optional "Module 0", presented after the onboarding preface and before Module 1, offered via a pinned-verbatim (INV-056) 👉 skip/keep gate. It is NOT counted among the mandatory numbered Modules 1–7 (exempt from INV-013's ordering) and skipping it is a permitted, requested skip (exempt from INV-014); it does NOT run the per-module completion apparatus (no journey map, before/after, step overview, `docs/bootcamp_recap.md` section, or `modules_completed` entry). (Source: `entity-resolution-module-zero`, 2026-07-17.) (Superseded by INV-078: Module 0 inclusion is driven by Bootcamp preparation selection; the skip/keep gate is retired.)
+- **INV-073** — When the Bootcamper chooses to run Module 0 (does not skip it), Module 0 MUST present the ENTITY RESOLUTION CONCEPTS banner, a Senzing-MCP-sourced description of entity resolution, and the pinned-verbatim explore gate ("Are you ready to move on to the next module: Discover the Business Problem?") before handing off to Module 1. (Supersedes INV-019, INV-020, INV-021.) (Source: `entity-resolution-module-zero`, 2026-07-17.)
+- **INV-074** — The bootcamp feedback workflow MUST be bracketed by pinned-verbatim banners: a "BOOTCAMP FEEDBACK" entry banner before its first 👉 question, and a "FEEDBACK SAVED — BACK TO THE BOOTCAMP" exit banner (a statement, not a question) after the entry is confirmed saved and before the pending bootcamp 👉 question is re-presented. (Complements the bookend banners INV-022/INV-047/INV-057; upholds INV-005/INV-006 on resume.) (Source: `feedback-flow-boundary-banner`, 2026-07-17.)
+- **INV-075** — Bootcamp preparation is the first, mandatory module, run after the onboarding WELCOME preface. It presents the Core-vs-Customized path choice, per-module selection, the level-of-detail (verbosity) question, the programming-language question, and the version-control (git-init) question, and persists them in one consolidated write (INV-058). It is a lightweight setup module, exempt from the per-module completion apparatus (no journey map, before/after framing, step overview, `docs/bootcamp_recap.md` section, or `modules_completed` entry). (Relocates the verbosity and programming-language outcomes out of the preface; supersedes INV-024 and INV-026.) (See also INV-088: the software-integration and deployment-target questions were later relocated into this module.) (Source: `customizable-module-selection`, 2026-07-18.)
+- **INV-076** — In Bootcamp preparation the Bootcamper chooses a path: Core (every module, in order) or Customized (the required modules plus whichever optional modules the Bootcamper selects, run in prerequisite/dependency order). Required modules are always included and cannot be deselected; an optional module the Bootcamper does not select is a requested skip (INV-014). (Supersedes INV-013 and INV-025.) (Source: `customizable-module-selection`, 2026-07-18.)
+- **INV-077** — The guaranteed Truth Set web-app visualization is delivered by the selectable "Truth Set visualization" module (a standalone module, `module-03b-truthset-visualization`; formerly Module 3, Phase 2 — see INV-087): it MUST be produced whenever that module is selected (always in Core; in Customized only if chosen); when it is not selected, no workstation-verification visualization is produced. (Supersedes INV-038; INV-070/INV-071 on how the visualization renders still apply when it runs.) (Source: `customizable-module-selection`, 2026-07-18; standalone-module location clarified by `split-truthset-visualization-into-standalone-module`, 2026-07-20.)
+- **INV-078** — The optional Entity Resolution Concepts primer (Module 0) runs if and only if it was selected during Bootcamp preparation (Core always includes it; Customized includes it only if chosen); it has no separate skip/keep gate. When it runs it still presents the ENTITY RESOLUTION CONCEPTS banner, an MCP-sourced description, and the pinned explore gate (INV-073), and remains a lightweight preamble exempt from the per-module completion apparatus. (Supersedes the skip/keep-gate mechanism of INV-072.) (Source: `customizable-module-selection`, 2026-07-18.)
+- **INV-079** — Bootcamper-facing module references use the module NAME, not a fixed number: the module-start banner is "MODULE: [NAME IN CAPS]" (no number); module-transition/readiness 👉 questions name the next module ("Are you ready to move on to the next module: {name}?"); and the end-of-module completion line is "✅ Module complete: {Module name}" (no number), lightly highlighted (bold, wrapped in a thin `─` rule — more visible than plain prose, lighter than the module-start banner). Internal references (module titles, prerequisites, cross-references, recap `## Module N:` headings, progress keys) may still use numbers. (Supersedes INV-028.) (The recap `## Module N:` heading clause is superseded by INV-085: recap headings are name-based.) (Source: `module-references-by-name-not-number`, 2026-07-18.)
+- **INV-080** — Every bootcamp skill that can produce bootcamper-facing Senzing content MUST carry, prominently near the top of its `SKILL.md`, an explicit MCP-grounding / no-speculation clause — stating that all Senzing facts (SDK method and attribute names, config options, error codes, and entity-resolution specifics) come from the Senzing MCP tools and never from training data or speculation, and including the pre-response checklist — not merely a passing reference to "MCP-first". The canonical rule and tool routing remain the "MCP-first invariant" in `ground-rules.md`. (Source: `mcp-grounding-in-every-skill`, 2026-07-18.)
+- **INV-081** — Every bootcamper-facing visual deliverable the bootcamp generates (the Truth-Set visualization web app and its standalone snapshot, the recap PDF, and any future generated charts/dashboards/HTML/PDF) MUST take its palette and typography from the shared Senzing brand tokens shipped at `plugins/senzing-bootcamp/scripts/brand_tokens.py` — the single shipped source (extracted from `resources/senzing-style-reference.pdf`, which is NOT required at runtime) — never an ad hoc per-generator palette. Consumers MUST fall back gracefully if the token module is absent and MUST keep rendering offline (no web-font/CDN fetch; upholds INV-071). (Source: `apply-senzing-style-guide-to-deliverables`, 2026-07-18.)
+- **INV-082** — System Verification (Module 3) MUST verify with synthetic records that are deterministic **by construction** (designed to resolve into a known number of entities), and MUST NOT acquire, load, or visualize the Senzing Truth Set. The Truth Set is used exclusively by the selectable Truth Set visualization module (a separate, standalone module — see INV-087), which acquires and loads it itself. (Supersedes the Truth-Set coupling of INV-038/INV-068; the visualization guarantee itself remains INV-077.) (Source: `module3-synthetic-verification-data`, 2026-07-19; standalone-module location clarified by `split-truthset-visualization-into-standalone-module`, 2026-07-20.)
+- **INV-083** — For both the System Verification load and the Truth Set visualization load, the data source code(s) present in the data about to be loaded MUST be registered as the default engine config **before** each load — the synthetic `VERIFY` code before the System Verification load (Module 3), and the Truth Set codes before the Truth Set visualization load (in the standalone Truth Set visualization module) — so no load fails with `SENZ2207` on the first attempt. (Supersedes INV-068, generalizing its register-before-load guarantee to the synthetic and Truth-Set loads.) (Source: `module3-synthetic-verification-data`, 2026-07-19; module locations clarified by `split-truthset-visualization-into-standalone-module`, 2026-07-20.)
+- **INV-084** — Module 5's mapping/transformation output (Senzing-ready, load-ready JSONL) MUST be written to `data/senzing-ready/`, and every consumer (Module 6 loaders, graduation, the visualization server) MUST read it from there — never the former `data/transformed/`. (Renames the mapping-output directory; the INV-050 layout tree is updated to match.) (Source: `rename-transformed-to-senzing-ready`, 2026-07-19.)
+- **INV-085** — Recap section headers in `docs/bootcamp_recap.md` and the rendered PDF MUST be name-based (`## {Module name} — {timestamp}`, no catalog module number), appended in the bootcamper's experienced (module-completion) order, and every module in `modules_completed` MUST have its own section by graduation; the recap PDF renderer (`generate_recap_pdf.py`) MUST parse name-based headers, still tolerating legacy `## Module N:` headers. (Amends the recap-heading clause of INV-079.) (Source: `recap-sections-name-based-and-complete`, 2026-07-19.)
+- **INV-086** — When the Truth Set visualization module (Module 3, Phase 2) runs, the Module 3 close MUST record `truthset_visualization` as its own `modules_completed` entry (a module name token, placed after `system_verification` in experienced order) and append its own name-based `## Truth Set visualization` recap section — so it is a first-class module produced by the flow, not only recovered by graduation's reconcile backfill. `modules_completed` entries are module name tokens, never catalog numbers. As a first-class module it also receives the **full per-module apparatus**: at its Phase 2 start it presents a module-start banner ("MODULE: TRUTH SET VISUALIZATION"), a journey map with it shown `🔄` current, before/after framing, a step overview (INV-028–031/INV-079), and the model/effort nudge (INV-063); at Module 3 close it gets its own end-of-module summary and `✅ Module complete: Truth Set visualization` line (INV-032). It is NOT apparatus-exempt — contrast the explicitly-exempt Bootcamp preparation (INV-075) and Module 0 (INV-078). (The "Phase 2 start" / "Module 3 close records both" recording-location framing is **superseded by INV-087**, which makes Truth Set visualization a standalone module that presents its apparatus at its own module start and records itself at its own close; the first-class-module, full-apparatus, not-apparatus-exempt guarantee stated here otherwise stands.) (Hardens INV-077/INV-085; the full-apparatus clause clarified in place 2026-07-19, no meaning change — a "first-class module" always implied INV-028–032.) (Source: `record-truthset-visualization-completion`, 2026-07-19; full-apparatus clarification: `truthset-visualization-full-apparatus`, 2026-07-19.)
+- **INV-087** — Truth Set visualization is a **standalone module** in its own skill directory (`module-03b-truthset-visualization`), separate from System Verification (Module 3): it presents its full per-module apparatus at its **own** module start and runs its **own** module-completion at its **own** close — recording `truthset_visualization` in `modules_completed` and appending its own name-based recap section there (not at the System Verification / Module 3 close), then asking its own transition question; System Verification records only `system_verification` at its own close. (Supersedes the "Phase 2 start" / "Module 3 close records both" recording-location framing of INV-086; INV-086's first-class-module, full-apparatus, not-apparatus-exempt guarantee otherwise stands.) (Source: `split-truthset-visualization-into-standalone-module`, 2026-07-20.)
+- **INV-088** — The software-integration question ("will your entity-resolution results need to interface with other software") and the deployment-target question ("where do you plan to deploy the final solution") are asked in the **Bootcamp preparation** module (not in Module 1 / Discover the Business Problem), each as its own pinned-verbatim (INV-056) 👉 question, and their answers (`integration_targets`, `deployment_target`/`cloud_provider`) are persisted in Bootcamp preparation's single consolidated write (INV-058) and read from `config/bootcamp_preferences.yaml` by Module 1's problem statement and by graduation. (Extends the Bootcamp-preparation setup set of INV-075.) (Source: `relocate-setup-questions-to-bootcamp-preparation`, 2026-07-20.)
+- **INV-089** — For every load into the Senzing repository — the System Verification and Truth Set visualization loads already covered by INV-083, **and** the Module 5 Phase 3 test load and the Module 6 production load(s) — the `DATA_SOURCE` code(s) present in the data MUST be registered as the default engine config, idempotently, **before** that load runs, so no load fails with `SENZ2207` on the first attempt. (Generalizes INV-083's register-before-load guarantee to the production load.) (Source: `module6-register-data-sources-before-load`, 2026-07-20.)

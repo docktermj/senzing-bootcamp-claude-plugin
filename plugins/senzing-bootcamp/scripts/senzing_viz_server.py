@@ -24,8 +24,8 @@ Usage:
     python3 senzing_viz_server.py --records src/system_verification/*.jsonl
 
     # Also write a persistent standalone snapshot (no server needed to view):
-    python3 senzing_viz_server.py --records data/transformed/*.jsonl \\
-        --snapshot docs/visualizations/results.html --serve-once-check
+    python3 senzing_viz_server.py --records data/senzing-ready/*.jsonl \\
+        --snapshot docs/visualizations/results.html
 
     # Just build the snapshot and exit (no server), used by the completion gate:
     python3 senzing_viz_server.py --records src/system_verification/*.jsonl \\
@@ -49,12 +49,34 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
-SOURCE_COLORS = {
-    "CUSTOMERS": "#3b82f6",
-    "REFERENCE": "#22c55e",
-    "WATCHLIST": "#f59e0b",
-}
-FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#14b8a6", "#ef4444", "#0ea5e9", "#a3a34a"]
+# Brand tokens ship in this same directory. Import them so the visualization shares
+# the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
+# of the same values if the module is ever unavailable, so this script keeps working
+# in isolation (mirrors the vendored-D3 offline fallback).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import brand_tokens as _bt
+
+    SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
+    FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
+    _BRAND = {
+        "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
+        "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
+        "accent_hot": _bt.EMBER_HOT, "accent_soft": _bt.EMBER_SOFT,
+        "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
+        "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
+    }
+except Exception:  # defensive fallback — keep values in sync with brand_tokens.py
+    SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
+    FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+    _BRAND = {
+        "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
+        "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
+        "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
+        "line": "#E5DFD3", "green": "#1D9E75",
+        "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
+        "code_font": "'Fira Code', 'Courier New', Courier, monospace",
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -217,9 +239,9 @@ PAGE = r"""<!doctype html>
 __D3_SCRIPT__
 __DATA_SHIM__
 <style>
-:root{--navy:#0c2340;--blue:#175ca8;--gold:#c8922a;--ink:#1e293b;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc}
+:root{__ROOT_VARS__}
 *{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+body{margin:0;font-family:__FONT_STACK__;color:var(--ink);background:var(--bg)}
 header{background:var(--navy);color:#fff;padding:12px 20px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:10}
 header h1{margin:0;font-size:18px}
 .banner{display:flex;gap:10px;flex-wrap:wrap;padding:12px 20px;background:#fff;border-bottom:1px solid var(--line)}
@@ -240,19 +262,19 @@ main{padding:0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{stroke:#fff;stroke-width:1.5px;cursor:pointer}
 .node text{font-size:10px;fill:var(--ink);pointer-events:none}
-.edge line{stroke:#cbd5e1;stroke-width:1.5px}
+.edge line{stroke:var(--line);stroke-width:1.5px}
 .edge text{font-size:9px;fill:var(--muted)}
 .tooltip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;padding:6px 9px;border-radius:6px;font-size:12px;opacity:0;max-width:240px}
 .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px}
 .card h4{margin:0 0 6px;font-size:15px}
 .recs{display:flex;gap:10px;flex-wrap:wrap}
-.rec{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:150px;background:#f8fafc}
-.chip{display:inline-block;border:1px solid var(--blue);color:var(--blue);background:#eff6ff;border-radius:12px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;font-family:monospace}
-.mk span{display:inline-block;border:1px solid var(--gold);background:#fdf6e9;color:#8a6d1f;border-radius:4px;padding:0 5px;margin:1px;font-family:monospace;font-size:11px}
+.rec{border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:150px;background:var(--bg)}
+.chip{display:inline-block;border:1px solid var(--blue);color:var(--blue);background:var(--accent-soft);border-radius:12px;padding:1px 8px;font-size:11px;margin:2px 2px 0 0;font-family:__CODE_FONT__}
+.mk span{display:inline-block;border:1px solid var(--gold);background:var(--accent-soft);color:var(--ink);border-radius:4px;padding:0 5px;margin:1px;font-family:__CODE_FONT__;font-size:11px}
 #search-in{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;width:min(420px,100%)}
 button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
 .muted{color:var(--muted)}
-.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:50}
+.modal-bg{position:fixed;inset:0;background:rgba(15,13,12,.5);display:none;align-items:center;justify-content:center;z-index:50}
 .modal{background:#fff;border-radius:10px;padding:18px 20px;max-width:420px;width:90%}
 .modal h3{margin:0 0 8px}
 .modal button{margin-top:10px;border:none;background:var(--blue);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
@@ -265,10 +287,7 @@ button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;pad
   <section class="tab active" id="tab-graph"><div id="graph-container"><div class="tooltip" id="tt"></div></div></section>
   <section class="tab" id="tab-merges"><div id="merges"></div></section>
   <section class="tab" id="tab-stats"><div id="hist"></div></section>
-  <section class="tab" id="tab-probe">
-    <div style="margin-bottom:10px"><input id="search-in" placeholder="Search a name (e.g. Robert Smith)"> <button class="probe" onclick="doSearch()">Search</button></div>
-    <div id="probe-btns"></div><div id="results"></div>
-  </section>
+  <section class="tab" id="tab-probe">__PROBE_BODY__</section>
 </main>
 <div class="modal-bg" id="modal-bg" onclick="if(event.target.id==='modal-bg')closeModal()"><div class="modal" id="modal"></div></div>
 <script>
@@ -357,7 +376,7 @@ async function drawHist(){const s=await getJSON("/api/stats");const box=d3.selec
   svg.append("g").attr("transform","translate("+m.l+",0)").call(d3.axisLeft(y).ticks(5));
   svg.selectAll("rect").data(data).join("rect").attr("x",function(d){return x(d[0]);}).attr("y",function(d){return y(d[1]);})
     .attr("width",x.bandwidth()).attr("height",function(d){return y(0)-y(d[1]);}).attr("rx",4)
-    .attr("fill",function(d,i){return i===0?"#175ca8":"#c8922a";});
+    .attr("fill",function(d,i){return i===0?"__ACCENT__":"__ACCENT_HOT__";});
   svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(d){return x(d[0])+x.bandwidth()/2;})
     .attr("y",function(d){return y(d[1])-6;}).attr("text-anchor","middle").attr("font-size",13).attr("font-weight",600).text(function(d){return d[1];});}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
@@ -378,6 +397,15 @@ window.addEventListener("resize",function(){if(d3.select("#tab-graph").classed("
 """
 
 
+# The live Search/Probe tab: an interactive search box backed by /api/search.
+PROBE_BODY_LIVE = (
+    '<div style="margin-bottom:10px">'
+    '<input id="search-in" placeholder="Search a name (e.g. Robert Smith)"> '
+    '<button class="probe" onclick="doSearch()">Search</button></div>'
+    '<div id="probe-btns"></div><div id="results"></div>'
+)
+
+
 def _d3_script():
     """Return an inline <script> carrying the vendored D3, so the visualization
     renders with no network access. Fall back to the CDN tag only if the vendored
@@ -392,11 +420,22 @@ def _d3_script():
         return '<script src="https://d3js.org/d3.v7.min.js"></script>'
 
 
-def render_page(title, data_shim=""):
+def render_page(title, data_shim="", probe_body=None):
     # Replace D3 and the data shim LAST so their contents are never rescanned for
     # the other placeholders.
+    root_vars = (
+        "--navy:%(dark)s;--blue:%(accent)s;--gold:%(accent_hot)s;--ink:%(ink)s;"
+        "--muted:%(muted)s;--line:%(line)s;--bg:%(bg)s;--accent-soft:%(accent_soft)s;"
+        "--green:%(green)s" % _BRAND
+    )
     return (
         PAGE.replace("__TITLE__", title)
+        .replace("__PROBE_BODY__", probe_body if probe_body is not None else PROBE_BODY_LIVE)
+        .replace("__ROOT_VARS__", root_vars)
+        .replace("__FONT_STACK__", _BRAND["font"])
+        .replace("__CODE_FONT__", _BRAND["code_font"])
+        .replace("__ACCENT_HOT__", _BRAND["accent_hot"])
+        .replace("__ACCENT__", _BRAND["accent"])
         .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())
@@ -455,6 +494,107 @@ def build_model(settings, patterns):
     return factory, model, engine, flags
 
 
+def _esc_html(s):
+    return (
+        str("" if s is None else s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+
+
+def _match_key_chips(match_key):
+    """Split a Senzing match key (e.g. '+NAME+ADDRESS-DOB') into <span> chips,
+    mirroring the live app's doSearch() rendering."""
+    mk = match_key or ""
+    parts, cur = [], ""
+    for ch in mk:
+        if ch in "+-":
+            if cur:
+                parts.append(cur)
+            cur = ch
+        else:
+            cur += ch
+    if cur:
+        parts.append(cur)
+    return "".join("<span>" + _esc_html(p) + "</span>" for p in parts if p)
+
+
+def _result_card(searched, res):
+    """Render one pre-rendered example search-result card (mirrors doSearch())."""
+    rc = res.get("record_count")
+    html = ['<div class="card">']
+    html.append(
+        '<div class="muted" style="margin-bottom:4px">Searched: <b>'
+        + _esc_html(searched)
+        + "</b></div>"
+    )
+    html.append("<h4>" + _esc_html(res.get("entity_name", "?")) + "</h4>")
+    html.append(
+        '<div class="muted">Entity '
+        + _esc_html(res.get("entity_id"))
+        + " · "
+        + _esc_html(rc if rc is not None else "?")
+        + " record(s) · "
+        + _esc_html(", ".join(res.get("data_sources") or []))
+        + "</div>"
+    )
+    if res.get("match_key"):
+        html.append('<div class="mk">' + _match_key_chips(res["match_key"]) + "</div>")
+    if res.get("resolution_rule"):
+        html.append("<div><code>" + _esc_html(res["resolution_rule"]) + "</code></div>")
+    html.append("</div>")
+    return "".join(html)
+
+
+def _snapshot_probe_html(model, engine, flags):
+    """Build the static snapshot's Search/Probe tab: a note plus a fixed set of
+    pre-rendered example search results (no live search box, which cannot work in a
+    static file). Examples are drawn from this snapshot's own multi-record entities
+    and enriched via a real search so the match keys are truthful; if a search
+    cannot run, the card falls back to the merge data (no match key)."""
+    merges = model.merges().get("entities", [])
+    # Prefer cross-source merges (the most interesting), then the rest, by size.
+    ordered = sorted(
+        merges,
+        key=lambda e: (len(e.get("data_sources", [])) < 2, -e.get("record_count", 0)),
+    )
+    cards = []
+    for ent in ordered:
+        if len(cards) >= 5:
+            break
+        name = ent.get("entity_name") or ""
+        if not name:
+            continue
+        res = None
+        try:
+            hits = model.search(engine, flags, name).get("results", [])
+            res = next(
+                (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
+                hits[0] if hits else None,
+            )
+        except Exception:
+            res = None
+        if res is None:  # search unavailable — render from the merge data itself
+            res = {
+                "entity_id": ent.get("entity_id"),
+                "entity_name": name,
+                "record_count": ent.get("record_count"),
+                "data_sources": ent.get("data_sources", []),
+                "match_key": "",
+                "resolution_rule": "",
+            }
+        cards.append(_result_card(name, res))
+    note = (
+        '<p class="muted">This is a saved snapshot, so live search is disabled. Below are '
+        "example searches run against this Truth Set. In the live app "
+        "(<code>http://localhost:8080</code>) you can search any name.</p>"
+    )
+    if not cards:
+        return note + '<p class="muted">No multi-record entities to show.</p>'
+    return note + '<div id="results">' + "".join(cards) + "</div>"
+
+
 def write_snapshot(model, engine, flags, title, out_path):
     """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
     renders with no server and no network access."""
@@ -472,7 +612,9 @@ def write_snapshot(model, engine, flags, title, out_path):
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
-    page = render_page(title, data_shim=shim)
+    page = render_page(
+        title, data_shim=shim, probe_body=_snapshot_probe_html(model, engine, flags)
+    )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
         fh.write(page)

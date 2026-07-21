@@ -74,14 +74,14 @@ ground-rules file-placement contract:
 - Reusable resources at download time: transformation/workflow `.py` scripts → `src/`; the
   entity specification (`senzing_entity_specification.md`) → `docs/reference/`; other reference
   `.md` → `docs/`; config JSON → `config/`; data → `data/`.
-- **Transient run artifacts stay in the workspace while the run is in progress**: the workflow
+- **Transient run artifacts stay in the workspace while the run is in progress:** the workflow
   reads and writes them for its own use. Do NOT relocate, delete, or redirect these mid-run:
   `profile_report.md`, `schema_hints.md`, `JOURNAL.md`, and generated JSONL output.
 - **After the run for a source completes (after the iterate/finalize step), relocate the
   transient artifacts to their durable homes:** mapping-phase Markdown (`profile_report.md`,
   `schema_hints.md`, `JOURNAL.md`) → `docs/mapping/`; mapping working data
   (`*_mapping_spec.json`, the per-source `{source}_sample.jsonl`, intermediate analyzer JSONL)
-  → `data/mapping/`. Final transformed, load-ready JSONL stays in `data/transformed/`.
+  → `data/mapping/`. Final transformed, load-ready JSONL stays in `data/senzing-ready/`.
 - If a downloaded file matches no placement rule, leave it in the workspace and surface it as a
   warning rather than inventing a destination. If the plugin write-gate blocks a write, leave
   the file in the workspace and report it: do not retry against a different location.
@@ -185,25 +185,25 @@ the mapping table with reasoning for each decision and a confidence score.
 >
 > **`mapping_workflow` Steps 5–8 are optional sandbox validation** (Phase 3). They let you
 > trial-load the mapped source into a throwaway sandbox to preview entity resolution. They are
-> NOT the production load: the real load happens in **Module 6**. The four options are:
+> NOT the production load: the real load happens in **Data processing**. The four options are:
 >
-> - **skip**: skip the per-source sandbox test load and move on. **Recommended when one or
+> - **skip:** skip the per-source sandbox test load and move on. **Recommended when one or
 >   more unmapped sources remain.**
-> - **test_load**: run the optional sandbox test load (enters Phase 3) for this source.
-> - **load+resolve**: run the optional sandbox test load and resolve entities (enters Phase 3)
+> - **test_load:** run the optional sandbox test load (enters Phase 3) for this source.
+> - **load+resolve:** run the optional sandbox test load and resolve entities (enters Phase 3)
 >   for this source.
-> - **done**: finish the mapping workflow for this source without a sandbox test load.
+> - **done:** finish the mapping workflow for this source without a sandbox test load.
 >
 > **Multi-source continuation (recommended path):** When one or more unmapped sources remain,
-> recommend **skip**: the real load is deferred to Module 6, so a per-source sandbox test load
+> recommend **skip**: the real load is deferred to Data processing, so a per-source sandbox test load
 > adds little here: and automatically continue to the next unmapped source by starting its own
 > `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sandbox preview; since
-> you still have sources to map and the real load happens in Module 6, I'll skip the per-source
+> you still have sources to map and the real load happens in Data processing, I'll skip the per-source
 > test load and move on to the next unmapped source."
 >
 > **Explicit choice is preserved:** If the bootcamper explicitly chooses **test_load** or
 > **load+resolve**, follow that path into Phase 3 (`phase3-test-load.md`) unchanged. The real
-> production load still happens in Module 6 regardless.
+> production load still happens in Data processing regardless.
 
 **Checkpoint:** write step 11.
 
@@ -218,11 +218,11 @@ output format.
 >   (which fields became which Senzing attributes, how DATA_SOURCE and RECORD_ID are set, nested
 >   vs. flat layout).
 > - **Concise:** State the output file path and format only (e.g., "Output:
->   data/transformed/customers.jsonl: one JSON record per line").
+>   data/senzing-ready/customers.jsonl: one JSON record per line").
 
 After `mapping_workflow` generates output files into the workspace, place them into the correct
 project subdirectories per the file-placement guidance above (`.py` → `src/`, transformed JSONL
-→ `data/transformed/`, mapping docs → `docs/mapping/`, etc.). Regenerating a `docs/README.md`
+→ `data/senzing-ready/`, mapping docs → `docs/mapping/`, etc.). Regenerating a `docs/README.md`
 docs index is a later porting phase: skip it for now.
 
 **Checkpoint:** write step 12.
@@ -246,7 +246,7 @@ pass/fail, output file path, sample record, any observations.
 > - **Verbose:** Show pass/fail result, the output file path, a sample transformed record, and
 >   any observations (warnings, skipped records, format issues).
 > - **Concise:** Show pass/fail result and the output file path only (e.g., "✅ Pass: output:
->   data/transformed/customers_sample.jsonl").
+>   data/senzing-ready/customers_sample.jsonl").
 
 **Checkpoint:** write step 14.
 
@@ -283,7 +283,7 @@ adjustment.
 close the turn on one 👉 question:
 
 - **Quality ≥80% and all critical fields mapped:** "Quality looks strong. Ready to proceed to
-  loading (Module 6)."
+  loading (Data processing)."
 - **Quality 70-79%:**
 
   👉 **Quality is acceptable. What would you like to do? Reply with a number:**
@@ -308,7 +308,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 > **Data source registry:** Update the source's `mapping_status` to `complete` in
 > `config/data_sources.yaml` and set `updated_at`. If a transformed file was created, update
-> `file_path` to the `data/transformed/` output.
+> `file_path` to the `data/senzing-ready/` output.
 
 **Checkpoint:** write step 17.
 
@@ -316,7 +316,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 
 - Program in `src/transform/`.
 - Docs in `docs/mapping/mapping_[name].md` (field mappings, logic, quality, how to run).
-- Sample output in `data/transformed/[name]_sample.jsonl`.
+- Sample output in `data/senzing-ready/[name]_sample.jsonl`.
 - **Transformation lineage:** Create `docs/mapping/transformation_lineage_[name].md` for this
   data source, covering source file info, transformation program, output file info, field
   mappings, format changes, filters, quality improvements, and before/after record counts. (The
@@ -359,7 +359,7 @@ If issues are found, go back to the relevant step. Retest after changes.
 Each source gets its own transformation program and its own `mapping_workflow` run.
 
 > **Mandatory internal gate (do not render to the bootcamper):** BEFORE writing the module
-> completion checkpoint, list ALL files in `data/transformed/` and verify that EACH has a
+> completion checkpoint, list ALL files in `data/senzing-ready/` and verify that EACH has a
 > corresponding `docs/mapping/{source_name}_mapper.md`. If any are missing, create them NOW. Do
 > NOT write the module completion checkpoint until all mapping specs exist. This is a hard
 > requirement: the module is not complete without a per-source mapping specification for every
@@ -373,22 +373,23 @@ complete, delete its `config/mapping_state_[datasource].json` checkpoint.
 
 **Checkpoint:** write step 19.
 
-### 20. Transition
+### 20. Module completion and transition
 
-Once all sources are mapped, choose the next module by whether the Senzing SDK is already set up
-: check `config/bootcamp_progress.json` for Module 2 completion before deciding:
+Once all sources are mapped, **complete the module** — this is Module 5's completion site whenever
+the optional Phase 3 was not taken. Run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append
+the name-based Module 5 recap section to `docs/bootcamp_recap.md` (INV-085), show the
+`✅ Module complete: Data quality & mapping` line (INV-079), and end the turn on the pinned
+transition 👉 question naming the **next selected module** from `selected_modules` (INV-076 / INV-079):
 
-- **If Module 2 (SDK Setup) is already complete** (e.g., the bootcamper ran the optional Module
-  3 System Verification, which requires a working SDK, or the SDK was installed during
-  onboarding): skip Module 2 and transition directly to **Module 6 (Data Processing)** to load
-  the mapped data.
-- **If Module 2 is not yet complete:** transition to **Module 2 (SDK Setup)**: it is the next
-  module that needs the SDK, and loading in Module 6 depends on it.
-
-Close the turn on the transition question, for example:
-
-👉 **Module 5 complete. Ready to move on to [Module 2 (SDK Setup) / Module 6 (Data Processing)]?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)*
+
+Do **not** choose the next module by re-checking SDK state — `selected_modules` already fixes the
+order (SDK setup precedes Data quality & mapping; Data processing follows it). **Run Module
+Completion exactly once:** if the bootcamper took Phase 3 and its step 26 already completed the
+module (`data_quality_mapping` is already in `modules_completed`), skip completion here and present
+only the transition.
 
 **Checkpoint:** write step 20.

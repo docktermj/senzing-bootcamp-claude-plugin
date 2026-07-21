@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stop hook: a safety net that nudges for a single closing 👉 question. It fires
+"""Stop hook: to nudge for a single closing 👉 question (a safety net). It fires
 ONLY when a bootcamp is active AND the model actually forgot the question, and it can
 NEVER loop.
 
@@ -98,6 +98,7 @@ def pref_flag(key):
                 if stripped.startswith("#") or ":" not in stripped:
                     continue
                 name, _, val = stripped.partition(":")
+                val = val.split("#", 1)[0]  # ignore any trailing inline comment
                 # top-level key only (no leading indentation)
                 if name == key and line[:1] not in (" ", "\t"):
                     return truthy(val)

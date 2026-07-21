@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the bootcamp recap Markdown into a professional PDF trophy.
+"""Render the bootcamp recap Markdown into a professional recap PDF.
 
 Reads ``docs/bootcamp_recap.md`` and writes ``docs/bootcamp_recap.pdf``.
 
@@ -13,9 +13,11 @@ A valid PDF is ALWAYS produced, via a tiered strategy:
    paginated PDF rendered from the same parsed content, with no third-party
    dependency.
 
-The script is self-contained: it imports nothing from sibling scripts, so it
-works when bundled inside the Claude plugin and invoked from a bootcamp
-working directory.
+The script is dependency-light: its only optional sibling import is ``brand_tokens``
+(the shared Senzing brand palette that ships next to it in ``scripts/``), and it
+falls back to an inlined copy of those values if that module is unavailable — so it
+still works when bundled inside the Claude plugin and invoked from a bootcamp
+working directory, and always produces a valid PDF.
 
 Success signal (matches the graduation skill's contract): on success it prints
 a line beginning ``PDF generated:`` and exits 0. Any other outcome means no PDF
@@ -44,7 +46,7 @@ DEFAULT_INPUT = "docs/bootcamp_recap.md"
 DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
 
 # The labeled sub-sections a complete per-module recap section carries. The
-# graduation "trophy" requirement names Information Shared, Questions &
+# graduation recap requirement names Information Shared, Questions &
 # Responses, Actions Taken, and Journal. "Actions Taken" / "Action Taken" are
 # both accepted on parse.
 REQUIRED_SECTIONS = [
@@ -60,7 +62,9 @@ REQUIRED_SECTIONS = [
 # --------------------------------------------------------------------------- #
 @dataclass
 class ModuleSection:
-    """One ``## Module N: ...`` block from the recap."""
+    """One recap section: a name-based ``## <Name> — <date>`` block (legacy
+    ``## Module N: ...`` headers are also parsed). ``number`` is None for
+    name-based headers."""
 
     number: Optional[int]
     title: str
@@ -131,8 +135,8 @@ def parse_recap(text: str) -> Recap:
     current_sub: Optional[Tuple[str, List[str]]] = None
     seen_first_module = False
 
-    module_re = re.compile(r"^##\s+Module\s+(\d+)\s*[:\-—]?\s*(.*)$", re.IGNORECASE)
     generic_h2_re = re.compile(r"^##\s+(.*)$")
+    _legacy_module_re = re.compile(r"^Module\s+(\d+)\s*[:\-—]?\s*(.*)$", re.IGNORECASE)
     h1_re = re.compile(r"^#\s+(.*)$")
     h3_re = re.compile(r"^###\s+(.*)$")
     meta_re = re.compile(r"^\*\*(.+?)\*\*:?\s*(.*)$")
@@ -153,15 +157,25 @@ def parse_recap(text: str) -> Recap:
     for raw in lines:
         line = raw.rstrip("\n")
 
-        m = module_re.match(line)
-        if m:
+        # An H2 heading starts a new recap section (one per module). Name-based
+        # headers ("## Business problem — <date>") are the current form; legacy
+        # numbered headers ("## Module 3: System Verification — <date>") are still
+        # parsed for older recaps. ``number`` is None for name-based headers.
+        h2 = generic_h2_re.match(line)
+        if h2:
             close_module()
-            num = int(m.group(1))
-            rest = m.group(2).strip().lstrip(":-— ").strip()
-            title, date = _split_title_date(rest)
-            current_module = ModuleSection(
-                number=num, title=title or f"Module {num}", date=date
-            )
+            header = h2.group(1).strip()
+            legacy = _legacy_module_re.match(header)
+            if legacy:
+                num = int(legacy.group(1))
+                rest = legacy.group(2).strip().lstrip(":-— ").strip()
+                mtitle, date = _split_title_date(rest)
+                current_module = ModuleSection(
+                    number=num, title=mtitle or f"Module {num}", date=date
+                )
+            else:
+                mtitle, date = _split_title_date(header)
+                current_module = ModuleSection(number=None, title=mtitle, date=date)
             seen_first_module = True
             continue
 
@@ -170,11 +184,6 @@ def parse_recap(text: str) -> Recap:
             if hm:
                 close_sub()
                 current_sub = (hm.group(1).strip(), [])
-                continue
-            # A new H2 that is not a module ends the module block.
-            gm = generic_h2_re.match(line)
-            if gm:
-                close_module()
                 continue
             if line.strip() == "---":
                 # Separator between modules; keep it out of content.
@@ -213,30 +222,60 @@ def parse_recap(text: str) -> Recap:
 # --------------------------------------------------------------------------- #
 # Verification (--check and post-render round trip)
 # --------------------------------------------------------------------------- #
-def verify_recap(recap: Recap) -> List[str]:
-    """Return a list of human-readable problems; empty means complete."""
+def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> List[str]:
+    """Return a list of human-readable problems; empty means complete.
+
+    When ``expected_titles`` is given (e.g. the module names from
+    ``config/bootcamp_progress.json`` → ``modules_completed``), also flag any
+    expected module that has no ``## `` section at all — not just missing
+    subsections within the sections that happen to be present.
+    """
     problems: List[str] = []
     if not recap.modules:
-        problems.append("recap contains no '## Module N:' sections")
+        problems.append("recap contains no module ('## …') sections")
     for mod in recap.modules:
         missing = mod.missing_required()
         if missing:
             label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+    if expected_titles:
+        present = {(m.title or "").strip().lower() for m in recap.modules}
+        for title in expected_titles:
+            norm = title.strip().lower()
+            if norm and norm not in present:
+                problems.append(f"expected module '{title}' has no recap section at all")
     return problems
 
 
 # --------------------------------------------------------------------------- #
 # Rich renderer (fpdf2)
 # --------------------------------------------------------------------------- #
-# Senzing-flavored palette (deep blue + slate + a warm accent).
-NAVY = (12, 35, 64)
-BLUE = (23, 92, 168)
-SLATE = (71, 85, 105)
-LIGHT = (241, 245, 249)
-ACCENT = (200, 146, 42)
-INK = (30, 41, 59)
-GREEN = (22, 128, 82)
+# Senzing "Obsidian & Ember" brand palette, sourced from the shared brand tokens that
+# ship alongside this script (`brand_tokens.py`) so the recap PDF matches the Truth-Set
+# visualization. Falls back to an inlined copy of the same values if that module is
+# unavailable, so a valid PDF is still always produced (INV-048/INV-066).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    import brand_tokens as _bt
+
+    _h2rgb = _bt.hex_to_rgb
+    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / journal accent
+    BLUE = _h2rgb(_bt.EMBER_CORE)    # primary accent
+    SLATE = _h2rgb(_bt.BODY_INK)     # body text
+    LIGHT = _h2rgb(_bt.WARM_OFF_WHITE)  # warm off-white fills
+    ACCENT = _h2rgb(_bt.EMBER_HOT)   # hot ember accent / rules
+    INK = _h2rgb(_bt.DARK_INK)       # headline ink
+    GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
+    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+except Exception:  # defensive fallback — keep in sync with brand_tokens.py
+    NAVY = (24, 22, 15)
+    BLUE = (245, 120, 38)
+    SLATE = (74, 70, 64)
+    LIGHT = (250, 248, 243)
+    ACCENT = (255, 78, 31)
+    INK = (24, 22, 15)
+    GREEN = (29, 158, 117)
+    LINE = (229, 223, 211)
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -270,6 +309,9 @@ def _format_date(date: str) -> str:
 
 def _md_inline_to_text(s: str) -> str:
     """Strip the small subset of inline Markdown we emit, for plain text."""
+    # Reduce an embedded image ![alt](path) to its alt text — used as a caption
+    # by renderers that cannot embed the image (e.g. the stdlib fallback).
+    s = re.sub(r"!\[(.*?)\]\([^)]*\)", r"\1", s)
     s = re.sub(r"\*\*(.+?)\*\*", r"\1", s)
     s = re.sub(r"`(.+?)`", r"\1", s)
     return s
@@ -411,7 +453,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
     per_col = (len(rows) + 1) // 2
     card_h = 9 + per_col * 16 + 3
     pdf.set_fill_color(*LIGHT)
-    pdf.set_draw_color(210, 218, 228)
+    pdf.set_draw_color(*LINE)
     pdf.rect(card_x, y0, card_w, card_h, style="DF")
     for i, (key, val) in enumerate(rows):
         col, pos = i % 2, i // 2
@@ -450,7 +492,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
                 x = pdf.l_margin
                 y += 11
             pdf.set_fill_color(*LIGHT)
-            pdf.set_draw_color(210, 218, 228)
+            pdf.set_draw_color(*LINE)
             pdf.rect(x, y, w, 8.5, style="DF")
             pdf.set_xy(x, y)
             pdf.set_text_color(*INK)
@@ -544,10 +586,63 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     pdf.ln(2)
 
 
+def _is_empty_takeaway(text: str) -> bool:
+    """True for a '**Bootcamper's takeaway:**' line with no real value (empty or "N/A").
+
+    The takeaway is an optional field within the Journal subsection; when the bootcamper
+    gave none, the line is omitted rather than rendered as an "N/A" placeholder.
+    """
+    m = re.match(r"^\*\*(.+?):\*\*\s*(.*)$", text.strip())
+    return bool(
+        m
+        and m.group(1).strip().lower() == "bootcamper's takeaway"
+        and m.group(2).strip(" .").lower() in ("", "n/a", "none")
+    )
+
+
+def _render_image(pdf, epw, path: str, alt: str = "") -> None:
+    """Embed a local visualization screenshot into the recap, best-effort and non-fatal.
+
+    A missing/unreadable image, an fpdf2 build without image support, or a bad
+    file is skipped silently — an optional decoration must never break the
+    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-071).
+    """
+    if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
+        return  # never fetch a remote URL (offline guarantee)
+    p = Path(path)
+    if not p.is_absolute():
+        p = Path.cwd() / p
+    if not p.is_file():
+        return
+    try:
+        pdf.ln(1)
+        pdf.set_x(pdf.l_margin)
+        pdf.image(str(p), w=min(epw, 130.0))
+        pdf.ln(1)
+        if alt:
+            pdf.set_font("Helvetica", "I", 8.5)
+            pdf.set_text_color(*SLATE)
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(epw, 4.5, _safe(alt))
+            pdf.set_text_color(*INK)
+        pdf.ln(2)
+    except Exception:
+        return  # any embedding failure → skip the image, keep the PDF valid
+
+
 def _render_line(pdf, epw, line: str) -> None:
     stripped = line.strip()
     if not stripped:
         pdf.ln(3)
+        return
+    if stripped.startswith("<!--") and stripped.endswith("-->"):
+        return  # HTML comment (e.g. a maintainer note in the source): never rendered
+    if _is_empty_takeaway(stripped):
+        return
+    # Embedded visualization screenshot: ![alt](path) on its own line.
+    img = re.match(r"^!\[(.*?)\]\((.+?)\)$", stripped)
+    if img:
+        _render_image(pdf, epw, img.group(2).strip(), img.group(1).strip())
         return
     indent = 0
     bullet = ""
@@ -619,7 +714,8 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         for key, val in recap.meta:
             add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 11, 0)
         completed = ", ".join(
-            f"Module {m.number}" for m in recap.modules if m.number is not None
+            (f"Module {m.number}" if m.number is not None else m.title)
+            for m in recap.modules
         )
         if completed:
             add("", "F1", 4, 0)
@@ -684,6 +780,10 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if not s:
             add("", "F1", 4, 0)
             continue
+        if _is_empty_takeaway(s):
+            continue
+        if s.startswith("<!--") and s.endswith("-->"):
+            continue  # HTML comment (e.g. a maintainer note): never rendered
         indent = 6.0
         m = re.match(r"^(\s*)([-*])\s+(.*)$", line)
         if m:
@@ -832,6 +932,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="Verify required sections exist; do not render.",
     )
+    parser.add_argument(
+        "--expect-modules",
+        default="",
+        help=(
+            "Comma-separated module names that MUST each have a section; "
+            "flags a wholly-missing module, not just missing subsections."
+        ),
+    )
     args = parser.parse_args(argv)
 
     inp = Path(args.input)
@@ -842,7 +950,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     recap = parse_recap(inp.read_text(encoding="utf-8"))
 
     if args.check:
-        problems = verify_recap(recap)
+        expected = [s for s in (t.strip() for t in args.expect_modules.split(",")) if s]
+        problems = verify_recap(recap, expected or None)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")

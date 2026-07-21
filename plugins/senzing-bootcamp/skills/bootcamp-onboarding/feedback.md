@@ -45,6 +45,21 @@ Feedback captured during the Senzing Bootcamp. Saved locally only.
 ## Your Feedback
 ```
 
+## Step 1b: Mark the start of feedback (entry banner)
+
+Steps 0 and 1 are silent/administrative. This is the first bootcamper-facing moment of the
+feedback workflow: present the pinned entry banner **verbatim** so the bootcamper clearly sees
+they have switched out of the bootcamp and into feedback collection. Show it before the first 👉
+feedback question (Step 2), in the same turn:
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝📝📝  BOOTCAMP FEEDBACK  📝📝📝
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+The banner is a statement, not a question; it never counts against the one-👉-per-turn rule.
+
 ## Step 2: Gather the feedback, one 👉 question at a time
 
 Ask these in order, each as its own turn (pre-fill the module from captured
@@ -68,7 +83,7 @@ rewrite the file, so earlier entries are preserved.
 ## Improvement: [brief title from the bootcamper's description]
 
 **Date:** YYYY-MM-DD
-**Module:** [module number or "General"]
+**Module:** [module name or "General"]
 **Priority:** [High/Medium/Low]
 
 ### What happened
@@ -86,7 +101,7 @@ rewrite the file, so earlier entries are preserved.
 ### Context when reported
 
 - **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
-- **Plugin version:** [from `.claude-plugin/plugin.json`, or "Unknown"]
+- **Plugin version:** [from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"]
 - **Workstation:** [OS name and version, and architecture; e.g. "Linux 6.17.0-35-generic (x86_64)", or "Unknown"]
 - **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-4-8[1m] / high", or "Unknown"]
 - **Context size:** [approximate tokens and/or % of context window in use; e.g. "~85k tokens (~42% of window)", or "Unknown"]
@@ -110,6 +125,14 @@ never silently lost (INV-015).
 
 ## Step 4: Confirm and return
 
-- Only after Step 3b confirms the entry is on disk, confirm to the bootcamper: "Saved your feedback to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
+- Only after Step 3b confirms the entry is on disk, present the pinned exit banner **verbatim**, marking the return from feedback to the bootcamp:
+
+  ```text
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅  FEEDBACK SAVED — BACK TO THE BOOTCAMP  ✅
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ```
+
+  Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
 - Do NOT submit feedback to the Senzing MCP server or anywhere external unless the bootcamper explicitly asks.
-- Return the bootcamper to exactly where they left off, resuming the pending step or question. Do not make them re-navigate.
+- The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off by **re-presenting the exact pending 👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 ends the turn (INV-005). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.

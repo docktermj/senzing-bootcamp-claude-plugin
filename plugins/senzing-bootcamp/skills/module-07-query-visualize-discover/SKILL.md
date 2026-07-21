@@ -5,13 +5,21 @@ description: 'Bootcamp Module 7: Query, Visualize, and Discover. Use when the bo
 
 # Module 7: Query, Visualize, and Discover
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, no direct SQL, file placement, checkpointing). Execute every numbered step and
 sub-step one at a time, in order. Never skip, combine, or abbreviate a step containing a 👉
 question. This has the same absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** Your data is loaded and entities are resolved, but you haven't examined the
 results yet. After this module you'll have query programs that answer your business questions,
@@ -70,6 +78,6 @@ already checkpointed.
 
 ## Module position
 
-Module 7 is the end of the Core track. The Query Completeness Gate at the end of Phase 1 is the
+Module 7 is the last content module before graduation. The Query Completeness Gate at the end of Phase 1 is the
 module transition: Path A (full bootcamp) proceeds to graduation; Paths B/C
 (shorter paths) may stop here with working query programs. Preserve that gate exactly.

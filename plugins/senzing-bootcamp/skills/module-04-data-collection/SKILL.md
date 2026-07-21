@@ -5,20 +5,29 @@ description: "Bootcamp Module 4: Identify and Collect Data Sources. Use when the
 
 # Module 4: Identify and Collect Data Sources
 
+> **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
+> SDK method and attribute names, config options, error codes, and entity-resolution specifics —
+> MUST come from the Senzing MCP tools, never from training data, memory, or speculation.
+> **Pre-response checklist:** if a reply contains any Senzing specific, you MUST have called an MCP
+> tool this turn to obtain it; if not, stop and call it first. This has the same precedence as a ⛔
+> gate. The full rule and tool routing are the "MCP-first invariant" in
+> `../bootcamp-onboarding/ground-rules.md`.
+
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). Execute every numbered step one at a time, in
 order. Never skip, combine, or abbreviate a step containing a 👉 question: this has the same
 absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, and a brief numbered overview of this module's steps, before any module work. Read `current_step` and
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
 resume at the right step.
 
 > **User reference:** Detailed background for this module lives in the Kiro Power at
 > `docs/modules/MODULE_4_DATA_COLLECTION.md` (the docs port is a later porting phase).
 
-**Prerequisites:** ✅ Module 1 complete (business problem defined, data sources identified),
-✅ Module 3 complete (system verification passed or skipped).
+**Prerequisites:** ✅ Module 1 complete (business problem defined, data sources identified).
+System verification is optional (a deselectable module); when selected it precedes Data
+collection, but Data collection does not require it.
 
 **Before/After:** You have a list of data sources on paper. After this module, the actual data
 files are in your project (`data/raw/`), documented, and ready for quality evaluation.
@@ -63,7 +72,7 @@ forward.
 
 - **Keep the full dataset and expand:** route to the Module 1 licensing paths: apply an
   existing license, request one through the external channel, or (when available) request one
-  in-flow via the Senzing MCP server. Use the Module 1 Phase 1 discovery flow (Steps 6a–6e in
+  in-flow via the Senzing MCP server. Use the Module 1 Phase 1 discovery flow (Steps 5a–5e in
   `../module-01-business-problem/phase1-discovery.md`) for the tool-availability checks and
   branching; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
@@ -90,8 +99,13 @@ complete list.
 
 ### 2. For each data source, collect the data
 
-First, ask how the bootcamper wants to provide the data for a given source: upload a file,
-provide a URL/file path, connect to a database, or use an API endpoint.
+First, ask how the bootcamper wants to provide the data for a given source — pin this question
+verbatim (INV-051), never joining the choices with "or":
+
+👉 **How would you like to provide the data for this source? Reply with a number:** (1) upload a
+file, (2) provide a URL or file path, (3) connect to a database, (4) use an API endpoint.
+
+*(Internal: end the turn on this question and wait.)*
 
 **If the bootcamper doesn't have their own data** or wants free data to practice with,
 recommend CORD data as the primary alternative:
@@ -228,16 +242,13 @@ Get-Content data\raw\vendor_api.json -TotalCount 5
 
 ### 4. Document data source locations
 
-**Data Collection Checklist:** Before the bootcamper starts documenting sources, offer to copy
-a structured checklist into their project:
-
-👉 **I have a data collection checklist that helps you document all your data sources in a structured way. Want me to add it to `docs/data_collection_checklist.md`?**
-
-*(Internal: end the turn on this question and wait.)* If yes, create
-`docs/data_collection_checklist.md` with a Data Inventory Table (one row per data source) and a
-Validation Checklist, and guide the bootcamper to fill in one row per source and complete the
-checklist before Module 5. *(The Kiro `templates/data_collection_checklist.md` port is a later
-porting phase; compose the checklist directly for now.)*
+**Data Collection Checklist:** Always create a structured checklist in the project — no question
+(INV-012). Create `docs/data_collection_checklist.md` with a Data Inventory Table (one row per
+data source) and a Validation Checklist, and guide the bootcamper to fill in one row per source
+and complete the checklist before Module 5. Announce it as a produced file in the Step 9
+end-of-module summary's "Files produced" list (INV-032). *(The Kiro
+`templates/data_collection_checklist.md` port is a later porting phase; compose the checklist
+directly for now.)*
 
 Also create or update `docs/data_source_locations.md`:
 
@@ -322,7 +333,7 @@ the Senzing MCP server. When the dataset genuinely exceeds the effective limit, 
 can keep their full dataset and expand capacity via the Module 1 licensing paths, or work with
 a smaller slice. Do not steer them to a smaller substitute as the only path. Defer the
 licensing-path availability checks and any capacity figure to the Module 1 Phase 1 discovery
-flow (Steps 6a–6e in `../module-01-business-problem/phase1-discovery.md`) and the Senzing MCP
+flow (Steps 5a–5e in `../module-01-business-problem/phase1-discovery.md`) and the Senzing MCP
 server.
 
 **If the bootcamper chooses to work with a smaller slice:**
@@ -444,7 +455,7 @@ end-of-module summary), then ask the single transition question:
 "Great! Now that we have the data files, let's evaluate each one to see if it needs mapping or
 if it's already in the right format for Senzing."
 
-👉 **Module 4 complete. Ready to evaluate your data sources for mapping in Module 5?**
+👉 **Are you ready to move on to the next module: {next module name}?**
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`. On module completion set
 `current_step` to `null`.

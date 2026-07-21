@@ -73,7 +73,8 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 | `bootcamp-onboarding` | Gated preface, exact-wording gates, preference capture | Sonnet 5 | Protocol adherence needs adaptive thinking + strong instruction-following; no heavy code → Opus overkill, Haiku risky |
 | `module-01-business-problem` | Discovery conversation, document the problem | Sonnet 5 | Conversation-led, light technical |
 | `module-02-sdk-setup` | Cross-platform install, license/engine/DB config, build-from-source recovery | Opus 4.8 | Largest skill, most error-prone, platform-specific; install/config errors are high-cost |
-| `module-03-system-verification` | Run viz server, verify, report | Sonnet 5 | Mostly run / check / report |
+| `module-03-system-verification` | Verify end-to-end, report | Sonnet 5 | Mostly run / check / report |
+| `module-03b-truthset-visualization` | Load Truth Set, run viz server, visualize | Sonnet 5 | Mostly run / render |
 | `module-04-data-collection` | Gather sources into `data/raw/` | Sonnet 5 | Data wrangling + light code |
 | `module-05-data-quality-mapping` | Quality scoring + mapping to the Entity Spec via `mapping_workflow` | Opus 4.8 | Mapping correctness drives resolution quality — the technical crux |
 | `module-06-data-processing` | Load mapped data (SDK), validate, load-safety rails | Sonnet 5 (Opus if bespoke load code) | Heavy mapping already spent in M5; M6 executes/validates with guardrails |
@@ -90,7 +91,7 @@ statement. Switching is optional; the session-level `/model` and `/effort` persi
 
 | Stage | Recommended | Commands |
 |---|---|---|
-| Onboarding, Modules 1, 3, 4, 7 | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+| Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
 | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
 | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
 | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |

@@ -20,7 +20,7 @@ least one non-empty desired-output field:
 - Derive between 1 and 10 query requirements from the success criteria and desired outputs in
   the document. Each derived requirement must reference the specific success criterion or
   desired output it addresses.
-- Present them with this attribution: "Based on your business problem from Module 1, here are
+- Present them with this attribution: "Based on your business problem, here are
   the query requirements I've derived:"
 - List each requirement with its source (e.g. "From your success criterion about [X]..." or
   "From your desired output format of [Y]...").
@@ -30,11 +30,11 @@ least one non-empty desired-output field:
 *(Internal: end the turn on this question and wait.)*
 
 - **Accepts or modifies:** proceed with the confirmed requirements.
-- **Rejects all derived requirements:** ask a fresh open-ended question without referencing the
-  rejected items: "What questions do you need to answer with your data?"
+- **Rejects all derived requirements:** ask the fresh open-ended question below (the same 👉
+  question as the ELSE branch), without referencing the rejected items.
 
 **ELSE** (file missing, OR both success-criteria and desired-outputs sections are missing or
-empty): ask , 
+empty): ask the fresh open-ended question:
 
 👉 **What questions do you need to answer with your data?**
 
@@ -95,12 +95,12 @@ something is broken. Tell the bootcamper: "Entity resolution found very few matc
 mean: (a) your records are genuinely distinct with no duplicates, (b) the matching criteria
 need adjustment, perhaps key fields weren't mapped or data quality is too low, or (c) you're
 working with a single source that has no internal duplicates. Let's investigate which one."
-Check: are name/address/phone fields populated? Were they mapped correctly in Module 5? Is the
-Module 5 data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
+Check: are name/address/phone fields populated? Were they mapped correctly during Data quality &
+mapping? Is the data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
 finding, document it.
 
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
-matching concepts from Module 3, a sentence or two each, not a full re-explanation:
+matching concepts introduced earlier in the bootcamp, a sentence or two each, not a full re-explanation:
 
 - **Features:** the categories of identifying information (NAME, ADDRESS, PHONE, etc.) Senzing
   extracts and compares, and how to read match-key strings like `+NAME+ADDRESS+PHONE`.
@@ -110,7 +110,7 @@ matching concepts from Module 3, a sentence or two each, not a full re-explanati
   the same entity exists in multiple systems.
 
 Adapt the reminders to the bootcamper's own data context, reference the feature types, scores,
-and data sources present in their current results, not the Module 3 sample data. Then tell
+and data sources present in their current results, not the earlier sample data. Then tell
 them: "If you'd like a deeper refresher on how Senzing matching works, features, scoring, or
 cross-source connections, just ask and I'll walk through it again."
 
@@ -153,7 +153,11 @@ Based on the assessment:
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
-👉 **Would you like to return to Module 5 to refine your data mapping? Your loaded data and query programs will be preserved, after remapping, you'll reload the affected sources and re-evaluate here.**
+Explain first, as a statement: their loaded data and query programs will be preserved; after
+remapping, they'll reload the affected sources and re-evaluate here. Then end the turn on this
+single question:
+
+👉 **Would you like to return to the Data quality & mapping module to refine your data mapping?**
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -161,7 +165,8 @@ If accepted:
 
 1. Note which data sources need remapping in `config/bootcamp_progress.json` under a
    `quality_iteration` key.
-2. Set `current_module` to 5 and `current_step` to the Phase 2 start step.
+2. Set `current_module` to `data_quality_mapping` (Module 5's name token — `current_module` holds
+   a name token, never a catalog number, per INV-086) and `current_step` to the Phase 2 start step.
 3. Load the Module 5 skill and begin at its Phase 2. (Module 5 port is a later phase; when it
    lands, route to its Phase 2 entry point.)
 
@@ -186,28 +191,29 @@ Inline guidance until the visualization files are ported (later porting phase, t
   visualizations → `docs/visualizations/`, other output → `docs/` or `data/`). Never `/tmp/`.
 - Pull the entity/relationship data through generated SDK code and `reporting_guide`, never
   direct SQL.
-
-**Deferred first-visualization guarantee:** if a visualization is generated here AND
-`first_visualization` is `owed` in `config/bootcamp_progress.json` (Module 3 was opted out and
-the standalone demo declined), also mark the journey-level first-visualization as satisfied by
-`module_7_deferred` in `config/bootcamp_progress.json` (idempotent). This is journey-level only
-,  it does not change the Module 3 Step 9 gate. (The Kiro `scripts/progress_utils.py` helpers
-`is_first_visualization_owed` / `clear_first_visualization_owed` are a later porting phase;
-for now update the progress key directly.)
+- After generating the HTML visualization, capture screenshots for the recap (`{html}` = the
+  entity-graph HTML file, `{name}` = `entity_graph`) per
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
+  silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
 
 **Checkpoint:** write step 3c.
 
 ### 3d. Results dashboard visualization checkpoint
 
-Offer a visualization for checkpoint `m7_findings_documented` (a results dashboard). Pin the
-offer verbatim:
+Offer a visualization for checkpoint `m7_findings_documented` — a results dashboard showing
+**entity counts, match statistics, and sample resolved entities**. This is the bootcamp's single
+results-dashboard offer (Module 6 no longer offers one; it lives here, where results visualization
+belongs). Pin the offer verbatim:
 
-> 👉 **Would you like a results dashboard visualizing the findings?**
+> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
 
 Source the dashboard data via `reporting_guide(topic='dashboard', ...)` and
-`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language.
-Same inline guidance and file-placement rules as step 3c apply (visualization files are a later
-porting phase).
+`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language and save
+the HTML to `docs/visualizations/results_dashboard.html` (INV-070). Then capture screenshots for the
+recap (`{html}` = `results_dashboard.html`, `{name}` = `results_dashboard`) per
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip silently
+if no headless capability, otherwise embed the 2-3 best in this module's recap. Same inline guidance
+and file-placement rules as step 3c apply.
 
 **Checkpoint:** write step 3d.
 
@@ -242,13 +248,14 @@ Before wrapping up the module, confirm:
    checkpointed) or explicitly skipped by the bootcamper.
 4. **Ready to proceed?**
 
-Module 7 is the **end of the Core track**. Once the gate is satisfied, run the standard
-**Module Completion** process in `../bootcamp-onboarding/module-completion.md` (update progress,
-append the Module 7 recap section to `docs/bootcamp_recap.md`, and present the end-of-module
-summary). Because this is the last module of the Core track, the completion process ends with
-the graduation offer rather than a next-module transition:
+Module 7 is the **last content module before graduation** (required in every path). Once the gate
+is satisfied, run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md` (update progress, append the Module 7 recap section
+to `docs/bootcamp_recap.md`, and present the end-of-module summary). Because this is the last
+content module, the completion process ends with the graduation offer rather than a next-module
+transition:
 
-👉 **Module 7 complete, and that is the end of the Core track. Would you like to graduate now and generate your production project and recap trophy?**
+👉 **Would you like to graduate now and generate your production project and recap?**
 
 *(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
 to `null` per the ground rules.
@@ -257,9 +264,9 @@ to `null` per the ground rules.
   project). See `../graduation/SKILL.md`.
 - **Wants to keep exploring first:** stay available for more queries, visualizations, or Discover
   work, and offer graduation again whenever they are ready.
-- **Advanced Topics track:** graduation is the close-out for both tracks. Advanced Topics
-  production-hardening (performance, security, monitoring, deployment) is delivered through the
-  graduation production project and migration checklist, not as separate numbered modules.
+- **Production-hardening:** graduation is the close-out for everyone. Production-hardening
+  (performance, security, monitoring, deployment) is delivered through the graduation production
+  project and migration checklist, not as separate numbered modules.
 
 ## Integration patterns
 
