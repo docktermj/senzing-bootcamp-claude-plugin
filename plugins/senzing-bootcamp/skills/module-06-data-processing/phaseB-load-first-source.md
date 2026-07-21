@@ -2,7 +2,9 @@
 
 Continues from Phase A. Follow the ground rules; `🛑`/`⛔` are internal control directives.
 Loading and redo code comes from the MCP tools (`generate_scaffold` / `sdk_guide`), never
-hand-written. Back up `database/G2C.db` before loading.
+hand-written. Back up `database/G2C.db` before loading. The `DATA_SOURCE` codes in this data
+were registered in Phase A (step 4a), so the load runs against a config that already knows them
+(the loader's generic `SENZ2207` handling remains a fallback).
 
 ## 5. Test with sample data (if Phase 3 was skipped)
 

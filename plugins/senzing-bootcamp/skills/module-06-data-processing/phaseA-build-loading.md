@@ -1,4 +1,4 @@
-# Module 6, Phase A: Build Loading Program (steps 1–4)
+# Module 6, Phase A: Build Loading Program (steps 1–4a)
 
 Follow the ground rules. `🛑`/`⛔` are internal control directives, never render them; signal
 a stop by ending the turn on the single 👉 question and waiting. All loading, redo, and query
@@ -138,6 +138,41 @@ Call `generate_scaffold` with workflow `add_records` and the chosen language for
 SDK code. Call `sdk_guide(topic='load')` for platform-specific loading patterns.
 
 **Checkpoint:** write step 4.
+
+## 4a. Register the data source codes (before loading)
+
+Register every `DATA_SOURCE` code present in the data about to be loaded into the Senzing
+configuration **before** the Phase B load, so the first load does not fail with
+`SENZ2207: Data source code [...] does not exist`. Senzing does not auto-create data source
+codes — they must be registered in the active config first — and the default config seeded in
+Module 2 (SDK setup) knows none of the bootcamper's codes, because the data was collected
+afterward (Module 4). This mirrors the register-before-load step that System Verification and the
+Truth Set visualization module already run.
+
+1. **Determine the codes to register.** Collect the distinct `DATA_SOURCE` values present in the
+   record(s) about to be loaded — from the Senzing-ready JSONL in `data/senzing-ready/` for mapped
+   sources, and from the original file in `data/raw/` for `fast_pathed: true` CORD /
+   already-Senzing-ready sources — cross-checked against the source's entry in
+   `config/data_sources.yaml`. Never register a code that is not present in the data.
+2. **Generate the registration code from the MCP server** (never hand-write it): call
+   `sdk_guide(topic='configure')` (and `generate_scaffold` if it exposes a data-source
+   registration workflow) in the language read from `programming_language` in
+   `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it to
+   `src/load/register_data_sources.[ext]` (INV-018). The generated code MUST load the current
+   default config, register each code from step 1, set the updated config as the new default, and
+   be **idempotent** — a code already registered is treated as success, not an error, so re-runs
+   and multi-source orchestration stay safe.
+3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
+   Rust, TypeScript), using the same per-language build command as the loader.
+4. **Execute it before the Phase B load.** On success, record the registered codes in
+   `config/data_sources.yaml`. On failure, capture the output, call `explain_error_code` for any
+   SENZ codes, and report with remediation; the loading program's generic SENZ handling remains a
+   fallback.
+
+In Phase C (multiple sources), register each additional source's code the same way before its
+load — idempotently, so re-registering an existing code is a no-op.
+
+**Checkpoint:** write step 4a to `config/bootcamp_progress.json`.
 
 ## SQLite volume pre-load check (stop-and-confirm heads-up, not a mandatory gate)
 

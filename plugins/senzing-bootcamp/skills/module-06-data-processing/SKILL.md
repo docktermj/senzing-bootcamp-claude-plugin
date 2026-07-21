@@ -64,7 +64,7 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase A, Build Loading Program** (steps 1–4): `phaseA-build-loading.md`
+- **Phase A, Build Loading Program** (steps 1–4a): `phaseA-build-loading.md`
 - **Phase B, Load First Source** (steps 5–11): `phaseB-load-first-source.md`
 - **Phase C, Multi-Source Orchestration** (conditional, 2+ sources, steps 12–20):
   `phaseC-multi-source.md`

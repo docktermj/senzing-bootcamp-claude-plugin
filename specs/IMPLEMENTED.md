@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module6-register-data-sources-before-load
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`
+- **Summary:** Added register-before-load to the production and test loads, closing the SENZ2207-on-first-load gap (findings H1+M5). Module 6 Phase A gains a new step 4a ("Register the data source codes (before loading)") that collects the distinct `DATA_SOURCE` codes in the data about to be loaded (from `data/senzing-ready/` for mapped sources, `data/raw/` for `fast_pathed` sources, cross-checked against `config/data_sources.yaml`), generates the registration code via `sdk_guide`/`generate_scaffold` (MCP-sourced, INV-080; no hardcoded SDK method names), makes it idempotent, and runs it before the Phase B load; Phase B's intro now notes registration happened in 4a. Phase C's step-16 pre-load checklist was fixed to require each source's code be registered idempotently (per 4a) instead of the incorrect "match the Module 2 config" (M5 — Module 2 predates data collection). Module 5 Phase 3 gained step 21a registering the code before its test load (into the fresh test DB). SKILL.md phase title updated to "steps 1–4a". Verified: no `data/transformed`, stale wording removed, MCP-routed, no hardcoded method names, language-parameterized/cross-platform. Established **INV-089** (generalizes INV-083's register-before-load to the Module 6 production load and Module 5 Phase 3 test load), recorded in `specs/INVARIANTS.md` with maintainer sign-off and cross-referenced in the spec's `## Invariants introduced` note.
+- **Commit:** uncommitted
+
 ## concepts-questions-before-quiz
 
 - **Implemented:** 2026-07-20

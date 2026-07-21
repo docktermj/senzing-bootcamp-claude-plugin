@@ -31,6 +31,19 @@ from Phase 2 unchanged; checkpoint to `config/mapping_state_[datasource].json` a
 
 **Checkpoint:** write step 21 to `config/bootcamp_progress.json`.
 
+### 21a. Register the data source code (before the test load)
+
+Before the step 22 test load, ensure the source's `DATA_SOURCE` code is registered in the Senzing
+engine config, so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
+the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
+`DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
+registers the code as part of loading, this is already satisfied; otherwise generate the
+registration via `sdk_guide(topic='configure')` (in the `programming_language`) — it loads the
+current default config, registers the code, and sets it as the new default, idempotently — and run
+it first. Never rely on Module 2's default config, which predates data collection.
+
+**Checkpoint:** write step 21a.
+
 ### 22. Test data loading
 
 Advance through `mapping_workflow` step 6: load test data into a fresh SQLite database. This

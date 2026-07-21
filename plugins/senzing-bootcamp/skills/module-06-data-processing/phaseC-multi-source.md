@@ -61,7 +61,9 @@ Present the strategy choices as a neutral lead + numbered list (INV-051), pinned
 Verify before orchestration: each source's load file exists at its registry `file_path`
 (`data/senzing-ready/` for mapped sources; `data/raw/` for `fast_pathed: true` CORD /
 already-Senzing-ready sources, which skipped mapping in Module 5) and is non-empty;
-unique DATA_SOURCE names match the Module 2 config; RECORD_IDs unique within each source; a
+each source's DATA_SOURCE code is registered in the engine config (register any not yet
+registered, idempotently — per Phase A step 4a; do not rely on Module 2's default config, which
+predates data collection); RECORD_IDs unique within each source; a
 database backup of `database/G2C.db` exists; sufficient disk space (~2x per source); the
 Module 6 loading program works as a template. Fix failures before proceeding.
 

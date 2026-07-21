@@ -73,3 +73,7 @@ steps to prevent — but the guarantee was never extended to the module that doe
 - Final review audit (2026-07-20), findings **H1** (high) and **M5** (medium, merged).
 - Priority: High
 - Related specs: `module3-synthetic-verification-data.md` / `module3-register-truthset-data-sources.md` (INV-083 register-before-load pattern to mirror), `split-truthset-visualization-into-standalone-module.md`, `mcp-grounding-in-every-skill.md` (INV-080).
+
+## Invariants introduced
+
+- `INV-089` — For every load into the Senzing repository, the `DATA_SOURCE` code(s) present in the data MUST be registered as the default engine config, idempotently, before that load runs, so no load fails with `SENZ2207` on the first attempt; generalizes INV-083's register-before-load guarantee to the Module 6 production load and the Module 5 Phase 3 test load (recorded in `specs/INVARIANTS.md`).
