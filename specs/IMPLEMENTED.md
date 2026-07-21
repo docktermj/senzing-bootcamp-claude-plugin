@@ -23,35 +23,35 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Implemented:** 2026-07-20
 - **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
 - **Summary:** Resolved the doc/implementation mismatch for `name` (finding M4) via the maintainer-chosen "detect silently" option. Added a "Detect the bootcamper's name silently (do not ask)" step in Bootcamp preparation Step 4 — best-effort from `git config user.name` (else the environment), held for the Step 6 consolidated write, non-blocking, no new question (INV-012). Corrected `ground-rules.md` to state `name` is **detected** there (not asked) and removed it from the "asked" preference list; updated the Step 6 write to "the detected `name` (if any)". Recap/graduation already consume `name` best-effort, so consumers stay consistent. No new invariant. Verified: detection step present, ground-rules corrected, name removed from the asked-list.
-- **Commit:** uncommitted
+- **Commit:** e5d24e5
 
 ## module5-fastpath-cord-only-vs-senzing-ready
 
 - **Implemented:** 2026-07-20
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `specs/INVARIANTS.md`
 - **Summary:** Reconciled the fast-path contradiction (finding M3) via the maintainer-chosen "narrow to CORD-only" option. Step 5 now states CORD is the already-Senzing-ready fast-path class (offered only for `provenance: cord`); non-CORD compliant data — including data that looks Senzing-ready — continues to Phase 2, matching Step 5a ("CORD sources only"). Clarified INV-041/INV-042/INV-043 in place (dated 2026-07-20, marked "no meaning change", cross-referencing this spec) to state the fast-path class is CORD. No new invariant — an existing-invariant clarification with maintainer sign-off. Verified: Step 5/5a consistent, zero leftover "CORD / already-Senzing-ready" contradictions.
-- **Commit:** uncommitted
+- **Commit:** e5d24e5
 
 ## module5-ending-and-transition
 
 - **Implemented:** 2026-07-20
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`
 - **Summary:** Fixed Module 5's two ending defects (findings M1+M2). Phase 2 step 20 (the exit reached when the optional Phase 3 is skipped) previously ended on a transition question with no module-completion; it now runs the standard Module Completion process (end-of-module summary INV-032, name-based recap append INV-085, `✅ Module complete: Data quality & mapping` line INV-079) and ends on the pinned transition 👉 question naming the next module from `selected_modules` (INV-076/INV-079). The dead SDK-based "→ Module 2 (SDK Setup)" routing branch was removed (SDK setup always precedes Module 5 under fixed ordering). Both exits (Phase 2 step 20 and Phase 3 step 26) carry an exactly-once guard keyed on `data_quality_mapping` in `modules_completed`, so completion runs once on whichever path is taken. No new invariant (restores existing INV-032/079/085/076 compliance). Verified: dead routing gone, Module Completion invoked at step 20, guards present, selected-modules transition.
-- **Commit:** uncommitted
+- **Commit:** aed9fa3
 
 ## module6-register-data-sources-before-load
 
 - **Implemented:** 2026-07-20
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`
 - **Summary:** Added register-before-load to the production and test loads, closing the SENZ2207-on-first-load gap (findings H1+M5). Module 6 Phase A gains a new step 4a ("Register the data source codes (before loading)") that collects the distinct `DATA_SOURCE` codes in the data about to be loaded (from `data/senzing-ready/` for mapped sources, `data/raw/` for `fast_pathed` sources, cross-checked against `config/data_sources.yaml`), generates the registration code via `sdk_guide`/`generate_scaffold` (MCP-sourced, INV-080; no hardcoded SDK method names), makes it idempotent, and runs it before the Phase B load; Phase B's intro now notes registration happened in 4a. Phase C's step-16 pre-load checklist was fixed to require each source's code be registered idempotently (per 4a) instead of the incorrect "match the Module 2 config" (M5 — Module 2 predates data collection). Module 5 Phase 3 gained step 21a registering the code before its test load (into the fresh test DB). SKILL.md phase title updated to "steps 1–4a". Verified: no `data/transformed`, stale wording removed, MCP-routed, no hardcoded method names, language-parameterized/cross-platform. Established **INV-089** (generalizes INV-083's register-before-load to the Module 6 production load and Module 5 Phase 3 test load), recorded in `specs/INVARIANTS.md` with maintainer sign-off and cross-referenced in the spec's `## Invariants introduced` note.
-- **Commit:** uncommitted
+- **Commit:** 56942c7
 
 ## concepts-questions-before-quiz
 
 - **Implemented:** 2026-07-20
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md`, `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`
 - **Summary:** Added a questions/discussion invitation to Module 0 (Entity Resolution Concepts) between the primer and the optional quiz offer. In `concepts.md` inserted a new "Invite questions/discussion (before the quiz)" section ending on the pinned-verbatim (INV-056) 👉 question "Do you have any questions about entity resolution before we continue?" — single yes/no with no "or"-joined choices (INV-008/INV-051), non-blocking (not a ⛔ gate). Questions are answered via `search_docs` with a second confirming MCP call, MCP-only (INV-080), then the pinned question re-presented; "no" flows into the quiz offer. Reconciled the mandatory exploration gate's intro so it no longer re-issues the same "any questions?" invitation with example prompts (INV-006), while leaving the INV-073 readiness gate and its follow-up handling unchanged. Updated the `SKILL.md` Step 1 outline to add the new step (now step 3) ahead of the quiz (step 4) and gate (step 5). All acceptance criteria verified against the edited flow; pure Markdown skill content, so cross-platform and language-agnostic. No new invariant (a Module-0 flow refinement reusing existing invariants, consistent with how the sibling quiz addition was handled).
-- **Commit:** uncommitted
+- **Commit:** 65c60c5
 
 ## visualization-server-in-chosen-language
 
