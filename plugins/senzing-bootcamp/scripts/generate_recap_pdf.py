@@ -605,7 +605,7 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
 
     A missing/unreadable image, an fpdf2 build without image support, or a bad
     file is skipped silently — an optional decoration must never break the
-    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-071).
+    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-081).
     """
     if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
         return  # never fetch a remote URL (offline guarantee)

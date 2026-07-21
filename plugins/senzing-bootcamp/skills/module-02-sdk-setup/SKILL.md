@@ -190,9 +190,10 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 
 **Phase 2: EULA acceptance (requires bootcamper input):**
 
-The Senzing SDK requires EULA acceptance before use. Present the EULA question:
+The Senzing SDK requires EULA acceptance before use. Tell the bootcamper they can review it at
+<https://senzing.com/end-user-license-agreement/>, then present the EULA question:
 
-👉 **Do you accept the Senzing End User License Agreement (EULA)? You can review it at <https://senzing.com/end-user-license-agreement/>. Please respond yes or no.**
+👉 **Do you accept the Senzing End User License Agreement (EULA)? Respond yes or no.**
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*

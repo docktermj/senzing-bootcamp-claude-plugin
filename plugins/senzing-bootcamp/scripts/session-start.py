@@ -6,8 +6,9 @@ resume, so a module that was interrupted (quit / compaction / prior session) kee
 its in-progress narrative in the recap (see recap_checkpoint.py).
 
 Cross-platform: invoked in exec form (``python3 <path>``) so no shell is required on
-any platform. Python is already a hard bootcamp dependency (the Module 3
-visualization server and the graduation recap PDF both run under python3).
+any platform. Python is already a hard bootcamp dependency (the graduation recap PDF always
+runs under python3; the Truth Set visualization server also does when the chosen language is
+Python).
 """
 import sys
 

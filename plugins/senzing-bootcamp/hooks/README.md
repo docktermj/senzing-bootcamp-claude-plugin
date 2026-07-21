@@ -38,10 +38,10 @@ Code behavior), so the hooks do **not** depend on `bash`, Git Bash, or WSL — e
 Windows.
 
 The only requirement is a `python3` on `PATH`, and it is **not a new dependency** —
-the bootcamp already requires `python3` for the Truth Set visualization module's server
-(`scripts/senzing_viz_server.py`) and the graduation recap PDF
-(`scripts/generate_recap_pdf.py`), so any machine that can run the bootcamp can run
-the hooks.
+the bootcamp already requires `python3` for the graduation recap PDF
+(`scripts/generate_recap_pdf.py`, always run at graduation) and, when the chosen language is
+Python, the Truth Set visualization server (`scripts/senzing_viz_server.py`, the reference per
+INV-090), so any machine that can run the bootcamp can run the hooks.
 
 | Platform | Requirement | Notes |
 |----------|-------------|-------|

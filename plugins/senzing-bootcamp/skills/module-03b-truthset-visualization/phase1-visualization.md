@@ -1,4 +1,4 @@
-# Truth Set Visualization, Phase 1: Visualization (steps 1–3)
+# Truth Set Visualization, Phase 1: Visualization (steps 1–2)
 
 Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal directives, never
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
@@ -125,7 +125,7 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   exact response shapes in `visualization-api-reference.md`.
 - Serve the live D3 v7 page with the four tabs (see 2.4), and write a self-contained standalone
   HTML snapshot.
-- **Render offline (INV-071):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
+- **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
 - **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
@@ -186,7 +186,7 @@ this module's recap `Actions Taken`. This is never a 👉 question and never blo
 
 ### 2.3 Start the live web app
 
-Start the server as a background process you can stop later in Step 5 (Cleanup), serving the loaded
+Start the server as a background process you can stop later in Step 4 (Cleanup), serving the loaded
 records on port 8080. For Python:
 
 ```bash
@@ -281,7 +281,7 @@ the entity-graph page.
 
 If, after iterating with the MCP tools, the live server cannot be made to serve, you MUST still
 produce the standalone snapshot (INV-077): generate a self-contained D3 v7 HTML snapshot — vendored
-D3 inlined (INV-071), Senzing brand tokens applied (INV-081), edges mapped `source_entity_id`/
+D3 inlined (INV-091), Senzing brand tokens applied (INV-081), edges mapped `source_entity_id`/
 `target_entity_id` → `source`/`target` before `forceLink` — written to
 `docs/visualizations/truthset_verification.html`, so the completion gate's guarantee holds. Produce
 it with the chosen language's tooling (a generator, not direct HTML+JS file-writes). Only when the

@@ -62,8 +62,10 @@ Follow `concepts.md` in this skill directory:
 When the bootcamper signals they are ready to move on (Step 1's gate), first **capture this module
 in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary:
 
-1. Add `entity_resolution_concepts` to `modules_completed` in `config/bootcamp_progress.json`
-   (idempotent; do not duplicate).
+1. In `config/bootcamp_progress.json` (a single batched write): add `entity_resolution_concepts`
+   to `modules_completed` (idempotent; do not duplicate), set `current_module` to the next module
+   in `selected_modules`, and set `current_step` to `null` — so the next module's journey map
+   renders it as current, not Entity Resolution Concepts.
 2. Append a name-based recap section to `docs/bootcamp_recap.md` per
    `../bootcamp-onboarding/module-completion.md` Step 2 (2b/2c): `## Entity Resolution Concepts —
    {ISO 8601 timestamp}` with the four subsections — **Information Shared** (the entity-resolution

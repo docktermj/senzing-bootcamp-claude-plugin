@@ -123,12 +123,13 @@ steering files.)
   snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
   Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
   `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
-  palette. The bundled generators (`senzing_viz_server.py`, `generate_recap_pdf.py`) already
-  consume those tokens; any new generator should too. Key rules: dark backgrounds are
+  palette. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
+  already consume those tokens; any generator you build — including the chosen-language Truth Set
+  visualization server (INV-090) — should too. Key rules: dark backgrounds are
   Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
   live/resolved states (never decorative), light sections are warm off-white (never cold grey),
   and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
-  INV-071). "Where appropriate" leaves plain functional/dev output unbranded.
+  INV-081). "Where appropriate" leaves plain functional/dev output unbranded.
 
 ## Progress and state
 

@@ -71,7 +71,7 @@ with the plugin in `hooks/hooks.json` and are already active - there is no hook-
 
 Verify the basics for the bootcamper's platform: a working shell, Python 3 (for helper
 scripts), and internet access to the MCP server. Report anything missing and let them fix it.
-If the Senzing SDK is not yet installed, note that Module 2 covers installation - do not block.
+If the Senzing SDK is not yet installed, note that SDK setup covers installation - do not block.
 
 (A full preflight script is a later porting phase; keep this check lightweight for now.)
 
@@ -108,7 +108,7 @@ Then give the overview (cover naturally, do not ask a question yet):
   shows Senzing working on your machine — if you deselect it, you won't see that visual
   verification.
 - Licensing: a built-in evaluation license covers the bootcamp's demos; more capacity options
-  exist and Module 2 walks through them.
+  exist and SDK setup walks through them.
 - If you hit unfamiliar terms (Entity Specification, DATA_SOURCE, entity resolution), ask and
   I'll look up the current definition from the Senzing docs on demand.
 
@@ -134,6 +134,6 @@ Invoke the `bootcamp-preparation` skill. Bootcamp preparation is the **first, ma
 it asks the Core-vs-Customized path choice, per-module selection, verbosity, programming language,
 version control, and the software-integration and deployment-target questions, persists them in one
 consolidated write, then hands off to the first selected
-content module (the optional Entity Resolution Concepts primer if selected, otherwise Module 1).
+content module (the optional Entity Resolution Concepts primer if selected, otherwise Discover the Business Problem).
 The selected modules then run in the order recorded in `selected_modules`, each ending with the
 standard module completion process in `module-completion.md`.

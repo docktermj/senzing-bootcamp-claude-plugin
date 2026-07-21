@@ -25,7 +25,7 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > (1.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
 > module-transition question. Do NOT save progress. Produce the visualization first.
 
-## Step 4: Visualization completeness check
+## Step 3: Visualization completeness check
 
 Confirm that `config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint
 entries under `module_3_verification.checks` (this module's own checks). If either entry is missing
@@ -36,7 +36,7 @@ or has `"status": "failed"`:
 - If failed: note the failure and proceed (failed is different from skipped/missing; it means the
   step was attempted).
 
-## Step 5: Cleanup
+## Step 4: Cleanup
 
 Terminate the web service and purge the Truth Set data from the database.
 
@@ -63,7 +63,7 @@ end of Phase 1 (Step 2.5), so proceed directly to cleanup — do NOT re-ask (INV
 
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
-## Step 6: Module Close
+## Step 5: Module Close
 
 Complete this module using the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`. Record it as a first-class module in the order the

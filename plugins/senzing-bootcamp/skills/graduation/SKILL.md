@@ -28,6 +28,13 @@ and the recap guarantee at the end always produces a valid PDF. Steps that creat
 the `production/` project ask for confirmation before large or destructive
 actions.
 
+Graduation is a terminal bookend module, not a content module: it presents the GRADUATION banner
+and the model/effort nudge, but is exempt from the per-module apparatus (INV-029–032) — no journey
+map, before/after framing, step overview, or `✅ Module complete` line — since no next-module
+transition applies. It ends on the terminal END OF SENZING BOOTCAMP banner (INV-057), not a
+transition question. (Analogous to the exemptions for Bootcamp preparation (INV-075) and Module 0
+(INV-078).)
+
 ## Graduation banner (show first, exactly once)
 
 Display this banner verbatim as the FIRST output of graduation, before any step.
@@ -85,9 +92,10 @@ in `modules_completed` — match by module **name**, not a catalog number. Itera
 `modules_completed` list in its recorded (experienced) order and, for any completed module with no
 matching section, append one now from the module's artifacts and progress data, following
 `../bootcamp-onboarding/module-completion.md` (append only, never rewrite existing sections, never
-re-sort into catalog order). The module flow records each module it completes — including both
-`system_verification` and `truthset_visualization` when the Truth Set visualization ran (separate,
-standalone modules, each with its own `modules_completed` entry and recap section, INV-086/INV-087) —
+re-sort into catalog order). The module flow records each module it completes — including
+`entity_resolution_concepts` (Module 0, when it ran — INV-092) and both `system_verification` and
+`truthset_visualization` when the Truth Set visualization ran (each self-recording with its own
+`modules_completed` entry and recap section, INV-086/INV-087/INV-092) —
 so this reconcile is normally a **no-op**; its job is to **recover** a section missing because a
 module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at

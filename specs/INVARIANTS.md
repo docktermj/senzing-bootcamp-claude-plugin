@@ -175,7 +175,7 @@ These hold at the boundaries of every module.
   │   ├── transform/                     # Source-to-Senzing mappers
   │   ├── load/                          # Loading & redo processing
   │   ├── query/                         # Query, search & discovery
-  │   ├── server/                        # Visualization web server (reserved; the viz server ships with the plugin)
+  │   ├── server/                        # Truth Set viz server, generated in the chosen language (INV-090; Python runs the bundled reference)
   │   ├── system_verification/           # Pipeline verification (synthetic VERIFY data) + Truth Set viz artifacts
   │   ├── scripts/                       # Setup & data-generation utilities
   │   ├── resources/                     # Downloaded Senzing resources
