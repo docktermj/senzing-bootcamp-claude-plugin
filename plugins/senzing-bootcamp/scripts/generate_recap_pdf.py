@@ -936,8 +936,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         "--expect-modules",
         default="",
         help=(
-            "Comma-separated module names that MUST each have a section; "
-            "flags a wholly-missing module, not just missing subsections."
+            "Semicolon-separated module names that MUST each have a section; "
+            "flags a wholly-missing module. Semicolon (not comma) because some "
+            "names contain commas, e.g. 'Query, Visualize and Discover'."
         ),
     )
     args = parser.parse_args(argv)
@@ -950,7 +951,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     recap = parse_recap(inp.read_text(encoding="utf-8"))
 
     if args.check:
-        expected = [s for s in (t.strip() for t in args.expect_modules.split(",")) if s]
+        expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
         problems = verify_recap(recap, expected or None)
         if problems:
             for p in problems:
