@@ -38,9 +38,9 @@ engine config, so the load does not fail with `SENZ2207: Data source code [...] 
 the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
 `DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
 registers the code as part of loading, this is already satisfied; otherwise generate the
-registration via `sdk_guide(topic='configure')` (in the `programming_language`) — it loads the
-current default config, registers the code, and sets it as the new default, idempotently — and run
-it first. Never rely on Module 2's default config, which predates data collection.
+registration via `sdk_guide(topic='configure')` (in the `programming_language`), saving any
+generated file under `src/` (e.g. `src/load/`) per INV-018 — it loads the current default config,
+registers the code, and sets it as the new default, idempotently — and run it first. Never rely on Module 2's default config, which predates data collection.
 
 **Checkpoint:** write step 21a.
 

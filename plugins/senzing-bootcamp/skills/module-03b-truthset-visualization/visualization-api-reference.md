@@ -1,5 +1,10 @@
 # Truth Set Visualization: API Reference
 
+> **Language note (INV-090):** the API endpoints and JSON response shapes below are the contract to
+> implement in the Bootcamper's chosen language. `search_builder.py` / `graph_builder.py` are the
+> **Python reference implementation's** internal module names — not required file names for your
+> implementation.
+
 **Purpose:** full API response schemas and the `search_builder.py` enrichment specification for
 the Truth Set visualization web service. This is reference material, loaded on demand from
 `phase1-visualization.md` (Step 2). See that file for the executable generation and verification
@@ -49,8 +54,8 @@ Each node: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`
 `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`.
 
 > `source_entity_id`/`target_entity_id` are the unchanged API contract; mapping to D3's
-> `source`/`target` is a client-side concern handled in `drawGraph` (see the edge-mapping note
-> in the "Fallback: hand-build only if the bundled app cannot run" section of `phase1-visualization.md`).
+> `source`/`target` is a client-side concern handled in `drawGraph` (see the edge-mapping
+> requirement in Step 2 of `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
 from a default export. `graph_builder.py` SHALL discover relationships explicitly (a plain

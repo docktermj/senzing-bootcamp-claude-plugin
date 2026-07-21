@@ -80,7 +80,9 @@ This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 ## 2. Select modules (Customized only)
 
 Show the full module list above (as statements, so the bootcamper sees everything and what is
-always included), then end the turn on this single pinned 👉 question, verbatim (INV-056):
+always included) — present only the module **names** and their required/optional status; do NOT
+render the internal "#" or "Maps to" columns (catalog numbers and skill-directory names are
+internal — INV-079/INV-012). Then end the turn on this single pinned 👉 question, verbatim (INV-056):
 
 > 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated (or reply none):**
 >
@@ -151,6 +153,8 @@ as choosing the recommended `standard` and say so — never assume a level befor
   4. macOS (Intel)
   5. Windows (x86-64)
 
+  *(Internal: end the turn on this single 👉 question and wait — INV-005.)*
+
 - **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6
   consolidated write so the recap and graduation report can address the bootcamper by name; if
@@ -159,14 +163,14 @@ as choosing the recommended `standard` and say so — never assume a level befor
   languages on that platform.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned list, and **annotate each option with its install path for the detected
-  platform** so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
+- Present the MCP-returned options as a **numbered list**, annotating each option with its install path for the detected
+  platform so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
   "Python — runs via Docker (the SDK is Linux-only); Java / C# — native." Use the Module 2 routing
   rules (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") as the source of the per-platform
   paths. If the MCP server flags a language as discouraged/unsupported on the platform, relay that
   and suggest alternatives.
 
-  👉 **Which programming language would you like to use for the bootcamp?**
+  👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 
 - This is a ⛔ gate whose wording is pinned — present the 👉 question above verbatim (INV-056); wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
 - **Hold** the chosen programming language for the Step 6 consolidated write (do not write it now).
@@ -266,7 +270,7 @@ Hand off to the first module in `selected_modules` after `bootcamp_preparation`:
 - If **Entity Resolution Concepts** is selected → invoke `module-00-entity-resolution-concepts`
   (it runs the primer directly; its skip/keep gate has been retired — inclusion is driven by this
   selection).
-- Otherwise → invoke `module-01-business-problem` to begin Module 1.
+- Otherwise → invoke `module-01-business-problem` to begin Module 1 — **Discover the Business Problem** (name it to the bootcamper, never "Module 1").
 
 The selected numbered modules then run in order per `selected_modules`, each ending with the
 standard module completion process in `../bootcamp-onboarding/module-completion.md`, and the

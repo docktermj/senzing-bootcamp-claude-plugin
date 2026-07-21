@@ -1,4 +1,4 @@
-# Truth Set Visualization, Phase 1: Visualization (steps 1–3)
+# Truth Set Visualization, Phase 1: Visualization (steps 1–2)
 
 Follow `../bootcamp-onboarding/ground-rules.md`. `🛑`/`⛔` are internal directives, never
 rendered; signal a stop by ending the turn on the single 👉 question and waiting.
@@ -106,49 +106,62 @@ expected record count for the report.
 Save the load artifacts under `src/system_verification/` (Agent Rule 5). Once the Truth Set is
 loaded, continue to Step 2 below to visualize it.
 
-## Step 2: Run the bundled visualization web app
+## Step 2: Build and run the visualization server in your chosen programming language
 
-The plugin ships a tested, self-contained visualization web app,
-`scripts/senzing_viz_server.py`, so the visualization is produced **deterministically every
-time**. Do NOT hand-write a server or HTML page for the normal path: run the bundled app. It
-builds the entity model from the loaded records (one `get_entity_by_record_id` call per record,
-using `SZ_ENTITY_DEFAULT_FLAGS`, which includes all relations, so it never queries the database
-directly), then serves the live app plus the four APIs below.
+The Truth Set visualization is delivered by a web server **written in the Bootcamper's chosen
+programming language** (`programming_language` in `config/bootcamp_preferences.yaml`) — like every
+other deliverable in this bootcamp. The shipped `scripts/senzing_viz_server.py` is the **reference
+model** for what to build, and `visualization-api-reference.md` (this skill directory) is the
+authoritative API/response contract to implement. `senzing_viz_server.py` is **run directly only
+when the chosen language is Python**; for any other language it is a model to read, never run.
 
-**Why this is a bundled Python app and not your chosen programming language.** The visualization
-server is **plugin infrastructure** — a shipped, tested tool like the bootcamp's Python hooks
-(INV-052) — not part of the code *you* generate in this bootcamp. Shipping it once is what
-guarantees the deterministic "wow moment" (INV-077), offline rendering with vendored D3 (INV-071),
-and the Senzing brand look (INV-081) on every workstation; a freshly generated per-run server could
-not promise those. Your actual bootcamp deliverables — transform, load, and query code — are still
-generated in your chosen programming language. (Honor verbosity: keep this brief or omit it at the
-`minimal` preset, and surface it especially if the bootcamper asks what language the visualization
-uses. A bootcamper who wants to see it in their own language can opt in at Step 3.)
+Whatever the language, the server MUST reproduce the reference's behavior:
 
-### 2.1 Locate the bundled app
+- Build the entity model from the loaded records — one `get_entity_by_record_id` call per record,
+  requesting the default entity flags (which include all relations) so it never queries the
+  database directly. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
+  (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data (INV-080).
+- Serve the four JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/search` — with the
+  exact response shapes in `visualization-api-reference.md`.
+- Serve the live D3 v7 page with the four tabs (see 2.4), and write a self-contained standalone
+  HTML snapshot.
+- **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
+  the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
+  this holds regardless of the server's language.)
+- **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
+  tokens (`scripts/brand_tokens.py`, mirrored in `senzing_viz_server.py`) — data sources CUSTOMERS
+  ember/orange, REFERENCE blue, WATCHLIST gold/amber. A non-Python server cannot import the Python
+  module, so replicate the token **values** from the reference; never invent an ad-hoc palette.
+- **Map edges correctly:** expose `source`/`target` (from `source_entity_id`/`target_entity_id`)
+  **before** `forceLink().links(...)`, preserving node `id`/`entity_id` — omitting this renders an
+  empty graph.
 
-The generator ships with this plugin at `scripts/senzing_viz_server.py`. Resolve it in this
-order:
+Save the generated server and its assets under `src/server/` (INV-050). The Senzing native library
+must be importable, so run everything with the project env sourced (the `src/scripts/senzing-env.sh`
+/ `senzing-env.bat` created in Module 2): `source src/scripts/senzing-env.sh` on Linux/macOS, or
+`src\scripts\senzing-env.bat` on Windows first.
 
-- When the Truth Set visualization module is reached via a command/hook context, use `${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py`.
-- Otherwise resolve it relative to this skill directory (this file lives in
-  `skills/module-03b-truthset-visualization/`, so the script is at `../../scripts/senzing_viz_server.py`).
+### 2.1 Choose the path
 
-The Senzing native library must be importable, so run it with the project env sourced (the
-`src/scripts/senzing-env.sh` / `senzing-env.bat` created in Module 2). On Linux/macOS:
+Read `programming_language` from `config/bootcamp_preferences.yaml`:
 
-```bash
-source src/scripts/senzing-env.sh
-```
-
-On Windows, run `src\scripts\senzing-env.bat` first instead.
+- **Python** → the reference implementation *is* the server. Resolve `scripts/senzing_viz_server.py`
+  (`${CLAUDE_PLUGIN_ROOT}/scripts/senzing_viz_server.py` in a command/hook context, else
+  `../../scripts/senzing_viz_server.py` relative to this skill) and run it directly. This is the
+  **only** path on which `senzing_viz_server.py` runs.
+- **Any other language** → generate the server in that language per the contract above, modeled on
+  `senzing_viz_server.py` + `visualization-api-reference.md`, saved under `src/server/`. Do **not**
+  run `senzing_viz_server.py`. Generate code via the MCP tools and a generator per your language's
+  conventions; never hand-write SDK calls or HTML+JS with file-write tooling.
 
 ### 2.2 Always produce the standalone snapshot first (the guarantee)
 
-Before starting the live server, run the app in build-only mode to (a) build the entity model
-and (b) write a **self-contained standalone HTML snapshot** the bootcamper keeps even if they
-never open the live server. This is the artifact the completion gate checks for, so the
-visualization is guaranteed to exist:
+Before starting the live server, run your server in build-only / snapshot mode to (a) build the
+entity model and (b) write a **self-contained standalone HTML snapshot** the Bootcamper keeps even
+if they never open the live server. This is the artifact the completion gate checks, so the
+visualization is guaranteed to exist (INV-077). Write it to
+`docs/visualizations/truthset_verification.html` from `src/system_verification/truthset_data.jsonl`,
+titled "Senzing Truth Set - System Verification". For Python, that is:
 
 ```bash
 python3 <viz-server-path> \
@@ -158,10 +171,11 @@ python3 <viz-server-path> \
   --no-serve
 ```
 
-Success is a `Snapshot written: docs/visualizations/truthset_verification.html` line and exit 0.
-Confirm the file exists before continuing. If this build-only run fails (for example the engine
-cannot be reached), do not proceed to the live server: fix the underlying error (re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`) and retry. The snapshot is the guaranteed
-deliverable.
+For any other language, invoke your server's equivalent build-only/snapshot mode (write the same
+file, no server started). Confirm the file exists before continuing. If the build fails, do not
+proceed to the live server: fix the underlying cause (regenerate faulty code from the MCP tools;
+re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
+and retry until the snapshot is written — the module does not complete without it.
 
 **Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
 `docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap —
@@ -172,7 +186,8 @@ this module's recap `Actions Taken`. This is never a 👉 question and never blo
 
 ### 2.3 Start the live web app
 
-Start the server as a background process you can stop later in Step 5 (Cleanup):
+Start the server as a background process you can stop later in Step 4 (Cleanup), serving the loaded
+records on port 8080. For Python:
 
 ```bash
 python3 <viz-server-path> \
@@ -181,8 +196,9 @@ python3 <viz-server-path> \
   --port 8080
 ```
 
-It prints `Visualization running: http://localhost:8080`. If port 8080 is in use, pass a
-different `--port` and tell the bootcamper the chosen URL.
+For any other language, start your server's equivalent. It should report a URL like
+`http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the
+chosen URL.
 
 ### 2.4 Verify the endpoints
 
@@ -199,9 +215,9 @@ The live page renders four tabs, all populated from these APIs:
 
 1. **Entity Graph** (default): D3 v7 force-directed graph. Nodes colored by data source
    (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by record count, edges labeled with
-   match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (The
-   edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target` before
-   `forceLink`, is baked into the bundled app, correct by construction.)
+   match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (Your server
+   MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target`
+   before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
 2. **Record Merges:** cards showing each multi-record entity's constituent records.
 3. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
 4. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
@@ -247,7 +263,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 
 ```json
 {
-  "module_3_verification": {
+  "truthset_visualization": {
     "checks": {
       "web_service": {"status": "passed|failed", "port": 8080},
       "web_page": {"status": "passed|failed", "url": "http://localhost:8080/",
@@ -261,41 +277,16 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 `docs/visualizations/truthset_verification.html` AND the live app served the four endpoints and
 the entity-graph page.
 
-## Fallback: hand-build only if the bundled app cannot run
+## Fallback: guarantee the snapshot if the live server cannot run
 
-Only if `scripts/senzing_viz_server.py` cannot be located or run (and cannot be repaired) may you
-hand-build an equivalent: a Python stdlib HTTP server (`http.server`) serving a single
-self-contained D3 v7 page with the same four endpoints and tabs. If you hand-build the graph, you
-MUST map each edge to expose `source`/`target` (from `source_entity_id`/`target_entity_id`)
-**before** `forceLink().links(...)`, preserving node `id`/`entity_id`, omitting this map is a
-silent failure that renders an empty graph. Generate the HTML via a Python generator script
-(never write HTML+JS directly with file-write tooling). The full response schemas and the
-search-enrichment specification are in `visualization-api-reference.md`. Even on the fallback
-path, still write a standalone snapshot to `docs/visualizations/truthset_verification.html` so
-the completion gate's guarantee holds.
+If, after iterating with the MCP tools, the live server cannot be made to serve, you MUST still
+produce the standalone snapshot (INV-077): generate a self-contained D3 v7 HTML snapshot — vendored
+D3 inlined (INV-091), Senzing brand tokens applied (INV-081), edges mapped `source_entity_id`/
+`target_entity_id` → `source`/`target` before `forceLink` — written to
+`docs/visualizations/truthset_verification.html`, so the completion gate's guarantee holds. Produce
+it with the chosen language's tooling (a generator, not direct HTML+JS file-writes). Only when the
+chosen language is **Python** may you fall back to the bundled `senzing_viz_server.py`; for any
+other language `senzing_viz_server.py` is never run. The full response schemas and the
+search-enrichment specification are in `visualization-api-reference.md`.
 
-## Step 3: Optional — see the visualization server in your chosen language (learning exercise)
-
-The bundled server is plugin infrastructure (see the note at Step 2's start), but a bootcamper who
-is curious how it would look in **their** programming language can opt in to a minimal, illustrative
-stub — purely a learning exercise, never a replacement. After the bootcamper confirms they are done
-exploring (Step 2.5), present this pinned 👉 offer, verbatim (INV-056), on its own turn (INV-005):
-
-👉 **Would you like me to also generate a minimal version of this visualization server in your chosen programming language, as a learning exercise?**
-
-*(Internal: end the turn and wait.)*
-
-- **Yes:** generate a small stub in `programming_language` (from `config/bootcamp_preferences.yaml`)
-  under `src/server/` (INV-050) — a tiny HTTP server exposing the `/api/stats` and `/api/graph`
-  response shapes from `visualization-api-reference.md`, modeled on the MCP resource
-  `@plugin:senzing-bootcamp:senzing:senzing://privacy-policy` and on `sdk_guide` / `generate_scaffold`.
-  Every Senzing SDK specific (method/attribute names, flags) MUST come from the Senzing MCP tools,
-  never training data (INV-080). Make clear it is a learning artifact: the **bundled** snapshot at
-  `docs/visualizations/truthset_verification.html` remains the guaranteed, brand-consistent, offline
-  deliverable (INV-077/INV-071/INV-081) — the stub does not replace it and is not required to run.
-- **No / not now:** acknowledge and proceed. This offer is optional and never blocks the module.
-
-**Checkpoint:** write step 3 to `config/bootcamp_progress.json`.
-
-When the bootcamper has finished exploring and the optional Step 3 offer has been handled, load
-`phase2-close.md`.
+When the bootcamper has finished exploring, load `phase2-close.md`.

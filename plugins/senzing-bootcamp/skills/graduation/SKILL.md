@@ -28,6 +28,13 @@ and the recap guarantee at the end always produces a valid PDF. Steps that creat
 the `production/` project ask for confirmation before large or destructive
 actions.
 
+Graduation is a terminal bookend module, not a content module: it presents the GRADUATION banner
+and the model/effort nudge, but is exempt from the per-module apparatus (INV-029–032) — no journey
+map, before/after framing, step overview, or `✅ Module complete` line — since no next-module
+transition applies. It ends on the terminal END OF SENZING BOOTCAMP banner (INV-057), not a
+transition question. (Analogous to the exemptions for Bootcamp preparation (INV-075) and Module 0
+(INV-078).)
+
 ## Graduation banner (show first, exactly once)
 
 Display this banner verbatim as the FIRST output of graduation, before any step.
@@ -85,9 +92,10 @@ in `modules_completed` — match by module **name**, not a catalog number. Itera
 `modules_completed` list in its recorded (experienced) order and, for any completed module with no
 matching section, append one now from the module's artifacts and progress data, following
 `../bootcamp-onboarding/module-completion.md` (append only, never rewrite existing sections, never
-re-sort into catalog order). The module flow records each module it completes — including both
-`system_verification` and `truthset_visualization` when the Truth Set visualization ran (separate,
-standalone modules, each with its own `modules_completed` entry and recap section, INV-086/INV-087) —
+re-sort into catalog order). The module flow records each module it completes — including
+`entity_resolution_concepts` (Module 0, when it ran — INV-092) and both `system_verification` and
+`truthset_visualization` when the Truth Set visualization ran (each self-recording with its own
+`modules_completed` entry and recap section, INV-086/INV-087/INV-092) —
 so this reconcile is normally a **no-op**; its job is to **recover** a section missing because a
 module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
@@ -189,7 +197,7 @@ python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py
 The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 - **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<comma-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain a comma (e.g. "Query, Visualize and Discover"). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, Journal) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ## Step 2: Build the production project

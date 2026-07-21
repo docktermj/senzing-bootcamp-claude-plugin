@@ -8,27 +8,27 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > Before offering to advance to the next module or marking this module complete, the agent MUST
 > verify BOTH the checkpoints and the artifact on disk:
 >
-> - In `config/bootcamp_progress.json`: `module_3_verification.checks.web_service.status` =
->   `"passed"` and `module_3_verification.checks.web_page.status` = `"passed"`.
+> - In `config/bootcamp_progress.json`: `truthset_visualization.checks.web_service.status` =
+>   `"passed"` and `truthset_visualization.checks.web_page.status` = `"passed"`.
 > - **The visualization artifact actually exists on disk:** the standalone snapshot written by the
->   bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
+>   visualization server (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
 >   the hard guarantee that the visualization always happened; a checkpoint alone is not sufficient.
-> - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
->   build-only run (Phase 1, 2.2) MUST have reported `records_total > 0` on its
->   `Entity model built: …` line, consistent with the Truth Set record count loaded in Step 1
+> - **The snapshot reflects the loaded Truth Set, not an empty template:** the visualization
+>   server's build-only run (Phase 1, 2.2) MUST have built the entity model from a non-empty record
+>   set (`records_total > 0`), consistent with the Truth Set record count loaded in Step 1
 >   (1.2). A snapshot built from zero records is a blank page and does NOT satisfy INV-077.
 >
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built from
 > zero records, the agent MUST execute Steps 1–2 immediately (load `phase1-visualization.md`) and run
-> the bundled app's build-only snapshot step (2.2) — whose `--records` file
+> the visualization server's build-only snapshot step (2.2) — whose `--records` file
 > (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 1
 > (1.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
 > module-transition question. Do NOT save progress. Produce the visualization first.
 
-## Step 4: Visualization completeness check
+## Step 3: Visualization completeness check
 
 Confirm that `config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint
-entries under `module_3_verification.checks` (this module's own checks). If either entry is missing
+entries under `truthset_visualization.checks` (this module's own checks). If either entry is missing
 or has `"status": "failed"`:
 
 - If missing: STOP. Do not close the module. Return to Phase 1 and execute Steps 1–2 fully by loading
@@ -36,7 +36,7 @@ or has `"status": "failed"`:
 - If failed: note the failure and proceed (failed is different from skipped/missing; it means the
   step was attempted).
 
-## Step 5: Cleanup
+## Step 4: Cleanup
 
 Terminate the web service and purge the Truth Set data from the database.
 
@@ -58,12 +58,13 @@ end of Phase 1 (Step 2.5), so proceed directly to cleanup — do NOT re-ask (INV
      Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database.
 
 3. **Retain visualization artifacts:** the standalone snapshot
-   (`docs/visualizations/truthset_verification.html`) and any generated load/registration code under
-   `src/system_verification/` remain in place for reference.
+   (`docs/visualizations/truthset_verification.html`), the generated visualization server under
+   `src/server/` (when the chosen language is not Python), and any generated load/registration code
+   under `src/system_verification/` remain in place for reference.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
-## Step 6: Module Close
+## Step 5: Module Close
 
 Complete this module using the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`. Record it as a first-class module in the order the

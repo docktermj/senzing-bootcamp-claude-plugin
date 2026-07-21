@@ -132,7 +132,7 @@ Procedure (parameterized by the visualization's `{html}` file and a short `{name
    Resolve `<helper>` as `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (command/hook
    context) or `../../scripts/capture_screenshots.py` relative to a module skill. It tries several
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
-   fetches a remote URL (offline — INV-071).
+   fetches a remote URL (offline — INV-091).
 2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
    keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
    the `minimal` preset).
@@ -153,9 +153,9 @@ line wrapped in a thin rule of `─` characters above and below (more visible th
 lighter than the module-start banner's `━━━`/emoji triplet) — then the summary details. Render the
 completion line as shown (bold, no module number), the rest as a plain summary:
 
-─────────────────────────────────────────────
+──────────────────────────────────────────
 **✅ Module complete: {Module name}**
-─────────────────────────────────────────────
+──────────────────────────────────────────
 
 ```text
 What you accomplished:

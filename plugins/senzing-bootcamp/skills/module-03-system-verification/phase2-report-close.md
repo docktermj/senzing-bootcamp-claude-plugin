@@ -23,10 +23,10 @@ Generate a structured summary of the System Verification checks.
 
    ```text
    ╔══════════════════════════════════════════════════════════╗
-   ║  ✅ SYSTEM VERIFICATION COMPLETE                        ║
-   ║                                                         ║
-   ║  All checks passed. Your environment is verified and    ║
-   ║  ready for subsequent modules.                          ║
+   ║  ✅ SYSTEM VERIFICATION COMPLETE                         ║
+   ║                                                          ║
+   ║  All checks passed. Your environment is verified and     ║
+   ║  ready for subsequent modules.                           ║
    ╚══════════════════════════════════════════════════════════╝
    ```
 
@@ -40,7 +40,7 @@ Generate a structured summary of the System Verification checks.
    • <check_name>: <error_summary>
      Fix: <Fix_Instruction>
 
-   Please resolve the issues above and re-run Module 3.
+   Please resolve the issues above and re-run system verification.
    ```
 
 5. **Persist the report** to `config/bootcamp_progress.json` with the following structure:

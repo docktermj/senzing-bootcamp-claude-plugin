@@ -24,9 +24,12 @@ invoked, the bootcamper has already opted in — so **run the primer directly**;
 skip/keep question (that gate has been retired to avoid asking the same decision twice — INV-078).
 
 Module 0 is a **preamble, not a numbered module**: it is not counted among the mandatory
-Modules 1–7 (INV-076/INV-078), skipping it (by not selecting it) is a permitted, requested skip (INV-014),
-and it does **not** run the per-module completion apparatus (no journey map, no
-`docs/bootcamp_recap.md` section, and it is not added to `modules_completed`). Keep it lightweight.
+Modules 1–7 (INV-076/INV-078), skipping it (by not selecting it) is a permitted, requested skip (INV-014).
+Keep it lightweight — no module-start banner beyond its ENTITY RESOLUTION CONCEPTS banner, no journey
+map of its own, no before/after framing, no step overview, and no bootcamper-facing end-of-module
+summary. **But it IS captured in the recap** (INV-092): at its close it adds
+`entity_resolution_concepts` to `modules_completed` and appends its own name-based recap section to
+`docs/bootcamp_recap.md` (Step 2 below).
 
 ## 1. Run the primer
 
@@ -54,9 +57,26 @@ Follow `concepts.md` in this skill directory:
    (INV-008 / INV-051). Answer any entity-resolution follow-up via `search_docs`, verified with a
    second MCP call, then re-present the gate; do not advance until the bootcamper is ready.
 
-## 2. Hand off to Module 1
+## 2. Record the recap, then hand off to Module 1
 
-When the bootcamper signals they are ready to move on (Step 1's gate), invoke the
-`module-01-business-problem` skill to begin Module 1, applying the module-start banner and journey
-map from `ground-rules.md`. The selected numbered modules then run in the order recorded in
-`selected_modules` (Module 1 is the next module after Module 0 in every path).
+When the bootcamper signals they are ready to move on (Step 1's gate), first **capture this module
+in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary:
+
+1. In `config/bootcamp_progress.json` (a single batched write): add `entity_resolution_concepts`
+   to `modules_completed` (idempotent; do not duplicate), set `current_module` to the next module
+   in `selected_modules`, and set `current_step` to `null` — so the next module's journey map
+   renders it as current, not Entity Resolution Concepts.
+2. Append a name-based recap section to `docs/bootcamp_recap.md` per
+   `../bootcamp-onboarding/module-completion.md` Step 2 (2b/2c): `## Entity Resolution Concepts —
+   {ISO 8601 timestamp}` with the four subsections — **Information Shared** (the entity-resolution
+   concepts taught, MCP-sourced), **Questions & Responses** (the "any questions?" gate, the quiz
+   offer/questions if taken, and the readiness gate, each with the bootcamper's answer — or
+   `- {none this module}`), **Actions Taken** (that the primer and optional quiz were presented;
+   this preamble creates no project files), and **Journal**. Re-read to confirm the section landed
+   (2c). This is the ONLY module-completion step Module 0 runs; it does **not** present the
+   bootcamper-facing end-of-module summary (Step 3).
+
+Then invoke the `module-01-business-problem` skill to begin Module 1 — **Discover the Business
+Problem** (name the module to the bootcamper, never "Module 1") — applying the module-start banner
+and journey map from `ground-rules.md`. The selected numbered modules then run in the order recorded
+in `selected_modules` (Module 1 is the next module after Module 0 in every path).

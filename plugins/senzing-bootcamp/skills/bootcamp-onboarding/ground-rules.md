@@ -123,12 +123,13 @@ steering files.)
   snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
   Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
   `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
-  palette. The bundled generators (`senzing_viz_server.py`, `generate_recap_pdf.py`) already
-  consume those tokens; any new generator should too. Key rules: dark backgrounds are
+  palette. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
+  already consume those tokens; any generator you build — including the chosen-language Truth Set
+  visualization server (INV-090) — should too. Key rules: dark backgrounds are
   Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
   live/resolved states (never decorative), light sections are warm off-white (never cold grey),
   and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
-  INV-071). "Where appropriate" leaves plain functional/dev output unbranded.
+  INV-081). "Where appropriate" leaves plain functional/dev output unbranded.
 
 ## Progress and state
 
@@ -192,11 +193,13 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
 ## Module start banners and transitions
 
+- **Never show a module number to the bootcamper (INV-079).** In *every* bootcamper-facing line — the module-start banner, the journey map, transition questions, and especially casual acknowledgments such as "Great, moving on to …" — refer to a module by its **name** ("Discover the Business Problem"), never its number ("Module 1"). Module numbers are internal only (skill directory names, prerequisites, section headings, `config/*` keys) and MUST NOT appear in anything the bootcamper reads. When acknowledging a transition, use the next module's **name** — the same name shown in the journey map and the "…next module: {name}?" question.
 - At every module start, BEFORE any module work: read progress, then show the module start
   banner, a journey map (the **selected** modules — from `selected_modules` in
   `config/bootcamp_preferences.yaml` — marked by position relative to `current_module`: ✅ for
-  modules already experienced, i.e. those before `current_module` in the list, including the
-  apparatus-exempt Bootcamp preparation and Module 0 which are never in `modules_completed`;
+  modules already experienced, i.e. those before `current_module` in the list, including
+  apparatus-exempt Bootcamp preparation (never in `modules_completed`) and Module 0 (which, when it
+  runs, IS recorded in `modules_completed` — INV-092);
   🔄 for the current module; ⬜ for upcoming), before/after
   framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
 - **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
@@ -209,10 +212,13 @@ never count against the one-question-per-turn rule and must not be treated as ga
   preparation module (setup + module selection, always first) and the optional entity-resolution
   concepts primer (`../module-00-entity-resolution-concepts/SKILL.md`, run **only when selected** —
   its old skip/keep gate is retired; inclusion is driven by the Bootcamp preparation selection,
-  INV-078) do NOT run the per-module apparatus above (no journey map, no before/after, no step
-  overview, no `docs/bootcamp_recap.md` section, and they are not added to `modules_completed`).
-  Keep them lightweight. When Module 0 runs it presents only its ENTITY RESOLUTION CONCEPTS banner,
-  the MCP-sourced description, and its explore gate.
+  INV-078) do NOT run the module-start apparatus above (no journey map, no before/after, no step
+  overview, no bootcamper-facing end-of-module summary). Keep them lightweight. When Module 0 runs it
+  presents only its ENTITY RESOLUTION CONCEPTS banner, the MCP-sourced description, and its explore
+  gate. **Recap capture differs between the two:** Bootcamp preparation is fully exempt and is never
+  added to `modules_completed`; Module 0, when it runs, DOES append its own name-based recap section
+  and is added to `modules_completed` (INV-092), so it appears in the recap and is reconciled at
+  graduation (INV-085).
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →

@@ -7,11 +7,41 @@
 
 ---
 
-## Business problem — 2026-07-16T09:20:00-07:00
+## Entity Resolution Concepts — 2026-07-16T09:12:00-07:00
 
 ### Information Shared
 
-- Entity resolution concepts: principle-based matching, disclosed vs. discovered relationships, explainability, and real-time resolution (all sourced from Senzing docs via MCP).
+- What entity resolution is: deciding whether different records refer to the same real-world entity, then matching, relating, and deduplicating them (sourced from Senzing docs via MCP).
+- Senzing's principle-based matching (frequency, exclusivity, stability), disclosed vs. discovered relationships, and its differentiators: real-time resolution, no model training, explainability, and scalability.
+- The two failure modes (false negatives / false positives) and the conceptual pipeline: standardization → candidate selection → scoring → classification → entity clustering.
+
+### Questions & Responses
+
+- **Q:** Do you have any questions about entity resolution before we continue?
+    - **R:** No
+- **Q:** Would you like to test your knowledge of entity resolution with a short quiz?
+    - **R:** No — skipped the quiz
+- **Q:** Are you ready to move on to the next module: Discover the Business Problem?
+    - **R:** Yes
+
+### Actions Taken
+
+- Presented the Entity Resolution Concepts primer: the concepts banner, an MCP-sourced description of entity resolution, the optional knowledge-check quiz offer, and an open Q&A. This conceptual preamble creates no project files.
+
+### Journal
+
+**What we did:** Introduced the core ideas of entity resolution — principle-based matching, disclosed vs. discovered relationships, and explainability — grounded in Senzing documentation via MCP.
+
+**What was produced:** (no files — conceptual primer)
+
+**Why it matters:** Establishes the mental model that every later module (mapping, loading, querying, and the Truth Set visualization) builds on.
+
+---
+
+## Discover the Business Problem — 2026-07-16T09:20:00-07:00
+
+### Information Shared
+
 - A gallery of common entity-resolution business patterns (Customer 360, Fraud Detection, Data Migration, Compliance/KYC, Marketing, Healthcare, Supply Chain, Vendor MDM, Insurance), backed by real Senzing use-case and case-study documentation.
 - How Senzing's principle-based, entity-level, relationship-aware, explainable matching applies specifically to a multi-source compliance/due-diligence scenario.
 

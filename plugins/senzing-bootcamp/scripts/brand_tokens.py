@@ -51,7 +51,7 @@ MUTED_ON_DARK = "rgba(255,255,255,0.6)"
 CARD_BORDER_ON_DARK = "rgba(255,255,255,0.08)"
 
 # --- Typography ------------------------------------------------------------ #
-# The guide specifies Roboto (Google Fonts). To stay offline-safe (INV-071 — no
+# The guide specifies Roboto (Google Fonts). To stay offline-safe (INV-081 — no
 # network at render time) we prefer Roboto when the OS has it and fall back to
 # system sans; we do NOT @import a web font. The recap PDF uses fpdf2's built-in
 # Helvetica as an offline, dependency-free stand-in (embedding a Roboto TTF would

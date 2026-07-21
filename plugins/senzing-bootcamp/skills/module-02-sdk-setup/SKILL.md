@@ -190,9 +190,10 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 
 **Phase 2: EULA acceptance (requires bootcamper input):**
 
-The Senzing SDK requires EULA acceptance before use. Present the EULA question:
+The Senzing SDK requires EULA acceptance before use. Tell the bootcamper they can review it at
+<https://senzing.com/end-user-license-agreement/>, then present the EULA question:
 
-👉 **Do you accept the Senzing End User License Agreement (EULA)? You can review it at <https://senzing.com/end-user-license-agreement/>. Please respond yes or no.**
+👉 **Do you accept the Senzing End User License Agreement (EULA)? Respond yes or no.**
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*
@@ -399,7 +400,10 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 **Already-have-a-license guard (check first).** If a license was already established earlier —
 `license_record_limit` in `config/bootcamp_progress.json`, or a `license` entry in
 `config/bootcamp_preferences.yaml` (e.g. the bootcamper supplied a key during Module 1) — do not
-re-ask (INV-006): acknowledge the existing license and skip ahead to the connection test.
+re-ask (INV-006): acknowledge the existing license and skip ahead to the connection test. If instead
+Module 1 already raised the license question and deferred setup here (`license_guidance_deferred:
+true`), do not re-pose the identical yes/no cold — briefly acknowledge that earlier discussion before
+presenting the options below.
 
 **Availability check first.** Call `get_capabilities` on the Senzing MCP server to determine
 whether the `submit_feedback` tool is reported available (the same in-flow `license_request` path

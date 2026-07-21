@@ -97,3 +97,36 @@ guarantees). No new spec is warranted — the topic and both options are fully d
 **Maintainer signal:** the request is recurring; revisit only if you want to reopen the declined
 default, which remains a large per-language × per-platform architecture change that must first
 re-establish INV-071/INV-081/INV-077 in each chosen language.
+
+## Maintainer decision — REVERSED (2026-07-21)
+
+The maintainer **reopened and reversed** the 2026-07-20 decision: the Truth Set visualization server
+is now **built and run in the Bootcamper's chosen programming language** as the sole path, modeled on
+`scripts/senzing_viz_server.py` and `visualization-api-reference.md`. The bundled Python
+`senzing_viz_server.py` is run directly **only** when the chosen language is Python; for any other
+language it is a reference model and is never run during the bootcamp. The optional Step 3 stub is
+removed (the whole server is now language-native).
+
+The invariant tensions were resolved by carrying the guarantees into the language-native server,
+not dropping them:
+
+- **INV-071 → INV-091:** the generated server still renders offline — it inlines the vendored
+  `scripts/vendor/d3.v7.min.js` into the live page and the standalone snapshot (D3 is browser JS,
+  independent of the backend language). INV-071 is superseded by INV-091.
+- **INV-081:** the generated server replicates the shipped Senzing brand token *values*
+  (`scripts/brand_tokens.py`) since it cannot import the Python module — covered by INV-081's
+  existing "fall back gracefully if the token module is absent" clause; never an ad-hoc palette.
+- **INV-077:** the visualization is still always produced when the module is selected — the
+  snapshot-first build and the `phase2-close.md` completion gate enforce it; the module iterates the
+  generated server until the snapshot exists (no Python safety-net snapshot for non-Python).
+- **INV-002:** strengthened — the visualization is now in the chosen language like every other
+  deliverable.
+
+Implemented in `module-03b-truthset-visualization/` (rewrote Step 2, removed Step 3, updated the
+fallback, `SKILL.md`, `phase2-close.md`, and `visualization-api-reference.md`). Establishes INV-090
+(language-native server) and INV-091 (offline rendering generalized; supersedes INV-071).
+
+## Invariants introduced
+
+- `INV-090` — The Truth Set visualization server MUST be built and run in the Bootcamper's chosen programming language, modeled on `scripts/senzing_viz_server.py`; the bundled Python server runs directly only when Python is chosen (recorded in `specs/INVARIANTS.md`).
+- `INV-091` — The Truth Set visualization server (language-native, or the Python reference when Python is chosen) MUST render offline with vendored D3 inlined; supersedes INV-071 (recorded in `specs/INVARIANTS.md`).

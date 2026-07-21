@@ -9,7 +9,7 @@ the first that works; if none is available it exits with code 2 so the caller
 degrades gracefully — keeping the HTML link and never blocking graduation
 (INV-048).
 
-Offline guarantee (INV-071): only local files and ``localhost``/``127.0.0.1``
+Offline guarantee (INV-091): only local files and ``localhost``/``127.0.0.1``
 URLs are ever opened. A non-local ``http(s)`` host is refused — this helper
 never fetches from the network.
 
@@ -203,7 +203,7 @@ def capture(target: str, out_dir: Path, name: str, count: int) -> list:
     if not _is_local_target(target):
         raise ValueError(
             f"refusing non-local target {target!r}: only local files and "
-            "localhost URLs are captured (offline guarantee, INV-071)"
+            "localhost URLs are captured (offline guarantee, INV-091)"
         )
     out_dir.mkdir(parents=True, exist_ok=True)
     count = max(1, min(count, len(_VIEWS)))
