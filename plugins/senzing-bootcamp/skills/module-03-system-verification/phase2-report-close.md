@@ -23,10 +23,10 @@ Generate a structured summary of the System Verification checks.
 
    ```text
    ╔══════════════════════════════════════════════════════════╗
-   ║  ✅ SYSTEM VERIFICATION COMPLETE                        ║
-   ║                                                         ║
-   ║  All checks passed. Your environment is verified and    ║
-   ║  ready for subsequent modules.                          ║
+   ║  ✅ SYSTEM VERIFICATION COMPLETE                         ║
+   ║                                                          ║
+   ║  All checks passed. Your environment is verified and     ║
+   ║  ready for subsequent modules.                           ║
    ╚══════════════════════════════════════════════════════════╝
    ```
 
