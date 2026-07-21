@@ -373,22 +373,23 @@ complete, delete its `config/mapping_state_[datasource].json` checkpoint.
 
 **Checkpoint:** write step 19.
 
-### 20. Transition
+### 20. Module completion and transition
 
-Once all sources are mapped, choose the next module by whether the Senzing SDK is already set up
-: check `config/bootcamp_progress.json` for Module 2 completion before deciding:
-
-- **If Module 2 (SDK Setup) is already complete** (e.g., the bootcamper ran the optional Module
-  3 System Verification, which requires a working SDK, or the SDK was installed during
-  onboarding): skip Module 2 and transition directly to **Module 6 (Data Processing)** to load
-  the mapped data.
-- **If Module 2 is not yet complete:** transition to **Module 2 (SDK Setup)**: it is the next
-  module that needs the SDK, and loading in Module 6 depends on it.
-
-Close the turn on the transition question, for example:
+Once all sources are mapped, **complete the module** — this is Module 5's completion site whenever
+the optional Phase 3 was not taken. Run the standard **Module Completion** process in
+`../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append
+the name-based Module 5 recap section to `docs/bootcamp_recap.md` (INV-085), show the
+`✅ Module complete: Data quality & mapping` line (INV-079), and end the turn on the pinned
+transition 👉 question naming the **next selected module** from `selected_modules` (INV-076 / INV-079):
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)*
+
+Do **not** choose the next module by re-checking SDK state — `selected_modules` already fixes the
+order (SDK setup precedes Data quality & mapping; Data processing follows it). **Run Module
+Completion exactly once:** if the bootcamper took Phase 3 and its step 26 already completed the
+module (`data_quality_mapping` is already in `modules_completed`), skip completion here and present
+only the transition.
 
 **Checkpoint:** write step 20.

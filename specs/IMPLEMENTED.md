@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module5-ending-and-transition
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`
+- **Summary:** Fixed Module 5's two ending defects (findings M1+M2). Phase 2 step 20 (the exit reached when the optional Phase 3 is skipped) previously ended on a transition question with no module-completion; it now runs the standard Module Completion process (end-of-module summary INV-032, name-based recap append INV-085, `✅ Module complete: Data quality & mapping` line INV-079) and ends on the pinned transition 👉 question naming the next module from `selected_modules` (INV-076/INV-079). The dead SDK-based "→ Module 2 (SDK Setup)" routing branch was removed (SDK setup always precedes Module 5 under fixed ordering). Both exits (Phase 2 step 20 and Phase 3 step 26) carry an exactly-once guard keyed on `data_quality_mapping` in `modules_completed`, so completion runs once on whichever path is taken. No new invariant (restores existing INV-032/079/085/076 compliance). Verified: dead routing gone, Module Completion invoked at step 20, guards present, selected-modules transition.
+- **Commit:** uncommitted
+
 ## module6-register-data-sources-before-load
 
 - **Implemented:** 2026-07-20

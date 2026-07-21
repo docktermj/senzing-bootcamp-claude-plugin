@@ -166,8 +166,10 @@ verbatim:
 
 After all sources have completed (or skipped) Phase 3, run the standard **Module Completion**
 process in `../bootcamp-onboarding/module-completion.md` (update progress, append the Module 5
-recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary). Then present
-the decision gate below.
+recap section to `docs/bootcamp_recap.md`, and present the end-of-module summary) — this is Module
+5's completion site on the Phase 3 path. Run it **exactly once**: if Phase 2 step 20 already
+completed the module (`data_quality_mapping` in `modules_completed`), do not repeat it. Then
+present the decision gate below.
 
 Data processing is the next module by default. The shortcut path is only
 taken when the bootcamper explicitly requests it (skipping a module requires a bootcamper
