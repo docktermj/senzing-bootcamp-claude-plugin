@@ -73,6 +73,7 @@ out of scope for a coherent, low-risk change — call that out rather than attem
 ## Source
 
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Build the Truth Set visualization server in the bootcamper's chosen language, not always Python" (2026-07-20, Module 3)
+- Feedback (recurrence): `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Truth Set visualization server should run in the Bootcamper's chosen language, not Python" (2026-07-20 21:50 UTC, Truth Set Visualization module; Rust session). Explicitly asks that the **running** server — not just an optional learning stub — be generated in the chosen language, i.e. the "replace as default" path this spec's maintainer decision below declined. See the Recurrence note.
 - Priority: Medium
 - Related specs: `vendor-d3-offline-visualization.md` (INV-071), `apply-senzing-style-guide-to-deliverables.md` (INV-081), `customizable-module-selection.md` (INV-077), `cross-platform-hook-execution.md` (INV-052), `mcp-grounding-in-every-skill.md` (INV-080)
 
@@ -84,3 +85,15 @@ visualization module (`module-03b-truthset-visualization/`, since the split): a 
 plus an optional Step 9.6 offer to generate a language-native stub as a learning exercise, with the
 bundled snapshot remaining the guaranteed deliverable. No new invariant — the change honors
 INV-071/077/081/080/052.
+
+## Recurrence (2026-07-20)
+
+A second bootcamper (Rust session) independently raised this and is **explicitly asking for the
+"replace as default" path** — the live, running visualization server generated and run in the chosen
+language, with the optional stub called out as insufficient. That is the option the maintainer
+decision above already declined for the INV-071/INV-081/INV-077 tension (offline vendored-D3
+inlining, `brand_tokens.py` being a Python module, and the determinism the bundled tested app
+guarantees). No new spec is warranted — the topic and both options are fully documented here.
+**Maintainer signal:** the request is recurring; revisit only if you want to reopen the declined
+default, which remains a large per-language × per-platform architecture change that must first
+re-establish INV-071/INV-081/INV-077 in each chosen language.
