@@ -49,7 +49,7 @@ and starting the Bootcamp.
 1. Start Claude app.
 1. In the Claude app,
     1. In the left-hand pane, choose "**</> Code**".
-    1. In the *Code* pane, click "**New session**".
+    1. In the *Code* pane, click "**New**".
 1. In the Claude app, near the bottom, choose the "Working directory" (it might say "Select folder...")
     1. Create and use a new folder for the Senzing Bootcamp.
 1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
