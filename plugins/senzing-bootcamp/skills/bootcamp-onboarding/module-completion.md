@@ -153,9 +153,9 @@ line wrapped in a thin rule of `─` characters above and below (more visible th
 lighter than the module-start banner's `━━━`/emoji triplet) — then the summary details. Render the
 completion line as shown (bold, no module number), the rest as a plain summary:
 
-─────────────────────────────────────────────
+───────────────────────────────────────────
 **✅ Module complete: {Module name}**
-─────────────────────────────────────────────
+───────────────────────────────────────────
 
 ```text
 What you accomplished:
