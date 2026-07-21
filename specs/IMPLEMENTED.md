@@ -37,7 +37,7 @@ Entries are newest first. Do not delete history; append or update in place.
 - **Implemented:** 2026-07-21
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `specs/INVARIANTS.md`
 - **Summary:** Made Module 0 (Entity Resolution Concepts) recap-captured and renamed the Module 1 recap section to its full name (maintainer request 2026-07-21, so all nine experienced modules appear in the recap). module-00 `SKILL.md`: reworded the exemption and added a quiet close step that adds `entity_resolution_concepts` to `modules_completed` and appends a name-based `## Entity Resolution Concepts` recap section (four subsections), with no bootcamper-facing end-of-module summary. `ground-rules.md`: reconciled the journey-map ✅ note and the lightweight-modules note (Module 0 now in `modules_completed`; Bootcamp preparation still fully exempt). Example recap: added the Entity Resolution Concepts section first (moved the ER-concepts content out of the Business problem section), renamed `## Business problem` → `## Discover the Business Problem`, and regenerated the PDF (16 pages; `--check` clean; fictional Alex Rivera, no real PII — INV-065). Established **INV-092** (amends INV-072/INV-078); INV-078 marked amended. Verified: all nine sections present in experienced order, `generate_recap_pdf.py --check` passes.
-- **Commit:** uncommitted
+- **Commit:** 511b8cc
 
 ## module5-ending-and-transition
 
