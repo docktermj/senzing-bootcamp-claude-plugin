@@ -98,6 +98,7 @@ def pref_flag(key):
                 if stripped.startswith("#") or ":" not in stripped:
                     continue
                 name, _, val = stripped.partition(":")
+                val = val.split("#", 1)[0]  # ignore any trailing inline comment
                 # top-level key only (no leading indentation)
                 if name == key and line[:1] not in (" ", "\t"):
                     return truthy(val)

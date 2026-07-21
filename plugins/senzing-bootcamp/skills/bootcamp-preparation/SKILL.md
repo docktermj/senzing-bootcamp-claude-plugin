@@ -153,7 +153,7 @@ as choosing the recommended `standard` and say so — never assume a level befor
 
   👉 **Which programming language would you like to use for the bootcamp?**
 
-- This is a ⛔ gate: wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
+- This is a ⛔ gate whose wording is pinned — present the 👉 question above verbatim (INV-056); wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
 - **Hold** the chosen programming language for the Step 6 consolidated write (do not write it now).
 
 ## 4a. Software integration (optional)
