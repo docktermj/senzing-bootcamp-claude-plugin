@@ -3,3 +3,6 @@
 # Python bytecode
 __pycache__/
 *.pyc
+
+# Maintainer feedback-to-specs input (local triage only; the specs it produces are committed)
+/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md
