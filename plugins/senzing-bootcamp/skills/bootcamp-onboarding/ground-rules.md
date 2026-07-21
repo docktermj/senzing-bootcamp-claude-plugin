@@ -196,8 +196,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - At every module start, BEFORE any module work: read progress, then show the module start
   banner, a journey map (the **selected** modules — from `selected_modules` in
   `config/bootcamp_preferences.yaml` — marked by position relative to `current_module`: ✅ for
-  modules already experienced, i.e. those before `current_module` in the list, including the
-  apparatus-exempt Bootcamp preparation and Module 0 which are never in `modules_completed`;
+  modules already experienced, i.e. those before `current_module` in the list, including
+  apparatus-exempt Bootcamp preparation (never in `modules_completed`) and Module 0 (which, when it
+  runs, IS recorded in `modules_completed` — INV-092);
   🔄 for the current module; ⬜ for upcoming), before/after
   framing, and a brief numbered step overview. Never skip these - they orient the bootcamper.
 - **Module selection drives the journey map.** The bootcamp is a sequence of named modules chosen
@@ -210,10 +211,13 @@ never count against the one-question-per-turn rule and must not be treated as ga
   preparation module (setup + module selection, always first) and the optional entity-resolution
   concepts primer (`../module-00-entity-resolution-concepts/SKILL.md`, run **only when selected** —
   its old skip/keep gate is retired; inclusion is driven by the Bootcamp preparation selection,
-  INV-078) do NOT run the per-module apparatus above (no journey map, no before/after, no step
-  overview, no `docs/bootcamp_recap.md` section, and they are not added to `modules_completed`).
-  Keep them lightweight. When Module 0 runs it presents only its ENTITY RESOLUTION CONCEPTS banner,
-  the MCP-sourced description, and its explore gate.
+  INV-078) do NOT run the module-start apparatus above (no journey map, no before/after, no step
+  overview, no bootcamper-facing end-of-module summary). Keep them lightweight. When Module 0 runs it
+  presents only its ENTITY RESOLUTION CONCEPTS banner, the MCP-sourced description, and its explore
+  gate. **Recap capture differs between the two:** Bootcamp preparation is fully exempt and is never
+  added to `modules_completed`; Module 0, when it runs, DOES append its own name-based recap section
+  and is added to `modules_completed` (INV-092), so it appears in the recap and is reconciled at
+  graduation (INV-085).
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
