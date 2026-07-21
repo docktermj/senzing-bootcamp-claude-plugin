@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## concepts-questions-before-quiz
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md`, `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`
+- **Summary:** Added a questions/discussion invitation to Module 0 (Entity Resolution Concepts) between the primer and the optional quiz offer. In `concepts.md` inserted a new "Invite questions/discussion (before the quiz)" section ending on the pinned-verbatim (INV-056) 👉 question "Do you have any questions about entity resolution before we continue?" — single yes/no with no "or"-joined choices (INV-008/INV-051), non-blocking (not a ⛔ gate). Questions are answered via `search_docs` with a second confirming MCP call, MCP-only (INV-080), then the pinned question re-presented; "no" flows into the quiz offer. Reconciled the mandatory exploration gate's intro so it no longer re-issues the same "any questions?" invitation with example prompts (INV-006), while leaving the INV-073 readiness gate and its follow-up handling unchanged. Updated the `SKILL.md` Step 1 outline to add the new step (now step 3) ahead of the quiz (step 4) and gate (step 5). All acceptance criteria verified against the edited flow; pure Markdown skill content, so cross-platform and language-agnostic. No new invariant (a Module-0 flow refinement reusing existing invariants, consistent with how the sibling quiz addition was handled).
+- **Commit:** uncommitted
+
 ## visualization-server-in-chosen-language
 
 - **Implemented:** 2026-07-20

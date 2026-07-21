@@ -55,6 +55,33 @@ Cover, using `search_docs` results: principle-based matching (frequency, exclusi
 stability); pre-configured for people and organizations; differentiators (real-time, no model
 training required, explainability, scalability).
 
+## Invite questions/discussion (before the quiz)
+
+After the primer above and **before** the optional quiz offer below, give the bootcamper space to
+clarify or discuss the concepts first. Briefly invite them to ask anything about entity resolution —
+offer a couple of example prompts to lower the barrier:
+
+- "How does Senzing match records without rules?"
+- "What's the difference between matching and relating?"
+
+Then end the turn on this single, pinned 👉 question, asked **verbatim** (INV-056):
+
+> 👉 **Do you have any questions about entity resolution before we continue?**
+
+It is a single yes/no with exactly one meaning each (INV-008), no "or"-joined choices (INV-051,
+INV-009): "yes" means "I have something to ask or discuss", "no" means "nothing right now, continue".
+This is NOT a ⛔ gate — it never blocks.
+
+- On **yes**, or an actual question: answer it via `search_docs`, **verified with a second confirming
+  MCP call** (see "Verify substantive answers" above), present it, then re-present this pinned
+  question so the bootcamper can ask more. Stay MCP-only — never fall back to training data.
+- On **no** ("no", "not now", "let's continue"): acknowledge briefly and proceed to the optional
+  quiz offer below.
+
+This invitation is issued **once**, here (INV-006). The later exploration/readiness gate remains the
+place to keep exploring before moving on, so do not re-issue this same "any questions?" invitation
+there.
+
 ## Optional knowledge-check quiz (offer before the readiness gate)
 
 After the primer and before the mandatory exploration gate below, offer an optional short quiz.
@@ -90,14 +117,10 @@ after the quiz (or after a decline).
 
 ## Mandatory exploration gate (internal)
 
-After presenting, invite the bootcamper to explore before moving on. Offer example questions:
-
-- "How does Senzing match records without rules?"
-- "What's the difference between matching and relating?"
-- "What kinds of data does entity resolution work with?"
-
-Add: "You can ask any question about entity resolution - not just these examples. When you're
-ready to move on, just say so."
+The bootcamper was already invited to ask questions before the quiz, so do **not** re-issue that
+same "any questions?" invitation with a fresh list of example prompts here (INV-006). In one line,
+simply remind them they can still ask anything about entity resolution and should say so when
+they're ready to move on.
 
 Then end the turn on this single 👉 question, asked **verbatim**, and wait:
 
@@ -114,7 +137,7 @@ gate (internal - do not render the `⛔`/`🛑` glyphs). Do not advance until th
   **verify the answer with a second confirming MCP call** (see "Verify substantive answers"
   above) before presenting it, then re-present the pinned gate question. Do NOT advance.
 - **Readiness signal** ("ready", "let's go", "continue", "next", "yes"): hand off to Module 1
-  (`SKILL.md` Step 3). Do not re-present the primer or the gate.
+  (`SKILL.md`, "Hand off to Module 1"). Do not re-present the primer or the gate.
 - **Not ready** ("no", "not yet", "wait"): acknowledge, invite another entity-resolution question
   or topic, and re-present the pinned gate question. Do NOT advance.
 - **Ambiguous:** treat as a follow-up.
