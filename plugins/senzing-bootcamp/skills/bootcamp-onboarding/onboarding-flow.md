@@ -81,9 +81,9 @@ State that setup is complete ("Administrative setup is complete. The bootcamp is
 then display the WELCOME banner:
 
 ```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎓🎓🎓  WELCOME TO THE SENZING BOOTCAMP!  🎓🎓🎓
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 Then give the overview (cover naturally, do not ask a question yet):

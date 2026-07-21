@@ -53,9 +53,9 @@ they have switched out of the bootcamp and into feedback collection. Show it bef
 feedback question (Step 2), in the same turn:
 
 ```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝📝📝  BOOTCAMP FEEDBACK  📝📝📝
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 The banner is a statement, not a question; it never counts against the one-👉-per-turn rule.
@@ -128,9 +128,9 @@ never silently lost (INV-015).
 - Only after Step 3b confirms the entry is on disk, present the pinned exit banner **verbatim**, marking the return from feedback to the bootcamp:
 
   ```text
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ✅  FEEDBACK SAVED — BACK TO THE BOOTCAMP  ✅
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
 
   Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."

@@ -254,9 +254,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - Module start banner:
 
   ```text
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   🚀🚀🚀  MODULE: [MODULE NAME IN CAPS]  🚀🚀🚀
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ```
 
 - After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the

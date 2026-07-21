@@ -42,9 +42,9 @@ It bookends the bootcamp: the WELCOME banner marked the start, this marks the
 finish. Show it at most once per graduation.
 
 ```text
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎓🎓🎓  GRADUATION  🎓🎓🎓
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 After the banner, prompt for the best-value model/effort before the heavier graduation work.
@@ -297,9 +297,9 @@ Then stop and wait. This is the single closing question for the whole bootcamp.
      2. **Render the terminal banner, verbatim, exactly once** as the final output. It bookends the WELCOME banner that opened the bootcamp (start) and the GRADUATION banner (finish) with a clear end-of-bootcamp marker. No 👉 question follows it; the turn simply ends.
 
      ```text
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      🎓🎓🎓  END OF SENZING BOOTCAMP  🎓🎓🎓
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      ```
 
      Show this banner at most **once** per bootcamp, and never while exploration is still continuing.
