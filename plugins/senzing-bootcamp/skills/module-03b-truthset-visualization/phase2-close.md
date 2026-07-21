@@ -8,8 +8,8 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > Before offering to advance to the next module or marking this module complete, the agent MUST
 > verify BOTH the checkpoints and the artifact on disk:
 >
-> - In `config/bootcamp_progress.json`: `module_3_verification.checks.web_service.status` =
->   `"passed"` and `module_3_verification.checks.web_page.status` = `"passed"`.
+> - In `config/bootcamp_progress.json`: `truthset_visualization.checks.web_service.status` =
+>   `"passed"` and `truthset_visualization.checks.web_page.status` = `"passed"`.
 > - **The visualization artifact actually exists on disk:** the standalone snapshot written by the
 >   visualization server (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
 >   the hard guarantee that the visualization always happened; a checkpoint alone is not sufficient.
@@ -28,7 +28,7 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 ## Step 3: Visualization completeness check
 
 Confirm that `config/bootcamp_progress.json` contains BOTH `web_service` and `web_page` checkpoint
-entries under `module_3_verification.checks` (this module's own checks). If either entry is missing
+entries under `truthset_visualization.checks` (this module's own checks). If either entry is missing
 or has `"status": "failed"`:
 
 - If missing: STOP. Do not close the module. Return to Phase 1 and execute Steps 1–2 fully by loading
@@ -58,8 +58,9 @@ end of Phase 1 (Step 2.5), so proceed directly to cleanup — do NOT re-ask (INV
      Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database.
 
 3. **Retain visualization artifacts:** the standalone snapshot
-   (`docs/visualizations/truthset_verification.html`) and any generated load/registration code under
-   `src/system_verification/` remain in place for reference.
+   (`docs/visualizations/truthset_verification.html`), the generated visualization server under
+   `src/server/` (when the chosen language is not Python), and any generated load/registration code
+   under `src/system_verification/` remain in place for reference.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 

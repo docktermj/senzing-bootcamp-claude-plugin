@@ -1,5 +1,10 @@
 # Truth Set Visualization: API Reference
 
+> **Language note (INV-090):** the API endpoints and JSON response shapes below are the contract to
+> implement in the Bootcamper's chosen language. `search_builder.py` / `graph_builder.py` are the
+> **Python reference implementation's** internal module names — not required file names for your
+> implementation.
+
 **Purpose:** full API response schemas and the `search_builder.py` enrichment specification for
 the Truth Set visualization web service. This is reference material, loaded on demand from
 `phase1-visualization.md` (Step 2). See that file for the executable generation and verification

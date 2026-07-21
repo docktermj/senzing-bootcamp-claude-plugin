@@ -263,7 +263,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 
 ```json
 {
-  "module_3_verification": {
+  "truthset_visualization": {
     "checks": {
       "web_service": {"status": "passed|failed", "port": 8080},
       "web_page": {"status": "passed|failed", "url": "http://localhost:8080/",

@@ -80,7 +80,9 @@ This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 ## 2. Select modules (Customized only)
 
 Show the full module list above (as statements, so the bootcamper sees everything and what is
-always included), then end the turn on this single pinned 👉 question, verbatim (INV-056):
+always included) — present only the module **names** and their required/optional status; do NOT
+render the internal "#" or "Maps to" columns (catalog numbers and skill-directory names are
+internal — INV-079/INV-012). Then end the turn on this single pinned 👉 question, verbatim (INV-056):
 
 > 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated (or reply none):**
 >
