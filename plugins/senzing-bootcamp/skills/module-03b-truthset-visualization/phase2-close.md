@@ -11,16 +11,16 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 > - In `config/bootcamp_progress.json`: `module_3_verification.checks.web_service.status` =
 >   `"passed"` and `module_3_verification.checks.web_page.status` = `"passed"`.
 > - **The visualization artifact actually exists on disk:** the standalone snapshot written by the
->   bundled app (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
+>   visualization server (`docs/visualizations/truthset_verification.html`) is present and non-empty. This is
 >   the hard guarantee that the visualization always happened; a checkpoint alone is not sufficient.
-> - **The snapshot reflects the loaded Truth Set, not an empty template:** the bundled app's
->   build-only run (Phase 1, 2.2) MUST have reported `records_total > 0` on its
->   `Entity model built: …` line, consistent with the Truth Set record count loaded in Step 1
+> - **The snapshot reflects the loaded Truth Set, not an empty template:** the visualization
+>   server's build-only run (Phase 1, 2.2) MUST have built the entity model from a non-empty record
+>   set (`records_total > 0`), consistent with the Truth Set record count loaded in Step 1
 >   (1.2). A snapshot built from zero records is a blank page and does NOT satisfy INV-077.
 >
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built from
 > zero records, the agent MUST execute Steps 1–2 immediately (load `phase1-visualization.md`) and run
-> the bundled app's build-only snapshot step (2.2) — whose `--records` file
+> the visualization server's build-only snapshot step (2.2) — whose `--records` file
 > (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 1
 > (1.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
 > module-transition question. Do NOT save progress. Produce the visualization first.

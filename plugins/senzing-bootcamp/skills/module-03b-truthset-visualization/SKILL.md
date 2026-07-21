@@ -28,10 +28,11 @@ banner, journey map, before/after framing, a brief numbered overview of this mod
 before any module work. (The module-start apparatus block is specified in `phase1-visualization.md`.)
 
 **Language:** Read `programming_language` from `config/bootcamp_preferences.yaml` (persisted in
-Bootcamp preparation) at each code-generation step (data-source registration, loader). Never fall
-back to a hardcoded language. (The bundled visualization web app itself, `scripts/senzing_viz_server.py`,
-is a shipped, tested plugin tool — plugin infrastructure like the Python hooks — run deterministically
-every time; it is not part of the bootcamper's generated deliverable.)
+Bootcamp preparation) at each code-generation step (data-source registration, loader, **and the
+visualization server itself**). Never fall back to a hardcoded language. The visualization server is
+built in the chosen language, modeled on the shipped reference `scripts/senzing_viz_server.py`; that
+Python reference is run directly **only** when the chosen language is Python (Step 2 in
+`phase1-visualization.md`).
 
 ## Execution requirement (internal directive)
 
@@ -94,22 +95,23 @@ for the demo TruthSet DATA.
 - Entity operations (query, read by entity ID, search by attributes, why/how, relationship network,
   export) are NOT direct tools on this MCP server. Generate the SDK code for them via
   `get_sdk_reference` + `sdk_guide` and run it. Never generate SQL against `database/G2C.db`.
-- Counts, statistics, and visualization data come from `reporting_guide` and from the bundled app's
-  entity-model build (one `get_entity_by_record_id` per record), never from direct SQL.
+- Counts, statistics, and visualization data come from `reporting_guide` and from the visualization
+  server's entity-model build (one `get_entity_by_record_id` per record), never from direct SQL.
 - Kiro process control (`controlBashProcess`) maps here to running the web service as a background
   process and stopping it later at this module's close.
-- **Visualization (Step 2) ships as a bundled, tested web app:** `scripts/senzing_viz_server.py`.
-  This module runs it deterministically (build-only snapshot + live server), so the visualization is
-  guaranteed to be produced every run rather than hand-written each time. This supersedes the Kiro
-  `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
+- **Visualization (Step 2) is built in the Bootcamper's chosen programming language,** modeled on the
+  shipped reference `scripts/senzing_viz_server.py` and the `visualization-api-reference.md` contract;
+  the Python reference is run directly only when the chosen language is Python. The visualization is
+  guaranteed by the snapshot-first build and the completion gate (INV-077), not by a bundled runtime.
+  This supersedes the Kiro `generate_standalone_demo.py` / `write_html.py` / builder-module approach.
 
 ## Phases
 
-- **Phase 1: Visualization** (Steps 1–3), including the module-start apparatus:
-  `phase1-visualization.md`. Acquires and loads the Truth Set itself, then stands up the
-  interactive web app and the standalone snapshot. It also frames the bundled viz server as plugin
-  infrastructure (not the bootcamper's generated code) and offers an optional language-native stub as
-  a learning exercise (Step 3) — the bundled snapshot stays the guaranteed deliverable.
+- **Phase 1: Visualization** (Steps 1–2), including the module-start apparatus:
+  `phase1-visualization.md`. Acquires and loads the Truth Set itself, then builds and runs the
+  interactive web app **in the chosen programming language** (modeled on the shipped
+  `scripts/senzing_viz_server.py`; run directly only for Python) plus the guaranteed standalone
+  snapshot.
 - **Phase 2: Report and Close** (self-check + cleanup + module completion): `phase2-close.md`.
 - **Visualization API reference** (loaded on demand from Phase 1): `visualization-api-reference.md`
 
