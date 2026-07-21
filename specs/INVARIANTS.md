@@ -128,9 +128,9 @@ These hold at the boundaries of every module.
 **Module 5**
 
 - **INV-040** — The "raw" data is analyzed to see if mapping and transformation is needed. (CORD data does not require mapping nor transformation.)
-- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data. (CORD / already-Senzing-ready fast-pathed sources are exempt — they route directly to loading with no mapping, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
-- **INV-042** — Code is created to transform data according to mapping rules. (CORD / already-Senzing-ready fast-pathed sources need no transformation, so no transform code is created for them, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
-- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data. (CORD / fast-pathed sources are already Senzing-ready and route directly to loading with no transformation, per INV-040. Clarified 2026-07-19 to mirror INV-040's caveat; no meaning change.)
+- **INV-041** — The "raw" data undergoes mapping to determine how to transform data into "Senzing-ready" data. (CORD fast-pathed sources are exempt — they route directly to loading with no mapping, per INV-040; the already-Senzing-ready fast-path class is CORD, offered only for `provenance: cord`, so a non-CORD source that looks Senzing-ready still goes through mapping. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
+- **INV-042** — Code is created to transform data according to mapping rules. (CORD fast-pathed sources need no transformation, so no transform code is created for them, per INV-040; the fast-path class is CORD, offered only for `provenance: cord`. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
+- **INV-043** — Using the code, the "raw" data is transformed to Senzing-ready data. (CORD fast-pathed sources are already Senzing-ready and route directly to loading with no transformation, per INV-040; the fast-path class is CORD, offered only for `provenance: cord`. Clarified 2026-07-19 to mirror INV-040's caveat, and 2026-07-20 to state the fast-path class is CORD (`module5-fastpath-cord-only-vs-senzing-ready`); no meaning change.)
 
 **Module 6**
 

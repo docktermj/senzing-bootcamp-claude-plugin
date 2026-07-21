@@ -146,9 +146,10 @@ steering files.)
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
 - Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language,
-  `git_init`, `os`/`arch`, `integration_targets`, `deployment_target`/`cloud_provider`, name) are asked in the **Bootcamp preparation** module and persisted in **one**
+  `git_init`, `os`/`arch`, `integration_targets`, `deployment_target`/`cloud_provider`) are asked in the **Bootcamp preparation** module and persisted in **one**
   consolidated write at the end of that module — not one write per gate (see
-  `../bootcamp-preparation/SKILL.md`).
+  `../bootcamp-preparation/SKILL.md`). The bootcamper's `name` is **detected** there (from
+  `git config user.name` or the environment), not asked, and persisted in that same write.
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
   accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped

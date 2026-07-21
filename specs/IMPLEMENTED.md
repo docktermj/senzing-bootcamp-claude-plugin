@@ -18,6 +18,20 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## bootcamp-prep-name-never-asked
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`
+- **Summary:** Resolved the doc/implementation mismatch for `name` (finding M4) via the maintainer-chosen "detect silently" option. Added a "Detect the bootcamper's name silently (do not ask)" step in Bootcamp preparation Step 4 — best-effort from `git config user.name` (else the environment), held for the Step 6 consolidated write, non-blocking, no new question (INV-012). Corrected `ground-rules.md` to state `name` is **detected** there (not asked) and removed it from the "asked" preference list; updated the Step 6 write to "the detected `name` (if any)". Recap/graduation already consume `name` best-effort, so consumers stay consistent. No new invariant. Verified: detection step present, ground-rules corrected, name removed from the asked-list.
+- **Commit:** uncommitted
+
+## module5-fastpath-cord-only-vs-senzing-ready
+
+- **Implemented:** 2026-07-20
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `specs/INVARIANTS.md`
+- **Summary:** Reconciled the fast-path contradiction (finding M3) via the maintainer-chosen "narrow to CORD-only" option. Step 5 now states CORD is the already-Senzing-ready fast-path class (offered only for `provenance: cord`); non-CORD compliant data — including data that looks Senzing-ready — continues to Phase 2, matching Step 5a ("CORD sources only"). Clarified INV-041/INV-042/INV-043 in place (dated 2026-07-20, marked "no meaning change", cross-referencing this spec) to state the fast-path class is CORD. No new invariant — an existing-invariant clarification with maintainer sign-off. Verified: Step 5/5a consistent, zero leftover "CORD / already-Senzing-ready" contradictions.
+- **Commit:** uncommitted
+
 ## module5-ending-and-transition
 
 - **Implemented:** 2026-07-20

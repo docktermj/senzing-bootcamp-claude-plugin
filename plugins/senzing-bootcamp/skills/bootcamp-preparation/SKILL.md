@@ -140,6 +140,10 @@ as choosing the recommended `standard` and say so — never assume a level befor
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
   ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the Step 6 consolidated
   write so Module 2 can reuse it instead of re-asking (INV-061).
+- **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
+  `git config user.name` (else the environment). If found, hold it as `name` for the Step 6
+  consolidated write so the recap and graduation report can address the bootcamper by name; if
+  none is available, leave `name` unset. Never ask for it and never block on it.
 - Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
   languages on that platform.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
@@ -216,7 +220,7 @@ consolidated write below — no separate write (INV-058).
 
 Persist all setup choices collected in Steps 1-5 (including 4a/4b) to
 `config/bootcamp_preferences.yaml` in a **single** write (INV-058) — `path` (`core`/`customized`),
-`selected_modules`, `verbosity`, the programming language, `name` if it was captured, the detected
+`selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the detected
 `os`/`arch`, the `git_init` outcome, and the relocated setup answers `integration_targets` (list;
 `[]` if none) and `deployment_target` (plus `cloud_provider` when a hyperscaler was chosen). (`path`
 replaces the old `track` preference; downstream readers — graduation, the recap header — read
