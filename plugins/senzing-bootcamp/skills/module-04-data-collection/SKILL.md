@@ -25,8 +25,9 @@ resume at the right step.
 > **User reference:** Detailed background for this module lives in the Kiro Power at
 > `docs/modules/MODULE_4_DATA_COLLECTION.md` (the docs port is a later porting phase).
 
-**Prerequisites:** ✅ Module 1 complete (business problem defined, data sources identified),
-✅ Module 3 complete (system verification passed or skipped).
+**Prerequisites:** ✅ Module 1 complete (business problem defined, data sources identified).
+System verification is optional (a deselectable module); when selected it precedes Data
+collection, but Data collection does not require it.
 
 **Before/After:** You have a list of data sources on paper. After this module, the actual data
 files are in your project (`data/raw/`), documented, and ready for quality evaluation.

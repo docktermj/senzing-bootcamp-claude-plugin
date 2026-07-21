@@ -139,7 +139,18 @@ as choosing the recommended `standard` and say so — never assume a level befor
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
   ("Detected macOS on Apple Silicon"). Hold the detected `os`/`arch` for the Step 6 consolidated
-  write so Module 2 can reuse it instead of re-asking (INV-061).
+  write so Module 2 can reuse it instead of re-asking (INV-061). **Only if detection is genuinely
+  unavailable or ambiguous**, ask this pinned fallback question, verbatim (INV-056), and hold the
+  answer:
+
+  👉 **Which operating system and processor architecture are you using? Reply with a number:**
+
+  1. Linux (x86-64)
+  2. Linux (ARM64)
+  3. macOS (Apple Silicon)
+  4. macOS (Intel)
+  5. Windows (x86-64)
+
 - **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6
   consolidated write so the recap and graduation report can address the bootcamper by name; if

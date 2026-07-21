@@ -222,8 +222,14 @@ def parse_recap(text: str) -> Recap:
 # --------------------------------------------------------------------------- #
 # Verification (--check and post-render round trip)
 # --------------------------------------------------------------------------- #
-def verify_recap(recap: Recap) -> List[str]:
-    """Return a list of human-readable problems; empty means complete."""
+def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> List[str]:
+    """Return a list of human-readable problems; empty means complete.
+
+    When ``expected_titles`` is given (e.g. the module names from
+    ``config/bootcamp_progress.json`` → ``modules_completed``), also flag any
+    expected module that has no ``## `` section at all — not just missing
+    subsections within the sections that happen to be present.
+    """
     problems: List[str] = []
     if not recap.modules:
         problems.append("recap contains no module ('## …') sections")
@@ -232,6 +238,12 @@ def verify_recap(recap: Recap) -> List[str]:
         if missing:
             label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+    if expected_titles:
+        present = {(m.title or "").strip().lower() for m in recap.modules}
+        for title in expected_titles:
+            norm = title.strip().lower()
+            if norm and norm not in present:
+                problems.append(f"expected module '{title}' has no recap section at all")
     return problems
 
 
@@ -920,6 +932,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="Verify required sections exist; do not render.",
     )
+    parser.add_argument(
+        "--expect-modules",
+        default="",
+        help=(
+            "Comma-separated module names that MUST each have a section; "
+            "flags a wholly-missing module, not just missing subsections."
+        ),
+    )
     args = parser.parse_args(argv)
 
     inp = Path(args.input)
@@ -930,7 +950,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     recap = parse_recap(inp.read_text(encoding="utf-8"))
 
     if args.check:
-        problems = verify_recap(recap)
+        expected = [s for s in (t.strip() for t in args.expect_modules.split(",")) if s]
+        problems = verify_recap(recap, expected or None)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")

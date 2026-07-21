@@ -27,7 +27,7 @@ Present a brief introduction explaining what the Discover phase covers: why anal
 (understanding resolution decisions), how analysis (entity construction history), relationship
 networks (hidden connections), and data-specific visualizations. Then ask whether to proceed.
 
-👉 **Would you like to explore Senzing's advanced discover capabilities, why matches happened, how entities were built, and how they connect, using examples from your own data?**
+👉 **Would you like to explore Senzing's advanced discover capabilities using examples from your own data?**
 
 *(Internal: end the turn on this question and wait.)*
 

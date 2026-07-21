@@ -247,11 +247,11 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    default). Save the result to
    `src/system_verification/register_data_sources.[ext]` (Agent Rule 5 — artifact
    isolation; INV-018). The generated code MUST:
-   - Load the current default config via `SzConfigManager`.
-   - Call `SzConfig.register_data_source` for each code from step 1.
-   - Register the updated config and set it as the new default via
-     `SzConfigManager`, so `verify_pipeline` and every later SDK session see the
-     codes.
+   - Load the current default Senzing configuration.
+   - Register each data source code from step 1 in that configuration.
+   - Set the updated configuration as the new default, so `verify_pipeline` and every
+     later SDK session see the codes. Use the exact config classes/methods returned by
+     `sdk_guide`/`generate_scaffold` — never hardcode SDK names from memory.
    - Be **idempotent:** a code that is already registered is treated as success,
      not an error, so re-running Module 3 or resuming mid-module still passes.
 3. **Build the registration code if the language requires it** (compiled languages

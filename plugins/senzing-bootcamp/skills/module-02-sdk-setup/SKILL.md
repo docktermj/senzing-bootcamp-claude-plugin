@@ -339,7 +339,7 @@ troubleshooting.
 limit was detected in Step 5e, this session or a prior one). In that case, present the detected
 `recordLimit` as the authoritative limit ("Your license allows up to N records," or "Your
 license has no record cap (unlimited)" when it is `0`) and do NOT restate the 500-record figure
-or the "SENZ9000 error at record 501" claim as the authoritative limit. Skip the built-in
+or the over-limit error-code claim as the authoritative limit. Skip the built-in
 evaluation explanation below; it applies only when no custom license is active. Confirm any SDK
 facts against the Senzing MCP server rather than training data.
 
@@ -353,13 +353,14 @@ Before checking for license files or asking the bootcamper anything, proactively
 this automatically when no custom license is present. This is enough for the bootcamp's demo
 modules and small datasets.
 
-If you load more than 500 records, the SDK returns a **SENZ9000 error at record 501**. For
+If you load beyond that limit, the load stops with a licensing error at the cap. For
 larger datasets, you need a custom license file placed at `licenses/g2.lic`."
 
 When presenting the evaluation license's record capacity or validity period, retrieve those
 values from a Senzing MCP server tool during this session and present exactly what the tool
-returns. The **500 records** figure above is the current published value; confirm it against
-the Senzing MCP server rather than presenting it as authoritative from training data. Wait up
+returns. The **500 records** figure, and the exact over-limit error code and behavior, are published
+values that change: confirm them against the Senzing MCP server (use `explain_error_code` for the
+error code) rather than presenting them as authoritative from training data. Wait up
 to 30 seconds for a response; if the tool does not return a value, or the MCP server cannot be
 reached within that time, omit the specific figure and tell the bootcamper the current value is
 unavailable from the MCP server. Never substitute a hardcoded or remembered figure.
@@ -394,6 +395,11 @@ requesting one through Senzing support. Carry the caveat that the in-flow path d
 `submit_feedback` tool being available and may be unavailable in a given session.
 
 ### 5b. Ask about the bootcamper's license situation
+
+**Already-have-a-license guard (check first).** If a license was already established earlier —
+`license_record_limit` in `config/bootcamp_progress.json`, or a `license` entry in
+`config/bootcamp_preferences.yaml` (e.g. the bootcamper supplied a key during Module 1) — do not
+re-ask (INV-006): acknowledge the existing license and skip ahead to the connection test.
 
 **Availability check first.** Call `get_capabilities` on the Senzing MCP server to determine
 whether the `submit_feedback` tool is reported available (the same in-flow `license_request` path

@@ -204,6 +204,13 @@ These hold at the boundaries of every module.
   └── production/                        # Production project (generated at graduation)
   ```
 
+  The tree lists the canonical/primary artifacts, not an exhaustive whitelist: additional
+  per-source and per-module working files the flow creates — e.g. `config/mapping_state_*.json`,
+  `config/er_current_*.json` / `config/er_baseline_*.json`, `config/fallback_sources.yaml`, and the
+  per-module `docs/*.md` write-ups (`docs/data_source_locations.md`, `docs/loading_strategy.md`,
+  `docs/results_validation.md`, etc.) — live under the enumerated directories and are consistent
+  with this layout. (Clarified 2026-07-20 per the final-review audit; no meaning change.)
+
 ## Invariants added from implemented specs
 
 Invariants below were established by implemented specs and are maintained by the

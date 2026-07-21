@@ -42,17 +42,17 @@ Run the program on the complete data source with production-quality monitoring:
 - If errors exceed 5%, pause and investigate before continuing
 
 **License capacity before loading.** Before warning that the load will stop at the built-in
-evaluation limit (a `SENZ9000` error at the licensed cap), read `license_record_limit` from
+evaluation limit (a licensing error at the cap), read `license_record_limit` from
 `config/bootcamp_progress.json` (Module 2 persists it after a custom license is configured) and
 drive the decision from that effective limit, never a remembered or hardcoded figure:
 
 - **`0` (no cap), or ≥ the dataset size**, the active license permits the full load: omit the
-  SENZ9000/evaluation-capacity warning and proceed.
+  evaluation-capacity warning and proceed.
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: present the
   Module 1 licensing paths (apply an existing license, the external request, or the in-flow MCP
   request when available) as choices, not a wall; do not force downsizing.
 - **Absent or null** (no custom license detected), warn that the evaluation license halts the
-  load at its cap with a SENZ9000 error, confirming the current capacity figure and SENZ9000
+  load at its cap, confirming the current capacity figure and the exact over-limit error code and
   behavior from the Senzing MCP server at request time. If no figure is returned, say it is
   currently unavailable rather than restating a remembered one.
 
