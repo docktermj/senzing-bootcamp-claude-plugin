@@ -56,3 +56,11 @@ without an implementation (or vice-versa).
 - Final review audit (2026-07-20), finding **M4** (medium).
 - Priority: Medium
 - Related specs: `customizable-module-selection.md` / `relocate-setup-questions-to-bootcamp-preparation.md` (INV-075 / INV-088 Bootcamp-preparation setup set + consolidated write), `suppress-admin-write-noise.md` (INV-058).
+
+## Maintainer decision (2026-07-20)
+
+Chose **(a) detect silently**. Bootcamp preparation Step 4 now reads the bootcamper's name
+best-effort from `git config user.name` (else the environment), held for the consolidated write,
+non-blocking, with no new question; `ground-rules.md` was corrected to say `name` is detected, not
+asked. Options (b) ask a question and (c) drop it were not taken. Implemented — see
+`specs/IMPLEMENTED.md`.

@@ -56,3 +56,11 @@ fast-path-eligible in one place and excluded in another.
 - Final review audit (2026-07-20), finding **M3** (medium).
 - Priority: Medium
 - Related specs: `align-invariants-cord-and-optin.md` (CORD fast-path / opt-in alignment), `cord-fastpath-load-readiness.md`, `rename-transformed-to-senzing-ready.md` (INV-084).
+
+## Maintainer decision (2026-07-20)
+
+Chose **(a) narrow to CORD-only**. Step 5's wording now states CORD is the already-Senzing-ready
+fast-path class (offered only for `provenance: cord`); non-CORD compliant data — including data that
+looks Senzing-ready — continues to Phase 2, matching Step 5a. INV-041/INV-042/INV-043 were clarified
+in place (dated 2026-07-20, "no meaning change"). Option (b) broaden Step 5a was not taken.
+Implemented — see `specs/IMPLEMENTED.md`.
