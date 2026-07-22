@@ -189,6 +189,11 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 - Never drive interactive Senzing CLI tools (`sz_configtool`, `sz_explorer`): they require
   human input. Generate SDK code via `generate_scaffold` instead.
 - Senzing publishes native ARM64 images, so no x86 emulation is needed on Apple Silicon.
+- **Record the container for lifecycle tracking (INV-101).** When you `docker run` the container,
+  give it a stable `--name` and append an entry to a `docker_containers` list in
+  `config/bootcamp_progress.json` (at least its `name`; also `image` and `purpose` when handy).
+  The `SessionEnd` hook stops recorded containers on exit (`docker stop`, not remove) and
+  `SessionStart` surfaces them on resume so they can be restarted or regenerated.
 
 **Phase 2: EULA acceptance (requires bootcamper input):**
 

@@ -64,3 +64,7 @@ new invariant for the lifecycle guarantee.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Stop Docker containers on exit and remember them for resume" (2026-07-22, Module General — reported at graduation)
 - Priority: Medium
 - Related specs: `specs/postgres-in-docker-database-option.md` (starts a container this tracks), `specs/graduation-revisit-resume-bundle.md`; INV-052, INV-001, INV-002
+
+## Invariants introduced
+
+- `INV-101` — Bootcamp-started Docker containers are recorded in `config/bootcamp_progress.json` (`docker_containers`); the python3 SessionEnd hook stops them on exit (`docker stop`, not remove) when docker is available, and SessionStart surfaces them on resume; all docker interaction is optional and warns-and-continues when docker is absent/erroring (recorded in `specs/INVARIANTS.md`). Maintainer-approved wording.

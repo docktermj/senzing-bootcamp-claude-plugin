@@ -12,6 +12,7 @@ Python).
 """
 import sys
 
+import docker_lifecycle
 import recap_checkpoint
 
 if recap_checkpoint.bootcamp_active():
@@ -26,6 +27,9 @@ if recap_checkpoint.bootcamp_active():
             "docs/bootcamp_recap.md (source: docs/progress/recap_checkpoint.md). "
             "Continue that module and finalize its recap section on completion."
         )
+    containers = docker_lifecycle.resume_summary()
+    if containers:
+        message += " " + containers
     print(message)
 
 sys.exit(0)

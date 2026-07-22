@@ -2,18 +2,23 @@
 """SessionEnd hook: to preserve your in-progress recap when the session ends.
 
 When a bootcamp is active, fold the in-progress module recap checkpoint into
-docs/bootcamp_recap.md so quitting mid-module never loses that module's narrative.
-Deterministic, idempotent, append-only (see recap_checkpoint.py). Silent and
-non-blocking: it writes at most one file and never emits output.
+docs/bootcamp_recap.md so quitting mid-module never loses that module's narrative
+(deterministic, idempotent, append-only — see recap_checkpoint.py), and stop any
+Docker container the bootcamp started so it does not linger after exit (docker
+stop, never remove, so it can be restarted on resume — see docker_lifecycle.py,
+INV-101). Silent and non-blocking: it emits no output, and every Docker step is
+optional and warns-and-continues when the docker CLI is absent or errors.
 
 Cross-platform: invoked in exec form (``python3 <path>``) so no shell is required on
 any platform (INV-052). Python is already a hard bootcamp dependency.
 """
 import sys
 
+import docker_lifecycle
 import recap_checkpoint
 
 if recap_checkpoint.bootcamp_active():
     recap_checkpoint.fold_checkpoint()
+    docker_lifecycle.stop_started_containers()
 
 sys.exit(0)

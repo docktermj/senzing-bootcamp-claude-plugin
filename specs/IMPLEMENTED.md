@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## docker-container-lifecycle-teardown-and-resume
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/scripts/docker_lifecycle.py` (new), `plugins/senzing-bootcamp/scripts/session-end.py`, `plugins/senzing-bootcamp/scripts/session-start.py`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `specs/INVARIANTS.md`, `specs/docker-container-lifecycle-teardown-and-resume.md`
+- **Summary:** Added Docker container lifecycle tracking/teardown/resume. New python3 stdlib helper `scripts/docker_lifecycle.py` (parallel to `recap_checkpoint.py`): `tracked_containers()` reads a `docker_containers` list from `config/bootcamp_progress.json` (tolerates dict entries or bare name strings; `[]` when absent/garbage); `docker_available()` gates on `shutil.which("docker")`; `stop_started_containers()` runs `docker stop <name>` (never remove, so restartable) for each tracked container when docker is available, warn-and-continue, no-op when absent; `resume_summary()` reports each tracked container's `docker ps -a` state (running/stopped/missing) for the guide to restart or regenerate, or a docker-unavailable note. `session-end.py` now stops tracked containers after the recap fold (silent, non-blocking); `session-start.py` appends the resume summary to its message; the Module 2 docker install path instructs recording the started container. Both hooks stay python3 exec-form, cross-platform, docker-optional (INV-052/001/002). **Verified:** py_compile clean; the **docker-absent** path issues no docker command and returns the graceful message (monkeypatched, no real calls); command construction is exactly `["docker","stop","<name>"]` (monkeypatch capture); the **live** path executed for real (this environment has docker 29.6.1 + a real `bootcamp-postgres` container) — `docker stop` and `docker ps -a` state-read both worked; hooks run end-to-end at exit 0; unrelated containers (`portainer`, `buildx`) were never touched (only names in `docker_containers` are acted on). Note: the live verification ran a real `docker stop bootcamp-postgres` (a bootcamp DB artifact) — non-destructive and reversible via `docker start bootcamp-postgres`. **Maintainer-approved** invariant wording.
+- **Invariants introduced:** `INV-101` (recorded in `specs/INVARIANTS.md`) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## landscape-certificate-of-completion
 
 - **Implemented:** 2026-07-22
