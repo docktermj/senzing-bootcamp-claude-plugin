@@ -128,8 +128,8 @@ Record the validation findings:
 - This becomes the baseline for comparison
 
 The **results dashboard** (entity counts, match statistics, and sample resolved entities) is offered
-in the **Query, Visualize and Discover** module (Module 7, Step 3d), where all results visualization
-lives — Module 6 does not offer it, to avoid a duplicate offer. (The cross-source relationship
+in the **Query, Visualize and Discover** module (Module 7, Step 3c — the consolidated visualization
+gate), where all results visualization lives — Module 6 does not offer it, to avoid a duplicate offer. (The cross-source relationship
 visualization in step 23 is a distinct offer and is unaffected.)
 
 **Checkpoint:** write step 28.

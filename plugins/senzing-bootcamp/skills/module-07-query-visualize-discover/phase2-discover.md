@@ -7,7 +7,7 @@ ending the turn on the single 👉 question and waiting. On load, read
 demonstrations.
 
 Load this file when Phase 1 reaches step 4. When steps 4a–4c are complete, load
-`phase2b-discover.md` for steps 4d–4e.
+`phase2b-discover.md` for step 4d.
 
 **No direct SQL and no fabricated methods (see SKILL.md):** every entity operation here
 (`get_entity_by_record_id`, `why_records`, `why_entities`, `how_entity`) is generated SDK
@@ -23,9 +23,14 @@ demonstration point.
 
 ### Introduction and opt-in
 
+This opt-in is **independent of the visualization gate** in Phase 1 step 3c — ask it whether or
+not the bootcamper chose additional visualizations there.
+
 Present a brief introduction explaining what the Discover phase covers: why analysis
-(understanding resolution decisions), how analysis (entity construction history), relationship
-networks (hidden connections), and data-specific visualizations. Then ask whether to proceed.
+(understanding resolution decisions), how analysis (entity construction history), and
+relationship networks (hidden connections). (Data-specific visualization suggestions are no
+longer part of the Discover phase — they are offered at the Phase 1 step-3c visualization gate.)
+Then ask whether to proceed.
 
 👉 **Would you like to explore Senzing's advanced discover capabilities using examples from your own data?**
 
@@ -204,5 +209,5 @@ entity ID used in the How Analysis demonstration. Also set top-level `current_st
 
 ---
 
-**Next:** load `phase2b-discover.md` for steps 4d–4e (relationship networks and visualization
-suggestions).
+**Next:** load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
+Completion.
