@@ -52,13 +52,21 @@ Graduation is correctness-critical (Opus 4.8 + high effort) and steps up from th
 recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
+On the **CLI**, pin the switch question verbatim:
+
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
-telling the bootcamper to run those two commands, then end the turn on this pinned confirmation
-gate (verbatim, INV-056) — do NOT start the graduation work yet:
+On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent (INV-098):
 
-> 👉 **Are you done modifying the model and effort?** (Reply yes once you've run the commands; reply no if you need more time.)
+> 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+
+The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
+telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI, or
+use the model and reasoning-effort controls in their Claude app), then end the turn on this pinned
+confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts) — do NOT
+start the graduation work yet:
+
+> 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
 Run the Pre-checks and the first graduation step on the turn **after** the bootcamper confirms; if
 they need more time, acknowledge and wait, then continue — do not re-ask this gate (ask-once,

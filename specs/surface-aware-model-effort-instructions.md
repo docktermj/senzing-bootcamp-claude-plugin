@@ -66,3 +66,7 @@ INV-063 and INV-069.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Make the model/effort 'switch' instructions adapt to the Claude application (CLI vs Desktop vs others)" (2026-07-22, Module SDK setup / all module-start nudges)
 - Priority: Medium
 - Related specs: `specs/module-start-model-nudge.md`, `specs/model-effort-change-prompt.md`, `specs/model-effort-switch-done-confirmation.md`, `specs/skill-model-selection.md`; INV-063, INV-069, INV-056
+
+## Invariants introduced
+
+- `INV-098` — The model/effort nudge adapts to the Claude application surface: exact `/model`/`/effort` commands on the CLI; intent-based phrasing (model + effort level, directed to the app's controls, no hardcoded labels) on Desktop/web/IDE or unknown surfaces; the pinned switch question and gate keep their surface-neutral core wording (recorded in `specs/INVARIANTS.md`; INV-063 annotated as qualified, INV-069 unchanged). Maintainer-approved wording.

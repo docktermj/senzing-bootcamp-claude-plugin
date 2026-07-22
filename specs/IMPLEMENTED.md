@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## surface-aware-model-effort-instructions
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `specs/surface-aware-model-effort-instructions.md`
+- **Summary:** Made the module/graduation-start model/effort nudge adapt to the Claude application surface instead of hardcoding CLI slash commands. In `ground-rules.md` "Best-value model/effort prompt": added a surface-adaptation lead (CLI → exact `/model`/`/effort` commands; Desktop/web/IDE or unknown → phrase by intent, naming the model + reasoning-effort level and directing the bootcamper to their app's controls, no hardcoded UI labels); gave the switch question **two pinned forms** (CLI vs intent-based); made the "run those commands" statement and the gate's **answer hint** surface-neutral while keeping the pinned gate question "Are you done modifying the model and effort?" unchanged (INV-069 intact); renamed the per-stage table's "Commands" column to "CLI commands" and added a note that non-CLI surfaces set the same **Recommended** model/effort via the app's controls. Applied the same two-form treatment to graduation's switch question + gate. Added the surface note and column rename to the mirrored table in `docs/model-selection.md`. Acceptance criteria verified by inspection: CLI still shows exact commands; non-CLI/unknown gets intent-based phrasing (no CLI-only sole instruction); gate reads sensibly on every surface and stays pinned; no hardcoded Desktop/web control label; cross-platform and language-agnostic. **Maintainer-approved** invariant wording.
+- **Invariants introduced:** `INV-098` (recorded in `specs/INVARIANTS.md`; INV-063 annotated as qualified for non-CLI surfaces; INV-069's pinned question unchanged) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## relocate-integration-deployment-questions-to-module1
 
 - **Implemented:** 2026-07-22
