@@ -27,6 +27,9 @@ Generate a structured summary of the System Verification checks.
    ║                                                          ║
    ║  All checks passed. Your environment is verified and     ║
    ║  ready for subsequent modules.                           ║
+   ║                                                          ║
+   ║  Nothing for you to do here — you're all set to          ║
+   ║  continue.                                               ║
    ╚══════════════════════════════════════════════════════════╝
    ```
 
