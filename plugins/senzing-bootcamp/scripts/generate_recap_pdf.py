@@ -359,6 +359,9 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         # page-break, so it can never spawn a spurious blank page. Page 1 (the
         # cover) carries the credit line; every later page shows its page number.
         def footer(self) -> None:
+            # The landscape certificate page suppresses the page-number footer.
+            if getattr(self, "suppress_footer", False):
+                return
             self.set_y(-14)
             self.set_font("Helvetica", "I", 8)
             self.set_text_color(*SLATE)
@@ -387,6 +390,7 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         if recap.modules:
             _render_toc(measure, epw, recap, None)
         starts = [_render_module_page(measure, epw, mod) for mod in recap.modules]
+        _render_certificate(measure, recap)
 
         pdf = new_pdf()
         _render_cover(pdf, epw, recap)
@@ -394,6 +398,7 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
             _render_toc(pdf, epw, recap, starts)
         for mod in recap.modules:
             _render_module_page(pdf, epw, mod)
+        _render_certificate(pdf, recap)
 
         _ensure_parent(output)
         pdf.output(str(output))
@@ -498,6 +503,97 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
             pdf.set_text_color(*INK)
             pdf.cell(w, 8.5, label, align="C")
             x += w + 4
+
+
+def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
+    """Extract (bootcamper name, formatted date, module labels) for the certificate."""
+    name = ""
+    date = ""
+    for key, val in recap.meta:
+        k = key.strip().lower().rstrip(":")
+        v = _md_inline_to_text(val).strip()
+        if k in ("bootcamper", "name") and not name:
+            name = v
+        elif k in ("started", "date", "completed") and not date:
+            date = v
+    name = name or "Bootcamper"
+    date = _format_date(date) if date else ""
+    labels = [
+        (f"{m.number}. {m.title}" if m.number is not None else m.title)
+        for m in recap.modules
+    ]
+    return name, date, labels
+
+
+def _render_certificate(pdf, recap: Recap) -> None:
+    """Final page: a landscape Certificate of Completion (INV-100).
+
+    Rendered in landscape while every other page stays portrait; the page-number
+    footer is suppressed for it. Palette/typography come from the brand tokens.
+    """
+    name, date, labels = _cert_fields(recap)
+    # add_page first (so the previous page's footer renders normally), then suppress
+    # the footer for this — the last — page, which fpdf2 emits at output().
+    pdf.add_page(orientation="L")
+    pdf.suppress_footer = True
+    # The certificate is a fixed single-page design: disable the auto page-break so
+    # bottom-anchored content cannot spill onto a spurious second landscape page.
+    pdf.set_auto_page_break(False)
+    w, h = pdf.w, pdf.h  # landscape A4 ≈ 297 × 210 mm
+
+    # Double border: navy outer, ember inner.
+    pdf.set_draw_color(*NAVY)
+    pdf.set_line_width(1.2)
+    pdf.rect(10, 10, w - 20, h - 20, style="D")
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(0.5)
+    pdf.rect(14, 14, w - 28, h - 28, style="D")
+    pdf.set_line_width(0.2)
+
+    pdf.set_xy(0, 30)
+    pdf.set_text_color(*NAVY)
+    pdf.set_font("Helvetica", "B", 30)
+    pdf.cell(w, 14, "Certificate of Completion", align="C")
+
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(0.8)
+    pdf.line(w / 2 - 42, 50, w / 2 + 42, 50)
+    pdf.set_line_width(0.2)
+
+    pdf.set_xy(0, 62)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "", 13)
+    pdf.cell(w, 8, "This certifies that", align="C")
+
+    pdf.set_xy(0, 74)
+    pdf.set_text_color(*INK)
+    pdf.set_font("Helvetica", "B", 26)
+    pdf.cell(w, 14, _safe(name), align="C")
+
+    pdf.set_xy(0, 94)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "", 13)
+    pdf.cell(w, 8, "has completed the Senzing Bootcamp", align="C")
+    if date:
+        pdf.set_xy(0, 104)
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.cell(w, 7, _safe(f"on {date}"), align="C")
+
+    if labels:
+        pdf.set_xy(0, 122)
+        pdf.set_text_color(*NAVY)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(w, 6, "Modules completed", align="C")
+        pdf.set_xy(24, 131)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
+
+    pdf.set_xy(0, h - 22)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.cell(w, 6, "Senzing Bootcamp", align="C")
+    # Leave suppress_footer set: this is the last page.
 
 
 def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> None:
@@ -684,6 +780,45 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
+def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
+    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100)."""
+    name, date, labels = _cert_fields(recap)
+    ops: List[str] = []
+
+    # Border rectangle in brand navy (path: rectangle + stroke).
+    nr, ng, nb = (c / 255.0 for c in NAVY)
+    ops.append(f"{nr:.2f} {ng:.2f} {nb:.2f} RG 1.2 w 22 22 {w - 44:.1f} {h - 44:.1f} re S")
+
+    def center(text: str, font: str, size: float, y: float) -> None:
+        tw = len(text) * size * 0.52  # approximate Helvetica advance
+        x = max(24.0, (w - tw) / 2.0)
+        ops.append(
+            f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({_pdf_escape(text)}) Tj ET"
+        )
+
+    y = h - 96
+    center("Certificate of Completion", "F2", 26, y)
+    y -= 54
+    center("This certifies that", "F1", 13, y)
+    y -= 34
+    center(name, "F2", 22, y)
+    y -= 38
+    center("has completed the Senzing Bootcamp", "F1", 13, y)
+    y -= 22
+    if date:
+        center(f"on {date}", "F1", 11, y)
+        y -= 30
+    else:
+        y -= 8
+    if labels:
+        center("Modules completed", "F2", 11, y)
+        y -= 18
+        for chunk in _wrap("  -  ".join(labels), 110):
+            center(chunk, "F1", 9, y)
+            y -= 14
+    return "\n".join(ops)
+
+
 def render_with_stdlib(recap: Recap, output: Path) -> bool:
     """Write a valid, paginated PDF using only the standard library.
 
@@ -761,8 +896,14 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         if not pages:
             pages = [f"BT /F1 11 Tf 1 0 0 1 {margin} {page_h - margin} Tm (Bootcamp recap) Tj ET"]
 
+        # Content pages are portrait; append the landscape Certificate of Completion (INV-100).
+        page_sizes: List[Tuple[float, float]] = [(page_w, page_h)] * len(pages)
+        cert_w, cert_h = page_h, page_w  # landscape A4
+        pages.append(_stdlib_certificate_stream(recap, cert_w, cert_h))
+        page_sizes.append((cert_w, cert_h))
+
         _ensure_parent(output)
-        _write_pdf(output, pages, page_w, page_h)
+        _write_pdf(output, pages, page_sizes)
         return output.exists() and output.stat().st_size > 0
     except Exception as exc:  # pragma: no cover - defensive
         sys.stderr.write(f"stdlib render failed: {exc}\n")
@@ -849,7 +990,9 @@ def _pdf_escape(s: str) -> str:
     return "".join(out)
 
 
-def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> None:
+def _write_pdf(output: Path, pages: List[str], page_sizes: List[Tuple[float, float]]) -> None:
+    """Write a valid PDF. ``page_sizes[i]`` is the (width, height) of page ``i`` in
+    points, so pages can mix orientations (e.g. a landscape certificate)."""
     objects: List[bytes] = []
 
     def add_obj(body: bytes) -> int:
@@ -869,7 +1012,8 @@ def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> 
     pages_obj_num = len(objects) + 1  # next object we will create is Pages
     add_obj(b"__PAGES_PLACEHOLDER__")
 
-    for stream in pages:
+    for i, stream in enumerate(pages):
+        pw, ph = page_sizes[i]
         data = stream.encode("latin-1", "replace")
         content_num = add_obj(
             b"<< /Length %d >>\nstream\n%s\nendstream" % (len(data), data)
@@ -879,7 +1023,7 @@ def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> 
                 "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2f %.2f] "
                 "/Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> "
                 "/Contents %d 0 R >>"
-                % (pages_obj_num, page_w, page_h, font_regular, font_bold, content_num)
+                % (pages_obj_num, pw, ph, font_regular, font_bold, content_num)
             ).encode("latin-1")
         )
         page_obj_nums.append(page_num)

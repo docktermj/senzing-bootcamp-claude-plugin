@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## landscape-certificate-of-completion
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `specs/INVARIANTS.md`, `specs/landscape-certificate-of-completion.md`
+- **Summary:** Added a landscape Certificate of Completion as the recap PDF's final page in both renderers. **fpdf2:** new `_render_certificate(pdf, recap)` adds an `orientation="L"` page (border, "Certificate of Completion", bootcamper name, bootcamp date, "has completed the Senzing Bootcamp", modules-completed list) styled from `brand_tokens`, called at the end of both render passes; the page-number footer is suppressed on it (new `suppress_footer` flag, set after `add_page` so the prior page's footer still renders), and its auto page-break is disabled so it stays a single page. **stdlib fallback:** `_write_pdf` was refactored to take **per-page sizes** (`page_sizes: List[(w,h)]`) instead of one MediaBox for all pages; `render_with_stdlib` keeps content pages portrait (595×842) and appends one landscape (842×595) certificate page via the new `_stdlib_certificate_stream` helper. A shared `_cert_fields(recap)` derives name (from the `Bootcamper`/`Name` meta), date (`Started`/`Date`, via `_format_date`), and module labels from `recap.modules`; name falls back to "Bootcamper". The shipped example PDF was re-rendered (INV-065). **Render-verified:** both renderers produce exactly one landscape page as the last page with all content pages portrait (fpdf2 15P+1L, stdlib 9P+1L, confirmed by per-object MediaBox inspection), `--check` still passes (four subsections intact, INV-048), certificate uses brand tokens (INV-081) and renders offline. **Maintainer-approved** invariant wording. (A `resources/` certificate template is not yet shipped; when it lands the layout can be driven from it — tracked in the spec, not required by INV-100.)
+- **Invariants introduced:** `INV-100` (recorded in `specs/INVARIANTS.md`) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## bootcamp-preparation-end-of-module-recap
 
 - **Implemented:** 2026-07-22

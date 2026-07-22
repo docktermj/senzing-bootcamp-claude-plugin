@@ -79,3 +79,7 @@ Add a Certificate of Completion as the recap's final page during graduation:
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Add a landscape 'Certificate of Completion' as the final recap page" (2026-07-22, Module Graduation — recap PDF generation)
 - Priority: Medium
 - Related specs: `specs/recap-pdf-professional-design.md`, `specs/recap-sections-name-based-and-complete.md`, `specs/refresh-example-recap.md`; INV-048, INV-081, INV-066, INV-065
+
+## Invariants introduced
+
+- `INV-100` — The recap PDF ends with a landscape Certificate of Completion page (name, date, modules completed) while every other page stays portrait, in both the fpdf2 renderer and the stdlib fallback; brand-token styled, offline, four subsections + `--check` intact (recorded in `specs/INVARIANTS.md`). Maintainer-approved wording.
