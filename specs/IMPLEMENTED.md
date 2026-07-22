@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## postgres-in-docker-database-option
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `specs/IMPLEMENTED.md`
+- **Summary:** Added "PostgreSQL in a Docker container" as a first-class, MCP-grounded database option in SDK setup Step 7. The top-level choice now notes PostgreSQL can run via Docker/local/existing; when PostgreSQL is chosen, a new pinned 👉 sub-question (INV-051/INV-056) offers (1) in a Docker container — recommended when Docker is detected, (2) install locally, (3) existing server, (4) switch to SQLite. The Docker option: `docker run` an official `postgres` image with a stable `--name` and a project-local volume, record it in `docker_containers` for lifecycle teardown/resume (INV-101), wait for readiness, apply the Senzing PostgreSQL schema DDL before any SDK use, and wire the `postgresql://` connection via `sdk_guide(topic='configure')`. **MCP-grounded (INV-080):** the schema-DDL path (`/opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql` — confirmed via `search_docs` anti_patterns: the SDK does NOT auto-create the PostgreSQL schema, unlike SQLite), the connection-URL format (`postgresql://user:password@host:port/database` — confirmed via `search_docs` configuration), and the Docker-database pattern (confirmed via `search_docs` deployment) were all confirmed against the Senzing MCP server this session; the skill instructs re-confirming them at runtime and never hand-constructing `SENZING_ENGINE_CONFIGURATION_JSON`. SQLite remains the default recommendation; INV-037 is satisfied by any path. Also fixed a CommonMark bold-colon nit in Step 5 (`**not a question**:` → `**not a question:**`) flagged by the PostToolUse hook. **Verification:** by inspection (option present, MCP-grounded, container-tracking wired to INV-101, CommonMark hook passed, fence balance even). A live end-to-end DB creation was NOT run — verifying that the resulting database satisfies INV-037 requires an installed Senzing SDK + running engine, which this environment lacks; this matches the inspection+MCP standard used for the other skill-prose specs. No new invariant (a new path to satisfy INV-037).
+- **Commit:** uncommitted
+
 ## docker-container-lifecycle-teardown-and-resume
 
 - **Implemented:** 2026-07-22

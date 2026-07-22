@@ -352,7 +352,7 @@ has no record cap (unlimited)" when it is `0`), and skip the evaluation-license 
 re-ask (INV-006). Confirm any SDK facts against the Senzing MCP server rather than training data.
 
 Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
-**not a question**:
+**not a question:**
 
 "Your Senzing SDK uses a **built-in evaluation license limited to 500 records** automatically when
 no custom license is present — no license file needed. That's enough for the demo modules that come
@@ -393,7 +393,7 @@ be organized properly throughout the bootcamp."
 Ask: 👉 **Which database would you like to use? Reply with a number:**
 
 1. **SQLite** — recommended for learning and evaluation.
-2. **PostgreSQL** — better for production.
+2. **PostgreSQL** — better for production; can run in a Docker container (recommended when Docker is available), a local install, or an existing server.
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -406,11 +406,71 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 - **IMPORTANT:** Never use `/tmp/` or in-memory databases. If `generate_scaffold` or
   `ExampleEnvironment` defaults to `/tmp/`, override the path to `database/G2C.db`.
 
-**For PostgreSQL** (production):
+**For PostgreSQL** (production): first choose HOW to run it. Detect Docker availability
+(`docker version`); when Docker is present, offer the container option **first and recommended** —
+a real, production-style PostgreSQL with no system-wide install or admin rights, easy to tear down.
+Pin this 👉 question verbatim (neutral lead + numbered list, INV-051/INV-056):
 
-- User needs PostgreSQL installed and running.
-- Create a database for Senzing.
-- Use `sdk_guide` with `topic='configure'` for PostgreSQL setup.
+👉 **How would you like to run PostgreSQL? Reply with a number:**
+
+1. **In a Docker container** — recommended when Docker is available; self-contained and production-style.
+2. **Install PostgreSQL locally.**
+3. **Use an existing PostgreSQL server.**
+4. **Switch to SQLite** (the bootcamp default).
+
+*(Internal: end the turn on this question and wait.)* When Docker is not available, omit option 1
+and say so.
+
+**MCP-first (INV-080):** confirm the current PostgreSQL connection-URL format, the schema-DDL path,
+and the engine-config wiring from the Senzing MCP server at runtime — do not treat the values below
+as authoritative. Use `search_docs(query='Senzing engine configuration PostgreSQL connection')` and
+`search_docs(query='PostgreSQL schema DDL initialization', category='anti_patterns')`, and generate
+the engine config with `sdk_guide(topic='configure', ...)` — never hand-construct
+`SENZING_ENGINE_CONFIGURATION_JSON`.
+
+**Option 1 — PostgreSQL in a Docker container:**
+
+1. Run an official `postgres` image with a stable `--name`, a **project-local volume** (data
+   persists in the working directory, not an ephemeral layer), and credentials:
+
+   ```bash
+   docker run -d --name bootcamp-postgres \
+     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=senzing -e POSTGRES_DB=G2 \
+     -p 5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
+   ```
+
+2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
+   `config/bootcamp_progress.json` (at least its `name`) so the SessionEnd hook stops it on exit
+   and SessionStart offers to restart it.
+3. Wait until the server is ready (poll `docker exec bootcamp-postgres pg_isready`).
+4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
+   (unlike SQLite). MCP confirms the DDL ships with the SDK install at
+   `/opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql`; apply it against the
+   container:
+
+   ```bash
+   docker exec -i bootcamp-postgres psql -U senzing -d G2 \
+     < /opt/senzing/er/resources/schema/szcore-schema-postgresql-create.sql
+   ```
+
+   Re-confirm the exact path via MCP; the Windows/macOS SDK install path differs (see the
+   initialization anti-patterns doc).
+5. Wire the connection into the engine config (Step 8): the `SQL.CONNECTION` URL is
+   `postgresql://user:password@host:port/database` (MCP-confirmed). Generate the full engine config
+   via `sdk_guide(topic='configure', ...)` and save it to `config/engine_config.json`.
+
+**Option 2 — Install PostgreSQL locally:** install and start a local PostgreSQL server, create the
+Senzing database, apply the schema DDL as above (`psql -f .../szcore-schema-postgresql-create.sql`),
+then wire the `postgresql://` connection via `sdk_guide(topic='configure', ...)`.
+
+**Option 3 — Use an existing PostgreSQL server:** obtain the host/port/database/credentials, apply
+the schema DDL to that database, and wire the `postgresql://` connection as above. Managed cloud
+PostgreSQL typically requires SSL (`PGSSLMODE=require`) — confirm via MCP.
+
+**Option 4 — Switch to SQLite:** proceed with the SQLite setup above.
+
+SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
+is the production-style path. INV-037 is satisfied by any of these paths.
 
 **Checkpoint:** write step 7 to `config/bootcamp_progress.json`.
 
