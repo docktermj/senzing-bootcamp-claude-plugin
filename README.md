@@ -54,6 +54,7 @@ and starting the Bootcamp.
     1. Create and use a new folder for the Senzing Bootcamp.
 1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
     1. In the *Directory* pane, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
+        1. If the plus sign is missing, see [Troubleshooting: Claude Code inoperative](#claude-code-inoperative)
     1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
@@ -154,6 +155,16 @@ and a `production/` starter project.
     claude plugin uninstall senzing-bootcamp@senzing-bootcamp
     claude plugin marketplace remove senzing-bootcamp
     ```
+
+### Troubleshooting
+
+### Claude code inoperative
+
+If you are unable to enter and process prompts in Claude Code,
+or if you are unable to add a Claude Marketplace or Claude plugin,
+the issue may be with an incomplete installation of Claude Desktop.
+
+- Claude Code requires `git` to be installed.
 
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude app]: https://claude.ai/download
