@@ -54,8 +54,8 @@ When the bootcamper hits an error during this module:
 By default, the bootcamper already has Senzing's **built-in evaluation license**: the capacity
 that applies when no custom license is configured. Treat it as the default the session already
 has, presented as a choice rather than a wall. Before any license-based capacity or sampling
-decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (Module 2 writes
-it after a custom license is configured) and drive the decision from that effective limit: never from a remembered or hardcoded figure:
+decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (the Module 4 license
+gate at Step 8a writes it after a custom license is configured) and drive the decision from that effective limit: never from a remembered or hardcoded figure:
 
 - **Present and greater than 0** (custom license with a finite record cap): the effective limit
   is that value. Recommend sampling for license reasons only when the dataset total genuinely
@@ -70,11 +70,10 @@ choice, not a wall. The bootcamper can keep their full dataset and expand capaci
 with a smaller slice, and downsizing is only ever one option among several, never the only path
 forward.
 
-- **Keep the full dataset and expand:** route to the Module 1 licensing paths: apply an
-  existing license, request one through the external channel, or (when available) request one
-  in-flow via the Senzing MCP server. Use the Module 1 Phase 1 discovery flow (Steps 5a–5e in
-  `../module-01-business-problem/phase1-discovery.md`) for the tool-availability checks and
-  branching; do not duplicate that logic here.
+- **Keep the full dataset and expand:** the single Senzing License Key gate (Step 8a below)
+  handles this — apply an existing license, request one through the external channel, or (when
+  available) request one in-flow via the Senzing MCP server (INV-093). The tool-availability
+  checks, branching, and setup mechanics all live in Step 8a; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
   dataset.
 
@@ -330,11 +329,10 @@ decision from that effective limit. When it is `0` (no cap) or greater than or e
 dataset size, do **not** recommend sampling for license reasons: support loading the full
 dataset. When it is absent or null, fall back to the built-in evaluation capacity confirmed via
 the Senzing MCP server. When the dataset genuinely exceeds the effective limit, the bootcamper
-can keep their full dataset and expand capacity via the Module 1 licensing paths, or work with
-a smaller slice. Do not steer them to a smaller substitute as the only path. Defer the
-licensing-path availability checks and any capacity figure to the Module 1 Phase 1 discovery
-flow (Steps 5a–5e in `../module-01-business-problem/phase1-discovery.md`) and the Senzing MCP
-server.
+can keep their full dataset and expand capacity via the single License Key gate at Step 8a, or
+work with a smaller slice. Do not steer them to a smaller substitute as the only path. The
+License Key setup, its tool-availability checks, and any capacity figure all live in the Step 8a
+gate (INV-093) and the Senzing MCP server.
 
 **If the bootcamper chooses to work with a smaller slice:**
 
@@ -369,18 +367,90 @@ Data Source Collection Status:
 
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 
-### 8a. Record-count license back-fill (after all sources are collected)
+### 8a. Senzing License Key gate (single, volume-gated — INV-093)
 
-Infer the real record total from `config/data_sources.yaml`. If the collected total exceeds the
-built-in evaluation limit and Module 1 license guidance was skipped or deferred, surface the
-**existing** Module 1 Steps 6b–6e license guidance now: using the canonical framing at the top
-of this module and the Senzing MCP server for any capacity/validity figure: then update the
-same `license` / `license_guidance_deferred` markers Module 1 uses. If guidance was already
-delivered, or the total is at or below the limit, do not re-present guidance. If the total
-cannot be computed, note the warning and continue on Module 1's prose-count behavior. This step
-is non-blocking: always proceed to Step 8b regardless of the outcome. *(The Kiro
-`record_count_backfill.py` helper is a later porting phase; compute the total from the registry
-directly for now.)*
+This is the bootcamp's **single** Senzing License Key prompt. It runs once, here — after all data
+sources are collected (so the real volume is known) and before any load (Module 6). SDK setup
+(Module 2) established only the built-in evaluation license without prompting; Module 1 recorded
+whether the anticipated volume looked likely to exceed it (`license_guidance_deferred`). Decide now
+from the actual collected total. Confirm every Senzing/SDK fact via the Senzing MCP server, never
+training data.
+
+1. **Read state and compute the total.** Read `license_record_limit` from
+   `config/bootcamp_progress.json` and the `license` / `license_guidance_deferred` markers from
+   `config/bootcamp_preferences.yaml`. Compute the collected total record count from
+   `config/data_sources.yaml` (per the canonical framing at the top of this module). If the total
+   cannot be computed, note the warning and proceed to Step 8b (non-blocking).
+
+2. **Already-licensed guard (INV-006).** If a custom license is already configured (`license: custom`
+   in `config/bootcamp_preferences.yaml`, or a `license_record_limit` reflecting a custom key),
+   acknowledge it and skip to Step 8b — do not ask.
+
+3. **Volume-skip (the common case).** If the collected total is at or below the effective limit — or
+   the limit is `0` (unlimited) — the built-in evaluation license suffices. State that briefly and
+   skip to Step 8b. **Do not ask for a License Key.**
+
+4. **Only when the collected total exceeds the effective limit,** present the License-Key gate.
+   First check the in-flow request option's availability: call `get_capabilities` on the Senzing MCP
+   server to see whether `submit_feedback` is reported available (wait up to 30s). Present the
+   four-option form when available, otherwise the three-option form; pin whichever you present
+   verbatim (INV-056):
+
+   Four-option form (when `submit_feedback` is available):
+
+   👉 **Do you have a Senzing License Key? Reply with a number:**
+
+   1. Yes — a license file (`.lic`).
+   2. Yes — a Base64-encoded license key.
+   3. No — I'll obtain one another way (a license I get elsewhere, or Senzing support).
+   4. No — request a free evaluation license now through the bootcamp.
+
+   Three-option form (when `submit_feedback` is unavailable):
+
+   👉 **Do you have a Senzing License Key? Reply with a number:**
+
+   1. Yes — a license file (`.lic`).
+   2. Yes — a Base64-encoded license key.
+   3. No — I need to obtain one.
+
+   *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper answers.)*
+
+5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
+   into chat. Decode/place it to `licenses/g2.lic`:
+
+   - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;
+     Windows (PowerShell):
+     `[System.Convert]::FromBase64String('<BASE64_STRING>') | Set-Content -Path licenses\g2.lic -AsByteStream`.
+     Verify it is binary with `file licenses/g2.lic`.
+   - **`.lic` file** — `cp /path/to/g2.lic licenses/g2.lic`.
+
+   Then add `LICENSEFILE` to the engine config PIPELINE section
+   (`"PIPELINE": { "LICENSEFILE": "licenses/g2.lic" }`) and record `license: custom` in
+   `config/bootcamp_preferences.yaml`. Continue to sub-step 7 to detect the limit.
+
+6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
+   MCP server first: `search_docs(query='larger or temporary evaluation license for datasets over
+   500 records')` and present the returned guidance. Present the available paths as distinct,
+   individually selectable options — the in-flow MCP request (invoke `submit_feedback` once with the
+   `license_request` category; only when reported available), the external channel
+   (<support@senzing.com>; include name, org, expected record count, use case; production licenses
+   via <sales@senzing.com>), and apply-an-existing-key (sub-step 5). The bootcamp **continues on the
+   built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the email;
+   the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even in a
+   later session. Retrieve any capacity/validity figures from MCP at runtime, never a remembered
+   figure. Record `license: evaluation` when no custom key is applied.
+
+7. **Detect the active license's record limit (after a custom key is applied in sub-step 5).**
+   Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',
+   language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
+   cap). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
+   `config/license.json`, parse `recordLimit`, and write `license_record_limit` into
+   `config/bootcamp_progress.json`. Report the detected limit to the bootcamper (e.g. "Your license
+   allows up to N records," or "no record cap (unlimited)" when `0`).
+
+This gate is non-blocking on the obtain paths (the bootcamp proceeds on the evaluation license while
+a key is pending). Once resolved — or when the volume was within the limit — clear
+`license_guidance_deferred` and proceed to Step 8b.
 
 **Checkpoint:** write step 8a to `config/bootcamp_progress.json`.
 

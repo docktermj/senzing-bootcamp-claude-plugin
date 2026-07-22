@@ -79,3 +79,7 @@ amending INV-036.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Ask for the Senzing License Key once, at the natural point where the bootcamper's own data is processed (not in SDK setup)" (2026-07-22, Module SDK setup → Data collection)
 - Priority: High
 - Related specs: `specs/module2-license-clarity.md`, `specs/module1-license-flow-parity.md`, `specs/license-request-option.md`; INV-036, INV-006
+
+## Invariants introduced
+
+- `INV-093` — The Senzing License Key prompt MUST be presented at most once across the bootcamp, at the start of Data collection (Module 4), after the volume is known and before any load, and only when the volume exceeds the active license's record limit; SDK setup (Module 2) establishes only the built-in evaluation license with no prompt, and every other module reads the persisted result rather than re-asking (recorded in `specs/INVARIANTS.md`). INV-036 was annotated to point to INV-093.

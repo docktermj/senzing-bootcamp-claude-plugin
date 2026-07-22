@@ -106,111 +106,26 @@ targets** (specific software, pipeline mentions). Use "not yet determined" when 
 
 **Checkpoint:** write step 5.
 
-### 5a. Record-count threshold check
+### 5a. Record-count threshold check (compute-only — no license prompt here)
 
-Compute the total record count across mentioned sources. Read `license_record_limit` from
-`config/bootcamp_progress.json` (Module 2 writes it):
+Compute the total record count across the mentioned sources and read `license_record_limit` from
+`config/bootcamp_progress.json` (present only if a custom license was configured in a prior
+session; normally absent at this point):
 
-- **Present and > 0:** if total exceeds it, license guidance required → Step 5b; else → Step 6.
-- **Present and = 0** (no cap): skip license guidance → Step 6.
-- **Absent/null:** compare against the built-in evaluation capacity, confirmed via the Senzing
-  MCP server (never a hardcoded figure). If total exceeds it → Step 5b; else → Step 6.
+- **Present and > 0:** if the total exceeds it, the bootcamper will likely need a Senzing License
+  Key — record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Otherwise
+  leave it unset. Either way, proceed to Step 6.
+- **Present and = 0** (no cap): no license concern → proceed to Step 6.
+- **Absent/null:** compare the total against the built-in evaluation capacity, confirmed via the
+  Senzing MCP server (never a hardcoded figure). If the total exceeds it, record
+  `license_guidance_deferred: true`; otherwise leave it unset. Either way, proceed to Step 6.
 
-### 5b. License guidance trigger (only if total exceeds the evaluation limit)
+**The bootcamp does not ask about a Senzing License Key here.** The single, volume-gated License
+Key prompt is presented once — at the start of Data collection (Module 4), after the actual data
+volume is known and before any load — per INV-093. This step only records whether the anticipated
+volume looks likely to exceed the limit, so Module 4's gate can pick it up (`license_guidance_deferred`).
 
-Explain that the built-in evaluation license processes a limited number of records (confirm the
-figure via MCP), so a full Senzing License Key is needed for more.
-
-👉 **Do you already have a Senzing License Key?**
-
-*(Internal: end the turn and wait; pinned verbatim, INV-056.)* Yes → 5c; No → 5d.
-
-### 5c. Already has a Senzing License Key
-
-Offer both ways to provide the key — a neutral lead question with a numbered list (INV-051):
-
-👉 **How would you like to provide your Senzing License Key? Reply with a number:**
-
-1. Paste the Base64-encoded license string.
-2. Give the path to a downloaded license file (often named `senzing-license.txt`).
-
-*(Internal: end the turn and wait.)* Then, based on the choice:
-
-- **Base64 string:** decode to `licenses/g2.lic`: `echo "<string>" | base64 --decode > licenses/g2.lic`
-- **File path:** locate the file at the given path — hint the likely default name
-  `senzing-license.txt` if they need to find it — then place it at `licenses/g2.lic`: decode it if
-  it holds a Base64 string, or copy it if it is already a `.lic` file.
-
-Then:
-
-3. Add `LICENSEFILE` to the engine config PIPELINE section pointing at `licenses/g2.lic`.
-4. Record `license: custom` in `config/bootcamp_preferences.yaml`. Proceed to Step 6.
-
-**Checkpoint:** write step 5c.
-
-### 5d. Does not have a license
-
-Consult MCP first: `search_docs(query='temporary or larger evaluation license for more than 500
-records')` and present the guidance. Then call `get_capabilities` to check whether the
-`submit_feedback` tool is available (wait up to 30s):
-
-- **Available:** present all three paths.
-- **Unavailable / error / no response:** omit the in-flow path, present the other two.
-
-Paths:
-
-1. **Request via MCP (in-flow):** *only if `submit_feedback` is available.* Invoke
-   `submit_feedback` once with the `license_request` category; the license arrives by email
-   with a download link.
-2. **External channel:** email <support@senzing.com>, mention the Senzing Bootcamp, include
-   name, org, expected record count, use case. Response in 1–2 business days.
-3. **Apply an existing Senzing License Key:** follow Step 5c.
-
-Retrieve any validity period / capacity figures from MCP at runtime; never substitute a
-remembered figure.
-
-👉 **Which would you like to do? Reply with a number:**
-
-1. Request via the MCP server (if available).
-2. Request through the external channel.
-3. Apply a Senzing License Key you already have.
-4. Defer for now.
-
-*(Internal: end the turn and wait.)* Then act on the choice:
-
-- **Path 1 (MCP request):** invoke `submit_feedback` (`license_request`), then go to Step 5d-i.
-- **Path 2 (external channel):** give the email guidance; proceed to Step 6 (the bootcamp
-  continues on the built-in evaluation license and applies the emailed key via Step 5c whenever
-  it arrives).
-- **Path 3 (apply existing):** follow Step 5c.
-- **Path 4 (defer):** Step 5e.
-
-**Checkpoint:** write step 5d.
-
-### 5d-i. Confirm the requested Senzing License Key arrived (after path 1)
-
-The evaluation License Key arrives by email with a download link, so don't strand the bootcamper
-by moving on before it lands. The bootcamp can continue on the built-in evaluation license
-meanwhile and apply the emailed key whenever it arrives.
-
-👉 **Has your Senzing License Key email arrived yet?**
-
-*(Internal: end the turn and wait; pinned verbatim, INV-056.)*
-
-- **Yes:** apply the key now via Step 5c (paste the Base64 string, or give the downloaded file's
-  path), then proceed to Step 6.
-- **No / not yet:** state that the bootcamp will continue on the built-in evaluation license and
-  the key can be applied later (Module 2 Step 5 also handles license configuration as a mandatory
-  gate). Proceed to Step 6.
-
-**Checkpoint:** write step 5d-i.
-
-### 5e. Deferral
-
-Record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Note Module 2
-Step 5 handles license configuration as a mandatory gate. Proceed to Step 6.
-
-**Checkpoint:** write step 5e.
+**Checkpoint:** write step 5a to `config/bootcamp_progress.json`.
 
 ## 6. Confirm inferred details and fill gaps
 
