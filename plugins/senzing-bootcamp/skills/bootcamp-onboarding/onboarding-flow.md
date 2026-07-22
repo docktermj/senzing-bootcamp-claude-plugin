@@ -92,10 +92,7 @@ Then give the overview (cover naturally, do not ask a question yet):
   what the bootcamp tells you, and ask questions any time. Be curious.
 - Goal: get comfortable generating Senzing SDK code, finishing with running code you can build on.
 - You finish with a professional **recap PDF** — a keepsake of everything you built, module by
-  module, to keep and share with your team. A sample of a finished recap ships with the plugin at
-  `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
-  the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
-  a non-blocking mention, not a question or a gate.
+  module, to keep and share with your team.
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
   Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
   *Truth Set visualization* (optional), **Data collection**, **Data quality & mapping**, **Data

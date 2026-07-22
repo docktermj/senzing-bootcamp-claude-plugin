@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## remove-sample-recap-pdf-mention-from-welcome
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`
+- **Summary:** Removed the sample-recap-PDF pointer from the WELCOME overview (onboarding-flow.md §3, "Welcome and overview"). Deleted the clause "A sample of a finished recap ships with the plugin at `docs/examples/bootcamp_recap.example.pdf` … (yours will differ). This is a non-blocking mention, not a question or a gate." while keeping the recap-PDF value sentence the bootcamper did not object to ("You finish with a professional recap PDF — a keepsake …"). Acceptance criteria verified: the WELCOME overview no longer mentions `bootcamp_recap.example.pdf` (grep clean); the example `.md`/`.pdf` still ship and remain regenerable via `generate_recap_pdf.py` (untouched); the graduation Step 1 pointer (`graduation/SKILL.md:83-84`) and the README link (`README.md:169`) remain unchanged; the change is a docs wording removal, so it holds cross-platform and stays language-agnostic. INV-065 (example asset ships/regenerable) unaffected. No new invariant introduced.
+- **Commit:** uncommitted
+
 ## bootcamp-prep-name-never-asked
 
 - **Implemented:** 2026-07-20
