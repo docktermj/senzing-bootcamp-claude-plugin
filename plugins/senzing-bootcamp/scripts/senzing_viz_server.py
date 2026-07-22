@@ -346,6 +346,24 @@ button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;pad
 .explain pre{max-height:52vh;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font-family:__CODE_FONT__;font-size:11px;white-space:pre-wrap;word-break:break-word}
 .bucket-list{margin-top:14px}
 .bucket-list .rec{cursor:pointer}
+.explain h4{margin:12px 0 4px}
+.explain details{margin-top:14px}
+.explain summary{cursor:pointer;color:var(--muted);font-size:12px}
+.legend-note{font-size:12px;color:var(--muted);margin:6px 0 0}
+.verdict{border-left:4px solid var(--blue);background:var(--accent-soft);padding:8px 12px;border-radius:0 6px 6px 0;margin:4px 0 10px}
+.why-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+.why-table th,.why-table td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.why-table th{background:var(--bg);font-size:10px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+.why-table td.feat{font-weight:600;white-space:nowrap}
+.score-bar{height:7px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px}
+.score-bar>span{display:block;height:100%}
+.bucket{display:inline-block;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:600;border:1px solid transparent}
+.b-strong{background:#e6f4ea;color:#137333;border-color:#cdebd6}
+.b-mid{background:#fef7e0;color:#8a6d00;border-color:#f3e2a6}
+.b-weak{background:#fdeee3;color:#a1440a;border-color:#f6cfae}
+.b-none{background:#fce8e6;color:#a50e0e;border-color:#f4c7c3}
+.step{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;background:#fff}
+.step .num{display:inline-block;background:var(--blue);color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:700;font-size:12px;margin-right:6px}
 </style></head>
 <body>
 <header><h1>__TITLE__</h1></header>
@@ -439,22 +457,56 @@ async function explain(kind,eid,name){const m=d3.select("#modal");
   let data;try{data=await getJSON("/api/"+kind+"?entity_id="+encodeURIComponent(eid));}catch(e){data={error:String(e)};}
   let html=head;
   if(data&&data.error){html+="<p class='muted'>"+esc(data.error)+"</p>";}
-  else{html+=renderExplain(kind,data);
-    html+="<pre>"+esc(JSON.stringify(data&&data.result!==undefined?data.result:data,null,2))+"</pre>";}
+  else{html+=(kind==="why"?renderWhy(data):renderHow(data));
+    html+="<details><summary>Show the raw Senzing response (JSON)</summary><pre>"+esc(JSON.stringify(data&&data.result!==undefined?data.result:data,null,2))+"</pre></details>";}
   html+="<button onclick='closeModal()'>Close</button>";m.html(html);}
-function renderExplain(kind,data){try{const r=(data&&data.result)||{};
-  if(kind==="how"){const hr=r.HOW_RESULTS||{};const steps=hr.RESOLUTION_STEPS||[];
-    if(!steps.length){const ve=((hr.FINAL_STATE||{}).VIRTUAL_ENTITIES||[]).length;
-      return "<p class='muted'>This entity resolved directly into a single virtual entity with no incremental merge steps"+(ve?(" ("+ve+" virtual entit"+(ve===1?"y":"ies")+")"):"")+". The full construction state is shown below.</p>";}
-    let h="<p>Senzing built this entity in <b>"+steps.length+"</b> resolution step(s):</p><div class='recs'>";
-    steps.forEach(function(st,i){const mi=st.MATCH_INFO||{};const mk=mi.MATCH_KEY||st.MATCH_KEY||"";const rule=mi.ERRULE_CODE||mi.RESOLUTION_RULE||"";
-      h+="<div class='rec'><b>Step "+(i+1)+"</b>"+(mk?"<br><span class='chip'>"+esc(mk)+"</span>":"")+(rule?"<br><code>"+esc(rule)+"</code>":"")+"</div>";});
-    return h+"</div>";}
-  const wr=r.WHY_RESULTS||[];
-  if(wr.length){const mi=wr[0].MATCH_INFO||{};const mk=mi.WHY_KEY||mi.MATCH_KEY||"";const rule=mi.ERRULE_CODE||"";
-    return "<p>Match key: "+(mk?"<span class='chip'>"+esc(mk)+"</span>":"<span class='muted'>(none)</span>")+(rule?"  rule <code>"+esc(rule)+"</code>":"")+"</p><p class='muted'>Feature-by-feature scores are in the detail below.</p>";}
-  return "<p class='muted'>Senzing's explanation detail is shown below.</p>";
-  }catch(e){return "";}}
+function mkChips(mk){return (mk||"").split(/(?=[+-])/).filter(function(p){return p;})
+  .map(function(p){return "<span class='chip'>"+esc(p)+"</span>";}).join("")||"<span class='muted'>(none)</span>";}
+function humLevel(l){return ({RESOLVED:"the same entity",POSSIBLY_SAME:"possibly the same entity",
+  POSSIBLY_RELATED:"possibly related",DISCLOSED_RELATION:"a disclosed relationship",
+  NO_RELATION:"not related"})[l]||(l?l.toLowerCase().replace(/_/g," "):"related");}
+function bucketMeta(b){b=(b||"").toUpperCase();
+  if(b==="SAME")return ["b-strong","#137333","Same"];
+  if(b==="CLOSE")return ["b-strong","#137333","Close"];
+  if(b==="LIKELY")return ["b-mid","#8a6d00","Likely"];
+  if(b==="PLAUSIBLE")return ["b-weak","#a1440a","Plausible"];
+  if(b==="NO_CHANCE"||b==="UNLIKELY")return ["b-none","#a50e0e","No match"];
+  return ["b-mid","#8a6d00",b||"—"];}
+function renderWhy(data){const wr=((data.result||{}).WHY_RESULTS)||[];
+  if(!wr.length)return "<p class='muted'>Senzing returned no comparison detail for these records.</p>";
+  const mi=wr[0].MATCH_INFO||{};const key=mi.WHY_KEY||mi.MATCH_KEY||"";const rule=mi.WHY_ERRULE_CODE||mi.ERRULE_CODE||"";const level=mi.MATCH_LEVEL_CODE||"";
+  let h="<div class='verdict'>Senzing considers these records <b>"+esc(humLevel(level))+"</b> — on match key "+mkChips(key)+(rule?" (rule <code>"+esc(rule)+"</code>)":"")+".</div>";
+  const fs=mi.FEATURE_SCORES||{};const feats=Object.keys(fs);
+  if(feats.length){
+    h+="<h4>Feature-by-feature comparison</h4>";
+    h+="<table class='why-table'><thead><tr><th>Feature</th><th>Record A</th><th>Record B</th><th>How well it matched</th></tr></thead><tbody>";
+    feats.forEach(function(ft){(fs[ft]||[]).forEach(function(sc){
+      const bm=bucketMeta(sc.SCORE_BUCKET);const sv=(sc.SCORE===0||sc.SCORE)?sc.SCORE:"";
+      h+="<tr><td class='feat'>"+esc(ft)+"</td><td>"+esc(sc.INBOUND_FEAT_DESC||"")+"</td><td>"+esc(sc.CANDIDATE_FEAT_DESC||"")+"</td>"+
+        "<td><span class='bucket "+bm[0]+"'>"+esc(bm[2])+(sv!==""?" · "+sv:"")+"</span>"+
+        (sv!==""?"<div class='score-bar'><span style='width:"+Math.max(3,Math.min(100,sv))+"%;background:"+bm[1]+"'></span></div>":"")+"</td></tr>";
+    });});
+    h+="</tbody></table><p class='legend-note'>Each row compares one feature across the two records. The score (0–100) and its bucket show how strongly that feature agreed — green = strong, amber = likely, orange = plausible, red = no match.</p>";
+  }
+  return h;}
+function _recordChips(members){var out=[];(members||[]).forEach(function(mb){(mb.RECORDS||[]).forEach(function(r){
+  out.push("<span class='chip'>"+esc((r.DATA_SOURCE||"?")+":"+(r.RECORD_ID||"?"))+"</span>");});});
+  return out.join("")||"<span class='muted'>—</span>";}
+function renderHow(data){const hr=(data.result||{}).HOW_RESULTS||{};const steps=hr.RESOLUTION_STEPS||[];
+  if(steps.length){
+    let h="<div class='verdict'>Senzing built this entity in <b>"+steps.length+"</b> step(s), each merging two groups of records.</div>";
+    steps.forEach(function(st,i){const mi=st.MATCH_INFO||{};const mk=mi.MATCH_KEY||"";const rule=mi.ERRULE_CODE||"";
+      const v1=st.VIRTUAL_ENTITY_1||{};const v2=st.VIRTUAL_ENTITY_2||{};
+      h+="<div class='step'><div><span class='num'>"+(st.STEP||(i+1))+"</span><b>Merged on</b> "+mkChips(mk)+(rule?" · <code>"+esc(rule)+"</code>":"")+"</div>"+
+        "<div class='recs' style='margin-top:8px'><div class='rec'><b>Group A</b><br>"+_recordChips(v1.MEMBER_RECORDS)+"</div>"+
+        "<div class='rec'><b>Group B</b><br>"+_recordChips(v2.MEMBER_RECORDS)+"</div></div></div>";});
+    return h;}
+  const ve=((hr.FINAL_STATE||{}).VIRTUAL_ENTITIES)||[];
+  var members=[];ve.forEach(function(v){(v.MEMBER_RECORDS||[]).forEach(function(m){members.push(m);});});
+  var n=0;members.forEach(function(m){n+=((m.RECORDS||[]).length);});
+  return "<div class='verdict'>These records resolved <b>directly</b> into one entity — Senzing found them consistent enough to merge with no intermediate steps.</div>"+
+    "<h4>"+n+" record"+(n===1?"":"s")+" in this entity</h4>"+
+    "<div class='recs'><div class='rec' style='min-width:auto'>"+_recordChips(members)+"</div></div>";}
 async function drawMerges(){const m=await getJSON("/api/merges");const box=d3.select("#merges");box.html("");
   if(!m.entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
   m.entities.forEach(function(e){const card=box.append("div").attr("class","card");
