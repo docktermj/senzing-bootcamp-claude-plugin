@@ -10,10 +10,15 @@ one up through the Senzing SDK, so all data comes from real entity resolution),
 then serves:
 
 - ``GET /``            single-page D3 v7 visualization (4 tabs + summary banner)
-- ``GET /api/stats``   aggregate resolution statistics
+- ``GET /api/stats``   aggregate resolution statistics (incl. per-bucket entity lists
+  under ``bucket_entities`` for the clickable histogram)
 - ``GET /api/graph``   entity nodes + relationship edges
 - ``GET /api/merges``  multi-record entities with constituent records
 - ``GET /api/search``  search-by-attributes with resolution reasoning
+- ``GET /api/why``     explain WHY the records in an entity resolved together
+  (``why_records`` / ``why_record_in_entity``); ``?entity_id=<id>``
+- ``GET /api/how``     explain HOW an entity was constructed from its records
+  (``how_entity_by_entity_id``); ``?entity_id=<id>``
 
 Data source: ``get_entity_by_record_id`` with ``SZ_ENTITY_DEFAULT_FLAGS`` (which
 includes ``SZ_ENTITY_INCLUDE_ALL_RELATIONS``), so nodes and edges come from one
@@ -161,11 +166,24 @@ class Model:
 
     # ---- API payloads ---------------------------------------------------- #
     def stats(self):
-        ents = self.entities.values()
+        ents = list(self.entities.values())
         hist = {"1": 0, "2": 0, "3": 0, "4+": 0}
+        # Per-bucket entity lists so the histogram bars can be clicked to drill
+        # down. Capped per bucket to bound the payload (and the embedded snapshot);
+        # the `histogram` counts remain authoritative.
+        buckets = {"1": [], "2": [], "3": [], "4+": []}
         for e in ents:
             c = e["record_count"]
-            hist["4+" if c >= 4 else str(c)] = hist.get("4+" if c >= 4 else str(c), 0) + 1
+            b = "4+" if c >= 4 else str(c)
+            hist[b] = hist.get(b, 0) + 1
+            if len(buckets[b]) < 200:
+                buckets[b].append(
+                    {
+                        "entity_id": e["entity_id"],
+                        "entity_name": e["entity_name"],
+                        "record_count": c,
+                    }
+                )
         return {
             "records_total": self.records_total,
             "entities_total": len(self.entities),
@@ -173,6 +191,7 @@ class Model:
             "cross_source_entities": sum(1 for e in ents if len(e["data_sources"]) >= 2),
             "relationships_total": len(self.edges),
             "histogram": hist,
+            "bucket_entities": buckets,
         }
 
     def graph(self):
@@ -227,6 +246,49 @@ class Model:
             )
         return {"results": results}
 
+    def how(self, engine, sz, entity_id):
+        """Explain HOW an entity was constructed from its records
+        (SzEngine.how_entity_by_entity_id, SZ_HOW_ENTITY_DEFAULT_FLAGS)."""
+        try:
+            eid = int(entity_id)
+        except (TypeError, ValueError):
+            return {"error": "invalid entity_id"}
+        try:
+            raw = engine.how_entity_by_entity_id(eid, sz.SZ_HOW_ENTITY_DEFAULT_FLAGS)
+            return {"entity_id": eid, "result": json.loads(raw)}
+        except Exception as exc:
+            return {"entity_id": eid, "error": "%s: %s" % (type(exc).__name__, exc)}
+
+    def why(self, engine, sz, entity_id):
+        """Explain WHY the records in an entity resolved together. Uses
+        SzEngine.why_records between two of the entity's constituent records, or
+        why_record_in_entity for a single-record entity (both feature-scored)."""
+        try:
+            eid = int(entity_id)
+        except (TypeError, ValueError):
+            return {"error": "invalid entity_id"}
+        recs = (self.entities.get(eid) or {}).get("records", [])
+        try:
+            if len(recs) >= 2:
+                (d1, r1), (d2, r2) = (
+                    (recs[0]["data_source"], recs[0]["record_id"]),
+                    (recs[1]["data_source"], recs[1]["record_id"]),
+                )
+                raw = engine.why_records(d1, r1, d2, r2, sz.SZ_WHY_RECORDS_DEFAULT_FLAGS)
+                mode = "why_records"
+            elif len(recs) == 1:
+                raw = engine.why_record_in_entity(
+                    recs[0]["data_source"],
+                    recs[0]["record_id"],
+                    sz.SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS,
+                )
+                mode = "why_record_in_entity"
+            else:
+                return {"entity_id": eid, "error": "no records known for this entity"}
+            return {"entity_id": eid, "mode": mode, "result": json.loads(raw)}
+        except Exception as exc:
+            return {"entity_id": eid, "error": "%s: %s" % (type(exc).__name__, exc)}
+
 
 # --------------------------------------------------------------------------- #
 # HTML (single page, D3 v7). Placeholders filled with .replace() to avoid brace
@@ -278,6 +340,12 @@ button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;pad
 .modal{background:#fff;border-radius:10px;padding:18px 20px;max-width:420px;width:90%}
 .modal h3{margin:0 0 8px}
 .modal button{margin-top:10px;border:none;background:var(--blue);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
+.modal.wide{max-width:680px}
+.actions{margin-top:8px;display:flex;gap:6px}
+.actions button{border:1px solid var(--blue);background:var(--accent-soft);color:var(--blue);border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+.explain pre{max-height:52vh;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px;font-family:__CODE_FONT__;font-size:11px;white-space:pre-wrap;word-break:break-word}
+.bucket-list{margin-top:14px}
+.bucket-list .rec{cursor:pointer}
 </style></head>
 <body>
 <header><h1>__TITLE__</h1></header>
@@ -352,33 +420,76 @@ function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
 function drawLegend(){d3.select("#graph-container .legend").remove();
   const srcs=Object.keys(SRC_COLORS);const l=d3.select("#graph-container").append("div").attr("class","legend");
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");r.append("span").attr("class","dot").style("background",color(s));r.append("span").text(s);});}
-function openModal(d){const m=d3.select("#modal");
+function openModal(d){const m=d3.select("#modal");document.getElementById("modal").className="modal";
   m.html("<h3>"+esc(d.entity_name)+"</h3><div class='muted'>Entity ID "+d.entity_id+"</div>"+
     "<p><b>Data sources:</b> "+d.data_sources.join(", ")+"<br><b>Records:</b> "+d.record_count+"</p>"+
     "<div>"+d.records.map(function(r){return "<span class='chip'>"+r.data_source+":"+r.record_id+"</span>";}).join("")+"</div>"+
     "<button onclick='closeModal()'>Close</button>");
   document.getElementById("modal-bg").style.display="flex";}
 function closeModal(){document.getElementById("modal-bg").style.display="none";}
+function addExplainButtons(sel,eid,name){if(eid===undefined||eid===null)return;
+  const a=sel.append("div").attr("class","actions");
+  a.append("button").attr("title","Why did these records resolve together?").text("Why?").on("click",function(){explain("why",eid,name);});
+  a.append("button").attr("title","How was this entity constructed?").text("How?").on("click",function(){explain("how",eid,name);});}
+function explainTitle(kind){return kind==="why"?"Why did these records resolve together?":"How was this entity built?";}
+async function explain(kind,eid,name){const m=d3.select("#modal");
+  document.getElementById("modal").className="modal wide explain";
+  const head="<h3>"+esc(explainTitle(kind))+"</h3><div class='muted'>"+esc(name||"")+" · Entity "+eid+"</div>";
+  m.html(head+"<p class='muted'>Loading…</p>");document.getElementById("modal-bg").style.display="flex";
+  let data;try{data=await getJSON("/api/"+kind+"?entity_id="+encodeURIComponent(eid));}catch(e){data={error:String(e)};}
+  let html=head;
+  if(data&&data.error){html+="<p class='muted'>"+esc(data.error)+"</p>";}
+  else{html+=renderExplain(kind,data);
+    html+="<pre>"+esc(JSON.stringify(data&&data.result!==undefined?data.result:data,null,2))+"</pre>";}
+  html+="<button onclick='closeModal()'>Close</button>";m.html(html);}
+function renderExplain(kind,data){try{const r=(data&&data.result)||{};
+  if(kind==="how"){const hr=r.HOW_RESULTS||{};const steps=hr.RESOLUTION_STEPS||[];
+    if(!steps.length){const ve=((hr.FINAL_STATE||{}).VIRTUAL_ENTITIES||[]).length;
+      return "<p class='muted'>This entity resolved directly into a single virtual entity with no incremental merge steps"+(ve?(" ("+ve+" virtual entit"+(ve===1?"y":"ies")+")"):"")+". The full construction state is shown below.</p>";}
+    let h="<p>Senzing built this entity in <b>"+steps.length+"</b> resolution step(s):</p><div class='recs'>";
+    steps.forEach(function(st,i){const mi=st.MATCH_INFO||{};const mk=mi.MATCH_KEY||st.MATCH_KEY||"";const rule=mi.ERRULE_CODE||mi.RESOLUTION_RULE||"";
+      h+="<div class='rec'><b>Step "+(i+1)+"</b>"+(mk?"<br><span class='chip'>"+esc(mk)+"</span>":"")+(rule?"<br><code>"+esc(rule)+"</code>":"")+"</div>";});
+    return h+"</div>";}
+  const wr=r.WHY_RESULTS||[];
+  if(wr.length){const mi=wr[0].MATCH_INFO||{};const mk=mi.WHY_KEY||mi.MATCH_KEY||"";const rule=mi.ERRULE_CODE||"";
+    return "<p>Match key: "+(mk?"<span class='chip'>"+esc(mk)+"</span>":"<span class='muted'>(none)</span>")+(rule?"  rule <code>"+esc(rule)+"</code>":"")+"</p><p class='muted'>Feature-by-feature scores are in the detail below.</p>";}
+  return "<p class='muted'>Senzing's explanation detail is shown below.</p>";
+  }catch(e){return "";}}
 async function drawMerges(){const m=await getJSON("/api/merges");const box=d3.select("#merges");box.html("");
   if(!m.entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
   m.entities.forEach(function(e){const card=box.append("div").attr("class","card");
     card.append("h4").text(e.entity_name+"  ");card.select("h4").append("span").attr("class","chip").text(e.data_sources.join(" + "));
     const rc=card.append("div").attr("class","recs");
-    e.records.forEach(function(r){const d=rc.append("div").attr("class","rec");d.html("<b>"+r.data_source+"</b><br>record "+r.record_id);});});}
+    e.records.forEach(function(r){const d=rc.append("div").attr("class","rec");d.html("<b>"+r.data_source+"</b><br>record "+r.record_id);});
+    addExplainButtons(card,e.entity_id,e.entity_name);});}
 async function drawHist(){const s=await getJSON("/api/stats");const box=d3.select("#hist");box.html("");
   box.append("p").html("<b>"+s.records_total+"</b> records collapsed into <b>"+s.entities_total+"</b> entities, including <b>"+s.multi_record_entities+"</b> multi-record entities.");
-  const data=[["1 record",s.histogram["1"]||0],["2 records",s.histogram["2"]||0],["3 records",s.histogram["3"]||0],["4+ records",s.histogram["4+"]||0]];
+  box.append("p").attr("class","muted").text("Click a bar to list the entities in that bucket.");
+  const data=[["1 record","1"],["2 records","2"],["3 records","3"],["4+ records","4+"]]
+    .map(function(z){return {label:z[0],key:z[1],n:s.histogram[z[1]]||0};});
   const W=Math.min(720,box.node().clientWidth),H=300,m={t:20,r:10,b:40,l:44};
   const svg=box.append("svg").attr("width",W).attr("height",H);
-  const x=d3.scaleBand().domain(data.map(function(d){return d[0];})).range([m.l,W-m.r]).padding(0.25);
-  const y=d3.scaleLinear().domain([0,d3.max(data,function(d){return d[1];})||1]).nice().range([H-m.b,m.t]);
+  const x=d3.scaleBand().domain(data.map(function(d){return d.label;})).range([m.l,W-m.r]).padding(0.25);
+  const y=d3.scaleLinear().domain([0,d3.max(data,function(d){return d.n;})||1]).nice().range([H-m.b,m.t]);
   svg.append("g").attr("transform","translate(0,"+(H-m.b)+")").call(d3.axisBottom(x));
   svg.append("g").attr("transform","translate("+m.l+",0)").call(d3.axisLeft(y).ticks(5));
-  svg.selectAll("rect").data(data).join("rect").attr("x",function(d){return x(d[0]);}).attr("y",function(d){return y(d[1]);})
-    .attr("width",x.bandwidth()).attr("height",function(d){return y(0)-y(d[1]);}).attr("rx",4)
-    .attr("fill",function(d,i){return i===0?"__ACCENT__":"__ACCENT_HOT__";});
-  svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(d){return x(d[0])+x.bandwidth()/2;})
-    .attr("y",function(d){return y(d[1])-6;}).attr("text-anchor","middle").attr("font-size",13).attr("font-weight",600).text(function(d){return d[1];});}
+  svg.selectAll("rect").data(data).join("rect").attr("x",function(d){return x(d.label);}).attr("y",function(d){return y(d.n);})
+    .attr("width",x.bandwidth()).attr("height",function(d){return y(0)-y(d.n);}).attr("rx",4).style("cursor","pointer")
+    .attr("fill",function(d,i){return i===0?"__ACCENT__":"__ACCENT_HOT__";})
+    .on("click",function(ev,d){showBucket(s,d.key,d.label);});
+  svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(d){return x(d.label)+x.bandwidth()/2;})
+    .attr("y",function(d){return y(d.n)-6;}).attr("text-anchor","middle").attr("font-size",13).attr("font-weight",600).text(function(d){return d.n;});
+  box.append("div").attr("id","bucket-list").attr("class","bucket-list");}
+function showBucket(s,key,label){const box=d3.select("#bucket-list");if(box.empty())return;box.html("");
+  const list=(s.bucket_entities&&s.bucket_entities[key])||[];
+  const total=(s.histogram&&s.histogram[key])||list.length;
+  box.append("h4").text(label+" — "+total+(total===1?" entity":" entities"));
+  if(!list.length){box.append("p").attr("class","muted").text("No entities in this bucket.");return;}
+  const wrap=box.append("div").attr("class","recs");
+  list.forEach(function(en){const d=wrap.append("div").attr("class","rec");
+    d.html("<b>"+esc(en.entity_name)+"</b><br>ID "+en.entity_id+" · "+en.record_count+" record(s)");
+    d.on("click",function(){explain("how",en.entity_id,en.entity_name);});});
+  if(total>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" of "+total+".");}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
   const r=await getJSON("/api/search?q="+encodeURIComponent(q));box.html("");
   if(!r.results||!r.results.length){box.append("p").attr("class","muted").text("No matching entities found.");return;}
@@ -386,7 +497,8 @@ async function doSearch(){const q=document.getElementById("search-in").value;con
     card.append("h4").text(e.entity_name);
     card.append("div").attr("class","muted").text("Entity "+e.entity_id+" · "+(e.record_count||"?")+" record(s) · "+(e.data_sources||[]).join(", "));
     if(e.match_key){const mk=card.append("div").attr("class","mk");e.match_key.split(/(?=[+-])/).forEach(function(p){if(p)mk.append("span").text(p);});}
-    if(e.resolution_rule)card.append("div").append("code").text(e.resolution_rule);});}
+    if(e.resolution_rule)card.append("div").append("code").text(e.resolution_rule);
+    addExplainButtons(card,e.entity_id,e.entity_name);});}
 async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.select("#probe-btns");box.html("");
   m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
     .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
@@ -445,7 +557,7 @@ def render_page(title, data_shim="", probe_body=None):
 # --------------------------------------------------------------------------- #
 # Server
 # --------------------------------------------------------------------------- #
-def make_handler(model, engine, flags, title):
+def make_handler(model, engine, flags, sz, title):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):  # quiet
             pass
@@ -473,6 +585,12 @@ def make_handler(model, engine, flags, title):
                 if path == "/api/search":
                     q = parse_qs(parsed.query).get("q", [""])[0]
                     return self._send(200, json.dumps(model.search(engine, flags, q)))
+                if path == "/api/why":
+                    eid = parse_qs(parsed.query).get("entity_id", [""])[0]
+                    return self._send(200, json.dumps(model.why(engine, sz, eid)))
+                if path == "/api/how":
+                    eid = parse_qs(parsed.query).get("entity_id", [""])[0]
+                    return self._send(200, json.dumps(model.how(engine, sz, eid)))
                 return self._send(404, json.dumps({"error": "not found"}))
             except Exception as exc:  # never 500-crash silently
                 return self._send(500, json.dumps({"error": str(exc)}))
@@ -491,7 +609,9 @@ def build_model(settings, patterns):
     engine = factory.create_engine()
     flags = SzEngineFlags.SZ_ENTITY_DEFAULT_FLAGS
     model = Model().build(engine, flags, _iter_record_keys(patterns))
-    return factory, model, engine, flags
+    # Return the flags class too, so the why/how endpoints can use the
+    # MCP-confirmed default flag groups (SZ_HOW_ENTITY_DEFAULT_FLAGS, etc.).
+    return factory, model, engine, flags, SzEngineFlags
 
 
 def _esc_html(s):
@@ -610,6 +730,7 @@ def write_snapshot(model, engine, flags, title, out_path):
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
+        "if(p==='why'||p==='how'){return Promise.resolve({json:function(){return Promise.resolve({error:'Why/How explanations run only against the live visualization server (start it with: python3 senzing_viz_server.py --records ...).'});}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
     page = render_page(
@@ -642,7 +763,7 @@ def main(argv=None):
         return 2
 
     try:
-        factory, model, engine, flags = build_model(settings, args.records)
+        factory, model, engine, flags, sz = build_model(settings, args.records)
     except Exception as exc:
         sys.stderr.write(f"Could not build entity model: {type(exc).__name__}: {exc}\n")
         return 1
@@ -661,7 +782,7 @@ def main(argv=None):
     if args.no_serve:
         return 0
 
-    handler = make_handler(model, engine, flags, args.title)
+    handler = make_handler(model, engine, flags, sz, args.title)
     httpd = ThreadingHTTPServer(("127.0.0.1", args.port), handler)
     print(f"Visualization running: http://localhost:{args.port}")
     print("Press Ctrl+C to stop.")

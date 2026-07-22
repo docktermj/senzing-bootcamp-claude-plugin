@@ -11,7 +11,8 @@ the Truth Set visualization web service. This is reference material, loaded on d
 steps.
 
 All endpoint data derives from Senzing SDK methods (`export_json_entity_report`,
-`get_entity_by_entity_id`, `search_by_attributes`, `find_network_by_entity_id`). These are SDK
+`get_entity_by_entity_id`, `search_by_attributes`, `find_network_by_entity_id`,
+`why_records`, `why_record_in_entity`, `how_entity_by_entity_id`). These are SDK
 methods, not MCP tools; generate the SDK code for them via `get_sdk_reference` + `sdk_guide`, and
 confirm exact method and flag names via the Senzing MCP server. Never query `database/G2C.db`
 with SQL.
@@ -29,13 +30,21 @@ The server SHALL expose these endpoints:
   "multi_record_entities": 87,
   "cross_source_entities": 42,
   "relationships_total": 156,
-  "histogram": {"1": 308, "2": 65, "3": 17, "4+": 5}
+  "histogram": {"1": 308, "2": 65, "3": 17, "4+": 5},
+  "bucket_entities": {
+    "1": [{"entity_id": 10, "entity_name": "Alice Johnson", "record_count": 1}],
+    "2": [{"entity_id": 1, "entity_name": "Robert Smith", "record_count": 2}],
+    "3": [], "4+": []
+  }
 }
 ```
 
 Required fields: `records_total`, `entities_total`, `multi_record_entities`,
-`cross_source_entities`, `relationships_total`, `histogram`. The `histogram` maps record-count
-buckets (1, 2, 3, 4+) to entity counts.
+`cross_source_entities`, `relationships_total`, `histogram`, `bucket_entities`. The `histogram`
+maps record-count buckets (1, 2, 3, 4+) to entity counts; `bucket_entities` maps the same buckets
+to the entities in each (each `{entity_id, entity_name, record_count}`) so the histogram bars are
+clickable and drill down to the entities in a bucket. Implementations MAY cap each bucket list
+(the reference caps at 200 per bucket); the `histogram` counts remain authoritative.
 
 **`GET /api/graph`:** Entity nodes and relationship edges
 
@@ -179,7 +188,55 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 }
 ```
 
+**`GET /api/why?entity_id=<id>`:** Explain WHY the records in an entity resolved together
+
+Backed by `why_records` (comparing two of the entity's constituent records) or, for a
+single-record entity, `why_record_in_entity`. Use the `SZ_WHY_RECORDS_DEFAULT_FLAGS` /
+`SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS` group (these include `SZ_INCLUDE_FEATURE_SCORES`; add
+`SZ_INCLUDE_MATCH_KEY_DETAILS` for match-key breakdowns) — confirm exact method/flag names via the
+Senzing MCP server (`get_sdk_reference`).
+
+```json
+{
+  "entity_id": 1,
+  "mode": "why_records",
+  "result": {"WHY_RESULTS": ["..."], "ENTITIES": ["..."]}
+}
+```
+
+`result` is the SDK `why_*` response JSON verbatim. On failure, return
+`{"entity_id": <id>, "error": "<type>: <message>"}` (not a 500), so one entity's failure never
+breaks the tab.
+
+**`GET /api/how?entity_id=<id>`:** Explain HOW an entity was constructed from its records
+
+Backed by `how_entity_by_entity_id` with `SZ_HOW_ENTITY_DEFAULT_FLAGS` (confirm via the MCP
+server).
+
+```json
+{
+  "entity_id": 1,
+  "result": {"HOW_RESULTS": {"RESOLUTION_STEPS": ["..."], "FINAL_STATE": {"VIRTUAL_ENTITIES": ["..."]}}}
+}
+```
+
+`result` is the SDK response JSON verbatim: `HOW_RESULTS.RESOLUTION_STEPS[]` are the construction
+steps, and `FINAL_STATE.VIRTUAL_ENTITIES[]` describes the resolved entity when there are no
+incremental steps. On failure, return `{"entity_id": <id>, "error": "..."}`.
+
+**Where these surface in the UI:** the Record Merges tab and each Search / Probe result carry
+**Why?** and **How?** actions that call these endpoints and render the explanation (match keys,
+feature scores, construction steps) in a modal. The Merge Statistics histogram bars are clickable
+(driven by `bucket_entities`), listing the entities in each bucket and linking each to its **How?**
+explanation.
+
+**Static snapshot degradation:** the standalone snapshot has no live backend, so `why`/`how` are
+unavailable there — the actions show a note directing the viewer to the live server — while the
+histogram drill-down still works offline because `bucket_entities` is embedded in the snapshot.
+
 **Error response (all endpoints):** HTTP 500 with `{"error": "<description>"}` on SDK failure.
+Exception: `why`/`how` return a `200` with an `error` field per the shapes above so one entity's
+failure never breaks the tab.
 
 ## search_builder.py: Entity Enrichment Specification
 

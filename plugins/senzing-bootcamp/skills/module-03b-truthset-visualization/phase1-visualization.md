@@ -202,14 +202,16 @@ chosen URL.
 
 ### 2.4 Verify the endpoints
 
-The app serves the live page at `/` plus four JSON APIs. Verify each (10-second timeout):
+The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeout):
 
 | Endpoint | Success criteria |
 |----------|-----------------|
-| `GET /api/stats` | HTTP 200; fields `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `histogram` |
+| `GET /api/stats` | HTTP 200; fields `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `histogram`, `bucket_entities` (per-bucket entity lists for the clickable histogram) |
 | `GET /api/graph` | HTTP 200; `nodes` (each: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`) and `edges` (each: `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`) |
 | `GET /api/merges` | HTTP 200; at least one multi-record entity (2+ records) |
 | `GET /api/search?q=Robert Smith` | HTTP 200; `results` array with resolved entities, each carrying `match_key` and `resolution_rule` |
+| `GET /api/why?entity_id=<id>` | HTTP 200; real `WHY_RESULTS` (or an `error` field) explaining why the entity's records resolved together |
+| `GET /api/how?entity_id=<id>` | HTTP 200; real `HOW_RESULTS` (or an `error` field) explaining how the entity was constructed |
 
 The live page renders four tabs, all populated from these APIs:
 
@@ -218,10 +220,14 @@ The live page renders four tabs, all populated from these APIs:
    match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (Your server
    MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target`
    before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
-2. **Record Merges:** cards showing each multi-record entity's constituent records.
-3. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
+2. **Record Merges:** cards showing each multi-record entity's constituent records, each with
+   **Why?** and **How?** actions that call `/api/why` and `/api/how` and render Senzing's
+   explanation (match keys, feature scores, construction steps) in a modal.
+3. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence;
+   the bars are **clickable** (backed by `bucket_entities`) and drill down to the entities in each
+   bucket, each linking to its **How?** explanation.
 4. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it.
+   match key / resolution rule that linked it, plus the same **Why?** / **How?** actions.
 
 ### 2.5 Present it and give the guided tour
 
