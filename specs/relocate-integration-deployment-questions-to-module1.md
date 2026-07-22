@@ -62,3 +62,7 @@ these two questions to Module 1.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Move integration / deployment questions from Bootcamp preparation into Discover the Business Problem (keep programming language in preparation)" (2026-07-22, Module Bootcamp preparation / Discover the Business Problem)
 - Priority: Medium
 - Related specs: `specs/relocate-setup-questions-to-bootcamp-preparation.md` (this reverses it for the two questions; INV-088); INV-075
+
+## Invariants introduced
+
+- `INV-097` — The software-integration and deployment-target questions are asked in Module 1 Phase 2 (Step 10a), after the scenario and before the problem-statement artifacts; persisted to `config/bootcamp_preferences.yaml` and read by the problem statement and graduation; Bootcamp preparation does not ask them (recorded in `specs/INVARIANTS.md`; INV-088 marked superseded, INV-075's cross-reference updated). Maintainer-approved wording.

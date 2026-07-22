@@ -151,8 +151,8 @@ what they already covered.
 undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load
 `phase2-document-confirm.md`).
 
-(The software-integration and deployment-target questions were relocated to **Bootcamp
-preparation** — see `../bootcamp-preparation/SKILL.md` — where all setup questions live (INV-088).
-Their answers are persisted in `config/bootcamp_preferences.yaml` (`integration_targets`,
-`deployment_target`/`cloud_provider`) and read from there by the problem statement (Phase 2) and by
-graduation; do not re-ask them here (INV-006).)
+(The software-integration and deployment-target questions are asked in **Phase 2, Step 10a** — after
+the scenario is identified and before the problem statement is written (INV-097) — not here in
+Phase 1 and not in Bootcamp preparation. Their answers are persisted to
+`config/bootcamp_preferences.yaml` (`integration_targets`, `deployment_target`/`cloud_provider`)
+and read from there by the problem statement (Phase 2) and by graduation.)

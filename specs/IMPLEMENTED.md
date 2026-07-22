@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## relocate-integration-deployment-questions-to-module1
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `specs/INVARIANTS.md`, `specs/relocate-integration-deployment-questions-to-module1.md`
+- **Summary:** Reversed INV-088 (maintainer-approved) — moved the software-integration and deployment-target questions from Bootcamp preparation back to Module 1. Removed §4a/§4b from `bootcamp-preparation/SKILL.md` and dropped `integration_targets`/`deployment_target` from its §6 consolidated write (and its module-intro list). Added a new **Module 1 Phase 2 Step 10a** (between Step 10 scenario-identify and Step 11 problem-statement write) that asks both questions verbatim (INV-056), one per turn, and persists `integration_targets` + `deployment_target`/`cloud_provider` to `config/bootcamp_preferences.yaml` — so they flow into the problem statement written in Step 11. Repointed every stale attribution: the Module 1 problem-statement template (`INV-088 → Step 10a/INV-097`), the Module 1 SKILL.md phase note and phase1-discovery relocated-note, and the onboarding/prep "setup questions" statements. Acceptance criteria verified by inspection: no stale `INV-088` references remain in skills; the two questions are gone from Bootcamp preparation and present at Module 1 Step 10a; the persisted keys are unchanged so the problem statement and graduation still read them (the "read by graduation" clause is inherited from INV-088, not regressed); questions stay pinned/numbered (INV-056/008/051); cross-platform and language-agnostic. **Maintainer-approved** reversal and invariant wording.
+- **Invariants introduced:** `INV-097` (recorded in `specs/INVARIANTS.md`; INV-088 marked superseded, INV-075 cross-reference updated) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## module-preface-time-estimate
 
 - **Implemented:** 2026-07-22

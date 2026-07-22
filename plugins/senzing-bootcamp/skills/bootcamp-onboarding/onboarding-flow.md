@@ -11,11 +11,13 @@ then hands off to the first module. It follows this order:
 
 Steps 0-2 are administrative and mostly silent; they run before the WELCOME banner.
 
-**All setup questions live in the Bootcamp preparation module, not the preface.** The
+**Setup questions live in the Bootcamp preparation module, not the preface.** The
 Core-vs-Customized path choice, per-module selection, level of detail (verbosity), programming
-language, version control, and the software-integration and deployment-target questions are asked in
+language, and version control are asked in
 the first module — **Bootcamp preparation**
-(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. Entity resolution
+(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. (The
+software-integration and deployment-target questions are asked later, in Module 1 Phase 2, per
+INV-097 — not in the preface and not in Bootcamp preparation.) Entity resolution
 concepts are also **not** part of the preface: they are an optional module
 (`../module-00-entity-resolution-concepts/SKILL.md`) run only when selected during Bootcamp
 preparation.

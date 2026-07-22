@@ -16,10 +16,10 @@ description: 'Bootcamp preparation (first, mandatory module): choose Core vs Cus
 Follow `../bootcamp-onboarding/ground-rules.md` throughout (👉 one-question-at-a-time,
 MCP-first, file placement, checkpointing). This is the **first, mandatory module**. The
 onboarding preface (`../bootcamp-onboarding/onboarding-flow.md`) hands off here after the WELCOME
-banner, the overview, and the "any questions" step; this module consolidates **all setup** in one
+banner, the overview, and the "any questions" step; this module consolidates the core setup in one
 place: the Core-vs-Customized path choice, per-module selection, level of detail (verbosity),
-programming language, version control, and the software-integration and deployment-target questions
-(relocated here from Module 1, INV-088).
+programming language, and version control. (The software-integration and deployment-target
+questions are asked in Module 1 Phase 2, not here, per INV-097.)
 
 Bootcamp preparation is a **lightweight setup module**: it presents its own banner but is exempt
 from the per-module completion apparatus (no journey map, no before/after framing, no
@@ -175,39 +175,6 @@ as choosing the recommended `standard` and say so — never assume a level befor
 - This is a ⛔ gate whose wording is pinned — present the 👉 question above verbatim (INV-056); wait for the bootcamper's real choice. Do NOT assume or say "I'll go with X."
 - **Hold** the chosen programming language for the Step 6 consolidated write (do not write it now).
 
-## 4a. Software integration (optional)
-
-Optional forward-looking context (not a ⛔ gate) that helps tailor the problem statement (Module 1)
-and the graduation production project. Ask this as a single pinned 👉 question, verbatim (INV-056),
-and end the turn on it (INV-005):
-
-👉 **Will your entity-resolution results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
-
-*(Internal: end the turn and wait.)* On **yes**, ask one follow-up on the next turn — "👉 **Which
-systems do you expect to integrate with?**" — and **hold** the named systems (e.g. Elasticsearch,
-Salesforce) as `integration_targets` for the consolidated write. On **no**, hold `integration_targets: []`.
-Module 1's problem statement and graduation read `integration_targets` from
-`config/bootcamp_preferences.yaml` (INV-088).
-
-## 4b. Deployment target (optional)
-
-Deployment is addressed for every bootcamper in the graduation production project and migration
-checklist, so capturing a target now is optional — it just helps tailor that output. Ask this as a
-single, separate pinned 👉 question, verbatim (INV-056), neutral lead + numbered list (INV-051):
-
-👉 **Where do you plan to deploy the final solution? Reply with a number:**
-
-1. A cloud hyperscaler (AWS/Azure/GCP).
-2. A container platform (Kubernetes/Docker Swarm).
-3. Local / on-premises.
-4. Not sure yet.
-
-*(Internal: end the turn and wait.)* Reassure: "We'll develop everything locally first; deployment is
-addressed in the graduation production project and migration checklist." **Hold** `deployment_target`
-(`aws`/`azure`/`gcp` — also hold `cloud_provider`; `kubernetes`/`docker_swarm`; `local`/
-`on_premises`; or `undecided` for option 4) for the consolidated write. Graduation and Module 1
-Phase 2 read `deployment_target` from `config/bootcamp_preferences.yaml` (INV-088).
-
 ## 5. Initialize version control (automatic, no prompt)
 
 Do this quietly (administrative, not narrated — **no 👉 question**, INV-095). Check whether the
@@ -229,11 +196,11 @@ single consolidated write below — no separate write (INV-058).
 
 ## 6. Consolidated preference write (once, quietly)
 
-Persist all setup choices collected in Steps 1-5 (including 4a/4b) to
+Persist all setup choices collected in Steps 1-5 to
 `config/bootcamp_preferences.yaml` in a **single** write (INV-058) — `path` (`core`/`customized`),
 `selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the detected
-`os`/`arch`, the `git_init` outcome, and the relocated setup answers `integration_targets` (list;
-`[]` if none) and `deployment_target` (plus `cloud_provider` when a hyperscaler was chosen). (`path`
+`os`/`arch`, and the `git_init` outcome. (The software-integration and deployment-target answers are
+NOT collected here — they are asked in Module 1 Phase 2 and persisted there, per INV-097.) (`path`
 replaces the old `track` preference; downstream readers — graduation, the recap header — read
 `path`.) This is the only setup write of this module; the gates only held their answers, so the
 bootcamper sees one diff instead of one per gate (INV-012). Do not narrate this administrative
