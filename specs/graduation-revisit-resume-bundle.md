@@ -86,3 +86,7 @@ complete resume story.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "At graduation, save a full 'revisit/resume' bundle (state + database backup + return guide)" (2026-07-22, Module Graduation)
 - Priority: High
 - Related specs: `specs/docker-container-lifecycle-teardown-and-resume.md`, `specs/recap-pdf-professional-design.md`; INV-049, INV-048, INV-050
+
+## Invariants introduced
+
+- `INV-094` — Graduation MUST produce a silent, non-blocking revisit/resume bundle before the terminal banner: a database backup under `backups/`, a `RESUME_STATE` manifest, and a `docs/REVISIT_BOOTCAMP.md` return guide; warn-and-continue on failure, confirm before overwriting, bundle lives outside `production/` (recorded in `specs/INVARIANTS.md`). Maintainer-approved wording.

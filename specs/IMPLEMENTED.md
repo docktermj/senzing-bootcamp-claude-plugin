@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## graduation-revisit-resume-bundle
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `specs/INVARIANTS.md`, `specs/graduation-revisit-resume-bundle.md`
+- **Summary:** Added a silent, non-blocking **Step 6: Save the revisit/resume bundle** to graduation (before the terminal banner; the former Step 6 feedback reminder is renumbered to Step 7). The new step saves, under the reserved top-level `backups/revisit/` (outside `production/`, so Step 2's never-copy-the-eval-database rule is preserved): (6a) a **database backup** — SQLite file copy of `database/G2C.db`, or PostgreSQL `pg_dump` (via `docker exec` when containerized), with the restore command recorded; (6b) a **RESUME_STATE manifest** (`backups/revisit/RESUME_STATE.json`) indexing snapshots of `config/bootcamp_progress.json`, `bootcamp_preferences.yaml`, `data_sources.yaml`, `engine_config.json`, `license.json`, and `docs/mapping/` (copied into `backups/revisit/state/`), plus the recap PDF and `docs/visualizations/` snapshots; and (6c) a **return guide** at `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/` per INV-017) with a top-of-file quick-start, accomplishments, business problem/data sources, DB-restore steps, re-init/re-run steps, and license location. The step warns-and-continues on any failure and asks before overwriting an existing bundle (a pinned 👉, mirroring Step 2's `production/` handling). Acceptance criteria verified by inspection: DB backup (both engines) with restore commands; RESUME_STATE manifest; REVISIT_BOOTCAMP.md guide; silent/non-blocking with overwrite confirmation; never-copy-DB rule reconciled via the dedicated `backups/revisit/` path (bundle outside `production/`); INV-049/048/050 remain satisfied (backups/ and docs/ are enumerated dirs in the INV-050 tree, which is explicitly non-exhaustive); PostgreSQL + SQLite both handled and Docker treated as optional (cross-platform, language-agnostic); step renumber is clean (graduation Steps 1–7 + closing, no broken cross-references). **Maintainer-approved** plan (bundle under `backups/revisit/` + `docs/REVISIT_BOOTCAMP.md`) and invariant wording.
+- **Invariants introduced:** `INV-094` (recorded in `specs/INVARIANTS.md`) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## single-license-gate-at-data-processing
 
 - **Implemented:** 2026-07-22

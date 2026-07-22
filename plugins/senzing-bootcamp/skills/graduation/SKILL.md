@@ -264,7 +264,75 @@ next steps (fill in secrets, obtain a production license, work through the
 checklist, configure CI/CD, test with production data). If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
 
-## Step 6: Feedback reminder
+## Step 6: Save the revisit/resume bundle
+
+Silently preserve everything a returning bootcamper needs to pick the bootcamp back up — so
+"graduated" becomes a genuine save point. Like every graduation step this is **non-blocking**
+(warn-and-continue on any failure) and administrative in spirit (no narration beyond a short
+closing summary). The bundle lives **outside `production/`**, under the reserved top-level
+`backups/revisit/` directory, so Step 2's "never copy the eval database into `production/`" rule
+is preserved (INV-094).
+
+If `backups/revisit/` already exists from a prior graduation, pin this 👉 question verbatim before
+overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create it silently:
+
+👉 **A revisit bundle already exists — how should I proceed? Reply with a number:**
+
+1. **Overwrite** — replace the previous revisit bundle.
+2. **Keep** — leave the existing bundle untouched and skip this step.
+
+### 6a. Database backup
+
+Back up the resolved repository so it can be restored later. Read `database` (SQLite/PostgreSQL)
+from pre-checks and the connection from `config/engine_config.json`.
+
+- **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
+  `cp database/G2C.db backups/revisit/database/G2C.db`).
+- **PostgreSQL:** run `pg_dump` of the Senzing database to
+  `backups/revisit/database/senzing.dump`. When the database runs in a Docker container, dump
+  through the container (e.g.
+  `docker exec <container> pg_dump -U <user> -d <db> -Fc > backups/revisit/database/senzing.dump`).
+  Confirm the exact user / database / container from `config/engine_config.json` (and the recorded
+  container, when container-lifecycle tracking is present); never invent credentials.
+
+Record the exact **restore** command in the return guide (Step 6c): SQLite = copy the file back to
+`database/`; PostgreSQL = `pg_restore` (or `psql <` for a plain dump) into a fresh database. If the
+backup cannot be produced (tool missing, database unreachable), warn and continue — the rest of the
+bundle still saves.
+
+### 6b. RESUME_STATE manifest
+
+Snapshot the resume-critical state into `backups/revisit/state/` (copy each if it exists):
+`config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`, `config/data_sources.yaml`,
+`config/engine_config.json`, `config/license.json`, and `docs/mapping/`. Then write
+`backups/revisit/RESUME_STATE.json` — a manifest indexing what was saved: the bootcamp path and
+`modules_completed`, the programming language and database type, the business problem and data
+sources, the relative path of each snapshotted file, the database backup path and its restore
+command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapshots under
+`docs/visualizations/`. Use only project-relative paths.
+
+### 6c. Return guide
+
+Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017), authored to the same
+CommonMark house rules as the other graduation deliverables (Step 4). Cover:
+
+- **Quick start when you return** — a short command list at the very top (re-source the env, restore
+  the database, re-init the engine, re-run a query and the visualization).
+- **What you accomplished** — per completed module, drawn from the recap.
+- **Your business problem and data sources** — from `docs/business_problem.md` /
+  `config/data_sources.yaml`.
+- **Restore the database** — the exact SQLite copy-back or PostgreSQL `pg_restore` / `psql` command
+  recorded in Step 6a.
+- **Re-initialize and re-run** — how to re-source `src/scripts/senzing-env.sh` (if present) and
+  re-init the engine, then re-run the loader, queries, and visualization.
+- **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
+  evaluation license) and any expiry.
+- **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
+  `docs/visualizations/`.
+
+Then present a one-line summary of what the bundle saved and where, and continue to Step 7.
+
+## Step 7: Feedback reminder
 
 If `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` exists and contains at
 least one real feedback entry, remind the bootcamper it is there and offer to
