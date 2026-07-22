@@ -62,3 +62,7 @@ removal.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Don't ask the git-init question — always initialize git automatically" (2026-07-22, Module Bootcamp preparation)
 - Priority: Medium
 - Related specs: `specs/relocate-git-init-to-onboarding.md`, `specs/auto-detect-platform.md`; INV-075
+
+## Invariants introduced
+
+- `INV-095` — Bootcamp preparation auto-initializes git (`git init`) with no 👉 question when the directory is not a repo, recording `git_init: true`/`existing`/`unavailable`; it never prompts about version control (recorded in `specs/INVARIANTS.md`; INV-075 annotated to note the question's removal). Maintainer-approved wording.

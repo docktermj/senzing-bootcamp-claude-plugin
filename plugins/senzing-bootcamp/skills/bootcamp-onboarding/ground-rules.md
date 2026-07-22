@@ -219,6 +219,16 @@ never count against the one-question-per-turn rule and must not be treated as ga
   added to `modules_completed`; Module 0, when it runs, DOES append its own name-based recap section
   and is added to `modules_completed` (INV-092), so it appears in the recap and is reconciled at
   graduation (INV-085).
+- **Estimated time to complete (INV-096).** After the step overview and before the model/effort
+  prompt, add a short, honest, range-based estimate of how long the module will take — e.g.
+  "⏱️ Roughly 15-30 minutes, depending on download/install speed." Always caveat that it varies
+  with workstation power, business-scenario complexity, data volume, and how much must be
+  downloaded/installed. When a meaningful estimate is not possible for a module, say so plainly
+  ("hard to estimate for this module") rather than inventing a number; keep it honest and
+  range-based, never a single precise figure. It is explanatory output: suppress it entirely under
+  the `minimal` verbosity preset and keep it to one line under `concise` (INV-011/INV-012). This
+  applies only to the numbered content modules that run this apparatus — the apparatus-exempt setup
+  modules (Bootcamp preparation, Module 0) show no estimate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort with the exact commands. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
@@ -260,7 +270,8 @@ never count against the one-question-per-turn rule and must not be treated as ga
   ```
 
 - After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
-  banner + journey map + before/after + step overview + best-value model/effort prompt. When that
+  banner + journey map + before/after + step overview + estimated time to complete + best-value
+  model/effort prompt. When that
   prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
   statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with

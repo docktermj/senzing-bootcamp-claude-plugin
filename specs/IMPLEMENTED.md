@@ -18,6 +18,22 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module-preface-time-estimate
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`, `specs/module-preface-time-estimate.md`
+- **Summary:** Added an "estimated time to complete" element to the module-start apparatus in `ground-rules.md` ("Module start banners and transitions"), placed after the step overview and before the model/effort prompt. It is honest and range-based (e.g. "⏱️ Roughly 15-30 minutes, depending on download/install speed"), explicitly caveated as varying with workstation power, scenario complexity, data volume, and download/install time; when no meaningful estimate is possible the guide says "hard to estimate for this module" rather than inventing a number. It is explanatory output — suppressed under the `minimal` verbosity preset and one line under `concise` (INV-011/INV-012) — and does not apply to the apparatus-exempt setup modules (Bootcamp preparation, Module 0). The apparatus-assembly ordering line was updated to include it. Acceptance criteria verified by inspection: element present with range/caveat wording and the honest-when-unknowable clause; verbosity honored; setup modules excluded; cross-platform and language-agnostic (prose apparatus, no code). **Maintainer-approved** invariant wording.
+- **Invariants introduced:** `INV-096` (recorded in `specs/INVARIANTS.md`) — maintainer-approved wording.
+- **Commit:** uncommitted
+
+## auto-initialize-git-without-prompt
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `specs/INVARIANTS.md`, `specs/auto-initialize-git-without-prompt.md`
+- **Summary:** Rewrote Bootcamp preparation §5 ("Initialize version control") to auto-initialize git with no prompt. The pinned 👉 git-init question and its "no" branch (`git_init: false`) were removed; when the working directory is not a repo the bootcamp now runs `git init` automatically as a quiet administrative action and holds `git_init: true`, holds `git_init: existing` when already a repo, and holds `git_init: unavailable` (skip, non-blocking) when `git` is not installed. The value is still written in the single consolidated preference write (§6, INV-058). Acceptance criteria verified by inspection: no git-init 👉 question remains and `git_init: false` no longer occurs; auto-init + the three retained values present; runs quietly (INV-012); graceful when `git` is absent; cross-platform (exit-status check, no shell-specific redirect) and language-agnostic. INV-075 was annotated to record that the git-init question is removed (action retained). **Maintainer-approved** invariant wording.
+- **Invariants introduced:** `INV-095` (recorded in `specs/INVARIANTS.md`; INV-075 annotated) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## graduation-revisit-resume-bundle
 
 - **Implemented:** 2026-07-22

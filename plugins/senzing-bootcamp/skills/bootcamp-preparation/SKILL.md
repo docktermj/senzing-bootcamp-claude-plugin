@@ -208,28 +208,24 @@ addressed in the graduation production project and migration checklist." **Hold*
 `on_premises`; or `undecided` for option 4) for the consolidated write. Graduation and Module 1
 Phase 2 read `deployment_target` from `config/bootcamp_preferences.yaml` (INV-088).
 
-## 5. Initialize version control (optional)
+## 5. Initialize version control (automatic, no prompt)
 
-Do the detection quietly (administrative, not narrated). Check whether the working directory is
-already a git repository. `git` behaves identically on Linux, macOS, and Windows; rely on the
-command's **exit status**, not a shell-specific stderr redirect:
+Do this quietly (administrative, not narrated — **no 👉 question**, INV-095). Check whether the
+working directory is already a git repository. `git` behaves identically on Linux, macOS, and
+Windows; rely on the command's **exit status**, not a shell-specific stderr redirect:
 
 ```bash
 git rev-parse --is-inside-work-tree
 ```
 
-- **Already a repo** (command succeeds / prints `true`): skip the question. **Hold**
-  `git_init: existing`; proceed to the consolidated write.
-- **Not a repo** (command fails / non-zero exit): ask the pinned 👉 question, verbatim (INV-056):
+- **Already a repo** (command succeeds / prints `true`): **hold** `git_init: existing`.
+- **Not a repo** (command fails / non-zero exit): run `git init` automatically as a quiet
+  administrative action and **hold** `git_init: true`. Do not ask.
+- **`git` not installed** (command not found): skip initialization, **hold**
+  `git_init: unavailable`, and continue — never block on version control.
 
-  👉 **If you don't know what "git" is, just skip this. It's optional: would you like me to initialize a git repository for version control?**
-
-  *(Internal: end the turn on this single 👉 question and wait — INV-005.)* On **yes**, run
-  `git init` as a quiet administrative action and **hold** `git_init: true`; on **no**, skip and
-  **hold** `git_init: false`.
-
-`git init` is an action (run it now), but the `git_init` value is **held** for the single
-consolidated write below — no separate write (INV-058).
+`git init` is an action (run it now when applicable), but the `git_init` value is **held** for the
+single consolidated write below — no separate write (INV-058).
 
 ## 6. Consolidated preference write (once, quietly)
 

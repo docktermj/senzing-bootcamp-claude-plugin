@@ -61,3 +61,7 @@ overview / around the model/effort prompt). Requirements:
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Add an estimated time-to-complete to each module preface" (2026-07-22, Module All modules / module-start banner)
 - Priority: Medium
 - Related specs: `specs/module-references-by-name-not-number.md`, `specs/module-step-overview.md`, `specs/verbosity-minimal-preset.md`; INV-079, INV-011, INV-012
+
+## Invariants introduced
+
+- `INV-096` — Every numbered content module's start apparatus includes an honest, range-based, caveated estimated time-to-complete (after the step overview, before the model/effort prompt), stated as "hard to estimate" rather than fabricated when unknowable; suppressed under `minimal` and one line under `concise`; not shown for the apparatus-exempt setup modules (recorded in `specs/INVARIANTS.md`). Maintainer-approved wording.
