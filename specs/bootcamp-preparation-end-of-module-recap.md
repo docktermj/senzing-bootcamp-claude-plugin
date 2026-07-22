@@ -61,3 +61,7 @@ and state the invariant reconciliation explicitly in the implementation.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Add an end-of-module recap to Bootcamp preparation" (2026-07-22, Module Bootcamp preparation)
 - Priority: Medium
 - Related specs: `specs/capture-entity-resolution-concepts-in-recap.md` (INV-092, the precedent that excluded preparation); INV-075
+
+## Invariants introduced
+
+- `INV-099` — Bootcamp preparation closes with a concise bootcamper-facing recap of its setup choices (option (a), maintainer-chosen); it stays apparatus-exempt otherwise — not added to `modules_completed` and no `docs/bootcamp_recap.md` section (INV-092 preserved) (recorded in `specs/INVARIANTS.md`; INV-075 and INV-092 annotated to point to it). Maintainer-approved wording.

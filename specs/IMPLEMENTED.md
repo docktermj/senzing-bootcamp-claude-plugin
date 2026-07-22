@@ -18,6 +18,14 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## bootcamp-preparation-end-of-module-recap
+
+- **Implemented:** 2026-07-22
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `specs/INVARIANTS.md`, `specs/bootcamp-preparation-end-of-module-recap.md`
+- **Summary:** Added a bootcamper-facing end-of-module recap to Bootcamp preparation via the maintainer-chosen **option (a): recap-only**. §7 (renamed to "Recap the setup and hand off…") now, before handing off, reads the setup choices back from the consolidated write as a concise, lightly-highlighted summary (path, selected modules, verbosity, programming language, git status → next module), respecting the active verbosity preset (shorten under `concise`, one line under `minimal`). Crucially it stays apparatus-exempt: prep is **not** added to `modules_completed` and writes **no** `docs/bootcamp_recap.md` section, so it never appears in the graduation recap PDF (INV-092's "never in `modules_completed`" / no-recap-section guarantees preserved). The module-intro exemption note was updated to reflect the new recap. Acceptance criteria verified by inspection: recap present at handoff with all setup choices; option (a) constraints hold (no `modules_completed` entry, no recap-file section); verbosity respected; cross-platform and language-agnostic (prose). **Maintainer-chosen** option (a) and **maintainer-approved** invariant wording.
+- **Invariants introduced:** `INV-099` (recorded in `specs/INVARIANTS.md`; INV-075 and INV-092 annotated to point to it, their `modules_completed` / recap-section guarantees intact) — maintainer-approved wording.
+- **Commit:** uncommitted
+
 ## surface-aware-model-effort-instructions
 
 - **Implemented:** 2026-07-22

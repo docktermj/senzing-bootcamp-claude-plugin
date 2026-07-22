@@ -21,8 +21,9 @@ place: the Core-vs-Customized path choice, per-module selection, level of detail
 programming language, and version control. (The software-integration and deployment-target
 questions are asked in Module 1 Phase 2, not here, per INV-097.)
 
-Bootcamp preparation is a **lightweight setup module**: it presents its own banner but is exempt
-from the per-module completion apparatus (no journey map, no before/after framing, no
+Bootcamp preparation is a **lightweight setup module**: it presents its own banner and closes with
+a bootcamper-facing recap of the setup choices (INV-099), but is otherwise exempt from the
+per-module completion apparatus (no journey map, no before/after framing, no
 `docs/bootcamp_recap.md` section, and it is not added to `modules_completed`). It cannot show a
 journey map yet — it is the module that *produces* the selection that drives the journey map from
 the first content module onward. Do the administrative parts quietly (INV-012); ask the setup
@@ -226,9 +227,27 @@ Also record the selection into `config/bootcamp_progress.json` where module-comp
 journey map read it (a single batched write, INV-012): the ordered `selected_modules` and the
 `current_module` pointing at the first content module.
 
-## 7. Hand off to the first selected content module
+## 7. Recap the setup and hand off to the first selected content module
 
-Hand off to the first module in `selected_modules` after `bootcamp_preparation`:
+**First, recap the setup choices to the bootcamper** (INV-099): read them back from the
+consolidated write as a concise, lightly-highlighted summary — analogous to a per-module recap, but
+Bootcamp preparation stays apparatus-exempt, so this is a bootcamper-facing recap **only**: it is
+NOT added to `modules_completed` and NOT written as a `docs/bootcamp_recap.md` section (INV-092).
+Respect the active verbosity preset — shorten under `concise`, and keep it to a single line under
+`minimal`.
+
+```text
+✅ Bootcamp preparation complete
+────────────────────────────────
+• Path: Core (all modules) — or Customized (selected modules)
+• Modules: {ordered selected module names}
+• Detail level: {verbosity}
+• Language: {programming language}
+• Version control: {git initialized | existing repo | git unavailable}
+→ Next: {first content module name}
+```
+
+Then hand off to the first module in `selected_modules` after `bootcamp_preparation`:
 
 - If **Entity Resolution Concepts** is selected → invoke `module-00-entity-resolution-concepts`
   (it runs the primer directly; its skip/keep gate has been retired — inclusion is driven by this
