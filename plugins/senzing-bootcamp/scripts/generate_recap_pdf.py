@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import struct
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -348,6 +349,24 @@ def _safe(s: str) -> str:
     return s.encode("latin-1", "replace").decode("latin-1")
 
 
+def _logo_info() -> Optional[Tuple[str, int, int]]:
+    """Return (path, width_px, height_px) for the Senzing logo shipped beside this
+    script (``senzing_logo_light.png`` — the light wordmark for dark backgrounds),
+    or None when it is absent, in which case the cover falls back to a drawn badge
+    so a valid PDF is always produced (INV-048/INV-066)."""
+    path = Path(__file__).resolve().parent / "senzing_logo_light.png"
+    try:
+        with path.open("rb") as fh:
+            head = fh.read(26)
+    except OSError:
+        return None
+    if head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR":
+        w, h = struct.unpack(">II", head[16:24])
+        if w and h:
+            return str(path), w, h
+    return None
+
+
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     try:
         from fpdf import FPDF  # type: ignore
@@ -416,22 +435,39 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
     pdf.set_fill_color(*ACCENT)
     pdf.rect(0, 78, pdf.w, 3, style="F")
 
-    # "SZ" badge: a gold ring centered in the band.
-    cx, cy, r = pdf.w / 2.0, 22.0, 11.0
-    pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(1.4)
-    pdf.ellipse(cx - r, cy - r, 2 * r, 2 * r, style="D")
-    pdf.set_line_width(0.2)
-    pdf.set_xy(cx - r, cy - 4.5)
-    pdf.set_text_color(*ACCENT)
-    pdf.set_font("Helvetica", "B", 15)
-    pdf.cell(2 * r, 9, "SZ", align="C")
+    # Senzing logo (the light wordmark for dark backgrounds) centered in the band.
+    # Falls back to a drawn "SZ" ring if the shipped asset is missing, so the PDF
+    # always renders (INV-048/INV-066).
+    info = _logo_info()
+    placed = False
+    if info:
+        logo_path, lw, lh = info
+        try:
+            logo_h = 20.0
+            logo_w = logo_h * (lw / float(lh))
+            max_w = pdf.w - 2 * pdf.l_margin
+            if logo_w > max_w:
+                logo_w, logo_h = max_w, max_w * (lh / float(lw))
+            pdf.image(logo_path, x=(pdf.w - logo_w) / 2.0, y=15.0, w=logo_w, h=logo_h)
+            placed = True
+        except Exception:
+            placed = False
+    if not placed:
+        cx, cy, r = pdf.w / 2.0, 22.0, 11.0
+        pdf.set_draw_color(*ACCENT)
+        pdf.set_line_width(1.4)
+        pdf.ellipse(cx - r, cy - r, 2 * r, 2 * r, style="D")
+        pdf.set_line_width(0.2)
+        pdf.set_xy(cx - r, cy - 4.5)
+        pdf.set_text_color(*ACCENT)
+        pdf.set_font("Helvetica", "B", 15)
+        pdf.cell(2 * r, 9, "SZ", align="C")
 
-    # Wordmark inside the band; sub-title below it.
-    pdf.set_xy(pdf.l_margin, 42)
+    # Sub-title inside the band (the Senzing logo above carries the brand name).
+    pdf.set_xy(pdf.l_margin, 45)
     pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 28)
-    pdf.cell(epw, 14, "Senzing Bootcamp", align="C")
+    pdf.set_font("Helvetica", "B", 26)
+    pdf.cell(epw, 13, "Bootcamp", align="C")
 
     pdf.set_xy(pdf.l_margin, 90)
     pdf.set_text_color(*NAVY)
