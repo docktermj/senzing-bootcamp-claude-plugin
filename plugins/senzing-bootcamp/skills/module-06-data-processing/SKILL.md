@@ -26,7 +26,7 @@ load all data sources into Senzing, process redo records, and validate entity re
 results (from first load through cross-source validation).
 
 **Before/After:** You have Senzing-formatted JSON files in `data/senzing-ready/` (and possibly
-test-load results from Module 5 Phase 3). After this module, all your data is loaded, redo
+test-load results from the Data quality & mapping module). After this module, all your data is loaded, redo
 records are processed, and entity resolution results are validated, duplicates matched,
 cross-source connections found.
 

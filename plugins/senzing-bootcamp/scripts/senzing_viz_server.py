@@ -29,14 +29,14 @@ call per loaded record. No direct SQL is ever run against the database.
 
 Usage:
     # Serve the live web app (Python reference; run directly only when the chosen language is Python — INV-090):
-    python3 senzing_viz_server.py --records src/system_verification/*.jsonl
+    python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl
 
     # Also write a persistent standalone snapshot (no server needed to view):
     python3 senzing_viz_server.py --records data/senzing-ready/*.jsonl \\
         --snapshot docs/visualizations/results.html
 
     # Just build the snapshot and exit (no server), used by the completion gate:
-    python3 senzing_viz_server.py --records src/system_verification/*.jsonl \\
+    python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl \\
         --snapshot docs/visualizations/truthset_verification.html --no-serve
 
 Settings come from ``--settings`` (default ``config/engine_config.json``) or the

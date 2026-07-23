@@ -198,7 +198,9 @@ Common inline guidance for every sub-offer (until the Kiro `visualization-guide.
 `visualization-web-service.md` are ported): keep all generated code and output inside the working
 directory (`src/` for code, HTML → `docs/visualizations/`, other output → `docs/` or `data/`;
 never `/tmp/`); pull entity/relationship/report data through generated SDK code and
-`reporting_guide`, never direct SQL; after generating an HTML visualization, capture screenshots
+`reporting_guide`, never direct SQL; render every generated visualization offline (inline the
+vendored D3 asset, no CDN) with palette/typography from `scripts/brand_tokens.py` (INV-081); after
+generating an HTML visualization, capture screenshots
 for the recap per `../bootcamp-onboarding/module-completion.md` → "Capturing visualization
 screenshots" (skip silently with no headless capability, otherwise embed the 2-3 best in this
 module's recap).

@@ -78,7 +78,7 @@ Generate a structured summary of the System Verification checks.
 
 6. **If all checks passed:** proceed to Step 10 (Cleanup).
 7. **If any checks failed:** do NOT proceed to cleanup. Advise the bootcamper to fix the issues
-   and re-run Module 3 from the beginning.
+   and re-run System verification from the beginning.
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`.
 
