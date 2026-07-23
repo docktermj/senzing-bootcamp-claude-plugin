@@ -28,11 +28,12 @@ and the recap guarantee at the end always produces a valid PDF. Steps that creat
 the `production/` project ask for confirmation before large or destructive
 actions.
 
-Graduation is a terminal bookend module, not a content module: it presents the GRADUATION banner
-and the model/effort nudge, but is exempt from the per-module apparatus (INV-029–032) — no journey
-map, before/after framing, step overview, or `✅ Module complete` line — since no next-module
-transition applies. It ends on the terminal END OF SENZING BOOTCAMP banner (INV-057), not a
-transition question. (Analogous to the exemptions for Bootcamp preparation (INV-075) and Module 0
+Graduation is the terminal bookend module. Like every module it opens with the module-start
+apparatus — journey map, before/after framing, a step overview, and an estimated time — adapted to
+a terminal module (see "Graduation preface" below), then the model/effort nudge. Because no
+next-module transition applies, it shows no `✅ Module complete` line and no transition question,
+and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Graduation is NOT
+apparatus-exempt — contrast the exemptions for Bootcamp preparation (INV-075) and Module 0
 (INV-078).)
 
 ## Graduation banner (show first, exactly once)
@@ -47,7 +48,36 @@ finish. Show it at most once per graduation.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-After the banner, prompt for the best-value model/effort before the heavier graduation work.
+## Graduation preface (after the banner, before the model/effort prompt)
+
+Like every module, graduation opens with the module-start apparatus (INV-029–032), adapted to a
+terminal module — no next-module transition. Present these in order, right after the banner and
+before the model/effort prompt. First read `config/bootcamp_preferences.yaml` (`selected_modules`)
+and `config/bootcamp_progress.json` (`modules_completed`) to render the journey map. Honor the
+active verbosity preset (INV-011/INV-012): suppress the explanatory parts under `minimal`, keep
+them to one line under `concise`. Refer to modules by name, never number (INV-079).
+
+1. **Journey map.** List the selected modules by name, every one marked ✅ (all experienced), with
+   **Graduation** marked 🔄 as the current, final stage — nothing ⬜ after it.
+2. **Before / After.** Before: every module is complete and your data is resolved, but your work
+   still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
+   (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
+3. **What we'll do.** A brief numbered overview of graduation's steps: (1) normalize the `docs/`
+   Markdown and render the recap PDF keepsake, (2) build the `production/` project, (3) create a
+   silent revisit/resume bundle — a database backup plus a return guide — so you can come back
+   later (INV-094), and (4) close with the END OF SENZING BOOTCAMP banner.
+4. **Estimated time.** Give an honest, range-based estimate caveated per INV-096 — e.g.
+   "⏱️ Roughly 5–15 minutes, depending on your workstation, the database backup size, and PDF
+   rendering speed." If no meaningful estimate is possible, say "hard to estimate" rather than
+   inventing a number. Suppress under `minimal`; one line under `concise`.
+
+Graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
+transition — it ends on the END OF SENZING BOOTCAMP banner (INV-057). What the bootcamper carries
+forward is the recap PDF and the `production/` project.
+
+## Best-value model/effort prompt
+
+After the preface, prompt for the best-value model/effort before the heavier graduation work.
 Graduation is correctness-critical (Opus 4.8 + high effort) and steps up from the Module 7
 recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:

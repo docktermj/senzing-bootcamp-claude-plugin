@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## graduation-full-module-preface
+
+- **Implemented:** 2026-07-23
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `specs/INVARIANTS.md`, `specs/graduation-full-module-preface.md`, `specs/IMPLEMENTED.md`
+- **Summary:** Made Graduation open with the full module-start apparatus adapted to a terminal module, aligning it with every content module. Between the GRADUATION banner and the model/effort prompt, graduation now presents a new `## Graduation preface` section (`graduation/SKILL.md:51-76`): a journey map (all selected modules ✅ experienced, Graduation 🔄 current/final, nothing upcoming), before/after framing, a numbered step overview (recap PDF → `production/` → revisit/resume bundle → END banner), and an INV-096-style estimated time — all name-based (INV-079) and verbosity-aware (suppressed under `minimal`, one line under `concise`; INV-011/INV-012). The self-declared apparatus-exemption note was rewritten (`:31-37`) to state graduation runs the apparatus and is NOT exempt, and the model/effort text got its own `## Best-value model/effort prompt` heading with the lead-in changed from "After the banner" to "After the preface" (`:78-80`). The model/effort switch offer, the pinned confirmation gate (`:99`, INV-069/INV-098), and the terminal END OF SENZING BOOTCAMP banner (`:407`, INV-057) are unchanged; graduation stays terminal (no next-module transition, no `✅ Module complete` line). **Verified by inspection:** opening order is banner → journey map → before/after → step overview → estimated time → model/effort prompt (AC1); terminal close preserved (AC2); switch/gate wording + ordering intact (AC3); verbosity honored (AC4); exemption note updated and the INV-096 extension recorded as INV-102 (AC5); Markdown-only, cross-platform, language-agnostic (AC6). **New invariant INV-102** recorded in `specs/INVARIANTS.md` with maintainer sign-off.
+- **Commit:** uncommitted
+
 ## provenance-aware-phasec-load-questions
 
 - **Implemented:** 2026-07-23
