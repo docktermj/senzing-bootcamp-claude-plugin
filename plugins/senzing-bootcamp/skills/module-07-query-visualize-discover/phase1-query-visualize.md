@@ -218,8 +218,9 @@ typography from `scripts/brand_tokens.py` (INV-081). `{name}` = `truthset_style_
 > 👉 **Would you like a visualization of the resolved entities as an entity graph?**
 
 The visualization data comes from `reporting_guide(topic='graph', ...)` (network export) and
-`reporting_guide(topic='dashboard', ...)`; generate the rendering code in the chosen language.
-`{name}` = `entity_graph`.
+`reporting_guide(topic='dashboard', ...)`; generate the rendering code in the chosen language,
+rendered offline (inline the vendored D3 asset, no CDN) with palette/typography from
+`scripts/brand_tokens.py` (INV-081). `{name}` = `entity_graph`.
 
 #### (c) Results dashboard
 
@@ -229,7 +230,9 @@ This is the bootcamp's single results-dashboard offer (Module 6 no longer offers
 here, where results visualization belongs). Source the data via
 `reporting_guide(topic='dashboard', ...)` and `reporting_guide(topic='reports', ...)`; generate
 the rendering code in the chosen language and save the HTML to
-`docs/visualizations/results_dashboard.html` (INV-070). `{name}` = `results_dashboard`.
+`docs/visualizations/results_dashboard.html` (INV-070), rendered offline (inline the vendored D3
+asset, no CDN) with palette/typography from `scripts/brand_tokens.py` (INV-081).
+`{name}` = `results_dashboard`.
 
 #### (d) Data-specific visualization suggestions
 

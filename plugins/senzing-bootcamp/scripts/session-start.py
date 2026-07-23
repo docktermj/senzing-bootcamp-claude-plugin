@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SessionStart hook: to inject bootcamp resume context when a bootcamp is in progress.
+"""SessionStart hook: to resume an in-progress bootcamp by injecting resume context.
 
 Also folds any in-progress module recap checkpoint into docs/bootcamp_recap.md on
 resume, so a module that was interrupted (quit / compaction / prior session) keeps

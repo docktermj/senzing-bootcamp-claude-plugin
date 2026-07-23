@@ -101,9 +101,13 @@ complete list.
 First, ask how the bootcamper wants to provide the data for a given source — pin this question
 verbatim (INV-051), never joining the choices with "or":
 
-👉 **How would you like to provide the data for this source? Reply with a number:** (1) upload a
-file, (2) provide a URL or file path, (3) connect to a database, (4) use an API endpoint, (5) I
-don't have my own data — generate/synthesize it for me.
+👉 **How would you like to provide the data for this source? Reply with a number:**
+
+1. Upload a file.
+2. Provide a URL or file path.
+3. Connect to a database.
+4. Use an API endpoint.
+5. I don't have my own data — generate/synthesize it for me.
 
 *(Internal: end the turn on this question and wait.)*
 
