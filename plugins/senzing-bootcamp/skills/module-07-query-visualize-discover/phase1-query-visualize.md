@@ -180,7 +180,10 @@ resolved data. It is the single visualization artifact: the entity graph, relati
 results dashboard, cross-source overlap heatmap, match-key frequency, and feature-score views are
 all **tabs** of this one app, not separate offers or static pages (see the full tab set and the
 de-duplication rules in `../module-03b-truthset-visualization/visualization-api-reference.md`).
-Offer it here, after the query results (3a) and quality evaluation (3b) are in hand. The
+This is also where Module 6's cross-source relationship view now lives — the Entity Graph,
+Cross-Source, and Relationship Network tabs replace the former Module 6 `multi_source_results.html`
+static page (Module 6 no longer offers a visualization). Offer it here, after the query results
+(3a) and quality evaluation (3b) are in hand. The
 Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
 why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
 

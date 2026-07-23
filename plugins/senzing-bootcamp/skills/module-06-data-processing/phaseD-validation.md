@@ -53,14 +53,11 @@ Sample 15–25 entities that contain records from multiple data sources and veri
 the same real-world person or organization. Check cross-source matches and spot-check
 single-source entities to confirm no cross-source matches were missed.
 
-Offer to visualize the cross-source entity relationships as a web page. Pin the offer verbatim:
-
-> 👉 **Would you like a web page visualizing the cross-source entity relationships?**
-
-If accepted, save to `docs/visualizations/multi_source_results.html`, then capture screenshots for
-the recap (`{html}` = `multi_source_results.html`, `{name}` = `multi_source_results`) per
-`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
-silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
+This is validation work only — do **not** produce a visualization here. All results and
+cross-source relationship visualization is offered once, in Module 7 (Query, Visualize and
+Discover), where it is delivered as tabs of the single interactive app (Entity Graph, Cross-Source,
+and Relationship Network) rather than a separate static page (INV-104). Module 6 no longer offers a
+cross-source visualization, to avoid a duplicate/misplaced offer.
 
 **Checkpoint:** write step 23.
 
@@ -129,8 +126,10 @@ Record the validation findings:
 
 The **results dashboard** (entity counts, match statistics, and sample resolved entities) is offered
 in the **Query, Visualize and Discover** module (Module 7, Step 3c — the consolidated visualization
-gate), where all results visualization lives — Module 6 does not offer it, to avoid a duplicate offer. (The cross-source relationship
-visualization in step 23 is a distinct offer and is unaffected.)
+gate), where all results visualization lives — Module 6 does not offer it, to avoid a duplicate
+offer. Module 6 offers **no** visualization at all: the cross-source relationship view (step 23) is
+also delivered in Module 7's single interactive app (its Entity Graph / Cross-Source / Relationship
+Network tabs, INV-104), not as a separate Module 6 page.
 
 **Checkpoint:** write step 28.
 
