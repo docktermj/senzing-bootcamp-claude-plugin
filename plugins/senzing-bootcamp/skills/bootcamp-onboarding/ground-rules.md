@@ -283,6 +283,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
   model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
   the Claude Code equivalent (INV-098).
 
+  Onboarding and Bootcamp preparation appear in this table only so the nudge can detect whether the
+  recommendation **changes** at the next module; being apparatus-exempt (INV-075/INV-078), those
+  setup stages present no model/effort nudge themselves (see the carve-out above).
+
 - Module start banner:
 
   ```text

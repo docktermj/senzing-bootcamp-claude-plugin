@@ -92,7 +92,7 @@ connections between entities using `find_network` and `find_path`.
 8. **Transition:** relationship-network exploration is the final Discover demonstration. After
    presenting it (or the fallback above), end the turn on this single question:
 
-   👉 **Would you like to wrap up the Discover phase and continue to module completion?**
+   👉 **Would you like to continue to module completion now?**
 
    *(Internal: end the turn on this question and wait.)* The Discover phase is complete either
    way — proceed to Discover phase completion below, then return to `phase1-query-visualize.md`

@@ -65,9 +65,10 @@ The following rules are mandatory for the agent executing this module:
    (you design them to merge), so Step 7 validates against that design, not against an MCP
    expected-results set.
 8. **Overwrite on re-run:** if the module is re-run, overwrite this module's own synthetic-`VERIFY`
-   artifacts in `src/system_verification/` — but leave any Truth Set visualization artifacts there
-   (e.g. `truthset_data.jsonl` and its generated server/load code) untouched, since that is a
-   separate module (INV-087). The database cleanup ensures a clean slate for the synthetic records.
+   artifacts in `src/system_verification/` — but leave any Truth Set visualization artifacts
+   untouched (its `truthset_data.jsonl` and load/registration code in `src/system_verification/`,
+   and its visualization server under `src/server/`, INV-050), since that is a separate module
+   (INV-087). The database cleanup ensures a clean slate for the synthetic records.
 9. **No orphaned processes:** System Verification starts no web service; the separate Truth Set
    visualization module starts and terminates its own web service within its own phases.
 10. **Progress persistence:** every step MUST write its checkpoint to
