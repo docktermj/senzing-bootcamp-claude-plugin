@@ -102,12 +102,13 @@ First, ask how the bootcamper wants to provide the data for a given source — p
 verbatim (INV-051), never joining the choices with "or":
 
 👉 **How would you like to provide the data for this source? Reply with a number:** (1) upload a
-file, (2) provide a URL or file path, (3) connect to a database, (4) use an API endpoint.
+file, (2) provide a URL or file path, (3) connect to a database, (4) use an API endpoint, (5) I
+don't have my own data — generate/synthesize it for me.
 
 *(Internal: end the turn on this question and wait.)*
 
-**If the bootcamper doesn't have their own data** or wants free data to practice with,
-recommend CORD data as the primary alternative:
+**If the bootcamper chose option 5** — or otherwise doesn't have their own data, or wants free
+data to practice with — recommend CORD data as the primary alternative:
 
 > "Senzing provides **CORD (Collections Of Relatable Data)**: curated, real-world-like
 > datasets designed specifically for entity resolution evaluation. These are the best option

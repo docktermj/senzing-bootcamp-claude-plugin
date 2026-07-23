@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## offer-generate-data-in-data-collection-menu
+
+- **Implemented:** 2026-07-23
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `specs/IMPLEMENTED.md`
+- **Summary:** Added a numbered generate option to Data collection (Module 4) Step 2's pinned data-provision menu so it matches Module 1's treatment. The menu (`SKILL.md:104-106`) now offers a fifth choice — "(5) I don't have my own data — generate/synthesize it for me" — mirroring Module 1 Step 4's option-3 wording (`module-01-business-problem/phase1-discovery.md:55-56`). Selecting it routes into the **existing** CORD → free-data → synthesized generation prose (no duplicated logic): its lead-in was retitled to "**If the bootcamper chose option 5** — or otherwise doesn't have their own data, or wants free data to practice with —" (`SKILL.md:110-111`), and provenance (`cord`/`free_data`/`synthesized`) is still recorded via the unchanged block at `SKILL.md:209-220`. The agent-behavior hierarchy (`SKILL.md:541-547`) keeps synthesized data as the last resort, so the "own data encouraged, generation as fallback" framing is preserved. **Verified by inspection:** the menu lists five numbered choices comma-separated with no "or" joining the choices and the lead question unchanged/neutral (INV-008/INV-051); option 5's label contains only a "generate/synthesize" slash, not an "or" (INV-009); the internal "end the turn and wait" note is intact so the bootcamper still chooses (INV-007); Markdown-only content change, cross-platform and language-agnostic (INV-001/INV-002). The menu is the sole occurrence in the file (grep-confirmed). No new invariant — a content-consistency fix mirroring Module 1; the menu format is already governed by INV-051.
+- **Commit:** uncommitted
+
 ## visualization-why-how-and-clickable-histogram
 
 - **Implemented:** 2026-07-22
