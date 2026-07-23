@@ -1,4 +1,4 @@
-# Module 7, Phase 2b: Discover, Part B (steps 4d–4e)
+# Module 7, Phase 2b: Discover, Part B (step 4d)
 
 Follow the ground rules. `🛑`/`⛔` are internal directives, never render them; signal a stop by
 ending the turn on the single 👉 question and waiting. On load, read
@@ -14,7 +14,7 @@ SDK methods, not MCP tools. Generate the SDK code, sourcing flags and signatures
 `get_sdk_reference` and network/path patterns from `reporting_guide(topic='graph', ...)`. Never
 query `database/G2C.db` tables directly.
 
-## Steps 4d–4e: Discover (continued)
+## Step 4d: Discover (continued)
 
 ### Step 4d: Relationship network exploration
 
@@ -89,16 +89,14 @@ connections between entities using `find_network` and `find_path`.
    - Explain the SDK methods conceptually so the bootcamper understands how to use them with
      relationship-rich data.
    - Write step 4d status as `"skipped"` with reason `"no_relationships"` in the checkpoint.
-8. **Transition:**
+8. **Transition:** relationship-network exploration is the final Discover demonstration. After
+   presenting it (or the fallback above), end the turn on this single question:
 
-   👉 **What would you like to do next? Reply with a number:**
+   👉 **Would you like to continue to module completion now?**
 
-   1. Continue to the next demonstration — Visualization Suggestions (data-specific analytical views).
-   2. Proceed to module completion.
-
-   *(Internal: end the turn on this question and wait.)* If the bootcamper chooses to exit,
-   write `discover_phase: "skipped"` to `config/bootcamp_progress.json` and return to
-   `phase1-query-visualize.md` for the Query Completeness Gate.
+   *(Internal: end the turn on this question and wait.)* The Discover phase is complete either
+   way — proceed to Discover phase completion below, then return to `phase1-query-visualize.md`
+   for the Query Completeness Gate.
 
 **Checkpoint:** write step 4d under `module_7_query.steps.4d`:
 
@@ -108,71 +106,19 @@ connections between entities using `find_network` and `find_path`.
 Include the `reason` field only when the step is skipped. Also set top-level `current_step` to
 `"4d"`.
 
-### Step 4e: Data-specific visualization suggestions
-
-Suggest at least two visualizations tailored to the bootcamper's data structure and resolution
-results. Select from the catalog below based on what was found in step 4a.
-
-1. **Visualization catalog, select based on the bootcamper's data:**
-   - **Cross-source overlap heatmap:** suggest when 2+ data sources are loaded. Reveals which
-     sources share the most resolved entities. Framing: "Since you have records from [Source A]
-     and [Source B], a cross-source overlap heatmap would show which sources share the most
-     resolved entities, helping you see where your data sources agree."
-   - **Entity size distribution chart:** suggest for any data. Shows records per entity
-     (singletons vs. small merges vs. large merges). Framing: "An entity size distribution
-     chart would show how your records clustered, how many entities are singletons versus
-     multi-record merges."
-   - **Relationship network graph:** suggest when relationships exist (from step 4a). Shows how
-     entities connect through shared attributes. Framing: "Since your data has relationship
-     clusters, a network graph would visualize how entities connect through shared attributes."
-   - **Match key frequency analysis:** suggest when multi-record entities exist. Shows which
-     feature combinations (match keys) drive the most resolutions. Framing: "A match key
-     frequency chart would show which feature combinations, like NAME+ADDRESS or NAME+DOB , 
-     are driving the most resolutions in your data."
-   - **Feature score distribution:** suggest when multi-record entities exist. Shows how
-     closely features match across resolved records. Framing: "A feature score distribution
-     would show how tightly your resolved records match, whether most merges are near-exact or
-     fuzzy matches."
-2. **Selection logic:** select at least 2 visualizations relevant to the bootcamper's specific
-   data structure based on the patterns found in step 4a. Do not suggest visualizations that
-   require data patterns not present:
-   - No cross-source heatmap if only one data source is loaded.
-   - No relationship network graph if no relationships were found in step 4a.
-   - No match key frequency or feature score distribution if no multi-record entities exist.
-   - The entity size distribution chart is always applicable.
-3. **Relevance explanation:** for each suggested visualization, explain concretely what it would
-   reveal about the bootcamper's specific data. Reference their actual data sources, entity
-   counts, and step-4a patterns. Be specific, not generic: "Since you have 5 cross-source
-   entities spanning CUSTOMERS and WATCHLIST, a cross-source overlap heatmap would show exactly
-   how much overlap exists between those two sources."
-4. **Generation:** when the bootcamper selects a visualization, generate it in their chosen
-   language. Source the underlying data via `reporting_guide(topic='dashboard', ...)` and
-   `reporting_guide(topic='graph', ...)` (never direct SQL), and generate working rendering code
-   that queries the bootcamper's actual data. (The Kiro `visualization-guide.md`: code
-   structure, charting-library selection, output format, is a later porting phase; until then,
-   use the reporting_guide patterns and keep all code and output inside the working directory.)
-5. **Handle decline:** if the bootcamper declines all suggestions, acknowledge gracefully and
-   proceed to the module completion gate. Do not push or re-offer after a decline.
-6. **Transition:** after visualization generation (or decline), return to
-   `phase1-query-visualize.md` for the Query Completeness Gate.
-
-**Checkpoint:** write step 4e under `module_7_query.steps.4e`:
-
-- If visualizations were offered:
-  `{"status": "completed", "visualizations_offered": N}` where N is the number suggested.
-- If the step was skipped: `{"status": "skipped", "visualizations_offered": 0}`.
-
-Also set top-level `current_step` to `"4e"`.
-
 ### Discover phase completion
 
-After step 4e is complete (or after any early exit), update the top-level `discover_phase`
+After step 4d is complete (or after any early exit), update the top-level `discover_phase`
 status in `config/bootcamp_progress.json` under `module_7_query`:
 
-- Set `"discover_phase": "completed"` when all steps 4a–4e have been checkpointed (whether
+- Set `"discover_phase": "completed"` when all steps 4a–4d have been checkpointed (whether
   completed or individually skipped due to data limitations).
 - Set `"discover_phase": "skipped"` when the bootcamper declines the Discover phase at the
   opt-in prompt or exits early at any transition point.
+
+(The former step 4e — data-specific visualization suggestions — are now tabs of the Phase 1
+step-3c visualization app (Match Keys, Feature Scores, Cross-Source, Relationship Network) and are
+no longer part of the Discover phase.)
 
 The full checkpoint structure in `config/bootcamp_progress.json` is:
 
@@ -183,8 +129,7 @@ The full checkpoint structure in `config/bootcamp_progress.json` is:
       "4a": {"status": "completed", "patterns_found": {"multi_record": 5, "cross_source": 3, "relationships": 2}},
       "4b": {"status": "completed", "entity_demonstrated": 1234},
       "4c": {"status": "completed", "entity_demonstrated": 5678},
-      "4d": {"status": "completed"},
-      "4e": {"status": "completed", "visualizations_offered": 2}
+      "4d": {"status": "completed"}
     },
     "discover_phase": "completed"
   }
@@ -195,4 +140,5 @@ After updating the `discover_phase` status, return to `phase1-query-visualize.md
 Completeness Gate.
 
 **Success:** Discover phase completed (or explicitly skipped), data patterns analyzed, why/how
-analysis demonstrated, relationship networks explored, and visualization suggestions offered.
+analysis demonstrated, and relationship networks explored. (Data-specific visualization
+suggestions are offered separately at the Phase 1 step-3c visualization gate.)

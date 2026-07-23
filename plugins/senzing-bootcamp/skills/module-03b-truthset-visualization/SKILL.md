@@ -24,7 +24,7 @@ Verification, in its own skill directory — with its own full per-module appara
 (INV-086/INV-087). It is **not** apparatus-exempt.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module-start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063),
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063),
 before any module work. (The module-start apparatus block is specified in `phase1-visualization.md`.)
 
 **Language:** Read `programming_language` from `config/bootcamp_preferences.yaml` (persisted in
@@ -119,6 +119,6 @@ Read `current_step` from `config/bootcamp_progress.json` and resume at the right
 
 **Success indicator:** ✅ The standalone snapshot exists at
 `docs/visualizations/truthset_verification.html` (built from a non-empty Truth Set) AND the live app
-served its four endpoints and the entity-graph page; the web service is terminated and the Truth Set
+served its endpoints and the entity-graph page; the web service is terminated and the Truth Set
 data purged at close; `truthset_visualization` is recorded in `modules_completed` with its own recap
 section (INV-085/INV-086/INV-087).

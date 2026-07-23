@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SessionStart hook: to inject bootcamp resume context when a bootcamp is in progress.
+"""SessionStart hook: to resume an in-progress bootcamp by injecting resume context.
 
 Also folds any in-progress module recap checkpoint into docs/bootcamp_recap.md on
 resume, so a module that was interrupted (quit / compaction / prior session) keeps
@@ -12,6 +12,7 @@ Python).
 """
 import sys
 
+import docker_lifecycle
 import recap_checkpoint
 
 if recap_checkpoint.bootcamp_active():
@@ -26,6 +27,9 @@ if recap_checkpoint.bootcamp_active():
             "docs/bootcamp_recap.md (source: docs/progress/recap_checkpoint.md). "
             "Continue that module and finalize its recap section on completion."
         )
+    containers = docker_lifecycle.resume_summary()
+    if containers:
+        message += " " + containers
     print(message)
 
 sys.exit(0)

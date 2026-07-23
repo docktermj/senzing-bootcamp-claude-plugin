@@ -41,14 +41,14 @@ bulk-loading issues, threading problems, redo processing, load-order dependencie
 
 👉 **How many records do you expect to load in a production system?**
 
-*(Internal: end the turn on this question and wait.)*
-
 Example ranges to help answer:
 
 1. Fewer than 500, demo/evaluation
 2. 500 to 500,000, small production
 3. 500,000 to 10,000,000, medium production
 4. 10,000,000+, large production
+
+*(Internal: end the turn on this question and wait.)*
 
 **Classify and persist the tier.** Map the answer to a tier, `demo` (<500), `small`
 (500–500K), `medium` (500K–10M), `large` (10M+). If the reply is a bare option number (1–4),

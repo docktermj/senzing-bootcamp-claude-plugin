@@ -29,22 +29,24 @@ bootcamper through setup and into the numbered module skills, one guided step at
 
 ## Onboarding sequence (fresh start)
 
-Follow `onboarding-flow.md` for the detailed steps. Steps 1-2 are administrative; steps 3-4 are
-the short bootcamper-facing preface; step 5 hands off to the first module. **All setup questions
-live in the Bootcamp preparation module, not the preface.**
+Follow `onboarding-flow.md` for the detailed, numbered steps (0–5 there). The administrative work
+runs mostly silently; the short bootcamper-facing preface is the WELCOME banner + overview and the
+"any questions" prompt; then it hands off to the first module. **All setup questions live in the
+Bootcamp preparation module, not the preface.**
 
-1. **MCP health check** - confirm the Senzing MCP server is reachable. It is required; the
-   bootcamp cannot proceed without it.
-2. **Project setup** - create the working directory structure and `config/` files silently.
-3. **Welcome + overview** - show the WELCOME banner and give the overview: the named module
-   sequence and the Core-vs-Customized choice the first module will offer.
-4. **Any questions** - invite final questions before continuing.
-5. **Hand off to Bootcamp preparation** - invoke the `bootcamp-preparation` skill: the first,
+- **MCP health check** - confirm the Senzing MCP server is reachable. It is required; the
+  bootcamp cannot proceed without it.
+- **Project setup** - create the working directory structure and `config/` files silently.
+- **Prerequisite check** - detect and persist OS/architecture and required tooling for later reuse.
+- **Welcome + overview** - show the WELCOME banner and give the overview: the named module
+  sequence and the Core-vs-Customized choice the first module will offer.
+- **Any questions** - invite final questions before continuing.
+- **Hand off to Bootcamp preparation** - invoke the `bootcamp-preparation` skill: the first,
    mandatory module. It asks the Core-vs-Customized path choice, per-module selection, level of
-   detail (verbosity), programming language, version control, and the software-integration and
-   deployment-target questions; persists them in one consolidated write; then hands off to the first
+   detail (verbosity), and programming language, initializes version control (git, no prompt —
+   INV-095), and persists these in one consolidated write; then hands off to the first
    selected content module (the **optional**
-   Entity Resolution Concepts primer if selected, otherwise Module 1). Entity resolution concepts
+   Entity Resolution Concepts primer if selected, otherwise Discover the Business Problem). Entity resolution concepts
    and the setup questions are no longer asked in the preface.
 
 ## Ground rules you must never break during onboarding

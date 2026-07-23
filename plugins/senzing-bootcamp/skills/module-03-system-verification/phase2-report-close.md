@@ -27,6 +27,9 @@ Generate a structured summary of the System Verification checks.
    ║                                                          ║
    ║  All checks passed. Your environment is verified and     ║
    ║  ready for subsequent modules.                           ║
+   ║                                                          ║
+   ║  Nothing for you to do here — you're all set to          ║
+   ║  continue.                                               ║
    ╚══════════════════════════════════════════════════════════╝
    ```
 
@@ -75,7 +78,7 @@ Generate a structured summary of the System Verification checks.
 
 6. **If all checks passed:** proceed to Step 10 (Cleanup).
 7. **If any checks failed:** do NOT proceed to cleanup. Advise the bootcamper to fix the issues
-   and re-run Module 3 from the beginning.
+   and re-run System verification from the beginning.
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`.
 
@@ -119,8 +122,9 @@ visualization is a separate, standalone module that records itself at its own cl
    `selected_modules`, and `current_step` to `null`. All idempotent (do not duplicate).
 2. **Append the recap section** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085):
    `## System verification — {timestamp}` (Information Shared, Questions & Responses, Actions Taken,
-   Journal) — capture that all 8 checks passed against the synthetic `VERIFY` data. The narrative goes
-   in the `### Journal` subsection (the consolidated recap replaces the separate journal file).
+   End-of-Module Summary) — capture that all 8 checks passed against the synthetic `VERIFY` data. The
+   narrative goes in the `### End-of-Module Summary` subsection (the consolidated recap replaces the
+   separate journal file).
 3. **Present the completion line + end-of-module summary** (INV-032): `✅ Module complete: System
    verification` and its four-part summary, per `module-completion.md` Step 3.
 4. **Transition to the next module:** ask the single transition question; on an affirmative reply,

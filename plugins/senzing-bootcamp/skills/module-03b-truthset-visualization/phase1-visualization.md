@@ -51,8 +51,12 @@ immediately before Step 1:
    their "wow moment".
 5. **Step overview (INV-031):** briefly enumerate this module's steps — acquire the Truth Set →
    register the codes + load → build and serve the visualization → explore it → clean up.
-6. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
-   unchanged from System verification (Module 3 tier), so a concise statement (or omit).
+6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,
+   varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
+   figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
+7. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
+   unchanged from System verification (Module 3 tier), so a concise, non-blocking statement (never
+   omitted — INV-063 requires it at every module start).
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)
@@ -121,10 +125,11 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   requesting the default entity flags (which include all relations) so it never queries the
   database directly. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
   (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data (INV-080).
-- Serve the four JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/search` — with the
-  exact response shapes in `visualization-api-reference.md`.
-- Serve the live D3 v7 page with the four tabs (see 2.4), and write a self-contained standalone
-  HTML snapshot.
+- Serve the JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/search`, `/api/why`,
+  `/api/how`, `/api/dashboard`, `/api/overlap`, `/api/matchkeys`, `/api/features` — with the exact
+  response shapes in `visualization-api-reference.md`.
+- Serve the live D3 v7 page as a **single consolidated, tabbed app** (all tabs in 2.4), and write a
+  self-contained standalone HTML snapshot.
 - **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
@@ -202,26 +207,55 @@ chosen URL.
 
 ### 2.4 Verify the endpoints
 
-The app serves the live page at `/` plus four JSON APIs. Verify each (10-second timeout):
+The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeout):
 
 | Endpoint | Success criteria |
 |----------|-----------------|
-| `GET /api/stats` | HTTP 200; fields `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `histogram` |
+| `GET /api/stats` | HTTP 200; fields `records_total`, `entities_total`, `multi_record_entities`, `cross_source_entities`, `relationships_total`, `data_sources_total`, `histogram`, `bucket_entities` (per-bucket entity lists for the clickable histogram) |
 | `GET /api/graph` | HTTP 200; `nodes` (each: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`) and `edges` (each: `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`) |
 | `GET /api/merges` | HTTP 200; at least one multi-record entity (2+ records) |
 | `GET /api/search?q=Robert Smith` | HTTP 200; `results` array with resolved entities, each carrying `match_key` and `resolution_rule` |
+| `GET /api/why?entity_id=<id>` | HTTP 200; real `WHY_RESULTS` (or an `error` field) explaining why the entity's records resolved together |
+| `GET /api/how?entity_id=<id>` | HTTP 200; real `HOW_RESULTS` (or an `error` field) explaining how the entity was constructed |
+| `GET /api/dashboard` | HTTP 200; `counts`, `histogram`, and `sample_entities` for the results dashboard |
+| `GET /api/overlap` | HTTP 200; `sources` + square `matrix` of cross-source shared-entity counts |
+| `GET /api/matchkeys` | HTTP 200; `match_keys` (most-frequent first) + `distinct` + `capped` |
+| `GET /api/features` | HTTP 200; `features` (per-feature score-bucket counts), `sampled`, `multi_record_total`, `capped` |
 
-The live page renders four tabs, all populated from these APIs:
+The live page is a **single consolidated, tabbed app** — the one visualization artifact (no
+separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
+shown:
 
-1. **Entity Graph** (default): D3 v7 force-directed graph. Nodes colored by data source
-   (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by record count, edges labeled with
-   match keys, hover tooltip, click-to-detail modal, zoom/pan, and a color legend. (Your server
-   MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` → `source`/`target`
-   before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
-2. **Record Merges:** cards showing each multi-record entity's constituent records.
-3. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence.
-4. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it.
+1. **Entity Graph** (default): D3 v7 force-directed graph of the full entity population. Nodes
+   colored by data source (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by
+   record count, edges labeled with match keys, hover tooltip, click-to-detail modal, zoom/pan, and
+   a color legend. This is also the cross-source entity-relationship view (it subsumes the former
+   `multi_source_results.html`). (Your server MUST perform the edge-key mapping,
+   `source_entity_id`/`target_entity_id` → `source`/`target` before `forceLink` — per Step 2's
+   intro; omitting it renders an empty graph.)
+2. **Relationship Network** (when relationships exist): the subgraph of entities connected by
+   relationships (possible matches / disclosed relations), edges colored by relationship type with a
+   type legend — distinct from Entity Graph, which shows the full population.
+3. **Record Merges:** cards showing each multi-record entity's constituent records, each with
+   **Why?** and **How?** actions that call `/api/why` and `/api/how` and render Senzing's
+   explanation (match keys, feature scores, construction steps) in a modal.
+4. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence —
+   this **is** the entity-size distribution; the bars are **clickable** (backed by `bucket_entities`)
+   and drill down to the entities in each bucket, each linking to its **How?** explanation.
+5. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
+   combinations) that drove resolutions.
+6. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
+   resolved records, from a capped `why_records` sample; the tab always shows the sample size.
+7. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
+   sources shares.
+8. **Results Dashboard:** headline counts, the records-per-entity histogram, and a sample of the
+   largest resolved entities.
+9. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
+   match key / resolution rule that linked it, plus the same **Why?** / **How?** actions.
+
+Do **not** add redundant tabs — the entity-size distribution is Merge Statistics, and the
+cross-source entity-relationship view is Entity Graph (per `visualization-api-reference.md` →
+"De-duplication").
 
 ### 2.5 Present it and give the guided tour
 
@@ -245,10 +279,16 @@ Then deliver this guided tour as one message (no interactive pauses):
   bars at 2/3/4+ are where Senzing found duplicates.
 - **Search / Probe:** type a name (try "Robert Smith") to see the resolved entity and why it
   matched.
+- **More tabs:** the **Results Dashboard** summarizes the run at a glance; **Match Keys** and
+  **Feature Scores** show what drove the resolutions; **Cross-Source** (with 2+ sources) maps where
+  your sources overlap; **Relationship Network** shows how entities connect. (Point these out
+  briefly — one line — under `concise`/`minimal` verbosity, or skip the list.)
 
 ---
 
-👉 **Take your time exploring the visualization. Let me know when you're ready to continue.**
+Take your time exploring the visualization.
+
+👉 **Are you ready to continue?**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
 exploring. Do not proceed to Phase 2 (the close) until they respond.)*
@@ -274,7 +314,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 ```
 
 **Success indicator:** ✅ The standalone snapshot exists at
-`docs/visualizations/truthset_verification.html` AND the live app served the four endpoints and
+`docs/visualizations/truthset_verification.html` AND the live app served its endpoints and
 the entity-graph page.
 
 ## Fallback: guarantee the snapshot if the live server cannot run

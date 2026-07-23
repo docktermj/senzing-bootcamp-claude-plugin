@@ -33,6 +33,7 @@ sections: append only.
 
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
+the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"; and
 also include the chosen programming language and path (Core/Customized) when present):
 
 ```markdown
@@ -42,9 +43,15 @@ also include the chosen programming language and path (Core/Customized) when pre
 **Started:** {ISO 8601 timestamp with timezone offset}
 **Programming language:** {language}
 **Path:** {path}
+**Plugin version:** {plugin version}
 
 ---
 ```
+
+The **Run environment** provenance lines (operating system + architecture, Python version,
+language runtime, Senzing SDK, database) are added to this header at graduation, where they are
+current — see `../graduation/SKILL.md`. They are recorded in the recap only, never shown in the
+bootcamp output (INV-012).
 
 ### 2b. Append this module's section
 
@@ -67,10 +74,15 @@ bootcamper's point of view:
 ### Actions Taken
 - {files created or modified, code generated, commands run, decisions made}
 
-### Journal
-**What we did:** {1-2 sentence summary of what was accomplished}
-**What was produced:** {comma-separated artifact paths created or modified}
-**Why it matters:** {how this module enables the modules that follow}
+### End-of-Module Summary
+**What you accomplished:**
+- {plain-language accomplishment 1}
+- {accomplishment 2}
+
+**Files produced:**
+- `{path}` — {what it is}
+
+**Why it matters:** {1-2 sentences tying this module's output to the bootcamper's goal}
 **Bootcamper's takeaway:** {the bootcamper's stated takeaway — omit this whole line if the bootcamper gave no takeaway; never write "N/A"}
 
 ---
@@ -81,7 +93,7 @@ graduation PDF renders exactly these four labeled sections per module):
 
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
-- **Journal:** the bold fields as shown; the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
+- **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
 - **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding the 2-3 curated screenshots is required**, not optional: add them to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>.png)` — in the same turn the capture ran. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
 
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
@@ -176,6 +188,10 @@ Next: {next module name in your selected sequence} — {one line on what it does
 If the module produced no new files (rare), say so plainly rather than inventing
 paths. Keep the list to what the bootcamper cares about; suppress internal
 bookkeeping.
+
+This same What you accomplished / Files produced / Why it matters content is persisted into the
+recap's **End-of-Module Summary** subsection (Step 2b) — keep the two consistent. "What's next" is
+chat-only and is **not** written to the recap.
 
 ## Step 4: Transition question
 

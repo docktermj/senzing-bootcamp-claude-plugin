@@ -20,6 +20,37 @@ each represents. **Checkpoint:** write step 9.
 Categorize as Customer 360, Fraud Detection, Data Migration, Compliance, Marketing, etc. If a
 pattern was selected, it's already identified. **Checkpoint:** write step 10.
 
+## 10a. Software integration and deployment target
+
+Now that the scenario is identified — and **before** the problem-statement artifacts are written
+in Step 11 — capture two forward-looking attributes of the business problem so they flow straight
+into the problem statement and the graduation production project (INV-097). Ask each as its own
+pinned 👉 question (INV-056), one per turn (INV-005), and persist the answers to
+`config/bootcamp_preferences.yaml`.
+
+First, software integration:
+
+👉 **Will your entity-resolution results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
+
+*(Internal: end the turn and wait.)* On **yes**, ask one follow-up on the next turn — "👉 **Which
+systems do you expect to integrate with?**" — and persist the named systems (e.g. Elasticsearch,
+Salesforce) as `integration_targets`. On **no**, persist `integration_targets: []`.
+
+Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051):
+
+👉 **Where do you plan to deploy the final solution? Reply with a number:**
+
+1. A cloud hyperscaler (AWS/Azure/GCP).
+2. A container platform (Kubernetes/Docker Swarm).
+3. Local / on-premises.
+4. Not sure yet.
+
+*(Internal: end the turn and wait.)* Reassure: "We'll develop everything locally first; deployment
+is addressed in the graduation production project and migration checklist." Persist
+`deployment_target` (`aws`/`azure`/`gcp` — also persist `cloud_provider`; `kubernetes`/
+`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4) to
+`config/bootcamp_preferences.yaml`. **Checkpoint:** write step 10a.
+
 ## 11. Create the problem statement document
 
 Save to `docs/business_problem.md` using this template:
@@ -59,14 +90,14 @@ Save to `docs/business_problem.md` using this template:
 Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 
 ## Integration Requirements
-**Downstream systems** / **Integration method** / **Systems mentioned** (from `integration_targets` in `config/bootcamp_preferences.yaml`, captured in Bootcamp preparation — INV-088)
+**Downstream systems** / **Integration method** / **Systems mentioned** (from `integration_targets` in `config/bootcamp_preferences.yaml`, captured in Phase 2 Step 10a — INV-097)
 
 ## Deployment Target
 [If `deployment_target` present in preferences: Platform / Category (Cloud/Container/Local/
 Undecided) / Note "development proceeds locally first; infrastructure is a production follow-up
 covered by the graduation production project and migration checklist". If "not sure yet":
 Platform "To be determined", Category "Undecided". If absent: "Not applicable: deployment target
-not captured for this track."]
+not captured for this bootcamp."]
 
 ## Timeline
 **Target completion** / **Key milestones**
@@ -106,7 +137,7 @@ reference how the bootcamp implements it.
   entity resolution, THEN a search index (Elasticsearch/OpenSearch) over resolved entities.
   This prevents a common architecture mistake. (Full `design-patterns` reference is a later
   porting phase; use `search_docs` for specifics.)
-- **If integration targets were identified** (`integration_targets` in `config/bootcamp_preferences.yaml`, from Bootcamp preparation): reference them and use `search_docs`
+- **If integration targets were identified** (`integration_targets` in `config/bootcamp_preferences.yaml`, captured in Phase 2 Step 10a — INV-097): reference them and use `search_docs`
   for Senzing's guidance on integrating with those systems.
 
 **Checkpoint:** write step 13.

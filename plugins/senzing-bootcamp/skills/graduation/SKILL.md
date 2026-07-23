@@ -28,11 +28,12 @@ and the recap guarantee at the end always produces a valid PDF. Steps that creat
 the `production/` project ask for confirmation before large or destructive
 actions.
 
-Graduation is a terminal bookend module, not a content module: it presents the GRADUATION banner
-and the model/effort nudge, but is exempt from the per-module apparatus (INV-029–032) — no journey
-map, before/after framing, step overview, or `✅ Module complete` line — since no next-module
-transition applies. It ends on the terminal END OF SENZING BOOTCAMP banner (INV-057), not a
-transition question. (Analogous to the exemptions for Bootcamp preparation (INV-075) and Module 0
+Graduation is the terminal bookend module. Like every module it opens with the module-start
+apparatus — journey map, before/after framing, a step overview, and an estimated time — adapted to
+a terminal module (see "Graduation preface" below), then the model/effort nudge. Because no
+next-module transition applies, it shows no `✅ Module complete` line and no transition question,
+and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Graduation is NOT
+apparatus-exempt — contrast the exemptions for Bootcamp preparation (INV-075) and Module 0
 (INV-078).)
 
 ## Graduation banner (show first, exactly once)
@@ -47,18 +48,55 @@ finish. Show it at most once per graduation.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-After the banner, prompt for the best-value model/effort before the heavier graduation work.
+## Graduation preface (after the banner, before the model/effort prompt)
+
+Like every module, graduation opens with the module-start apparatus (INV-029–032), adapted to a
+terminal module — no next-module transition. Present these in order, right after the banner and
+before the model/effort prompt. First read `config/bootcamp_preferences.yaml` (`selected_modules`)
+and `config/bootcamp_progress.json` (`modules_completed`) to render the journey map. Honor the
+active verbosity preset (INV-011/INV-012): suppress the explanatory parts under `minimal`, keep
+them to one line under `concise`. Refer to modules by name, never number (INV-079).
+
+1. **Journey map.** List the selected modules by name, every one marked ✅ (all experienced), with
+   **Graduation** marked 🔄 as the current, final stage — nothing ⬜ after it.
+2. **Before / After.** Before: every module is complete and your data is resolved, but your work
+   still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
+   (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
+3. **What we'll do.** A brief numbered overview of graduation's steps: (1) normalize the `docs/`
+   Markdown and render the recap PDF keepsake, (2) build the `production/` project, (3) create a
+   silent revisit/resume bundle — a database backup plus a return guide — so you can come back
+   later (INV-094), and (4) close with the END OF SENZING BOOTCAMP banner.
+4. **Estimated time.** Give an honest, range-based estimate caveated per INV-096 — e.g.
+   "⏱️ Roughly 5–15 minutes, depending on your workstation, the database backup size, and PDF
+   rendering speed." If no meaningful estimate is possible, say "hard to estimate" rather than
+   inventing a number. Suppress under `minimal`; one line under `concise`.
+
+Graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
+transition — it ends on the END OF SENZING BOOTCAMP banner (INV-057). What the bootcamper carries
+forward is the recap PDF and the `production/` project.
+
+## Best-value model/effort prompt
+
+After the preface, prompt for the best-value model/effort before the heavier graduation work.
 Graduation is correctness-critical (Opus 4.8 + high effort) and steps up from the Module 7
 recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
+On the **CLI**, pin the switch question verbatim:
+
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
-telling the bootcamper to run those two commands, then end the turn on this pinned confirmation
-gate (verbatim, INV-056) — do NOT start the graduation work yet:
+On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent (INV-098):
 
-> 👉 **Are you done modifying the model and effort?** (Reply yes once you've run the commands; reply no if you need more time.)
+> 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+
+The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
+telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI, or
+use the model and reasoning-effort controls in their Claude app), then end the turn on this pinned
+confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts) — do NOT
+start the graduation work yet:
+
+> 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
 Run the Pre-checks and the first graduation step on the turn **after** the bootcamper confirms; if
 they need more time, acknowledge and wait, then continue — do not re-ask this gate (ask-once,
@@ -101,6 +139,35 @@ module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
 all, reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
+**Stamp the completion date.** Ensure the recap header carries a `**Completed:** {today's date, ISO
+8601}` line (add it directly under the `**Started:**` line if absent; leave an existing one intact).
+This is the date the Certificate of Completion shows (INV-100), distinct from `**Started:**` — so a
+bootcamp spanning multiple days shows the graduation date, not the start date. The renderer prefers
+this `Completed` date and falls back to `Started` when it is absent.
+
+**Record the run environment (recap-only).** Ensure the recap header carries the plugin version and
+a run-environment provenance block, so the keepsake records which plugin version produced the run
+and the hardware/software it ran on. Add these header meta lines (in the preamble, above the first
+`## ` section) when absent, idempotently — leave existing lines intact:
+
+- `**Plugin version:**` — from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (should already be
+  present from the recap header; add it here if the header predates that field).
+- `**Operating system:**` — OS + architecture, reused from the detected/persisted values in
+  `config/bootcamp_preferences.yaml` (INV-061), e.g. `Ubuntu 24.04 (x86_64)`.
+- `**Python version:**` — the `python3 --version` of the environment.
+- `**Language runtime:**` — the bootcamper's chosen-language runtime and version (for a Python
+  bootcamp, the same Python).
+- `**Senzing SDK:**` — the Senzing SDK/engine version, obtained from the Senzing MCP tools (INV-080),
+  never guessed; "Unknown" if unavailable.
+- `**Database:**` — the database backend (e.g. SQLite, or PostgreSQL when chosen).
+
+The renderer renders `Plugin version` on the cover and the `Operating system` / `Python version` /
+`Language runtime` / `Senzing SDK` / `Database` lines as a distinct **Run environment** block (use
+exactly those key names so the renderer groups them). This block is written to `docs/bootcamp_recap.md`
+and the PDF only — it is **never** shown in the bootcamp output (INV-012) — and MUST NOT contain a
+hostname, username, IP address, or any other personal/host identifier (INV-065). Like every
+graduation step it warns-and-continues: if a value cannot be gathered, record "Unknown" and proceed.
+
 If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
 module interrupted before completion), fold its content into that module's
 `## {Module name}` section (append only), then remove the
@@ -114,9 +181,10 @@ sections.
 the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module. Map each PNG to
 its module by the visualization it came from: match the PNG's base name against the `<name>.html`
 referenced in a module's recap section (e.g. `truthset_verification-*` → Truth Set visualization;
-`multi_source_results-*`/`results_dashboard-*` → the module that produced them; `entity_graph-*`,
+`results_visualization-*` (Module 7's single interactive visualization app),
 `due_diligence_results-*`, or any other `<name>-*` → the module whose section references
-`<name>.html`). If a PNG matches no section, place it in the nearest preceding module section. This
+`<name>.html` (older recaps may carry `multi_source_results-*` from before the consolidation; the
+general `<name>-*` rule still maps them)). If a PNG matches no section, place it in the nearest preceding module section. This
 is a **safety net** for captures whose embed step was skipped mid-bootcamp
 (`../bootcamp-onboarding/module-completion.md` makes the embed a required step, but this guarantees
 the recap PDF still shows captured screenshots if one was missed). Append-only and **idempotent** —
@@ -135,7 +203,7 @@ Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031
 (MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
 the colon, none before). The pass is **purely cosmetic — structure- and content-preserving**: it
 must never reorder, remove, or rewrite the prose of a completed `## {Module name}` section, nor
-drop any of its four subsections (Information Shared, Questions & Responses, Actions Taken, Journal).
+drop any of its four subsections (Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary).
 Like every graduation step it is non-blocking: if normalization fails or is uncertain, warn,
 leave the content as written, and continue — a formatting issue is never a reason to skip the PDF.
 
@@ -198,7 +266,7 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 - **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line.
 - **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain a comma (e.g. "Query, Visualize and Discover"). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
-- **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, Journal) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
+- **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ## Step 2: Build the production project
 
@@ -264,7 +332,75 @@ next steps (fill in secrets, obtain a production license, work through the
 checklist, configure CI/CD, test with production data). If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
 
-## Step 6: Feedback reminder
+## Step 6: Save the revisit/resume bundle
+
+Silently preserve everything a returning bootcamper needs to pick the bootcamp back up — so
+"graduated" becomes a genuine save point. Like every graduation step this is **non-blocking**
+(warn-and-continue on any failure) and administrative in spirit (no narration beyond a short
+closing summary). The bundle lives **outside `production/`**, under the reserved top-level
+`backups/revisit/` directory, so Step 2's "never copy the eval database into `production/`" rule
+is preserved (INV-094).
+
+If `backups/revisit/` already exists from a prior graduation, pin this 👉 question verbatim before
+overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create it silently:
+
+👉 **A revisit bundle already exists — how should I proceed? Reply with a number:**
+
+1. **Overwrite** — replace the previous revisit bundle.
+2. **Keep** — leave the existing bundle untouched and skip this step.
+
+### 6a. Database backup
+
+Back up the resolved repository so it can be restored later. Read `database` (SQLite/PostgreSQL)
+from pre-checks and the connection from `config/engine_config.json`.
+
+- **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
+  `cp database/G2C.db backups/revisit/database/G2C.db`).
+- **PostgreSQL:** run `pg_dump` of the Senzing database to
+  `backups/revisit/database/senzing.dump`. When the database runs in a Docker container, dump
+  through the container (e.g.
+  `docker exec <container> pg_dump -U <user> -d <db> -Fc > backups/revisit/database/senzing.dump`).
+  Confirm the exact user / database / container from `config/engine_config.json` (and the recorded
+  container, when container-lifecycle tracking is present); never invent credentials.
+
+Record the exact **restore** command in the return guide (Step 6c): SQLite = copy the file back to
+`database/`; PostgreSQL = `pg_restore` (or `psql <` for a plain dump) into a fresh database. If the
+backup cannot be produced (tool missing, database unreachable), warn and continue — the rest of the
+bundle still saves.
+
+### 6b. RESUME_STATE manifest
+
+Snapshot the resume-critical state into `backups/revisit/state/` (copy each if it exists):
+`config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`, `config/data_sources.yaml`,
+`config/engine_config.json`, `config/license.json`, and `docs/mapping/`. Then write
+`backups/revisit/RESUME_STATE.json` — a manifest indexing what was saved: the bootcamp path and
+`modules_completed`, the programming language and database type, the business problem and data
+sources, the relative path of each snapshotted file, the database backup path and its restore
+command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapshots under
+`docs/visualizations/`. Use only project-relative paths.
+
+### 6c. Return guide
+
+Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017), authored to the same
+CommonMark house rules as the other graduation deliverables (Step 4). Cover:
+
+- **Quick start when you return** — a short command list at the very top (re-source the env, restore
+  the database, re-init the engine, re-run a query and the visualization).
+- **What you accomplished** — per completed module, drawn from the recap.
+- **Your business problem and data sources** — from `docs/business_problem.md` /
+  `config/data_sources.yaml`.
+- **Restore the database** — the exact SQLite copy-back or PostgreSQL `pg_restore` / `psql` command
+  recorded in Step 6a.
+- **Re-initialize and re-run** — how to re-source `src/scripts/senzing-env.sh` (if present) and
+  re-init the engine, then re-run the loader, queries, and visualization.
+- **License** — where the license lives (`licenses/g2.lic` when custom, else the built-in
+  evaluation license) and any expiry.
+- **Where things are** — point at `backups/revisit/` (state + database backup), the recap PDF, and
+  `docs/visualizations/`.
+
+Then present a one-line summary of what the bundle saved and where, and continue to Step 7.
+
+## Step 7: Feedback reminder
 
 If `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` exists and contains at
 least one real feedback entry, remind the bootcamper it is there and offer to
@@ -277,11 +413,11 @@ line: "Say \"bootcamp feedback\" anytime if you'd like to share your experience.
 This runs exactly once, after the report, before graduation is reported finished.
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
-2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and Journal, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
 
 Example (list only what exists):
 
-> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and Journal for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
+> 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`.
 
 3. **End on the single closing question.** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 

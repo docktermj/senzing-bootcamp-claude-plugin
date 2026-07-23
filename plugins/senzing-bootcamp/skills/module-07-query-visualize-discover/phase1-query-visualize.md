@@ -1,4 +1,4 @@
-# Module 7, Phase 1: Query and Visualize (steps 1–3d)
+# Module 7, Phase 1: Query and Visualize (steps 1–3c)
 
 Follow the ground rules. `🛑`/`⛔` are internal directives, never render them; signal a stop by
 ending the turn on the single 👉 question and waiting. On load, read
@@ -172,69 +172,84 @@ If accepted:
 
 **Checkpoint:** write step 3b.
 
-### 3c. Entity graph visualization checkpoint
+### 3c. Visualization offer (single gate)
 
-Offer a visualization for checkpoint `m7_exploratory_queries` (an entity graph of the resolved
-results). Pin the offer verbatim:
+This module's results visualization is delivered as **one** interactive, tabbed app — the same
+Truth-Set-style visualization built in the Truth Set module, now pointed at the bootcamper's own
+resolved data. It is the single visualization artifact: the entity graph, relationship network,
+results dashboard, cross-source overlap heatmap, match-key frequency, and feature-score views are
+all **tabs** of this one app, not separate offers or static pages (see the full tab set and the
+de-duplication rules in `../module-03b-truthset-visualization/visualization-api-reference.md`).
+This is also where Module 6's cross-source relationship view now lives — the Entity Graph,
+Cross-Source, and Relationship Network tabs replace the former Module 6 `multi_source_results.html`
+static page (Module 6 no longer offers a visualization). Offer it here, after the query results
+(3a) and quality evaluation (3b) are in hand. The
+Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
+why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
 
-> 👉 **Would you like a visualization of the resolved entities as an entity graph?**
+Pin the offer verbatim:
 
-The visualization data comes from `reporting_guide(topic='graph', ...)` (network export) and
-`reporting_guide(topic='dashboard', ...)` (visualization concepts and data sources); generate
-the rendering code in the bootcamper's chosen language.
+> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, results dashboard, cross-source overlap, and match/feature analysis, all in one app?**
 
-Inline guidance until the visualization files are ported (later porting phase, the Kiro
-`visualization-guide.md` and `visualization-web-service.md` are not yet available):
+*(Internal: end the turn on this question and wait.)*
 
-- Offer the visualization; do not force it. If the bootcamper declines, acknowledge and move on.
-- Keep all generated code and output inside the working directory (`src/` for code, HTML
-  visualizations → `docs/visualizations/`, other output → `docs/` or `data/`). Never `/tmp/`.
-- Pull the entity/relationship data through generated SDK code and `reporting_guide`, never
-  direct SQL.
-- After generating the HTML visualization, capture screenshots for the recap (`{html}` = the
-  entity-graph HTML file, `{name}` = `entity_graph`) per
-  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip
-  silently if no headless capability, otherwise embed the 2-3 best in this module's recap.
+- **Declines:** skip the visualization and continue to "Next: Discover phase (step 4)". This
+  question is itself the visualization offer for the Query Completeness Gate (it covers the entity
+  graph and results dashboard as tabs) — checkpoint `m7_visualizations` as `{"offered": true,
+  "accepted": false}` under `module_7_query`.
+- **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
+  `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
 
-**Checkpoint:** write step 3c.
+Build it modeled on the shipped Truth Set visualization server (`scripts/senzing_viz_server.py`)
+and the `../module-03b-truthset-visualization/visualization-api-reference.md` contract, in the
+bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
+of the Truth Set. It MUST:
 
-### 3d. Results dashboard visualization checkpoint
+- Serve/render every applicable tab from that contract — Entity Graph, Relationship Network, Record
+  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, Results Dashboard, and
+  Search / Probe. Tabs whose data is absent are simply not shown (e.g. Cross-Source needs 2+
+  sources; Match Keys / Feature Scores need multi-record entities). Do **not** produce separate
+  static pages, and do **not** add redundant tabs — the entity-size distribution is Merge
+  Statistics and the cross-source entity-relationship view is Entity Graph.
+- Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
+  `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
+  entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
+  SQL.
+- Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
+  from `scripts/brand_tokens.py` (INV-081).
+- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070); after
+  generating it, capture screenshots for the recap per
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
+  silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
+  `{name}` = `results_visualization`.
 
-Offer a visualization for checkpoint `m7_findings_documented` — a results dashboard showing
-**entity counts, match statistics, and sample resolved entities**. This is the bootcamp's single
-results-dashboard offer (Module 6 no longer offers one; it lives here, where results visualization
-belongs). Pin the offer verbatim:
-
-> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
-
-Source the dashboard data via `reporting_guide(topic='dashboard', ...)` and
-`reporting_guide(topic='reports', ...)`; generate the rendering code in the chosen language and save
-the HTML to `docs/visualizations/results_dashboard.html` (INV-070). Then capture screenshots for the
-recap (`{html}` = `results_dashboard.html`, `{name}` = `results_dashboard`) per
-`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" — skip silently
-if no headless capability, otherwise embed the 2-3 best in this module's recap. Same inline guidance
-and file-placement rules as step 3c apply.
-
-**Checkpoint:** write step 3d.
+**Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
+(offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
+"docs/visualizations/results_visualization.html"}`). The former per-visualization checkpoints
+`m7_exploratory_queries` (entity graph) and `m7_findings_documented` (dashboard) are subsumed here.
 
 ## Next: Discover phase (step 4)
 
 The Discover phase introduces advanced Senzing capabilities using concrete examples from the
-bootcamper's loaded data. It is opt-in, the bootcamper can decline or exit early at any
-demonstration point.
+bootcamper's loaded data. It is opt-in and **independent of the visualization decision above** —
+ask it whether or not the bootcamper wanted additional visualizations. The bootcamper can decline
+or exit early at any demonstration point.
 
 - Load `phase2-discover.md` for steps 4a–4c (data pattern analysis, why analysis, how
   analysis).
-- Then load `phase2b-discover.md` for steps 4d–4e (relationship networks, visualization
-  suggestions, and Discover Phase Completion).
+- Then load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
+  Completion. (The former step 4e data-specific visualization suggestions are now tabs of the
+  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Relationship Network.)
 
-Steps 4a–4e each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
+Steps 4a–4d each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
 phase completes or is skipped, return here for the Query Completeness Gate.
 
 ## Success criteria
 
 - ✅ Query programs created and tested.
-- ✅ Visualizations offered (entity graph and results dashboard).
+- ✅ Visualization offered (the single interactive-visualization gate in step 3c was presented; the
+  tabbed app — entity graph, relationship network, results dashboard, cross-source overlap, and
+  match/feature analysis — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
 
 ## Query Completeness Gate
@@ -243,8 +258,10 @@ Before wrapping up the module, confirm:
 
 1. **Query programs created and tested?** At least one query program runs successfully
    against the resolved data.
-2. **Visualizations offered?** Both the entity graph and the results dashboard were offered.
-3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4e
+2. **Visualization offered?** The step-3c visualization gate was presented (the single
+   interactive-visualization question, which covers the entity graph and results dashboard as tabs)
+   — this counts as offered whether the bootcamper accepted or declined it.
+3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4d
    checkpointed) or explicitly skipped by the bootcamper.
 4. **Ready to proceed?**
 
@@ -257,8 +274,9 @@ transition:
 
 👉 **Would you like to graduate now and generate your production project and recap?**
 
-*(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
-to `null` per the ground rules.
+*(Internal: end the turn on this question and wait; keep this offer's wording identical to
+`../bootcamp-onboarding/module-completion.md` → "Reaching graduation".)* On module completion, set
+`current_step` to `null` per the ground rules.
 
 - **Affirmative:** invoke the `graduation` skill (GRADUATION banner, recap PDF, and `production/`
   project). See `../graduation/SKILL.md`.

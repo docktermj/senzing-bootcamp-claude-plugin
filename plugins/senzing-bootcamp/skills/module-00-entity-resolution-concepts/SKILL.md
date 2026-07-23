@@ -72,7 +72,7 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
    concepts taught, MCP-sourced), **Questions & Responses** (the "any questions?" gate, the quiz
    offer/questions if taken, and the readiness gate, each with the bootcamper's answer — or
    `- {none this module}`), **Actions Taken** (that the primer and optional quiz were presented;
-   this preamble creates no project files), and **Journal**. Re-read to confirm the section landed
+   this preamble creates no project files), and **End-of-Module Summary**. Re-read to confirm the section landed
    (2c). This is the ONLY module-completion step Module 0 runs; it does **not** present the
    bootcamper-facing end-of-module summary (Step 3).
 

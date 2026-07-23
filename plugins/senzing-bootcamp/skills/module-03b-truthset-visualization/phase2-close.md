@@ -76,7 +76,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    in `selected_modules` and `current_step` to `null`. All idempotent (do not duplicate).
 2. **Append the recap section** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085):
    `## Truth Set visualization — {timestamp}` with the four subsections (Information Shared,
-   Questions & Responses, Actions Taken, Journal): capture the Truth Set acquisition/load, the
+   Questions & Responses, Actions Taken, End-of-Module Summary): capture the Truth Set acquisition/load, the
    interactive visualization and standalone snapshot, and — if screenshots were captured — the
    embedded `![…](docs/visualizations/…png)` image(s) in Actions Taken.
 3. **Present the completion line + end-of-module summary** (INV-032):
@@ -94,5 +94,5 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ The standalone snapshot exists (built from a non-empty Truth Set) + the
-live app served its four endpoints + the web service is terminated + the Truth Set data is purged +
+live app served its endpoints + the web service is terminated + the Truth Set data is purged +
 `truthset_visualization` is recorded in `modules_completed` with its own recap section.

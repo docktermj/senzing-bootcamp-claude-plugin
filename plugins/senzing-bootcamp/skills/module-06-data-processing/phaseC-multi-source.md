@@ -21,13 +21,31 @@ can review and confirm the list is complete.
 
 Explain the common dependency patterns: parent-child (load parents first), reference data first,
 temporal ordering, or none. If a circular dependency is detected, explain that Senzing resolves
-entities as records arrive, load the higher-quality source first. Then ask a single pinned 👉
-question (INV-056) and end the turn on it:
+entities as records arrive, load the higher-quality source first.
+
+**First, check the data's provenance.** Read the `provenance` field for each source being loaded
+(step 12's inventory) in `config/data_sources.yaml` — the same field Module 5's fast-path uses. If
+**every** such source is agent-generated (`provenance: cord` or `synthesized`), or
+`docs/business_problem.md` carries the bootcamp-generated marker `> 🤖 Bootcamp-generated business
+case`, the agent selected these sources itself and already knows there are no real load-order
+dependencies between them. State that briefly (INV-012) and confirm rather than asking an open
+question — pin the question verbatim (INV-056) and end the turn on it:
+
+👉 **The generated sources have no load-order dependencies — shall I proceed with none?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)* On **yes**, record that there are none; on
+**no**, ask the bootcamper to describe the dependencies they see and capture the dependency map.
+
+Otherwise (some source being loaded is bootcamper-supplied — `provenance: own`/`free_data`/`unknown` —
+and no generated marker is present), ask a single pinned 👉 question (INV-056) exactly as today and end the turn
+on it:
 
 👉 **Are there load-order dependencies between your data sources?**
 
 *(Internal: end the turn on this question and wait.)* On **yes**, capture the dependency map; on
-**no**, record that there are none. Save the dependency map to `docs/loading_strategy.md`.
+**no**, record that there are none.
+
+Save the resulting dependency map (or the "no dependencies" record) to `docs/loading_strategy.md`.
 
 **Checkpoint:** write step 13.
 
@@ -43,8 +61,22 @@ the bootcamper to review.
 
 ## 15. Select loading strategy
 
-Present the strategy choices as a neutral lead + numbered list (INV-051), pinned verbatim
-(INV-056), and end the turn on the 👉 question:
+**First, check the data's provenance** (as in step 13). If **every** source being loaded is
+agent-generated (`provenance: cord`/`synthesized` in `config/data_sources.yaml`, or the
+`> 🤖 Bootcamp-generated business case` marker is present in `docs/business_problem.md`), the agent
+selected these sources and can recommend a strategy from what it knows: for the generated (typically
+small) dataset, **Sequential** — safer, easy to debug, with no real gain from parallelism at this
+scale. State that briefly (INV-012) and confirm rather than posing the open menu — pin the question
+verbatim (INV-056) and end the turn on it:
+
+👉 **I recommend the Sequential loading strategy for this generated dataset — shall I use it?** (respond yes or no)
+
+*(Internal: end the turn on this question and wait.)* On **yes**, record Sequential; on **no**,
+present the numbered menu below so the bootcamper chooses (INV-007).
+
+Otherwise (some source being loaded is bootcamper-supplied — `provenance: own`/`free_data`/`unknown` —
+and no generated marker is present), present the strategy choices as a neutral lead + numbered list (INV-051),
+pinned verbatim (INV-056), and end the turn on the 👉 question:
 
 👉 **Which loading strategy would you like? Reply with a number:**
 

@@ -86,10 +86,15 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 `ground-rules.md` → "Module start banners and transitions" surfaces this per-stage recommendation
 at the start of each module (and `graduation/SKILL.md` at the graduation banner): a single 👉
 switch question when the recommendation changes from the current stage, otherwise a brief
-statement. Switching is optional; the session-level `/model` and `/effort` persist for the session
+statement. Switching is optional; the session-level model/effort persists for the session
 (unlike per-skill frontmatter). Keep this table in sync with the mirror in `ground-rules.md`.
 
-| Stage | Recommended | Commands |
+The nudge adapts to the Claude application surface (INV-098): the **Recommended** column is
+surface-neutral; the **CLI commands** column is the Claude Code equivalent. On Desktop, web, or an
+IDE extension, the same model and reasoning effort are set via the app's model/effort controls
+rather than the slash commands.
+
+| Stage | Recommended | CLI commands |
 |---|---|---|
 | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
 | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |

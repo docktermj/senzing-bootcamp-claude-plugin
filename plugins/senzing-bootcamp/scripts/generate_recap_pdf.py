@@ -8,7 +8,7 @@ A valid PDF is ALWAYS produced, via a tiered strategy:
 1. Rich renderer using ``fpdf2`` when it is importable: a designed cover page
    plus one section per completed module, each carrying its four labeled
    sub-sections (Information Shared, Questions & Responses, Actions Taken,
-   Journal).
+   End-of-Module Summary; legacy "Journal" is accepted as an alias).
 2. Stdlib-only fallback writer when ``fpdf2`` is absent: a plainer but valid,
    paginated PDF rendered from the same parsed content, with no third-party
    dependency.
@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import struct
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -47,13 +48,14 @@ DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
 
 # The labeled sub-sections a complete per-module recap section carries. The
 # graduation recap requirement names Information Shared, Questions &
-# Responses, Actions Taken, and Journal. "Actions Taken" / "Action Taken" are
-# both accepted on parse.
+# Responses, Actions Taken, and End-of-Module Summary (INV-103; it replaced the
+# former "Journal"). "Actions Taken" / "Action Taken" and legacy "Journal" /
+# "End-of-Module Summary" are accepted as aliases on parse (see _normalize_heading).
 REQUIRED_SECTIONS = [
     "Information Shared",
     "Questions & Responses",
     "Actions Taken",
-    "Journal",
+    "End-of-Module Summary",
 ]
 
 
@@ -121,6 +123,11 @@ def _normalize_heading(name: str) -> str:
     n = re.sub(r"\s+", " ", n)
     if n == "action taken":
         n = "actions taken"
+    if n == "journal":
+        # Legacy alias: the fourth recap subsection was renamed
+        # Journal → End-of-Module Summary (INV-103); older recaps still
+        # render and pass --check via this alias.
+        n = "end-of-module summary"
     return n
 
 
@@ -259,7 +266,7 @@ try:
     import brand_tokens as _bt
 
     _h2rgb = _bt.hex_to_rgb
-    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / journal accent
+    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / summary accent
     BLUE = _h2rgb(_bt.EMBER_CORE)    # primary accent
     SLATE = _h2rgb(_bt.BODY_INK)     # body text
     LIGHT = _h2rgb(_bt.WARM_OFF_WHITE)  # warm off-white fills
@@ -282,7 +289,7 @@ _SECTION_ACCENT = {
     "information shared": BLUE,
     "questions & responses": ACCENT,
     "actions taken": GREEN,
-    "journal": NAVY,
+    "end-of-module summary": NAVY,
 }
 
 _MONTHS = [
@@ -348,6 +355,24 @@ def _safe(s: str) -> str:
     return s.encode("latin-1", "replace").decode("latin-1")
 
 
+def _logo_info() -> Optional[Tuple[str, int, int]]:
+    """Return (path, width_px, height_px) for the Senzing logo shipped beside this
+    script (``senzing_logo_light.png`` — the light wordmark for dark backgrounds),
+    or None when it is absent, in which case the cover falls back to a drawn badge
+    so a valid PDF is always produced (INV-048/INV-066)."""
+    path = Path(__file__).resolve().parent / "senzing_logo_light.png"
+    try:
+        with path.open("rb") as fh:
+            head = fh.read(26)
+    except OSError:
+        return None
+    if head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR":
+        w, h = struct.unpack(">II", head[16:24])
+        if w and h:
+            return str(path), w, h
+    return None
+
+
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     try:
         from fpdf import FPDF  # type: ignore
@@ -359,6 +384,9 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         # page-break, so it can never spawn a spurious blank page. Page 1 (the
         # cover) carries the credit line; every later page shows its page number.
         def footer(self) -> None:
+            # The landscape certificate page suppresses the page-number footer.
+            if getattr(self, "suppress_footer", False):
+                return
             self.set_y(-14)
             self.set_font("Helvetica", "I", 8)
             self.set_text_color(*SLATE)
@@ -387,6 +415,7 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         if recap.modules:
             _render_toc(measure, epw, recap, None)
         starts = [_render_module_page(measure, epw, mod) for mod in recap.modules]
+        _render_certificate(measure, recap)
 
         pdf = new_pdf()
         _render_cover(pdf, epw, recap)
@@ -394,6 +423,7 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
             _render_toc(pdf, epw, recap, starts)
         for mod in recap.modules:
             _render_module_page(pdf, epw, mod)
+        _render_certificate(pdf, recap)
 
         _ensure_parent(output)
         pdf.output(str(output))
@@ -401,6 +431,58 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     except Exception as exc:  # pragma: no cover - defensive
         sys.stderr.write(f"fpdf2 render failed: {exc}\n")
         return False
+
+
+# Run-environment (hardware/software) meta keys, recorded in the recap for
+# provenance and rendered as a distinct "Run environment" block — never mixed into
+# the identity card and never placed on the certificate face. Matched case-folded.
+_ENV_KEYS = (
+    "operating system",
+    "python version",
+    "language runtime",
+    "senzing sdk",
+    "database",
+)
+
+
+def _is_env_key(key: str) -> bool:
+    return key.strip().lower().rstrip(":") in _ENV_KEYS
+
+
+def _partition_meta(
+    meta: List[Tuple[str, str]]
+) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """Split header meta into (identity rows, run-environment rows). Identity rows
+    (bootcamper, dates, language, path, plugin version) drive the cover card and the
+    certificate; environment rows render as their own block."""
+    ident = [(k, v) for k, v in meta if not _is_env_key(k)]
+    env = [(k, v) for k, v in meta if _is_env_key(k)]
+    return ident, env
+
+
+def _render_env_block(pdf, epw: float, env: List[Tuple[str, str]], top: float) -> None:
+    """Render the recap-only 'Run environment' provenance block (fpdf2 path)."""
+    if not env:
+        return
+    # If too close to the page bottom, start a fresh page so nothing draws off-page.
+    if top > pdf.h - 50:
+        pdf.add_page()
+        top = pdf.t_margin
+    pdf.set_xy(pdf.l_margin, top)
+    pdf.set_text_color(*NAVY)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(epw, 8, "Run environment")
+    pdf.ln(10)
+    for key, val in env:
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*SLATE)
+        pdf.set_font("Helvetica", "B", 9)
+        label = _safe(key.rstrip(":")) + ":  "
+        lw = pdf.get_string_width(label) + 1
+        pdf.cell(lw, 6, label)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(epw - lw, 6, _safe(_md_inline_to_text(val)))
 
 
 def _render_cover(pdf, epw: float, recap: Recap) -> None:
@@ -411,22 +493,39 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
     pdf.set_fill_color(*ACCENT)
     pdf.rect(0, 78, pdf.w, 3, style="F")
 
-    # "SZ" badge: a gold ring centered in the band.
-    cx, cy, r = pdf.w / 2.0, 22.0, 11.0
-    pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(1.4)
-    pdf.ellipse(cx - r, cy - r, 2 * r, 2 * r, style="D")
-    pdf.set_line_width(0.2)
-    pdf.set_xy(cx - r, cy - 4.5)
-    pdf.set_text_color(*ACCENT)
-    pdf.set_font("Helvetica", "B", 15)
-    pdf.cell(2 * r, 9, "SZ", align="C")
+    # Senzing logo (the light wordmark for dark backgrounds) centered in the band.
+    # Falls back to a drawn "SZ" ring if the shipped asset is missing, so the PDF
+    # always renders (INV-048/INV-066).
+    info = _logo_info()
+    placed = False
+    if info:
+        logo_path, lw, lh = info
+        try:
+            logo_h = 20.0
+            logo_w = logo_h * (lw / float(lh))
+            max_w = pdf.w - 2 * pdf.l_margin
+            if logo_w > max_w:
+                logo_w, logo_h = max_w, max_w * (lh / float(lw))
+            pdf.image(logo_path, x=(pdf.w - logo_w) / 2.0, y=15.0, w=logo_w, h=logo_h)
+            placed = True
+        except Exception:
+            placed = False
+    if not placed:
+        cx, cy, r = pdf.w / 2.0, 22.0, 11.0
+        pdf.set_draw_color(*ACCENT)
+        pdf.set_line_width(1.4)
+        pdf.ellipse(cx - r, cy - r, 2 * r, 2 * r, style="D")
+        pdf.set_line_width(0.2)
+        pdf.set_xy(cx - r, cy - 4.5)
+        pdf.set_text_color(*ACCENT)
+        pdf.set_font("Helvetica", "B", 15)
+        pdf.cell(2 * r, 9, "SZ", align="C")
 
-    # Wordmark inside the band; sub-title below it.
-    pdf.set_xy(pdf.l_margin, 42)
+    # Sub-title inside the band (the Senzing logo above carries the brand name).
+    pdf.set_xy(pdf.l_margin, 45)
     pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 28)
-    pdf.cell(epw, 14, "Senzing Bootcamp", align="C")
+    pdf.set_font("Helvetica", "B", 26)
+    pdf.cell(epw, 13, "Bootcamp", align="C")
 
     pdf.set_xy(pdf.l_margin, 90)
     pdf.set_text_color(*NAVY)
@@ -444,8 +543,10 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
         align="C",
     )
 
-    # Two-column labeled metadata card, driven by the recap's meta rows.
-    rows = recap.meta or [("Bootcamper", "Bootcamper")]
+    # Two-column labeled metadata card, driven by the recap's identity meta rows
+    # (run-environment rows render as their own block below the module chips).
+    ident, env = _partition_meta(recap.meta)
+    rows = ident or [("Bootcamper", "Bootcamper")]
     card_x = pdf.l_margin + 15
     card_w = epw - 30
     col_w = card_w / 2.0
@@ -498,6 +599,111 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
             pdf.set_text_color(*INK)
             pdf.cell(w, 8.5, label, align="C")
             x += w + 4
+
+    # Run-environment provenance block (recap-only, INV-012), below the chips.
+    next_y = (y + 12) if recap.modules else (y0 + card_h + 12)
+    _render_env_block(pdf, epw, env, next_y)
+
+
+def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
+    """Extract (bootcamper name, formatted date, module labels) for the certificate.
+
+    The date prefers an explicit completion/graduation date (stamped into the recap
+    header at graduation) over the bootcamp start date, so a bootcamp spanning multiple
+    days shows the graduation date on the Certificate of Completion, not the start date.
+    Falls back to the start date when no completion date was recorded.
+    """
+    name = ""
+    started = ""
+    completed = ""
+    for key, val in recap.meta:
+        k = key.strip().lower().rstrip(":")
+        v = _md_inline_to_text(val).strip()
+        if k in ("bootcamper", "name") and not name:
+            name = v
+        elif k in ("completed", "graduated", "completion date") and not completed:
+            completed = v
+        elif k in ("started", "date") and not started:
+            started = v
+    name = name or "Bootcamper"
+    raw_date = completed or started
+    date = _format_date(raw_date) if raw_date else ""
+    labels = [
+        (f"{m.number}. {m.title}" if m.number is not None else m.title)
+        for m in recap.modules
+    ]
+    return name, date, labels
+
+
+def _render_certificate(pdf, recap: Recap) -> None:
+    """Final page: a landscape Certificate of Completion (INV-100).
+
+    Rendered in landscape while every other page stays portrait; the page-number
+    footer is suppressed for it. Palette/typography come from the brand tokens.
+    """
+    name, date, labels = _cert_fields(recap)
+    # add_page first (so the previous page's footer renders normally), then suppress
+    # the footer for this — the last — page, which fpdf2 emits at output().
+    pdf.add_page(orientation="L")
+    pdf.suppress_footer = True
+    # The certificate is a fixed single-page design: disable the auto page-break so
+    # bottom-anchored content cannot spill onto a spurious second landscape page.
+    pdf.set_auto_page_break(False)
+    w, h = pdf.w, pdf.h  # landscape A4 ≈ 297 × 210 mm
+
+    # Double border: navy outer, ember inner.
+    pdf.set_draw_color(*NAVY)
+    pdf.set_line_width(1.2)
+    pdf.rect(10, 10, w - 20, h - 20, style="D")
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(0.5)
+    pdf.rect(14, 14, w - 28, h - 28, style="D")
+    pdf.set_line_width(0.2)
+
+    pdf.set_xy(0, 30)
+    pdf.set_text_color(*NAVY)
+    pdf.set_font("Helvetica", "B", 30)
+    pdf.cell(w, 14, "Certificate of Completion", align="C")
+
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(0.8)
+    pdf.line(w / 2 - 42, 50, w / 2 + 42, 50)
+    pdf.set_line_width(0.2)
+
+    pdf.set_xy(0, 62)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "", 13)
+    pdf.cell(w, 8, "This certifies that", align="C")
+
+    pdf.set_xy(0, 74)
+    pdf.set_text_color(*INK)
+    pdf.set_font("Helvetica", "B", 26)
+    pdf.cell(w, 14, _safe(name), align="C")
+
+    pdf.set_xy(0, 94)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "", 13)
+    pdf.cell(w, 8, "has completed the Senzing Bootcamp", align="C")
+    if date:
+        pdf.set_xy(0, 104)
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.cell(w, 7, _safe(f"on {date}"), align="C")
+
+    if labels:
+        pdf.set_xy(0, 122)
+        pdf.set_text_color(*NAVY)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(w, 6, "Modules completed", align="C")
+        pdf.set_xy(24, 131)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
+
+    pdf.set_xy(0, h - 22)
+    pdf.set_text_color(*SLATE)
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.cell(w, 6, "Senzing Bootcamp", align="C")
+    # Leave suppress_footer set: this is the last page.
 
 
 def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> None:
@@ -589,8 +795,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
 def _is_empty_takeaway(text: str) -> bool:
     """True for a '**Bootcamper's takeaway:**' line with no real value (empty or "N/A").
 
-    The takeaway is an optional field within the Journal subsection; when the bootcamper
-    gave none, the line is omitted rather than rendered as an "N/A" placeholder.
+    The takeaway is an optional field within the End-of-Module Summary subsection; when the
+    bootcamper gave none, the line is omitted rather than rendered as an "N/A" placeholder.
     """
     m = re.match(r"^\*\*(.+?):\*\*\s*(.*)$", text.strip())
     return bool(
@@ -684,6 +890,45 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
+def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
+    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100)."""
+    name, date, labels = _cert_fields(recap)
+    ops: List[str] = []
+
+    # Border rectangle in brand navy (path: rectangle + stroke).
+    nr, ng, nb = (c / 255.0 for c in NAVY)
+    ops.append(f"{nr:.2f} {ng:.2f} {nb:.2f} RG 1.2 w 22 22 {w - 44:.1f} {h - 44:.1f} re S")
+
+    def center(text: str, font: str, size: float, y: float) -> None:
+        tw = len(text) * size * 0.52  # approximate Helvetica advance
+        x = max(24.0, (w - tw) / 2.0)
+        ops.append(
+            f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({_pdf_escape(text)}) Tj ET"
+        )
+
+    y = h - 96
+    center("Certificate of Completion", "F2", 26, y)
+    y -= 54
+    center("This certifies that", "F1", 13, y)
+    y -= 34
+    center(name, "F2", 22, y)
+    y -= 38
+    center("has completed the Senzing Bootcamp", "F1", 13, y)
+    y -= 22
+    if date:
+        center(f"on {date}", "F1", 11, y)
+        y -= 30
+    else:
+        y -= 8
+    if labels:
+        center("Modules completed", "F2", 11, y)
+        y -= 18
+        for chunk in _wrap("  -  ".join(labels), 110):
+            center(chunk, "F1", 9, y)
+            y -= 14
+    return "\n".join(ops)
+
+
 def render_with_stdlib(recap: Recap, output: Path) -> bool:
     """Write a valid, paginated PDF using only the standard library.
 
@@ -711,7 +956,8 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         add(recap.title, "F2", 22, 0)
         add("Completion Recap", "F2", 14, 0)
         add("", "F1", 6, 0)
-        for key, val in recap.meta:
+        ident, env = _partition_meta(recap.meta)
+        for key, val in ident:
             add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 11, 0)
         completed = ", ".join(
             (f"Module {m.number}" if m.number is not None else m.title)
@@ -720,6 +966,11 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         if completed:
             add("", "F1", 4, 0)
             add_wrapped(f"Modules completed: {completed}", "F1", 11, 0)
+        if env:
+            add("", "F1", 6, 0)
+            add("Run environment", "F2", 12, 0)
+            for key, val in env:
+                add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 10, 6)
 
         for mod in recap.modules:
             add("", "F1", 10, 0)
@@ -761,8 +1012,14 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         if not pages:
             pages = [f"BT /F1 11 Tf 1 0 0 1 {margin} {page_h - margin} Tm (Bootcamp recap) Tj ET"]
 
+        # Content pages are portrait; append the landscape Certificate of Completion (INV-100).
+        page_sizes: List[Tuple[float, float]] = [(page_w, page_h)] * len(pages)
+        cert_w, cert_h = page_h, page_w  # landscape A4
+        pages.append(_stdlib_certificate_stream(recap, cert_w, cert_h))
+        page_sizes.append((cert_w, cert_h))
+
         _ensure_parent(output)
-        _write_pdf(output, pages, page_w, page_h)
+        _write_pdf(output, pages, page_sizes)
         return output.exists() and output.stat().st_size > 0
     except Exception as exc:  # pragma: no cover - defensive
         sys.stderr.write(f"stdlib render failed: {exc}\n")
@@ -849,7 +1106,9 @@ def _pdf_escape(s: str) -> str:
     return "".join(out)
 
 
-def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> None:
+def _write_pdf(output: Path, pages: List[str], page_sizes: List[Tuple[float, float]]) -> None:
+    """Write a valid PDF. ``page_sizes[i]`` is the (width, height) of page ``i`` in
+    points, so pages can mix orientations (e.g. a landscape certificate)."""
     objects: List[bytes] = []
 
     def add_obj(body: bytes) -> int:
@@ -869,7 +1128,8 @@ def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> 
     pages_obj_num = len(objects) + 1  # next object we will create is Pages
     add_obj(b"__PAGES_PLACEHOLDER__")
 
-    for stream in pages:
+    for i, stream in enumerate(pages):
+        pw, ph = page_sizes[i]
         data = stream.encode("latin-1", "replace")
         content_num = add_obj(
             b"<< /Length %d >>\nstream\n%s\nendstream" % (len(data), data)
@@ -879,7 +1139,7 @@ def _write_pdf(output: Path, pages: List[str], page_w: float, page_h: float) -> 
                 "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2f %.2f] "
                 "/Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> "
                 "/Contents %d 0 R >>"
-                % (pages_obj_num, page_w, page_h, font_regular, font_bold, content_num)
+                % (pages_obj_num, pw, ph, font_regular, font_bold, content_num)
             ).encode("latin-1")
         )
         page_obj_nums.append(page_num)

@@ -19,7 +19,7 @@ sub-step one at a time, in order. Never skip, combine, or abbreviate a step cont
 question. This has the same absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** Your data is loaded and entities are resolved, but you haven't examined the
 results yet. After this module you'll have query programs that answer your business questions,
@@ -32,8 +32,8 @@ discover capabilities (why, how, relationship networks).
 - ✅ No critical loading errors.
 
 **Success indicator:** ✅ Query programs created and tested + queries answer the business
-problem + visualizations offered (entity graph and results dashboard) + Discover phase
-completed or explicitly skipped.
+problem + the single interactive visualization app offered (entity graph and results dashboard
+are tabs within it) + Discover phase completed or explicitly skipped.
 
 ## No direct SQL (module-critical)
 
@@ -67,9 +67,9 @@ When the bootcamper hits an error during this module:
 
 ## Phases
 
-- **Phase 1: Query and Visualize** (steps 1–3d): `phase1-query-visualize.md`
+- **Phase 1: Query and Visualize** (steps 1–3c): `phase1-query-visualize.md`
 - **Phase 2a: Discover, Part A** (steps 4a–4c): `phase2-discover.md`
-- **Phase 2b: Discover, Part B** (steps 4d–4e): `phase2b-discover.md`
+- **Phase 2b: Discover, Part B** (step 4d): `phase2b-discover.md`
 
 Read `current_step` from `config/bootcamp_progress.json` (an integer, or a sub-step string like
 `"3b"` or `"4a"`) and resume at the right phase and sub-step. Do not re-run completed steps.

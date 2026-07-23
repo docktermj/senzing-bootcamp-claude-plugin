@@ -11,11 +11,14 @@ then hands off to the first module. It follows this order:
 
 Steps 0-2 are administrative and mostly silent; they run before the WELCOME banner.
 
-**All setup questions live in the Bootcamp preparation module, not the preface.** The
-Core-vs-Customized path choice, per-module selection, level of detail (verbosity), programming
-language, version control, and the software-integration and deployment-target questions are asked in
+**Setup questions live in the Bootcamp preparation module, not the preface.** The
+Core-vs-Customized path choice, per-module selection, level of detail (verbosity), and programming
+language are asked in
 the first module — **Bootcamp preparation**
-(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. Entity resolution
+(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. That module also
+initializes version control (git, no prompt — INV-095). (The
+software-integration and deployment-target questions are asked later, in Module 1 Phase 2, per
+INV-097 — not in the preface and not in Bootcamp preparation.) Entity resolution
 concepts are also **not** part of the preface: they are an optional module
 (`../module-00-entity-resolution-concepts/SKILL.md`) run only when selected during Bootcamp
 preparation.
@@ -27,7 +30,9 @@ Tell the bootcamper, in your own words:
 "I'm going to do some quick administrative setup: creating your project directory and checking
 your environment."
 
-Optionally show the plugin version (from `.claude-plugin/plugin.json`): `Senzing Bootcamp vX.Y.Z`.
+Read the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (the `version`
+field; use "Unknown" if unreadable) and hold it to display with the WELCOME banner (step 3) and to
+record in the recap.
 
 ## 0b. MCP health check (required)
 
@@ -86,24 +91,25 @@ then display the WELCOME banner:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
+Then show the plugin version as a one-line statement (verbosity-aware — suppress under the
+`minimal` preset, one line otherwise, INV-011/INV-012): `Senzing Bootcamp vX.Y.Z`.
+
 Then give the overview (cover naturally, do not ask a question yet):
 
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.
 - Goal: get comfortable generating Senzing SDK code, finishing with running code you can build on.
 - You finish with a professional **recap PDF** — a keepsake of everything you built, module by
-  module, to keep and share with your team. A sample of a finished recap ships with the plugin at
-  `docs/examples/bootcamp_recap.example.pdf` (under the plugin root, `${CLAUDE_PLUGIN_ROOT}`); point
-  the bootcamper to it if they'd like to see what theirs will look like (yours will differ). This is
-  a non-blocking mention, not a question or a gate.
+  module, to keep and share with your team.
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
   Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
   *Truth Set visualization* (optional), **Data collection**, **Data quality & mapping**, **Data
   processing**, **Query, Visualize and Discover**, and **Graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
   the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
-  modules to include). It also sets your level of detail, programming language, and version
-  control. Required modules always run; the optional ones are yours to include or skip.
+  modules to include). It also sets your level of detail and programming language, and sets up
+  version control for you automatically (no question). Required modules always run; the optional
+  ones are yours to include or skip.
 - One thing to know if you customize: *Truth Set visualization* is the interactive web app that
   shows Senzing working on your machine — if you deselect it, you won't see that visual
   verification.
@@ -131,8 +137,8 @@ single consolidated write, INV-058.)
 ## 5. Hand off to the Bootcamp preparation module
 
 Invoke the `bootcamp-preparation` skill. Bootcamp preparation is the **first, mandatory module**:
-it asks the Core-vs-Customized path choice, per-module selection, verbosity, programming language,
-version control, and the software-integration and deployment-target questions, persists them in one
+it asks the Core-vs-Customized path choice, per-module selection, verbosity, and programming
+language, initializes version control (git, no prompt — INV-095), persists these in one
 consolidated write, then hands off to the first selected
 content module (the optional Entity Resolution Concepts primer if selected, otherwise Discover the Business Problem).
 The selected modules then run in the order recorded in `selected_modules`, each ending with the

@@ -19,7 +19,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question: thi
 absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** You may have seen a demo, but you don't yet have a defined problem or plan.
 After this module you'll have a documented business problem, identified data sources, and clear
@@ -45,7 +45,8 @@ When the bootcamper hits an error during this module:
 - **Phase 1: Discovery** (steps 1–6): `phase1-discovery.md`
 - **Phase 2: Document and Confirm** (steps 9–17): `phase2-document-confirm.md`
 
-(Steps 7–8 — the former software-integration and deployment-target questions — were relocated to
-Bootcamp preparation (INV-088), so Phase 2 intentionally resumes at step 9.)
+(The former standalone steps 7–8 — the software-integration and deployment-target questions — are
+now asked in **Phase 2 as Step 10a** (after the scenario is identified, before the problem statement
+is written), per INV-097; Phase 1 ends at step 6 and Phase 2's numbering starts at 9.)
 
 Read `current_step` from `config/bootcamp_progress.json` and resume at the right phase.

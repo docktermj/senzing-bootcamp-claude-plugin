@@ -146,14 +146,17 @@ steering files.)
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
-- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language,
-  `git_init`, `os`/`arch`, `integration_targets`, `deployment_target`/`cloud_provider`) are asked in the **Bootcamp preparation** module and persisted in **one**
-  consolidated write at the end of that module — not one write per gate (see
-  `../bootcamp-preparation/SKILL.md`). The bootcamper's `name` is **detected** there (from
-  `git config user.name` or the environment), not asked, and persisted in that same write.
+- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language)
+  are asked in the **Bootcamp preparation** module and persisted in **one** consolidated write at
+  the end of that module — not one write per gate (see `../bootcamp-preparation/SKILL.md`). In that
+  same write, `git_init` is recorded from the automatic `git init` (no prompt — INV-095), `os`/`arch`
+  are the auto-detected platform values (INV-061), and the bootcamper's `name` is **detected** (from
+  `git config user.name` or the environment), not asked. The `integration_targets` and
+  `deployment_target`/`cloud_provider` preferences are **not** set here — they are asked in Module 1
+  (Discover the Business Problem), Phase 2, Step 10a, and persisted there (INV-097).
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
-  accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped
+  accumulating Information Shared / Questions & Responses / Actions Taken / End-of-Module Summary-so-far, wrapped
   in `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` markers. This is what
   survives a quit, compaction, or new session mid-module: the plugin's `PreCompact`, `SessionEnd`,
   and `SessionStart` hooks fold it into `docs/bootcamp_recap.md` (append-only, idempotent). It is a
@@ -219,19 +222,44 @@ never count against the one-question-per-turn rule and must not be treated as ga
   added to `modules_completed`; Module 0, when it runs, DOES append its own name-based recap section
   and is added to `modules_completed` (INV-092), so it appears in the recap and is reconciled at
   graduation (INV-085).
+- **Estimated time to complete (INV-096).** After the step overview and before the model/effort
+  prompt, add a short, honest, range-based estimate of how long the module will take — e.g.
+  "⏱️ Roughly 15-30 minutes, depending on download/install speed." Always caveat that it varies
+  with workstation power, business-scenario complexity, data volume, and how much must be
+  downloaded/installed. When a meaningful estimate is not possible for a module, say so plainly
+  ("hard to estimate for this module") rather than inventing a number; keep it honest and
+  range-based, never a single precise figure. It is explanatory output: suppress it entirely under
+  the `minimal` verbosity preset and keep it to one line under `concise` (INV-011/INV-012). This
+  applies only to the numbered content modules that run this apparatus — the apparatus-exempt setup
+  modules (Bootcamp preparation, Module 0) show no estimate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
-  model + effort with the exact commands. Two cases:
+  model + effort. Like the step overview and the time estimate, this is module-start apparatus, so
+  the apparatus-exempt setup modules (Bootcamp preparation, Module 0) do not present it (INV-063
+  clarification). **Adapt the wording to the Claude application in use** (INV-098): on **Claude
+  Code (CLI)** present the exact `/model` and `/effort` commands; on **Desktop, web, or an IDE
+  extension** — or when the surface is unknown — phrase it by intent, naming the recommended model
+  and reasoning-effort level and directing the bootcamper to their Claude app's model/effort
+  controls, without hardcoding a UI label that may drift. Two cases:
   - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
     end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
     Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
 
+    On the **CLI**, pin the switch question verbatim with the stage's commands:
+
     > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
 
-    This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
-    telling the bootcamper to run those two commands, then end the turn on this pinned
-    confirmation gate (verbatim, INV-056) — do NOT show Step 1 yet:
+    On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
+    stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
 
-    > 👉 **Are you done modifying the model and effort?** (Reply yes once you've run the commands; reply no if you need more time.)
+    > 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+
+    This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
+    telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
+    or use the model and reasoning-effort controls in their Claude app), then end the turn on this
+    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts
+    to the surface) — do NOT show Step 1 yet:
+
+    > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
     Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
     acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
@@ -244,12 +272,20 @@ never count against the one-question-per-turn rule and must not be treated as ga
   Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
   recommendation (keep in sync with `../../docs/model-selection.md`):
 
-  | Stage | Recommended | Commands |
+  | Stage | Recommended | CLI commands |
   |---|---|---|
   | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
   | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
   | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+
+  The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
+  model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
+  the Claude Code equivalent (INV-098).
+
+  Onboarding and Bootcamp preparation appear in this table only so the nudge can detect whether the
+  recommendation **changes** at the next module; being apparatus-exempt (INV-075/INV-078), those
+  setup stages present no model/effort nudge themselves (see the carve-out above).
 
 - Module start banner:
 
@@ -260,7 +296,8 @@ never count against the one-question-per-turn rule and must not be treated as ga
   ```
 
 - After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
-  banner + journey map + before/after + step overview + best-value model/effort prompt. When that
+  banner + journey map + before/after + step overview + estimated time to complete + best-value
+  model/effort prompt. When that
   prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
   statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with
