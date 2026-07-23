@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## provenance-aware-phasec-load-questions
+
+- **Implemented:** 2026-07-23
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `specs/IMPLEMENTED.md`
+- **Summary:** Made Module 6 Phase C Steps 13 (dependencies) and 15 (loading strategy) provenance-aware, following the already-implemented Phase D marker-guard pattern (`skip-business-user-uat-for-generated-scenario`). Each step now first reads the `provenance` field for the sources being loaded from `config/data_sources.yaml` (the same field Module 5's fast-path uses) and checks for the `> 🤖 Bootcamp-generated business case` marker in `docs/business_problem.md`. When **every** source being loaded is agent-generated (`provenance: cord`/`synthesized`, or the marker is present): Step 13 states the generated sources have no load-order dependencies and confirms with a single pinned yes/no question (`phaseC-multi-source.md:34`) — on "no" the bootcamper describes the dependencies; Step 15 recommends Sequential for the generated (typically small) dataset and confirms with a single pinned yes/no question (`:72`) — on "no" the original numbered menu is presented. When **any** source is bootcamper-supplied (`own`/`free_data`/`unknown`, or no marker), both steps ask the pinned-verbatim open questions exactly as before (`:43`, `:81`). **Verified by inspection:** the agent-generated branch replaces the open questions with confirm-style yes/no questions that state their reason briefly (INV-012) and end the turn (the accepted path adds no extra turn); the bootcamper still confirms/overrides so nothing is assumed (INV-007); the yes/no hint "(respond yes or no)" matches the Phase D Step 25 style and is exempt from INV-051; the bootcamper-supplied branch preserves the verbatim questions (INV-056); provenance is read, not re-derived (matches Module 5); Markdown-only, cross-platform and language-agnostic (INV-001/INV-002). Grep-confirmed the two questions exist only in this file. No new invariant — a per-step UX conditional following the existing generated-marker pattern (which itself introduced none).
+- **Commit:** uncommitted
+
 ## offer-generate-data-in-data-collection-menu
 
 - **Implemented:** 2026-07-23
