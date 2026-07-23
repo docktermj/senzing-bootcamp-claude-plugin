@@ -94,5 +94,5 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
 **Checkpoint:** write to `config/bootcamp_progress.json`.
 
 **Success indicator:** ✅ The standalone snapshot exists (built from a non-empty Truth Set) + the
-live app served its four endpoints + the web service is terminated + the Truth Set data is purged +
+live app served its endpoints + the web service is terminated + the Truth Set data is purged +
 `truthset_visualization` is recorded in `modules_completed` with its own recap section.

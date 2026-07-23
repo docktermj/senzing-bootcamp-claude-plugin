@@ -102,8 +102,9 @@ Then give the overview (cover naturally, do not ask a question yet):
   processing**, **Query, Visualize and Discover**, and **Graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
   the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
-  modules to include). It also sets your level of detail, programming language, and version
-  control. Required modules always run; the optional ones are yours to include or skip.
+  modules to include). It also sets your level of detail and programming language, and sets up
+  version control for you automatically (no question). Required modules always run; the optional
+  ones are yours to include or skip.
 - One thing to know if you customize: *Truth Set visualization* is the interactive web app that
   shows Senzing working on your machine — if you deselect it, you won't see that visual
   verification.

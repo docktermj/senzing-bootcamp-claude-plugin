@@ -1,4 +1,4 @@
-# Module 7, Phase 1: Query and Visualize (steps 1–3d)
+# Module 7, Phase 1: Query and Visualize (steps 1–3c)
 
 Follow the ground rules. `🛑`/`⛔` are internal directives, never render them; signal a stop by
 ending the turn on the single 👉 question and waiting. On load, read
@@ -274,8 +274,9 @@ transition:
 
 👉 **Would you like to graduate now and generate your production project and recap?**
 
-*(Internal: end the turn on this question and wait.)* On module completion, set `current_step`
-to `null` per the ground rules.
+*(Internal: end the turn on this question and wait; keep this offer's wording identical to
+`../bootcamp-onboarding/module-completion.md` → "Reaching graduation".)* On module completion, set
+`current_step` to `null` per the ground rules.
 
 - **Affirmative:** invoke the `graduation` skill (GRADUATION banner, recap PDF, and `production/`
   project). See `../graduation/SKILL.md`.

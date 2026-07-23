@@ -119,11 +119,13 @@ source.
 **Fallback only** — when detection is genuinely unavailable or ambiguous, ask this pinned question
 and wait:
 
-👉 **What operating system are you on? Reply with a number:**
+👉 **Which operating system and processor architecture are you using? Reply with a number:**
 
-1. Linux
-2. macOS
-3. Windows
+1. Linux (x86-64)
+2. Linux (ARM64)
+3. macOS (Apple Silicon)
+4. macOS (Intel)
+5. Windows (x86-64)
 
 *(Internal: end the turn on this question and wait.)*
 

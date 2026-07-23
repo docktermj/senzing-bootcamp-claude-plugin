@@ -44,7 +44,7 @@ live in the Bootcamp preparation module, not the preface.**
    detail (verbosity), and programming language, initializes version control (git, no prompt —
    INV-095), and persists these in one consolidated write; then hands off to the first
    selected content module (the **optional**
-   Entity Resolution Concepts primer if selected, otherwise Module 1). Entity resolution concepts
+   Entity Resolution Concepts primer if selected, otherwise Discover the Business Problem). Entity resolution concepts
    and the setup questions are no longer asked in the preface.
 
 ## Ground rules you must never break during onboarding

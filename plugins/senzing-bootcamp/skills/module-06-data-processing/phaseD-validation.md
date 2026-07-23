@@ -224,7 +224,7 @@ summary), then close the module:
 
 *(Internal: end the turn on this question and wait.)* On completion, set `current_step` to
 `null` in `config/bootcamp_progress.json` and, on an affirmative reply, produce the Module 7
-start banner, journey map, and before/after framing per the ground rules.
+start banner, journey map, before/after framing, and step overview per the ground rules.
 
 **Success indicator:** ✅ All data sources loaded + redo records processed + no critical errors +
 entity resolution results validated + results documented in `docs/results_validation.md`.

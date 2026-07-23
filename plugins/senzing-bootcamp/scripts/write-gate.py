@@ -43,8 +43,10 @@ except (ValueError, AttributeError):
     file_path = m.group(1) if m else ""
 
 # An unexpanded Windows temp env-var reference (%TEMP%/%TMP%) is always a temp
-# target, independent of the project directory.
-if "%TEMP%" in file_path or "%TMP%" in file_path:
+# target, independent of the project directory. Windows env-var names are
+# case-insensitive, so compare case-folded (%Temp%, %tmp%, ... all count).
+_fp_upper = file_path.upper()
+if "%TEMP%" in _fp_upper or "%TMP%" in _fp_upper:
     block(LOC_MSG)
 
 # Resolve to an absolute path. A relative path is, by definition, inside the project,
@@ -88,7 +90,7 @@ if abs_path:
             if target.startswith(tmp_norm + "/"):
                 block(LOC_MSG)
 
-if re.search(r"BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|AKIA[0-9A-Z]{16}", data):
+if re.search(r"BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY|AKIA[0-9A-Z]{16}", data):
     block(SECRET_MSG)
 
 sys.exit(0)

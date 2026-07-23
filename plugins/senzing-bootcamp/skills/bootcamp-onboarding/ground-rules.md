@@ -233,7 +233,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
   applies only to the numbered content modules that run this apparatus — the apparatus-exempt setup
   modules (Bootcamp preparation, Module 0) show no estimate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
-  model + effort. **Adapt the wording to the Claude application in use** (INV-098): on **Claude
+  model + effort. Like the step overview and the time estimate, this is module-start apparatus, so
+  the apparatus-exempt setup modules (Bootcamp preparation, Module 0) do not present it (INV-063
+  clarification). **Adapt the wording to the Claude application in use** (INV-098): on **Claude
   Code (CLI)** present the exact `/model` and `/effort` commands; on **Desktop, web, or an IDE
   extension** — or when the surface is unknown — phrase it by intent, naming the recommended model
   and reasoning-effort level and directing the bootcamper to their Claude app's model/effort

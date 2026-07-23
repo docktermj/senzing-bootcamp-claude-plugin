@@ -403,7 +403,7 @@ training data.
 
    Four-option form (when `submit_feedback` is available):
 
-   👉 **Do you have a Senzing License Key? Reply with a number:**
+   👉 **Which best describes your Senzing License Key situation? Reply with a number:**
 
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.
@@ -412,7 +412,7 @@ training data.
 
    Three-option form (when `submit_feedback` is unavailable):
 
-   👉 **Do you have a Senzing License Key? Reply with a number:**
+   👉 **Which best describes your Senzing License Key situation? Reply with a number:**
 
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.

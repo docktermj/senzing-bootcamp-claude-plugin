@@ -55,7 +55,8 @@ immediately before Step 1:
    varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
    figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
 7. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
-   unchanged from System verification (Module 3 tier), so a concise statement (or omit).
+   unchanged from System verification (Module 3 tier), so a concise, non-blocking statement (never
+   omitted — INV-063 requires it at every module start).
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)
@@ -285,7 +286,9 @@ Then deliver this guided tour as one message (no interactive pauses):
 
 ---
 
-👉 **Take your time exploring the visualization. Let me know when you're ready to continue.**
+Take your time exploring the visualization.
+
+👉 **Are you ready to continue?**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
 exploring. Do not proceed to Phase 2 (the close) until they respond.)*
@@ -311,7 +314,7 @@ exploring. Do not proceed to Phase 2 (the close) until they respond.)*
 ```
 
 **Success indicator:** ✅ The standalone snapshot exists at
-`docs/visualizations/truthset_verification.html` AND the live app served the four endpoints and
+`docs/visualizations/truthset_verification.html` AND the live app served its endpoints and
 the entity-graph page.
 
 ## Fallback: guarantee the snapshot if the live server cannot run
