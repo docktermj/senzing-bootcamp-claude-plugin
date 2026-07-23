@@ -19,7 +19,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question: thi
 absolute precedence as a mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
 resume at the right step.
 
 > **User reference:** Detailed background for this module lives in the Kiro Power at

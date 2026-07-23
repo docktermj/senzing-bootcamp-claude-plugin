@@ -20,7 +20,7 @@ mandatory gate. This has absolute precedence: no internal reasoning or token-bud
 overrides it.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work. Resume at
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Resume at
 `current_step` if progress already exists.
 
 Install and configure the Senzing SDK natively on the bootcamper's machine. This is the first
@@ -358,7 +358,7 @@ Otherwise (only the built-in evaluation license is active), present this briefly
 no custom license is present — no license file needed. That's enough for the demo modules that come
 next (System verification and Truth Set visualization), which run on small synthetic and Truth Set
 data. If your **own** data later exceeds the evaluation limit, we'll set up a Senzing License Key in
-the Data collection module (Module 4), where your data volume is known. Nothing to do here."
+the Data collection module, where your data volume is known. Nothing to do here."
 
 When presenting the evaluation license's record capacity or validity period, retrieve those values
 from a Senzing MCP server tool during this session and present exactly what the tool returns. The

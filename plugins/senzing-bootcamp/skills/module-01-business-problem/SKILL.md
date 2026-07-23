@@ -19,7 +19,7 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question: thi
 absolute precedence as a ⛔ mandatory gate.
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
-banner, journey map, before/after framing, a brief numbered overview of this module's steps, and the recommended model/effort nudge (INV-063), before any module work.
+banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 
 **Before/After:** You may have seen a demo, but you don't yet have a defined problem or plan.
 After this module you'll have a documented business problem, identified data sources, and clear

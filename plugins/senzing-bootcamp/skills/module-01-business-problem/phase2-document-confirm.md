@@ -137,7 +137,7 @@ reference how the bootcamp implements it.
   entity resolution, THEN a search index (Elasticsearch/OpenSearch) over resolved entities.
   This prevents a common architecture mistake. (Full `design-patterns` reference is a later
   porting phase; use `search_docs` for specifics.)
-- **If integration targets were identified** (`integration_targets` in `config/bootcamp_preferences.yaml`, from Bootcamp preparation): reference them and use `search_docs`
+- **If integration targets were identified** (`integration_targets` in `config/bootcamp_preferences.yaml`, captured in Phase 2 Step 10a — INV-097): reference them and use `search_docs`
   for Senzing's guidance on integrating with those systems.
 
 **Checkpoint:** write step 13.

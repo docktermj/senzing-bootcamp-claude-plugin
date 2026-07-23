@@ -146,11 +146,14 @@ steering files.)
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
-- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language,
-  `git_init`, `os`/`arch`, `integration_targets`, `deployment_target`/`cloud_provider`) are asked in the **Bootcamp preparation** module and persisted in **one**
-  consolidated write at the end of that module — not one write per gate (see
-  `../bootcamp-preparation/SKILL.md`). The bootcamper's `name` is **detected** there (from
-  `git config user.name` or the environment), not asked, and persisted in that same write.
+- Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language)
+  are asked in the **Bootcamp preparation** module and persisted in **one** consolidated write at
+  the end of that module — not one write per gate (see `../bootcamp-preparation/SKILL.md`). In that
+  same write, `git_init` is recorded from the automatic `git init` (no prompt — INV-095), `os`/`arch`
+  are the auto-detected platform values (INV-061), and the bootcamper's `name` is **detected** (from
+  `git config user.name` or the environment), not asked. The `integration_targets` and
+  `deployment_target`/`cloud_provider` preferences are **not** set here — they are asked in Module 1
+  (Discover the Business Problem), Phase 2, Step 10a, and persisted there (INV-097).
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
   accumulating Information Shared / Questions & Responses / Actions Taken / End-of-Module Summary-so-far, wrapped

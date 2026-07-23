@@ -1,6 +1,6 @@
 ---
 name: bootcamp-preparation
-description: 'Bootcamp preparation (first, mandatory module): choose Core vs Customized, select which modules to run, and set verbosity, programming language, version control, software integration, and deployment target. Use right after the onboarding WELCOME preface, before the entity-resolution primer / Module 1.'
+description: 'Bootcamp preparation (first, mandatory module): choose Core vs Customized, select which modules to run, set verbosity and programming language, and initialize version control (git, no prompt). Use right after the onboarding WELCOME preface, before the entity-resolution primer / Module 1.'
 ---
 
 # Bootcamp Preparation (first module, mandatory)

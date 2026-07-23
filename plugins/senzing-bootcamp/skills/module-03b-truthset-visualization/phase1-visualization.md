@@ -51,7 +51,10 @@ immediately before Step 1:
    their "wow moment".
 5. **Step overview (INV-031):** briefly enumerate this module's steps — acquire the Truth Set →
    register the codes + load → build and serve the visualization → explore it → clean up.
-6. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
+6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,
+   varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
+   figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
+7. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
    unchanged from System verification (Module 3 tier), so a concise statement (or omit).
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set

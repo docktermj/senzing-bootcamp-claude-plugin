@@ -12,10 +12,11 @@ then hands off to the first module. It follows this order:
 Steps 0-2 are administrative and mostly silent; they run before the WELCOME banner.
 
 **Setup questions live in the Bootcamp preparation module, not the preface.** The
-Core-vs-Customized path choice, per-module selection, level of detail (verbosity), programming
-language, and version control are asked in
+Core-vs-Customized path choice, per-module selection, level of detail (verbosity), and programming
+language are asked in
 the first module — **Bootcamp preparation**
-(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. (The
+(`../bootcamp-preparation/SKILL.md`) — which the preface hands off to at step 5. That module also
+initializes version control (git, no prompt — INV-095). (The
 software-integration and deployment-target questions are asked later, in Module 1 Phase 2, per
 INV-097 — not in the preface and not in Bootcamp preparation.) Entity resolution
 concepts are also **not** part of the preface: they are an optional module
@@ -130,8 +131,8 @@ single consolidated write, INV-058.)
 ## 5. Hand off to the Bootcamp preparation module
 
 Invoke the `bootcamp-preparation` skill. Bootcamp preparation is the **first, mandatory module**:
-it asks the Core-vs-Customized path choice, per-module selection, verbosity, programming language,
-version control, and the software-integration and deployment-target questions, persists them in one
+it asks the Core-vs-Customized path choice, per-module selection, verbosity, and programming
+language, initializes version control (git, no prompt — INV-095), persists these in one
 consolidated write, then hands off to the first selected
 content module (the optional Entity Resolution Concepts primer if selected, otherwise Discover the Business Problem).
 The selected modules then run in the order recorded in `selected_modules`, each ending with the
