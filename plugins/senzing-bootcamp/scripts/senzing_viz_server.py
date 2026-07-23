@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Bundled Senzing entity-resolution visualization web app.
+"""Bundled Senzing entity-resolution visualization web app — the shipped reference.
 
-A single, self-contained, tested visualization the bootcamp can run
-deterministically so the Module 3 "wow moment" (and later result views) ALWAYS
-happens, instead of the agent hand-writing a server + D3 page every run.
+Per INV-090 the Truth Set visualization server is built in the bootcamper's chosen
+programming language, modeled on this reference and the ``visualization-api-reference.md``
+contract; this Python script is run directly only when the chosen language is Python. It
+delivers the standalone **Truth Set visualization module** (Module 3b) "wow moment" and is
+reused for Module 7 result views. System Verification (Module 3) uses synthetic data and
+does not visualize (INV-082/INV-087).
 
 It builds an entity model from the records the bootcamper loaded (by looking each
 one up through the Senzing SDK, so all data comes from real entity resolution),
@@ -25,7 +28,7 @@ includes ``SZ_ENTITY_INCLUDE_ALL_RELATIONS``), so nodes and edges come from one
 call per loaded record. No direct SQL is ever run against the database.
 
 Usage:
-    # Serve the live web app (Module 3 default):
+    # Serve the live web app (Python reference; run directly only when the chosen language is Python — INV-090):
     python3 senzing_viz_server.py --records src/system_verification/*.jsonl
 
     # Also write a persistent standalone snapshot (no server needed to view):

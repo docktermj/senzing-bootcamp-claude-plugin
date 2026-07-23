@@ -577,7 +577,7 @@ Once the SDK is installed and verified, run the standard **Module Completion** p
 to `docs/bootcamp_recap.md`, and present the end-of-module summary), then ask the single
 transition question.
 
-The next module in your selected sequence continues the bootcamp — when it is System verification, it verifies the full setup end-to-end with synthetic records (and, when the Truth Set visualization is selected, visualizes the Senzing Truth Set):
+The next module in your selected sequence continues the bootcamp — when it is System verification, it verifies the full setup end-to-end with synthetic records; the separate Truth Set visualization module, when selected, then visualizes the Senzing Truth Set:
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 

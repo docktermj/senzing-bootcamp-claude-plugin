@@ -139,6 +139,12 @@ module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
 all, reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
+**Stamp the completion date.** Ensure the recap header carries a `**Completed:** {today's date, ISO
+8601}` line (add it directly under the `**Started:**` line if absent; leave an existing one intact).
+This is the date the Certificate of Completion shows (INV-100), distinct from `**Started:**` — so a
+bootcamp spanning multiple days shows the graduation date, not the start date. The renderer prefers
+this `Completed` date and falls back to `Started` when it is absent.
+
 If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
 module interrupted before completion), fold its content into that module's
 `## {Module name}` section (append only), then remove the

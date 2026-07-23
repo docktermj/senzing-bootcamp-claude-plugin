@@ -97,7 +97,7 @@ Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 Undecided) / Note "development proceeds locally first; infrastructure is a production follow-up
 covered by the graduation production project and migration checklist". If "not sure yet":
 Platform "To be determined", Category "Undecided". If absent: "Not applicable: deployment target
-not captured for this track."]
+not captured for this bootcamp."]
 
 ## Timeline
 **Target completion** / **Key milestones**

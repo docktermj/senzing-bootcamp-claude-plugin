@@ -548,18 +548,28 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
 
 
 def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
-    """Extract (bootcamper name, formatted date, module labels) for the certificate."""
+    """Extract (bootcamper name, formatted date, module labels) for the certificate.
+
+    The date prefers an explicit completion/graduation date (stamped into the recap
+    header at graduation) over the bootcamp start date, so a bootcamp spanning multiple
+    days shows the graduation date on the Certificate of Completion, not the start date.
+    Falls back to the start date when no completion date was recorded.
+    """
     name = ""
-    date = ""
+    started = ""
+    completed = ""
     for key, val in recap.meta:
         k = key.strip().lower().rstrip(":")
         v = _md_inline_to_text(val).strip()
         if k in ("bootcamper", "name") and not name:
             name = v
-        elif k in ("started", "date", "completed") and not date:
-            date = v
+        elif k in ("completed", "graduated", "completion date") and not completed:
+            completed = v
+        elif k in ("started", "date") and not started:
+            started = v
     name = name or "Bootcamper"
-    date = _format_date(date) if date else ""
+    raw_date = completed or started
+    date = _format_date(raw_date) if raw_date else ""
     labels = [
         (f"{m.number}. {m.title}" if m.number is not None else m.title)
         for m in recap.modules
