@@ -122,8 +122,9 @@ visualization is a separate, standalone module that records itself at its own cl
    `selected_modules`, and `current_step` to `null`. All idempotent (do not duplicate).
 2. **Append the recap section** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085):
    `## System verification — {timestamp}` (Information Shared, Questions & Responses, Actions Taken,
-   Journal) — capture that all 8 checks passed against the synthetic `VERIFY` data. The narrative goes
-   in the `### Journal` subsection (the consolidated recap replaces the separate journal file).
+   End-of-Module Summary) — capture that all 8 checks passed against the synthetic `VERIFY` data. The
+   narrative goes in the `### End-of-Module Summary` subsection (the consolidated recap replaces the
+   separate journal file).
 3. **Present the completion line + end-of-module summary** (INV-032): `✅ Module complete: System
    verification` and its four-part summary, per `module-completion.md` Step 3.
 4. **Transition to the next module:** ask the single transition question; on an affirmative reply,

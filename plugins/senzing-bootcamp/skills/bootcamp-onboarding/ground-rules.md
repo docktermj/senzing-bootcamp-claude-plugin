@@ -153,7 +153,7 @@ steering files.)
   `git config user.name` or the environment), not asked, and persisted in that same write.
 - **In-progress recap checkpoint (durability).** During a module, keep an in-progress recap at
   `docs/progress/recap_checkpoint.md`, refreshed at each step boundary with the module's
-  accumulating Information Shared / Questions & Responses / Actions Taken / Journal-so-far, wrapped
+  accumulating Information Shared / Questions & Responses / Actions Taken / End-of-Module Summary-so-far, wrapped
   in `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` markers. This is what
   survives a quit, compaction, or new session mid-module: the plugin's `PreCompact`, `SessionEnd`,
   and `SessionStart` hooks fold it into `docs/bootcamp_recap.md` (append-only, idempotent). It is a

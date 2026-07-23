@@ -8,7 +8,7 @@ A valid PDF is ALWAYS produced, via a tiered strategy:
 1. Rich renderer using ``fpdf2`` when it is importable: a designed cover page
    plus one section per completed module, each carrying its four labeled
    sub-sections (Information Shared, Questions & Responses, Actions Taken,
-   Journal).
+   End-of-Module Summary; legacy "Journal" is accepted as an alias).
 2. Stdlib-only fallback writer when ``fpdf2`` is absent: a plainer but valid,
    paginated PDF rendered from the same parsed content, with no third-party
    dependency.
@@ -48,13 +48,14 @@ DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
 
 # The labeled sub-sections a complete per-module recap section carries. The
 # graduation recap requirement names Information Shared, Questions &
-# Responses, Actions Taken, and Journal. "Actions Taken" / "Action Taken" are
-# both accepted on parse.
+# Responses, Actions Taken, and End-of-Module Summary (INV-103; it replaced the
+# former "Journal"). "Actions Taken" / "Action Taken" and legacy "Journal" /
+# "End-of-Module Summary" are accepted as aliases on parse (see _normalize_heading).
 REQUIRED_SECTIONS = [
     "Information Shared",
     "Questions & Responses",
     "Actions Taken",
-    "Journal",
+    "End-of-Module Summary",
 ]
 
 
@@ -122,6 +123,11 @@ def _normalize_heading(name: str) -> str:
     n = re.sub(r"\s+", " ", n)
     if n == "action taken":
         n = "actions taken"
+    if n == "journal":
+        # Legacy alias: the fourth recap subsection was renamed
+        # Journal → End-of-Module Summary (INV-103); older recaps still
+        # render and pass --check via this alias.
+        n = "end-of-module summary"
     return n
 
 
@@ -260,7 +266,7 @@ try:
     import brand_tokens as _bt
 
     _h2rgb = _bt.hex_to_rgb
-    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / journal accent
+    NAVY = _h2rgb(_bt.DEEP)          # dark cover band / summary accent
     BLUE = _h2rgb(_bt.EMBER_CORE)    # primary accent
     SLATE = _h2rgb(_bt.BODY_INK)     # body text
     LIGHT = _h2rgb(_bt.WARM_OFF_WHITE)  # warm off-white fills
@@ -283,7 +289,7 @@ _SECTION_ACCENT = {
     "information shared": BLUE,
     "questions & responses": ACCENT,
     "actions taken": GREEN,
-    "journal": NAVY,
+    "end-of-module summary": NAVY,
 }
 
 _MONTHS = [
@@ -721,8 +727,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
 def _is_empty_takeaway(text: str) -> bool:
     """True for a '**Bootcamper's takeaway:**' line with no real value (empty or "N/A").
 
-    The takeaway is an optional field within the Journal subsection; when the bootcamper
-    gave none, the line is omitted rather than rendered as an "N/A" placeholder.
+    The takeaway is an optional field within the End-of-Module Summary subsection; when the
+    bootcamper gave none, the line is omitted rather than rendered as an "N/A" placeholder.
     """
     m = re.match(r"^\*\*(.+?):\*\*\s*(.*)$", text.strip())
     return bool(

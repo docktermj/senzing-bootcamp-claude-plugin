@@ -410,7 +410,7 @@ System Verification is successfully complete when ALL of the following are true:
 - The gate 3→4 status is updated to "completed".
 - The `## System verification` recap section is appended to `docs/bootcamp_recap.md` (the
   consolidated recap replaced the separate `docs/bootcamp_journal.md`; the narrative lives in the
-  section's `### Journal` subsection).
+  section's `### End-of-Module Summary` subsection).
 
 (The Truth Set visualization module — run next when selected — owns its own `web_service`/`web_page`
 checks, standalone snapshot, web-service termination, TruthSet purge, and `## Truth Set

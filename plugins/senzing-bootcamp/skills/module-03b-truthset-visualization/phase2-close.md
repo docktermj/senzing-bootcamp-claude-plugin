@@ -76,7 +76,7 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    in `selected_modules` and `current_step` to `null`. All idempotent (do not duplicate).
 2. **Append the recap section** to `docs/bootcamp_recap.md`, name-based and append-only (INV-085):
    `## Truth Set visualization — {timestamp}` with the four subsections (Information Shared,
-   Questions & Responses, Actions Taken, Journal): capture the Truth Set acquisition/load, the
+   Questions & Responses, Actions Taken, End-of-Module Summary): capture the Truth Set acquisition/load, the
    interactive visualization and standalone snapshot, and — if screenshots were captured — the
    embedded `![…](docs/visualizations/…png)` image(s) in Actions Taken.
 3. **Present the completion line + end-of-module summary** (INV-032):
