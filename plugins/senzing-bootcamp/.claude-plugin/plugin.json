@@ -1,6 +1,6 @@
 {
   "name": "senzing-bootcamp",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Guided bootcamp for learning Senzing entity resolution with Claude Code, from first demo to production deployment.",
   "author": {
     "name": "Senzing"
