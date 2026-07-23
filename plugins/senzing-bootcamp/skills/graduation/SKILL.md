@@ -158,9 +158,9 @@ sections.
 the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module. Map each PNG to
 its module by the visualization it came from: match the PNG's base name against the `<name>.html`
 referenced in a module's recap section (e.g. `truthset_verification-*` → Truth Set visualization;
-`multi_source_results-*`/`results_dashboard-*` → the module that produced them; `entity_graph-*`,
-`due_diligence_results-*`, or any other `<name>-*` → the module whose section references
-`<name>.html`). If a PNG matches no section, place it in the nearest preceding module section. This
+`multi_source_results-*` → the module that produced it; `results_visualization-*` (Module 7's
+single interactive visualization app), `due_diligence_results-*`, or any other `<name>-*` → the
+module whose section references `<name>.html`). If a PNG matches no section, place it in the nearest preceding module section. This
 is a **safety net** for captures whose embed step was skipped mid-bootcamp
 (`../bootcamp-onboarding/module-completion.md` makes the embed a required step, but this guarantees
 the recap PDF still shows captured screenshots if one was missed). Append-only and **idempotent** —

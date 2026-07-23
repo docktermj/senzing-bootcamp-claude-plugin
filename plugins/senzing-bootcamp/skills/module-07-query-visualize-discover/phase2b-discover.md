@@ -116,8 +116,9 @@ status in `config/bootcamp_progress.json` under `module_7_query`:
 - Set `"discover_phase": "skipped"` when the bootcamper declines the Discover phase at the
   opt-in prompt or exits early at any transition point.
 
-(The former step 4e — data-specific visualization suggestions — has moved to the Phase 1
-step-3c visualization gate, sub-offer (d), and is no longer part of the Discover phase.)
+(The former step 4e — data-specific visualization suggestions — are now tabs of the Phase 1
+step-3c visualization app (Match Keys, Feature Scores, Cross-Source, Relationship Network) and are
+no longer part of the Discover phase.)
 
 The full checkpoint structure in `config/bootcamp_progress.json` is:
 

@@ -172,110 +172,58 @@ If accepted:
 
 **Checkpoint:** write step 3b.
 
-### 3c. Visualization offers (single gate)
+### 3c. Visualization offer (single gate)
 
-All of this module's visualization offers are consolidated under one decision point here, after
-the query results (3a) and quality evaluation (3b) are in hand. The Discover-phase opt-in in
-step 4 is asked **independently** of this decision and covers only the why/how/network
-demonstrations — it is not gated on, or bundled with, the visualization choice.
+This module's results visualization is delivered as **one** interactive, tabbed app — the same
+Truth-Set-style visualization built in the Truth Set module, now pointed at the bootcamper's own
+resolved data. It is the single visualization artifact: the entity graph, relationship network,
+results dashboard, cross-source overlap heatmap, match-key frequency, and feature-score views are
+all **tabs** of this one app, not separate offers or static pages (see the full tab set and the
+de-duplication rules in `../module-03b-truthset-visualization/visualization-api-reference.md`).
+Offer it here, after the query results (3a) and quality evaluation (3b) are in hand. The
+Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
+why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
 
-First, pin the umbrella offer verbatim:
+Pin the offer verbatim:
 
-> 👉 **Would you like to consider additional visualizations of your data?**
+> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, results dashboard, cross-source overlap, and match/feature analysis, all in one app?**
 
 *(Internal: end the turn on this question and wait.)*
 
-- **Declines:** skip every visualization sub-offer below and continue to "Next: Discover phase
-  (step 4)". The umbrella question itself is the visualization offer for the Query Completeness
-  Gate — checkpoint `m7_visualizations` as `{"offered": true, "accepted": false}` under
-  `module_7_query`.
-- **Accepts:** present each sub-offer below, each as its own pinned 👉 question, in order
-  (a)→(d). A decline on any individual sub-offer is acknowledged and skipped (INV-014).
-  Checkpoint `m7_visualizations` as `{"offered": true, "accepted": true}` plus the per-sub-offer
-  results.
-
-Common inline guidance for every sub-offer (until the Kiro `visualization-guide.md` /
-`visualization-web-service.md` are ported): keep all generated code and output inside the working
-directory (`src/` for code, HTML → `docs/visualizations/`, other output → `docs/` or `data/`;
-never `/tmp/`); pull entity/relationship/report data through generated SDK code and
-`reporting_guide`, never direct SQL; render every generated visualization offline (inline the
-vendored D3 asset, no CDN) with palette/typography from `scripts/brand_tokens.py` (INV-081); after
-generating an HTML visualization, capture screenshots
-for the recap per `../bootcamp-onboarding/module-completion.md` → "Capturing visualization
-screenshots" (skip silently with no headless capability, otherwise embed the 2-3 best in this
-module's recap).
-
-#### (a) Truth-Set-style interactive view
-
-> 👉 **Would you like a Truth-Set-style interactive visualization of your own resolved data?**
+- **Declines:** skip the visualization and continue to "Next: Discover phase (step 4)". This
+  question is itself the visualization offer for the Query Completeness Gate (it covers the entity
+  graph and results dashboard as tabs) — checkpoint `m7_visualizations` as `{"offered": true,
+  "accepted": false}` under `module_7_query`.
+- **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
+  `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
 
 Build it modeled on the shipped Truth Set visualization server (`scripts/senzing_viz_server.py`)
 and the `../module-03b-truthset-visualization/visualization-api-reference.md` contract, in the
-bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data
-instead of the Truth Set. Render offline with the vendored D3 asset (INV-091) and take palette /
-typography from `scripts/brand_tokens.py` (INV-081). `{name}` = `truthset_style_view`.
+bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
+of the Truth Set. It MUST:
 
-#### (b) Entity graph
-
-> 👉 **Would you like a visualization of the resolved entities as an entity graph?**
-
-The visualization data comes from `reporting_guide(topic='graph', ...)` (network export) and
-`reporting_guide(topic='dashboard', ...)`; generate the rendering code in the chosen language,
-rendered offline (inline the vendored D3 asset, no CDN) with palette/typography from
-`scripts/brand_tokens.py` (INV-081). `{name}` = `entity_graph`.
-
-#### (c) Results dashboard
-
-> 👉 **Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?**
-
-This is the bootcamp's single results-dashboard offer (Module 6 no longer offers one; it lives
-here, where results visualization belongs). Source the data via
-`reporting_guide(topic='dashboard', ...)` and `reporting_guide(topic='reports', ...)`; generate
-the rendering code in the chosen language and save the HTML to
-`docs/visualizations/results_dashboard.html` (INV-070), rendered offline (inline the vendored D3
-asset, no CDN) with palette/typography from `scripts/brand_tokens.py` (INV-081).
-`{name}` = `results_dashboard`.
-
-#### (d) Data-specific visualization suggestions
-
-Suggest at least two visualizations tailored to the bootcamper's data structure and resolution
-results. Base the selection on the results and quality evaluation already gathered in steps 3a/3b
-and on `config/data_sources.yaml` (number of sources, and whether multi-record / cross-source
-entities are present) — this offer no longer depends on the Discover-phase pattern analysis,
-which may not have run.
-
-Visualization catalog, select based on the bootcamper's data:
-
-- **Cross-source overlap heatmap:** suggest when 2+ data sources are loaded. Reveals which
-  sources share the most resolved entities. Framing: "Since you have records from [Source A] and
-  [Source B], a cross-source overlap heatmap would show which sources share the most resolved
-  entities, helping you see where your data sources agree."
-- **Entity size distribution chart:** suggest for any data. Shows records per entity (singletons
-  vs. small merges vs. large merges).
-- **Relationship network graph:** suggest when the results show disclosed relationships. Shows
-  how entities connect through shared attributes.
-- **Match key frequency analysis:** suggest when multi-record entities exist. Shows which feature
-  combinations (match keys) drive the most resolutions. Framing: "A match key frequency chart
-  would show which feature combinations, like NAME+ADDRESS or NAME+DOB, are driving the most
-  resolutions in your data."
-- **Feature score distribution:** suggest when multi-record entities exist. Shows how closely
-  features match across resolved records — whether merges are near-exact or fuzzy. Framing: "A
-  feature score distribution would show how tightly your resolved records match."
-
-Selection logic: suggest at least 2 relevant to the bootcamper's specific data; do not suggest
-visualizations that require patterns not present (no cross-source heatmap with one source; no
-relationship network graph with no relationships; no match-key or feature-score views with no
-multi-record entities; the entity size distribution chart is always applicable). For each,
-explain concretely what it would reveal about their actual data (reference their real sources and
-counts). When the bootcamper selects one, generate it in their chosen language, sourcing data via
-`reporting_guide(topic='dashboard', ...)` / `reporting_guide(topic='graph', ...)`. On decline,
-acknowledge and move on. `{name}` = `viz_suggestion_<slug>`.
+- Serve/render every applicable tab from that contract — Entity Graph, Relationship Network, Record
+  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, Results Dashboard, and
+  Search / Probe. Tabs whose data is absent are simply not shown (e.g. Cross-Source needs 2+
+  sources; Match Keys / Feature Scores need multi-record entities). Do **not** produce separate
+  static pages, and do **not** add redundant tabs — the entity-size distribution is Merge
+  Statistics and the cross-source entity-relationship view is Entity Graph.
+- Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
+  `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
+  entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
+  SQL.
+- Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
+  from `scripts/brand_tokens.py` (INV-081).
+- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070); after
+  generating it, capture screenshots for the recap per
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
+  silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
+  `{name}` = `results_visualization`.
 
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
-(offered/accepted and which sub-offers were accepted, e.g. `{"offered": true, "accepted": true,
-"truthset_style": false, "entity_graph": true, "results_dashboard": true, "suggestions_offered": 2}`).
-The former separate `m7_exploratory_queries` (entity graph) and `m7_findings_documented`
-(dashboard) checkpoints are subsumed here.
+(offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
+"docs/visualizations/results_visualization.html"}`). The former per-visualization checkpoints
+`m7_exploratory_queries` (entity graph) and `m7_findings_documented` (dashboard) are subsumed here.
 
 ## Next: Discover phase (step 4)
 
@@ -287,8 +235,8 @@ or exit early at any demonstration point.
 - Load `phase2-discover.md` for steps 4a–4c (data pattern analysis, why analysis, how
   analysis).
 - Then load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
-  Completion. (The former step 4e data-specific visualization suggestions have moved to the
-  step-3c visualization gate, sub-offer (d).)
+  Completion. (The former step 4e data-specific visualization suggestions are now tabs of the
+  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Relationship Network.)
 
 Steps 4a–4d each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
 phase completes or is skipped, return here for the Query Completeness Gate.
@@ -296,9 +244,9 @@ phase completes or is skipped, return here for the Query Completeness Gate.
 ## Success criteria
 
 - ✅ Query programs created and tested.
-- ✅ Visualizations offered (the single "additional visualizations?" gate in step 3c was
-  presented; entity graph, results dashboard, Truth-Set-style view, and data-specific
-  suggestions were available when accepted).
+- ✅ Visualization offered (the single interactive-visualization gate in step 3c was presented; the
+  tabbed app — entity graph, relationship network, results dashboard, cross-source overlap, and
+  match/feature analysis — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
 
 ## Query Completeness Gate
@@ -307,9 +255,9 @@ Before wrapping up the module, confirm:
 
 1. **Query programs created and tested?** At least one query program runs successfully
    against the resolved data.
-2. **Visualizations offered?** The step-3c visualization gate was presented (the umbrella
-   "additional visualizations?" question) — this counts as offered whether the bootcamper
-   accepted or declined it.
+2. **Visualization offered?** The step-3c visualization gate was presented (the single
+   interactive-visualization question, which covers the entity graph and results dashboard as tabs)
+   — this counts as offered whether the bootcamper accepted or declined it.
 3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4d
    checkpointed) or explicitly skipped by the bootcamper.
 4. **Ready to proceed?**
