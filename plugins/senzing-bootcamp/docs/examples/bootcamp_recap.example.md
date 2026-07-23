@@ -5,6 +5,12 @@
 **Completed:** 2026-07-16T18:00:00-07:00
 **Programming language:** Java
 **Path:** Core
+**Plugin version:** 0.3.6
+**Operating system:** macOS 14.5 (Apple Silicon)
+**Python version:** 3.12.3
+**Language runtime:** OpenJDK 21.0.2
+**Senzing SDK:** 4.3.2
+**Database:** SQLite
 
 ---
 

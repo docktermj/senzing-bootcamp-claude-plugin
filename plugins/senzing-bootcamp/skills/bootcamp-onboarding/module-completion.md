@@ -33,6 +33,7 @@ sections: append only.
 
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
+the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"; and
 also include the chosen programming language and path (Core/Customized) when present):
 
 ```markdown
@@ -42,9 +43,15 @@ also include the chosen programming language and path (Core/Customized) when pre
 **Started:** {ISO 8601 timestamp with timezone offset}
 **Programming language:** {language}
 **Path:** {path}
+**Plugin version:** {plugin version}
 
 ---
 ```
+
+The **Run environment** provenance lines (operating system + architecture, Python version,
+language runtime, Senzing SDK, database) are added to this header at graduation, where they are
+current — see `../graduation/SKILL.md`. They are recorded in the recap only, never shown in the
+bootcamp output (INV-012).
 
 ### 2b. Append this module's section
 

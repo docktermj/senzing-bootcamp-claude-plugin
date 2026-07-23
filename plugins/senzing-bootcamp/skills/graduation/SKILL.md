@@ -145,6 +145,29 @@ This is the date the Certificate of Completion shows (INV-100), distinct from `*
 bootcamp spanning multiple days shows the graduation date, not the start date. The renderer prefers
 this `Completed` date and falls back to `Started` when it is absent.
 
+**Record the run environment (recap-only).** Ensure the recap header carries the plugin version and
+a run-environment provenance block, so the keepsake records which plugin version produced the run
+and the hardware/software it ran on. Add these header meta lines (in the preamble, above the first
+`## ` section) when absent, idempotently — leave existing lines intact:
+
+- `**Plugin version:**` — from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (should already be
+  present from the recap header; add it here if the header predates that field).
+- `**Operating system:**` — OS + architecture, reused from the detected/persisted values in
+  `config/bootcamp_preferences.yaml` (INV-061), e.g. `Ubuntu 24.04 (x86_64)`.
+- `**Python version:**` — the `python3 --version` of the environment.
+- `**Language runtime:**` — the bootcamper's chosen-language runtime and version (for a Python
+  bootcamp, the same Python).
+- `**Senzing SDK:**` — the Senzing SDK/engine version, obtained from the Senzing MCP tools (INV-080),
+  never guessed; "Unknown" if unavailable.
+- `**Database:**` — the database backend (e.g. SQLite, or PostgreSQL when chosen).
+
+The renderer renders `Plugin version` on the cover and the `Operating system` / `Python version` /
+`Language runtime` / `Senzing SDK` / `Database` lines as a distinct **Run environment** block (use
+exactly those key names so the renderer groups them). This block is written to `docs/bootcamp_recap.md`
+and the PDF only — it is **never** shown in the bootcamp output (INV-012) — and MUST NOT contain a
+hostname, username, IP address, or any other personal/host identifier (INV-065). Like every
+graduation step it warns-and-continues: if a value cannot be gathered, record "Unknown" and proceed.
+
 If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
 module interrupted before completion), fold its content into that module's
 `## {Module name}` section (append only), then remove the

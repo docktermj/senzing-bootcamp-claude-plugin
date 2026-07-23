@@ -30,7 +30,9 @@ Tell the bootcamper, in your own words:
 "I'm going to do some quick administrative setup: creating your project directory and checking
 your environment."
 
-Optionally show the plugin version (from `.claude-plugin/plugin.json`): `Senzing Bootcamp vX.Y.Z`.
+Read the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (the `version`
+field; use "Unknown" if unreadable) and hold it to display with the WELCOME banner (step 3) and to
+record in the recap.
 
 ## 0b. MCP health check (required)
 
@@ -88,6 +90,9 @@ then display the WELCOME banner:
 🎓🎓🎓  WELCOME TO THE SENZING BOOTCAMP!  🎓🎓🎓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+Then show the plugin version as a one-line statement (verbosity-aware — suppress under the
+`minimal` preset, one line otherwise, INV-011/INV-012): `Senzing Bootcamp vX.Y.Z`.
 
 Then give the overview (cover naturally, do not ask a question yet):
 

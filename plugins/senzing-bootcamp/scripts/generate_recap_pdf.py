@@ -433,6 +433,58 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         return False
 
 
+# Run-environment (hardware/software) meta keys, recorded in the recap for
+# provenance and rendered as a distinct "Run environment" block — never mixed into
+# the identity card and never placed on the certificate face. Matched case-folded.
+_ENV_KEYS = (
+    "operating system",
+    "python version",
+    "language runtime",
+    "senzing sdk",
+    "database",
+)
+
+
+def _is_env_key(key: str) -> bool:
+    return key.strip().lower().rstrip(":") in _ENV_KEYS
+
+
+def _partition_meta(
+    meta: List[Tuple[str, str]]
+) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """Split header meta into (identity rows, run-environment rows). Identity rows
+    (bootcamper, dates, language, path, plugin version) drive the cover card and the
+    certificate; environment rows render as their own block."""
+    ident = [(k, v) for k, v in meta if not _is_env_key(k)]
+    env = [(k, v) for k, v in meta if _is_env_key(k)]
+    return ident, env
+
+
+def _render_env_block(pdf, epw: float, env: List[Tuple[str, str]], top: float) -> None:
+    """Render the recap-only 'Run environment' provenance block (fpdf2 path)."""
+    if not env:
+        return
+    # If too close to the page bottom, start a fresh page so nothing draws off-page.
+    if top > pdf.h - 50:
+        pdf.add_page()
+        top = pdf.t_margin
+    pdf.set_xy(pdf.l_margin, top)
+    pdf.set_text_color(*NAVY)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(epw, 8, "Run environment")
+    pdf.ln(10)
+    for key, val in env:
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*SLATE)
+        pdf.set_font("Helvetica", "B", 9)
+        label = _safe(key.rstrip(":")) + ":  "
+        lw = pdf.get_string_width(label) + 1
+        pdf.cell(lw, 6, label)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(epw - lw, 6, _safe(_md_inline_to_text(val)))
+
+
 def _render_cover(pdf, epw: float, recap: Recap) -> None:
     pdf.add_page()
     # Navy header band with a gold accent rule.
@@ -491,8 +543,10 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
         align="C",
     )
 
-    # Two-column labeled metadata card, driven by the recap's meta rows.
-    rows = recap.meta or [("Bootcamper", "Bootcamper")]
+    # Two-column labeled metadata card, driven by the recap's identity meta rows
+    # (run-environment rows render as their own block below the module chips).
+    ident, env = _partition_meta(recap.meta)
+    rows = ident or [("Bootcamper", "Bootcamper")]
     card_x = pdf.l_margin + 15
     card_w = epw - 30
     col_w = card_w / 2.0
@@ -545,6 +599,10 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
             pdf.set_text_color(*INK)
             pdf.cell(w, 8.5, label, align="C")
             x += w + 4
+
+    # Run-environment provenance block (recap-only, INV-012), below the chips.
+    next_y = (y + 12) if recap.modules else (y0 + card_h + 12)
+    _render_env_block(pdf, epw, env, next_y)
 
 
 def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
@@ -898,7 +956,8 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         add(recap.title, "F2", 22, 0)
         add("Completion Recap", "F2", 14, 0)
         add("", "F1", 6, 0)
-        for key, val in recap.meta:
+        ident, env = _partition_meta(recap.meta)
+        for key, val in ident:
             add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 11, 0)
         completed = ", ".join(
             (f"Module {m.number}" if m.number is not None else m.title)
@@ -907,6 +966,11 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         if completed:
             add("", "F1", 4, 0)
             add_wrapped(f"Modules completed: {completed}", "F1", 11, 0)
+        if env:
+            add("", "F1", 6, 0)
+            add("Run environment", "F2", 12, 0)
+            for key, val in env:
+                add_wrapped(f"{key}: {_md_inline_to_text(val)}", "F1", 10, 6)
 
         for mod in recap.modules:
             add("", "F1", 10, 0)
