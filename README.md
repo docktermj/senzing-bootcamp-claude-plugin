@@ -80,7 +80,7 @@ You end with working Senzing code and data in your project (`src/`, `data/`, `da
 a professional recap PDF you can keep and share (e.g. [bootcamp_recap.pdf], but yours will differ),
 and a `production/` starter project.
 
-### Troubleshooting
+## Troubleshooting
 
 ### Claude code inoperative
 
