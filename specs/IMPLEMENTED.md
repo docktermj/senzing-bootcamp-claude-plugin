@@ -18,6 +18,48 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## module02-postgres-credentials-hardening
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Replaced the guessable `POSTGRES_PASSWORD=senzing` default in the Docker Postgres option with a generated per-project password (`python3 -c "import secrets; print(secrets.token_hex(16))"`), bound the published port to `127.0.0.1:5432:5432` instead of all interfaces, and documented reusing the baked-in password via `docker start` on resume (never regenerate). The engine-config step now notes the `SQL.CONNECTION` URL uses the generated value. Verified: no `PASSWORD=senzing` remains; port is localhost-bound; engine config still generated via `sdk_guide` (MCP-grounded).
+- **Commit:** uncommitted
+
+## model-effort-table-name-based
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/docs/model-selection.md`
+- **Summary:** Replaced bare "Module N" tokens in the model/effort guidance (prose + stage table) with module names, resolving the collision with the bootcamp-preparation 1–11 catalog (an LLM agent could otherwise apply Opus to the wrong module). Opus 4.8/high → SDK setup, Data quality & mapping, Graduation; Sonnet 5/high → Data processing; Sonnet 5/medium → the rest. Applied the identical fix to `model-selection.md`'s mirror stage table (which also had the bare numbers — the spec assumed only its per-skill table was affected) to keep the two in sync. Verified: no bare "Module N" remains in either stage table; mapping matches the per-skill table; remaining "Module N" hits are the INV-079 rule text and prose cross-references (out of scope). No bootcamper-facing change.
+- **Commit:** uncommitted
+
+## write-gate-tests
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `tests/test_write_gate.py` (new), `tests/README.md` (new)
+- **Summary:** Added a stdlib-`unittest` harness for the security-critical write-gate in a **top-level `tests/`** directory (not under `plugins/`, so `propagate.sh` never ships it). Tests invoke `write-gate.py` as a subprocess (it reads stdin at import time) with a temp project holding `config/bootcamp_progress.json`, asserting exit codes: location allow/block (`/tmp`, `/var/tmp`, Downloads, `%TEMP%`, `$TMPDIR`, home-relative), `..`-traversal, the project-under-`/tmp` exemption, the case-folded exemption, and secret detection (PEM/AWS/`AQAAAD`, with `.lic` paths and bare "AQAAAD" prose allowed). One-command run documented: `python3 -m unittest discover -s tests`. Verified: 23 tests pass; `tests/` is outside the propagation allowlist.
+- **Commit:** uncommitted
+
+## pr4-review-minor-fixes
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/scripts/capture_screenshots.py`, `plugins/senzing-bootcamp/scripts/write-gate.py`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `tests/test_brand_sync.py` (new)
+- **Summary:** Batched low-severity fixes: (1) `senzing_viz_server.py` settings file read via `with open(...)`; (2) `build_model` and snapshot-probe swallow-paths now write a `stderr` breadcrumb (still never raise, INV-077 preserved); (3) promoted the inlined brand-palette fallbacks in `senzing_viz_server.py` and `generate_recap_pdf.py` to named module-scope constants and added `tests/test_brand_sync.py`, which asserts they equal the `brand_tokens.py`-derived values (fails loudly on drift); (4) `capture_screenshots.py` waits on `load` + a bounded settle instead of `networkidle` for `file://` targets; (5) annotated the Module 3 checkpoint fields — `expected_merge_record_count` (pre-load expectation) vs `matches_verified` (post-load verified) are intentionally distinct, not a rename; (6) `write-gate.py` temp-path checks expressed as iterated `TEMP_PREFIXES`/`TEMP_SUBSTRINGS` tuples. Optional d3 SHA-pin left undone (version already in the file header). Verified: all scripts compile; brand-sync + write-gate tests pass; blocking behavior unchanged.
+- **Commit:** uncommitted
+
+## harden-write-gate
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/write-gate.py`, `specs/harden-write-gate.md`
+- **Summary:** Hardened the PreToolUse write-gate: (1) `os.path.expanduser` now expands a leading `~` before path classification, so home-relative system-temp/Downloads targets resolve to their real location; (2) the in-project exemption is case-folded with the same rule as the temp/Downloads checks, so a case-variant in-project path is exempted, not blocked; (3) the secret regex now flags `AQAAAD…` Senzing license blobs (long base64 tail keeps it off prose and `.lic` paths). Corrected the spec's first acceptance criterion, which wrongly listed `~/tmp/x` (a personal dir) as blocked — the gate blocks *system* temp/Downloads, not "outside the project" (per `PreToolUseWriteError.md`), so `~/tmp` correctly stays allowed. Verified via subprocess tests (see `write-gate-tests`): all criteria hold; PEM/AWS still blocked; gate still disabled outside a bootcamp and fail-open on bad payload.
+- **Commit:** uncommitted
+
+## escape-viz-snapshot-script-payload
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** Fixed the stored-XSS in the self-contained visualization snapshot: added a `_script_json` helper (escapes `<`/`>`/`&` as `\uXXXX`) and used it for the `write_snapshot` `__DATA__` payload embed and the `__SRC_COLORS__` embed, replacing bare `json.dumps` inside inline `<script>`. Verified: a `</script>`/`<img onerror=...>` in a data field is emitted as inert escaped text (no early script termination); the payload round-trips byte-identically once parsed; pure string transform, so the offline guarantee (INV-091) is preserved. Live `/api/*` JSON responses left unchanged (not an HTML-embed surface).
+- **Commit:** uncommitted
+
 ## show-plugin-version-and-record-environment
 
 - **Implemented:** 2026-07-23

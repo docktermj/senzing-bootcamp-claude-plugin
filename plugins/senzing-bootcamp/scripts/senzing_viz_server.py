@@ -74,6 +74,20 @@ from urllib.parse import urlparse, parse_qs
 # of the same values if the module is ever unavailable, so this script keeps working
 # in isolation (mirrors the vendored-D3 offline fallback).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Fallback palette, used only if brand_tokens is unavailable. Named at module scope
+# so tests/test_brand_sync.py can assert it stays equal to brand_tokens.py — the two
+# copies would otherwise drift silently (the runtime prefers the imported values
+# whenever brand_tokens loads, so a stale fallback is never exercised in practice).
+_FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
+_FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+_FALLBACK_BRAND = {
+    "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
+    "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
+    "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
+    "line": "#E5DFD3", "green": "#1D9E75",
+    "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
+    "code_font": "'Fira Code', 'Courier New', Courier, monospace",
+}
 try:
     import brand_tokens as _bt
 
@@ -86,17 +100,10 @@ try:
         "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
         "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
     }
-except Exception:  # defensive fallback — keep values in sync with brand_tokens.py
-    SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
-    FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
-    _BRAND = {
-        "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
-        "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
-        "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
-        "line": "#E5DFD3", "green": "#1D9E75",
-        "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
-        "code_font": "'Fira Code', 'Courier New', Courier, monospace",
-    }
+except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
+    FALLBACK_COLORS = list(_FALLBACK_COLORS)
+    _BRAND = dict(_FALLBACK_BRAND)
 
 
 # --------------------------------------------------------------------------- #
@@ -913,7 +920,7 @@ def render_page(title, data_shim="", probe_body=None):
         .replace("__CODE_FONT__", _BRAND["code_font"])
         .replace("__ACCENT_HOT__", _BRAND["accent_hot"])
         .replace("__ACCENT__", _BRAND["accent"])
-        .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
+        .replace("__SRC_COLORS__", _script_json(SOURCE_COLORS))
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())
     )
@@ -987,8 +994,11 @@ def build_model(settings, patterns):
     # single-record-only data set never blocks the model/snapshot build (INV-077).
     try:
         model.compute_feature_dist(engine, SzEngineFlags)
-    except Exception:
-        pass
+    except Exception as exc:  # non-fatal (INV-077): leave a breadcrumb, don't block
+        sys.stderr.write(
+            f"feature-score distribution unavailable (non-fatal): "
+            f"{type(exc).__name__}: {exc}\n"
+        )
     # Return the flags class too, so the why/how endpoints can use the
     # MCP-confirmed default flag groups (SZ_HOW_ENTITY_DEFAULT_FLAGS, etc.).
     return factory, model, engine, flags, SzEngineFlags
@@ -1000,6 +1010,20 @@ def _esc_html(s):
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
+    )
+
+
+def _script_json(obj):
+    """json.dumps safe to embed inside an inline <script> block. json.dumps does
+    not escape "<", so a data-sourced string containing "</script>" would close
+    the element early and let the remainder parse as HTML (a stored-XSS vector in
+    the self-contained snapshot). Escaping "<"/">"/"&" as \\uXXXX keeps the JSON
+    valid and byte-identical once parsed, but inert to the HTML parser."""
+    return (
+        json.dumps(obj)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
     )
 
 
@@ -1073,7 +1097,11 @@ def _snapshot_probe_html(model, engine, flags):
                 (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
                 hits[0] if hits else None,
             )
-        except Exception:
+        except Exception as exc:  # non-fatal (INV-077): fall back to merge data
+            sys.stderr.write(
+                f"snapshot probe search failed for {name!r} (non-fatal): "
+                f"{type(exc).__name__}: {exc}\n"
+            )
             res = None
         if res is None:  # search unavailable — render from the merge data itself
             res = {
@@ -1110,7 +1138,7 @@ def write_snapshot(model, engine, flags, title, out_path):
     # The embedded-data shim runs after D3 and before the page bootstrap, replacing
     # the fetch-based bootstrap with the inlined data.
     shim = (
-        "<script>const __DATA__=" + json.dumps(payload) + ";"
+        "<script>const __DATA__=" + _script_json(payload) + ";"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
@@ -1139,7 +1167,8 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     if os.path.exists(args.settings):
-        settings = open(args.settings, encoding="utf-8").read()
+        with open(args.settings, encoding="utf-8") as _sf:
+            settings = _sf.read()
     else:
         settings = os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", "")
     if not settings:

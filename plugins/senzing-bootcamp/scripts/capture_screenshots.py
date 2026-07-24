@@ -83,7 +83,11 @@ def _capture_playwright(url: str, outs: list) -> bool:
             wrote = False
             for out, (w, h, _label) in zip(outs, _VIEWS):
                 page = browser.new_page(viewport={"width": w, "height": h})
-                page.goto(url, wait_until="networkidle")
+                # A self-contained file:// page produces no network events, so
+                # "networkidle" can hang or fire inconsistently; wait for "load"
+                # and give the D3 force layout a bounded moment to settle.
+                page.goto(url, wait_until="load")
+                page.wait_for_timeout(1200)
                 page.screenshot(path=str(out), full_page=(_label == "tall"))
                 page.close()
                 wrote = out.is_file() or wrote

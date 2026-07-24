@@ -15,7 +15,8 @@ steering files.)
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
   best-value recommendation (see "Module start banners and transitions" below): a single 👉 switch
   question when the recommendation changes from the current stage, otherwise a brief statement. The
-  heavier Modules 2 and 5 and graduation warrant Opus 4.8 + high effort, lighter modules Sonnet 5.
+  heavier SDK setup and Data quality & mapping modules and graduation warrant Opus 4.8 + high
+  effort, lighter modules Sonnet 5.
   Do not change the session yourself — only the bootcamper can.
 
 ## Conversation protocol (the 👉 rules)
@@ -274,9 +275,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   | Stage | Recommended | CLI commands |
   |---|---|---|
-  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-  | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
-  | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
+  | Onboarding, Bootcamp preparation, Discover the Business Problem, System verification, Data collection, Query/Visualize/Discover, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | SDK setup, Data quality & mapping | Opus 4.8, high effort | `/model opus` · `/effort high` |
+  | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
 
   The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same

@@ -139,6 +139,10 @@ report's verification checks):
   "expected_entities": <entity_count>, "expected_merge_record_count": <largest_cluster_size>}}}
 ```
 
+`expected_merge_record_count` here is the pre-load *expectation*; the post-load *verified*
+count is recorded separately as `matches_verified` in the Step 7 `results_validation` check.
+The two are intentionally distinct fields (expected vs. verified), not a rename.
+
 ### Step 3: SDK Initialization
 
 Verify the Senzing SDK initializes correctly and connects to the database.

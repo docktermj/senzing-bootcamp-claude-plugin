@@ -432,14 +432,27 @@ the engine config with `sdk_guide(topic='configure', ...)` — never hand-constr
 
 **Option 1 — PostgreSQL in a Docker container:**
 
-1. Run an official `postgres` image with a stable `--name`, a **project-local volume** (data
-   persists in the working directory, not an ephemeral layer), and credentials:
+1. Generate a strong, project-specific database password **once** — it is baked into the
+   project-local volume on first initialization, so reuse the same value everywhere below and
+   never regenerate it on a later restart:
+
+   ```bash
+   python3 -c "import secrets; print(secrets.token_hex(16))"
+   ```
+
+   Then run an official `postgres` image with a stable `--name`, a **project-local volume** (data
+   persists in the working directory, not an ephemeral layer), the generated password (never the
+   guessable default `senzing`), and the port **bound to localhost only** (`127.0.0.1:`, so the
+   database is not exposed on other network interfaces):
 
    ```bash
    docker run -d --name bootcamp-postgres \
-     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=senzing -e POSTGRES_DB=G2 \
-     -p 5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
+     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=<generated-password> -e POSTGRES_DB=G2 \
+     -p 127.0.0.1:5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
    ```
+
+   On a later resume, restart the existing container with `docker start bootcamp-postgres` (which
+   preserves the baked-in password) rather than a fresh `docker run`.
 
 2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
    `config/bootcamp_progress.json` (at least its `name`) so the SessionEnd hook stops it on exit
@@ -458,7 +471,8 @@ the engine config with `sdk_guide(topic='configure', ...)` — never hand-constr
    Re-confirm the exact path via MCP; the Windows/macOS SDK install path differs (see the
    initialization anti-patterns doc).
 5. Wire the connection into the engine config (Step 8): the `SQL.CONNECTION` URL is
-   `postgresql://user:password@host:port/database` (MCP-confirmed). Generate the full engine config
+   `postgresql://user:password@host:port/database` (MCP-confirmed), where `password` is the
+   generated value from Step 1 (not the old `senzing` default). Generate the full engine config
    via `sdk_guide(topic='configure', ...)` and save it to `config/engine_config.json`.
 
 **Option 2 — Install PostgreSQL locally:** install and start a local PostgreSQL server, create the

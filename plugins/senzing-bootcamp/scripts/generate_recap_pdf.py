@@ -262,6 +262,14 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
 # visualization. Falls back to an inlined copy of the same values if that module is
 # unavailable, so a valid PDF is still always produced (INV-048/INV-066).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Fallback palette (RGB), used only if brand_tokens is unavailable. Named at module
+# scope so tests/test_brand_sync.py can assert it stays equal to the brand_tokens
+# values — the two copies would otherwise drift silently (INV-048/INV-066).
+_FALLBACK_RGB = {
+    "NAVY": (24, 22, 15), "BLUE": (245, 120, 38), "SLATE": (74, 70, 64),
+    "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
+    "GREEN": (29, 158, 117), "LINE": (229, 223, 211),
+}
 try:
     import brand_tokens as _bt
 
@@ -274,15 +282,15 @@ try:
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
-except Exception:  # defensive fallback — keep in sync with brand_tokens.py
-    NAVY = (24, 22, 15)
-    BLUE = (245, 120, 38)
-    SLATE = (74, 70, 64)
-    LIGHT = (250, 248, 243)
-    ACCENT = (255, 78, 31)
-    INK = (24, 22, 15)
-    GREEN = (29, 158, 117)
-    LINE = (229, 223, 211)
+except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    NAVY = _FALLBACK_RGB["NAVY"]
+    BLUE = _FALLBACK_RGB["BLUE"]
+    SLATE = _FALLBACK_RGB["SLATE"]
+    LIGHT = _FALLBACK_RGB["LIGHT"]
+    ACCENT = _FALLBACK_RGB["ACCENT"]
+    INK = _FALLBACK_RGB["INK"]
+    GREEN = _FALLBACK_RGB["GREEN"]
+    LINE = _FALLBACK_RGB["LINE"]
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
