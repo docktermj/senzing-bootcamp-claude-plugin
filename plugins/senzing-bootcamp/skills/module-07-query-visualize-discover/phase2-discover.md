@@ -59,7 +59,9 @@ the Module 5 loading results, or from the data sources in `config/data_sources.y
    data. Entities with one or more disclosed relationships are candidates for the Relationship
    Network demonstration (step 4d). Use relationship flags when calling
    `get_entity_by_record_id` so the response includes relationship information (look up the
-   flag names via `get_sdk_reference(topic='flags')`).
+   flag names via `get_sdk_reference(topic='flags', filter='get_entity_by_record_id')`, and the
+   response structure via `get_sdk_reference(topic='response_schemas',
+   filter='get_entity_by_record_id')` before parsing it — INV-115).
 4. **SDK flag usage:** explain your flag choices as you go. For example: "I'm using
    `get_entity_by_record_id` with relationship flags so we can see which entities connect to
    others. This helps me find good candidates for the relationship network demonstration."
@@ -98,8 +100,11 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      together. Use when you know exactly which two records to compare.
    - `why_entities`: compares two resolved entities and explains why they are (or are not) the
      same. Use when investigating whether two entities should merge, or auditing a split.
-3. **SDK flags:** generate the `why_records` (or `why_entities`) call with BOTH flags (confirm
-   their exact names via `get_sdk_reference(topic='flags')`):
+3. **SDK flags and response shape:** generate the `why_records` (or `why_entities`) call with
+   BOTH flags (confirm their exact names via `get_sdk_reference(topic='flags',
+   filter='why_records')`), and look up the response structure via
+   `get_sdk_reference(topic='response_schemas', filter='why_records')` before writing anything
+   that parses it (INV-115):
    - `SZ_INCLUDE_FEATURE_SCORES`: explain: "I'm using SZ_INCLUDE_FEATURE_SCORES so we can see
      the numeric similarity scores for each feature comparison. This tells us how closely each
      attribute matched between the two records."
@@ -160,8 +165,11 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
 1. **Entity selection:** select a multi-record entity with 3+ records from step 4a. State which
    entity and why: "I'll use Entity [ID], which has [N] records, enough construction steps to
    see a meaningful history of how Senzing built this entity over time."
-2. **SDK flag:** generate the `how_entity` call with the `SZ_INCLUDE_FEATURE_SCORES` flag
-   (confirm via `get_sdk_reference(topic='flags')`). Explain: "I'm using
+2. **SDK flag and response shape:** generate the `how_entity` call with the
+   `SZ_INCLUDE_FEATURE_SCORES` flag (confirm via `get_sdk_reference(topic='flags',
+   filter='how_entity_by_entity_id')`), and look up the response structure via
+   `get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id')` before
+   parsing it (INV-115). Explain: "I'm using
    SZ_INCLUDE_FEATURE_SCORES so we can see the scoring at each construction step. This shows
    how closely features matched each time a new record was added."
 3. **Chronological narrative presentation:** present the How Analysis output as a chronological

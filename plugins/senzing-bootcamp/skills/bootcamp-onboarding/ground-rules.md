@@ -58,8 +58,9 @@ steering files.)
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
 - **Tool routing:** attribute names / JSON mappings -> `mapping_workflow`; SDK code ->
-  `generate_scaffold` or `sdk_guide`; method signatures and flags -> `get_sdk_reference`; error
-  codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
+  `generate_scaffold` or `sdk_guide`; method signatures, flags, **and response structures** ->
+  `get_sdk_reference` (topics `flags` and `response_schemas`; narrow with `filter='<method>'`);
+  error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
 - Never hand-code Senzing JSON mappings or SDK method names.
@@ -67,8 +68,22 @@ steering files.)
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
   returns no answer, say so and point to <https://docs.senzing.com> / <support@senzing.com>.
 - **Flags:** before an SDK call that accepts flags, look them up with
-  `get_sdk_reference(topic='flags')`, pick the flags matching the bootcamper's intent, explain
-  the choice in one sentence, and reuse that knowledge within the module.
+  `get_sdk_reference(topic='flags', filter='<method>')`, pick the flags matching the
+  bootcamper's intent, explain the choice in one sentence, and reuse that knowledge within the
+  module.
+- **Response structures (INV-115).** Flags are only half the lookup. Before writing any code
+  that **parses** an SDK response, call
+  `get_sdk_reference(topic='response_schemas', filter='<method>')`. **Never infer field names
+  from an example snippet** — including the illustrative payloads in this plugin's own docs.
+  This matters more than flags do: a wrong flag usually yields a visible error, whereas a wrong
+  field name yields `None`, which renders as blank text. The output then looks like "Senzing
+  found nothing" instead of a defect, so nobody reports it.
+- **Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
+  **probable wrong field name first and absent data second** — verify against
+  `response_schemas`, or dump one raw response and read it, before rendering. Never present a
+  blank value as a real result: say "no value returned for X" so the failure is visible. Note
+  `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
+  under `MATCH_INFO`), the raw-response dump is the authority.
 - **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
   bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
   examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via

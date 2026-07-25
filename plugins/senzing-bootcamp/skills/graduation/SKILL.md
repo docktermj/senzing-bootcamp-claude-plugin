@@ -62,10 +62,11 @@ them to one line under `concise`. Refer to modules by name, never number (INV-07
 2. **Before / After.** Before: every module is complete and your data is resolved, but your work
    still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
    (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
-3. **What we'll do.** A brief numbered overview of graduation's steps: (1) normalize the `docs/`
-   Markdown and render the recap PDF keepsake, (2) build the `production/` project, (3) create a
+3. **What we'll do.** A brief numbered overview of graduation's steps: (1) note anything that
+   tripped us up this session, so the bootcamp itself improves, (2) normalize the `docs/`
+   Markdown and render the recap PDF keepsake, (3) build the `production/` project, (4) create a
    silent revisit/resume bundle — a database backup plus a return guide — so you can come back
-   later (INV-094), and (4) close with the END OF SENZING BOOTCAMP banner.
+   later (INV-094), and (5) close with the END OF SENZING BOOTCAMP banner.
 4. **Estimated time.** Give an honest, range-based estimate caveated per INV-096 — e.g.
    "⏱️ Roughly 5–15 minutes, depending on your workstation, the database backup size, and PDF
    rendering speed." If no meaningful estimate is possible, say "hard to estimate" rather than
@@ -128,6 +129,56 @@ Gather context before any step. Do this silently.
    — graduation is non-blocking and the generator still renders a certificate, warning on stderr
    that it used the "Bootcamper" placeholder. **Never print a rejected system-account value** on the
    certificate or into the recap (INV-065); ask, and use the answer.
+
+## Step 0: Session retrospective (self-observed feedback)
+
+Run this **before** Step 1 renders the recap PDF. Every feedback entry the plugin has ever
+collected exists because the *bootcamper* noticed something and said so. That sensor is blind to
+the most valuable class of defect: **the kind that looks like it worked** — a wrong field name that
+renders blank, a tool that behaves differently than documented, a workaround you applied so
+smoothly nobody registered it as friction. This step is the plugin's second sensor, and it does not
+depend on the bootcamper noticing anything.
+
+Review **this session** for four categories:
+
+- **False starts** — an approach you began and abandoned.
+- **Errors** — commands, compiles, or tool calls that failed and had to be retried differently.
+- **Course corrections** — a stated plan or hypothesis that measurement disproved.
+- **Learnings** — anything you discovered about the environment, the SDK, or the MCP tools that is
+  not in the plugin's documentation.
+
+⛔ **The inclusion test is recurrence, not embarrassment: "would this happen to another
+bootcamper?"** A one-off typo is noise. A documented tool that behaves differently than documented
+is signal — file it. Do not soften a finding to look better, and do not manufacture findings to
+look thorough; if the session genuinely produced none, write nothing and say so in one line.
+
+For each finding, append a `## Improvement:` entry to
+`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` using the **exact template** in
+`../bootcamp-onboarding/feedback.md` Step 3 (append only — never rewrite the file), with:
+
+- **`Source:` `self-observed (assistant retrospective)`** — not `bootcamper-reported` (INV-116).
+  A maintainer must be able to tell the two apart; they deserve different weight.
+- **`Module:`** the module where the friction occurred, even though you are filing at graduation.
+- The same **Context when reported** block, describing what *you* hit rather than what the
+  bootcamper saw.
+
+Then **verify it landed**: re-read the file and confirm each entry is present, exactly as
+`../bootcamp-onboarding/feedback.md` Step 3b requires. An unwritten retrospective is worse than
+none, because nobody is watching for it.
+
+Constraints:
+
+- **Non-blocking.** A retrospective that fails, finds nothing, or cannot review the session must
+  never hold up graduation. Report and continue.
+- **Not a gate.** Announce it in one line — "📝 Filed N self-observed notes to
+  `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`." — and continue in the same turn. This is
+  not a 👉 question, and the bootcamper is never asked to author or approve it.
+- **No feedback-flow banners.** The entry/exit banners in `../bootcamp-onboarding/feedback.md`
+  mark the boundary of the *bootcamper-driven* feedback flow (INV-088). This is a graduation step,
+  not that flow — do not present them.
+- **PII boundary.** Same rule as the recap (INV-065): no hostname, username, IP address, or other
+  personal/host identifier. OS/architecture, plugin version, and model/effort are diagnostic
+  context and are permitted — the line is personal/host identifiers, not environment facts.
 
 ## Step 1: Finalize the recap and render the recap PDF
 

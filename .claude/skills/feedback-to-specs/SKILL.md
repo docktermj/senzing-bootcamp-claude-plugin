@@ -39,13 +39,31 @@ Read the whole file.
 
 Feedback is usually a series of `## Improvement: <title>` blocks with subsections
 (**What happened**, **Why it matters**, **Suggested fix**, **Context when
-reported**), plus **Date**, **Module**, and **Priority** lines. Handle free-form
-prose too — bootcampers do not always follow the template.
+reported**), plus **Date**, **Module**, **Priority**, and **Source** lines. Handle
+free-form prose too — bootcampers do not always follow the template.
 
 For each item, extract: `title`, `symptom` (what happened, with any verbatim
 error/output), `impact` (why it matters), `suggested_fix`, `priority`, `module`,
-and `date`. Skip the file's header/placeholder sections (e.g. an empty "Your
-Feedback" heading with no content).
+`date`, and `source`. Skip the file's header/placeholder sections (e.g. an empty
+"Your Feedback" heading with no content).
+
+**`Source:` — who noticed it.** Two values (absent means `bootcamper-reported`):
+
+- **`bootcamper-reported`** — a human hit this and said so. It is real, felt
+  friction: someone's experience was degraded enough that they stopped to report
+  it. Weight impact accordingly.
+- **`self-observed (assistant retrospective)`** — the graduation retrospective
+  filed it. These skew toward the defect class a bootcamper *cannot* report:
+  silently-wrong output, undocumented environment gotchas, tools behaving
+  differently than documented. A bootcamper never files "the field name was wrong
+  so the section rendered empty," because on screen that looks like no data.
+
+Do **not** treat self-observed items as lower priority by default — they are
+often more severe precisely because nobody would otherwise catch them. Do use the
+distinction when a spec's `## Problem` needs to say who experienced what: attribute
+bootcamper-reported items to the bootcamper's experience, and self-observed ones to
+what the assistant hit, without implying a user complained. Record the value in the
+spec's `## Source` block so the provenance survives into implementation.
 
 ## Step 3: Load triage context (do this before writing anything)
 

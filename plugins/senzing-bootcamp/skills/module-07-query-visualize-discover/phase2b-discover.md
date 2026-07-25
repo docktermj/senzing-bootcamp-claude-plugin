@@ -26,10 +26,16 @@ connections between entities using `find_network` and `find_path`.
    attributes. State which and why: "I'll use Entities [ID1], [ID2], and [ID3], which have
    disclosed relationships or shared attributes. These give us a connected set of entities to
    explore as a network."
-2. **Flag lookup:** before generating the `find_network` or `find_path` calls, look up available
-   flags:
-   - `get_sdk_reference(method='find_network', topic='flags')` for network exploration.
-   - `get_sdk_reference(method='find_path', topic='flags')` for path finding.
+2. **Flag and response-shape lookup:** before generating the `find_network` or `find_path` calls,
+   look up available flags **and the response structure** (the narrowing parameter is `filter`,
+   not `method`):
+   - `get_sdk_reference(topic='flags', filter='find_network')` and
+     `get_sdk_reference(topic='response_schemas', filter='find_network')` for network exploration.
+   - `get_sdk_reference(topic='flags', filter='find_path')` and
+     `get_sdk_reference(topic='response_schemas', filter='find_path')` for path finding.
+
+   ⛔ **Look up the response structure before writing any code that parses the response — never
+   infer field names from an example snippet** (INV-115).
 
    Select flags appropriate for relationship exploration and explain each: "I'm using [flag] so
    we can see [what it provides]." For example: "I'm using [relationship detail flag] so we can

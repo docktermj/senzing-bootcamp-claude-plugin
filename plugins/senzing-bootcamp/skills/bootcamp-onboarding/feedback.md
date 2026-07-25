@@ -85,6 +85,7 @@ rewrite the file, so earlier entries are preserved.
 **Date:** YYYY-MM-DD
 **Module:** [module name or "General"]
 **Priority:** [High/Medium/Low]
+**Source:** bootcamper-reported
 
 ### What happened
 
@@ -113,6 +114,12 @@ rewrite the file, so earlier entries are preserved.
 - **Expected behavior:** [what the active hooks/skills/ground-rules imply should happen]
 - **Divergence:** [why expected did not match actual]
 ```
+
+**`Source:`** distinguishes who noticed the problem (INV-116). This bootcamper-driven flow always
+writes `bootcamper-reported`. The graduation retrospective (`../graduation/SKILL.md`) reuses this
+same template and durability check to file findings the **assistant** noticed, marked
+`self-observed (assistant retrospective)` — a maintainer triaging the file needs to tell real user
+friction from the assistant's own stumbles, because the two deserve different weight.
 
 ## Step 3b: Verify it landed (durability)
 

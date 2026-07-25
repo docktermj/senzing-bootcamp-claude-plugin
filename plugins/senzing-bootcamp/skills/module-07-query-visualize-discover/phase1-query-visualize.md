@@ -58,10 +58,22 @@ language='<lang>', version='current')`.
 **Flags:** when generated query code calls SDK methods that accept flags (`get_entity`,
 `get_entity_by_record_id`, `search_by_attributes`, `how_entity`, `why_entities`, `why_records`,
 `why_record_in_entity`, `find_network`, `find_path`), look up available flags via
-`get_sdk_reference(topic='flags')` (filter by method name) and select the flags matching the
+`get_sdk_reference(topic='flags', filter='<method>')` and select the flags matching the
 bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag] so we can see
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
 and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
+
+⛔ **Response shapes (INV-115).** Flags are only half the lookup. Before writing any code that
+*parses* a response, also call `get_sdk_reference(topic='response_schemas', filter='<method>')`
+— **never infer field names from an example snippet.** Wrong field names do not raise: they
+render as blank text, so the output looks like "Senzing found nothing" rather than a bug.
+`response_schemas` documents the top-level shape per method; for deeper nesting (anything under
+`MATCH_INFO`), dump one raw response and read it before writing the parser.
+
+**Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
+**probable wrong field name first and absent data second**. Verify against `response_schemas` or
+a dumped raw response before rendering. Never render a blank value as though it were a real
+result — say "no value returned for X" so the failure is visible.
 
 **CRITICAL, file placement:** if the generated scaffold uses `/tmp/`, `ExampleEnvironment`, or
 any path outside the working directory, override the database path to `database/G2C.db` and

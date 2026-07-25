@@ -42,8 +42,11 @@ Senzing database (`database/G2C.db`) or its internal tables (`RES_ENT`, `OBS_ENT
 `DSRC_RECORD`, `LIB_FEAT`, `RES_REL`, etc.). Every entity operation goes through the SDK:
 
 - **Search, get entity, why-matched, how-built, network, path** → generate SDK code via
-  `get_sdk_reference` (flags and method signatures) plus `sdk_guide` / `reporting_guide`
-  (topic `entity_views` for get/why/how patterns, topic `graph` for network/path patterns).
+  `get_sdk_reference` (flags, method signatures, **and response structures** — topics `flags`
+  and `response_schemas`, narrowed with `filter='<method>'`) plus `sdk_guide` /
+  `reporting_guide` (topic `entity_views` for get/why/how patterns, topic `graph` for
+  network/path patterns). Look up the response shape **before** writing code that parses it
+  (INV-115); a wrong field name renders blank rather than raising.
 - **Counts, stats, quality, reporting and visualization data** → `reporting_guide` (topics
   `reports`, `quality`, `evaluation`, `dashboard`, `graph`).
 

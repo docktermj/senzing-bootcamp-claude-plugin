@@ -192,13 +192,43 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 }
 ```
 
+> ⛔ **The JSON payloads below illustrate SHAPE, not field names (INV-115).** They are examples,
+> not authority. Before writing any code that parses an SDK response, call
+> `get_sdk_reference(topic='response_schemas', filter='<method>')`; for nesting deeper than that
+> topic documents, dump one raw response and read it. A wrong field name does not raise — it
+> yields `None` and renders blank, so the output reads as "Senzing found nothing" rather than a
+> bug. Three such mistakes shipped silently in one bootcamp before anyone noticed.
+>
+> **MCP-confirmed response paths** (verified 2026-07-25 against `get_sdk_reference` and
+> `search_docs`; re-verify rather than trusting this list):
+>
+> | Method | Confirmed paths |
+> |---|---|
+> | `get_entity_by_entity_id` / `get_entity_by_record_id` | `RESOLVED_ENTITY.ENTITY_ID`, `.ENTITY_NAME`, `.FEATURES`, `.RECORD_SUMMARY`, `.RECORDS[]` with `.DATA_SOURCE` / `.RECORD_ID` / `.MATCH_KEY` / `.MATCH_LEVEL_CODE` / `.ERRULE_CODE`; `RELATED_ENTITIES[]` with `.ENTITY_ID` / `.MATCH_LEVEL_CODE` / `.MATCH_KEY` / `.IS_DISCLOSED` / `.IS_AMBIGUOUS` |
+> | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]` (carries `MATCH_INFO`), `ENTITIES[]` |
+> | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
+> | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
+> | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]` |
+>
+> **Watch this asymmetry — it is a silent-blank trap.** With `SZ_INCLUDE_MATCH_KEY_DETAILS`, the
+> match-key breakdown sits under a **differently named key** depending on the call: `why_*` puts a
+> **`WHY_KEY_DETAILS`** object inside `MATCH_INFO`, while `how_entity_by_entity_id` puts a
+> **`MATCH_KEY_DETAILS`** object inside each resolution step's `MATCH_INFO`. Both contain
+> `CONFIRMATIONS` (and optionally `DENIALS`). Reusing one parser for both silently yields nothing.
+>
+> Field names *inside* those `CONFIRMATIONS` entries, and the exact `FEATURE_SCORES` path, are
+> **not** documented by `response_schemas` — dump a raw response to confirm them. Do not copy
+> field names from any prior implementation, this file included.
+
 **`GET /api/why?entity_id=<id>`:** Explain WHY the records in an entity resolved together
 
 Backed by `why_records` (comparing two of the entity's constituent records) or, for a
 single-record entity, `why_record_in_entity`. Use the `SZ_WHY_RECORDS_DEFAULT_FLAGS` /
 `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS` group (these include `SZ_INCLUDE_FEATURE_SCORES`; add
-`SZ_INCLUDE_MATCH_KEY_DETAILS` for match-key breakdowns) — confirm exact method/flag names via the
-Senzing MCP server (`get_sdk_reference`).
+`SZ_INCLUDE_MATCH_KEY_DETAILS` for match-key breakdowns) — confirm exact method/flag names **and
+the response structure** via the Senzing MCP server (`get_sdk_reference`, topics `flags` and
+`response_schemas`).
 
 ```json
 {
@@ -331,7 +361,16 @@ graph.
 
 The Record Merges tab and each Search / Probe result carry **Why?** and **How?** actions that call
 `/api/why` and `/api/how` and render the explanation (match keys, feature scores, construction
-steps) in a modal. The Merge Statistics histogram bars are clickable (driven by `bucket_entities`),
+steps) in a modal.
+
+**Distinguish "no data returned" from "rendered empty" (INV-115).** Where the UI renders a parsed
+field — a feature-score table, a match key, a resolution step — an absent or blank value MUST be
+labeled as such ("no feature scores returned for this entity"), never rendered as an empty row,
+empty cell, or bare punctuation. A wrong field name and genuinely empty data look identical
+otherwise, and the wrong-field case is the far likelier of the two. This is what makes the failure
+visible to whoever is looking at the screen; it is the defense that survives a future field rename,
+and it matters more once a plain-language summary replaces the raw JSON, because a mis-named field
+becomes a blank cell rather than visibly-absent JSON. The Merge Statistics histogram bars are clickable (driven by `bucket_entities`),
 listing the entities in each bucket and linking each to its **How?** explanation.
 
 **Static snapshot degradation:** the standalone snapshot has no live backend, so `why`/`how` and
