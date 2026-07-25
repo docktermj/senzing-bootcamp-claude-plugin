@@ -88,6 +88,13 @@ REQUIRED_SECTIONS = [
     "End-of-Module Summary",
 ]
 
+# Shown on the Certificate of Completion (INV-100) when the recap carries no
+# bootcamper name. Both renderers reach it through `_cert_fields`; `main()` warns
+# on stderr whenever it is used (INV-113) — a certificate is the one artifact
+# where a placeholder name is immediately visible and permanently wrong, so the
+# substitution must never be silent.
+CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
+
 # Minimum share of the input's content-bearing characters that must survive into
 # the parsed recap. Below this the input is treated as "not a recap" rather than
 # "an imperfect recap" and no PDF is written (see the module docstring).
@@ -804,7 +811,11 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
             completed = v
         elif k in ("started", "date") and not started:
             started = v
-    name = name or "Bootcamper"
+    # Substitution is silent here on purpose: the fpdf2 renderer runs a measure
+    # pass plus a real pass, so this helper is called twice per render. The
+    # user-facing warning is emitted once from main() via
+    # `recap_missing_certificate_name` instead.
+    name = name or CERTIFICATE_NAME_PLACEHOLDER
     raw_date = completed or started
     date = _format_date(raw_date) if raw_date else ""
     labels = [
@@ -812,6 +823,21 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
         for m in recap.modules
     ]
     return name, date, labels
+
+
+def recap_missing_certificate_name(recap: Recap) -> bool:
+    """True when the recap carries no bootcamper name for the certificate.
+
+    The Certificate of Completion (INV-100) then renders
+    ``CERTIFICATE_NAME_PLACEHOLDER``. Callers warn on this rather than letting a
+    placeholder name ship silently — it is the one artifact where a wrong name is
+    immediately visible and permanently wrong.
+    """
+    for key, val in recap.meta:
+        k = key.strip().lower().rstrip(":")
+        if k in ("bootcamper", "name") and _md_inline_to_text(val).strip():
+            return False
+    return True
 
 
 def _render_certificate(pdf, recap: Recap) -> None:
@@ -1419,6 +1445,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             "general-purpose Markdown renderer. No PDF was written.\n"
         )
         return 1
+
+    # Input-quality warning, emitted once (the fpdf2 renderer itself runs two
+    # passes). Never fatal: graduation is non-blocking and a certificate with a
+    # placeholder name still beats no PDF — but it must not be silent.
+    if recap_missing_certificate_name(recap):
+        sys.stderr.write(
+            f'WARNING: no bootcamper name found in {inp}; the Certificate of '
+            f'Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
+            f'"**Bootcamper:** <name>" line to the recap preamble to fix it.\n'
+        )
 
     used = "fpdf2"
     ok = render_with_fpdf2(recap, out)

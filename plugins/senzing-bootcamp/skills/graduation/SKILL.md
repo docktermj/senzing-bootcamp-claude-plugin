@@ -78,7 +78,7 @@ forward is the recap PDF and the `production/` project.
 ## Best-value model/effort prompt
 
 After the preface, prompt for the best-value model/effort before the heavier graduation work.
-Graduation is correctness-critical (Opus 4.8 + high effort) and steps up from the Module 7
+Graduation is correctness-critical (Opus 5 + high effort) and steps up from the Module 7
 recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
@@ -88,7 +88,7 @@ On the **CLI**, pin the switch question verbatim:
 
 On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent (INV-098):
 
-> 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
 
 The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
 telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI, or
@@ -111,6 +111,23 @@ Gather context before any step. Do this silently.
 1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract `name`, `language`, `path` (Core/Customized; older sessions may store this as `track`), `selected_modules`, `database` (SQLite/PostgreSQL), and `data_sources` if present.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
 3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
+4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
+   preparation and never asked (INV-076), so it can be absent or unsuitable. Treat it as **unusable**
+   only when it is missing, empty/whitespace, or clearly not a person's display name — a known
+   system/service account (`root`, `ubuntu`, `ec2-user`, `admin`, `runner`), a value containing no
+   letters, an email address or `@handle`, or a bare lowercase token identical to the OS username.
+   Be conservative: a plausible real name must **never** trigger the question, because asking
+   someone their name right after correctly detecting it is its own defect (INV-006).
+
+   When it is unusable, ask this once, pinned verbatim (INV-056), **before** Step 1 renders the PDF:
+
+   > 👉 **What name would you like printed on your Certificate of Completion?**
+
+   Persist the answer as `name` in `config/bootcamp_preferences.yaml` so a re-render or a resumed
+   session never asks again (INV-006). If the bootcamper declines or gives nothing usable, continue
+   — graduation is non-blocking and the generator still renders a certificate, warning on stderr
+   that it used the "Bootcamper" placeholder. **Never print a rejected system-account value** on the
+   certificate or into the recap (INV-065); ask, and use the answer.
 
 ## Step 1: Finalize the recap and render the recap PDF
 
@@ -267,7 +284,7 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 - **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over.
 - **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognisable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain a comma (e.g. "Query, Visualize and Discover"). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ## Step 2: Build the production project

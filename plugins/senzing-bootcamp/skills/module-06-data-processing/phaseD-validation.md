@@ -162,7 +162,7 @@ Route on the UAT / match-accuracy results:
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question.
-- **UAT <80%:** state "Results need improvement — I recommend going back to Data quality & mapping
+- **UAT <80%:** state "Results need improvement — I recommend going back to Data Quality, Mapping, and Transformation
   to refine the mapping." and proceed to the transition question.
 - **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
   (neutral lead + numbered list, INV-051):

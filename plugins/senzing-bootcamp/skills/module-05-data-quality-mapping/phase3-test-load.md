@@ -5,7 +5,7 @@ render them. Signal a stop by ending the turn on the single 👉 question and wa
 
 > **This phase is optional.** Bootcampers who prefer to write custom loading programs can skip
 > Phase 3 and proceed directly to Data processing. Phase 3 uses `mapping_workflow` steps 5–8 to give
-> immediate feedback on ER quality without leaving Data quality & mapping.
+> immediate feedback on ER quality without leaving Data Quality, Mapping, and Transformation.
 
 > **Entry from the Step 5 `detect_environment` menu:** Phase 3 is entered from the
 > `detect_environment` menu handled in `phase2-data-mapping.md` (step 11). When the bootcamper

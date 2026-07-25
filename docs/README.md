@@ -35,7 +35,7 @@ and starting the Bootcamp.
     ```
 
 1. *Command line options:* run most of the bootcamp on **Sonnet 5** for
-   the best value and switch up to **Opus 4.8** for the correctness-critical
+   the best value and switch up to **Opus 5** for the correctness-critical
    stretches: Modules 2 and 5, and graduation.
 
    For the smoothest ride, run Claude with `--permission-mode auto`.

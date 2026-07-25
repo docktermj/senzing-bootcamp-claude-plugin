@@ -157,7 +157,7 @@ Explain first, as a statement: their loaded data and query programs will be pres
 remapping, they'll reload the affected sources and re-evaluate here. Then end the turn on this
 single question:
 
-👉 **Would you like to return to the Data quality & mapping module to refine your data mapping?**
+👉 **Would you like to return to the Data Quality, Mapping, and Transformation module to refine your data mapping?**
 
 *(Internal: end the turn on this question and wait.)*
 

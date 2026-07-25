@@ -379,7 +379,7 @@ Once all sources are mapped, **complete the module** — this is Module 5's comp
 the optional Phase 3 was not taken. Run the standard **Module Completion** process in
 `../bootcamp-onboarding/module-completion.md`: present the end-of-module summary (INV-032), append
 the name-based Module 5 recap section to `docs/bootcamp_recap.md` (INV-085), show the
-`✅ Module complete: Data quality & mapping` line (INV-079), and end the turn on the pinned
+`✅ Module complete: Data Quality, Mapping, and Transformation` line (INV-079), and end the turn on the pinned
 transition 👉 question naming the **next selected module** from `selected_modules` (INV-076 / INV-079):
 
 👉 **Are you ready to move on to the next module: {next module name}?**
@@ -387,7 +387,7 @@ transition 👉 question naming the **next selected module** from `selected_modu
 *(Internal: end the turn on this question and wait.)*
 
 Do **not** choose the next module by re-checking SDK state — `selected_modules` already fixes the
-order (SDK setup precedes Data quality & mapping; Data processing follows it). **Run Module
+order (SDK setup precedes Data Quality, Mapping, and Transformation; Data processing follows it). **Run Module
 Completion exactly once:** if the bootcamper took Phase 3 and its step 26 already completed the
 module (`data_quality_mapping` is already in `modules_completed`), skip completion here and present
 only the transition.

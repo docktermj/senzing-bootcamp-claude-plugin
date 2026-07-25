@@ -52,13 +52,13 @@ run unless its prerequisite is also included.
 | 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` |
 | 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03b-truthset-visualization` |
 | 7 | Data collection | Required | `module-04-data-collection` |
-| 8 | Data quality & mapping | Required — Requires "Data collection" | `module-05-data-quality-mapping` |
-| 9 | Data processing | Required — Requires "Data quality & mapping" | `module-06-data-processing` |
+| 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `module-05-data-quality-mapping` |
+| 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `module-06-data-processing` |
 | 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `module-07-query-visualize-discover` |
 | 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` |
 
 Because **Graduation is required** and it requires "Query, Visualize and Discover", which requires
-"Data processing", which requires "Data quality & mapping", which requires "Data collection", that
+"Data processing", which requires "Data Quality, Mapping, and Transformation", which requires "Data collection", that
 whole downstream chain is always included. So the genuinely deselectable modules are exactly three:
 **Entity Resolution Concepts**, **System verification**, and **Truth Set visualization** (and
 deselecting System verification forces deselecting Truth Set visualization, which requires it).

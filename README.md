@@ -16,7 +16,7 @@ to working entity resolution:
 - System Verification
 - An interactive web app of the resolved Truth Set data. *(optional)*
 - Identify and Collect Data Sources
-- Data Quality & Mapping
+- Data Quality, Mapping, and Transformation
 - Data Processing
 - Query, Visualize, and Discover
 - Graduation

@@ -51,14 +51,23 @@ Consequences:
 ## Model tiers (for "best value")
 
 Approximate positioning (verify current pricing/availability before relying on
-the numbers):
+the numbers — see the staleness note below):
 
 | Model | Tier | ~Price (in/out per MTok) | Adaptive thinking | Notes |
 |---|---|---|:---:|---|
 | Fable 5 (`claude-fable-5`) | Top | ~$10 / ~$50 | Always on | Most capable; for long-running agents; slower; ~2× Opus cost |
-| Opus 4.8 (`claude-opus-4-8`) | High | ~$5 / ~$25 | Yes | Complex agentic coding default |
+| Opus 5 (`claude-opus-5`) | High | ~$5 / ~$25 | Yes | Complex agentic coding default |
 | Sonnet 5 (`claude-sonnet-5`) | Mid | ~$3 / ~$15 | Yes | Speed/cost/capability sweet spot |
 | Haiku 4.5 (`claude-haiku-4-5`) | Budget | ~$1 / ~$5 | **No** | Fastest; no adaptive thinking |
+
+> **Point-in-time data — re-verify before relying on it.** Model names, IDs, and
+> prices above are a snapshot, **last verified 2026-07-25** against current Claude
+> documentation. They go stale whenever a new model ships. Two known triggers:
+> Sonnet 5's listed rate is its standard price — an introductory rate applies
+> through 2026-08-31, so the effective cost is lower until then; and Opus 5 is
+> priced identically to the model it replaced (Opus 4.8, at the same ~$5 / ~$25),
+> which will not stay true across future releases. Re-verify names, IDs, and
+> pricing against current Claude documentation rather than trusting this table.
 
 For a protocol-heavy (⛔ gates, INV-056 pinned wording, one-👉-per-turn),
 MCP-first teaching plugin, Haiku's lack of adaptive thinking is a real risk of
@@ -72,14 +81,14 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 |---|---|:---:|---|
 | `bootcamp-onboarding` | Gated preface, exact-wording gates, preference capture | Sonnet 5 | Protocol adherence needs adaptive thinking + strong instruction-following; no heavy code → Opus overkill, Haiku risky |
 | `module-01-business-problem` | Discovery conversation, document the problem | Sonnet 5 | Conversation-led, light technical |
-| `module-02-sdk-setup` | Cross-platform install, license/engine/DB config, build-from-source recovery | Opus 4.8 | Largest skill, most error-prone, platform-specific; install/config errors are high-cost |
+| `module-02-sdk-setup` | Cross-platform install, license/engine/DB config, build-from-source recovery | Opus 5 | Largest skill, most error-prone, platform-specific; install/config errors are high-cost |
 | `module-03-system-verification` | Verify end-to-end, report | Sonnet 5 | Mostly run / check / report |
 | `module-03b-truthset-visualization` | Load Truth Set, run viz server, visualize | Sonnet 5 | Mostly run / render |
 | `module-04-data-collection` | Gather sources into `data/raw/` | Sonnet 5 | Data wrangling + light code |
-| `module-05-data-quality-mapping` | Quality scoring + mapping to the Entity Spec via `mapping_workflow` | Opus 4.8 | Mapping correctness drives resolution quality — the technical crux |
+| `module-05-data-quality-mapping` | Quality scoring + mapping to the Entity Spec via `mapping_workflow` | Opus 5 | Mapping correctness drives resolution quality — the technical crux |
 | `module-06-data-processing` | Load mapped data (SDK), validate, load-safety rails | Sonnet 5 (Opus if bespoke load code) | Heavy mapping already spent in M5; M6 executes/validates with guardrails |
 | `module-07-query-visualize-discover` | Query SDK code, visualize, discovery | Sonnet 5 | Iterative query/exploration; Sonnet's speed suits it |
-| `graduation` | Recap reconcile, PDF, production project (code/config/docs), report | Opus 4.8 | Crown-jewel deliverable; production code/config correctness matters most |
+| `graduation` | Recap reconcile, PDF, production project (code/config/docs), report | Opus 5 | Crown-jewel deliverable; production code/config correctness matters most |
 
 ## Module-start commands (the nudge)
 
@@ -87,7 +96,17 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 at the start of each module (and `graduation/SKILL.md` at the graduation banner): a single 👉
 switch question when the recommendation changes from the current stage, otherwise a brief
 statement. Switching is optional; the session-level model/effort persists for the session
-(unlike per-skill frontmatter). Keep this table in sync with the mirror in `ground-rules.md`.
+(unlike per-skill frontmatter).
+
+> **`ground-rules.md` is the authoritative copy of this table; the copy below is derived.**
+> `ground-rules.md` is the file the guide actually loads at module start, so the operational values
+> must live there — a nudge that first had to fetch this maintainer doc could silently misfire, and
+> INV-063 mandates the nudge. Change `ground-rules.md` first, then mirror it here.
+>
+> The two are not kept in sync by hand: `tests/test_model_guidance_sync.py` asserts they are
+> identical row for row, that no superseded model name or ID appears in any shipped or
+> user-facing doc, and that this file carries a dated verification note (INV-114). Editing one
+> table without the other fails the suite.
 
 The nudge adapts to the Claude application surface (INV-098): the **Recommended** column is
 surface-neutral; the **CLI commands** column is the Claude Code equivalent. On Desktop, web, or an
@@ -97,9 +116,9 @@ rather than the slash commands.
 | Stage | Recommended | CLI commands |
 |---|---|---|
 | Onboarding, Bootcamp preparation, Discover the Business Problem, System verification, Data collection, Query/Visualize/Discover, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-| SDK setup, Data quality & mapping | Opus 4.8, high effort | `/model opus` · `/effort high` |
+| SDK setup, Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
 | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
-| Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+| Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
 ## Recommendation
 
@@ -107,13 +126,13 @@ Because skill overrides reset per prompt, realize the evaluation through the
 **session** model — not per-skill frontmatter:
 
 - **Value-optimized (the `README.md` default):** run the session on **Sonnet 5**,
-  and switch the session up to **Opus 4.8** for the correctness-critical stretches
+  and switch the session up to **Opus 5** for the correctness-critical stretches
   — Modules 2 and 5, and graduation (optionally Module 6 with custom load code).
-  Switch mid-session with `/model claude-opus-4-8` and back with
+  Switch mid-session with `/model claude-opus-5` and back with
   `/model claude-sonnet-5`. **Haiku 4.5** is not recommended for any
   bootcamper-facing skill (protocol risk); **Fable 5** is not the value pick here.
 - **Simplest (one model, no switching):** run the whole session on
-  **Opus 4.8 + `--effort high`**. Zero-friction — one strong model for everything
+  **Opus 5 + `--effort high`**. Zero-friction — one strong model for everything
   — at the cost of over-paying on the lighter conversational modules.
 
 ## Optional lever: invoking-turn-only effort

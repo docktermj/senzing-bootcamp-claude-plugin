@@ -103,7 +103,7 @@ rewrite the file, so earlier entries are preserved.
 - **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
 - **Plugin version:** [from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"]
 - **Workstation:** [OS name and version, and architecture; e.g. "Linux 6.17.0-35-generic (x86_64)", or "Unknown"]
-- **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-4-8[1m] / high", or "Unknown"]
+- **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-5[1m] / high", or "Unknown"]
 - **Context size:** [approximate tokens and/or % of context window in use; e.g. "~85k tokens (~42% of window)", or "Unknown"]
 - **Module / step:** [`current_module` / `current_step` from `config/bootcamp_progress.json`, or "Unknown"]
 - **Recent questions:** [the last few 👉 questions asked]

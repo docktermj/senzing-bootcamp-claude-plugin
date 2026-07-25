@@ -1,9 +1,9 @@
 ---
 name: module-05-data-quality-mapping
-description: 'Bootcamp Module 5: Data Quality & Mapping. Use when the bootcamper starts or resumes Module 5, or needs to assess data quality and map records to the Senzing Entity Specification.'
+description: 'Bootcamp Module 5: Data Quality, Mapping, and Transformation. Use when the bootcamper starts or resumes Module 5, or needs to assess data quality and map records to the Senzing Entity Specification.'
 ---
 
-# Module 5: Data Quality & Mapping
+# Module 5: Data Quality, Mapping, and Transformation
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —

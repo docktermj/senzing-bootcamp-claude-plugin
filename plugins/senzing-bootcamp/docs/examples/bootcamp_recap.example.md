@@ -202,7 +202,7 @@
 
 - The bootcamp's data-recommendation hierarchy (CORD first, then free-data repo, then synthesized data) — not needed here since the business problem already chose CORD.
 - The license/dataset-size framing: since the bootcamper's Senzing License Key raises the record limit and the collected total (~400) is far below it, no sampling-for-license or SQLite load-time warning applied.
-- Each of the four sources uses a genuinely different schema (flat fields vs. nested NAMES/ADDRESSES arrays), setting up the mapping work in Data quality & mapping.
+- Each of the four sources uses a genuinely different schema (flat fields vs. nested NAMES/ADDRESSES arrays), setting up the mapping work in Data Quality, Mapping, and Transformation.
 
 ### Questions & Responses
 
@@ -224,11 +224,11 @@
 
 **Files produced:** data/raw/ppp_loans.jsonl, data/raw/gleif.jsonl, data/raw/us_labor_violations.jsonl, data/raw/open_ownership.jsonl, config/data_sources.yaml, config/cord_metadata.yaml, docs/data_collection_checklist.md, docs/data_source_locations.md, .gitignore, docs/security_compliance.md
 
-**Why it matters:** These four files, each with a different schema, are exactly what Data quality & mapping will assess and map onto the Senzing Entity Specification.
+**Why it matters:** These four files, each with a different schema, are exactly what Data Quality, Mapping, and Transformation will assess and map onto the Senzing Entity Specification.
 
 ---
 
-## Data quality & mapping — 2026-07-16T14:00:00-07:00
+## Data Quality, Mapping, and Transformation — 2026-07-16T14:00:00-07:00
 
 ### Information Shared
 
@@ -316,7 +316,7 @@
     - **R:** Add a visualization like the Truth Set one
 - **Q:** Would you like a visualization of the resolved entities as an entity graph?
     - **R:** Yes
-- **Q:** Would you like to return to Data quality & mapping to refine your data mapping?
+- **Q:** Would you like to return to Data Quality, Mapping, and Transformation to refine your data mapping?
     - **R:** No — proceed
 
 ### Actions Taken

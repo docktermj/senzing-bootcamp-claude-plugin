@@ -15,7 +15,7 @@ steering files.)
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
   best-value recommendation (see "Module start banners and transitions" below): a single 👉 switch
   question when the recommendation changes from the current stage, otherwise a brief statement. The
-  heavier SDK setup and Data quality & mapping modules and graduation warrant Opus 4.8 + high
+  heavier SDK setup and Data Quality, Mapping, and Transformation modules and graduation warrant Opus 5 + high
   effort, lighter modules Sonnet 5.
   Do not change the session yourself — only the bootcamper can.
 
@@ -252,7 +252,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
     On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
     stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    > 👉 **Would you like to switch to Opus 5 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
     telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
@@ -270,15 +270,19 @@ never count against the one-question-per-turn rule and must not be treated as ga
   - **Recommendation unchanged** → a brief one-line statement; no question, so the
     bootcamp never asks a pointless "switch?" every module (INV-012).
 
-  Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
-  recommendation (keep in sync with `../../docs/model-selection.md`):
+  Switching is always optional — running one model for everything (Opus 5) stays valid. Per-stage
+  recommendation — **this table is the authoritative copy** (the one in
+  `../../docs/model-selection.md` is derived from it; change this one first). Model names, IDs, and
+  the values below are point-in-time and go stale when a new model ships; `docs/model-selection.md`
+  carries the dated verification note, and `tests/test_model_guidance_sync.py` fails if the two
+  tables drift or if any superseded model name survives (INV-114):
 
   | Stage | Recommended | CLI commands |
   |---|---|---|
   | Onboarding, Bootcamp preparation, Discover the Business Problem, System verification, Data collection, Query/Visualize/Discover, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-  | SDK setup, Data quality & mapping | Opus 4.8, high effort | `/model opus` · `/effort high` |
+  | SDK setup, Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
   | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
-  | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+  | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
   The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
   model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
