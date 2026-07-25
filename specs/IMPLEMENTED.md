@@ -36,7 +36,7 @@ Entries are newest first. Do not delete history; append or update in place.
   `year established`/`filing date` and `BID`/`EFX_ID` cases named). Phase 1 gained
   a "What this score does not measure" note so a green quality score is not read as
   a correct mapping. Verified all 11 acceptance criteria by grep; 43 tests pass.
-- **Commit:** uncommitted
+- **Commit:** `0c0ec44`
 
 ## detect-dynamic-key-document-shaped-sources
 
@@ -54,7 +54,7 @@ Entries are newest first. Do not delete history; append or update in place.
   never a gate — genuinely wide sources exist. Phase 1 notes that a score averaged
   over phantom fields is provisional until re-profiled. Verified all 9 acceptance
   criteria by grep; 43 tests pass.
-- **Commit:** uncommitted
+- **Commit:** `0c0ec44`
 
 ## java-scaffold-json-dependency-gap
 
