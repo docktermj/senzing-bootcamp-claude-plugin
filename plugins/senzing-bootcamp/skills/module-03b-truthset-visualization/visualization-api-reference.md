@@ -36,17 +36,23 @@ The server SHALL expose these endpoints:
     "1": [{"entity_id": 10, "entity_name": "Alice Johnson", "record_count": 1}],
     "2": [{"entity_id": 1, "entity_name": "Robert Smith", "record_count": 2}],
     "3": [], "4+": []
-  }
+  },
+  "sample_entities": [
+    {"entity_id": 1, "entity_name": "Robert Smith", "record_count": 3, "data_sources": ["CUSTOMERS", "REFERENCE"]}
+  ]
 }
 ```
 
 Required fields: `records_total`, `entities_total`, `multi_record_entities`,
 `cross_source_entities`, `relationships_total`, `data_sources_total`, `histogram`,
-`bucket_entities`. The `histogram`
+`bucket_entities`, `sample_entities`. The `histogram`
 maps record-count buckets (1, 2, 3, 4+) to entity counts; `bucket_entities` maps the same buckets
 to the entities in each (each `{entity_id, entity_name, record_count}`) so the histogram bars are
 clickable and drill down to the entities in a bucket. Implementations MAY cap each bucket list
 (the reference caps at 200 per bucket); the `histogram` counts remain authoritative.
+`sample_entities` is the multi-record entities in descending record-count order (the reference caps
+the list at 10), each `{entity_id, entity_name, record_count, data_sources}` — the largest resolved
+entities, shown beneath the histogram on the same tab.
 `data_sources_total` is the count of distinct data-source codes across all entities; the client
 uses it to decide whether the **Cross-Source** tab applies (it needs 2+ sources).
 
@@ -65,6 +71,24 @@ uses it to decide whether the **Cross-Source** tab applies (it needs 2+ sources)
 
 Each node: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`. Each edge:
 `source_entity_id`, `target_entity_id`, `match_key`, `relationship_type`.
+
+**`relationship_type` vocabulary (enumerated).** `relationship_type` MUST be one of the values
+below — a closed set, so the legend and the edge styling cannot drift apart. Derive it from the
+Senzing relationship fields, which `get_sdk_reference(topic='response_schemas')` documents on
+`RELATED_ENTITIES[]` as `MATCH_LEVEL_CODE` (values `POSSIBLY_SAME`, `POSSIBLY_RELATED`),
+`IS_DISCLOSED` (1 when the relationship was disclosed in the source data) and `IS_AMBIGUOUS`
+(verified 2026-07-25 — re-verify rather than trusting this table):
+
+| `relationship_type` | Derived from | Bootcamper-facing label |
+|---|---|---|
+| `possibly_same` | `MATCH_LEVEL_CODE == "POSSIBLY_SAME"` | "possibly the same entity" |
+| `possibly_related` | `MATCH_LEVEL_CODE == "POSSIBLY_RELATED"` | "possibly related" |
+| `disclosed` | `IS_DISCLOSED == 1` (takes precedence over the match level) | "disclosed relationship" |
+| `ambiguous` | `IS_AMBIGUOUS == 1` | "ambiguous" |
+
+Emit the label alongside the code so the legend text and the edge data share one source. Do not
+invent additional values: an unrecognized relationship falls back to `possibly_related` rather than
+creating a new type the legend does not know about.
 
 > `source_entity_id`/`target_entity_id` are the unchanged API contract; mapping to D3's
 > `source`/`target` is a client-side concern handled in `drawGraph` (see the edge-mapping
@@ -258,25 +282,32 @@ server).
 steps, and `FINAL_STATE.VIRTUAL_ENTITIES[]` describes the resolved entity when there are no
 incremental steps. On failure, return `{"entity_id": <id>, "error": "..."}`.
 
-**`GET /api/dashboard`:** Results-dashboard payload — headline counts, the records-per-entity
-histogram, and a sample of the largest resolved entities
+**`GET /api/dashboard`: REMOVED.** Its content is served by `/api/stats`, which carries the same
+`histogram` and headline counts plus the `sample_entities` list that was this endpoint's only
+unique content. Do NOT implement it, and do not add a separate "Results Dashboard" tab — see
+"De-duplication (required)" below.
+
+**`GET /api/records?entity_id=<id>`:** The constituent records of one entity
 
 ```json
 {
-  "counts": {
-    "records_total": 510, "entities_total": 395, "multi_record_entities": 87,
-    "cross_source_entities": 42, "relationships_total": 156
-  },
-  "histogram": {"1": 308, "2": 65, "3": 17, "4+": 5},
-  "sample_entities": [
-    {"entity_id": 1, "entity_name": "Robert Smith", "record_count": 3, "data_sources": ["CUSTOMERS", "REFERENCE"]}
+  "entity_id": 1,
+  "entity_name": "Robert Smith",
+  "records": [
+    {"data_source": "CUSTOMERS", "record_id": "1001", "name": "Robert Smith", "address": "123 Main St", "phone": "555-0100", "identifiers": {"SSN": "123-45-6789"}}
   ]
 }
 ```
 
-`counts` and `histogram` are drawn from the same aggregates as `/api/stats`; `sample_entities` is
-the multi-record entities in descending record-count order (the reference caps the list at 10),
-each `{entity_id, entity_name, record_count, data_sources}`. Backs the **Results Dashboard** tab.
+Backs the **Records** action everywhere an entity is shown (see "Per-entity actions" below),
+including single-record entities — unlike `/api/merges`, which returns only multi-record entities.
+Each record carries the same fields `/api/merges` uses: `data_source`, `record_id`, `name`,
+`address`, `phone`, `identifiers`. On failure return `{"entity_id": <id>, "error": "<type>: <message>"}`
+with HTTP 200, so one entity's failure never breaks the tab.
+
+Unlike `why`/`how`, this endpoint's data MUST also be **embedded in the standalone snapshot**, so
+the Records action works offline — it needs no engine call at view time, only the record data
+already gathered when the model was built.
 
 **`GET /api/overlap`:** Cross-source overlap matrix — how many resolved entities each pair of data
 sources shares
@@ -284,7 +315,12 @@ sources shares
 ```json
 {
   "sources": ["CUSTOMERS", "REFERENCE", "WATCHLIST"],
-  "matrix": [[395, 42, 12], [42, 210, 8], [12, 8, 95]]
+  "matrix": [[395, 42, 12], [42, 210, 8], [12, 8, 95]],
+  "cell_entities": {
+    "0,1": [{"entity_id": 1, "entity_name": "Robert Smith", "record_count": 3}],
+    "0,0": [{"entity_id": 7, "entity_name": "Alice Johnson", "record_count": 1}]
+  },
+  "cell_capped": false
 }
 ```
 
@@ -294,13 +330,24 @@ records from **both** `sources[i]` and `sources[j]`, and the diagonal `matrix[i]
 of entities present in `sources[i]`. Symmetric. Backs the **Cross-Source** heatmap tab (shown only
 when `data_sources_total` ≥ 2).
 
+`cell_entities` maps each cell to the entities it counts, keyed `"i,j"` with `i <= j` (the matrix is
+symmetric, so store each pair once and have the client normalize the key). Each entry is
+`{entity_id, entity_name, record_count}` — the same shape as `bucket_entities` on `/api/stats`, so
+one drill-down renderer serves both. Implementations MAY cap each cell list (the reference caps at
+200); `cell_capped` is true when any cell was capped, and the client MUST surface that so the cap is
+never silent. `matrix` counts remain authoritative.
+
 **`GET /api/matchkeys`:** Match-key frequency — which feature combinations drove resolutions
 
 ```json
 {
   "match_keys": [{"match_key": "+NAME+ADDRESS", "count": 128}, {"match_key": "+NAME+DOB", "count": 74}],
   "distinct": 11,
-  "capped": false
+  "capped": false,
+  "match_key_entities": {
+    "+NAME+ADDRESS": [{"entity_id": 1, "entity_name": "Robert Smith", "record_count": 3}]
+  },
+  "entities_capped": false
 }
 ```
 
@@ -310,6 +357,12 @@ first (the reference returns the top 20); `distinct` is the total number of dist
 (shown only when multi-record entities exist). Per-record match keys come from the entity's records
 (the default entity flags' record-matching info); the seed record's match key is typically empty
 and is excluded.
+
+`match_key_entities` maps each returned match key to the entities carrying it, each
+`{entity_id, entity_name, record_count}` — the same shape as `bucket_entities` and `cell_entities`,
+so the one drill-down renderer serves all three. Implementations MAY cap each list (the reference
+caps at 200); `entities_capped` is true when any list was capped and the client MUST surface it.
+`count` remains authoritative.
 
 **`GET /api/features`:** Feature-score distribution across a capped sample of multi-record entities
 
@@ -343,25 +396,152 @@ not shown:
 
 | Tab | Endpoint(s) | Shown when |
 |-----|-------------|-----------|
-| **Entity Graph** (default) | `/api/graph` | always — force-directed graph of the full entity population; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`) |
-| **Relationship Network** | `/api/graph` | relationships exist (`relationships_total` > 0) — the subgraph of entities connected by relationships, edges colored by relationship type |
-| **Record Merges** | `/api/merges`, `/api/why`, `/api/how` | always — cards with **Why?**/**How?** actions |
-| **Merge Statistics** | `/api/stats` | always — records-per-entity histogram; this **is** the entity-size distribution (clickable bars drill down via `bucket_entities`, each linking to **How?**) |
-| **Match Keys** | `/api/matchkeys` | multi-record entities exist |
+| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the full entity population; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`) |
+| **Relationship Network** | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | relationships exist (`relationships_total` > 0) — the subgraph of entities connected by relationships, edges styled by relationship type |
+| **Record Merges** | `/api/merges`, `/api/records`, `/api/why`, `/api/how` | always — one card per multi-record entity: name, record count, match key, and the actions. **No inline record listing** |
+| **Merge Statistics** | `/api/stats`, `/api/records`, `/api/why`, `/api/how` | always — records-per-entity histogram (this **is** the entity-size distribution) with clickable bars drilling down via `bucket_entities`, plus the largest resolved entities from `sample_entities` |
+| **Match Keys** | `/api/matchkeys`, `/api/records`, `/api/why`, `/api/how` | multi-record entities exist — clickable rows drilling down via `match_key_entities` |
 | **Feature Scores** | `/api/features` | multi-record entities exist |
-| **Cross-Source** | `/api/overlap` | 2+ data sources (`data_sources_total` ≥ 2) |
-| **Results Dashboard** | `/api/dashboard` | always |
-| **Search / Probe** | `/api/search`, `/api/why`, `/api/how` | always |
+| **Cross-Source** | `/api/overlap`, `/api/records`, `/api/why`, `/api/how` | 2+ data sources (`data_sources_total` ≥ 2) — clickable cells drilling down via `cell_entities` |
+| **Search / Probe** | `/api/search`, `/api/records`, `/api/why`, `/api/how` | always — with pre-verified example-query chips |
 
-**De-duplication (required).** Do NOT add redundant tabs: the entity-size distribution is the
-**Merge Statistics** histogram, and the cross-source entity-relationship view / former
-`multi_source_results.html` is the **Entity Graph** tab. The **Relationship Network** tab is
-distinct (the related-entity subgraph emphasizing relationship type), not a second full-population
-graph.
+**De-duplication (required).** Do NOT add a tab whose content is derivable from another tab's
+endpoint. When two candidate tabs share their aggregates, **they are one tab.** Applying that test:
+
+- The entity-size distribution is the **Merge Statistics** histogram — not a second tab.
+- The cross-source entity-relationship view / former `multi_source_results.html` is the **Entity
+  Graph** tab.
+- There is **no "Results Dashboard" tab.** Its headline counts and histogram came from the same
+  aggregates as `/api/stats`, and its only unique content — the largest resolved entities — is now
+  `sample_entities` on that endpoint, rendered beneath the Merge Statistics histogram. Two tabs
+  showing one histogram read as redundant, not complementary.
+- The **Relationship Network** tab *is* distinct (the related-entity subgraph emphasizing
+  relationship type), not a second full-population graph.
+
+Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
+them in its own summary sentence.
+
+## Per-entity actions (required everywhere)
+
+Every place an entity is shown with actions gets the **same three buttons, in this order — never a
+subset**:
+
+| Action | Calls | Shows |
+|---|---|---|
+| **Records** | `/api/records?entity_id=` | the entity's constituent records |
+| **Why?** | `/api/why?entity_id=` | why the records resolved together |
+| **How?** | `/api/how?entity_id=` | how the entity was constructed |
+
+That set applies to: the Entity Graph node detail, the Relationship Network node detail, Record
+Merges cards, the Merge Statistics bucket drill-down **and** its `sample_entities` list, the
+Cross-Source cell drill-down, the Match Keys row drill-down, and Search / Probe results. Implement
+it as **one shared renderer** invoked from every surface — the failure mode this prevents is real:
+the buttons were added per-code-path, so each new entity surface silently shipped with a different
+subset, and bootcampers reported the gaps one tab at a time.
+
+**Drill-down on every aggregate view.** Every aggregate is clickable and opens the underlying
+entities with the action set above: histogram bars (`bucket_entities`), Cross-Source cells
+(`cell_entities`), Match Keys rows (`match_key_entities`). All three payloads share one entity
+shape, so one drill-down renderer serves all three. An aggregate that shows a count but cannot be
+opened is a dead end and is not acceptable.
+
+**No redundant inline record listings.** Where an entity list offers the Records action, it MUST
+NOT also print the constituent records inline. Record Merges cards show entity name, record count,
+and match key plus the actions — nothing more. Showing the same records twice is clutter, and it
+reads as unfinished once "click Records to see records" is the established pattern everywhere else.
+
+> ⚠️ **Implementation pitfall — `onclick` + JSON serialization.** When building `onclick="..."`
+> attributes by string concatenation, never embed serialized-JSON output (which is double-quoted)
+> inside a double-quoted HTML attribute: the browser truncates the attribute at the first embedded
+> quote and the handler silently never fires. This bug is easy to miss because calling the same
+> function directly from the browser console works fine, which masks the failure. Escape the payload
+> for the attribute context, or attach handlers programmatically instead of inlining them. This is
+> language-agnostic front-end JavaScript, not a quirk of any one implementation.
 
 The Record Merges tab and each Search / Probe result carry **Why?** and **How?** actions that call
 `/api/why` and `/api/how` and render the explanation (match keys, feature scores, construction
 steps) in a modal.
+
+## Rendering contract
+
+These are requirements, not suggestions. This module is the bootcamp's "wow moment" — the surface
+whose whole purpose is a strong first impression — so the quality bar below is the **default every
+implementation ships**, not something a bootcamper has to ask for one improvement at a time.
+
+### Why? / How? — plain language first, raw JSON behind a twistie
+
+The API returns the SDK response verbatim; that is about *availability*, not about what the UI
+renders. Dumping `JSON.stringify` output into a `<pre>` block satisfies the letter of "verbatim"
+and defeats the entire purpose of the feature, which exists to make Senzing's reasoning legible.
+
+- **Why?** renders match level, match key, and resolution rule, then a per-feature table:
+  feature · this record · compared-to record · score · bucket.
+- **How?** renders a numbered, step-by-step merge narrative ("Step 1: record A from CUSTOMERS
+  established the entity. Step 2: record B was added because …").
+- **Score buckets render as color-coded badges**, mapped from the buckets this contract already
+  enumerates for `/api/features`: `SAME`/`CLOSE` → positive, `PLUS`/`LIKELY`/`PLAUSIBLE` → caution,
+  `UNLIKELY`/`NO_CHANCE` → negative. Use `brand_tokens`' `SIGNAL_GREEN` for the positive bucket —
+  that is exactly its reserved "resolved state" meaning (INV-081) — and define the caution and
+  negative colors **once, as named constants in one place**, since the brand palette deliberately
+  does not supply status colors. Never scatter hex literals through the render code.
+  **Never rely on color alone** — keep the bucket name as text, so the badge survives a monochrome
+  recap screenshot and is readable without color vision.
+- **The raw SDK response stays available but collapsed**, behind a `<details>`/twistie that is
+  closed by default. Available on demand; never the default view.
+- Parse these responses against `get_sdk_reference(topic='response_schemas')`, never from the
+  illustrative payloads above (INV-115). A summary view makes a wrong field name *harder* to spot,
+  because it becomes a blank cell rather than visibly-absent JSON.
+
+### Modal chrome
+
+Entity-detail dialogs (Records / Why? / How?) are a primary "wow moment" surface and get the same
+visual care as the headline tabs: a real header bar (title plus a close control) visually separated
+from the body, deliberate spacing and typographic hierarchy, and a subtle entrance transition.
+Palette and type come from `scripts/brand_tokens.py` (INV-081) — the brand tokens apply *inside* the
+modal, not only to the app shell. A functionally-correct but visually plain dialog undersells the
+moment.
+
+### Graph rendering — labels, scale, and legends
+
+Applies to both **Entity Graph** and **Relationship Network**.
+
+- **Independent label toggles.** Separate show/hide controls for **node** (entity name) labels and
+  **edge** (match key / relationship type) labels. Two independent dials, not one combined control,
+  so a bootcamper can declutter for an overview pass or drill into detail without switching tabs.
+- **Scale-dependent defaults.** Label visibility defaults by graph size, not to a fixed value: both
+  label sets default **off above ~150 nodes** and on below it. State the threshold in the
+  implementation so every language build behaves the same.
+- **Say why they started off.** When labels default off, show a short inline note ("Labels hidden —
+  3,986 entities; use the toggles above to show them"). Without it, a label-less graph reads as
+  broken rather than as a deliberate default.
+- **Legible labels when shown.** On-canvas node labels MUST avoid unreadable overlap — a
+  collision/overlap-avoidance pass, truncation, or zoom-gated labels. A hover-only tooltip does
+  **not** satisfy this: the complaint it addresses is being unable to tell which records matched
+  without hovering every node in turn.
+- **Legends are generated FROM the data, and filter it.** Build each legend from the values actually
+  present in the rendered set — the `relationship_type` values on the drawn edges, the data sources
+  on the drawn nodes. A legend entry can then never exist without matching marks, which is what
+  makes "the legend shows three colors that appear nowhere in the graph" structurally impossible.
+  Clicking a legend entry filters the view to that type/source and toggles back; show the active
+  filter state and a per-entry count. Pair color with a non-color distinction (e.g. line style per
+  relationship type) so the encoding survives a monochrome screenshot.
+- **Init-state note.** An unchecked toggle fires no change event, so apply its render state
+  explicitly at load — do not rely on the event handler to establish the initial view.
+
+> **Scale principle (general).** Any default chosen while developing against the Truth Set MUST be
+> reviewed for its behavior at 100× scale. Module 7 reuses this same app over the bootcamper's real
+> data (`../module-07-query-visualize-discover/phase1-query-visualize.md`), which is usually far
+> larger — a default tuned to 84 entities produced an unreadable hairball at 3,986, in the module
+> meant to showcase results, and the bootcamper cannot tell a bad default from bad data.
+
+### Search / Probe — pre-verified example queries
+
+The Search / Probe tab MUST ship a small set of example queries as clickable chips that both fill
+the search box **and** run the search on click. They are generated per-dataset from the loaded data
+and **verified live to return at least one match** before being offered — a hint that returns
+nothing is worse than no hint. Never present a bare search box: a bootcamper exploring a Truth Set
+they did not build has no idea what a good demo query looks like, and a failed first search is a
+poor first impression of the product.
 
 **Distinguish "no data returned" from "rendered empty" (INV-115).** Where the UI renders a parsed
 field — a feature-score table, a match key, a resolution step — an absent or blank value MUST be
@@ -376,10 +556,13 @@ listing the entities in each bucket and linking each to its **How?** explanation
 **Static snapshot degradation:** the standalone snapshot has no live backend, so `why`/`how` and
 live `search` are unavailable there — those actions show a note directing the viewer to the live
 server. Everything else renders **offline** because the snapshot embeds `stats`, `graph`, `merges`,
-`dashboard`, `overlap`, `matchkeys`, and `features` — so the Entity Graph, Relationship Network,
-Merge Statistics (with bucket drill-down), Match Keys, Feature Scores, Cross-Source, and Results
-Dashboard tabs all work with no network access. The Feature Scores tab shows whatever was computed
-(capped) at build time.
+`records`, `overlap`, `matchkeys`, and `features` — so the Entity Graph, Relationship Network,
+Record Merges, Merge Statistics (with bucket drill-down and the largest-entities list), Match Keys
+(with row drill-down), Feature Scores, and Cross-Source (with cell drill-down) tabs all work with no
+network access. **The Records action works offline too**, because `records` is embedded: it needs no
+engine call at view time, unlike `why`/`how`. The Feature Scores tab shows whatever was computed
+(capped) at build time. (`dashboard` is no longer embedded — the endpoint was removed and its
+content folded into `stats`.)
 
 **Error response (all endpoints):** HTTP 500 with `{"error": "<description>"}` on SDK failure.
 Exception: `why`/`how` return a `200` with an `error` field per the shapes above so one entity's

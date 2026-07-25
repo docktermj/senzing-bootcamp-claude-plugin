@@ -226,36 +226,49 @@ The live page is a **single consolidated, tabbed app** — the one visualization
 separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
 shown:
 
+**Every entity shown with actions gets the same three buttons — Records / Why? / How? — with no
+exceptions**, and **every aggregate view drills down** to the entities behind it. Those two rules,
+the Why?/How? rendering contract, the graph label/legend rules, and the search-hint requirement are
+specified in `visualization-api-reference.md` → "Per-entity actions" and "Rendering contract".
+Build to that contract; the summaries below are the tab inventory, not the full requirements.
+
 1. **Entity Graph** (default): D3 v7 force-directed graph of the full entity population. Nodes
    colored by data source (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by
-   record count, edges labeled with match keys, hover tooltip, click-to-detail modal, zoom/pan, and
-   a color legend. This is also the cross-source entity-relationship view (it subsumes the former
-   `multi_source_results.html`). (Your server MUST perform the edge-key mapping,
-   `source_entity_id`/`target_entity_id` → `source`/`target` before `forceLink` — per Step 2's
-   intro; omitting it renders an empty graph.)
+   record count, hover tooltip, click-to-detail modal with the three actions, zoom/pan, and a
+   click-to-filter source legend generated from the data. Independent node-label and edge-label
+   toggles, defaulting off above ~150 nodes with an on-screen note saying why. This is also the
+   cross-source entity-relationship view (it subsumes the former `multi_source_results.html`).
+   (Your server MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` →
+   `source`/`target` before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
 2. **Relationship Network** (when relationships exist): the subgraph of entities connected by
-   relationships (possible matches / disclosed relations), edges colored by relationship type with a
-   type legend — distinct from Entity Graph, which shows the full population.
-3. **Record Merges:** cards showing each multi-record entity's constituent records, each with
-   **Why?** and **How?** actions that call `/api/why` and `/api/how` and render Senzing's
-   explanation (match keys, feature scores, construction steps) in a modal.
-4. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence —
-   this **is** the entity-size distribution; the bars are **clickable** (backed by `bucket_entities`)
-   and drill down to the entities in each bucket, each linking to its **How?** explanation.
+   relationships, edges styled by `relationship_type` (color **plus** line style) with a
+   click-to-filter type legend built from the types actually present — distinct from Entity Graph,
+   which shows the full population. Same independent label toggles and scale-aware defaults.
+3. **Record Merges:** one card per multi-record entity showing name, record count, and match key,
+   plus the three actions. **No inline record listing** — records are shown on demand via
+   **Records**, the same as everywhere else.
+4. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) — this **is** the entity-size
+   distribution; the bars are **clickable** (backed by `bucket_entities`) and drill down to the
+   entities in each bucket. Beneath it, the largest resolved entities from `sample_entities`. Both
+   lists use the three actions. Headline counts live in the page summary strip and are **not**
+   repeated here.
 5. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
-   combinations) that drove resolutions.
+   combinations) that drove resolutions; **rows are clickable** (backed by `match_key_entities`) and
+   drill down to the entities carrying that key.
 6. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
    resolved records, from a capped `why_records` sample; the tab always shows the sample size.
 7. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
-   sources shares.
-8. **Results Dashboard:** headline counts, the records-per-entity histogram, and a sample of the
-   largest resolved entities.
-9. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it, plus the same **Why?** / **How?** actions.
+   sources shares; **cells are clickable** (backed by `cell_entities`) and drill down to the
+   entities in that cell.
+8. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
+   match key / resolution rule that linked it, plus the three actions. Ships with pre-verified
+   example-query chips that fill **and** run the search on click.
 
-Do **not** add redundant tabs — the entity-size distribution is Merge Statistics, and the
-cross-source entity-relationship view is Entity Graph (per `visualization-api-reference.md` →
-"De-duplication").
+Do **not** add a tab whose content is derivable from another tab's endpoint. In particular there is
+**no "Results Dashboard" tab** — its counts and histogram duplicated `/api/stats`, and its unique
+content (the largest resolved entities) is now `sample_entities`, rendered on Merge Statistics. The
+entity-size distribution is Merge Statistics, and the cross-source entity-relationship view is
+Entity Graph (per `visualization-api-reference.md` → "De-duplication").
 
 ### 2.5 Present it and give the guided tour
 

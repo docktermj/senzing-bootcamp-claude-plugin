@@ -218,11 +218,20 @@ bootcamper's chosen programming language (INV-090), pointed at the bootcamper's 
 of the Truth Set. It MUST:
 
 - Serve/render every applicable tab from that contract — Entity Graph, Relationship Network, Record
-  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, Results Dashboard, and
-  Search / Probe. Tabs whose data is absent are simply not shown (e.g. Cross-Source needs 2+
-  sources; Match Keys / Feature Scores need multi-record entities). Do **not** produce separate
-  static pages, and do **not** add redundant tabs — the entity-size distribution is Merge
-  Statistics and the cross-source entity-relationship view is Entity Graph.
+  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, and Search / Probe. Tabs whose
+  data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys / Feature
+  Scores need multi-record entities). Do **not** produce separate static pages, and do **not** add a
+  tab whose content is derivable from another tab's endpoint — the entity-size distribution is Merge
+  Statistics, the cross-source entity-relationship view is Entity Graph, and there is no separate
+  Results Dashboard tab.
+- Honor the contract's **"Per-entity actions"** and **"Rendering contract"** sections in full:
+  Records / Why? / How? on every entity surface, drill-down from every aggregate, plain-language
+  Why?/How? with the raw JSON behind a twistie, and pre-verified search-hint chips.
+- **Mind the scale.** This module points the app at the bootcamper's real data, which is usually far
+  larger than the Truth Set it was designed against — the graph label defaults are scale-aware
+  (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable
+  hairball at ~4,000. Re-check any other visual default at your actual entity count before
+  presenting; the bootcamper cannot tell a bad default from bad data.
 - Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
   `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
