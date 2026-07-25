@@ -18,6 +18,44 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## post-load-match-key-semantic-audit
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+- **Summary:** Added a "Match-key audit" section to Phase D that runs before the
+  iterate-vs-proceed gate: extract `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` via the
+  MCP-generated SDK code (never direct SQL), tabulate the `+`/`-` suppressor
+  notation, separate single-source from cross-source keys, and surface the result
+  as a finding — never a pass/fail — into the gate's routing bullets. The `+`/`-`
+  semantics are cited from `get_sdk_reference(topic='response_schemas')`; the
+  approach is backed by the `reporting_guide(topic='quality')` anti-pattern
+  "aggregate stats hide errors — always sample and manually review specific
+  entities". Module 5 gained the upstream half: an explicit statement that the
+  validation stack is structural, not semantic, and a cross-source shared-feature
+  collision check at the Map step (date and identifier features, with the
+  `year established`/`filing date` and `BID`/`EFX_ID` cases named). Phase 1 gained
+  a "What this score does not measure" note so a green quality score is not read as
+  a correct mapping. Verified all 11 acceptance criteria by grep; 43 tests pass.
+- **Commit:** uncommitted
+
+## detect-dynamic-key-document-shaped-sources
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+- **Summary:** Step 9 (Profile) now interprets the field count instead of
+  reporting it. Above ~100 fields or ~50 distinct patterns the source is treated
+  as document-shaped rather than wide: look for dynamic/value-shaped root keys
+  (report count plus a sample, not the full table), cross-check whether those key
+  names also appear as values elsewhere in the record, recommend pre-process ->
+  re-profile explicitly as the sanctioned route, and require before/after proof
+  that the dropped data was redundant and record counts are unchanged. The
+  presentation block suppresses the full column table in verbose mode and leads
+  with the diagnosis rather than the bare count in concise mode. It is a finding,
+  never a gate — genuinely wide sources exist. Phase 1 notes that a score averaged
+  over phantom fields is provisional until re-profiled. Verified all 9 acceptance
+  criteria by grep; 43 tests pass.
+- **Commit:** uncommitted
+
 ## java-scaffold-json-dependency-gap
 
 - **Implemented:** 2026-07-25

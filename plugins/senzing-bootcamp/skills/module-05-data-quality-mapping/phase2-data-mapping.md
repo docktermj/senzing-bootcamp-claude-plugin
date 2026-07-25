@@ -119,13 +119,42 @@ reusable resources at their policy-correct locations per the file-placement guid
 Run the profiler, then summarize columns/types/completeness/quality. Advance with
 `action='profile_summary'`.
 
+⛔ **Profile sanity check — interpret the field count, never just report it.** Before presenting
+anything, check whether the profile is *plausible*: roughly **more than 100 fields, or more than 50
+distinct field patterns**, is not a wide source — it is a signal that the source is shaped like a
+document rather than a table. Report the likely cause instead of the raw number.
+
+The usual cause is **dynamic keys — the source using data values as attribute names**, so each
+record contributes new "fields" that are really values. When the count is implausible:
+
+1. **Look for dynamic/unbounded keys:** many root keys appearing in only one or two records each,
+   especially keys that are purely numeric or otherwise value-shaped. Report the count and a
+   sample, not the full column table.
+2. **Cross-check for redundancy:** check whether those key *names* also appear as **values**
+   elsewhere in the same record (e.g. matching an ID field the record already carries). If they do,
+   say so — that redundancy is precisely what makes dropping them lossless, and it is the
+   difference between a safe pre-process and silent data loss.
+3. **Recommend the sanctioned route explicitly:** pre-process to strip the dynamic keys, then
+   **re-profile**. Name it as the expected next step; do not leave the bootcamper to infer that
+   pre-processing is allowed.
+4. **Require before/after proof:** show the removed data is redundant *before* dropping it, and
+   that record counts and preserved features are unchanged *after*. Without that proof,
+   pre-processing is silent data loss — worse than an unmappable profile.
+
+This is a **finding, not a gate**: genuinely wide sources exist. Report, recommend, and let the
+bootcamper decide — never block mapping on a field count.
+
 > **Presentation (conditional on `mapping_verbosity`):**
 >
 > - **Verbose:** Present a full column table with types, sample values, completeness %, and
 >   what each means for mapping (maps to Senzing / will skip / needs attention). Explain the
->   key takeaway.
+>   key takeaway. **Exception — when the sanity check above fires, do NOT print the full table**
+>   (a 1,373-row column table is noise precisely when the bootcamper most needs to understand
+>   what happened): show the diagnosis, a sample of the offending keys, and the recommendation.
 > - **Concise:** Present one summary line: N columns detected, X% overall completeness, and key
->   issues only (e.g., "12 columns, 94% complete, 2 fields need attention").
+>   issues only (e.g., "12 columns, 94% complete, 2 fields need attention"). When the sanity check
+>   fires, lead with the diagnosis rather than the count — "1,373 fields detected, which almost
+>   certainly means dynamic keys rather than a genuinely wide source" beats a bare number.
 
 **Checkpoint:** write step 9.
 
@@ -152,6 +181,21 @@ Map fields to Senzing attributes via `mapping_workflow(action='schema_mappings')
 attribute names. For non-Latin data: `search_docs(query="globalization")`. Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
+⛔ **Shared-feature collision check (cross-source).** After mapping a source, compare its feature
+targets against the sources already mapped. When **two or more sources send different source fields
+to the same Senzing feature**, stop and confirm the two fields measure the *same quantity* — not
+merely the same *kind* of thing. Ask one 👉 question naming both fields and the feature (its wording
+is necessarily specific to the collision, so it is not a pinned question), and record the answer
+with the mapping rationale.
+
+This is the one check the validation scripts structurally **cannot** perform: they each see a single
+source, and the defect only exists in the relationship between two. Watch **date** and **identifier**
+features hardest, where near-miss semantics are the norm — "year established" vs. "incorporation
+filing date" are both plausible `REGISTRATION_DATE` candidates and mean different things; `BID` vs.
+`EFX_ID` are both identifiers and are not the same identifier. If they measure different things,
+route one to payload instead of the shared feature. Getting this wrong does not produce an error —
+it produces silently suppressed merges that only the post-load match-key audit will reveal.
+
 > **Presentation (conditional on `mapping_verbosity`):**
 >
 > - **Verbose:** Show the full mapping table with a rationale column explaining each mapping
@@ -177,6 +221,20 @@ the mapping table with reasoning for each decision and a confidence score.
 > In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
+
+⛔ **These gates are structural, not semantic — say so; do not let green be mistaken for correct.**
+Every check above validates **one source at a time** and asks whether the output is *well-formed*:
+the analyzer checks structure against the Entity Specification, the verbatim check that values were
+not altered, the routing report that fields reached a feature, the quality score completeness and
+format. **None of them evaluates whether a field means what the feature means**, and none compares
+how two sources populate the *same* feature. A mapping can pass all of them and still be wrong in
+the way that matters most — telling Senzing two things conflict when they do not, which suppresses
+legitimate merges.
+
+Tell the bootcamper this plainly when reporting a passing result: the mapping is **structurally
+valid**, and it is not **semantically validated** until data is loaded and the match keys are read.
+Data processing's match-key audit is where that happens. A bootcamper who hears "all gates green"
+and infers "the mapping is correct" has been misled by omission.
 
 > **Step 5 `detect_environment` menu handling (after this step's approval):** After a source's
 > mapping is approved, `mapping_workflow` returns its Step 5 (`detect_environment`) with a

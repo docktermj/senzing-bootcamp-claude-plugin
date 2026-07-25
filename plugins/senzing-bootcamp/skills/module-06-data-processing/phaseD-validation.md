@@ -156,12 +156,54 @@ If a source fails during orchestration, present three options:
 2. **Retry after fix:** pause, fix the issue, retry the failed source.
 3. **Restore and restart:** restore from backup, fix, restart orchestration.
 
+## Match-key audit (run before the iterate-vs-proceed gate)
+
+Every mapping gate the bootcamp runs before this point is **static, single-source, and
+structural** — the analyzer, the verbatim check, the routing report, the quality score. None of
+them evaluates *meaning*. So a whole defect class survives them: two source fields that measure
+different things mapped to the same Senzing feature. Senzing is then told a conflict exists where
+none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
+
+This is the reading that catches it. It also matches the Senzing reporting guidance directly —
+`reporting_guide(topic='quality')`'s anti-patterns say *"Only checking aggregate statistics for
+quality … Aggregate stats hide errors. Always sample and manually review specific entities"* —
+which is exactly the gap the UAT percentages below leave open.
+
+1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
+   against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')`, a resolved
+   entity's per-record match keys are at `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`, and relationship
+   match keys at `RELATED_ENTITIES[].MATCH_KEY`. Confirm the method and flags via MCP this session.
+2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
+   and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
+   `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
+   by frequency, and **separate single-source from cross-source** comparisons — the cross-source
+   ones are where a mapping disagreement between two sources shows up.
+3. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
+   is detracting on a large share of cross-source comparisons, say so plainly and ask the
+   bootcamper to check whether the two sources' fields for that feature genuinely measure the same
+   thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two
+   records really do disagree), and a hard failure here would produce false alarms and train
+   bootcampers to dismiss the signal — which would cost more than the check gains.
+4. **Carry the finding into the decision gate below**, alongside the UAT numbers.
+
+> **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
+> (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates
+> before it incorporates, so the two disagreed on up to 676 records and `-REGISTRATION_DATE`
+> appeared on nearly every cross-source match key. All five static gates passed; the quality score
+> was 86.3%. Routing one field to payload instead — no other change — took cross-source merges from
+> 1 to 4 and links from 160 to 170. The signal was there the whole time; nothing was reading it.
+
 ## Iterate vs. proceed decision gate
 
-Route on the UAT / match-accuracy results:
+Route on the UAT / match-accuracy results, **and present any match-key audit finding alongside
+them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
+iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
+to choose "iterate now" even when the numbers look acceptable.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
-  transition question.
+  transition question. **If the audit produced a finding, say so in the same breath** — strong
+  numbers plus a suppressing feature is exactly the case this audit exists to surface, and the
+  bootcamper should hear it before moving on.
 - **UAT <80%:** state "Results need improvement — I recommend going back to Data Quality, Mapping, and Transformation
   to refine the mapping." and proceed to the transition question.
 - **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question

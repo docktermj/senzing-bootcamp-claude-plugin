@@ -153,6 +153,19 @@ and duplicate rate. Use these thresholds to guide the decision:
   resolution results will be poor. Help the user identify the biggest quality issues and create
   a remediation plan. Only proceed if the user explicitly chooses to continue.
 
+**What this score does not measure.** It scores completeness, format consistency, and duplicate
+rate — all *structural* properties of one source in isolation. It says nothing about whether a
+field will be mapped to a feature that **means** the same thing, and nothing about how two sources
+will interact once resolved. A source can score 86% and still carry a mapping that suppresses
+legitimate merges. Present the number as "the data is clean enough to map", never as "the mapping
+will be correct" — semantic correctness is only established after loading, by the match-key audit
+in Data processing.
+
+If the profile that fed this score tripped the field-count sanity check in Phase 2 step 9 (dynamic
+keys inflating the field list), treat the score as provisional and re-compute it after
+pre-processing and re-profiling: a score averaged over hundreds of phantom fields is not
+meaningful.
+
 Present the assessment clearly:
 
 ```text
