@@ -18,6 +18,13 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## recap-pdf-generator-fail-loudly-on-content-loss
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_recap_pdf_guard.py`, `tests/README.md`
+- **Summary:** The generator printed `PDF generated:` and exited 0 after dropping essentially all of its input, because `verify_recap` ran *after* rendering and every problem was a warning. Added a pre-render audit (`RecapAudit` / `audit_recap`) that splits problems into two classes: **recognisable but incomplete** (a module missing a subsection) still warns, renders, and exits 0 — the non-blocking graduation guarantee is untouched — while **not-a-recap or catastrophic content loss** writes no PDF, prints no success line, and exits non-zero. Fatal conditions: no `## ` sections, no section carrying any recognised `### ` subsection, or content retention below `MIN_CONTENT_RETENTION` (0.60, calibrated against the shipped example recap's 99% vs. a non-recap document's 19%). Retention is now reported on success, failure, and `--check`, so partial truncation is visible without extracting the PDF's text. Replaced the silent `except Exception: return False` around the `fpdf` import with two distinct messages — "not installed for `<sys.executable>`" vs. "installed but could not be imported" — so a venv mismatch is legible and a renderer downgrade is never inferred from silence. Documented the required input structure in the module docstring and rejected non-recap input rather than generalizing the renderer (the generic-Markdown need belongs to `always-produce-data-discoveries-document`, which now requires a sibling renderer). `graduation/SKILL.md` Step 1b gained the three-outcome contract so the assistant reports a hard failure instead of announcing a PDF. Verified: all 9 acceptance criteria hold; `tests/test_recap_pdf_guard.py` adds 17 tests (38 total, all passing) covering both exit-code classes, the absence of a false success line, the retention figure, both import-diagnostic branches, `--check` semantics, and the stdlib fallback's landscape Certificate of Completion (INV-066/INV-100 confirmed intact — 10 pages, exactly 1 landscape page carrying the certificate). `--check` exit semantics unchanged, so the graduation content-check contract still holds.
+- **Commit:** uncommitted
+
 ## module02-postgres-credentials-hardening
 
 - **Implemented:** 2026-07-24

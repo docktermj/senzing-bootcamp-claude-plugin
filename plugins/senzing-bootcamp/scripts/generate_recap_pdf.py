@@ -23,6 +23,36 @@ Success signal (matches the graduation skill's contract): on success it prints
 a line beginning ``PDF generated:`` and exits 0. Any other outcome means no PDF
 was written.
 
+Required input structure. This is NOT a general-purpose Markdown renderer: it
+reads the bootcamp recap structure specifically —
+
+    # <Recap title>
+    **Bootcamper:** <name>          <- preamble "**Key:** value" meta lines
+
+    ## <Module name> — <date>       <- one H2 section per completed module
+    ### Information Shared          <- content lives under these H3 headings
+    ### Questions & Responses
+    ### Actions Taken
+    ### End-of-Module Summary
+
+Body text is kept only when it sits under an H3 sub-heading of a module section
+(see ``parse_recap``), so a document whose H2 sections have no recognised
+sub-headings renders as headings with empty bodies. To keep that from shipping
+as a plausible-looking but empty deliverable, the input is audited **before**
+rendering and two outcomes are distinguished:
+
+* **Incomplete but recognisable** (e.g. one module missing a sub-section) —
+  warn on stderr, render, exit 0. Graduation is non-blocking, so an imperfect
+  recap still produces its PDF.
+* **Not a recap, or catastrophic content loss** (no module sections, no section
+  carrying any recognised sub-section, or content retention below
+  ``MIN_CONTENT_RETENTION``) — write the reason to stderr, print no
+  ``PDF generated:`` line, write no PDF, and exit non-zero. Here an empty
+  deliverable would be worse than none.
+
+Every successful render also reports a content-retention figure, so silent
+truncation is visible without extracting the PDF's text.
+
 Usage:
     python3 generate_recap_pdf.py [--input docs/bootcamp_recap.md]
                                   [--output docs/bootcamp_recap.pdf]
@@ -57,6 +87,18 @@ REQUIRED_SECTIONS = [
     "Actions Taken",
     "End-of-Module Summary",
 ]
+
+# Minimum share of the input's content-bearing characters that must survive into
+# the parsed recap. Below this the input is treated as "not a recap" rather than
+# "an imperfect recap" and no PDF is written (see the module docstring).
+#
+# Calibration: the shipped reference recap
+# (docs/examples/bootcamp_recap.example.md) retains ~99%, because a well-formed
+# recap keeps essentially everything except blank lines and `---` separators. A
+# document with H2 headings but no recognised H3 sub-headings retains ~19%, since
+# only the headings survive. 0.60 sits far from both, so ordinary slack (a stray
+# lead line under an H2) never trips it, while real content loss always does.
+MIN_CONTENT_RETENTION = 0.60
 
 
 # --------------------------------------------------------------------------- #
@@ -254,6 +296,117 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
     return problems
 
 
+def _source_content_chars(text: str) -> int:
+    """Count content-bearing characters in the source Markdown.
+
+    Blank lines and the ``---`` separators between module sections are excluded:
+    the renderers legitimately drop them, so counting them would understate
+    retention for a perfectly good recap.
+    """
+    total = 0
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line == "---":
+            continue
+        total += len(line)
+    return total
+
+
+def _rendered_content_chars(recap: Recap) -> int:
+    """Count the characters a parsed recap actually carries into the PDF.
+
+    Mirrors what both renderers draw: the title, the preamble meta pairs, and per
+    module its title/date plus each sub-section's heading and body lines.
+    """
+    total = len(recap.title)
+    for key, val in recap.meta:
+        total += len(key) + len(val)
+    for mod in recap.modules:
+        total += len(mod.title) + len(mod.date)
+        for heading, lines in mod.subsections:
+            total += len(heading)
+            total += sum(len(line.strip()) for line in lines if line.strip())
+    return total
+
+
+@dataclass
+class RecapAudit:
+    """A parsed recap's problems, split by severity.
+
+    ``fatal`` means the input is not a recap, or rendering it would silently drop
+    most of its content — an empty deliverable would be worse than none, so no
+    PDF is written. ``warnings`` means an imperfect but recognisable recap:
+    render it and continue, because graduation is non-blocking.
+    """
+
+    fatal: List[str]
+    warnings: List[str]
+    source_chars: int
+    rendered_chars: int
+
+    @property
+    def retention(self) -> float:
+        if self.source_chars <= 0:
+            return 0.0
+        return self.rendered_chars / self.source_chars
+
+    def retention_note(self) -> str:
+        return (
+            f"rendered {self.rendered_chars} of {self.source_chars} "
+            f"source characters ({self.retention:.0%})"
+        )
+
+
+def audit_recap(
+    recap: Recap,
+    source_text: str,
+    expected_titles: Optional[List[str]] = None,
+) -> RecapAudit:
+    """Classify a parsed recap's problems by severity.
+
+    Builds on :func:`verify_recap` — which stays the ``--check`` contract and
+    reports per-section completeness — and adds the two content-loss checks a
+    per-section list cannot express: an input with no recap sections at all, and
+    one whose sections carry no recognised sub-sections (so the parser keeps
+    their headings and discards their bodies).
+    """
+    warnings = verify_recap(recap, expected_titles)
+    source_chars = _source_content_chars(source_text)
+    rendered_chars = _rendered_content_chars(recap)
+    retention = (rendered_chars / source_chars) if source_chars > 0 else 0.0
+
+    fatal: List[str] = []
+    if not recap.modules:
+        fatal.append(
+            "input does not look like a bootcamp recap: no "
+            "'## <Module name>' sections found"
+        )
+    else:
+        bodyless = sum(1 for mod in recap.modules if not mod.subsections)
+        if bodyless == len(recap.modules):
+            fatal.append(
+                f"input does not look like a bootcamp recap: 0 of "
+                f"{len(recap.modules)} '##' sections carry any recognised "
+                f"sub-section (expected one or more of: "
+                f"{', '.join(REQUIRED_SECTIONS)})"
+            )
+
+    if source_chars > 0 and retention < MIN_CONTENT_RETENTION:
+        fatal.append(
+            f"catastrophic content loss: only {retention:.0%} of the input's "
+            f"content would reach the PDF (minimum "
+            f"{MIN_CONTENT_RETENTION:.0%}) — body text is kept only under a "
+            f"module section's '### ' sub-headings"
+        )
+
+    return RecapAudit(
+        fatal=fatal,
+        warnings=warnings,
+        source_chars=source_chars,
+        rendered_chars=rendered_chars,
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Rich renderer (fpdf2)
 # --------------------------------------------------------------------------- #
@@ -384,7 +537,25 @@ def _logo_info() -> Optional[Tuple[str, int, int]]:
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     try:
         from fpdf import FPDF  # type: ignore
-    except Exception:
+    except ModuleNotFoundError:
+        # Not installed for THIS interpreter — the common, expected case. Naming
+        # the interpreter turns the most confusing variant (fpdf2 installed into a
+        # venv, script run with a different python3) from silence into a legible
+        # message, instead of looking like "fpdf2 is absent from this machine".
+        sys.stderr.write(
+            f"fpdf2 is not installed for {sys.executable}; "
+            "falling back to the stdlib renderer.\n"
+        )
+        return False
+    except Exception as exc:
+        # Present but unusable: broken build, ABI mismatch, partial install.
+        # Distinct from the above because the remedy is different (reinstall or
+        # repair, not install).
+        sys.stderr.write(
+            f"fpdf2 is installed for {sys.executable} but could not be "
+            f"imported: {exc.__class__.__name__}: {exc}; "
+            "falling back to the stdlib renderer.\n"
+        )
         return False
 
     class RecapPDF(FPDF):
@@ -1216,19 +1387,39 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stderr.write(f"Recap not found: {inp}\n")
         return 1
 
-    recap = parse_recap(inp.read_text(encoding="utf-8"))
+    source_text = inp.read_text(encoding="utf-8")
+    recap = parse_recap(source_text)
+    expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
+    audit = audit_recap(recap, source_text, expected or None)
 
     if args.check:
-        expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
-        problems = verify_recap(recap, expected or None)
+        problems = audit.fatal + audit.warnings
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
+            sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
         print("Recap complete: all module sections carry the required subsections.")
         return 0
 
     out = Path(args.output)
+
+    # Audit BEFORE rendering. A structurally wrong input must never reach the
+    # "PDF generated:" line, which is the graduation skill's success signal — a
+    # valid-looking PDF with none of the content is the failure nobody checks.
+    if audit.fatal:
+        sys.stderr.write(f"ERROR: refusing to render {inp}\n")
+        for problem in audit.fatal:
+            sys.stderr.write(f"  - {problem}\n")
+        sys.stderr.write(f"  ({audit.retention_note()})\n")
+        sys.stderr.write(
+            "This generator renders the bootcamp recap structure only "
+            "('## <Module name>' sections whose body sits under '### " +
+            REQUIRED_SECTIONS[0] + "' and its siblings); it is not a "
+            "general-purpose Markdown renderer. No PDF was written.\n"
+        )
+        return 1
+
     used = "fpdf2"
     ok = render_with_fpdf2(recap, out)
     if not ok:
@@ -1236,15 +1427,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         ok = render_with_stdlib(recap, out)
 
     if ok:
-        # Non-fatal content warning (never blocks; graduation is non-blocking).
-        problems = verify_recap(recap)
-        if problems:
+        # Recognisable but imperfect: warn and still ship the PDF (never blocks;
+        # graduation is non-blocking). Distinct from the fatal class above.
+        if audit.warnings:
             sys.stderr.write(
                 "WARNING: recap PDF generated but some sections are incomplete:\n"
             )
-            for p in problems:
-                sys.stderr.write(f"  - {p}\n")
-        print(f"PDF generated: {out} (renderer: {used})")
+            for problem in audit.warnings:
+                sys.stderr.write(f"  - {problem}\n")
+        # Report retention on success too, so partial truncation is visible
+        # without extracting the PDF's text.
+        print(f"PDF generated: {out} (renderer: {used}, {audit.retention_note()})")
         return 0
 
     sys.stderr.write("Failed to generate a PDF by any strategy.\n")
