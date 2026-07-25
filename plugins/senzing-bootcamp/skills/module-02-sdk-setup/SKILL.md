@@ -148,7 +148,9 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
    SDK is only supported on Linux; on macOS/Windows it must run in a container.
 2. macOS Intel → **`platform='docker'`**. There is no native Intel-Mac install: the Homebrew
    tap is Apple Silicon (ARM64) only.
-3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**.
+3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. If the chosen language runs
+   on the JVM (Java), also read "The launch environment" in Step 3 before the first run —
+   installing the SDK is not the same as being able to launch against it.
 4. Windows without Scoop (non-Python) → **`platform='docker'`**. With Scoop available →
    **`platform='windows'`**.
 5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`** based on the package
@@ -312,6 +314,75 @@ environment script at `src/scripts/senzing-env.sh` (or `.bat` for Windows) that 
 `SENZING_ROOT`, library paths, and any other Senzing-specific variables. Source this script
 before running bootcamp tasks. This keeps the bootcamp self-contained and avoids side effects on
 the user's system.
+
+### The launch environment (JVM languages, and macOS generally)
+
+Installing the SDK is not the same as being able to **launch** against it. These are
+launch-environment problems, **not** Senzing misconfigurations — say so when one appears, so the
+bootcamper does not go hunting through their engine config for a fault that is not there. Each
+presents as an error far from its cause.
+
+⛔ **Confirm the specifics for the bootcamper's platform via
+`sdk_guide(topic='install', platform='<platform>', language='<language>')` this session** — the
+library path, the jar path, and the platform gotchas come from MCP, never from memory or from this
+file (INV-080). What follows is the shape of the problem, not a substitute for that lookup.
+
+**macOS + a JVM language (a first-class combination here: `macos_arm` plus Java or C#).**
+
+- **The native library is found through the shell environment, not a JVM flag.** Per the MCP
+  install guidance for `macos_arm`, `DYLD_LIBRARY_PATH` must be set **at the shell level before the
+  JVM starts**, and `-Djava.library.path` **alone is insufficient**. This is the opposite of the
+  natural guess — that a JVM flag can fix a JVM library-path error — which is what makes it cost
+  time. A process cannot repair its own dynamic-linker search path after it has started, so the
+  variable has to be in the environment of the shell that launches `java`.
+- **That is why `senzing-env.sh` must be sourced in the same shell that launches the JVM** — not
+  merely created. Because the global shell config is off-limits (the rule above), a **project-local
+  launcher script** that sources the env script and then executes `java` in one step is the reliable
+  pattern: it keeps "set the environment" and "start the JVM" inseparable, which is precisely what
+  the requirement demands. Generate one and use it for every subsequent JVM invocation.
+- **Do not pass flags through an unquoted variable.** `java $SENZING_JAVA_OPTS` does not word-split
+  in zsh (macOS's default shell), so multiple flags arrive as a single argument. Write the flags
+  explicitly in the launcher script.
+- **Classpath:** the MCP install guidance's example is
+  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:<your classes>" MyApp`. Note the SDK **jar** lives
+  under `sdk/java/`, while the **native** library lives under `lib/` — two different paths for two
+  different things, and confusing them produces a class-not-found or a library-not-found error
+  depending on which you get wrong. Confirm both paths via `sdk_guide`.
+- **If you see `.dylib`/`.so` "not found" errors, do not symlink or copy Senzing libraries.** Per
+  the MCP anti-patterns, Senzing tries both extensions and may report one even when the other works;
+  the real cause is usually a missing dependency or an unset `DYLD_LIBRARY_PATH`. Re-run the
+  `sdk_guide` install lookup and follow its gotchas for the installed version.
+
+**MCP Java scaffolds may need a JSON library the install does not provide.** The authoritative Java
+snippets from `generate_scaffold` (e.g. `loading/LoadWithInfoViaFutures.java`) `import javax.json.*`
+and call `Json.createReader(...)` to parse records and `WITH_INFO` responses. `javax.json` (JSON-P)
+is an external dependency: it is **not** part of the Java SE standard library, and the bootcamp
+compiles with plain `javac` and never sets up Maven or Gradle. So:
+
+1. **Verify before compiling, not after.** When a scaffold imports a package outside the standard
+   library, check whether the environment actually provides it (inspect the install's jars) and
+   resolve it *then* — rather than surfacing a raw `javac` import error the bootcamper has to
+   diagnose. Verify per install; do not assume it is present or absent.
+2. **State the safety asymmetry plainly when it comes up — this is the line that matters.**
+   Replacing the **JSON library** is safe. Altering the **SDK calls** is not. Without that, a
+   bootcamper facing an import error may "fix" it by rewriting the Senzing calls, which is exactly
+   the failure `generate_scaffold` exists to prevent.
+3. **Prefer a dependency-free JSON reader** for the bootcamp's own generated Java, so the code
+   compiles under plain `javac`. Reuse one reader across modules rather than re-deriving it.
+4. **Record the deviation in the source header** — what was substituted and why — so the take-home
+   code shows where it departs from the authoritative scaffold. Never silently strip the import.
+
+**`timeout` is not available on a stock macOS shell** (it is GNU coreutils; `gtimeout` exists only
+if the user installed them). This is not Java-specific — it affects **any** command you wrap in a
+timeout on macOS. Use a background process plus a polling loop with a deadline instead, or skip the
+timeout. Check before relying on it rather than assuming a Linux userland.
+
+**Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. On
+**Windows**, the DYLD/LD variables do not apply at all and the env script is a `.bat`; the
+classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
+`timeout` caveat is macOS-specific — **neither applies on Linux**, where both behave as expected.
+Non-JVM languages need none of the JVM-specific items above.
 
 **Checkpoint:** write step 3 to `config/bootcamp_progress.json`.
 

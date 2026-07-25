@@ -117,6 +117,20 @@ the bootcamper's file path, data source name, and progress reporting. If the sca
 `/tmp/`, `ExampleEnvironment`, or any path outside the working directory, override the database
 path to `database/G2C.db` and keep all output files project-relative.
 
+⛔ **Check the scaffold's imports before compiling, not after.** A scaffold may import a package
+outside the language's standard library that the environment does not provide — the Java snippets,
+for example, import `javax.json` (JSON-P), which plain `javac` does not supply and which this
+bootcamp never installs a build tool to fetch. Verify against the actual install rather than
+assuming, and resolve it **before** the compile, so the bootcamper never has to diagnose a raw
+import error in code they were told was authoritative.
+
+When you resolve it: **replacing the JSON library is safe; altering the SDK calls is not.** Keep
+every Senzing method name, signature, and flag exactly as the scaffold has them — that fidelity is
+the whole reason to use `generate_scaffold` — swap only the JSON handling (prefer the
+dependency-free reader already used for the mappers), and record the substitution in the source
+header so the take-home code shows what deviated and why. See
+`../module-02-sdk-setup/SKILL.md` → "The launch environment".
+
 The program must include production-quality features:
 
 - **Robust error handling:** per-record error logging with record ID, error code, and message.

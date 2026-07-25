@@ -234,6 +234,14 @@ reading, field mapping, type conversion, cleansing, `DATA_SOURCE`/`RECORD_ID`, a
 handling. Save to `src/transform/transform_[name].[ext]`. Tell the user: the file path, what it
 reads/writes, and what it handles.
 
+**Keep JSON handling dependency-free.** This is usually the first Java the bootcamp generates, and
+the bootcamp compiles with plain `javac` and never sets up Maven or Gradle — so the mapper must not
+depend on an external JSON library (a scaffold importing `javax.json` will not compile as written).
+Write the reader here so it needs only the standard library, and **reuse this same reader in later
+modules** rather than re-deriving one per module: Data processing's loading program expects it. Full
+rationale, and the rule that replacing the JSON library is safe while altering SDK calls is not, are
+in `../module-02-sdk-setup/SKILL.md` → "The launch environment".
+
 **Checkpoint:** write step 13.
 
 ### 14. Test
