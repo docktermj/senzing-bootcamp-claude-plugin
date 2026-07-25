@@ -4,5 +4,7 @@
 __pycache__/
 *.pyc
 
-# Maintainer feedback-to-specs input (local triage only; the specs it produces are committed)
-/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md
+# Maintainer feedback-to-specs input (local triage only; the specs it produces are committed).
+# The glob covers the numbered variants a multi-bootcamp triage round produces
+# (…_01.md, …_13.md), not just the bare filename.
+/SENZING_BOOTCAMP_PLUGIN_FEEDBACK*.md
