@@ -35,7 +35,7 @@ Entries are newest first. Do not delete history; append or update in place.
   4a outcome — the same decision Step 11 already branches on — with the
   `> 🤖 Bootcamp-generated business case` marker named as its persisted form for resumed sessions;
   no second mechanism was introduced. Verified all 7 acceptance criteria by grep; 43 tests pass.
-- **Commit:** uncommitted
+- **Commit:** `d4213fd`
 
 ## visualization-server-lifetime-and-teardown-gate
 
