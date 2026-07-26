@@ -8,13 +8,23 @@ Three separate SDK-usage failures in one session, all in code the plugin told th
 all sharing one gap: the plugin's pre-code lookup discipline covers **method names, flag names, and
 response shapes** — but not **parameter shapes** or **what a flag family actually controls**.
 
-**1. `SZ_EXPORT_ALL_FLAGS` does not exist.** Writing the phase D entity export, a composite
-`SzEngineFlags.SZ_EXPORT_ALL_FLAGS` was the natural reach for "give me everything" — by analogy with
-`SZ_ENTITY_DEFAULT_FLAGS`. It raised `AttributeError`; the constant does not exist on the installed
-SDK (4.3.3 / build 4.3.3.26191). Recovery was by introspecting `dir(SzEngineFlags)` at runtime and
-OR-ing the individual `SZ_EXPORT_INCLUDE_*` flags by hand. This one fails loudly, so it costs a
-debugging cycle rather than producing a wrong answer — but it is avoidable, and every bootcamper
-writing an export will look for that constant.
+**1. `SZ_EXPORT_ALL_FLAGS` is absent from the Python binding.** Writing the phase D entity export,
+a composite `SzEngineFlags.SZ_EXPORT_ALL_FLAGS` was the natural reach for "give me everything" — by
+analogy with `SZ_ENTITY_DEFAULT_FLAGS`. It raised `AttributeError` on the installed SDK (4.3.3 /
+build 4.3.3.26191). Recovery was by introspecting `dir(SzEngineFlags)` at runtime and OR-ing the
+individual `SZ_EXPORT_INCLUDE_*` flags by hand. This one fails loudly, so it costs a debugging cycle
+rather than producing a wrong answer — but it is avoidable, and every bootcamper writing an export
+will look for that constant.
+
+⚠️ **Corrected 2026-07-26.** This finding was originally filed, and originally written up here, as
+"`SZ_EXPORT_ALL_FLAGS` does not exist". That generalisation is wrong.
+`get_sdk_reference(topic='flags', filter='export_json_entity_report')` returns the constant with
+`applies_to: ["export_json_entity_report", "export_csv_entity_report"]` and the description "All
+export flags combined", sourced from the **Java SDK's flag enum**. So the composite *is* documented
+for the export methods; it is the **Python** binding's `SzEngineFlags` that lacks it — which is
+exactly what the `AttributeError` was telling us. The observation was real; only the conclusion drawn
+from it was too broad. The correct rule is per-binding availability, not non-existence, and that is
+what the rest of this spec now asks for.
 
 **2. `SZ_EXPORT_INCLUDE_*` flags alone produce rows containing only `{"ENTITY_ID": n}`.** After
 OR-ing the six `SZ_EXPORT_INCLUDE_*` flags (single-record, multi-record, disclosed, possibly-same,
@@ -97,8 +107,10 @@ Two tracks: what this repository can fix now, and what to request upstream.
    - `SZ_ENTITY_INCLUDE_*` chooses the **columns** (what detail each row carries);
    - an export with only the former is **valid but empty** — it will succeed and produce rows
      containing only `ENTITY_ID`;
-   - there is **no `SZ_EXPORT_ALL_FLAGS`** — do not guess a composite; enumerate via the MCP tools or
-     introspect the flags enum.
+   - a composite's **availability is per-binding**: `SZ_EXPORT_ALL_FLAGS` is documented for the
+     export methods but is absent from the Python binding's `SzEngineFlags`, so confirm a composite
+     exists on the bootcamper's binding before reaching for it — enumerate via the MCP tools or
+     introspect the flags enum. Do **not** state that the constant does not exist.
 
    A worked flag expression makes this unmissable; include one, marked as MCP-confirmed at the time of
    writing and to be re-confirmed per session (INV-080).
@@ -110,10 +122,12 @@ Two tracks: what this repository can fix now, and what to request upstream.
 
 **Upstream (Senzing MCP server) — request, track, do not block on**
 
-- Have `reporting_guide(topic='export')` name the actual export composite(s) available in the current
-  SDK, or state plainly that none exists and the individual `SZ_EXPORT_INCLUDE_*` flags must be OR-ed,
-  together with the `SZ_ENTITY_INCLUDE_*` distinction. A one-line "there is no `SZ_EXPORT_ALL_FLAGS`"
-  note would close finding 1.
+- Have `reporting_guide(topic='export')` name the export composites available **per language
+  binding**, together with the `SZ_EXPORT_INCLUDE_*` (row set) vs `SZ_ENTITY_INCLUDE_*` (per-row
+  detail) distinction. `SZ_EXPORT_ALL_FLAGS` is documented for the export methods but is absent from
+  the Python `SzEngineFlags` in 4.3.3, so a reader who trusts the flag reference gets an
+  `AttributeError`. A one-line note that the constant is Java-side only, plus a pointer to
+  `SZ_EXPORT_DEFAULT_FLAGS` as the Python starting point, would close finding 1.
 - Have `reporting_guide(topic='graph')` show a runnable Python `find_network_by_entity_id` /
   `find_path_by_entity_id` call with actual argument types.
 - **Extend `get_sdk_reference` to cover parameter shapes**, not just responses and flags. This fixes
@@ -133,8 +147,9 @@ MCP server covers parameter shapes.
       `find_network_by_entity_id` and `find_path_by_entity_id`, and that the JSON-document form is
       wrong for Python — while staying framed language-agnostically (INV-002).
 - [ ] Phase D's export guidance states the `SZ_EXPORT_INCLUDE_*` (rows) vs `SZ_ENTITY_INCLUDE_*`
-      (columns) split, that only the former yields rows containing just `ENTITY_ID`, and that no
-      `SZ_EXPORT_ALL_FLAGS` exists.
+      (columns) split, that only the former yields rows containing just `ENTITY_ID`, and that
+      `SZ_EXPORT_ALL_FLAGS` is documented for the export methods yet absent from the Python binding —
+      qualified by binding, never asserted as non-existent (INV-080).
 - [ ] A worked, MCP-confirmed flag expression for a detail-carrying export appears in the guidance,
       marked for per-session re-confirmation (INV-080).
 - [ ] Writing an export parser is preceded by dumping one raw row and confirming the expected fields
@@ -153,8 +168,8 @@ MCP server covers parameter shapes.
 - `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md` — Python
   parameter shapes for the graph methods at step 4d (`:26-46`).
 - `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md` — the two export
-  flag families, the no-`SZ_EXPORT_ALL_FLAGS` note, the worked flag expression, and the raw-row dump
-  requirement.
+  flag families, the per-binding composite-availability note, the worked flag expression, and the
+  raw-row dump requirement.
 - `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`
   — align its export-flag guidance with the flag-family split.
 
@@ -162,6 +177,8 @@ MCP server covers parameter shapes.
 
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "`SZ_EXPORT_ALL_FLAGS` does not exist in SDK
   4.3.3" (2026-07-26, Module Data processing; `Source: self-observed (assistant retrospective)`)
+  — entry title quoted verbatim for traceability; its claim is corrected in finding 1 above (the
+  constant exists for the export methods, absent from the Python binding).
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "`export_json_entity_report` with only
   `SZ_EXPORT_INCLUDE_*` flags returns bare `{\"ENTITY_ID\": n}`" (2026-07-26, Module Data processing;
   `Source: self-observed (assistant retrospective)`)
@@ -182,12 +199,19 @@ MCP server covers parameter shapes.
   flag family's meaning and a composite's availability MUST likewise be confirmed per binding
   (recorded in `specs/INVARIANTS.md`).
 
-## Correction required to this spec
+## Correction applied (2026-07-26)
 
-⚠️ This spec's `## Problem` (finding 1) and the acceptance criterion "there is **no**
-`SZ_EXPORT_ALL_FLAGS`" are **factually wrong** and were deliberately not implemented as written.
-MCP (`get_sdk_reference(topic='flags', filter='export_json_entity_report')`) shows the constant does
-exist for `export_json_entity_report` / `export_csv_entity_report`, sourced from the Java SDK flag
-enum — it is the **Python** binding that lacks it, which is what produced the reported
-`AttributeError`. The shipped guidance qualifies it by binding instead. Correcting this spec's text
-belongs to `feedback-to-specs`; it was left unedited here on purpose.
+This spec previously asserted, in five places, that `SZ_EXPORT_ALL_FLAGS` does not exist — including
+in an acceptance criterion, which would have put a Senzing falsehood into bootcamper-facing guidance
+(INV-080 forbids that as firmly as a guess). MCP
+(`get_sdk_reference(topic='flags', filter='export_json_entity_report')`) shows the constant is
+documented for `export_json_entity_report` / `export_csv_entity_report`, sourced from the Java SDK
+flag enum; the **Python** binding lacks it, which is what produced the reported `AttributeError`.
+
+All five are now corrected to the per-binding rule: finding 1's heading and body, the
+proposed-change bullet, the upstream request wording, the acceptance criterion, and the
+affected-files description. The original feedback entry title is quoted verbatim under `## Source`
+for traceability, annotated as corrected. The shipped guidance
+(`ground-rules.md`, `phaseD-validation.md`) already stated the per-binding rule, and
+`tests/test_sdk_parameter_shapes.py` asserts neither file ever denies the constant outright — so the
+code never carried the error, only this document did.

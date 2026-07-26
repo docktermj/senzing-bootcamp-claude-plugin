@@ -74,13 +74,24 @@ Entries are newest first. Do not delete history; append or update in place.
   instead qualifies the constant by binding — already landed in `phaseD-validation.md` during
   `match-key-audit-cannot-read-related-entities-from-export`, and now also in `ground-rules.md`
   — and `tests/test_sdk_parameter_shapes.py` asserts that neither file ever denies it outright.
-  **The spec text was left unedited**; correcting it belongs to `feedback-to-specs`.
-- **Deferred:** the spec's upstream criterion — `submit_feedback` requests for export composites
-  in `reporting_guide(topic='export')`, a runnable graph call in `reporting_guide(topic='graph')`,
-  and parameter-shape coverage in `get_sdk_reference` — was **not** filed, following the same
-  decision taken for `mapping-workflow-truncated-validation-errors`: it sends content to an
-  external service, so the maintainer files it. Extending `get_sdk_reference` to cover parameter
-  shapes remains the fix for the whole class; everything above is the plugin-side mitigation.
+  **Resolved 2026-07-26:** the spec has since been corrected in all five places (finding 1's heading
+  and body, the proposed-change bullet, the upstream request wording, the acceptance criterion, and
+  the affected-files description) to state the per-binding rule, with a
+  `## Correction applied` note and the original entry title kept verbatim under `## Source` for
+  traceability. All three of the spec's findings are therefore now covered, and the corrected
+  acceptance criterion matches what ships.
+- **Upstream requests FILED 2026-07-26** (previously deferred). All three of this spec's upstream
+  asks were submitted via `submit_feedback` at the maintainer's direction, after the exact message
+  text was reviewed and approved: `reporting_guide(topic='export')` composite availability
+  per binding plus the row-set vs per-row-detail split (`bug`); a runnable Python
+  `find_network_by_entity_id` / `find_path_by_entity_id` call in `reporting_guide(topic='graph')`
+  (`feature`); and **parameter-shape coverage in `get_sdk_reference`** (`feature`) — the
+  class-level fix that makes the other two unnecessary. Each message named the tool, the observed
+  behavior and the SDK version (4.3.3 / build 4.3.3.26191), and carried no hostname, username,
+  email, or path (INV-065 discipline). The export request was reworded first so it no longer rests
+  on the corrected `SZ_EXPORT_ALL_FLAGS` premise. Submissions are anonymous — the server records no
+  sender identity, so there is no reply channel; the plugin-side guidance stands as the mitigation
+  until upstream lands, and should be trimmed then.
 - **Commit:** uncommitted
 
 ## rebuild-viz-snapshot-after-customization
@@ -334,11 +345,16 @@ Entries are newest first. Do not delete history; append or update in place.
   workflow. `SKILL.md`'s error-handling section now routes both failure modes to this
   handling rather than leaving them to improvisation. `tests/test_mapping_rejection_fallback.py`
   (16 tests) pins all of it; 16 assertions fail against the pre-fix skill.
-- **Deferred:** the spec's upstream criterion — filing a `submit_feedback` request for full
-  or structured step-3 validation errors — was **deliberately not done**. It sends content
-  to an external service, so the maintainer chose to file it themselves. Every plugin-side
-  change is complete and verified; the upstream request remains outstanding and is the
-  actual fix for the root cause, which is in the Senzing MCP server, not this repository.
+- **Upstream request FILED 2026-07-26** (previously deferred). Submitted via `submit_feedback`
+  as category `bug` at the maintainer's direction, after the exact message text was reviewed and
+  approved: it reports that step-3 validation rejected a payload twice with the error truncated
+  before naming the offending field, states the consequence (the documented path becomes unusable
+  and the fallback is the hand-authoring the tool exists to prevent, for two of three sources), and
+  asks for the full error or a structured per-field list — noting even a bounded "first 10 problems,
+  N total" would make it recoverable. No hostname, username, email, or path was included
+  (INV-065 discipline). Submissions are anonymous, so there is no reply channel. This remains the
+  actual fix for the root cause, which is in the Senzing MCP server, not this repository; the
+  plugin-side fallback handling stands as the mitigation.
 - **Commit:** uncommitted
 
 ## per-tab-screenshot-capture-and-grounded-captions
