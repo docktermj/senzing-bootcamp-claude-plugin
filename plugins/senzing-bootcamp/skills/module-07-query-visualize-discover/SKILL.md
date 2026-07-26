@@ -32,8 +32,8 @@ discover capabilities (why, how, relationship networks).
 - ✅ No critical loading errors.
 
 **Success indicator:** ✅ Query programs created and tested + queries answer the business
-problem + the single interactive visualization app offered (entity graph and results dashboard
-are tabs within it) + Discover phase completed or explicitly skipped.
+problem + the single interactive visualization app offered (the entity graph and every results
+view are tabs within it) + Discover phase completed or explicitly skipped.
 
 ## No direct SQL (module-critical)
 

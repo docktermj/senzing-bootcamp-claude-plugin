@@ -194,7 +194,7 @@ Constraints:
   `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`." — and continue in the same turn. This is
   not a 👉 question, and the bootcamper is never asked to author or approve it.
 - **No feedback-flow banners.** The entry/exit banners in `../bootcamp-onboarding/feedback.md`
-  mark the boundary of the *bootcamper-driven* feedback flow (INV-088). This is a graduation step,
+  mark the boundary of the *bootcamper-driven* feedback flow (INV-074). This is a graduation step,
   not that flow — do not present them.
 - **PII boundary.** Same rule as the recap (INV-065): no hostname, username, IP address, or other
   personal/host identifier. OS/architecture, plugin version, and model/effort are diagnostic

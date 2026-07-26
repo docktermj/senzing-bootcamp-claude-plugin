@@ -189,9 +189,10 @@ If accepted:
 This module's results visualization is delivered as **one** interactive, tabbed app — the same
 Truth-Set-style visualization built in the Truth Set module, now pointed at the bootcamper's own
 resolved data. It is the single visualization artifact: the entity graph, relationship network,
-results dashboard, cross-source overlap heatmap, match-key frequency, and feature-score views are
-all **tabs** of this one app, not separate offers or static pages (see the full tab set and the
-de-duplication rules in `../module-03b-truthset-visualization/visualization-api-reference.md`).
+record merges, merge statistics, cross-source overlap heatmap, match-key frequency, and
+feature-score views are all **tabs** of this one app, not separate offers or static pages (see the
+full tab set and the de-duplication rules in
+`../module-03b-truthset-visualization/visualization-api-reference.md`).
 This is also where Module 6's cross-source relationship view now lives — the Entity Graph,
 Cross-Source, and Relationship Network tabs replace the former Module 6 `multi_source_results.html`
 static page (Module 6 no longer offers a visualization). Offer it here, after the query results
@@ -201,14 +202,15 @@ why/how/network demonstrations — it is not gated on, or bundled with, the visu
 
 Pin the offer verbatim:
 
-> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, results dashboard, cross-source overlap, and match/feature analysis, all in one app?**
+> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, merge statistics, cross-source overlap, and match/feature analysis, all in one app?**
 
 *(Internal: end the turn on this question and wait.)*
 
 - **Declines:** skip the visualization and continue to "Next: Discover phase (step 4)". This
-  question is itself the visualization offer for the Query Completeness Gate (it covers the entity
-  graph and results dashboard as tabs) — checkpoint `m7_visualizations` as `{"offered": true,
-  "accepted": false}` under `module_7_query`.
+  question is itself the visualization offer for the Query Completeness Gate (one offer covers
+  the entity graph and the results summary INV-046 asks for; both live inside the single app) —
+  checkpoint `m7_visualizations` as `{"offered": true, "accepted": false}` under
+  `module_7_query`.
 - **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
   `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
 
@@ -298,7 +300,7 @@ phase completes or is skipped, return here for the Query Completeness Gate.
 
 - ✅ Query programs created and tested.
 - ✅ Visualization offered (the single interactive-visualization gate in step 3c was presented; the
-  tabbed app — entity graph, relationship network, results dashboard, cross-source overlap, and
+  tabbed app — entity graph, relationship network, merge statistics, cross-source overlap, and
   match/feature analysis — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
 
@@ -365,7 +367,7 @@ Before wrapping up the module, confirm:
 1. **Query programs created and tested?** At least one query program runs successfully
    against the resolved data.
 2. **Visualization offered?** The step-3c visualization gate was presented (the single
-   interactive-visualization question, which covers the entity graph and results dashboard as tabs)
+   interactive-visualization question, which is the single offer covering every view in the app)
    — this counts as offered whether the bootcamper accepted or declined it.
 3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4d
    checkpointed) or explicitly skipped by the bootcamper.

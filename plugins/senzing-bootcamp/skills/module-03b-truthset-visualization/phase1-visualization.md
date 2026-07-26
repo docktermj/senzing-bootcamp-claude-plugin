@@ -218,7 +218,7 @@ The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeo
 | `GET /api/search?q=Robert Smith` | HTTP 200; `results` array with resolved entities, each carrying `match_key` and `resolution_rule` |
 | `GET /api/why?entity_id=<id>` | HTTP 200; real `WHY_RESULTS` (or an `error` field) explaining why the entity's records resolved together |
 | `GET /api/how?entity_id=<id>` | HTTP 200; real `HOW_RESULTS` (or an `error` field) explaining how the entity was constructed |
-| `GET /api/dashboard` | HTTP 200; `counts`, `histogram`, and `sample_entities` for the results dashboard |
+| `GET /api/records?entity_id=<id>` | HTTP 200; `entity_id`, `entity_name`, and a `records` array carrying each constituent record's `data_source`, `record_id`, and fields — backs the Records action on every entity surface |
 | `GET /api/overlap` | HTTP 200; `sources` + square `matrix` of cross-source shared-entity counts |
 | `GET /api/matchkeys` | HTTP 200; `match_keys` (most-frequent first) + `distinct` + `capped` |
 | `GET /api/features` | HTTP 200; `features` (per-feature score-bucket counts), `sampled`, `multi_record_total`, `capped` |
@@ -294,7 +294,7 @@ Then deliver this guided tour as one message (no interactive pauses):
   bars at 2/3/4+ are where Senzing found duplicates.
 - **Search / Probe:** type a name (try "Robert Smith") to see the resolved entity and why it
   matched.
-- **More tabs:** the **Results Dashboard** summarizes the run at a glance; **Match Keys** and
+- **More tabs:** **Record Merges** lists what collapsed into what; **Match Keys** and
   **Feature Scores** show what drove the resolutions; **Cross-Source** (with 2+ sources) maps where
   your sources overlap; **Relationship Network** shows how entities connect. (Point these out
   briefly — one line — under `concise`/`minimal` verbosity, or skip the list.)
