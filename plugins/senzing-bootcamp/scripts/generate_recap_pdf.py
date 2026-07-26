@@ -167,6 +167,57 @@ def _split_title_date(rest: str) -> Tuple[str, str]:
     return rest.strip(), ""
 
 
+# --- Inter-item spacing in the long bullet lists -------------------------------- #
+# These three lists are the substance of the recap — what was taught, what was done,
+# what was achieved per module — and they carry its longest bullets. A bullet ends with
+# a `multi_cell` at line height 5.5 and no trailing gap, so the space between two
+# separate items equals the space between a wrapped item's own lines, and multi-line
+# items run together. A small gap between items (never after the last) fixes it.
+_ITEM_GAP_MM = 2.4
+_ITEM_GAP_PT = 3.0
+
+# Compared through _normalize_heading, so the "Action Taken" singular variant is covered.
+_SPACED_SUBSECTIONS = ("information shared", "actions taken")
+
+# Spaced only where they appear as a `**Label:**` block, so that within End-of-Module
+# Summary the accomplishments list is spaced while "Files produced" — a short list of
+# one-line paths — stays tight.
+_SPACED_LABELS = ("what you accomplished",)
+
+# Deliberately NOT spaced:
+# * "Questions & Responses" — its responses are indented sub-bullets under their
+#   questions; spacing every bullet would separate each answer from its question and
+#   read worse, not better.
+# * "Files produced" — a short reference list of paths.
+
+
+def _block_label(line: str) -> str:
+    """The normalized `**Label:**` of a line, or "" when it carries none.
+
+    Used to switch spacing on inside a subsection: End-of-Module Summary holds both a
+    list that wants spacing and one that does not.
+    """
+    m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
+    return _normalize_heading(m.group(1)) if m else ""
+
+
+def _is_bullet(line: str) -> bool:
+    return bool(re.match(r"^\s*[-*]\s+\S", line))
+
+
+def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
+    """True when the next content-bearing line after ``index`` is also a bullet.
+
+    Gating on the *next* line keeps the gap strictly between items: it never trails the
+    last bullet of a list, where the subsection's own spacing already applies.
+    """
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            continue
+        return _is_bullet(line)
+    return False
+
+
 def _normalize_heading(name: str) -> str:
     """Normalize a heading for tolerant comparison.
 
@@ -679,9 +730,13 @@ def _is_env_key(key: str) -> bool:
 def _partition_meta(
     meta: List[Tuple[str, str]]
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
-    """Split header meta into (identity rows, run-environment rows). Identity rows
-    (bootcamper, dates, language, path, plugin version) drive the cover card and the
-    certificate; environment rows render as their own block."""
+    """Split header meta into (identity rows, run-environment rows).
+
+    Identity rows (bootcamper, dates, language, path, plugin version) drive the cover
+    card; environment rows render as their own block. The certificate does **not**
+    consume this partition — it takes exactly the fields it prints via ``_cert_fields``
+    and ``_cert_plugin_version``.
+    """
     ident = [(k, v) for k, v in meta if not _is_env_key(k)]
     env = [(k, v) for k, v in meta if _is_env_key(k)]
     return ident, env
@@ -866,6 +921,33 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
     return name, date, labels
 
 
+def _cert_plugin_version(recap: Recap) -> str:
+    """The plugin version for the certificate face, or "" when it is not recorded.
+
+    The certificate is the page most likely to be detached from the rest of the recap —
+    shared, printed, or attached to something on its own — so it has to be
+    self-describing about which bootcamp produced it. Graduation already stamps
+    ``**Plugin version:**`` into the recap header for the cover card; this reads the same
+    row.
+
+    Returns "" rather than a placeholder: an unknown version must be **omitted**, never
+    printed as "v(unknown)" on a certificate.
+    """
+    for key, val in recap.meta:
+        if key.strip().lower().rstrip(":") == "plugin version":
+            return _md_inline_to_text(val).strip()
+    return ""
+
+
+def _cert_attribution(recap: Recap) -> List[str]:
+    """The certificate's footer attribution lines, top to bottom."""
+    lines = ["Senzing Bootcamp"]
+    version = _cert_plugin_version(recap)
+    if version:
+        lines.append(f"Senzing Bootcamp Claude plugin v{version.lstrip('v')}")
+    return lines
+
+
 def recap_missing_certificate_name(recap: Recap) -> bool:
     """True when the recap carries no bootcamper name for the certificate.
 
@@ -945,10 +1027,18 @@ def _render_certificate(pdf, recap: Recap) -> None:
         pdf.set_font("Helvetica", "", 10)
         pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
 
-    pdf.set_xy(0, h - 22)
+    # ⚠️ The inner ember border's bottom edge sits at y = h - 14 (the rect above), so a
+    # line placed at h - 17 is clipped by it — text extraction reports the string present
+    # and correct while the glyphs are visually sliced in half. Both attribution lines
+    # must clear it: h - 28 and h - 22. Verify by rasterizing, never by pdftotext.
+    attribution = _cert_attribution(recap)
+    # One line keeps its long-standing h - 22; a second stacks above it at h - 28.
+    offsets = (22,) if len(attribution) == 1 else (28, 22)
     pdf.set_text_color(*SLATE)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.cell(w, 6, "Senzing Bootcamp", align="C")
+    for offset, line in zip(offsets, attribution):
+        pdf.set_xy(0, h - offset)
+        pdf.cell(w, 6, _safe(line), align="C")
     # Leave suppress_footer set: this is the last page.
 
 
@@ -1033,8 +1123,18 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
         pdf.multi_cell(epw, 6, "(not recorded)")
         pdf.ln(1)
         return
-    for line in content:
+    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    active_label = ""
+    for index, line in enumerate(content):
+        label = _block_label(line)
+        if label:
+            active_label = label
         _render_line(pdf, epw, line)
+        if not _is_bullet(line):
+            continue
+        if spaced_section or active_label in _SPACED_LABELS:
+            if _next_nonblank_is_bullet(content, index):
+                pdf.ln(_ITEM_GAP_MM)
     pdf.ln(2)
 
 
@@ -1178,6 +1278,15 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         for chunk in _wrap("  -  ".join(labels), 110):
             center(chunk, "F1", 9, y)
             y -= 14
+
+    # Footer attribution, bottom-anchored so it matches the fpdf2 certificate rather
+    # than following the variable-length module list. 22 mm and 28 mm above the page
+    # bottom, expressed in points (1 mm ≈ 2.835 pt) — well clear of this renderer's
+    # border, whose bottom edge is at y = 22 pt.
+    attribution = _cert_attribution(recap)
+    baselines = (62.4,) if len(attribution) == 1 else (79.4, 62.4)
+    for baseline, line in zip(baselines, attribution):
+        center(line, "F1", 8, baseline)
     return "\n".join(ops)
 
 
@@ -1250,16 +1359,22 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                 pages.append("\n".join(buf))
 
         for text, font, size, indent in tokens:
-            if y - line_h < margin:
+            # A "GAP" token is pure vertical space of exactly `size` points; it emits no
+            # text op, so it never references a font resource. Needed because an ordinary
+            # empty token costs 0.6 of a line — too much for an inter-item gap.
+            gap = font == "GAP"
+            advance = size if gap else (line_h if text else line_h * 0.6)
+            if y - advance < margin:
                 flush_page()
                 buf = []
                 y = page_h - margin
-            esc = _pdf_escape(text)
-            x = margin + indent
-            buf.append(
-                f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({esc}) Tj ET"
-            )
-            y -= line_h if text else line_h * 0.6
+            if not gap:
+                esc = _pdf_escape(text)
+                x = margin + indent
+                buf.append(
+                    f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({esc}) Tj ET"
+                )
+            y -= advance
         flush_page()
         if not pages:
             pages = [f"BT /F1 11 Tf 1 0 0 1 {margin} {page_h - margin} Tm (Bootcamp recap) Tj ET"]
@@ -1284,7 +1399,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
     if content is None or not any(l.strip() for l in content):
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
-    for line in content:
+    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    active_label = ""
+    for index, line in enumerate(content):
         s = line.strip()
         if not s:
             add("", "F1", 4, 0)
@@ -1293,6 +1410,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
             continue
         if s.startswith("<!--") and s.endswith("-->"):
             continue  # HTML comment (e.g. a maintainer note): never rendered
+        label = _block_label(line)
+        if label:
+            active_label = label
         indent = 6.0
         m = re.match(r"^(\s*)([-*])\s+(.*)$", line)
         if m:
@@ -1301,6 +1421,10 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         else:
             s = _md_inline_to_text(s)
         add_wrapped(s, "F1", 10.5, indent)
+        # Mirror the fpdf2 path's inter-item gap so the two renderers do not drift.
+        if m and (spaced_section or active_label in _SPACED_LABELS):
+            if _next_nonblank_is_bullet(content, index):
+                add("", "GAP", _ITEM_GAP_PT, 0)
 
 
 def _wrap(text: str, width: int) -> List[str]:

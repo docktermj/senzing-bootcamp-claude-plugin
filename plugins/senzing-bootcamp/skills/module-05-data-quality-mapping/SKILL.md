@@ -37,6 +37,12 @@ transformation programs tested + output validated with quality >70%.
   definitions in Phase 1 (field completeness, format consistency, duplicate rate). The
   standalone `QUALITY_SCORING_METHODOLOGY` guide is a later porting phase; for now use
   `search_docs` for any Senzing-specific quality guidance.
+  ⛔ Because the completeness helper is authored fresh each run until that guide is ported, use
+  the **presence test defined in Phase 1 step 6** rather than writing one from scratch. Two traps
+  it exists to close: never use a truthiness test (`if value:`) — `false` and `0` are present
+  values — and never use key presence as coverage, which reports 100% for a field that is an
+  empty array in every record. When the guide is ported, implement presence exactly as Phase 1
+  defines it and carry the caution into the ported methodology.
 - **Multi-language data:** If a source contains non-Latin characters (Chinese, Arabic,
   Cyrillic, etc.), call `search_docs(query="globalization")` for current guidance on UTF-8
   encoding, non-Latin character support, cross-script name matching, and multi-language data

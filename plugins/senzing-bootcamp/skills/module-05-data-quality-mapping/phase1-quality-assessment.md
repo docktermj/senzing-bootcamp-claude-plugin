@@ -142,7 +142,35 @@ lineage write failure MUST NOT block the fast-path.
 ## 6. Assess data quality and apply thresholds
 
 For each data source, compute a quality score based on field completeness, format consistency,
-and duplicate rate. Use these thresholds to guide the decision:
+and duplicate rate.
+
+⛔ **Define "present" this way — do not re-invent it.** Completeness feeds the score that gates this
+module, so the presence test is part of the measurement, not an implementation detail. A field value
+is **present** unless it is:
+
+- absent — the key is missing from the record — or `null`;
+- an empty or whitespace-only string;
+- an empty container (a list, dict, set or tuple of length 0);
+- a container whose every element is itself empty by these rules (e.g. `[""]`, `[{}]`, `[null]`).
+
+Everything else is present. Two consequences to get right:
+
+- **`false`, `0` and `0.0` count as PRESENT.** They are values, not absences. A truthiness test
+  (`if value:`) is wrong: it silently reports real data as missing.
+- **Presence is a property of the VALUE, never of the key.** Testing "does the record have this
+  field?" reports 100% coverage for a field that is an empty array in every record — which is
+  exactly how one bootcamp reported `IDENTIFIER_LIST` coverage as **100%** when the true figure was
+  **0%**, on the field family that supplies exclusive identifiers, feeding the number straight into
+  the mapping decision.
+
+⛔ **Sanity-check any 0% or 100% figure before it routes the gate.** A field family reporting
+*exactly* full or *exactly* zero coverage across every record is the signature of a presence test
+measuring the wrong thing. Print one sample value for that field and confirm the figure against it
+before reporting. Treat a suspiciously uniform result as a probable measurement failure first and a
+real finding second — the same discipline INV-115 applies to blank parsed SDK fields, applied here to
+profiling.
+
+Use these thresholds to guide the decision:
 
 - **≥80% quality score** → Proceed to Phase 2 (mapping). Data quality is strong enough for
   meaningful entity resolution.

@@ -64,12 +64,59 @@ PDF_FONT = "Helvetica"
 # The style guide does not define data-source colors; categorical distinctness
 # matters here ("where appropriate" latitude). The primary source is anchored to
 # ember; signal green is deliberately excluded (reserved). Kept brand-harmonious.
+#
+# ⛔ SOURCE_COLORS holds **preferred** assignments only — it is NOT the full map.
+# These are the Truth Set's source names, and no bootcamper uses them for their own
+# data, by definition. A name-keyed lookup therefore collapses every real data source
+# to one fallback color, which is worst exactly where cross-source structure is the
+# thing worth seeing. Assign colors from the sources actually present, via
+# `color_for_sources()`.
 SOURCE_COLORS = {
     "CUSTOMERS": EMBER_CORE,
     "REFERENCE": "#3B6EA5",
     "WATCHLIST": "#C8922A",
 }
 FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+
+# Second visual channel for a source beyond the first palette cycle, so a model with
+# more sources than colors stays readable instead of silently reusing one.
+SOURCE_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
+
+
+def color_for_sources(sources):
+    """Map the data-source codes actually present to distinct colors.
+
+    Truth Set names keep their preferred `SOURCE_COLORS` assignment; every other source
+    takes the next `FALLBACK_COLORS` entry not already claimed by a preferred one, so two
+    sources can never collide on the first cycle. `SIGNAL_GREEN` is never assigned — it is
+    reserved for live/resolved states and is explicitly not a categorical color.
+
+    Ordering is deterministic (sorted), so the same model yields the same legend on every
+    rebuild — otherwise a re-rendered snapshot or a re-captured screenshot disagrees with
+    the recap prose describing it.
+
+    Returns ``{source_code: {"fill": "#RRGGBB", "stroke": "#RRGGBB", "cycle": int}}``.
+    """
+    codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
+    preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
+    claimed = set(preferred.values())
+    available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+
+    assigned = {}
+    nth = 0
+    for code in codes:
+        if code in preferred:
+            fill, cycle = preferred[code], 0
+        else:
+            fill = available[nth % len(available)]
+            cycle = nth // len(available)
+            nth += 1
+        assigned[code] = {
+            "fill": fill,
+            "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+            "cycle": cycle,
+        }
+    return assigned
 
 
 def hex_to_rgb(value):

@@ -568,6 +568,22 @@ Applies to both **Entity Graph** and **Relationship Network**.
   Clicking a legend entry filters the view to that type/source and toggles back; show the active
   filter state and a per-entry count. Pair color with a non-color distinction (e.g. line style per
   relationship type) so the encoding survives a monochrome screenshot.
+- **Data-source colors are ASSIGNED FROM the sources present, never from a name-keyed palette.**
+  Build the source→color map at model-build time from the data-source codes actually loaded. A map
+  keyed by source *name* is not acceptable: the shipped palette names the Truth Set's sources
+  (`CUSTOMERS`, `REFERENCE`, `WATCHLIST`), and **no bootcamper uses those names for their own data,
+  by definition** — so a name-keyed lookup drops every real source to one identical fallback color
+  and reduces the payoff module's centerpiece to a monochrome hairball. It fails silently: a graph
+  renders, just uninformative, and a bootcamper who did not build the server cannot tell a bad
+  default from genuinely unclustered data.
+
+  Requirements: Truth Set names keep their preferred assignment (so the Truth Set view is
+  unchanged); every other source takes the next unclaimed palette entry, so two sources never
+  collide; assignment is **deterministic** (sort the codes) so a rebuilt snapshot or a re-captured
+  screenshot still matches the recap prose describing it; when there are more sources than palette
+  entries, vary a second visual channel (e.g. node stroke) rather than silently reusing a color; and
+  the reserved signal green is never assigned as a categorical color. The Python reference implements
+  this as `brand_tokens.color_for_sources()`.
 - **Init-state note.** An unchecked toggle fires no change event, so apply its render state
   explicitly at load — do not rely on the event handler to establish the initial view.
 

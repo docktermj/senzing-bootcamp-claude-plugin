@@ -215,6 +215,270 @@ class StdlibFallbackKeepsCertificate(unittest.TestCase):
         self.assertEqual(len(landscape), 1, "expected exactly one landscape page")
 
 
+# A recap whose lists exercise every spacing decision at once: spaced subsections,
+# the spaced "What you accomplished" label block, and the two deliberate exclusions.
+SPACING_RECAP = """# Senzing Bootcamp Recap
+
+**Bootcamper:** Ada Lovelace
+**Started:** 2026-07-20
+**Plugin version:** 9.9.9
+
+## SDK setup — 2026-07-20T10:00:00-05:00
+
+### Information Shared
+
+- First shared item, long enough that it wraps onto a second rendered line so the
+  gap between items has to be larger than the gap inside one item.
+- Second shared item, also long enough to wrap across more than a single line in
+  the rendered output of this subsection.
+- Third and final shared item of this list.
+
+### Questions & Responses
+
+- **Q:** Which database would you like to use?
+  - **R:** SQLite
+- **Q:** Do you have a Senzing License Key?
+  - **R:** No, request an evaluation license
+
+### Actions Taken
+
+- Created the SQLite database and schema at database/G2C.db.
+- Created the engine configuration at config/engine_config.json.
+
+### End-of-Module Summary
+
+**What you accomplished:**
+- Verified the SDK works end to end.
+- Configured the database and engine.
+
+**Files produced:**
+- `artifacts/alpha-marker.db`
+- `artifacts/beta-marker.json`
+"""
+
+
+def load_generator():
+    """Import the generator as a module so its helpers can be unit-tested."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("recap_gen_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["recap_gen_under_test"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def drawn_runs(path):
+    """Every drawn text run as (x, y, text) in points.
+
+    Position is what distinguishes "rendered" from "present in the file", and it is the
+    only way to measure spacing. A stream that will not decompress is kept raw rather
+    than skipped — dropping it fabricates missing content (it did, during this
+    implementation, and briefly looked like a lost module section).
+    """
+    import zlib
+
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    runs = []
+    pattern = re.compile(r"([\d.]+)\s+([\d.]+)\s+(?:Td|Tm)\b(.*?)\bTj", re.S)
+    for match in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", raw, re.S):
+        body = match.group(1)
+        # `decompressobj` decodes the valid prefix and tolerates a slice whose tail
+        # is off by a few bytes; strict `decompress` raises on that, which silently
+        # hid a whole page of text and looked exactly like a lost module section.
+        try:
+            body = zlib.decompressobj().decompress(body)
+        except zlib.error:
+            pass
+        for run_match in pattern.finditer(body.decode("latin-1", "replace")):
+            text = re.findall(r"\((.*?)\)\s*$", run_match.group(3).strip())
+            if text:
+                runs.append(
+                    (round(float(run_match.group(1)), 1), round(float(run_match.group(2)), 1), text[0])
+                )
+    return runs
+
+
+def render_to(markdown, args=()):
+    """Render `markdown` and return the output PDF path (kept for inspection)."""
+    workdir = tempfile.mkdtemp()
+    src = os.path.join(workdir, "recap.md")
+    out = os.path.join(workdir, "recap.pdf")
+    with open(src, "w", encoding="utf-8") as fh:
+        fh.write(markdown)
+    proc = subprocess.run(
+        [sys.executable, SCRIPT, "--input", src, "--output", out, *args],
+        capture_output=True, text=True, cwd=workdir,
+    )
+    assert proc.returncode == 0, proc.stderr
+    return out
+
+
+class CertificateCarriesThePluginVersion(unittest.TestCase):
+    """The certificate is the page most likely to be detached and shared on its own, so
+    it has to say which plugin produced it."""
+
+    def test_version_line_is_rendered(self):
+        runs = drawn_runs(render_to(SPACING_RECAP))
+        self.assertTrue(
+            any("Senzing Bootcamp Claude plugin v9.9.9" == t for _x, _y, t in runs),
+            "the certificate must name the plugin version from the header meta row",
+        )
+
+    def test_version_is_omitted_when_the_meta_row_is_absent(self):
+        """Omit, never a placeholder — a certificate is permanently visible."""
+        without = SPACING_RECAP.replace("**Plugin version:** 9.9.9\n", "")
+        runs = drawn_runs(render_to(without))
+        self.assertFalse(any("Claude plugin v" in t for _x, _y, t in runs))
+        self.assertTrue(
+            any(t.strip() == "Senzing Bootcamp" for _x, _y, t in runs),
+            "the existing attribution line must survive",
+        )
+
+    def test_both_attribution_lines_clear_the_inner_border(self):
+        """The ember border's bottom edge is at h - 14 mm; a line at h - 17 is clipped.
+
+        Text extraction reported the string present and correct while the glyphs were
+        visually sliced in half, so this asserts geometry, not presence.
+        """
+        module = load_generator()
+        runs = drawn_runs(render_to(SPACING_RECAP))
+        # Landscape A4 height = 210 mm; the border bottom sits 14 mm above the page
+        # bottom, i.e. at y = 14 mm in fpdf2's top-down space.
+        attribution = [
+            (y, t) for _x, y, t in runs
+            if t.strip() == "Senzing Bootcamp" or "Claude plugin v" in t
+        ]
+        self.assertEqual(2, len(attribution), "expected exactly two attribution lines")
+        for y, text in attribution:
+            with self.subTest(text=text):
+                # y here is a PDF baseline in points from the page bottom; both lines
+                # must sit above the 14 mm (≈39.7 pt) border.
+                self.assertGreater(y, 39.7, f"{text!r} is clipped by the inner border")
+        self.assertEqual(2, len(module._cert_attribution(module.parse_recap(SPACING_RECAP))))
+
+    def test_partition_meta_docstring_matches_the_code(self):
+        """It used to claim identity rows drive the certificate; they do not."""
+        module = load_generator()
+        doc = re.sub(r"\s+", " ", module._partition_meta.__doc__ or "")
+        self.assertIn("cover card", doc)
+        self.assertRegex(doc, r"certificate does \*\*not\*\* consume this partition")
+
+
+class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
+    """Bullets ended with no trailing gap, so the space between two items equalled the
+    space inside one wrapped item and multi-line bullets ran together."""
+
+    def setUp(self):
+        self.module = load_generator()
+        self.runs = drawn_runs(render_to(SPACING_RECAP))
+
+    def _y_of(self, needle):
+        for _x, y, text in self.runs:
+            if needle in text:
+                return y
+        self.fail(f"{needle!r} was not drawn")
+
+    def test_spaced_and_unspaced_subsections_are_declared(self):
+        self.assertEqual(
+            ("information shared", "actions taken"), self.module._SPACED_SUBSECTIONS
+        )
+        self.assertEqual(("what you accomplished",), self.module._SPACED_LABELS)
+
+    def test_action_taken_singular_is_covered(self):
+        """INV-048 names it singular; every surface uses the plural."""
+        self.assertIn(
+            self.module._normalize_heading("Action Taken"), self.module._SPACED_SUBSECTIONS
+        )
+
+    def test_consecutive_actions_taken_items_are_more_than_one_line_apart(self):
+        first = self._y_of("Created the SQLite database")
+        second = self._y_of("Created the engine configuration")
+        gap = first - second
+        # One line is 5.5 mm ≈ 15.6 pt; the item gap adds 2.4 mm ≈ 6.8 pt.
+        self.assertGreater(gap, 17.0, "Actions Taken items are still one line apart")
+
+    def test_question_and_response_stay_together(self):
+        """Spacing here would separate each answer from the question it answers."""
+        question = self._y_of("Which database would you like to use")
+        response = self._y_of("SQLite")
+        self.assertLess(
+            question - response, 17.0, "Q/R pairing must not be broken by item spacing"
+        )
+
+    def test_files_produced_list_stays_tight(self):
+        first = self._y_of("artifacts/alpha-marker.db")
+        second = self._y_of("artifacts/beta-marker.json")
+        self.assertLess(
+            first - second, 17.0, "Files produced is a short path list; keep it tight"
+        )
+
+    def test_accomplishments_list_is_spaced(self):
+        first = self._y_of("Verified the SDK works end to end")
+        second = self._y_of("Configured the database and engine")
+        self.assertGreater(first - second, 17.0)
+
+    def test_gap_is_between_items_never_after_the_last(self):
+        lines = [
+            "- first item",
+            "- second item",
+            "",
+            "not a bullet",
+        ]
+        self.assertTrue(self.module._next_nonblank_is_bullet(lines, 0))
+        self.assertFalse(self.module._next_nonblank_is_bullet(lines, 1))
+        self.assertFalse(self.module._next_nonblank_is_bullet(lines, 3))
+
+    def test_block_label_only_matches_a_standalone_label(self):
+        """A bullet carrying `- **Q:**` must not switch spacing on."""
+        self.assertEqual(
+            "what you accomplished", self.module._block_label("**What you accomplished:**")
+        )
+        self.assertEqual("", self.module._block_label("- **Q:** a question"))
+
+    def test_content_is_not_lost_to_the_added_spacing(self):
+        """INV-110/INV-121: extra vertical space must never push content out."""
+        for probe in (
+            "First shared item",
+            "Third and final shared item",
+            "Created the engine configuration",
+            "Verified the SDK works end to end",
+            "config/engine_config.json",
+        ):
+            with self.subTest(probe=probe):
+                self.assertTrue(any(probe in t for _x, _y, t in self.runs))
+
+
+class StdlibFallbackMatchesTheFpdf2Certificate(unittest.TestCase):
+    """The two renderers must not drift on the certificate footer."""
+
+    def test_stdlib_certificate_carries_the_version_line(self):
+        module = load_generator()
+        recap = module.parse_recap(SPACING_RECAP)
+        stream = module._stdlib_certificate_stream(recap, 842.0, 595.0)
+        self.assertIn("Senzing Bootcamp Claude plugin v9.9.9", stream)
+        self.assertIn("Senzing Bootcamp", stream)
+
+    def test_stdlib_certificate_omits_an_absent_version(self):
+        module = load_generator()
+        recap = module.parse_recap(SPACING_RECAP.replace("**Plugin version:** 9.9.9\n", ""))
+        stream = module._stdlib_certificate_stream(recap, 842.0, 595.0)
+        self.assertNotIn("Claude plugin v", stream)
+        self.assertIn("Senzing Bootcamp", stream)
+
+    def test_stdlib_gap_token_emits_no_text_operator(self):
+        """A GAP token is pure vertical space; it must not reference a font."""
+        module = load_generator()
+        recap = module.parse_recap(SPACING_RECAP)
+        out = os.path.join(tempfile.mkdtemp(), "stdlib.pdf")
+        self.assertTrue(module.render_with_stdlib(recap, __import__("pathlib").Path(out)))
+        with open(out, "rb") as handle:
+            raw = handle.read().decode("latin-1")
+        self.assertNotIn("/GAP", raw, "the gap sentinel must never reach the PDF")
+        self.assertIn("Certificate of Completion", raw)
+
+
 class CheckModeContract(unittest.TestCase):
     """`--check` keeps its exit semantics: 0 when complete, non-zero on any gap."""
 

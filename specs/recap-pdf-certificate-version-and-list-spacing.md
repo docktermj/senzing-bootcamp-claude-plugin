@@ -181,3 +181,10 @@ aligns the guidance with the invariant rather than changing it.
   `specs/discoveries-pdf-offpage-blocks-and-list-spacing.md` (the sibling generator; carries the
   shared long-bold-label fix that also lands in `_render_line`),
   `specs/artifact-level-verification-for-deliverables.md`.
+
+## Invariants introduced
+
+- `INV-126` — The Certificate of Completion MUST name the plugin version on the certificate face,
+  omitting the line rather than placeholdering it when the version is unknown, with both renderers
+  identical and the attribution lines verified clear of the inner border by rasterizing (recorded in
+  `specs/INVARIANTS.md`).

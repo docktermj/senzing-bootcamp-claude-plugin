@@ -147,3 +147,9 @@ bundled Python reference.
   `specs/consolidate-module7-visualizations-as-truthset-app-tabs.md`,
   `specs/visualization-server-in-chosen-language.md` (INV-090 — why this must be contract),
   `specs/final-review-doc-coherence.md` (prior brand-token/fallback sync finding).
+
+## Invariants introduced
+
+- `INV-127` — Categorical colors in a bootcamper-facing visualization MUST be assigned from the
+  category values actually present, deterministically and without collision, never by lookup in a
+  name-keyed palette (recorded in `specs/INVARIANTS.md`).

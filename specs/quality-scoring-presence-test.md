@@ -130,3 +130,9 @@ so the definition does not diverge from the interim guidance.
   the structural score explicitly does not establish),
   `specs/mapping-workflow-truncated-validation-errors.md` (the other Module 5 finding from this
   session).
+
+## Invariants introduced
+
+- `INV-128` — Field completeness MUST use an explicit emptiness test on the value (`false`/`0`
+  present; key presence is not coverage), and a uniform 0%/100% figure MUST be confirmed against a
+  sample value before it feeds a gate (recorded in `specs/INVARIANTS.md`).

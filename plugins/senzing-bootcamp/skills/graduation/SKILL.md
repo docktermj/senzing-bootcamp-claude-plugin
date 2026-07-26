@@ -133,12 +133,22 @@ Gather context before any step. Do this silently.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
 3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
 4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
-   preparation and never asked (INV-076), so it can be absent or unsuitable. Treat it as **unusable**
-   only when it is missing, empty/whitespace, or clearly not a person's display name — a known
-   system/service account (`root`, `ubuntu`, `ec2-user`, `admin`, `runner`), a value containing no
-   letters, an email address or `@handle`, or a bare lowercase token identical to the OS username.
-   Be conservative: a plausible real name must **never** trigger the question, because asking
-   someone their name right after correctly detecting it is its own defect (INV-006).
+   preparation and never asked (INV-076), so it can be absent or unsuitable. **The governing test is
+   the whole test:** treat it as **unusable** when it is missing, empty/whitespace, or **clearly not
+   a person's display name**. The cases below are *examples* of that test, not an exhaustive list —
+   a value that is plainly not a display name is unusable even if it matches none of them:
+
+   - a known system/service account (`root`, `ubuntu`, `ec2-user`, `admin`, `runner`);
+   - a value containing no letters;
+   - an email address or `@handle`;
+   - **a bare single-token handle** — one lowercase word with no space, e.g. `docktermj`, `jsmith42`,
+     `mdockter`. This holds whether or not it matches the OS username: a handle is a handle either
+     way, and requiring it to equal the OS username let one through onto a certificate.
+
+   Be conservative in the other direction: a plausible real name must **never** trigger the
+   question, because asking someone their name right after correctly detecting it is its own defect
+   (INV-006). A value containing a space and normal capitalisation ("Ada Lovelace") is a display
+   name; a single lowercase token is not.
 
    When it is unusable, ask this once, pinned verbatim (INV-056), **before** Step 1 renders the PDF:
 

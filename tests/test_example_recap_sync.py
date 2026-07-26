@@ -53,8 +53,11 @@ def pdf_text(path):
     chunks = []
     for match in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", raw, re.S):
         body = match.group(1)
+        # `decompressobj` decodes the valid prefix and tolerates a slice whose tail
+        # is off by a few bytes; strict `decompress` raises on that, which silently
+        # hid a whole page of text and looked exactly like a lost module section.
         try:
-            body = zlib.decompress(body)
+            body = zlib.decompressobj().decompress(body)
         except zlib.error:
             pass
         chunks.append(body.decode("latin-1", "replace"))

@@ -80,6 +80,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # whenever brand_tokens loads, so a stale fallback is never exercised in practice).
 _FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
 _FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+_FALLBACK_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
 _FALLBACK_BRAND = {
     "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
     "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
@@ -93,6 +94,8 @@ try:
 
     SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
     FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
+    SOURCE_STROKES = list(_bt.SOURCE_STROKES)
+    color_for_sources = _bt.color_for_sources
     _BRAND = {
         "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
         "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
@@ -103,6 +106,29 @@ try:
 except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
     SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
     FALLBACK_COLORS = list(_FALLBACK_COLORS)
+    SOURCE_STROKES = list(_FALLBACK_STROKES)
+
+    def color_for_sources(sources):
+        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract)."""
+        codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
+        preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
+        claimed = set(preferred.values())
+        available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+        assigned, nth = {}, 0
+        for code in codes:
+            if code in preferred:
+                fill, cycle = preferred[code], 0
+            else:
+                fill = available[nth % len(available)]
+                cycle = nth // len(available)
+                nth += 1
+            assigned[code] = {
+                "fill": fill,
+                "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+                "cycle": cycle,
+            }
+        return assigned
+
     _BRAND = dict(_FALLBACK_BRAND)
 
 
@@ -196,6 +222,18 @@ class Model:
                         or "RELATED",
                     }
         return self
+
+    def data_sources(self):
+        """Every data-source code present in the model, sorted.
+
+        Drives the node/legend colors: they are assigned from the sources actually
+        loaded, never from a fixed name-keyed palette (a Truth-Set-keyed map renders
+        every real bootcamper's sources in one identical fallback color).
+        """
+        codes = set()
+        for entity in self.entities.values():
+            codes.update(entity.get("data_sources", []))
+        return sorted(str(c) for c in codes if str(c).strip())
 
     # ---- API payloads ---------------------------------------------------- #
     def stats(self):
@@ -635,8 +673,16 @@ nav{flex-wrap:wrap}
 <div class="modal-bg" id="modal-bg" onclick="if(event.target.id==='modal-bg')closeModal()"><div class="modal" id="modal"></div></div>
 <script>
 const ALL_TABS=[["graph","Entity Graph"],["network","Relationship Network"],["merges","Record Merges"],["stats","Merge Statistics"],["matchkeys","Match Keys"],["features","Feature Scores"],["overlap","Cross-Source"],["probe","Search / Probe"]];
+// {source_code: {fill, stroke, cycle}} assigned from the sources actually loaded, so a
+// bootcamper's own sources are always distinct. The last-resort literal is for a source
+// absent from the model entirely; it is deliberately NOT equal to any assigned color, so
+// "unassigned" never masquerades as a real category.
 const SRC_COLORS=__SRC_COLORS__;
-function color(src){return SRC_COLORS[src]||"#8b5cf6";}
+const UNKNOWN_SRC="#9aa0a6";
+function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",cycle:0};}
+function color(src){return srcStyle(src).fill;}
+function srcStroke(src){return srcStyle(src).stroke;}
+function srcCycle(src){return srcStyle(src).cycle||0;}
 const CSSV=getComputedStyle(document.documentElement);
 function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
@@ -698,7 +744,9 @@ async function drawGraph(){
       tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);});
+  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
+    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
+    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
   node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
       .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
   sim.on("tick",function(){
@@ -754,7 +802,8 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const off={};
   const l=d3.select("#graph-container").append("div").attr("class","legend");
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");
-    r.append("span").attr("class","dot").style("background",color(s));
+    r.append("span").attr("class","dot").style("background",color(s))
+      .style("box-shadow",srcCycle(s)?("inset 0 0 0 1.5px "+srcStroke(s)):null);
     r.append("span").text(s);
     r.append("span").attr("class","cnt").text(counts[s]);
     r.attr("title","Show only "+s+" (click again to restore)");
@@ -969,7 +1018,9 @@ async function drawNetwork(){
       tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt2").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);});
+  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
+    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
+    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
   node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
       .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
   sim.on("tick",function(){
@@ -1116,7 +1167,7 @@ def _d3_script():
         return '<script src="https://d3js.org/d3.v7.min.js"></script>'
 
 
-def render_page(title, data_shim="", probe_body=None):
+def render_page(title, data_shim="", probe_body=None, sources=None):
     # Replace D3 and the data shim LAST so their contents are never rescanned for
     # the other placeholders.
     root_vars = (
@@ -1132,7 +1183,12 @@ def render_page(title, data_shim="", probe_body=None):
         .replace("__CODE_FONT__", _BRAND["code_font"])
         .replace("__ACCENT_HOT__", _BRAND["accent_hot"])
         .replace("__ACCENT__", _BRAND["accent"])
-        .replace("__SRC_COLORS__", _script_json(SOURCE_COLORS))
+        # Built from the sources actually present, so each renders distinctly. Falling
+        # back to the preferred-name keys keeps a caller that passes nothing working.
+        .replace(
+            "__SRC_COLORS__",
+            _script_json(color_for_sources(sources if sources else SOURCE_COLORS.keys())),
+        )
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())
     )
@@ -1159,7 +1215,11 @@ def make_handler(model, engine, flags, sz, title):
             path = parsed.path
             try:
                 if path in ("/", "/index.html"):
-                    return self._send(200, render_page(title), "text/html; charset=utf-8")
+                    return self._send(
+                        200,
+                        render_page(title, sources=model.data_sources()),
+                        "text/html; charset=utf-8",
+                    )
                 if path == "/api/stats":
                     return self._send(200, json.dumps(model.stats()))
                 if path == "/api/graph":
@@ -1363,7 +1423,10 @@ def write_snapshot(model, engine, flags, title, out_path):
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
     page = render_page(
-        title, data_shim=shim, probe_body=_snapshot_probe_html(model, engine, flags)
+        title,
+        data_shim=shim,
+        probe_body=_snapshot_probe_html(model, engine, flags),
+        sources=model.data_sources(),
     )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:

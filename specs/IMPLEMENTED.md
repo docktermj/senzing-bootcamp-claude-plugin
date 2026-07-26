@@ -18,6 +18,107 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## quality-scoring-presence-test
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/SKILL.md`, `tests/test_quality_presence_test.py` (new)
+- **Summary:** Confirmed the durable root cause: `phase1-quality-assessment.md:144` said only
+  "compute a quality score based on field completeness…" and `SKILL.md:38` confirms the helper
+  is authored fresh each run until the standalone guide is ported — so what counts as a
+  *present* value was re-derived every session, with the result feeding the ≥80/70-79/<70
+  gate. Defined the presence test in Phase 1 step 6: a value is present unless the key is
+  missing or `null`, it is an empty/whitespace-only string, an empty container, or a container
+  whose every element is itself empty. Stated the two consequences explicitly — **`false`,
+  `0` and `0.0` count as present** (a truthiness test is wrong), and **presence is a property
+  of the value, never of the key** (the key test reports 100% for a field that is an empty
+  array in every record, which is how `IDENTIFIER_LIST` was reported as 100% when the true
+  figure was 0%). Added a sanity check requiring any exactly-0% or exactly-100% figure to be
+  confirmed against one printed sample value before it routes the gate, mirroring INV-115's
+  discipline for blank parsed fields; it warns rather than blocking and adds no 👉 question.
+  `SKILL.md`'s reference note now routes to that definition and names both traps, including
+  for the eventual port. Thresholds and the structural-not-semantic caveat are untouched —
+  this defines a measurement, it does not move a gate.
+- **Spec correction recorded, not applied:** the spec marks the reported mechanism
+  **Unverified**, and it does not reproduce. `value not in (None, "", [], {})` counts an empty
+  list as *absent* (correct) and `False`/`0` as *present* (also correct, and what the fix
+  asks for), so it cannot have produced the 100%. `tests/test_quality_presence_test.py`
+  encodes this as executable evidence and demonstrates that a key-presence test does produce
+  exactly the reported inversion over 14,119 all-empty records. The spec text was left
+  unedited. 12 assertions fail against the pre-fix skill; full suite 221 passed.
+- **Commit:** uncommitted
+
+## source-colors-from-discovered-data-sources
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/brand_tokens.py`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_brand_sync.py`
+- **Summary:** Colors are now assigned from the data sources actually loaded instead of
+  looked up by name. Confirmed the root cause: `senzing_viz_server.py:639` was
+  `function color(src){return SRC_COLORS[src]||"#8b5cf6";}` over a map keyed by the Truth
+  Set's three source names, and `FALLBACK_COLORS` — the six-colour palette that exists for
+  exactly this purpose — was imported at `:95` and **never used anywhere**. The mechanism
+  was already shipped; nothing wired it up, and the JS literal happened to equal
+  `FALLBACK_COLORS[0]`, which is why one source looked right and the rest looked identical
+  to it. Added `brand_tokens.color_for_sources()` returning
+  `{code: {fill, stroke, cycle}}`: Truth Set names keep their preferred assignment, every
+  other source takes the next palette entry **not** claimed by a preferred one (so no
+  collision), ordering is deterministic via sorting (a rebuilt snapshot must still match
+  the screenshot the recap describes), a second visual channel (`SOURCE_STROKES`)
+  distinguishes sources beyond the first cycle, and `SIGNAL_GREEN` is never assigned.
+  Added `Model.data_sources()`, threaded `sources=` through `render_page()` from both
+  callers (live handler and `write_snapshot`), and replaced the JS accessor with
+  `srcStyle`/`color`/`srcStroke`/`srcCycle` plus an `UNKNOWN_SRC` grey that is
+  deliberately unequal to any assigned colour so "unassigned" cannot masquerade as a real
+  category. Mirrored the helper in the import-failure fallback and made
+  `tests/test_brand_sync.py` assert the two produce **identical** output rather than
+  merely both existing. Made it contract in `visualization-api-reference.md` beside the
+  existing legends-from-data rule, so an any-language server (INV-090) inherits it.
+  Verified: the reported case (`PPP_LOANS`, `EQUIFAX`, `NOMINO-RISK`) goes from 1 colour to
+  3 distinct; Truth Set unchanged with `CUSTOMERS` still ember `#F57826`; a mixed model
+  gives 3 distinct with no reuse of the preferred colour; 9 sources yield 9 unique
+  (fill, stroke) pairs. 14 assertions fail against the pre-fix scripts; full suite
+  203 passed.
+- **Commit:** uncommitted
+
+## recap-pdf-certificate-version-and-list-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `tests/test_recap_pdf_guard.py`, `tests/test_example_recap_sync.py`, `tests/test_discoveries_pdf.py`
+- **Summary:** Three changes. **(1) Plugin version on the certificate.** Added
+  `_cert_plugin_version()` (returns `""` when the meta row is absent — omit, never a
+  placeholder) and `_cert_attribution()`, rendered in both `_render_certificate` and
+  `_stdlib_certificate_stream` so the two paths cannot drift. The inner ember border's
+  bottom edge sits at `y = h - 14`, so the two lines sit at `h - 28` and `h - 22`; a
+  single line keeps its long-standing `h - 22`, leaving the no-version render
+  byte-comparable. **Verified by rasterizing** the certificate page — text extraction
+  reported the string present and correct in the original field report while the glyphs
+  were sliced in half, so presence was never accepted as proof. The stdlib certificate
+  previously had no attribution line at all; it now matches, bottom-anchored at the
+  equivalent point offsets. **(2) List spacing.** `_SPACED_SUBSECTIONS`
+  (`information shared`, `actions taken`, compared through `_normalize_heading` so the
+  singular "Action Taken" of INV-048 is covered), `_SPACED_LABELS`
+  (`what you accomplished`) with `_block_label()`, and a 2.4 mm gap emitted only when
+  `_next_nonblank_is_bullet()` — strictly between items, never trailing the last.
+  Mirrored in the stdlib renderer via a new exact-advance `GAP` token (3 pt), since an
+  ordinary empty token there costs 0.6 of a line. Measured per list on a rasterized
+  render: Information Shared 31.1 pt, Actions Taken 22.4 pt, accomplishments 22.4 pt
+  (spaced); Files produced 15.6 pt and Q/R pairing 15.6 pt (deliberately tight, so each
+  response stays attached to its question). **(3) Certificate-name test broadened.**
+  `graduation/SKILL.md` now leads with the governing test and presents the cases as
+  examples, dropping the "identical to the OS username" qualifier that let the handle
+  `docktermj` onto a certificate; a bare single-token lowercase handle is unusable either
+  way. Also corrected `_partition_meta`'s docstring, which claimed identity rows drive
+  the certificate — they never did. Re-rendered the shipped example PDF (17 → 19 pages,
+  3 embedded images preserved per `pdfimages -list`, certificate intact).
+- **Verification note:** a first pass appeared to lose the whole System-verification
+  module section. It had not — my regex-based stream extractor used strict
+  `zlib.decompress`, which rejects a slice whose tail is off by a few bytes and silently
+  dropped that page. `pdftotext` confirmed the content was present, and
+  `zlib.decompressobj()` recovered its 5844 bytes. The same latent fragility was making
+  `tests/test_example_recap_sync.py` fail falsely after the re-render, so all three test
+  extractors now use tolerant decompression. Worth remembering: the verification tool was
+  the thing that was wrong, which is exactly the failure mode INV-121 describes.
+- **Commit:** uncommitted
+
 ## mapping-workflow-truncated-validation-errors
 
 - **Implemented:** 2026-07-26
