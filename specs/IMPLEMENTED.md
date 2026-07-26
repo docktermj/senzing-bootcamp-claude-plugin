@@ -18,6 +18,59 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## dry-run-phase2-hooks-and-scripts
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `tests/test_recap_pdf_font_safety.py` (new)
+- **Not a spec** — phase 2 of the dry run: executing all six hooks and every bundled script against
+  a realistic scratch bootcamp project (populated `config/`, a mid-module recap, an unfinalized
+  checkpoint block, a feedback file, messy Markdown) rather than reading them. **Establishes no new
+  invariant**; it enforces INV-048's designed-render intent, and everything else it touched was
+  found already correct.
+- **One real defect, and it was silent by construction.** `_clip()` truncated with a U+2026 "…",
+  but every call site is `_clip(_safe(x), n)` — `_safe` runs **first**, so it never saw the character
+  `_clip` appended. fpdf2's Latin-1 core font then raised, `render_with_fpdf2` caught it exactly as
+  designed (INV-111 reported the cause on stderr, which is how it was noticed at all), and the only
+  symptom was the bootcamper quietly receiving the plainer stdlib PDF instead of the designed one
+  (INV-048). `_UNICODE_MAP` already mapped "…" to "..."; the defect was purely order of operations.
+  Fixed in `_clip` with an ASCII suffix rather than at the three call sites, so the ordering hazard
+  cannot recur. **Why no test caught it:** it fires on the cover's module chips at width 46, and
+  "Data Quality, Mapping, and Transformation" is 41 characters — the shipped example fixture sits
+  five characters under the threshold, so it clips only once a number prefix or timestamp is
+  appended. A swept audit of every other fpdf2 text path found all of them sanitized
+  (`_render_line` even documents its bullet as "middle dot (Latin-1 safe)").
+- **Verified working, against real state rather than by reading.** All six hooks no-op silently
+  outside a bootcamp and behave correctly inside it; the write-gate blocks `/tmp`, `~/Downloads`,
+  `C:\Windows\Temp` and both secret classes while allowing project-relative writes (INV-109/INV-001);
+  `feedback-capture` injects the full triage/durability guidance on a feedback prompt and stays
+  silent on an unrelated one; `stop-nudge` stays silent both when the transcript is unreadable and
+  when `stop_hook_active` is set (INV-054); the recap fold run three times produced one checkpoint
+  block, one section, and left the completed section intact (INV-059); the normalizer left the
+  feedback file **byte-identical** and the recap's word count unchanged (INV-067/INV-060); the
+  discoveries generator refused junk input and wrote no PDF (INV-110); `capture_screenshots` skipped
+  an absent tab with a message on stderr instead of saving the default tab under its name, and named
+  its output by tab slug (INV-122); `docker_lifecycle` reported a stopped container and
+  warned-and-continued on a missing one (INV-101); the viz server refused to write a snapshot when
+  the entity model could not be built, rather than emitting a blank page (INV-077); and
+  `color_for_sources` gave a bootcamper's own four sources four distinct fills, varied `cycle`
+  rather than reusing a colour when the palette exhausted at nine, and was order-independent
+  (INV-127).
+- **Coverage limit, stated rather than glossed:** this environment has no Senzing SDK (`libSz.so`
+  absent), so the live viz server, the loads, and every SDK-dependent path were **not** exercised.
+  The suite's own fake-model tests cover the snapshot HTML generation. The conversational layer
+  (👉 discipline, banners, gates) remains untested and cannot be tested by the assistant alone —
+  it needs a human bootcamper (phase 3).
+- **Test suite:** 411 -> 417 passing. The new guard is negative-controlled: reverting the ellipsis
+  fails four assertions including the end-to-end "still renders with fpdf2" one.
+- ⚠️ **Two process notes, both recorded because they nearly produced false confidence.** (1) I
+  repeated the previous entry's `git restore` mistake — reverting an injected mutation while the fix
+  was still uncommitted, which discarded it again. Use `cp`/`mv` for a backup when the tree is
+  dirty; the lesson only stuck the second time. (2) After restoring, the suite kept failing on
+  already-fixed code: `"…"` and `"..."` are both 3 bytes, so the restored file had the same size and
+  a same-second mtime as the mutated one, and Python reused the stale `__pycache__` bytecode. Clear
+  `__pycache__` after any same-size revert before trusting a test result.
+- **Commit:** uncommitted
+
 ## dry-run-mcp-call-contracts
 
 - **Implemented:** 2026-07-26

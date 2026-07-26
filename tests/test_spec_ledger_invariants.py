@@ -69,6 +69,16 @@ GRANDFATHERED = frozenset(
 )
 
 
+def flatten(text):
+    """Collapse whitespace so a marker phrase still matches when prose wraps.
+
+    Ledger bodies are hand-wrapped Markdown, so "establishes no new\\n  invariant" is the
+    normal shape rather than the exception — matching raw substrings against it produced a
+    false failure on the very first entry that used the phrase.
+    """
+    return re.sub(r"\s+", " ", text).lower()
+
+
 def entries():
     """Yield (name, iso_date_or_None, body_text) for each ## entry in IMPLEMENTED.md."""
     text = IMPLEMENTED.read_text(encoding="utf-8")
@@ -99,10 +109,10 @@ class TestForwardCoverage(unittest.TestCase):
                 continue
             if name in GRANDFATHERED or name in sources:
                 continue
-            low = body.lower()
-            if any(p in low for p in NO_INVARIANT_PHRASES):
+            flat = flatten(body)
+            if any(flatten(p) in flat for p in NO_INVARIANT_PHRASES):
                 continue
-            if any(p in low for p in ESTABLISHED_MARKERS):
+            if any(flatten(p) in flat for p in ESTABLISHED_MARKERS):
                 continue
             unaccounted.append(
                 f"{name} (implemented {date}) is neither cited as a `Source:` in "

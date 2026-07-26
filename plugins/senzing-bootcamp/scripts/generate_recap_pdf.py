@@ -1236,7 +1236,23 @@ def _render_line(pdf, epw, line: str) -> None:
 
 
 def _clip(s: str, n: int) -> str:
-    return s if len(s) <= n else s[: n - 1] + "…"
+    """Truncate to ``n`` characters with an ASCII ellipsis.
+
+    ⛔ **The ellipsis must stay ASCII.** Every call site is ``_clip(_safe(x), n)`` —
+    ``_safe`` runs *first*, so anything ``_clip`` appends afterwards is never sanitized.
+    A U+2026 "…" here therefore reached fpdf2's Latin-1 core font unescaped and raised
+    ``Character "…" … outside the range of characters supported``, which
+    ``render_with_fpdf2`` catches — so the only symptom was every affected bootcamper
+    silently getting the plainer stdlib PDF instead of the designed one (INV-048).
+
+    Found by the 2026-07-26 dry run on the cover's module chips (``_clip(..., 46)``):
+    "Data Quality, Mapping, and Transformation" is 41 characters and survives bare, but
+    clips the moment a number prefix or a timestamp is appended. ``_UNICODE_MAP`` maps
+    "…" to "..." already; the defect was purely the order of operations, which is why the
+    fix is here rather than at the three call sites — an ASCII suffix cannot be got wrong.
+    ``tests/test_recap_pdf_font_safety.py`` pins this.
+    """
+    return s if len(s) <= n else s[: n - 1] + "..."
 
 
 # --------------------------------------------------------------------------- #
