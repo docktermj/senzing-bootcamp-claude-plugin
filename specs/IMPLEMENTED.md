@@ -41,7 +41,7 @@ Entries are newest first. Do not delete history; append or update in place.
   near-empty PDF at exit 0. Both renderers were verified by extracting and
   decompressing the PDF text, not by trusting the success line. New
   `tests/test_discoveries_pdf.py` (16 tests); suite is now 72, all passing.
-- **Commit:** uncommitted
+- **Commit:** `9c248fb`
 
 ## model-effort-guidance-advisory-not-gate
 
