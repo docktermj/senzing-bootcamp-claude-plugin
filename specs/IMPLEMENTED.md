@@ -18,6 +18,53 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## dry-run-skill
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `.claude/skills/dry-run/SKILL.md`, `.claude/skills/dry-run/phase1-mcp-contracts.md`, `.claude/skills/dry-run/phase2-hooks-and-scripts.md`, `.claude/skills/dry-run/phase3-conversational.md`, `.claude/skills/dry-run/scaffold_project.py`, `tests/test_dry_run_scaffold.py` (all new)
+- **Not a spec** — maintainer request: turn the three-phase dry-run exercise into a reusable
+  maintainer skill. **Establishes no new invariant** (it is a development tool, not plugin
+  behaviour). Lives under `.claude/`, which `propagate.sh` does not mirror, so none of it ships.
+- **Why a skill rather than notes.** The methodology found a module-breaking defect chain and a
+  silent renderer downgrade that three prose audits and 399 tests had missed, and its value is
+  almost entirely in the *discipline* — which is what gets lost first. The skill states the
+  organising idea plainly: static analysis can only confirm the plugin agrees with **itself**; each
+  phase points it at something external (the MCP server's real schemas, the filesystem and rendered
+  artifacts, a human answering questions).
+- **Structure.** `SKILL.md` carries the phase table, the absolute rules and the
+  finding-to-test-to-ledger workflow; one file per phase carries the procedure, the defect patterns
+  each phase finds, and the traps. Phase 3's file states explicitly that it **cannot be self-played**
+  — fabricating the Bootcamper's answers violates INV-007 and `ground-rules.md`, and an assistant
+  grading its own 👉 discipline cannot distinguish "the files produce this" from "I was careful".
+- **The hard-won process rules are recorded as absolute rules**, because each cost real work in the
+  originating session: commit or `cp` aside before mutating the tree (`git restore` cannot tell your
+  fix from an injected defect — this ate work twice); clear `__pycache__` after a same-size revert
+  (`"…"` and `"..."` are both three bytes, so a restored file with a same-second mtime lets Python
+  reuse the mutated bytecode); never call `submit_feedback`; negative-control every guard; and state
+  coverage limits explicitly rather than implying clean coverage.
+- **`scaffold_project.py`** builds the realistic fixture the exercise depends on — mid-bootcamp
+  progress, an unfinalized checkpoint block, a precious feedback entry, messy Markdown, an absent
+  Docker container, sample records — and `--explain` prints which fixture exercises which invariant.
+  It refuses to build inside the repo or under `/tmp`, and `--fresh` produces the empty-state variant
+  phase 3 needs.
+- ⚠️ **The skill's own first version shipped the exact bug it warns about, and validating it caught
+  that.** The scaffold's longest recap chip was 41 characters against the recap cover's
+  46-character clip — reproducing the precise blind spot the skill documents as the reason the
+  renderer crash survived three audits — while a comment claimed it was "deliberately longer". No
+  real module name reaches 46; the realistic trigger is the durability hooks folding an unfinalized
+  heading with its "— in progress" suffix attached (55 characters). Fixed, and then **verified end to
+  end**: with the `_clip` fix in place the fixture renders `renderer: fpdf2`; with the fix reverted it
+  reproduces `fpdf2 render failed → renderer: stdlib`. Writing the methodology down without running
+  it would have shipped a fixture that could never fail.
+- **`tests/test_dry_run_scaffold.py`** (8 tests) pins the one numeric claim the exercise rests on:
+  the scaffold's in-progress heading must exceed the narrowest `_clip` width, with **both** values
+  read from source rather than hardcoded, so shortening the heading or changing the generator's
+  widths fails the build. Also pins the guardrails and that a bare module name would *not* reach the
+  clip (which is why the fold is required). Negative-controlled: reverting the heading to a short one
+  fails two assertions.
+- **Test suite:** 417 -> 425 passing.
+- **Commit:** uncommitted
+
 ## dry-run-phase2-hooks-and-scripts
 
 - **Implemented:** 2026-07-26
