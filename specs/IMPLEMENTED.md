@@ -18,6 +18,25 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## generate-diagrams-for-generated-scenarios
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`
+- **Summary:** Split Module 1 Step 9 on scenario provenance. **9a** (bootcamper-described case) asks
+  the pinned diagram-sharing question verbatim exactly as before, `[variable]`-placeholder handling
+  intact. **9b** (Business Case Offer accepted) does not ask it — there are no diagrams to share for
+  a scenario the bootcamp authored minutes earlier — and instead generates
+  `docs/data_architecture.md` with a data-architecture diagram (generated sources → Senzing engine →
+  datastore) and a data-flow diagram (raw → mapped → loaded → resolved → queried), announced in one
+  line rather than gated behind a yes/no. Diagrams are Mermaid fences in Markdown: diffable,
+  offline (INV-091), no binary images, no CDN, no headless renderer. Step 11's generated-scenario
+  branch now links the file from `docs/business_problem.md`, and 9b requires listing it under
+  **Files produced** (INV-032) and in the recap section. The provenance signal is the Phase 1 Step
+  4a outcome — the same decision Step 11 already branches on — with the
+  `> 🤖 Bootcamp-generated business case` marker named as its persisted form for resumed sessions;
+  no second mechanism was introduced. Verified all 7 acceptance criteria by grep; 43 tests pass.
+- **Commit:** uncommitted
+
 ## visualization-server-lifetime-and-teardown-gate
 
 - **Implemented:** 2026-07-25
