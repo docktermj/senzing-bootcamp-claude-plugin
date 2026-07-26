@@ -193,9 +193,10 @@ record merges, merge statistics, cross-source overlap heatmap, match-key frequen
 feature-score views are all **tabs** of this one app, not separate offers or static pages (see the
 full tab set and the de-duplication rules in
 `../module-03b-truthset-visualization/visualization-api-reference.md`).
-This is also where Module 6's cross-source relationship view now lives — the Entity Graph,
-Cross-Source, and Relationship Network tabs replace the former Module 6 `multi_source_results.html`
-static page (Module 6 no longer offers a visualization). Offer it here, after the query results
+This is also where Module 6's cross-source relationship view now lives — the Entity Graph tab
+(including its "Show only entities with relationships" mode) and the Cross-Source tab replace the
+former Module 6 `multi_source_results.html` static page (Module 6 no longer offers a
+visualization). Offer it here, after the query results
 (3a) and quality evaluation (3b) are in hand. The
 Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
 why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
@@ -219,13 +220,15 @@ and the `../module-03b-truthset-visualization/visualization-api-reference.md` co
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. It MUST:
 
-- Serve/render every applicable tab from that contract — Entity Graph, Relationship Network, Record
-  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, and Search / Probe. Tabs whose
-  data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys / Feature
-  Scores need multi-record entities). Do **not** produce separate static pages, and do **not** add a
-  tab whose content is derivable from another tab's endpoint — the entity-size distribution is Merge
-  Statistics, the cross-source entity-relationship view is Entity Graph, and there is no separate
-  Results Dashboard tab.
+- Serve/render every applicable tab from that contract — Entity Graph, Merge Statistics, Match
+  Keys, Feature Scores, Cross-Source, and Search / Probe. That is the whole set: **six** tabs. Tabs
+  whose data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys /
+  Feature Scores need multi-record entities). Entity Graph carries the relationship subgraph as a
+  **mode** (its "Show only entities with relationships" toggle), and Search / Probe carries the
+  no-query merge browse as its "Show all merged entities" button. Do **not** produce separate static
+  pages, and do **not** add a tab whose content is derivable from another tab's endpoint — the
+  entity-size distribution is Merge Statistics, the cross-source entity-relationship view is Entity
+  Graph, and there is no separate Results Dashboard, Relationship Network, or Record Merges tab.
 - Honor the contract's **"Per-entity actions"** and **"Rendering contract"** sections in full:
   Records / Why? / How? on every entity surface, drill-down from every aggregate, plain-language
   Why?/How? with the raw JSON behind a twistie, and pre-verified search-hint chips.
@@ -300,7 +303,8 @@ or exit early at any demonstration point.
   analysis).
 - Then load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
   Completion. (The former step 4e data-specific visualization suggestions are now tabs of the
-  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Relationship Network.)
+  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Entity Graph's
+  relationship mode.)
 
 Steps 4a–4d each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
 phase completes or is skipped, return here for the Query Completeness Gate.

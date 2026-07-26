@@ -55,8 +55,8 @@ single-source entities to confirm no cross-source matches were missed.
 
 This is validation work only — do **not** produce a visualization here. All results and
 cross-source relationship visualization is offered once, in Module 7 (Query, Visualize and
-Discover), where it is delivered as tabs of the single interactive app (Entity Graph, Cross-Source,
-and Relationship Network) rather than a separate static page (INV-104). Module 6 no longer offers a
+Discover), where it is delivered as tabs of the single interactive app (Entity Graph — including
+its relationship-subgraph mode — and Cross-Source) rather than a separate static page (INV-104). Module 6 no longer offers a
 cross-source visualization, to avoid a duplicate/misplaced offer.
 
 **Checkpoint:** write step 23.

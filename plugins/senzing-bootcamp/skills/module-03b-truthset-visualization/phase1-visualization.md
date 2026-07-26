@@ -249,29 +249,33 @@ Build to that contract; the summaries below are the tab inventory, not the full 
    cross-source entity-relationship view (it subsumes the former `multi_source_results.html`).
    (Your server MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` →
    `source`/`target` before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
-2. **Relationship Network** (when relationships exist): the subgraph of entities connected by
-   relationships, edges styled by `relationship_type` (color **plus** line style) with a
-   click-to-filter type legend built from the types actually present — distinct from Entity Graph,
-   which shows the full population. Same independent label toggles and scale-aware defaults.
-3. **Record Merges:** one card per multi-record entity showing name, record count, and match key,
-   plus the three actions. **No inline record listing** — records are shown on demand via
-   **Records**, the same as everywhere else.
-4. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) — this **is** the entity-size
+
+   It also carries a **"Show only entities with relationships"** toggle, shown only when
+   `relationships_total > 0`. Switched on, the graph filters to the subgraph of entities that a
+   relationship connects and styles edges by `relationship_type` (colour **plus** line style), with
+   a click-to-filter type legend built from the types actually present. Same label toggles and
+   scale-aware defaults in both modes. This is a **mode of this tab, not a second tab** — both modes
+   are served by the same `/api/graph` payload, so a standalone "Relationship Network" tab would be
+   a duplicate (contract: "De-duplication (required)").
+2. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) — this **is** the entity-size
    distribution; the bars are **clickable** (backed by `bucket_entities`) and drill down to the
    entities in each bucket. Beneath it, the largest resolved entities from `sample_entities`. Both
    lists use the three actions. Headline counts live in the page summary strip and are **not**
    repeated here.
-5. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
+3. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
    combinations) that drove resolutions; **rows are clickable** (backed by `match_key_entities`) and
    drill down to the entities carrying that key.
-6. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
+4. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
    resolved records, from a capped `why_records` sample; the tab always shows the sample size.
-7. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
+5. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
    sources shares; **cells are clickable** (backed by `cell_entities`) and drill down to the
    entities in that cell.
-8. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
+6. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
    match key / resolution rule that linked it, plus the three actions. Ships with pre-verified
-   example-query chips that fill **and** run the search on click.
+   example-query chips that fill **and** run the search on click, and a **"Show all merged
+   entities"** button that lists every multi-record entity with no query — the no-query browse that
+   the former Record Merges tab uniquely offered. This must work in the standalone snapshot too, so
+   it reads the embedded `merges` payload rather than the live search.
 
 Do **not** add a tab whose content is derivable from another tab's endpoint. In particular there is
 **no "Results Dashboard" tab** — its counts and histogram duplicated `/api/stats`, and its unique
@@ -323,10 +327,11 @@ Then deliver this guided tour as one message (no interactive pauses):
   bars at 2/3/4+ are where Senzing found duplicates.
 - **Search / Probe:** type a name (try "Robert Smith") to see the resolved entity and why it
   matched.
-- **More tabs:** **Record Merges** lists what collapsed into what; **Match Keys** and
-  **Feature Scores** show what drove the resolutions; **Cross-Source** (with 2+ sources) maps where
-  your sources overlap; **Relationship Network** shows how entities connect. (Point these out
-  briefly — one line — under `concise`/`minimal` verbosity, or skip the list.)
+- **More tabs:** **Match Keys** and **Feature Scores** show what drove the resolutions;
+  **Cross-Source** (with 2+ sources) maps where your sources overlap. On **Entity Graph**, the
+  "Show only entities with relationships" toggle narrows the picture to just the entities that
+  connect to something else. (Point these out briefly — one line — under `concise`/`minimal`
+  verbosity, or skip the list.)
 
 ---
 

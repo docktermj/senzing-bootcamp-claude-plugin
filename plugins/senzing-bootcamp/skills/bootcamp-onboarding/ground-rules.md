@@ -30,6 +30,11 @@ steering files.)
 - Each 👉 question has exactly one meaning for "yes" and one for "no". For two or more
   alternatives, use a neutral lead question plus a numbered list. Confirm first; ask for
   corrections only if the answer is no.
+- **The one sanctioned "or":** a yes/no question MAY carry an answer-format hint — the canonical
+  form is a trailing `(respond yes or no)`. INV-051 exempts it explicitly, because it clarifies the
+  answer shape rather than joining two alternatives. It is optional and used sparingly (a handful of
+  confirm-style gates carry it); do **not** add or remove it from a question whose wording is pinned
+  verbatim (INV-056), and never use "or" for anything else.
 - **Never fabricate or simulate the bootcamper's response.** Never emit text starting with
   "Human:" or "User:". Stop and wait at every 👉 question and every gate.
 - `🛑 STOP` and `⛔ MANDATORY GATE` are INTERNAL control directives - never render them to the

@@ -109,7 +109,17 @@ Entries are newest first. Do not delete history; append or update in place.
 ## consolidate-truthset-viz-merges-and-network-tabs
 
 - **Implemented:** 2026-07-26
-- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_viz_tab_consolidation.py` (new)
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` + `.pdf`, `tests/test_viz_tab_consolidation.py` (new), `tests/test_tab_set_is_singular.py` (new)
+- **Corrected 2026-07-26 after an invariant audit.** The first pass was **recorded as complete when
+  it was not**, and this entry's original "Files changed" listed only the two surfaces I had edited.
+  A deep-dive against @INVARIANTS.md found **nine locations across four module-instruction files**
+  still telling the agent to build the removed tabs — including `phase1-query-visualize.md:222`
+  ("Serve/render every applicable tab … Entity Graph, Relationship Network, Record Merges, …") and
+  `phase1-visualization.md:252,256`, the numbered list of tabs the server MUST render. The spec had
+  listed `phase1-visualization.md` as an affected file; I skipped it and the ledger omitted it rather
+  than flagging it, breaching this skill's "never mark a spec implemented that isn't" guardrail. Also
+  found: the consolidation **silently removed offline merge-browsing from the snapshot** (see below),
+  and the shipped example recap still described a four-tab app. All fixed; see the follow-up notes.
 - **Summary:** Eight tabs to six. **Record Merges** removed: for any entity in both, Search /
   Probe's result is a strict superset, and its one unique capability — browsing every merged
   entity with no query — is now a "Show all merged entities" button on that tab, with the same
@@ -239,6 +249,26 @@ Entries are newest first. Do not delete history; append or update in place.
   gives 3 distinct with no reuse of the preferred colour; 9 sources yield 9 unique
   (fill, stroke) pairs. 14 assertions fail against the pre-fix scripts; full suite
   203 passed.
+- **Follow-up fixes (2026-07-26, same day).** (a) All nine stale locations updated: the tab build
+  list in `phase1-visualization.md` folded to six items with the relationship subgraph documented as
+  a *mode* of Entity Graph; the guided tour now points at the toggle instead of two removed tabs; the
+  Module 7 "serve every applicable tab" instruction reduced to the six and made explicit ("That is
+  the whole set: **six** tabs"); the Module 6/7 cross-references reworded. (b) **Snapshot regression
+  fixed.** Verified empirically that `#probe-btns` existed only in `PROBE_BODY_LIVE`, so
+  `loadProbes()` — the only client-side reader of `/api/merges` — no-opped in the snapshot and the
+  "Show all merged entities" browse never rendered there. Before the consolidation, `drawMerges()`
+  made that capability work offline, and the contract said so. So the removal was lossless live but a
+  **net loss in the keepsake**. Added `#probe-btns` to the snapshot probe body, made the example-query
+  chips live-only (they drive a search box a static file lacks, so they were dead controls), and made
+  `showAllMerges` snapshot-safe. Confirmed by running a real `write_snapshot` output in headless
+  Chrome with **no server**: the button renders, labelled "Show all merged entities (4)", chips
+  suppressed, pre-rendered cards intact. Corrected the contract sentence, which had claimed the
+  browse was available offline when it was not. (c) Example recap's "four tabs" sentence fixed and the
+  example PDF re-rendered (19 pages, 3 images). (d) New `tests/test_tab_set_is_singular.py` (14 tests)
+  scans **every** shipped Markdown file for a removed tab presented as live and cross-checks the
+  server, the contract, and the screenshot helper against one another — the check the original suite
+  lacked, which is why 318 tests passed over an incoherent plugin. It reproduces all nine original
+  offending lines by exact `file:line`. Full suite 332 passed.
 - **Commit:** uncommitted
 
 ## recap-pdf-certificate-version-and-list-spacing

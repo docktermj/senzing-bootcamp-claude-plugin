@@ -1036,7 +1036,10 @@ async function doSearch(){const q=document.getElementById("search-in").value;con
     if(e.resolution_rule)card.append("div").append("code").text(e.resolution_rule);
     addEntityActions(card,e.entity_id,e.entity_name);});}
 async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.select("#probe-btns");box.html("");
-  m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
+  // The example chips drive the live search box. The static snapshot has none, so they would be
+  // dead controls there — offer only the browse, which needs no engine.
+  const live=!!document.getElementById("search-in");
+  if(live)m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
     .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});
   // The one capability the removed Record Merges tab uniquely had: browse every merged
   // entity with no query. Search / Probe otherwise shows a strict superset per entity,
@@ -1050,7 +1053,8 @@ async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.se
 // result, so the entity surfaces stay consistent (contract: per-entity actions everywhere).
 function showAllMerges(entities){
   const box=d3.select("#results");box.html("");
-  document.getElementById("search-in").value="";
+  const si=document.getElementById("search-in");
+  if(si)si.value="";
   if(!entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
   box.append("p").attr("class","muted")
      .text("All "+entities.length+" merged entities. Search above to see per-record match keys and feature scores for one of them.");
@@ -1405,9 +1409,14 @@ def _snapshot_probe_html(model, engine, flags):
         "example searches run against this Truth Set. In the live app "
         "(<code>http://localhost:8080</code>) you can search any name.</p>"
     )
+    # #probe-btns must exist here too, or `loadProbes()` has nothing to render into and the
+    # snapshot silently loses the "Show all merged entities" browse — the one capability the
+    # removed Record Merges tab uniquely had, and one that previously worked offline. It needs
+    # no engine: it reads the embedded `merges` payload, so it works with no server.
+    browse = '<div id="probe-btns"></div>'
     if not cards:
-        return note + '<p class="muted">No multi-record entities to show.</p>'
-    return note + '<div id="results">' + "".join(cards) + "</div>"
+        return note + browse + '<p class="muted">No multi-record entities to show.</p>'
+    return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
 def write_snapshot(model, engine, flags, title, out_path):

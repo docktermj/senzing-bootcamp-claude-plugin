@@ -633,8 +633,13 @@ server. Everything else renders **offline** because the snapshot embeds `stats`,
 relationship subgraph is filtered from the same embedded `graph` payload), Merge Statistics (with
 bucket drill-down and the largest-entities list), Match Keys (with row drill-down), Feature Scores,
 and Cross-Source (with cell drill-down) tabs all work with no network access. `merges` stays embedded
-because Search / Probe's example-query chips and its "Show all merged entities" list both read it —
-that list is therefore available offline even though live search is not. **The Records action works offline too**, because `records` is embedded: it needs no
+because Search / Probe's "Show all merged entities" browse reads it, so **that browse works offline**
+— which is what keeps the removed Record Merges tab's no-query capability available in the keepsake,
+not only in the live app. The snapshot's Search / Probe body MUST therefore include the
+`#probe-btns` container even though it has no live search box; without it the browse has nowhere to
+render and the snapshot silently loses the capability. The example-query **chips** are live-only by
+design — they drive the search box, which a static file does not have — so they are suppressed
+there rather than shipped as dead controls. **The Records action works offline too**, because `records` is embedded: it needs no
 engine call at view time, unlike `why`/`how`. The Feature Scores tab shows whatever was computed
 (capped) at build time. (`dashboard` is no longer embedded — the endpoint was removed and its
 content folded into `stats`.)

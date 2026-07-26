@@ -164,7 +164,7 @@
 ### Information Shared
 
 - The Senzing Truth Set (CUSTOMERS 120, REFERENCE 22, WATCHLIST 17 = 159 records) is the deterministic demo dataset with a published ground-truth key (85 expected entities), sourced via the MCP server's get_sample_data.
-- The interactive visualization is a self-contained web app (four tabs: Entity Graph, Record Merges, Merge Statistics, Search/Probe) that shows the resolved Truth Set — the "wow moment" of seeing entity resolution work on your own machine.
+- The interactive visualization is a self-contained web app (six tabs: Entity Graph — with a toggle for just the entities that have relationships — Merge Statistics, Match Keys, Feature Scores, Cross-Source, and Search/Probe) that shows the resolved Truth Set — the "wow moment" of seeing entity resolution work on your own machine.
 - Match keys (e.g. +NAME+DOB+PHONE), resolution rules, and relationship types (POSSIBLY_SAME, DISCLOSED, AMBIGUOUS) as surfaced in the resolved-entity JSON via getEntity(SzRecordKey, SZ_ENTITY_DEFAULT_FLAGS).
 - On macOS the Python-based bundled app's native SDK is unavailable, so a Java entity export plus an equivalent Python-stdlib/D3 server was used, serving the same four-endpoint contract; it renders fully offline (D3 is vendored in the plugin).
 
