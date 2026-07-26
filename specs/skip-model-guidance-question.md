@@ -123,3 +123,17 @@ themselves intact, since other surfaces read the preference.
   `specs/model-effort-switch-done-confirmation.md` (INV-069),
   `specs/auto-initialize-git-without-prompt.md` (precedent for removing a setup question
   outright).
+
+## Invariants introduced
+
+- `INV-133` — A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be
+  honored, its capture question MUST NOT be asked, the value in force MUST be stated once in the
+  setup-choices recap, and a saved value MUST NEVER be overwritten with a recommended default
+  (recorded in `specs/INVARIANTS.md`).
+
+## Route taken
+
+The maintainer chose the **pre-set-preference** route described under "Recommended resolution",
+not the literal request to delete Step 3a and hardcode `prompt`. INV-119 therefore stands unamended:
+the question is still asked when no preference is saved, and absent-or-unreadable still means
+`advisory`.

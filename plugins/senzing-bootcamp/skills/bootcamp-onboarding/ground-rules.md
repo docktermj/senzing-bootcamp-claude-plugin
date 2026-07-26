@@ -84,6 +84,24 @@ steering files.)
   blank value as a real result: say "no value returned for X" so the failure is visible. Note
   `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
   under `MATCH_INFO`), the raw-response dump is the authority.
+- **Parameter shapes, for the bootcamper's binding.** The lookup above covers what a method
+  *returns*. It does not cover what it *takes*, and `get_sdk_reference`'s `flags` and
+  `response_schemas` topics do not either — so before **calling** an SDK method, confirm its
+  argument types for the chosen language. ⛔ **Cross-language documentation is not authoritative
+  for parameter shapes:** the same method takes a JSON document in one binding and a native
+  collection in another. Python's `find_network_by_entity_id` takes a plain `List[int]` of entity
+  IDs, not the `{"ENTITIES": [{"ENTITY_ID": n}]}` document the flags docs and the Java/C#
+  signatures imply — passing the document raises `SzSdkError`. When the MCP reference does not
+  cover the shape, **introspect the installed binding** (`help(...)`, `inspect.signature(...)`,
+  `dir(SzEngineFlags)`) rather than inferring it from another language's example.
+- **Flag families answer different questions.** Confirm what a flag family *selects*, not just
+  that the name exists. On the export methods, `SZ_EXPORT_INCLUDE_*` chooses **which entities**
+  appear as rows while `SZ_ENTITY_INCLUDE_*` chooses **what detail** each row carries, so an
+  export flagged with only the former succeeds and writes rows containing nothing but
+  `ENTITY_ID` — a valid-looking result with no usable fields. A composite's availability is also
+  per-binding: `SZ_EXPORT_ALL_FLAGS` is documented for the export methods but is absent from the
+  Python binding's `SzEngineFlags`, so confirm a composite exists on *your* binding before
+  reaching for it.
 - **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
   bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
   examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via
@@ -258,8 +276,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
   controls, without hardcoding a UI label that may drift.
 
   ⛔ **Read `model_guidance` from `config/bootcamp_preferences.yaml` first (INV-119).** It was
-  chosen once in Bootcamp preparation (Step 3a) and governs this whole block. **Absent, empty, or
-  unreadable → treat as `advisory`.** The three modes:
+  settled once in Bootcamp preparation (Step 3a) — either by the pinned question, or by a value the
+  Bootcamper had already saved, in which case the question was not asked (INV-133). Either way the
+  file is the single source of truth here, so read it rather than assuming a question was answered
+  this run. **Absent, empty, or unreadable → treat as `advisory`.** The three modes:
 
   - **`advisory` (the default) — one line, no question, no gate.** Present the recommendation as
     part of the apparatus block, beside the time estimate, then continue **straight into Step 1 in

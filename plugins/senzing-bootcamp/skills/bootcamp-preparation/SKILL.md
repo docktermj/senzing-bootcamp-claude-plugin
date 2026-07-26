@@ -165,7 +165,23 @@ as choosing the recommended `standard` and say so — never assume a level befor
 
 Each module has a recommended model and reasoning effort. Ask once, here, how the bootcamper wants
 that surfaced — then honor it for the whole run rather than re-deciding at every module boundary
-(INV-006/INV-119). Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
+(INV-006/INV-119).
+
+⛔ **First, read `config/bootcamp_preferences.yaml`. If it already carries a valid
+`model_guidance` (`advisory` | `off` | `prompt`), do NOT ask this question.** Honor the saved value,
+carry it into the Step 6 write unchanged, and state it in one line as part of the Step 7
+setup-choices recap — e.g. "Model guidance: stop and ask me each time (from your saved
+preferences)." Asking a bootcamper something they have already recorded an answer to is an INV-006
+violation, and this is the one setup preference a returning bootcamper is most likely to have
+opinions about.
+
+A bootcamper who always wants the same mode can therefore set it once and never see this question
+again: put `model_guidance: prompt` (or `advisory` / `off`) in
+`config/bootcamp_preferences.yaml` before starting. Mention that affordance when you tell them they
+can change it later.
+
+Only when the preference is **absent or unreadable**, present this pinned 👉 question, verbatim
+(INV-056), and end the turn on it:
 
 > 👉 **How would you like model guidance handled? Reply with a number:**
 >
@@ -179,7 +195,12 @@ write it now (INV-058).
 
 If they decline to choose, take `advisory` and say so. **An absent or unreadable preference is
 treated as `advisory`** everywhere it is read, so a session that skipped preparation is never left
-without guidance. Tell them they can change it any time ("change model guidance").
+without guidance. Tell them they can change it any time ("change model guidance") — and that
+setting `model_guidance` in `config/bootcamp_preferences.yaml` makes the choice stick, so this
+question is not asked again on a future run.
+
+Whichever path produced it, the value written in Step 6 is the bootcamper's — never overwrite a
+saved preference with the recommended default.
 
 Only the bootcamper can change the session's model or effort — the guide never does, in any mode.
 
@@ -296,6 +317,7 @@ Respect the active verbosity preset — shorten under `concise`, and keep it to 
 • Path: Core (all modules) — or Customized (selected modules)
 • Modules: {ordered selected module names}
 • Detail level: {verbosity}
+• Model guidance: {one-line recommendation each module | not shown | stop and ask each time}{ — from your saved preferences, when it was not asked}
 • Language: {programming language}
 • Version control: {git initialized | existing repo | git unavailable}
 → Next: {first content module name}

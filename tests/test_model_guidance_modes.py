@@ -92,6 +92,70 @@ class TestPreferenceIsAskedOnce(unittest.TestCase):
         )
 
 
+class TestSavedPreferenceSkipsTheQuestion(unittest.TestCase):
+    """INV-006: a bootcamper who has already recorded an answer must not be asked again.
+
+    The question is still the path when nothing is saved (INV-119 unchanged); it is simply
+    not asked when `config/bootcamp_preferences.yaml` already carries a valid value. That
+    also gives a bootcamper who always wants one mode a way to stop being asked at all,
+    without changing the default for anyone else.
+    """
+
+    def setUp(self):
+        self.text = read(PREPARATION)
+
+    def test_preference_is_read_before_asking(self):
+        step = self.text[self.text.index("## 3a. Model guidance mode"):]
+        step = step[: step.index("## 4.")]
+        self.assertRegex(
+            step,
+            r"(?s)First, read `config/bootcamp_preferences\.yaml`",
+            "Step 3a must read the saved preference before presenting the question.",
+        )
+        self.assertRegex(step, r"(?s)do NOT ask this question")
+
+    def test_question_is_conditional_on_the_preference_being_absent(self):
+        step = self.text[self.text.index("## 3a. Model guidance mode"):]
+        step = step[: step.index("## 4.")]
+        ask_idx = step.index("How would you like model guidance handled?")
+        gate_idx = step.index("absent or unreadable")
+        self.assertLess(
+            gate_idx, ask_idx,
+            "the absent-or-unreadable condition must precede the question it gates",
+        )
+
+    def test_saved_value_is_never_overwritten_by_the_default(self):
+        self.assertRegex(
+            self.text,
+            r"(?s)never overwrite a\s*\n?saved preference with the recommended default",
+        )
+
+    def test_the_opt_out_affordance_is_documented(self):
+        """A bootcamper must be told how to make the choice stick."""
+        self.assertRegex(
+            self.text,
+            r"(?s)`model_guidance: prompt`.{0,120}`config/bootcamp_preferences\.yaml`",
+        )
+
+    def test_mode_appears_in_the_setup_choices_recap(self):
+        """INV-099: the bootcamper is told which mode is in force either way."""
+        self.assertIn("• Model guidance:", self.text)
+        self.assertIn("from your saved preferences", self.text)
+
+    def test_readers_do_not_assume_the_question_was_answered_this_run(self):
+        """The file is the source of truth whether or not the question was asked."""
+        import re as _re
+        gr = read(GROUND_RULES)
+        squashed = _re.sub(r"[*\s]+", " ", gr)
+        self.assertIn("rather than assuming a question was answered this run", squashed)
+        self.assertIn("INV-133", gr)
+
+    def test_inv_119_default_is_unchanged(self):
+        self.assertRegex(
+            self.text, r"(?s)absent or unreadable preference is\s*\n?treated as `advisory`"
+        )
+
+
 class TestReadersDefaultToAdvisory(unittest.TestCase):
     def test_each_reader_reads_the_preference(self):
         for path in NUDGE_READERS:

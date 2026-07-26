@@ -174,3 +174,20 @@ MCP server covers parameter shapes.
   `specs/match-key-audit-cannot-read-related-entities-from-export.md` (the same phase D export work),
   `specs/java-scaffold-json-dependency-gap.md` and
   `specs/mapping-workflow-truncated-validation-errors.md` (other upstream MCP-server findings).
+
+## Invariants introduced
+
+- `INV-132` — Before calling a Senzing SDK method, its parameter shape MUST be confirmed for the
+  Bootcamper's binding; cross-language documentation is not authoritative for argument types, and a
+  flag family's meaning and a composite's availability MUST likewise be confirmed per binding
+  (recorded in `specs/INVARIANTS.md`).
+
+## Correction required to this spec
+
+⚠️ This spec's `## Problem` (finding 1) and the acceptance criterion "there is **no**
+`SZ_EXPORT_ALL_FLAGS`" are **factually wrong** and were deliberately not implemented as written.
+MCP (`get_sdk_reference(topic='flags', filter='export_json_entity_report')`) shows the constant does
+exist for `export_json_entity_report` / `export_csv_entity_report`, sourced from the Java SDK flag
+enum — it is the **Python** binding that lacks it, which is what produced the reported
+`AttributeError`. The shipped guidance qualifies it by binding instead. Correcting this spec's text
+belongs to `feedback-to-specs`; it was left unedited here on purpose.

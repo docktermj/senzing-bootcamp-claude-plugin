@@ -202,8 +202,31 @@ which is exactly the gap the UAT percentages below leave open.
    uniformly available across bindings — introspect (`dir(SzEngineFlags)`) or confirm via MCP for
    the bootcamper's language instead of copying a name from cross-language documentation.
 
+   A worked expression for a detail-carrying export in Python — start here rather than assembling
+   row filters and hoping:
+
+   ```python
+   from senzing import SzEngineFlags
+
+   # SZ_EXPORT_DEFAULT_FLAGS carries the per-entity detail; add row filters only to widen
+   # WHICH entities appear. Re-confirm both names via MCP this session (INV-080) — this is a
+   # worked example, not a substitute for the lookup.
+   flags = (
+       SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS
+       | SzEngineFlags.SZ_EXPORT_INCLUDE_ALL_ENTITIES
+   )
+   handle = sz_engine.export_json_entity_report(flags)
+   try:
+       row = sz_engine.fetch_next(handle)   # dump this ONE row and read it before parsing
+       print(row)
+   finally:
+       sz_engine.close_export_report(handle)   # close_export_report, not close_export
+   ```
+
    Before parsing the whole reader output, **dump one raw row** and confirm the fields the parser
-   expects are actually present (INV-115).
+   expects are actually present (INV-115). This is the check that turns "4,587 rows exported
+   successfully, all containing only `ENTITY_ID`" from a wasted validation pass into one line of
+   output.
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked

@@ -37,6 +37,30 @@ connections between entities using `find_network` and `find_path`.
    ⛔ **Look up the response structure before writing any code that parses the response — never
    infer field names from an example snippet** (INV-115).
 
+   ⛔ **Neither of those topics tells you the ARGUMENT types — confirm those for the bootcamper's
+   binding before writing the call.** `topic='flags'` covers flags and
+   `topic='response_schemas'` covers the response; the parameter shape is documented by neither,
+   so the only remaining source is cross-language documentation, and it is wrong for Python here.
+
+   For **Python**, both graph methods take native collections, not an entity-IDs JSON document:
+
+   ```text
+   find_network_by_entity_id(entity_ids: List[int], max_degrees: int,
+                             build_out_degrees: int, build_out_max_entities: int, flags: int)
+   find_path_by_entity_id(start_entity_id: int, end_entity_id: int, max_degrees: int, ...)
+   ```
+
+   So pass `[300418, 501752, 500174]` — **not**
+   `json.dumps({"ENTITIES": [{"ENTITY_ID": 300418}, ...]})`, which the flags documentation and the
+   Java/C# signatures imply and which raises
+   `SzSdkError: value {"ENTITIES": [...]} has type str, should be a list of int(s)`. (Credit to
+   the SDK: that error names the expected signature outright, so recovery is immediate — but the
+   round trip is avoidable.)
+
+   For any other language, confirm the shape from the installed binding (its own reference,
+   `help()`, or equivalent introspection) rather than copying Python's or another language's form
+   (INV-002 — this module is language-agnostic; only the *known-divergent* case is spelled out).
+
    Select flags appropriate for relationship exploration and explain each: "I'm using [flag] so
    we can see [what it provides]." For example: "I'm using [relationship detail flag] so we can
    see the full attribute information for each entity in the network. This helps us understand

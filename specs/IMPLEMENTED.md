@@ -18,6 +18,71 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## skip-model-guidance-question
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `tests/test_model_guidance_modes.py`
+- **Summary:** Implemented the spec's own recommended resolution rather than its literal
+  request, at the maintainer's direction. Step 3a now **reads
+  `config/bootcamp_preferences.yaml` first** and, when it already carries a valid
+  `model_guidance` (`advisory` | `off` | `prompt`), does **not** ask the question: it honors
+  the saved value, carries it into the Step 6 write unchanged, and states the mode in one line
+  in the Step 7 setup-choices recap (INV-099), which gained a `• Model guidance:` row so the
+  bootcamper is told which mode is in force on either path. The affordance is documented so a
+  bootcamper who always wants one mode can set it once and never see the question again. Also
+  added an explicit rule that a saved preference is never overwritten with the recommended
+  default. The question itself is unchanged and still the path when nothing is saved, so
+  INV-119's question-capture clause and the absent-or-unreadable → `advisory` default both
+  stand — no invariant amendment was needed.
+- **Why not the literal request:** the bootcamper asked for Step 3a to be deleted and
+  `model_guidance: prompt` hardcoded for every run. That conflicts with INV-119, and it would
+  re-impose on **every** bootcamper the blocking gate that
+  `model-effort-guidance-advisory-not-gate` existed to remove. The maintainer chose the
+  pre-set-preference route, which gives this bootcamper the outcome they wanted — never asked
+  again, always `prompt` — without changing anyone else's default. Recorded here because the
+  spec's `## Proposed change` describes both routes and only one was built.
+- **Commit:** uncommitted
+
+## verify-sdk-parameter-shapes-and-flag-families
+
+- **Implemented:** 2026-07-26 (two of three findings; see the correction below)
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `tests/test_sdk_parameter_shapes.py` (new)
+- **Summary:** Extended the pre-code lookup discipline from a method's **outputs** to its
+  **inputs**. Confirmed the root cause: `ground-rules.md:74-87` required looking up
+  `response_schemas` before parsing, and `phase2b-discover.md:29-38` faithfully required both
+  the `flags` and `response_schemas` lookups before generating the `find_network` call — yet
+  neither topic documents parameter shapes, so a correctly-performed lookup still could not
+  have prevented the failure. Added two ground rules: **parameter shapes must be confirmed for
+  the bootcamper's binding** before calling a method, with cross-language documentation
+  declared non-authoritative and binding introspection (`inspect.signature`,
+  `dir(SzEngineFlags)`) named as the fallback; and **flag families answer different
+  questions** — on the export methods `SZ_EXPORT_INCLUDE_*` selects which entities become rows
+  while `SZ_ENTITY_INCLUDE_*` selects what detail each row carries, so row filters alone yield
+  rows containing nothing but `ENTITY_ID`. Step 4d now gives the Python signatures for
+  `find_network_by_entity_id` / `find_path_by_entity_id`, names the wrong JSON-document form
+  explicitly with the `SzSdkError` it produces, and keeps the framing language-agnostic
+  (INV-002) by spelling out only the known-divergent case. Phase D gained a runnable,
+  MCP-confirmed export flag expression starting from `SZ_EXPORT_DEFAULT_FLAGS`, marked as
+  needing per-session re-confirmation (INV-080) and using Python's `close_export_report`.
+- **Third finding NOT implemented as written — the spec is wrong on a fact.** Its Problem
+  section and one acceptance criterion assert "there is no `SZ_EXPORT_ALL_FLAGS`". MCP
+  (`get_sdk_reference(topic='flags', filter='export_json_entity_report')`) shows the constant
+  **does** exist for `export_json_entity_report` / `export_csv_entity_report`, sourced from the
+  Java SDK flag enum; it is the **Python** binding that lacks it, which is what produced the
+  reported `AttributeError`. Writing the spec's claim into bootcamper-facing guidance would put
+  a Senzing falsehood in the plugin, which INV-080 forbids as much as a guess. The guidance
+  instead qualifies the constant by binding — already landed in `phaseD-validation.md` during
+  `match-key-audit-cannot-read-related-entities-from-export`, and now also in `ground-rules.md`
+  — and `tests/test_sdk_parameter_shapes.py` asserts that neither file ever denies it outright.
+  **The spec text was left unedited**; correcting it belongs to `feedback-to-specs`.
+- **Deferred:** the spec's upstream criterion — `submit_feedback` requests for export composites
+  in `reporting_guide(topic='export')`, a runnable graph call in `reporting_guide(topic='graph')`,
+  and parameter-shape coverage in `get_sdk_reference` — was **not** filed, following the same
+  decision taken for `mapping-workflow-truncated-validation-errors`: it sends content to an
+  external service, so the maintainer files it. Extending `get_sdk_reference` to cover parameter
+  shapes remains the fix for the whole class; everything above is the plugin-side mitigation.
+- **Commit:** uncommitted
+
 ## rebuild-viz-snapshot-after-customization
 
 - **Implemented:** 2026-07-26
