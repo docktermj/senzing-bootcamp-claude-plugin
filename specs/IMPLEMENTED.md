@@ -38,7 +38,7 @@ Entries are newest first. Do not delete history; append or update in place.
   all three, with a gate that names only the server, because nothing there is
   purged and the bootcamper's loaded data is needed downstream. Verified all 7
   acceptance criteria by grep; 43 tests pass.
-- **Commit:** uncommitted
+- **Commit:** `659cbd2`
 
 ## production-volume-question-clarity-and-threading-cutover
 
@@ -63,7 +63,7 @@ Entries are newest first. Do not delete history; append or update in place.
   MCP-sourced ~100K SQLite guidance threshold so it stays in step with the new
   cutover. License framing (expansion paths before downsizing) is unchanged.
   Verified all 8 acceptance criteria; 43 tests pass.
-- **Commit:** uncommitted
+- **Commit:** `659cbd2`
 
 ## post-load-match-key-semantic-audit
 
