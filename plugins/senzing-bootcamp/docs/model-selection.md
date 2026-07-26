@@ -93,10 +93,24 @@ Best value = the capability the workload needs, at the lowest tier that meets it
 ## Module-start commands (the nudge)
 
 `ground-rules.md` → "Module start banners and transitions" surfaces this per-stage recommendation
-at the start of each module (and `graduation/SKILL.md` at the graduation banner): a single 👉
-switch question when the recommendation changes from the current stage, otherwise a brief
-statement. Switching is optional; the session-level model/effort persists for the session
-(unlike per-skill frontmatter).
+at the start of each module (and `graduation/SKILL.md` at the graduation banner). Switching is
+optional; the session-level model/effort persists for the session (unlike per-skill frontmatter),
+and the guide never changes it — only the bootcamper can.
+
+**How it is surfaced is the bootcamper's choice** (INV-119). Bootcamp preparation Step 3a asks once
+and persists `model_guidance` to `config/bootcamp_preferences.yaml`; every reader treats an absent
+or unreadable value as `advisory`:
+
+| `model_guidance` | Behavior at module/graduation start | Extra turns |
+|---|---|---|
+| `advisory` *(default)* | One line in the apparatus block, then Step 1 in the same turn. Names the current model and effort beside the recommendation, treats model and effort as separate dials, says either can change at any time, and flags a recommendation *below* the current setting as a downgrade (INV-120). | 0 |
+| `off` | Nothing is presented. | 0 |
+| `prompt` | The former INV-063/INV-069 flow: a single 👉 switch question when the recommendation changes, then the pinned "Are you done modifying the model and effort?" gate before the first step. | up to 2 |
+
+`prompt` exists because earlier bootcampers explicitly asked for the blocking gates
+(`specs/model-effort-change-prompt.md`, `specs/model-effort-switch-done-confirmation.md`); a later
+bootcamper found them costly, which is why `advisory` is the default rather than the only mode. The
+"Are you done modifying the model and effort?" gate MUST NOT appear under `advisory` or `off`.
 
 > **`ground-rules.md` is the authoritative copy of this table; the copy below is derived.**
 > `ground-rules.md` is the file the guide actually loads at module start, so the operational values

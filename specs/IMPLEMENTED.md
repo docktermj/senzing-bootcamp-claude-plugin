@@ -18,6 +18,32 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## model-effort-guidance-advisory-not-gate
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_modes.py`
+- **Summary:** Replaced the unconditional blocking model/effort nudge with a mode the bootcamper
+  picks once. Bootcamp preparation Step 3a asks a pinned question and holds `model_guidance`
+  (`advisory` | `off` | `prompt`) for the consolidated Step 6 write (INV-058); every reader treats an
+  absent or unreadable value as `advisory`. Under `advisory` — the default — the recommendation is
+  one line in the apparatus block and Step 1 lands in the same turn, naming the bootcamper's current
+  model and effort beside it, treating the two as separate dials, stating either can change at any
+  time, and flagging a recommendation below the current setting as a downgrade. Under `off` nothing
+  is presented. Under `prompt` the former INV-063/INV-069 flow runs unchanged, both pinned questions
+  verbatim — which is what keeps the two earlier bootcampers who requested those gates satisfied
+  rather than reverted. The "Are you done modifying the model and effort?" gate is now explicitly
+  confined to `prompt` in both `ground-rules.md` and `graduation/SKILL.md`. The behavior lives in
+  `ground-rules.md`, so the eight module skills that reference INV-063 needed no edit; the ninth,
+  `module-03b/phase1-visualization.md`, carried a local restatement ("never omitted — INV-063
+  requires it at every module start") that contradicted `off` and was corrected.
+  `docs/model-selection.md` documents the three modes. New `tests/test_model_guidance_modes.py`
+  (13 tests) guards the parts most likely to drift back: the question is asked once and only in
+  preparation, every reader defaults to `advisory`, the gate never appears in a skill without being
+  scoped to `prompt`, and the advisory line carries its INV-120 content. Suite is now 56 tests, all
+  passing; `tests/test_model_guidance_sync.py` still passes unchanged (the recommendation tables were
+  untouched).
+- **Commit:** uncommitted
+
 ## generate-diagrams-for-generated-scenarios
 
 - **Implemented:** 2026-07-25

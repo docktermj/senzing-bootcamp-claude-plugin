@@ -78,9 +78,26 @@ forward is the recap PDF and the `production/` project.
 
 ## Best-value model/effort prompt
 
-After the preface, prompt for the best-value model/effort before the heavier graduation work.
+After the preface, surface the best-value model/effort before the heavier graduation work.
 Graduation is correctness-critical (Opus 5 + high effort) and steps up from the Module 7
-recommendation, so end this turn with a single 👉 yes/no question — its own turn, not combined
+recommendation.
+
+⛔ **Read `model_guidance` from `config/bootcamp_preferences.yaml` first (INV-119)** — chosen once in
+Bootcamp preparation (Step 3a). **Absent, empty, or unreadable → treat as `advisory`.**
+
+- **`advisory` (the default):** one line, no question, no gate — then continue straight into the
+  Pre-checks and the first graduation step **in the same turn**. Name the bootcamper's current model
+  and effort beside the recommendation, name both dials separately, and say either can be changed at
+  any time, applying from their next message (INV-120). On the CLI, shape it like:
+
+  > **Recommended for graduation:** Opus 5 · high effort (`/model opus` · `/effort high`) — you're on **Sonnet 5 · high**; graduation is correctness-critical, so the step up is worth it here. Change either any time; it applies from your next message.
+
+  Adapt the phrasing per INV-098 on Desktop, web, or an IDE surface. If they are already on the
+  recommendation, collapse it to one line saying so.
+- **`off`:** present nothing; go straight to the Pre-checks.
+- **`prompt`:** the blocking flow below, unchanged.
+
+Under `prompt`, end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
 On the **CLI**, pin the switch question verbatim:
@@ -102,8 +119,11 @@ start the graduation work yet:
 Run the Pre-checks and the first graduation step on the turn **after** the bootcamper confirms; if
 they need more time, acknowledge and wait, then continue — do not re-ask this gate (ask-once,
 INV-006). On **no**, continue straight into the graduation work the same reply turn: run the
-Pre-checks and proceed to the first step, ending that turn on its own 👉 question. You never change
-the session yourself. See `../../docs/model-selection.md`.
+Pre-checks and proceed to the first step, ending that turn on its own 👉 question.
+
+⛔ **Both pinned questions above belong to `prompt` alone** — under `advisory` and `off` neither is
+asked, because there is nothing to wait for. In every mode you never change the session yourself;
+only the bootcamper can. See `../../docs/model-selection.md`.
 
 ## Pre-checks
 

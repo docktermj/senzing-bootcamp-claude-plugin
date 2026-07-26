@@ -137,6 +137,28 @@ not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007)
 If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
 as choosing the recommended `standard` and say so — never assume a level before they have replied.
 
+## 3a. Model guidance mode
+
+Each module has a recommended model and reasoning effort. Ask once, here, how the bootcamper wants
+that surfaced — then honor it for the whole run rather than re-deciding at every module boundary
+(INV-006/INV-119). Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
+
+> 👉 **How would you like model guidance handled? Reply with a number:**
+>
+> 1. **A one-line recommendation at each module** *(recommended)* — shown alongside the time estimate; never interrupts.
+> 2. **Don't show it** — no model or effort guidance at all.
+> 3. **Stop and ask me each time** — pause with a yes/no question whenever the recommendation changes.
+
+Wait for the answer, then **hold** it for the consolidated write in Step 6 as
+`model_guidance: advisory | off | prompt` (option 1 → `advisory`, 2 → `off`, 3 → `prompt`) — do not
+write it now (INV-058).
+
+If they decline to choose, take `advisory` and say so. **An absent or unreadable preference is
+treated as `advisory`** everywhere it is read, so a session that skipped preparation is never left
+without guidance. Tell them they can change it any time ("change model guidance").
+
+Only the bootcamper can change the session's model or effort — the guide never does, in any mode.
+
 ## 4. Programming language selection (gate)
 
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
@@ -199,8 +221,9 @@ single consolidated write below — no separate write (INV-058).
 
 Persist all setup choices collected in Steps 1-5 to
 `config/bootcamp_preferences.yaml` in a **single** write (INV-058) — `path` (`core`/`customized`),
-`selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the detected
-`os`/`arch`, and the `git_init` outcome. (The software-integration and deployment-target answers are
+`selected_modules`, `verbosity`, `model_guidance` (`advisory`/`off`/`prompt`, Step 3a), the
+programming language, the detected `name` (if any), the detected `os`/`arch`, and the `git_init`
+outcome. (The software-integration and deployment-target answers are
 NOT collected here — they are asked in Module 1 Phase 2 and persisted there, per INV-097.) (`path`
 replaces the old `track` preference; downstream readers — graduation, the recap header — read
 `path`.) This is the only setup write of this module; the gates only held their answers, so the

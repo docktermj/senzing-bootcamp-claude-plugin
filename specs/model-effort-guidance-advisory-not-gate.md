@@ -187,3 +187,16 @@ twice. The advisory line's example text should carry the *current* top-tier mode
   `specs/surface-aware-model-effort-instructions.md` (INV-098),
   `specs/refresh-model-guidance-to-current-top-tier-model.md` (**same lines — check sequencing**),
   `specs/module-preface-time-estimate.md` (the apparatus block this line joins)
+
+## Invariants introduced
+
+- `INV-119` — Model/effort guidance at module and graduation start is governed by a `model_guidance`
+  preference (`advisory` | `off` | `prompt`) captured once in Bootcamp preparation, defaulting to
+  `advisory` when absent; `advisory` costs zero extra turns, `off` presents nothing, and `prompt`
+  reproduces the INV-063/INV-069 behavior exactly (recorded in `specs/INVARIANTS.md`).
+- `INV-120` — The advisory line names the current model and effort beside the recommendation, treats
+  model and effort as separate dials, states either can change at any time, and explicitly flags a
+  recommendation below the current setting as a downgrade (recorded in `specs/INVARIANTS.md`).
+
+INV-063 and INV-069 were marked superseded in place — neither deleted nor renumbered — with notes
+recording that their behavior is retained under the `prompt` mode.
