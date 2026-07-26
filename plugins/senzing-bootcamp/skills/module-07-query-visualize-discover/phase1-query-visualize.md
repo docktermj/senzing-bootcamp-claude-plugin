@@ -302,6 +302,62 @@ phase completes or is skipped, return here for the Query Completeness Gate.
   match/feature analysis — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
 
+## Data-discoveries deliverable (produced on every path)
+
+⛔ **Produce `docs/bootcamp_data_discoveries.md` and `.pdf` before the gate below, whether the
+bootcamper accepted the Discover opt-in, declined it, or exited part-way.** Every branch of
+`phase2-discover.md` returns here, which is why this lives at the convergence point rather than in
+each branch.
+
+The opt-in governs **the tutorial** — whether the bootcamper is walked through why/how/networks
+interactively. It must not govern **the findings**, which are the payoff for every preceding module:
+collection, mapping, loading, resolution. A bootcamper who declines a walkthrough at the end of a
+long session should still leave knowing what Senzing found in *their* data. Generate and announce it
+in one line (no yes/no gate).
+
+Source every figure through generated SDK code and `reporting_guide` — never direct SQL against
+`database/G2C.db`. Write these six sections; the generator checks for them by name:
+
+1. **`## Headline numbers, interpreted`** — records loaded, entities resolved, merge count, and what
+   those numbers *mean* here. Never bare counts.
+2. **`## Merges and match keys`** — every merge with the match key that drove it, so each is
+   explainable and auditable.
+3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
+   the most business value: each row is one human decision away from being actioned.
+4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
+   **near-miss**. Why something did *not* merge teaches more than why something did.
+5. **`## Relationship networks`** — multi-hop paths no single record states.
+6. **`## What was not found, and why`** — ⛔ the section most likely to be dropped, and the one that
+   changes how the whole document reads. State the measurement (e.g. how many names or identifiers
+   the sources actually share) and say explicitly which case applies: **the data had little overlap
+   to find**, or **the pipeline underperformed**. Without it, a correct result on a
+   low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
+   suppressor findings belong here.
+
+Then render the PDF:
+
+```bash
+python3 scripts/generate_discoveries_pdf.py
+```
+
+That script is the discoveries **sibling** of the recap generator — do not point
+`generate_recap_pdf.py` at this document, which parses recap-shaped module sections and would
+produce a near-empty PDF. It uses `fpdf2` when importable and a stdlib renderer otherwise, so no
+optional PDF dependency is required; and per INV-110 it refuses to write a PDF at all if the
+document would lose most of its content, rather than reporting success over an empty deliverable.
+
+⛔ **Verify the PDF carries the findings — a `PDF generated:` line is not verification** (INV-077).
+Extract text from the written PDF and confirm real findings appear (fpdf2 compresses its content
+streams, so decompress before searching). If extraction shows an empty or near-empty document, say
+so and fix the Markdown rather than shipping it.
+
+**Non-blocking.** If either file cannot be produced, report exactly what failed and continue — this
+never blocks the gate below or graduation. Say plainly that the deliverable is missing, so its
+absence is visible rather than silent.
+
+**Announce both files** in the end-of-module summary's **Files produced** list (INV-032) and in this
+module's recap section.
+
 ## Query Completeness Gate
 
 Before wrapping up the module, confirm:
@@ -313,7 +369,10 @@ Before wrapping up the module, confirm:
    — this counts as offered whether the bootcamper accepted or declined it.
 3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4d
    checkpointed) or explicitly skipped by the bootcamper.
-4. **Ready to proceed?**
+4. **Data-discoveries deliverable produced?** `docs/bootcamp_data_discoveries.md` and `.pdf` exist
+   and the PDF's extracted text carries the findings — or, if they could not be produced, the
+   bootcamper was told why. Never silently absent.
+5. **Ready to proceed?**
 
 Module 7 is the **last content module before graduation** (required in every path). Once the gate
 is satisfied, run the standard **Module Completion** process in

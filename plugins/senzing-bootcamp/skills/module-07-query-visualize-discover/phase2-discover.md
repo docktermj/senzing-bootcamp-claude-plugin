@@ -41,6 +41,13 @@ Then ask whether to proceed.
 - **Agrees:** write `discover_phase: "in_progress"` under `module_7_query` and continue to
   step 4a.
 
+⛔ **Declining skips the walkthrough, not the findings.** This question governs whether the
+bootcamper is *walked through* why/how/networks interactively. The data-discoveries deliverable
+(`docs/bootcamp_data_discoveries.md` + `.pdf`) is produced on **every** path — including this
+decline and both early exits below — at the convergence point in `phase1-query-visualize.md` →
+"Data-discoveries deliverable". Do not present declining as giving up the findings, and do not
+offer the deliverable as a consolation question; it is generated and announced either way.
+
 ### Step 4a: Data pattern analysis
 
 Analyze the bootcamper's loaded data to identify interesting entities for the Discover

@@ -18,6 +18,31 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## always-produce-data-discoveries-document
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py` (new), `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`, `tests/test_discoveries_pdf.py` (new)
+- **Summary:** Split the tutorial from the deliverable. The Discover opt-in still
+  governs only whether the bootcamper is walked through why/how/networks; the
+  findings are now produced on every path. All four branches (decline, both
+  early exits, full completion) return to the Query Completeness Gate, so the
+  instruction lives at that convergence point rather than being duplicated four
+  times — with a pointer in the decline branch stating that declining skips the
+  walkthrough, not the findings. Six required sections are specified, including
+  "what was not found, and why" with the measurement that distinguishes low data
+  overlap from pipeline underperformance. New sibling renderer
+  `generate_discoveries_pdf.py` renders a general Markdown subset (headings,
+  bullets, labels, fenced code, tables, paragraphs) using fpdf2 when importable
+  and a stdlib writer otherwise, reusing the recap generator's PDF plumbing so
+  the plugin keeps one hand-rolled page writer. Per INV-110 it audits before
+  rendering: a partial document warns and renders (exit 0), while a recap-shaped
+  or heading-less document gets no PDF, no success line, and a non-zero exit —
+  verified against the exact recap-shaped input that previously produced a
+  near-empty PDF at exit 0. Both renderers were verified by extracting and
+  decompressing the PDF text, not by trusting the success line. New
+  `tests/test_discoveries_pdf.py` (16 tests); suite is now 72, all passing.
+- **Commit:** uncommitted
+
 ## model-effort-guidance-advisory-not-gate
 
 - **Implemented:** 2026-07-25
