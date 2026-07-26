@@ -39,8 +39,13 @@ record in the recap.
 Confirm the Senzing MCP server is reachable before starting. It is required: it generates SDK
 code in the chosen language, looks up Senzing facts, and provides working examples.
 
-- **Probe:** make a lightweight call such as `search_docs(query="health check")` (about a
-  10-second timeout).
+- **Probe:** call `get_capabilities` (about a 10-second timeout). This is the call
+  `ground-rules.md` → "Session start" already requires once before any other Senzing MCP call, so
+  it doubles as the reachability probe and the preface makes **one** MCP call here, not two. Its
+  response is also the tool manifest the guide needs anyway.
+  - Do **not** probe with `search_docs`. It was specified here as "a lightweight call such as
+    `search_docs(query="health check")`", which it is not: that query returns a multi-page FAQ
+    article (~5 KB) for a question that only needed "did the server answer at all".
 - **Success** (any response, even empty results): proceed silently.
 - **Failure** (timeout or error): display a blocking message and STOP. Do not proceed until the
   bootcamper fixes the connection and says "retry":

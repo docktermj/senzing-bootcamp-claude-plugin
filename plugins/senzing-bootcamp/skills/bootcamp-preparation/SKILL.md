@@ -66,7 +66,43 @@ whole downstream chain is always included. So the genuinely deselectable modules
 **Entity Resolution Concepts**, **System verification**, and **Truth Set visualization** (and
 deselecting System verification forces deselecting Truth Set visualization, which requires it).
 
+## 0. Read the saved preferences first — honor them, do not ask (INV-133)
+
+⛔ **Before Step 1, read `config/bootcamp_preferences.yaml` once.** Every capture question below is
+governed by the same rule, and it applies to **all** of them, not just model guidance:
+
+> A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be honored, its
+> capture question MUST NOT be asked, and the saved value MUST NEVER be overwritten with a
+> recommended default (INV-133).
+
+This is what lets a returning bootcamper settle a recurring choice permanently — put
+`programming_language: Python` and `verbosity: {preset: minimal}` in the file before starting and
+those two questions never appear again — without changing the default for anyone else. Asking
+someone what they already told you is an INV-006 violation, and it is most galling on a second run.
+
+| Preference | Question it suppresses | Honor when |
+|---|---|---|
+| `path` | Step 1 | `core`; or `customized` **and** a valid `selected_modules` list is also saved |
+| `verbosity` | Step 3 | a recognized preset (`minimal`/`concise`/`standard`/`detailed`) |
+| `model_guidance` | Step 3a | `advisory`, `off` or `prompt` |
+| `programming_language` | Step 4 | any non-empty value |
+
+- **`path: customized` with no `selected_modules`** is not honorable — the selection would be
+  undefined. Ask Step 1 (and Step 2) in that case, and say why in one line.
+- **An unrecognized or unreadable value is not honorable.** Fall through to the question rather than
+  guessing what was meant.
+- **Nothing here is a question.** Read the file quietly (INV-012) and hold each honored value for the
+  Step 6 consolidated write, unchanged.
+- **`name`, `os`/`arch` and `git_init` are detected, never asked** (INV-134/INV-061/INV-095), so they
+  have no question to suppress — but a saved `name` is still honored rather than re-detected.
+
+⛔ **State every honored value once in the Step 7 recap**, marked as coming from the saved file, so
+the bootcamper can see what is in force and correct it. A silently-honored preference is
+indistinguishable from a question you forgot to ask.
+
 ## 1. Choose the bootcamp path
+
+⛔ Skip this step entirely when `path` is honorable per Step 0.
 
 Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
 
@@ -132,6 +168,8 @@ write in Step 6. Keep the list in module order so the journey map and transition
 
 ## 3. Level of detail (verbosity)
 
+⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
+
 > 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 >
 > 1. **minimal** — near-zero output: only questions, results, and required banners/summaries; no explanations, code walkthroughs, or step recaps. Best for experts who want to move fast.
@@ -170,18 +208,16 @@ Each module has a recommended model and reasoning effort. Ask once, here, how th
 that surfaced — then honor it for the whole run rather than re-deciding at every module boundary
 (INV-006/INV-119).
 
-⛔ **First, read `config/bootcamp_preferences.yaml`. If it already carries a valid
-`model_guidance` (`advisory` | `off` | `prompt`), do NOT ask this question.** Honor the saved value,
-carry it into the Step 6 write unchanged, and state it in one line as part of the Step 7
-setup-choices recap — e.g. "Model guidance: stop and ask me each time (from your saved
-preferences)." Asking a bootcamper something they have already recorded an answer to is an INV-006
-violation, and this is the one setup preference a returning bootcamper is most likely to have
-opinions about.
+⛔ Skip this step entirely when `model_guidance` is honorable per Step 0 — a valid saved value is
+`advisory`, `off` or `prompt`. Honor it, carry it into the Step 6 write unchanged, and state it in
+the Step 7 recap marked as saved — e.g. "Model guidance: stop and ask me each time (from your saved
+preferences)."
 
 A bootcamper who always wants the same mode can therefore set it once and never see this question
 again: put `model_guidance: prompt` (or `advisory` / `off`) in
 `config/bootcamp_preferences.yaml` before starting. Mention that affordance when you tell them they
-can change it later.
+can change it later — and that the same trick works for `verbosity`, `programming_language` and
+`path` (Step 0).
 
 Only when the preference is **absent or unreadable**, present this pinned 👉 question, verbatim
 (INV-056), and end the turn on it:
@@ -208,6 +244,10 @@ saved preference with the recommended default.
 Only the bootcamper can change the session's model or effort — the guide never does, in any mode.
 
 ## 4. Programming language selection (gate)
+
+⛔ Skip the **programming-language question** when `programming_language` is honorable per Step 0.
+Platform detection and name detection below still run either way — they are detections, not
+questions.
 
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
@@ -314,17 +354,24 @@ NOT added to `modules_completed` and NOT written as a `docs/bootcamp_recap.md` s
 Respect the active verbosity preset — shorten under `concise`, and keep it to a single line under
 `minimal`.
 
+Every line states the value **in force**, whether it came from a question this run or from the
+saved file (INV-133). Append ` — from your saved preferences` to any line whose question Step 0
+suppressed, so an honored preference is visible rather than looking like a question you skipped:
+
 ```text
 ✅ Bootcamp preparation complete
 ────────────────────────────────
 • Path: Core (all modules) — or Customized (selected modules)
 • Modules: {ordered selected module names}
-• Detail level: {verbosity}
-• Model guidance: {one-line recommendation each module | not shown | stop and ask each time}{ — from your saved preferences, when it was not asked}
-• Language: {programming language}
+• Detail level: {verbosity}{ — from your saved preferences}
+• Model guidance: {one-line recommendation each module | not shown | stop and ask each time}{ — from your saved preferences}
+• Language: {programming language}{ — from your saved preferences}
 • Version control: {git initialized | existing repo | git unavailable}
 → Next: {first content module name}
 ```
+
+When Step 0 honored anything, close the recap with one line telling them how to change it: "Edit
+`config/bootcamp_preferences.yaml` to change any saved choice, or just tell me."
 
 Then hand off to the first module in `selected_modules` after `bootcamp_preparation`:
 

@@ -18,6 +18,56 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## dry-run-phase3-findings
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `tests/test_saved_preferences_honored.py` (new), `tests/test_model_guidance_modes.py`
+- **Not a spec** — the three findings from phase 3 of the dry run, the conversational walk with the
+  maintainer answering as the Bootcamper. **Establishes no new invariant**; all three make existing
+  invariants (INV-133, INV-006, INV-012, INV-003) actually hold in the flow.
+- **INV-133 covered only one of the four preferences it names.** The invariant is phrased generally —
+  "A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be honored and its
+  capture question MUST NOT be asked" — but arrived via `skip-model-guidance-question`, and only
+  `model_guidance` ever got the read-first check. Steps 1 (path), 3 (verbosity) and 4 (programming
+  language) asked unconditionally, so a returning Bootcamper who had saved `verbosity: minimal` was
+  asked for it again. Reading the file suggested this in the first audit; **walking the steps in
+  order is what confirmed it**, because the absence of any check is invisible until you follow the
+  sequence looking for one. Added a shared **Step 0** stating the rule once with an honorability
+  table, plus a skip instruction on each of the four steps so an agent reading only its own step
+  still obeys it. Two edge cases the general rule needed: `path: customized` with no
+  `selected_modules` is **not** honorable (the selection would be undefined), and an unrecognised
+  value falls through to the question rather than being guessed at.
+- **A silently-honored preference is indistinguishable from a question you forgot**, so the Step 7
+  recap now marks each honored line ` — from your saved preferences` and closes with how to change
+  them. INV-133 already required stating the value in force; it was only wired up for
+  `model_guidance`.
+- **The documented health probe was not lightweight.** `onboarding-flow.md` step 0b called for "a
+  lightweight call such as `search_docs(query="health check")`" — which returns a multi-page FAQ
+  article (~5 KB) to answer "did the server answer at all". Meanwhile `ground-rules.md` already
+  requires `get_capabilities` once before any other Senzing MCP call, so the preface was making two
+  liveness calls where one would do. The probe is now `get_capabilities`, whose response is also the
+  tool manifest the guide needs.
+- **An instruction the guide is told it must follow and provably cannot.** `ground-rules.md` requires
+  every acknowledgment to reference "at least one specific thing they said" and forbids a bare "Got
+  it." — but the answer to "any questions before we get started?" is usually just "no", where there
+  is nothing specific to quote and no carve-out existed. This is the finding class unique to phase 3:
+  not a wrong instruction but an unsatisfiable one, which teaches the model to read the surrounding
+  rules as advisory. Added a carve-out that keeps the intent (prove you read the answer) by naming
+  what the answer selected or causes, explicitly forbidding a manufactured quote or padding to reach
+  two sentences.
+- **`tests/test_saved_preferences_honored.py`** (8 tests) pins that every preference with a capture
+  question appears in Step 0's table **and** carries a skip instruction on its own step, that
+  detected values are not misfiled as questions, that the recap marks honored values, and that the
+  health probe reuses `get_capabilities`. Negative-controlled on all three findings.
+- **Updated `tests/test_model_guidance_modes.py` rather than working around it.** It pinned Step 3a's
+  literal sentence "First, read `config/bootcamp_preferences.yaml`", which the generalisation moved
+  to Step 0 — so a test written to protect a guarantee would have blocked strengthening it. Rewritten
+  to assert the guarantee (a read step exists, precedes the question, and the step defers to it) with
+  a note saying why. Verified it still catches a real regression: deleting Step 0 fails 3 assertions
+  across the two files.
+- **Test suite:** 425 -> 433 passing.
+- **Commit:** uncommitted
+
 ## dry-run-skill
 
 - **Implemented:** 2026-07-26

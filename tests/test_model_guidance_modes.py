@@ -105,14 +105,31 @@ class TestSavedPreferenceSkipsTheQuestion(unittest.TestCase):
         self.text = read(PREPARATION)
 
     def test_preference_is_read_before_asking(self):
-        step = self.text[self.text.index("## 3a. Model guidance mode"):]
-        step = step[: step.index("## 4.")]
+        """The read must precede the question — wherever the rule is written.
+
+        Updated 2026-07-26: this asserted Step 3a's literal "First, read
+        `config/bootcamp_preferences.yaml`". INV-133 was then generalised from
+        `model_guidance` to every setup preference, so the read moved to a shared
+        Step 0 and Step 3a points at it. Pinning the old sentence would have blocked
+        the generalisation while the guarantee it protects was strengthened, so this
+        now asserts the guarantee: a read step exists, it precedes this question, and
+        this step defers to it.
+        """
+        step_zero = self.text.index("## 0.")
+        step_3a = self.text.index("## 3a. Model guidance mode")
+        self.assertLess(
+            step_zero, step_3a, "the honor-first read step must precede the question"
+        )
+        preamble = self.text[step_zero : self.text.index("## 1.")]
+        self.assertIn("config/bootcamp_preferences.yaml", preamble)
+        self.assertRegex(preamble, r"MUST NOT be asked")
+
+        step = self.text[step_3a : self.text.index("## 4.", step_3a)]
         self.assertRegex(
             step,
-            r"(?s)First, read `config/bootcamp_preferences\.yaml`",
-            "Step 3a must read the saved preference before presenting the question.",
+            r"[Ss]kip this step entirely when `model_guidance` is honorable",
+            "Step 3a must defer to the shared honor-first rule",
         )
-        self.assertRegex(step, r"(?s)do NOT ask this question")
 
     def test_question_is_conditional_on_the_preference_being_absent(self):
         step = self.text[self.text.index("## 3a. Model guidance mode"):]

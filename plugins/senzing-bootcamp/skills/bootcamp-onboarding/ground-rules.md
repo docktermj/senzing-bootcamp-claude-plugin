@@ -47,6 +47,15 @@ steering files.)
   referencing at least one specific thing they said. Never a bare "Got it." / "Okay." A
   dead-end acknowledgment (no next step, no question) is a violation - always follow with the
   next step or the next 👉 question.
+  - **When the answer carries nothing to reference, name the consequence instead.** A bare
+    readiness signal ("no", "ready", "let's go"), a bare option number, or a one-word decline has
+    no specific content to quote, so the requirement above is unsatisfiable as literally written.
+    Satisfy its **intent** — prove you read the answer — by naming what that answer selected or
+    what happens because of it: "Core it is — that includes all eleven modules" rather than a bare
+    "Got it." Do not manufacture a quote, and do not pad the reply to reach two sentences.
+
+    Once the bootcamper says something substantive, the reference-something-specific form applies
+    again; this carve-out is for content-free answers only.
 - **Continuation requests** ("continue", "keep going", "next", "proceed", "move on") -> give
   the next step this same turn. Never suggest pausing, "take a break", or "pick this up later".
 - After the bootcamper answers a pending 👉 question, processing that answer is the FIRST
