@@ -107,9 +107,10 @@ or unreadable value as `advisory`:
 | `off` | Nothing is presented. | 0 |
 | `prompt` | The former INV-063/INV-069 flow: a single 👉 switch question when the recommendation changes, then the pinned "Are you done modifying the model and effort?" gate before the first step. | up to 2 |
 
-`prompt` exists because earlier bootcampers explicitly asked for the blocking gates
-(`specs/model-effort-change-prompt.md`, `specs/model-effort-switch-done-confirmation.md`); a later
-bootcamper found them costly, which is why `advisory` is the default rather than the only mode. The
+`prompt` exists because earlier bootcampers explicitly asked for the blocking gates; a later
+bootcamper found them costly, which is why `advisory` is the default rather than the only mode. (The
+originating feedback and the specs that acted on it live in the plugin's development repository, which
+is not shipped — so no path is cited here that a reader of this copy could not open.) The
 "Are you done modifying the model and effort?" gate MUST NOT appear under `advisory` or `off`.
 
 > **`ground-rules.md` is the authoritative copy of this table; the copy below is derived.**

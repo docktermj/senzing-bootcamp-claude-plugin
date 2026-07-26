@@ -30,7 +30,9 @@ SECRET_MSG = (
 # entries match the start of the normalized, lower-cased path; substring entries
 # match anywhere (Downloads and the Windows temp dir can appear mid-path).
 TEMP_PREFIXES = ("/tmp/", "/var/tmp/", "/private/tmp/", "/private/var/folders/")
-TEMP_SUBSTRINGS = ("/downloads/", "/appdata/local/temp/")
+# `/windows/temp/` is the SYSTEM account's temp dir on Windows (%SystemRoot%\Temp) — the
+# Windows counterpart of /tmp, and previously the one uncovered system temp location.
+TEMP_SUBSTRINGS = ("/downloads/", "/appdata/local/temp/", "/windows/temp/")
 
 
 def block(message):
@@ -110,11 +112,15 @@ if abs_path:
         ):
             block(LOC_MSG)
         else:
-            # macOS puts the per-user temp dir under $TMPDIR (e.g. /var/folders/...).
-            tmpdir = os.environ.get("TMPDIR", "")
-            if tmpdir:
-                tmp_norm = norm(tmpdir.rstrip("/")).lower()
-                if low.startswith(tmp_norm + "/"):
+            # Per-user / relocated temp dirs the prefix lists cannot enumerate: macOS puts
+            # its under $TMPDIR (e.g. /var/folders/...), Windows under %TEMP%/%TMP%. Consult
+            # all three so no platform is covered less well than the others (INV-001).
+            for var in ("TMPDIR", "TEMP", "TMP"):
+                env_tmp = os.environ.get(var, "")
+                if not env_tmp:
+                    continue
+                tmp_norm = norm(env_tmp.rstrip("/\\")).lower()
+                if tmp_norm and low.startswith(tmp_norm + "/"):
                     block(LOC_MSG)
 
 # Secrets: PEM private keys, AWS access-key IDs, and raw Senzing license payloads

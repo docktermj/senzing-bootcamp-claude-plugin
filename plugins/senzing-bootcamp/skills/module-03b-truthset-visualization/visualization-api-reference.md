@@ -525,6 +525,43 @@ These are requirements, not suggestions. This module is the bootcamp's "wow mome
 whose whole purpose is a strong first impression — so the quality bar below is the **default every
 implementation ships**, not something a bootcamper has to ask for one improvement at a time.
 
+### Escaping data-sourced strings (required — security)
+
+⛔ **Every string that reaches the page from the loaded data MUST be escaped for the context it is
+written into.** Entity names, data-source codes, record IDs, match keys, resolution rules and feature
+descriptions all originate in the Bootcamper's records, so none of them can be treated as trusted
+markup. This is a **stored** injection surface, not a reflected one: the standalone snapshot is
+saved, kept, and shared, so anything injected persists in the artifact the Bootcamper hands to
+someone else.
+
+Two contexts, two rules:
+
+1. **Values embedded in an inline `<script>` block** — the snapshot inlines the whole entity model
+   this way. Serializing with your language's plain JSON writer is **not sufficient**: JSON does not
+   escape `<`, so a value containing the literal `</script>` closes the script element early and the
+   browser parses what follows as markup. Escape `<`, `>` and `&` as their `\uXXXX` JSON escapes
+   (`\u003c`, `\u003e`, `\u0026`) after serializing. The result is still valid JSON and the parsed
+   data is byte-identical, so nothing downstream changes.
+2. **Values written into rendered HTML** — entity cards, tooltips, legends, table cells, modal
+   bodies. Escape `&`, `<` and `>` (and quotes in attribute position) before insertion, or use an
+   API that treats the value as text rather than markup.
+
+Live `/api/*` responses served as `application/json` are **exempt** — they are not an HTML-embed
+surface.
+
+*Reference implementation (Python):* `senzing_viz_server.py` provides `_script_json()` for case 1 and
+`_esc_html()` for case 2. Those are the names in the bundled reference, **not** the requirement —
+implement the equivalent for your language (INV-090). A server that skips this ships a stored-XSS
+vector in a shared keepsake, which is why it is a ⛔ and not a nicety (INV-106).
+
+### Offline rendering (required)
+
+The live page and the standalone snapshot MUST both render with **no network access**: inline the
+vendored D3 asset rather than fetching from a CDN, and embed every payload the snapshot needs. A
+snapshot that reaches for a CDN is broken in exactly the air-gapped and proxy-restricted settings
+where it matters most (INV-091). See `phase1-visualization.md` → "Render offline" for the vendored
+asset's location.
+
 ### Why? / How? — plain language first, raw JSON behind a twistie
 
 The API returns the SDK response verbatim; that is about *availability*, not about what the UI

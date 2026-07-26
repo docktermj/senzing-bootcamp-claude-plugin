@@ -18,6 +18,60 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## audit-2-any-language-contract-and-windows-temp
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/scripts/write-gate.py`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md` (INV-106 clarified in place), `tests/test_any_language_contract_complete.py` (new)
+- **Not a spec** — findings from a second full audit against @INVARIANTS.md, fixed directly at
+  the maintainer's request. Recorded here so the work is traceable alongside the spec ledger.
+- **Finding 5 (MEDIUM-HIGH, security).** INV-106's stored-XSS guard reached only the Python path.
+  It mandated escaping by naming `senzing_viz_server.py`'s `_script_json`, but INV-090 requires the
+  visualization server be built in the Bootcamper's chosen language from
+  `visualization-api-reference.md` — and that contract mentioned escaping **zero times** (verified by
+  grep for `_script_json`, `\u003c`, `escape`, `</script>`, `XSS`, `inject`). So a Java/C#/Go/TS
+  bootcamp built strictly to the contract shipped the exact `</script>` breakout vector the invariant
+  exists to close, in the standalone snapshot — the artifact designed to be saved and shared. What
+  marked it a gap rather than an accepted limit: the sibling requirement *did* get through —
+  offline/no-CDN (INV-091) is stated plainly in `phase1-visualization.md:134`. Added an
+  **"Escaping data-sourced strings (required — security)"** section to the contract covering both
+  contexts (inline `<script>` payloads: escape `<`/`>`/`&` as `\uXXXX` because JSON does not escape
+  `<`; rendered HTML: escape before insertion), naming `application/json` responses as exempt, and
+  labelling `_script_json`/`_esc_html` as the *Python reference implementation, not the requirement*.
+  Also added an **"Offline rendering (required)"** section so the contract states it too rather than
+  relying on the sibling file. **INV-106 was clarified in place** (permitted by INVARIANTS.md's own
+  rules — wording only, no meaning change, dated note added): the requirement is now the escaping
+  behaviour, satisfiable in any language, with the Python helpers named as the reference. The guard
+  always applied to generated HTML in any language; naming only the Python helper left it
+  unsatisfiable for a non-Python server.
+- **Finding 6 (LOW-MEDIUM).** `docs/model-selection.md:111` — a **shipped** doc — cited
+  `specs/model-effort-change-prompt.md` and `specs/model-effort-switch-done-confirmation.md`, but
+  `propagate-to-public/SKILL.md:43` lists `specs/**` as never propagated, so those were dangling
+  pointers in the public repo (INV-003). Reworded to describe the provenance without citing a path a
+  reader of that copy cannot open. A scan of every shipped file against the full exclusion list found
+  this as the only real hit; the other seven were the bootcamper project's own `src/resources/`,
+  Senzing install paths under `/opt/senzing/er/resources/`, and a `DATABASE_MIGRATION.md` substring.
+- **Finding 7 (LOW).** Executed `write-gate.py` against 14 cases. Correct on 12; two Windows gaps
+  under INV-001: `C:\Windows\Temp` (the SYSTEM account's temp, the Windows counterpart of `/tmp`)
+  was not blocked, and the gate consulted `$TMPDIR` for macOS's per-user temp but never `%TEMP%` /
+  `%TMP%`, so a relocated Windows temp was covered less well than a relocated macOS one. Added
+  `/windows/temp/` to `TEMP_SUBSTRINGS` and made the env-var check iterate `TMPDIR`, `TEMP`, `TMP`.
+  Re-verified: all four Windows shapes now block, a relocated `%TEMP%` blocks, POSIX/macOS unchanged,
+  in-project paths and a project living under a `tmp`-ish name still allowed;
+  `tests/test_write_gate.py` still passes.
+- **New test.** `tests/test_any_language_contract_complete.py` (11 tests) asserts, for ten
+  requirements an any-language builder must satisfy, that the build guidance states each **as
+  behaviour**; that no requirement is expressed only as a Python identifier (every
+  `_script_json`/`_esc_html`/`json.dumps` mention must sit in a passage labelling it the Python
+  reference); that the Python reference has not drifted from the contract it references; and that no
+  shipped file cites a never-propagated path. Against the pre-fix state it fails 7 assertions and
+  names exactly what a Java bootcamp would not have received.
+- **Verified clean this pass:** all six hooks executed (routing, silence, loop-safety, no crashes);
+  `INVARIANTS.md` internally consistent across 24 supersession claims; 296 plugin-internal file
+  references, none broken; no dead INV-050 tree entries (all three unwritten files already marked
+  `(reserved)`); module prerequisite chain sound, with no Required module depending on an Optional
+  one. Full suite 343 passed.
+- **Commit:** uncommitted
+
 ## skip-model-guidance-question
 
 - **Implemented:** 2026-07-26
