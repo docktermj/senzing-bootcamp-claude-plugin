@@ -234,5 +234,80 @@ class CheckModeContract(unittest.TestCase):
         self.assertFalse(pdf_exists)
 
 
+class UnfinalizedModuleIsReported(unittest.TestCase):
+    """A missed module-completion step 2d must not pass silently.
+
+    Step 2d appends the finalized `## {Name}` section and then removes the
+    durability hooks' folded `<!-- RECAP-CHECKPOINT -->` block. Skipping the
+    removal leaves two copies of the module, and the markers are HTML comments
+    that the renderers drop — so the keepsake PDF renders the module twice with
+    nothing on stderr to say why. Neither symptom blocks graduation (INV-110
+    keeps a recognisable recap renderable), but both must be *reported*.
+    """
+
+    def duplicated(self):
+        """GOOD_RECAP with its module section repeated."""
+        head, sep, body = GOOD_RECAP.partition("## Entity Resolution Concepts")
+        return head + sep + body + "\n" + sep + body
+
+    def with_marker_block(self):
+        head, sep, body = GOOD_RECAP.partition("## Entity Resolution Concepts")
+        return (
+            head
+            + "<!-- RECAP-CHECKPOINT:START -->\n\n"
+            + sep
+            + body
+            + "\n<!-- RECAP-CHECKPOINT:END -->\n"
+        )
+
+    def test_duplicate_section_fails_check(self):
+        code, _, stderr, _ = run(self.duplicated(), args=("--check",))
+        self.assertNotEqual(code, 0, "a duplicated module section must fail --check")
+        self.assertIn("more than one recap section", stderr)
+
+    def test_duplicate_section_still_renders_but_warns(self):
+        """Non-blocking: graduation still gets its PDF (INV-048/INV-110)."""
+        code, stdout, stderr, pdf_exists = run(self.duplicated())
+        self.assertEqual(code, 0, stderr)
+        self.assertIn(SUCCESS_LINE, stdout)
+        self.assertTrue(pdf_exists)
+        self.assertIn("more than one recap section", stderr)
+
+    def test_stray_checkpoint_block_fails_check(self):
+        code, _, stderr, _ = run(self.with_marker_block(), args=("--check",))
+        self.assertNotEqual(code, 0, "a surviving checkpoint block must fail --check")
+        self.assertIn("RECAP-CHECKPOINT", stderr)
+
+    def test_stray_checkpoint_block_still_renders_but_warns(self):
+        code, stdout, stderr, pdf_exists = run(self.with_marker_block())
+        self.assertEqual(code, 0, stderr)
+        self.assertIn(SUCCESS_LINE, stdout)
+        self.assertTrue(pdf_exists)
+        self.assertIn("RECAP-CHECKPOINT", stderr)
+
+    def test_markers_match_the_hook_that_writes_them(self):
+        """The renderer's fence constants must equal recap_checkpoint.py's."""
+        import re
+
+        def constants(path):
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            return set(re.findall(r'"(<!-- RECAP-CHECKPOINT:(?:START|END) -->)"', text))
+
+        hook = os.path.join(PLUGIN, "scripts", "recap_checkpoint.py")
+        self.assertEqual(
+            constants(hook),
+            constants(SCRIPT),
+            "the fold hook and the renderer disagree on the checkpoint markers, "
+            "so the renderer would stop detecting unfinalized modules",
+        )
+
+    def test_clean_recap_reports_neither(self):
+        code, _, stderr, _ = run(GOOD_RECAP, args=("--check",))
+        self.assertEqual(code, 0, stderr)
+        self.assertNotIn("more than one recap section", stderr)
+        self.assertNotIn("RECAP-CHECKPOINT", stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

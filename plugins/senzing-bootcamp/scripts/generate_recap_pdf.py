@@ -95,6 +95,12 @@ REQUIRED_SECTIONS = [
 # substitution must never be silent.
 CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
 
+# Fence markers the durability hooks (INV-059) wrap their folded checkpoint in.
+# They must match `scripts/recap_checkpoint.py`; a block still present at render
+# time means a module was never finalized (module-completion step 2d).
+RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
+RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
+
 # Minimum share of the input's content-bearing characters that must survive into
 # the parsed recap. Below this the input is treated as "not a recap" rather than
 # "an imperfect recap" and no PDF is written (see the module docstring).
@@ -294,6 +300,27 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
         if missing:
             label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+
+    # A module appearing twice renders twice in the keepsake PDF. The usual cause
+    # is a missed module-completion step 2d: the finalized '## {Name}' section was
+    # appended while the durability hooks' folded checkpoint block — which carries
+    # its own copy of that section — was left in place. INV-085 gives each
+    # completed module *its own* section, singular.
+    seen: set = set()
+    reported: set = set()
+    for mod in recap.modules:
+        key = (mod.title or "").strip().lower()
+        if not key:
+            continue
+        if key in seen and key not in reported:
+            reported.add(key)
+            problems.append(
+                f"module '{mod.title}' has more than one recap section — it will "
+                "render twice; keep the finalized section and remove the leftover "
+                "RECAP-CHECKPOINT block (module-completion step 2d)"
+            )
+        seen.add(key)
+
     if expected_titles:
         present = {(m.title or "").strip().lower() for m in recap.modules}
         for title in expected_titles:
@@ -378,6 +405,20 @@ def audit_recap(
     their headings and discards their bodies).
     """
     warnings = verify_recap(recap, expected_titles)
+
+    # A surviving checkpoint block means a module was never finalized: the
+    # durability hooks (INV-059) fence their fold in these markers, and
+    # module-completion step 2d removes the block once the finalized section is
+    # appended. The markers themselves are HTML comments, so the renderers drop
+    # them silently — which is exactly why their presence has to be reported here
+    # rather than left to be noticed in the PDF.
+    if RECAP_CHECKPOINT_START in source_text or RECAP_CHECKPOINT_END in source_text:
+        warnings.append(
+            f"recap still contains a {RECAP_CHECKPOINT_START} … "
+            f"{RECAP_CHECKPOINT_END} block — a module was folded by the "
+            "durability hooks but never finalized (module-completion step 2d)"
+        )
+
     source_chars = _source_content_chars(source_text)
     rendered_chars = _rendered_content_chars(recap)
     retention = (rendered_chars / source_chars) if source_chars > 0 else 0.0
