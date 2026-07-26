@@ -261,6 +261,14 @@ never count against the one-question-per-turn rule and must not be treated as ga
   one, and do not advance.
 - **Ask-once:** ask each question only once. Do not re-ask a question the bootcamper already
   answered unless they request the repeat.
+  - **A pending, *unanswered* question is different — re-present it verbatim.** After any
+    interruption that left a 👉 question hanging — a compaction, a session boundary, the feedback
+    detour, or the bootcamper going off on a tangent and coming back — re-present that exact
+    question rather than skipping it or inventing a new one. This is **not** a re-ask: ask-once
+    protects the bootcamper from answering the same thing twice, and an unanswered question has no
+    answer to protect. Skipping it is the real violation, because it advances on an answer nobody
+    gave (INV-007). `feedback.md` Step 4 mandates this for the feedback detour specifically; the
+    same rule applies to every other interruption.
 
 ## Module start banners and transitions
 

@@ -249,12 +249,24 @@ questions.
   languages on that platform.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned options as a **numbered list**, annotating each option with its install path for the detected
-  platform so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
-  "Python — runs via Docker (the SDK is Linux-only); Java / C# — native." Use the Module 2 routing
-  rules (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") as the source of the per-platform
-  paths. If the MCP server flags a language as discouraged/unsupported on the platform, relay that
-  and suggest alternatives.
+- Present the MCP-returned options as a **numbered list**. Annotate an option **only where the
+  Module 2 routing rules actually distinguish it** — that is, where the platform forces a language
+  into a container — so the trade-off is visible at the decision point:
+  - **macOS Apple Silicon:** "Python — runs via Docker (the SDK is Linux-only); Java / C# —
+    native." (routing rules 1 and 3)
+  - **macOS Intel:** every language runs via Docker; there is no native Intel-Mac install. (rule 2)
+  - **Windows:** Python runs via Docker; other languages need Scoop, else Docker. (rules 1 and 4)
+  - **Linux:** the rules distinguish nothing per language — all supported languages install
+    natively via the platform's package manager (rule 5). Say that once rather than annotating
+    each option with the same thing, and do **not** invent per-language install detail to fill the
+    space.
+
+  ⛔ **Do not manufacture an annotation the routing rules do not support.** Those rules
+  (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") resolve a *platform*, not per-language
+  install mechanics, so on Linux there is genuinely nothing to differentiate. Precise install
+  commands come from `sdk_guide(topic='install', platform=…, language=…)` in Module 2, at the point
+  they are needed — not from memory here (INV-080). If the MCP server flags a language as
+  discouraged or unsupported on the platform, relay that and suggest alternatives.
 
   👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 

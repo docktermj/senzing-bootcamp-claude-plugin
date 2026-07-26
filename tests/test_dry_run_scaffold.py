@@ -113,6 +113,47 @@ class TestScaffoldReachesTheClipPath(unittest.TestCase):
         )
 
 
+class TestSeededModeExercisesTheHonorPath(unittest.TestCase):
+    """A walk where everything was asked only tests the rule's inert direction."""
+
+    def setUp(self):
+        self.scaffold = load(SCAFFOLD, "_dryrun_scaffold_seed")
+
+    def test_it_seeds_every_honorable_preference(self):
+        seeded = self.scaffold.SEEDED_PREFERENCES
+        for key in ("path:", "verbosity:", "programming_language:"):
+            with self.subTest(key=key):
+                self.assertIn(key, seeded)
+
+    def test_it_does_not_seed_the_retired_preference(self):
+        self.assertNotIn(
+            "model_guidance",
+            self.scaffold.SEEDED_PREFERENCES,
+            "model_guidance was retired by INV-137; seeding it would test a path that "
+            "no longer exists",
+        )
+
+    def test_the_seeded_verbosity_is_the_one_with_a_visible_effect(self):
+        """`minimal` suppresses output, so honouring it wrongly is obvious in a walk."""
+        self.assertIn("preset: minimal", self.scaffold.SEEDED_PREFERENCES)
+
+    def test_the_phase_three_doc_prescribes_the_seeded_walk(self):
+        doc = (SKILL.parent / "phase3-conversational.md").read_text(encoding="utf-8")
+        self.assertIn("--seeded", doc)
+        self.assertRegex(
+            doc,
+            r"inert direction",
+            "the doc should say why one walk is not enough, not merely offer a flag",
+        )
+
+    def test_the_doc_lists_what_the_walk_cannot_test(self):
+        doc = (SKILL.parent / "phase3-conversational.md").read_text(encoding="utf-8")
+        self.assertRegex(doc, r"cannot test")
+        for gap in ("write noise", "hooks do not fire", "own compliance"):
+            with self.subTest(gap=gap):
+                self.assertRegex(doc, gap.replace(" ", r"\s+"), f"missing: {gap}")
+
+
 class TestScaffoldGuardrails(unittest.TestCase):
     """It must refuse to build somewhere that would damage the repo."""
 

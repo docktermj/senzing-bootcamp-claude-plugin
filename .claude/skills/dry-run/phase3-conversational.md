@@ -29,6 +29,21 @@ this phase tests the fresh-start path:
 python3 .claude/skills/dry-run/scaffold_project.py "$HOME/senzing-bootcamp-phase3" --fresh
 ```
 
+**Then do a second, short walk with `--seeded`.** It pre-fills exactly the preferences
+INV-133 makes honorable (`path`, `verbosity: minimal`, `programming_language: Java`), so
+Bootcamp preparation must **skip** Steps 1, 3 and 4 and mark each line
+"from your saved preferences" in its Step 7 recap:
+
+```bash
+python3 .claude/skills/dry-run/scaffold_project.py "$HOME/senzing-bootcamp-phase3" --seeded
+```
+
+Both directions are needed and the first run only proves one of them. A walk where
+everything was asked exercises the honor path **only in its inert direction** — it shows
+the rule does not fire when it shouldn't, and says nothing about whether it fires when it
+should. The seeded walk is short: preparation should ask nothing at all and hand straight
+off, which is also the fastest way to catch a step that asks anyway.
+
 Run only as far as the SDK is not required. **Onboarding preface → Bootcamp
 preparation → Module 0 → Module 1** needs MCP access and nothing else, and it covers
 the densest concentration of interaction invariants in the plugin. Going further
@@ -89,6 +104,30 @@ bare "Got it", but the answer to "any questions before we get started?" is often
 
 These are worth reporting even at low severity, because an instruction that cannot be
 followed trains the model to treat the surrounding instructions as advisory.
+
+## What this walk cannot test — say so rather than implying coverage
+
+The walk is an assistant following the skill files in a normal session, which leaves real
+gaps. Name them in the report; a phase-3 run that lists findings without listing these
+reads as broader coverage than it had.
+
+- **Administrative write noise.** INV-012 wants config writes unnarrated, and
+  `hooks/README.md` records that no harness mechanism suppresses Write/Edit diffs — so the
+  plugin minimises write *frequency* instead (INV-058's single consolidated write). During
+  a walk you will likely write config with `Bash`, which renders as tool output rather than
+  an inline diff, so **the walk cannot tell you whether the noise INV-058 exists to reduce
+  is actually reduced**. What it *can* check is the count: one write per file at Bootcamp
+  preparation, not one per gate.
+- **The hooks do not fire.** They are installed globally with the plugin, not by running
+  these files, so `SessionStart` / `Stop` / `UserPromptSubmit` stay silent in a walk. In
+  particular the `Stop` hook's closing-question safety net is untested here — phase 2
+  executes all six directly instead.
+- **Anything past the SDK.** The walk stops where a real Senzing install is needed, so the
+  loads, the live visualisation server, and graduation's deliverables are out of reach.
+- **The assistant's own compliance is not evidence.** A walk shows that following the files
+  *can* produce correct behaviour. It cannot show that a different assistant, or the same
+  one without a maintainer watching, would land the same way. Findings are trustworthy;
+  clean stretches are weaker evidence than they feel.
 
 ## Stopping
 

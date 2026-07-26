@@ -12,6 +12,7 @@ this never ships to bootcampers.
 Usage:
     python3 scaffold_project.py ~/senzing-bootcamp-dryrun
     python3 scaffold_project.py ~/senzing-bootcamp-phase3 --fresh
+    python3 scaffold_project.py ~/senzing-bootcamp-phase3 --seeded
     python3 scaffold_project.py --explain
 """
 import argparse
@@ -94,6 +95,28 @@ arch: x86_64
 git_init: true
 verbosity:
   preset: standard
+"""
+
+# Pre-seeds exactly the preferences INV-133 makes honorable, so a phase-3 walk can
+# exercise the honor-don't-ask path: Steps 1, 3 and 4 must all be skipped and the Step 7
+# recap must mark each as "from your saved preferences". Deliberately NOT a full mid-run
+# state -- progress stays empty so onboarding still runs from the top.
+SEEDED_PREFERENCES = """path: core
+selected_modules:
+  - bootcamp_preparation
+  - entity_resolution_concepts
+  - business_problem
+  - sdk_setup
+  - system_verification
+  - truthset_visualization
+  - data_collection
+  - data_quality_mapping
+  - data_processing
+  - query_visualize_discover
+  - graduation
+verbosity:
+  preset: minimal
+programming_language: Java
 """
 
 RECAP = f"""# Senzing Bootcamp Recap
@@ -233,7 +256,7 @@ def explain():
     )
 
 
-def build(root: Path, fresh: bool) -> None:
+def build(root: Path, fresh: bool, seeded: bool = False) -> None:
     if root.exists():
         shutil.rmtree(root)
     for d in DIRS:
@@ -243,11 +266,14 @@ def build(root: Path, fresh: bool) -> None:
         json.dumps({"PIPELINE": {}}, indent=2) + "\n", encoding="utf-8"
     )
 
-    if fresh:
-        # The fresh-start path: hooks must see no active bootcamp, and Bootcamp
-        # preparation must ask its questions rather than honor saved answers.
+    if fresh or seeded:
+        # The fresh-start path: hooks must see no active bootcamp, and onboarding runs
+        # from the top. With --seeded, preferences are pre-filled so Bootcamp preparation
+        # must HONOR them instead of asking (INV-133) -- the opposite direction to --fresh.
         (root / "config/bootcamp_progress.json").write_text("{}\n", encoding="utf-8")
-        (root / "config/bootcamp_preferences.yaml").write_text("", encoding="utf-8")
+        (root / "config/bootcamp_preferences.yaml").write_text(
+            SEEDED_PREFERENCES if seeded else "", encoding="utf-8"
+        )
     else:
         (root / "config/bootcamp_progress.json").write_text(
             json.dumps(PROGRESS, indent=2) + "\n", encoding="utf-8"
@@ -269,7 +295,12 @@ def build(root: Path, fresh: bool) -> None:
         FEEDBACK, encoding="utf-8"
     )
 
-    mode = "fresh (phase 3: onboarding from zero)" if fresh else "mid-bootcamp (phase 2)"
+    if seeded:
+        mode = "seeded (phase 3: honor-don't-ask path, INV-133)"
+    elif fresh:
+        mode = "fresh (phase 3: onboarding from zero)"
+    else:
+        mode = "mid-bootcamp (phase 2)"
     print(f"Built {mode} project at {root}\n")
     explain()
     print(
@@ -288,6 +319,11 @@ def main() -> int:
         "--fresh",
         action="store_true",
         help="empty config for the phase-3 onboarding path (no saved state)",
+    )
+    ap.add_argument(
+        "--seeded",
+        action="store_true",
+        help="pre-seed the honorable preferences so the honor-don't-ask path is exercised",
     )
     ap.add_argument(
         "--explain",
@@ -319,7 +355,7 @@ def main() -> int:
         )
         return 2
 
-    build(root, args.fresh)
+    build(root, args.fresh, args.seeded)
     return 0
 
 

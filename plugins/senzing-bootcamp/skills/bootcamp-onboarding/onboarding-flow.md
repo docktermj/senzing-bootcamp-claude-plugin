@@ -96,8 +96,15 @@ then display the WELCOME banner:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Then show the plugin version as a one-line statement (verbosity-aware — suppress under the
-`minimal` preset, one line otherwise, INV-011/INV-012): `Senzing Bootcamp vX.Y.Z`.
+Then show the plugin version as a one-line statement (INV-105): `Senzing Bootcamp vX.Y.Z`.
+
+**Verbosity applies here only if a preset already exists.** Read `verbosity` from
+`config/bootcamp_preferences.yaml`: when it is `minimal`, suppress this line; otherwise show it.
+⛔ On a **fresh** bootcamp there is no preset yet — verbosity is chosen in Bootcamp preparation
+(INV-075 moved it out of the preface, superseding INV-024), and step 4 below writes no preferences —
+so the line is simply shown, and that is correct rather than an oversight. The suppression path is
+reachable only on a resumed run, or when the bootcamper pre-seeded the file (INV-133). Do not stall
+trying to honor a preference that cannot exist yet, and do not ask for verbosity here.
 
 Then give the overview (cover naturally, do not ask a question yet):
 

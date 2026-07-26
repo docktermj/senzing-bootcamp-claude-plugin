@@ -18,6 +18,56 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## close-dry-run-open-items
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `specs/INVARIANTS.md`, `.claude/skills/dry-run/scaffold_project.py`, `.claude/skills/dry-run/phase3-conversational.md`, `tests/test_saved_preferences_honored.py`, `tests/test_dry_run_scaffold.py`
+- **Not a spec** — the five items left open when the dry run was stopped. **Establishes no new
+  invariant**; INV-105 is clarified in place and the rest tighten existing rules or the maintainer
+  skill.
+- **The preface's verbosity-awareness could not fire on a fresh run.** `onboarding-flow.md` said to
+  show the version line "verbosity-aware — suppress under the `minimal` preset", and INV-105 requires
+  it, but INV-075 moved the verbosity question into Bootcamp preparation, which runs *after* the
+  preface — and the preface writes no preferences. So on a first run the suppression condition was
+  unreachable while reading as always-applicable: the same unsatisfiable-instruction class as the
+  acknowledgment rule, and corrosive for the same reason. The preface now states that a fresh run has
+  no preset and the line is simply shown, that the suppression path is reachable only on a resumed or
+  pre-seeded run, and — guarded by a test — that the fix must **not** drift into asking for verbosity
+  in the preface. INV-105 carries a dated clarification so the ordering is not rediscovered.
+  **Worth noting why the mechanised guards missed it:** the symptom is a semantic dependency, an
+  instruction outliving the ordering it assumed, not stale vocabulary or a broken reference. That is
+  a real limit of the drift guards and an argument for keeping the human walk in the rotation.
+- **Ask-once did not cover an unanswered question.** `ground-rules.md` forbade re-asking a question
+  the bootcamper "already answered", which left every interruption that stranded a *pending* question
+  uncovered — a compaction, a session boundary, or a maintainer tangent. `feedback.md` Step 4
+  mandates re-presenting it verbatim, but only for the feedback detour. The general rule now covers
+  it, with the reasoning stated: ask-once protects the bootcamper from answering twice, an unanswered
+  question has no answer to protect, and **skipping it is the real violation** because it advances on
+  an answer nobody gave (INV-007).
+- **Step 4's language annotations implied precision their cited source lacks.** It said to annotate
+  each language with its install path "using the Module 2 routing rules as the source", but those
+  rules resolve a *platform*, not per-language install mechanics — so on Linux they distinguish
+  nothing and the instruction invited invention. Now enumerated per platform (the macOS/Windows cases
+  the rules genuinely produce), with Linux stated explicitly as "nothing to differentiate — say it
+  once", a ⛔ against manufacturing an annotation, and a pointer to `sdk_guide(topic='install')` in
+  Module 2 for real install detail. **Prose-only: verified by inspection, no test** — the honest
+  reason being that asserting "these annotations are sourced" is not something a string match can do.
+- **The honor-don't-ask path had only ever been exercised inert.** Every preference was asked in the
+  walk, so Step 0 was proven not to fire when it shouldn't and nothing more. Added `--seeded` to the
+  scaffold, pre-filling exactly the three honorable preferences (with `verbosity: minimal`, chosen
+  because honouring it wrongly is immediately visible), and `phase3-conversational.md` now prescribes
+  a second short walk with it, saying why one walk is insufficient.
+- **The walk's blind spots are now written down** in a "What this walk cannot test" section:
+  administrative write noise (a walk writes config via Bash, so it sees tool output rather than an
+  inline diff and cannot judge whether INV-058's noise reduction works — only the write *count*), the
+  hooks not firing, anything past the SDK, and the sharpest one — **the assistant's own compliance is
+  not evidence**, so findings are trustworthy while clean stretches are weaker than they feel.
+- **Six negative controls**, all confirmed: hiding the fresh-run ordering, drifting into asking for
+  verbosity, deleting the unanswered-question rule, un-seeding a preference, and dropping either the
+  why-two-walks rationale or the coverage-limits section.
+- **Test suite:** 427 -> 437 passing.
+- **Commit:** uncommitted
+
 ## retire-model-guidance-modes
 
 - **Implemented:** 2026-07-26

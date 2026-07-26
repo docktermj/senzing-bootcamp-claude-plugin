@@ -147,6 +147,62 @@ class TestEveryAskedPreferenceIsCovered(unittest.TestCase):
                 )
 
 
+class TestPrefaceVerbosityIsHonestAboutOrdering(unittest.TestCase):
+    """INV-105 asks for a verbosity-aware version line; INV-075 moved verbosity later.
+
+    The preface shows the version before Bootcamp preparation captures `verbosity`, so on a
+    fresh run the suppression condition is unreachable. The instruction used to read as
+    always-applicable, which is the kind of unsatisfiable rule that teaches a reader to
+    treat the surrounding ones as advisory. It must now say which runs it applies to.
+    """
+
+    def step_three(self):
+        return step_body(ONBOARDING.read_text(encoding="utf-8"), "## 3.")
+
+    def test_the_version_line_is_still_required(self):
+        self.assertIn("Senzing Bootcamp v", self.step_three(), "INV-105's version line")
+
+    def test_it_states_that_a_fresh_run_has_no_preset(self):
+        body = self.step_three()
+        self.assertRegex(
+            body,
+            r"fresh\*\* bootcamp there is no preset yet|no preset yet",
+            "the preface must say the suppression path is unreachable on a fresh run, "
+            "rather than implying verbosity is always available (INV-105/INV-075)",
+        )
+
+    def test_it_does_not_ask_for_verbosity_in_the_preface(self):
+        self.assertRegex(
+            self.step_three(),
+            r"do not ask for verbosity here|not ask.{0,30}verbosity",
+            "the fix must not become 'ask for verbosity in the preface' — INV-075 put "
+            "that question in Bootcamp preparation",
+        )
+
+
+class TestPendingQuestionsAreRePresented(unittest.TestCase):
+    """Ask-once protects answered questions; an unanswered one must come back."""
+
+    GROUND_RULES = (
+        REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "bootcamp-onboarding"
+        / "ground-rules.md"
+    )
+
+    def test_ground_rules_covers_the_unanswered_case(self):
+        text = self.GROUND_RULES.read_text(encoding="utf-8")
+        self.assertRegex(
+            text,
+            r"pending, \*unanswered\* question is different|re-present it verbatim",
+            "ground-rules' ask-once rule must state that an unanswered pending question "
+            "is re-presented after an interruption — feedback.md mandates it for the "
+            "feedback detour only, leaving every other interruption uncovered",
+        )
+
+    def test_it_names_skipping_as_the_real_violation(self):
+        text = self.GROUND_RULES.read_text(encoding="utf-8")
+        self.assertIn("INV-007", text.split("Ask-once")[1][:1200])
+
+
 class TestHealthProbeIsCheap(unittest.TestCase):
     """The preface should make one MCP call, not two, and not a heavyweight one."""
 
