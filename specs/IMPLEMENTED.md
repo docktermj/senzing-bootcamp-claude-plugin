@@ -18,6 +18,50 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## invariant-drift-guards
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `tests/test_retired_vocabulary.py`, `tests/test_spec_ledger_invariants.py`, `tests/test_deferral_freshness.py`, `tests/test_canonical_module_names.py`, `tests/test_graduation_ending_surfaces.py`, `tests/test_markdown_hygiene.py` (all new), `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
+- **Not a spec** — maintainer-requested follow-up to `deep-dive-audit-2026-07-26`. **These guards
+  establish no new invariant**; they mechanise enforcement of invariants that already exist
+  (INV-003, INV-004, INV-057, INV-076, INV-079, INV-084, INV-085, INV-103, INV-104, and the
+  INVARIANTS.md maintenance rules).
+- **Why.** Fourteen of that audit's seventeen findings were one defect class: an invariant
+  supersedes another, the new behaviour ships, and prose elsewhere keeps describing the retired
+  model. Three audits found it; the worst instance survived eight days and two of them. Re-reading
+  finds those one at a time — with 134 invariants and ~24 supersession chains, the class regenerates
+  faster than audits retire it. Six checks, stdlib-only, in the repo-level `tests/` per INV-108.
+- **The six.** (1) **Retired vocabulary** — a registry of eight retired terms; each may appear only
+  on a line that frames it as retired, which keeps honest back-compat notes ("older sessions may
+  store this as `track`") and fails bare ones. (2) **Spec-ledger accounting** — a post-cutoff
+  IMPLEMENTED entry must be cited as a `Source:`, name the invariant it established, or say it
+  established none; plus the reverse direction, that no invariant cites a spec which does not exist.
+  (3) **Deferral freshness** — the *inverse* check: a "later porting phase" note is
+  self-invalidating evidence, so any path it names must NOT resolve, and no note may call a module
+  unported when its skill directory ships. (4) **Canonical module names** — parsed from Bootcamp
+  preparation's module table (already self-declared as source of truth) rather than hardcoded, so a
+  rename is a one-place edit; bans seven off-canon variants and asserts the public README omits no
+  module. (5) **Graduation ending surfaces** — both surfaces that describe the ending must name the
+  terminal banner, condition it on a decline, and place it after the closing question; plus the
+  graduation offer must be worded identically across the two files that present it, which
+  `module-completion.md` demands and nothing enforced. (6) **Markdown hygiene** — no
+  space-before-comma, no trailing whitespace.
+- **Two findings the guards surfaced immediately,** which the audit's own reading had missed:
+  modules 2 and 4 titled themselves "SDK Installation and Configuration" and "Identify and Collect
+  Data Sources" in their frontmatter and H1 — the text the agent reads immediately before announcing
+  the module, so the off-canon name was one step from the banner and every transition question
+  (INV-079). Retitled to **SDK setup** and **Data collection** with the descriptive phrase kept as
+  subtitle prose. Case-only H1 styling ("System Verification") is deliberately out of scope and
+  documented as such.
+- **Every guard is negative-controlled.** Each defect was reintroduced and the guard confirmed to
+  fail, then reverted — seven controls across the six files (canonical names has two arms). This is
+  the discipline finding 17 of the prior audit was about: a guard whose docstring claims more than
+  its assertion checks is worse than none, because it certifies what it never tested. Four of the
+  six also carry a vacuity assertion (a glob or regex that stopped matching would otherwise pass
+  silently), and three carry a self-check pinning the literal string that shipped.
+- **Test suite:** 373 -> 399 passing.
+- **Commit:** uncommitted
+
 ## deep-dive-audit-2026-07-26
 
 - **Implemented:** 2026-07-26

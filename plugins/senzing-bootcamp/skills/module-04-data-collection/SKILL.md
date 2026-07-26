@@ -1,9 +1,14 @@
 ---
 name: module-04-data-collection
-description: "Bootcamp Module 4: Identify and Collect Data Sources. Use when the bootcamper starts or resumes Module 4, or needs to gather source data into data/raw/."
+description: "Bootcamp Module 4: Data collection (identifying and collecting data sources). Use when the bootcamper starts or resumes Module 4, or needs to gather source data into data/raw/."
 ---
 
-# Module 4: Identify and Collect Data Sources
+# Module 4: Data collection
+
+The Bootcamper-facing name of this module is **Data collection** — the spelling in
+`../bootcamp-preparation/SKILL.md`'s module table. Use it in the module-start banner, the
+journey map, and every transition question (INV-079); "identifying and collecting data
+sources" describes what the module does but is not its name.
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —

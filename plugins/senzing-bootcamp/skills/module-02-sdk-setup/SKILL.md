@@ -1,9 +1,14 @@
 ---
 name: module-02-sdk-setup
-description: 'Bootcamp Module 2: SDK Installation and Configuration. Use when the bootcamper starts or resumes Module 2, or needs to install/configure the Senzing SDK, set up the database, or run the verification test.'
+description: 'Bootcamp Module 2: SDK setup (installing and configuring the Senzing SDK). Use when the bootcamper starts or resumes Module 2, or needs to install/configure the Senzing SDK, set up the database, or run the verification test.'
 ---
 
-# Module 2: SDK Installation and Configuration
+# Module 2: SDK setup
+
+The Bootcamper-facing name of this module is **SDK setup** — the spelling in
+`../bootcamp-preparation/SKILL.md`'s module table. Use it in the module-start banner, the
+journey map, and every transition question (INV-079); "installing and configuring the SDK"
+describes what the module does but is not its name.
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
