@@ -86,9 +86,9 @@ tell me now and I'll build the threaded version instead."
 licensing as a default the bootcamper already has, never as a hard cap:
 
 - Frame the built-in evaluation license as the default they already have. Present the expansion
-  paths, apply an existing license, request one through the external channel
-  (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server
- , before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
+  paths — apply an existing license, request one through the external channel
+  (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server —
+  before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
   among these, not the only path.
 - Source the record capacity and validity period from a Senzing MCP tool this session and
   present exactly what it returns. If a value is unavailable or the MCP server can't be reached,

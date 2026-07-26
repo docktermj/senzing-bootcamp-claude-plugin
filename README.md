@@ -10,15 +10,16 @@ a hands-on, module-by-module tutorial.
 A guided sequence of hands-on modules takes you from zero
 to working entity resolution:
 
-- Entity Resolution Concepts primer *(optional)*
+- Bootcamp preparation — choose Core (every module) or Customized, your level of detail, and your programming language
+- Entity Resolution Concepts — a primer on how entity resolution works *(optional)*
 - Discover the Business Problem
-- SDK Installation and Configuration
-- System Verification
-- An interactive web app of the resolved Truth Set data. *(optional)*
-- Identify and Collect Data Sources
+- SDK setup — install and configure the Senzing SDK
+- System verification — end-to-end checks that Senzing works on your machine *(optional)*
+- Truth Set visualization — an interactive web app of the resolved Truth Set data *(optional)*
+- Data collection — identify and collect your data sources
 - Data Quality, Mapping, and Transformation
-- Data Processing
-- Query, Visualize, and Discover
+- Data processing
+- Query, Visualize and Discover
 - Graduation
 
 You finish with working Senzing code and data in your project, a professional
@@ -32,6 +33,13 @@ recap PDF you can keep and share, and a production starter. See
   It generates SDK code,
   looks up Senzing facts,
   and provides working examples.
+
+## Install and start
+
+Two ways to run the bootcamp — pick either:
+
+- **Claude app** (desktop) — the step-by-step walkthrough below.
+- **Claude Code** (command line) — see [Using Claude Code].
 
 ### Using Claude app
 
@@ -92,5 +100,6 @@ the issue may be with an incomplete installation of Claude Desktop.
 
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude app]: https://claude.ai/download
+[Using Claude Code]: docs/README.md#using-claude-code
 [Senzing MCP server]: https://mcp.senzing.com/mcp
 [Senzing]: https://senzing.com

@@ -16,8 +16,14 @@ Two traps are pinned here:
    ``docs/examples/bootcamp_recap.example.truthset.png`` — a path relative to a
    bootcamp *project root*. The renderer resolves image paths against the current
    working directory, and INV-048 has it silently skip missing images, so
-   regenerating from the repo root produces a valid PDF that quietly loses the
-   screenshot (~105KB, 0 images) instead of the correct one (~122KB, 3 images).
+   regenerating from anywhere else produces a valid PDF that quietly loses the
+   screenshot (~106KB, 2 image objects) instead of the correct one (~123KB, 3).
+
+   The cover logo is resolved relative to the *script*, not the cwd, so it always
+   embeds — which is why "any image at all" does not detect this. Measured
+   2026-07-26: correct render 3 image objects; regenerating from either the repo
+   root or ``docs/examples/`` yields 2 (the logo plus its soft mask) with the
+   screenshot gone. An earlier ``> 0`` assertion here passed on both bad renders.
 
    Regenerate from ``plugins/senzing-bootcamp/``:
 
@@ -113,16 +119,41 @@ class TestExampleAssetsExist(unittest.TestCase):
 class TestPdfEmbedsTheScreenshot(unittest.TestCase):
     """Guards against regenerating from the wrong working directory."""
 
+    # The cover logo (+ its soft mask) always embeds, because it resolves relative
+    # to the script rather than the cwd. Only the third object is the screenshot,
+    # so the screenshot's presence is what must be asserted — not "any image".
+    MIN_IMAGE_OBJECTS = 3
+
+    WRONG_DIR_HINT = (
+        "It was probably regenerated from the wrong working directory: the "
+        "example's image path resolves only from plugins/senzing-bootcamp/, and "
+        "INV-048 silently skips missing images. See this module's docstring for "
+        "the correct command."
+    )
+
     def test_screenshot_is_embedded(self):
         raw = pdf_bytes()
         images = raw.count(b"/Subtype /Image") + raw.count(b"/Subtype/Image")
-        self.assertGreater(
+        self.assertGreaterEqual(
             images,
-            0,
-            "The example PDF embeds no images. It was probably regenerated from "
-            "the repo root: the example's image path resolves only from "
-            "plugins/senzing-bootcamp/, and INV-048 silently skips missing "
-            "images. See this module's docstring for the correct command.",
+            self.MIN_IMAGE_OBJECTS,
+            f"The example PDF carries {images} image object(s), expected at least "
+            f"{self.MIN_IMAGE_OBJECTS} (cover logo, its soft mask, and the Truth "
+            f"Set screenshot). {self.WRONG_DIR_HINT}",
+        )
+
+    def test_screenshot_caption_is_rendered(self):
+        """The caption travels with the image, so its absence dates the loss.
+
+        Asserted separately from the object count: a future cover change could
+        alter how many image objects the logo contributes, but the caption is
+        rendered only when the screenshot itself resolved and embedded.
+        """
+        self.assertIn(
+            "159 records resolved into 84 entities",
+            normalize(pdf_text(EXAMPLE_PDF)),
+            "The Truth Set screenshot's caption is missing from the example PDF. "
+            + self.WRONG_DIR_HINT,
         )
 
     def test_markdown_references_the_screenshot(self):

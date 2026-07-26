@@ -107,9 +107,9 @@ something is broken. Tell the bootcamper: "Entity resolution found very few matc
 mean: (a) your records are genuinely distinct with no duplicates, (b) the matching criteria
 need adjustment, perhaps key fields weren't mapped or data quality is too low, or (c) you're
 working with a single source that has no internal duplicates. Let's investigate which one."
-Check: are name/address/phone fields populated? Were they mapped correctly during Data quality &
-mapping? Is the data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
-finding, document it.
+Check: are name/address/phone fields populated? Were they mapped correctly during Data Quality,
+Mapping, and Transformation? Is the data-quality score above 70%? If the data genuinely has no
+duplicates, that's a valid finding, document it.
 
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
 matching concepts introduced earlier in the bootcamp, a sentence or two each, not a full re-explanation:
@@ -179,8 +179,8 @@ If accepted:
    `quality_iteration` key.
 2. Set `current_module` to `data_quality_mapping` (Module 5's name token — `current_module` holds
    a name token, never a catalog number, per INV-086) and `current_step` to the Phase 2 start step.
-3. Load the Module 5 skill and begin at its Phase 2. (Module 5 port is a later phase; when it
-   lands, route to its Phase 2 entry point.)
+3. Load `../module-05-data-quality-mapping/phase2-data-mapping.md` and begin at its Phase 2
+   (step 8, "Start") for the source being refined.
 
 **Checkpoint:** write step 3b.
 
@@ -361,7 +361,7 @@ produce a near-empty PDF. It uses `fpdf2` when importable and a stdlib renderer 
 optional PDF dependency is required; and per INV-110 it refuses to write a PDF at all if the
 document would lose most of its content, rather than reporting success over an empty deliverable.
 
-⛔ **Verify the PDF carries the findings — a `PDF generated:` line is not verification** (INV-077).
+⛔ **Verify the PDF carries the findings — a `PDF generated:` line is not verification** (INV-129).
 Extract text from the written PDF and confirm real findings appear (fpdf2 compresses its content
 streams, so decompress before searching). If extraction shows an empty or near-empty document, say
 so and fix the Markdown rather than shipping it.

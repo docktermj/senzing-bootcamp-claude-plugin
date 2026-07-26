@@ -5,7 +5,7 @@
 **Completed:** 2026-07-16T18:00:00-07:00
 **Programming language:** Java
 **Path:** Core
-**Plugin version:** 0.3.6
+**Plugin version:** 0.4.0
 **Operating system:** macOS 14.5 (Apple Silicon)
 **Python version:** 3.12.3
 **Language runtime:** OpenJDK 21.0.2
@@ -120,7 +120,7 @@
 
 **Files produced:** database/G2C.db, config/engine_config.json, src/scripts/senzing-env.sh, src/scripts/senzing-env.bat, src/SetupVerify.java, licenses/g2.lic
 
-**Why it matters:** Every later module (loading data in Data processing, querying in Query/Visualize/Discover) depends on a working SDK, a configured database, and the registered default configuration set up here.
+**Why it matters:** Every later module — loading data in Data processing, querying in Query, Visualize and Discover — depends on a working SDK, a configured database, and the registered default configuration set up here.
 
 ---
 

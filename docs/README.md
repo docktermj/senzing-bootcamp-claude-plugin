@@ -36,7 +36,9 @@ and starting the Bootcamp.
 
 1. *Command line options:* run most of the bootcamp on **Sonnet 5** for
    the best value and switch up to **Opus 5** for the correctness-critical
-   stretches: Modules 2 and 5, and graduation.
+   stretches: **SDK setup**, **Data Quality, Mapping, and Transformation**,
+   and **Graduation**. The bootcamp surfaces the recommendation at the start of
+   each module, so you never have to remember which is which.
 
    For the smoothest ride, run Claude with `--permission-mode auto`.
 

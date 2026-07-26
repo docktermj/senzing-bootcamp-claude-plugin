@@ -109,7 +109,7 @@ always included) — present only the module **names** and their required/option
 render the internal "#" or "Maps to" columns (catalog numbers and skill-directory names are
 internal — INV-079/INV-012). Then end the turn on this single pinned 👉 question, verbatim (INV-056):
 
-> 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated (or reply none):**
+> 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated — reply "none" for just the required modules:**
 >
 > 1. **Entity Resolution Concepts** — a short primer on how entity resolution works.
 > 2. **System verification** — end-to-end checks that Senzing works on your machine.
@@ -117,8 +117,11 @@ internal — INV-079/INV-012). Then end the turn on this single pinned 👉 ques
 
 Apply the prerequisite rules when recording the selection:
 
-- All Required modules (Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, Data
-  quality & mapping, Data processing, Query/Visualize/Discover, Graduation) are always included.
+- All Required modules are always included. Name them exactly as the module table above spells them
+  — Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, **Data Quality,
+  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Graduation —
+  never an abbreviation, since these names are what the bootcamper reads here and in every later
+  journey map and transition question (INV-079).
 - If the bootcamper chooses **Truth Set visualization** (3) without **System verification** (2),
   tell them Truth Set visualization requires System verification, and include System verification
   too (do not silently drop the choice; state what you included and why).

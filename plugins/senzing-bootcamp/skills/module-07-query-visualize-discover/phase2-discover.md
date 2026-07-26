@@ -99,7 +99,7 @@ teaches the bootcamper how Senzing explains its resolution decisions.
    from two or more distinct data sources. Use the specific record IDs to call `why_records`,
    or the entity IDs to call `why_entities`. Prefer `why_records` for the initial demonstration
    because it compares two specific source records, which is easier to follow. State what you
-   are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] , 
+   are using: "I'll use Entity [ID], which contains records from [Source A] and [Source B] —
    let's see why Senzing decided these belong to the same real-world entity."
 2. **SDK method introduction:** before generating the SDK call, briefly explain the two Why
    Analysis methods:
@@ -124,7 +124,7 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      compared and which matched. "The NAME and ADDRESS features both matched between these
      records."
    - **Feature scores:** for each comparison, explain the numeric similarity score. "The name
-     comparison scored 95 out of 100, meaning the names are very similar but not identical , 
+     comparison scored 95 out of 100, meaning the names are very similar but not identical —
      because one record has 'Robert Smith' and the other has 'Bob Smith'." Explain the range
      (higher = more similar).
    - **Matching principle:** explain which principle applied to each comparison, exact match

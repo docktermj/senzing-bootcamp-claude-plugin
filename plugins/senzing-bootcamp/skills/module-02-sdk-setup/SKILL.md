@@ -204,7 +204,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 The Senzing SDK requires EULA acceptance before use. Tell the bootcamper they can review it at
 <https://senzing.com/end-user-license-agreement/>, then present the EULA question:
 
-👉 **Do you accept the Senzing End User License Agreement (EULA)? Respond yes or no.**
+👉 **Do you accept the Senzing End User License Agreement (EULA)?** (respond yes or no)
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*
@@ -427,18 +427,20 @@ re-ask (INV-006). Confirm any SDK facts against the Senzing MCP server rather th
 Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
 **not a question:**
 
-"Your Senzing SDK uses a **built-in evaluation license limited to 500 records** automatically when
-no custom license is present — no license file needed. That's enough for the demo modules that come
-next (System verification and Truth Set visualization), which run on small synthetic and Truth Set
-data. If your **own** data later exceeds the evaluation limit, we'll set up a Senzing License Key in
-the Data collection module, where your data volume is known. Nothing to do here."
+⛔ **Fill `{record limit}` below from the MCP server before presenting this — the figure is not
+written into this skill on purpose.** Call a Senzing MCP tool this session for the built-in
+evaluation license's record capacity and validity period, and present exactly what it returns
+(waiting up to 30 seconds). If the tool returns no value, drop the parenthetical entirely and say
+the current limit is unavailable from the MCP server. Never substitute a hardcoded or remembered
+figure — the published capacity has changed before, and a stale number here is a Senzing fact
+asserted from memory (INV-080), in the one place the bootcamper is most likely to plan against it.
 
-When presenting the evaluation license's record capacity or validity period, retrieve those values
-from a Senzing MCP server tool during this session and present exactly what the tool returns. The
-**500 records** figure is a published value that can change: confirm it against the Senzing MCP
-server rather than training data. Wait up to 30 seconds; if the tool does not return a value, omit
-the specific figure and tell the bootcamper the current value is unavailable from the MCP server.
-Never substitute a hardcoded or remembered figure.
+"Your Senzing SDK uses a **built-in evaluation license** automatically when no custom license is
+present (limited to {record limit} records) — no license file needed. That's enough for the demo
+modules that come next (System verification and Truth Set visualization), which run on small
+synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll set up a
+Senzing License Key in the Data collection module, where your data volume is known. Nothing to do
+here."
 
 > **Where the License Key is handled now:** the interactive License-Key setup (asking whether the
 > bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, requesting an

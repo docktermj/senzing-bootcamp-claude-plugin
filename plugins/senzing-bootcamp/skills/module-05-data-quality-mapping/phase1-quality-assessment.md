@@ -189,10 +189,16 @@ legitimate merges. Present the number as "the data is clean enough to map", neve
 will be correct" — semantic correctness is only established after loading, by the match-key audit
 in Data processing.
 
-If the profile that fed this score tripped the field-count sanity check in Phase 2 step 9 (dynamic
-keys inflating the field list), treat the score as provisional and re-compute it after
-pre-processing and re-profiling: a score averaged over hundreds of phantom fields is not
-meaningful.
+**If the field list itself looks implausible, this score is not yet meaningful.** The dynamic-key
+sanity check (>~100 fields or >50 distinct field patterns — INV-118) runs on the `mapping_workflow`
+profile in Phase 2 step 9, *after* this step, so on the first pass you will not have its verdict
+here. Two consequences:
+
+- **Now:** if the field list you compared against the Entity Specification in step 4 already looks
+  implausibly wide, say so, treat this score as provisional, and expect step 9 to confirm it.
+- **On return from Phase 2 step 9:** when that check trips, re-run this step after pre-processing
+  and re-profiling rather than keeping the first score — a score averaged over hundreds of phantom
+  fields is not meaningful, and it is this score that routes the gate below.
 
 Present the assessment clearly:
 
@@ -203,7 +209,7 @@ Source: CUSTOMERS_CRM
   Field completeness:  82%  (name: 99%, phone: 75%, email: 68%)
   Format consistency:  90%
   Duplicate rate:       3%
-  Overall quality:     78%  ✅ Ready for mapping
+  Overall quality:     78%  ⚠ Acceptable — some gaps (see below)
 
 Source: VENDORS_LEGACY
   Field completeness:  45%  (name: 90%, phone: 20%, email: 15%)
@@ -212,6 +218,11 @@ Source: VENDORS_LEGACY
   Overall quality:     42%  ⚠ Recommend fixing before mapping
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+⛔ **The status label MUST match the band above** — `✅` only at ≥80%, `⚠ Acceptable — some gaps`
+at 70-79%, `⚠ Recommend fixing before mapping` below 70%. Derive the label from the computed score
+rather than copying one from this example; a `✅` beside a 78% tells the bootcamper the gate said
+"proceed" when it is about to ask them to choose.
 
 > **Data source registry:** After computing the quality score, update the source's
 > `quality_score` field in `config/data_sources.yaml` and set `updated_at`. If the score is

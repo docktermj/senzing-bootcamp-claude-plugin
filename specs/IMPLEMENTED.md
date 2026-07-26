@@ -18,6 +18,62 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## deep-dive-audit-2026-07-26
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `specs/INVARIANTS.md`, `README.md`, `docs/README.md`, `.claude-plugin/marketplace.json`, `plugins/senzing-bootcamp/commands/graduate.md`, `plugins/senzing-bootcamp/hooks/README.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` + `.pdf`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/{SKILL.md,phase1-query-visualize.md,phase2-discover.md,phase2b-discover.md}`
+- **Not a spec** — a full-repo invariant-conformance and coherence audit the maintainer requested
+  directly. Recorded here so the work is traceable alongside the spec ledger. Every
+  mechanically-enforced invariant already held (372/372 tests green before and after); the 16
+  findings were coherence/staleness defects, one of them behavioral.
+- **Invariant established:** **INV-134** — the Bootcamper's `name` is detected silently in Bootcamp
+  preparation and never asked. The `bootcamp-prep-name-never-asked` spec was implemented and
+  ledgered but registered no invariant, so its guarantee had no ID; INV-113 and
+  `graduation/SKILL.md` had both been citing **INV-076** (the Core-vs-Customized path choice, which
+  says nothing about the name) as its authority. INV-113's parenthetical was corrected in place.
+- **Behavioral fix:** `module-07-query-visualize-discover/SKILL.md` still described the retired
+  A/B/C "track" model — "Paths B/C (shorter paths) may stop here … Preserve that gate exactly" —
+  which contradicted INV-076 (Graduation is Required in every path) and the same module's own
+  `phase1-query-visualize.md`. It could have let a bootcamper end before a mandatory module, an
+  unrequested skip (INV-014). Replaced with an explicit "graduation always follows" gate note.
+- **Other coherence fixes:** `commands/graduate.md` omitted INV-057's terminal
+  `END OF SENZING BOOTCAMP` banner and implied graduation ends on the closing question;
+  `phase1-query-visualize.md` claimed Module 5 was unported (it ships three phase files) and cited
+  INV-077 where INV-129 governs artifact verification; `hooks/README.md` credited the onboarding
+  preface with the consolidated setup write that INV-075 places in Bootcamp preparation; the root
+  `README.md` omitted Bootcamp preparation from the module list, used four off-canon module names,
+  and never linked the CLI install path in `docs/README.md`; Module 5's quality template showed
+  `78% ✅ Ready for mapping` against its own 70-79% warn band; Module 2 baked the evaluation
+  license's `500 records` into presented prose while the instruction below it said to source the
+  figure from MCP; four ` , ` artifacts from a botched em-dash pass sat in bootcamper-facing
+  dialogue; and the abbreviations "Data quality & mapping" / "Query/Visualize/Discover" were
+  replaced with canonical module names everywhere (INV-079).
+- **INV-050 clarified in place:** the layout tree now names three always-produced deliverables it
+  had omitted (`docs/bootcamp_data_discoveries.md`/`.pdf`, `docs/REVISIT_BOOTCAMP.md`) and no longer
+  annotates `backups/` as "reserved", since INV-094 requires the revisit bundle there. All three
+  already lived under enumerated directories, so this records what the layout already permitted.
+- **Model/effort table:** the per-stage Stage column now separates stages with **semicolons** in
+  both authoritative copies, because two canonical module names contain commas of their own — the
+  same pitfall graduation's `--expect-modules` note already documents. `test_model_guidance_sync.py`
+  compares the two tables verbatim, so both were changed together.
+- **Example recap regenerated:** bumped to the shipped `0.4.0` and re-rendered with `fpdf2`;
+  verified per INV-126/INV-129 by rasterizing the certificate page (v0.4.0 renders on the
+  certificate face, both attribution lines clear the inner ember border) and by confirming the
+  replaced strings landed in both directions.
+- **17th finding, surfaced by that verification — `tests/test_example_recap_sync.py` did not guard
+  what its docstring claimed.** `test_screenshot_is_embedded` asserted only `images > 0`, and the
+  cover logo resolves relative to the *script* rather than the cwd, so it always embeds: a
+  wrong-directory render loses the Truth Set screenshot yet still carries 2 image objects (logo +
+  soft mask) and passed. The docstring's "0 images" figure was wrong. Found the honest way — the
+  first regeneration attempt ran from `docs/examples/`, silently dropped the screenshot, and the
+  suite stayed green; the loss showed up only in a `pdftotext` diff against the committed PDF, which
+  is exactly the failure mode INV-129 exists to catch. Tightened to `>= 3` image objects with the
+  reasoning recorded, added `test_screenshot_caption_is_rendered` as an independent check that does
+  not depend on the cover's object count, and corrected the docstring's measured figures.
+  **Negative-controlled:** the tightened guard fails on renders from both the repo root *and*
+  `docs/examples/`, and passes on the correct render (373 tests, up from 372).
+- **Commit:** uncommitted
+
 ## feedback-routing-plugin-vs-mcp-server
 
 - **Implemented:** 2026-07-26

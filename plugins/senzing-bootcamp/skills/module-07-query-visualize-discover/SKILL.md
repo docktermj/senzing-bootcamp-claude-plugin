@@ -81,6 +81,14 @@ already checkpointed.
 
 ## Module position
 
-Module 7 is the last content module before graduation. The Query Completeness Gate at the end of Phase 1 is the
-module transition: Path A (full bootcamp) proceeds to graduation; Paths B/C
-(shorter paths) may stop here with working query programs. Preserve that gate exactly.
+Module 7 is the last content module before graduation, and it is **required in every path**
+(INV-076). The Query Completeness Gate at the end of Phase 1 is this module's transition: once it is
+satisfied, run module completion and offer graduation. Preserve that gate exactly.
+
+⛔ **Graduation always follows — there is no path that ends here.** Graduation is a Required module
+in both Core and Customized (`../bootcamp-preparation/SKILL.md` → module list), so never tell the
+bootcamper this is where the bootcamp may stop. A bootcamper who wants to keep exploring before
+graduating is welcome to; the offer is simply re-presented when they are ready (INV-014 permits only
+*requested* skips, and graduation cannot be deselected). The retired A/B/C "track" model that once
+allowed a short path ended here was superseded by the Core-vs-Customized path choice (INV-076
+supersedes INV-025).

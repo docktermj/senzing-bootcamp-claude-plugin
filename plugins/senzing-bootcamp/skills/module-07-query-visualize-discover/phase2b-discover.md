@@ -70,7 +70,7 @@ connections between entities using `find_network` and `find_path`.
    structure:
    - **Which entities are connected:** list each entity and its connections, with entity IDs
      and brief identifying information (name, data source).
-   - **What attributes they share:** for each connection, explain the common attributes , 
+   - **What attributes they share:** for each connection, explain the common attributes —
      shared addresses, phone numbers, names, or other features that create the link.
    - **Degrees of separation:** show how many hops separate each pair. "Entity A is directly
      connected to Entity B (1 degree), and Entity B connects to Entity C (so A and C are 2

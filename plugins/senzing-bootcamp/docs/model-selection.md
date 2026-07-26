@@ -128,10 +128,14 @@ surface-neutral; the **CLI commands** column is the Claude Code equivalent. On D
 IDE extension, the same model and reasoning effort are set via the app's model/effort controls
 rather than the slash commands.
 
+Stages in the first column are separated by **semicolons**, not commas — two module names contain a
+comma of their own ("Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation"),
+so a comma-separated list would read as extra stages.
+
 | Stage | Recommended | CLI commands |
 |---|---|---|
-| Onboarding, Bootcamp preparation, Discover the Business Problem, System verification, Data collection, Query/Visualize/Discover, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-| SDK setup, Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
+| Onboarding; Bootcamp preparation; Discover the Business Problem; System verification; Data collection; Query, Visualize and Discover; Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+| SDK setup; Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
 | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
 | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 

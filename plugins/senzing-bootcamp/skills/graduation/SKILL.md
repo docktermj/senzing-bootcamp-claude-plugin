@@ -133,7 +133,7 @@ Gather context before any step. Do this silently.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
 3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
 4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
-   preparation and never asked (INV-076), so it can be absent or unsuitable. **The governing test is
+   preparation and never asked (INV-134), so it can be absent or unsuitable. **The governing test is
    the whole test:** treat it as **unusable** when it is missing, empty/whitespace, or **clearly not
    a person's display name**. The cases below are *examples* of that test, not an exhaustive list —
    a value that is plainly not a display name is unusable even if it matches none of them:

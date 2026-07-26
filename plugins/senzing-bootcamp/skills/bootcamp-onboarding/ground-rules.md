@@ -30,11 +30,15 @@ steering files.)
 - Each 👉 question has exactly one meaning for "yes" and one for "no". For two or more
   alternatives, use a neutral lead question plus a numbered list. Confirm first; ask for
   corrections only if the answer is no.
-- **The one sanctioned "or":** a yes/no question MAY carry an answer-format hint — the canonical
-  form is a trailing `(respond yes or no)`. INV-051 exempts it explicitly, because it clarifies the
-  answer shape rather than joining two alternatives. It is optional and used sparingly (a handful of
-  confirm-style gates carry it); do **not** add or remove it from a question whose wording is pinned
-  verbatim (INV-056), and never use "or" for anything else.
+- **The one sanctioned "or" — an answer-FORMAT hint on a yes/no question, never a choice.** A
+  yes/no question MAY carry an answer-format hint; the canonical form is a trailing
+  `(respond yes or no)`. INV-051 exempts exactly this, because it clarifies the answer shape rather
+  than joining two alternatives. It is optional and used sparingly (a handful of confirm-style gates
+  carry it); do **not** add or remove it from a question whose wording is pinned verbatim (INV-056).
+- **Nowhere else.** Never use "or" in a 👉 question for anything but that hint — above all never to
+  join the choices themselves (INV-051), and not to offer an escape option on a numbered question
+  either. A multi-select's "select nothing" answer is written as its own clause, not with "or":
+  `Reply with the numbers …, comma-separated — reply "none" for just the required modules.`
 - **Never fabricate or simulate the bootcamper's response.** Never emit text starting with
   "Human:" or "User:". Stop and wait at every 👉 question and every gate.
 - `🛑 STOP` and `⛔ MANDATORY GATE` are INTERNAL control directives - never render them to the
@@ -346,10 +350,14 @@ never count against the one-question-per-turn rule and must not be treated as ga
   carries the dated verification note, and `tests/test_model_guidance_sync.py` fails if the two
   tables drift or if any superseded model name survives (INV-114):
 
+  Stages are separated by **semicolons**, not commas — "Query, Visualize and Discover" and "Data
+  Quality, Mapping, and Transformation" each contain a comma, so a comma-separated list would read as
+  extra stages.
+
   | Stage | Recommended | CLI commands |
   |---|---|---|
-  | Onboarding, Bootcamp preparation, Discover the Business Problem, System verification, Data collection, Query/Visualize/Discover, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-  | SDK setup, Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Onboarding; Bootcamp preparation; Discover the Business Problem; System verification; Data collection; Query, Visualize and Discover; Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | SDK setup; Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
   | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
   | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
