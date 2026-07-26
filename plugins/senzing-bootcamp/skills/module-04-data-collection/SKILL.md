@@ -440,16 +440,48 @@ training data.
    `config/bootcamp_preferences.yaml`. Continue to sub-step 7 to detect the limit.
 
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
-   MCP server first: `search_docs(query='larger or temporary evaluation license for datasets over
-500 records')` and present the returned guidance. Present the available paths as distinct,
-   individually selectable options — the in-flow MCP request (invoke `submit_feedback` once with the
-   `license_request` category; only when reported available), the external channel
-   (<support@senzing.com>; include name, org, expected record count, use case; production licenses
-   via <sales@senzing.com>), and apply-an-existing-key (sub-step 5). The bootcamp **continues on the
-   built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the email;
-   the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even in a
-   later session. Retrieve any capacity/validity figures from MCP at runtime, never a remembered
-   figure. Record `license: evaluation` when no custom key is applied.
+   MCP server first: `search_docs(query='temporary evaluation license for a dataset larger than the
+   default limit')` and present the returned guidance. Present the available paths as distinct,
+   individually selectable options — the in-flow MCP request (sub-step 6a below), the external
+   channel, and apply-an-existing-key (sub-step 5). Source the request channel's address and any
+   capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
+   the eval and production channels differ), never a remembered figure. The bootcamp **continues on
+   the built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the
+   email; the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even
+   in a later session. Record `license: evaluation` when no custom key is applied.
+
+   ### 6a. The in-flow license request sends the Bootcamper's name and work email — gate it
+
+   ⛔ **This is the only step in the entire bootcamp that transmits the Bootcamper's personal
+   details off their machine, and it MUST NOT happen without their explicit yes.** The
+   `submit_feedback` tool's `license_request` category **requires** a first name and a **work**
+   email address (personal domains are rejected), optionally a last name and how they heard about
+   Senzing; it emails back a time- and volume-limited evaluation license. Those are the
+   Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every
+   identifier (INV-065, `../bootcamp-onboarding/feedback.md` Step 3c) cannot apply here — the call
+   does not work without them. What carries over is the **consent discipline**, and it applies with
+   more force, not less:
+
+   1. **Confirm the current requirements from the tool itself** before asking for anything, so you
+      request exactly the fields it needs and no more. Never collect a field "in case".
+   2. **Ask for the values, one 👉 question per turn**, saying plainly that a work email is required
+      and that a personal address will be rejected. Never put them in a config file, the recap, or
+      the feedback file (INV-065) — hold them for the call alone.
+   3. **Show the exact request, then ask permission**, pinned verbatim (INV-056), ending the turn on
+      it. State what is sent, to whom, and what comes back:
+
+      > 👉 **Send this evaluation-license request, including your name and work email, to Senzing? Reply with a number:**
+      >
+      > 1. **Yes, send it** — Senzing emails the license to that address.
+      > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.
+
+   4. **Send only on an explicit yes.** On anything else, record `license: evaluation`, continue,
+      and do not re-ask (INV-006). Relay whatever the server returns verbatim.
+   5. **A failure never blocks.** Report it in one line and continue on the built-in evaluation
+      license.
+
+   Declining costs the Bootcamper nothing: option 3's external channel and sub-step 5 remain open,
+   and the bootcamp proceeds either way.
 
 7. **Detect the active license's record limit (after a custom key is applied in sub-step 5).**
    Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',

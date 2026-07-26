@@ -1,11 +1,20 @@
 """Tests that the plugin's pre-code SDK lookup covers INPUTS, not just outputs.
 
 INV-115 requires looking up a method's **response** structure before parsing it. Nothing
-required confirming what a method *takes*, and `get_sdk_reference`'s `flags` and
-`response_schemas` topics do not cover parameter shapes either — so the only remaining
-source is cross-language documentation, which is wrong for Python's graph methods. A
-bootcamp did the flags and response lookups correctly and still lost a round trip passing
+required confirming what a method *takes*: `get_sdk_reference`'s `flags` and
+`response_schemas` topics do not cover parameter shapes. A bootcamp did both of those
+lookups correctly and still lost a round trip passing
 `{"ENTITIES": [{"ENTITY_ID": n}]}` to `find_network_by_entity_id`, which takes `List[int]`.
+
+⚠️ **Corrected 2026-07-26 by a dry run against the live MCP server.** This module previously
+pinned the conclusion that, since `flags` and `response_schemas` miss parameter shapes, "the
+only remaining source is cross-language documentation" and the guide should fall back to
+introspecting the installed binding. That was wrong:
+`get_sdk_reference(topic='methods', filter='find_network_by_entity_id')` returns the
+binding's own signature outright. The tests below now pin the corrected routing — MCP first,
+via the `methods` topic, with local introspection as a genuine last resort — because routing
+the guide *away* from MCP is precisely what INV-080 forbids, and a test that pins the wrong
+premise makes the mistake permanent.
 
 A second, related gap: flag *families* answer different questions. On the export methods
 `SZ_EXPORT_INCLUDE_*` selects which entities appear as rows while `SZ_ENTITY_INCLUDE_*`
@@ -51,17 +60,45 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
 
     def test_it_says_the_existing_topics_do_not_cover_inputs(self):
         squashed = squash(self.text)
-        self.assertIn("It does not cover what it takes", squashed)
+        self.assertIn("not what it takes", squashed)
 
-    def test_cross_language_docs_are_declared_non_authoritative(self):
+    def test_the_methods_topic_is_named_as_the_route_to_parameter_shapes(self):
+        """The correction: MCP answers this, so the guide must be sent to MCP."""
+        self.assertIn("topic='methods'", self.text)
         self.assertIn(
-            "Cross-language documentation is not authoritative", self.text
+            "find_network_by_entity_id(entity_ids: List[int]",
+            self.text,
+            "ground-rules should show the signature the methods topic returns, so the "
+            "reader can see that MCP does answer parameter shapes",
         )
 
-    def test_introspection_is_the_documented_fallback(self):
+    def test_it_no_longer_claims_mcp_cannot_reach_parameter_shapes(self):
+        """Guards the correction against being reverted by a future edit."""
+        squashed = squash(self.text)
+        for false_premise in (
+            "the only remaining source is cross-language documentation",
+            "When the MCP reference does not cover the shape",
+        ):
+            with self.subTest(premise=false_premise):
+                self.assertNotIn(squash(false_premise), squashed)
+
+    def test_cross_language_docs_are_declared_non_authoritative(self):
+        """Still true, and still needed: the divergence is real per binding."""
+        self.assertRegex(
+            self.text, r"Cross-language documentation is (still )?not authoritative"
+        )
+
+    def test_introspection_is_the_documented_last_resort(self):
         for probe in ("inspect.signature", "dir(SzEngineFlags)"):
             with self.subTest(probe=probe):
                 self.assertIn(probe, self.text)
+        squashed = squash(self.text)
+        self.assertIn(
+            "Only when `topic='methods'` genuinely does not cover it",
+            squashed,
+            "introspection must be framed as the fallback AFTER the MCP lookup, not as "
+            "the primary route (INV-080)",
+        )
 
     def test_flag_families_rule_exists(self):
         self.assertIn("Flag families answer different questions", self.text)
@@ -123,6 +160,16 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
     def test_step_4d_states_the_topics_do_not_cover_arguments(self):
         squashed = squash(self.text)
         self.assertIn("Neither of those topics tells you the ARGUMENT types", squashed)
+
+    def test_step_4d_routes_to_the_methods_topic_not_to_guesswork(self):
+        """Same correction as ground-rules: this file carried the false premise too."""
+        self.assertIn("topic='methods'", self.text)
+        self.assertNotIn(
+            "the only remaining source is cross-language documentation",
+            self.text,
+            "step 4d again claims cross-language docs are the only source for parameter "
+            "shapes; the methods topic answers them (verified 2026-07-26)",
+        )
 
     def test_python_signature_is_given_for_both_graph_methods(self):
         self.assertIn("find_network_by_entity_id(entity_ids: List[int]", self.text)

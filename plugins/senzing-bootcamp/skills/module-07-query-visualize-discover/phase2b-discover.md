@@ -37,10 +37,12 @@ connections between entities using `find_network` and `find_path`.
    ⛔ **Look up the response structure before writing any code that parses the response — never
    infer field names from an example snippet** (INV-115).
 
-   ⛔ **Neither of those topics tells you the ARGUMENT types — confirm those for the bootcamper's
-   binding before writing the call.** `topic='flags'` covers flags and
-   `topic='response_schemas'` covers the response; the parameter shape is documented by neither,
-   so the only remaining source is cross-language documentation, and it is wrong for Python here.
+   ⛔ **Neither of those topics tells you the ARGUMENT types — so ask the topic that does, before
+   writing the call.** `topic='flags'` covers flags and `topic='response_schemas'` covers the
+   response; the parameter shape comes from
+   `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')`, which returns the
+   binding's own signature. Read the one for the bootcamper's language: cross-language
+   documentation is **not** authoritative for the shape you pass, and it is wrong for Python here.
 
    For **Python**, both graph methods take native collections, not an entity-IDs JSON document:
 

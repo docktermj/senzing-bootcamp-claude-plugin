@@ -230,7 +230,9 @@ re-run evaluation without reloading. If the session was interrupted before the d
   contract.
 - Never generate direct SQL against `database/G2C.db`: all data access goes through Senzing
   SDK methods (counts/stats via `reporting_guide`).
-- Always validate with `analyze_record` before loading.
+- Always validate with `analyze_record` before loading, passing its **required**
+  `workspace_dir='data/mapping'` — the call fails without it, and the parameter is what keeps the
+  analyzer script and its reports inside the project rather than in `/tmp`.
 
 ## Success criteria
 

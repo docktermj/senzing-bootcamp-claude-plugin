@@ -184,6 +184,14 @@ never automatic.
    and record IDs from their data are **theirs** — describe the shape of the problem, never the
    content. The bootcamper's own data must never leave the machine as part of a bug report.
 
+   *Scope:* this rule governs the **`bug` / `feature` / `question` / `general`** categories — defect
+   reports, which never need to identify anyone. The same tool's **`license_request`** category is a
+   different thing: it *requires* a first name and work email to issue an evaluation license, so
+   stripping them would break it. That path is therefore not run from here at all — it lives in
+   `../module-04-data-collection/SKILL.md` Step 8a.6a behind its own pinned consent gate (INV-135).
+   Never send personal details under a defect category, and never send a defect report under
+   `license_request`.
+
 3. **Show the exact message and ask.** The `submit_feedback` tool's own contract requires showing the
    message and confirming before sending, so present the full draft, then this pinned 👉 question
    (INV-056), and end the turn on it:

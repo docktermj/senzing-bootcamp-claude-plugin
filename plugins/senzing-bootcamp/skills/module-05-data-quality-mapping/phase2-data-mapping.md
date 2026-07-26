@@ -101,13 +101,73 @@ The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file
 is your responsibility. (The Kiro `organize_mapping_files.py` and `generate_docs_index.py`
 scripts are a later porting phase: place files directly per the contract above for now.)
 
+## Calling `mapping_workflow` correctly (⛔ read before step 8)
+
+Verified against the live tool schema on 2026-07-26. Three details the workflow **cannot run
+without** — each one was wrong or missing here before, and each fails at the first call rather than
+degrading.
+
+1. ⛔ **`start` requires BOTH `file_paths` and `data.workspace_dir`.** The tool's own contract:
+   "The call WILL FAIL without both", and "do NOT assume `/tmp` exists". Pass the project-local
+   mapping directory, which is where this bootcamp already keeps mapping working data (INV-050) —
+   never `/tmp`, never a home-relative path:
+
+   ```text
+   mapping_workflow(action='start',
+                    file_paths=['data/raw/<source>.csv'],
+                    data={'workspace_dir': 'data/mapping'})
+   ```
+
+   This is the same rule as the file-placement contract above, expressed as a parameter: the
+   workspace is where the tool writes its scripts, reference docs, mapper code and outputs, so
+   pointing it at `data/mapping/` is what keeps those files inside the project.
+
+2. ⛔ **There are exactly five actions: `start`, `advance`, `back`, `status`, `reset`.** Nothing
+   else is valid. Every step below advances with **`action='advance'`**; the step's data goes in
+   `data` (or the typed `payload`), and its field names are **not** action names. Five field names
+   were previously written as actions here — `profile_summary`, `entity_plan`, `schema_mappings`,
+   `paths`, `verdict` — which the server rejects.
+
+3. **Echo the returned `state` verbatim on every call after `start`.** Each response carries an
+   opaque `state` object; pass it back exactly, never reconstructed from memory or from this
+   bootcamp's own checkpoint file. (The checkpoint above is for *bootcamper-facing resume*, not a
+   substitute for the server's state.) If the state is lost, restart with `action='start'`.
+
+**If a step's guidance arrives truncated mid-sentence, suspect the client read cap before the
+server.** The tool embeds each step's advance schema verbatim in `instructions` and keeps any single
+step under 64 KB, and its contract warns that a smaller read cap "silently TRUNCATES step guidance
+mid-text and **reads as a server bug**." So a truncated step — including a step-3 rejection naming no
+field — is a read-cap symptom first and an upstream defect second. Check that before invoking the
+INV-125 fallback, and say which cause you concluded; INV-125 requires recording the raw failure, and
+a documented cause is part of that record.
+
+### This module's steps vs. the workflow's steps
+
+The workflow has 4 core steps; this module splits them across steps 8-18, so **the two numbering
+schemes are not the same** and only four `advance` calls happen:
+
+| This module | Workflow step | Advances with |
+|---|---|---|
+| 8 Start | — | `action='start'` (see above) |
+| 9 Profile | 1 profile_source_data | `action='advance'`, `data={'profile_summary': [...]}` |
+| 10 Plan | 2 plan_entity_structure | `action='advance'`, `data={'master_schemas': [...], 'support_schemas': [...]}` |
+| 11 Map | 3 map_fields | `action='advance'`, `data={'schema_mappings': [...]}` |
+| 12-16 | 4 generate_validate | **one** `advance` at step 15, `data={'verdict': ...}` |
+| 17-18 | — | no advance; `rework_*` verdicts route back |
+
+Steps 12, 13, 14 and 16 do **not** advance the workflow — they are work performed *inside* workflow
+step 4 (generate sample JSON, lint, write and run the mapper, analyze output) before its single
+verdict advance.
+
 ## Workflow (per data source)
 
 ### 8. Start
 
-Call `mapping_workflow(action='start')` with the source file from `data/raw/` or
-`data/samples/`. Override any `/tmp/` paths to project-local. Tell the user: "Starting mapping
-for [source]. I'll walk through each step and explain what I find."
+Call `mapping_workflow` with `action='start'`, `file_paths` naming the source file from
+`data/raw/` or `data/samples/`, and `data={'workspace_dir': 'data/mapping'}` — **both parameters
+are required and the call fails without either** (see the call contract above). Override any
+`/tmp/` paths to project-local. Tell the user: "Starting mapping for [source]. I'll walk through
+each step and explain what I find."
 
 > **Data source registry:** Update the source's `mapping_status` to `in_progress` in
 > `config/data_sources.yaml` and set `updated_at`.
@@ -127,8 +187,9 @@ reusable resources at their policy-correct locations per the file-placement guid
 
 ### 9. Profile
 
-Run the profiler, then summarize columns/types/completeness/quality. Advance with
-`action='profile_summary'`.
+Run the profiler, then summarize columns/types/completeness/quality. Advance workflow step 1 with
+`action='advance'`, carrying `profile_summary` (one entry per source schema, each with
+`schema_name`, `record_count`, `field_count`) in `data`.
 
 ⛔ **Profile sanity check — interpret the field count, never just report it.** Before presenting
 anything, check whether the profile is *plausible*: roughly **more than 100 fields, or more than 50
@@ -171,9 +232,11 @@ bootcamper decide — never block mapping on a field count.
 
 ### 10. Plan
 
-Identify entity type (person/org/both), structure (flat/nested), relationships. Advance with
-`action='entity_plan'`. Tell the user: explain the entity type decision, which fields map vs.
-skip and why.
+Identify entity type (person/org/both), structure (flat/nested), relationships. Advance workflow
+step 2 with `action='advance'`, carrying `master_schemas` (at least one, each with `schema_name`,
+`data_source` in UPPERCASE, `record_type`, `record_id_source`) and `support_schemas` (lookups,
+relationships, children) in `data`. Tell the user: explain the entity type decision, which fields
+map vs. skip and why.
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >
@@ -188,7 +251,9 @@ skip and why.
 
 ### 11. Map
 
-Map fields to Senzing attributes via `mapping_workflow(action='schema_mappings')`. NEVER guess
+Map fields to Senzing attributes, then advance workflow step 3 with `action='advance'`, carrying
+`schema_mappings` in `data` (per schema, a `field_mappings` list whose entries each declare a
+`disposition` — `feature`, `payload`, `ignore`, `derived`, or `extract`). NEVER guess
 attribute names. For non-Latin data: `search_docs(query="globalization")`. Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
@@ -317,8 +382,9 @@ and infers "the mapping is correct" has been misled by omission.
 
 ### 12. Generate starter code
 
-Advance with `action='paths'`. Tell the user: show a sample target JSON record so they see the
-output format.
+This step does **not** advance the workflow — generating the sample JSON and starter mapper is work
+performed inside workflow step 4, which advances once at step 15 with its verdict (see the call
+contract above). Tell the user: show a sample target JSON record so they see the output format.
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >
@@ -354,8 +420,11 @@ in `../module-02-sdk-setup/SKILL.md` → "The launch environment".
 
 ### 14. Test
 
-Run on 10-100 records from `data/samples/`. Validate with `analyze_record`. Tell the user:
-pass/fail, output file path, sample record, any observations.
+Run on 10-100 records from `data/samples/`. Validate with
+`analyze_record(workspace_dir='data/mapping')` — ⛔ `workspace_dir` is a **required** parameter on
+this tool as well, and it is where the analyzer script and its reports are written, so it takes the
+same project-local mapping directory as the workflow. Tell the user: pass/fail, output file path,
+sample record, any observations.
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >
@@ -368,9 +437,11 @@ pass/fail, output file path, sample record, any observations.
 
 ### 15. Quality analysis
 
-Run on 1000+ records. Evaluate feature distribution, coverage, quality scores. Advance with
-`action='verdict'`. Tell the user: overall score, per-feature coverage with what it means for
-matching, any issues found.
+Run on 1000+ records. Evaluate feature distribution, coverage, quality scores. This is workflow
+step 4's single advance: `action='advance'`, carrying `verdict` in `data` — `approve`,
+`rework_mapping`, or `rework_code` — plus `output_path` and `records_output`. A `rework_*` verdict
+is what routes step 17's iterate path. Tell the user: overall score, per-feature coverage with what
+it means for matching, any issues found.
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >

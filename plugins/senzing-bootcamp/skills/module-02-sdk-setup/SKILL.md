@@ -410,9 +410,15 @@ troubleshooting.
 > per INV-093. SDK setup only confirms that the built-in evaluation license is active; the
 > "License Key" reference notes below are kept for context.
 
-> **License check order:** Senzing checks for licenses in this order: project-local
-> `licenses/g2.lic` → `SENZING_LICENSE_PATH` env var → system CONFIGPATH → built-in evaluation
-> (500 records).
+> **License check order:** project-local `licenses/g2.lic` → a license-path environment variable →
+> system CONFIGPATH → the built-in evaluation license.
+>
+> ⛔ **Confirm the environment variable's exact name from MCP before naming it to the bootcamper**
+> (`sdk_guide(topic='configure', …)` or `search_docs`). This note previously hardcoded
+> `SENZING_LICENSE_PATH` while `sdk_guide` returns `SENZING_LICENSE_FILE`; the two differ by one
+> word and neither was verified here. Wrong environment-variable names are on the MCP server's own
+> list of common confabulations, so state whichever the server returns this session and never the
+> remembered one (INV-080). The record capacity is likewise looked up, not written here.
 
 > **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
 > *runtime-capacity* license (it sets how many records Senzing will resolve) — supplied as a `.lic`
@@ -433,12 +439,20 @@ Otherwise (only the built-in evaluation license is active), present this briefly
 **not a question:**
 
 ⛔ **Fill `{record limit}` below from the MCP server before presenting this — the figure is not
-written into this skill on purpose.** Call a Senzing MCP tool this session for the built-in
-evaluation license's record capacity and validity period, and present exactly what it returns
-(waiting up to 30 seconds). If the tool returns no value, drop the parenthetical entirely and say
-the current limit is unavailable from the MCP server. Never substitute a hardcoded or remembered
-figure — the published capacity has changed before, and a stale number here is a Senzing fact
-asserted from memory (INV-080), in the one place the bootcamper is most likely to plan against it.
+written into this skill on purpose.** The route that answers it is `sdk_guide` with a
+`record_count` above the default limit, whose `compatibility_notes` name the limit outright:
+
+```text
+sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
+```
+
+`search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
+EULA and pricing prose with no figure (checked 2026-07-26), which is why the tool is named here
+rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
+seconds). If it returns no figure, drop the parenthetical entirely and say the current limit is
+unavailable from the MCP server. Never substitute a hardcoded or remembered figure — the published
+capacity has changed before, and a stale number here is a Senzing fact asserted from memory
+(INV-080), in the one place the bootcamper is most likely to plan against it.
 
 "Your Senzing SDK uses a **built-in evaluation license** automatically when no custom license is
 present (limited to {record limit} records) — no license file needed. That's enough for the demo

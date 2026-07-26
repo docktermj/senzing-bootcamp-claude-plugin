@@ -67,7 +67,10 @@ steering files.)
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
 - **Tool routing:** attribute names / JSON mappings -> `mapping_workflow`; SDK code ->
-  `generate_scaffold` or `sdk_guide`; method signatures, flags, **and response structures** ->
+  `generate_scaffold` or `sdk_guide`; **method signatures and parameter types** ->
+  `get_sdk_reference` topic `methods` (aliases `functions` / `classes` / `api`), which searches the
+  SDK docs for signatures, parameters and examples — narrow with `filter='<method or class>'`;
+  flags **and response structures** ->
   `get_sdk_reference` (topics `flags` and `response_schemas`; narrow with `filter='<method>'`);
   error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
@@ -93,16 +96,29 @@ steering files.)
   blank value as a real result: say "no value returned for X" so the failure is visible. Note
   `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
   under `MATCH_INFO`), the raw-response dump is the authority.
-- **Parameter shapes, for the bootcamper's binding.** The lookup above covers what a method
-  *returns*. It does not cover what it *takes*, and `get_sdk_reference`'s `flags` and
-  `response_schemas` topics do not either — so before **calling** an SDK method, confirm its
-  argument types for the chosen language. ⛔ **Cross-language documentation is not authoritative
-  for parameter shapes:** the same method takes a JSON document in one binding and a native
-  collection in another. Python's `find_network_by_entity_id` takes a plain `List[int]` of entity
-  IDs, not the `{"ENTITIES": [{"ENTITY_ID": n}]}` document the flags docs and the Java/C#
-  signatures imply — passing the document raises `SzSdkError`. When the MCP reference does not
-  cover the shape, **introspect the installed binding** (`help(...)`, `inspect.signature(...)`,
-  `dir(SzEngineFlags)`) rather than inferring it from another language's example.
+- **Parameter shapes, for the bootcamper's binding.** The `flags` and `response_schemas` topics
+  cover what a method *returns*, not what it *takes* — but **`get_sdk_reference` does answer
+  parameter shapes, via `topic='methods'`**, and that is the first place to look before **calling**
+  an SDK method:
+
+  ```text
+  get_sdk_reference(topic='methods', filter='find_network_by_entity_id')
+  ```
+
+  returns the binding's own signature —
+  `find_network_by_entity_id(entity_ids: List[int], max_degrees: int, build_out_degrees: int,
+  build_out_max_entities: int, flags: int) -> str` — alongside the Java/C#/Rust equivalents.
+  (Verified against the live server 2026-07-26. An earlier version of this rule asserted the MCP
+  reference could not reach parameter shapes and sent you straight to local introspection; that was
+  wrong, and routing away from MCP is the one thing the MCP-first invariant forbids.)
+  ⛔ **Cross-language documentation is still not authoritative for the shape you must pass:** the
+  same method takes a JSON document in one binding and a native collection in another. Python's
+  `find_network_by_entity_id` takes a plain `List[int]` of entity IDs, not the
+  `{"ENTITIES": [{"ENTITY_ID": n}]}` document the flags docs and the Java/C# signatures imply —
+  passing the document raises `SzSdkError`. So read the signature **for the bootcamper's language**,
+  not the first one returned. Only when `topic='methods'` genuinely does not cover it, fall back to
+  **introspecting the installed binding** (`help(...)`, `inspect.signature(...)`,
+  `dir(SzEngineFlags)`) — never to another language's example.
 - **Flag families answer different questions.** Confirm what a flag family *selects*, not just
   that the name exists. On the export methods, `SZ_EXPORT_INCLUDE_*` chooses **which entities**
   appear as rows while `SZ_ENTITY_INCLUDE_*` chooses **what detail** each row carries, so an

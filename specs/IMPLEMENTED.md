@@ -18,6 +18,71 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## dry-run-mcp-call-contracts
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `.../phase3-test-load.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `.../feedback.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `specs/INVARIANTS.md`, `tests/test_mcp_call_contracts.py` (new), `tests/test_sdk_parameter_shapes.py`
+- **Not a spec** — phase 1 of the maintainer-requested dry run: verifying the plugin's MCP calls
+  against the **live** Senzing MCP server rather than reading the plugin. Everything prior had been
+  static analysis; this asked the different question of whether the documented calls work.
+- **Invariant established:** **INV-136** (satisfy required parameters and enumerated values before
+  calling any MCP tool) and **INV-135** (the evaluation-license request is consent-gated). INV-132
+  corrected in place.
+- **Module 5's mapping workflow could not execute as documented** — two independent defects on the
+  path every data source takes. (1) `mapping_workflow(action='start')` requires both `file_paths`
+  and `data.workspace_dir` — the tool's words are "The call WILL FAIL without both" and "do NOT
+  assume /tmp exists" — and `workspace_dir` appeared **nowhere** in the plugin, so the first call
+  failed. `analyze_record` requires it too and never passed it. (2) Five of eight
+  `mapping_workflow` action names were payload FIELD names written as actions
+  (`profile_summary`, `entity_plan`, `schema_mappings`, `paths`, `verdict`); only
+  start/advance/back/status/reset are valid. Added an explicit call contract plus a table mapping
+  this module's steps 8-18 onto the workflow's four, since only four advances occur and the two
+  numberings had been conflated.
+- **Probable mis-triage of the plugin's own upstream bug report.** INV-125 and
+  `mapping-workflow-truncated-validation-errors` were built around "**step-3** validation rejects
+  the payload with no actionable reason", filed as an `mcp-server` defect. Step 3 is Map — the line
+  calling `action='schema_mappings'`. Not provable after the fact, but step number, invalid call and
+  "no field named" align exactly. Separately, the tool documents that a client read cap under 64 KB
+  "silently TRUNCATES step guidance mid-text and **reads as a server bug**" — a cause the plugin
+  never mentioned. INV-136 now requires excluding the read cap before attributing a truncation
+  upstream, and recording the concluded cause.
+- **A privacy gap, backwards from where the rigour was.** `submit_feedback(category='license_request')`
+  requires a first name and a **work** email and mails back an evaluation licence. Module 4
+  specified it in one clause — no mention that it collects personal data, that it leaves the
+  machine, or any consent gate — while *defect* reports had a full pinned gate and stripped every
+  identifier. INV-065 as written also forbade the email the call requires, so the plugin both
+  required and forbade it. Added Step 8a.6a: confirm the fields from the tool, ask one 👉 per turn,
+  show the exact request, send only on an explicit yes, hold the values for the call alone, never
+  persist them. Scoped `feedback.md`'s stripping rule to the defect categories.
+- **A routing rule that sent the guide away from MCP.** INV-132 asserted `get_sdk_reference` cannot
+  reach parameter shapes, so the guide should introspect the installed binding.
+  `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')` returns
+  `find_network_by_entity_id(entity_ids: List[int], …)` — the exact shape INV-132 cites as
+  unreachable. The `methods`/`functions`/`classes`/`api` topic was missing from the tool-routing
+  table entirely, while `module-06/phaseD` already used it. Corrected INV-132 in place, added the
+  topic to the routing table, and fixed the same false premise in `phase2b-discover.md`.
+  `tests/test_sdk_parameter_shapes.py` had **pinned the wrong premise**, which is how it survived;
+  its docstring and assertions now pin the correction and guard against reverting it.
+- **Self-check on a fix from the previous session.** Module 2's `{record limit}` lookup said "a
+  Senzing MCP tool"; `search_docs` does not answer it (returns EULA/pricing prose). The route that
+  does is `sdk_guide(topic='load', record_count=1000)`, whose `compatibility_notes` name the limit.
+  Also found Module 2 hardcoding `SENZING_LICENSE_PATH` where `sdk_guide` returns
+  `SENZING_LICENSE_FILE` — a one-word difference in the category the server itself flags as a common
+  confabulation — so that note now requires an MCP lookup rather than naming either.
+- **New guard:** `tests/test_mcp_call_contracts.py` (9 tests) pins required parameters, the action
+  enum, project-local `workspace_dir`, the parameter-shape routing, and the licence consent gate.
+  Static by design (offline, stdlib-only per INV-108) with `CONTRACT_VERIFIED_ON` recorded, since a
+  static copy of a live contract can go stale. **All seven negative controls confirmed**: each
+  defect reintroduced, guard confirmed to fail, then reverted.
+- ⚠️ **Process note, recorded because it cost real work.** During those negative controls I used
+  `git restore` to revert each mutation while my fixes were still **uncommitted** — which discarded
+  six of the seven fixes along with the mutations. Every negative control passed and the suite then
+  failed. Redone from the conversation with no loss. The lesson: commit (or copy aside) before
+  mutating a tree to test a guard; `git restore` does not distinguish your change from the one you
+  injected.
+- **Test suite:** 399 -> 411 passing.
+- **Commit:** uncommitted
+
 ## invariant-drift-guards
 
 - **Implemented:** 2026-07-26
