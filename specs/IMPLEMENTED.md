@@ -18,6 +18,63 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## feedback-routing-plugin-vs-mcp-server
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `plugins/senzing-bootcamp/commands/bootcamp-feedback.md`, `plugins/senzing-bootcamp/scripts/feedback-capture.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_feedback_routing.py` (new)
+- **Not a spec** — a feature the maintainer requested directly: when a Bootcamper submits
+  bootcamp feedback, analyse whether the issue is in the plugin or in the Senzing MCP server,
+  record plugin issues in the feedback file, and submit MCP-server issues via the MCP server's
+  `submit_feedback` tool. Recorded here so the work is traceable alongside the spec ledger.
+- **Design decision, stated because it diverges from the literal request.** The request could be
+  read as routing *exclusively* — plugin issues to the file, MCP issues upstream. **INV-015 is
+  unconditional** ("Submitted bootcamp feedback is captured in
+  `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`"), so routing an MCP-server report away from
+  the file would breach it and would also cost the Bootcamper their own durable record. Implemented
+  as: **every entry is recorded locally regardless of verdict**, and an `mcp-server`/`both` verdict
+  *additionally* offers the upstream forward. The triage verdict decides whether an extra submission
+  happens, never whether the entry is saved.
+- **Step 2b — triage (silent, no 👉 question).** The Bootcamper reported a symptom; naming the
+  component is the plugin's job, not another question for them. Four verdicts (`plugin`,
+  `mcp-server`, `both`, `unclear`) with a discriminating test stated both ways — *would this still
+  happen if the plugin were perfect?* / *…if the MCP server were perfect?* — and a table of concrete
+  examples drawn from real findings (`mapping_workflow` truncated validation errors and
+  `get_sdk_reference`'s missing parameter shapes on the MCP side; a PDF generator dropping a table
+  off the page and a screenshot helper capturing the wrong tab on the plugin side). Includes an
+  explicit warning not to soften an `mcp-server` verdict to `plugin` just because this is the
+  bootcamp's own feedback file — a misfiled report reaches the wrong maintainer and gets fixed
+  nowhere.
+- **Step 3c — the upstream offer**, placed **after** Step 3b's durability check so a failed send can
+  never cost the Bootcamper their record. Requires: a self-contained message (tool name, observed,
+  expected, SDK version, verbatim error) because the recipient cannot see the bootcamp; ⛔ stripping
+  every identifying detail, with the Bootcamper's own entity names and record IDs called out as
+  theirs — describe the shape of the problem, never the content (INV-065); showing the exact draft
+  before asking, which is `submit_feedback`'s own documented contract; a pinned numbered 👉 question
+  (INV-051/INV-056) asked **once** (INV-006); disclosing that submissions are **anonymous** with no
+  reply channel *before* they answer, and pointing at `support@senzing.com` for a response; and
+  relaying the server's return verbatim. Failure or unavailability never blocks.
+- **New `Routing:` and `Upstream:` entry fields** record the verdict with a one-line reason and the
+  outcome (`not applicable` / `offered, declined` / `submitted YYYY-MM-DD` /
+  `submission failed: reason`), so a maintainer reading the file later knows what was decided and
+  what left the machine. The shipped file header now states the local-always guarantee and the
+  consent rule in the artifact itself.
+- **Reconciled the old blanket prohibition.** `feedback.md` previously said "Do NOT submit feedback
+  to the Senzing MCP server or anywhere external unless the bootcamper explicitly asks", which would
+  have contradicted the new path. It now names Step 3c as the *only* sanctioned external route and
+  keeps everything else local.
+- **Applied to the graduation retrospective too** (INV-116), which files with the same template:
+  self-observed findings skew toward MCP-server issues — a tool behaving differently than documented
+  is precisely the defect class a Bootcamper cannot report — so each is triaged rather than defaulted
+  to `plugin`, and the offer is **batched** into one question so the retrospective stays a single
+  non-blocking step.
+- **All three entry points updated** (workflow, slash command, `UserPromptSubmit` hook) so they
+  describe the same flow (INV-003); the hook's injected context was verified to carry the triage,
+  routing, `INV-015`, `INV-065` and show-the-message instructions, and to stay silent on unrelated
+  prompts and outside an active bootcamp. `tests/test_feedback_routing.py` (29 tests) pins the
+  unconditional local capture, the consent gate, the PII boundary and the three-surface agreement:
+  35 assertions fail against the pre-feature state. Full suite 372 passed.
+- **Commit:** uncommitted
+
 ## audit-2-any-language-contract-and-windows-temp
 
 - **Implemented:** 2026-07-26

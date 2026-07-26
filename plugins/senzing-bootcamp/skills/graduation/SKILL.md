@@ -189,6 +189,15 @@ For each finding, append a `## Improvement:` entry to
 - **`Source:` `self-observed (assistant retrospective)`** — not `bootcamper-reported` (INV-116).
   A maintainer must be able to tell the two apart; they deserve different weight.
 - **`Module:`** the module where the friction occurred, even though you are filing at graduation.
+- **`Routing:`** the Step 2b triage verdict (`plugin` | `mcp-server` | `both` | `unclear`) with its
+  one-line reason. Retrospective findings skew toward MCP-server issues — a tool behaving differently
+  than documented is exactly the defect class a bootcamper cannot report — so triage each one rather
+  than defaulting it to `plugin`.
+- **`Upstream:`** for an `mcp-server`/`both` verdict, offer the forward **once** per
+  `../bootcamp-onboarding/feedback.md` Step 3c: show the exact message, strip anything identifying
+  (INV-065), and send only on a yes. Batch the offer — one question covering all such findings, not
+  one per finding, so the retrospective stays a single non-blocking step. On decline or failure,
+  record it and continue; every entry is saved locally regardless (INV-015).
 - The same **Context when reported** block, describing what *you* hit rather than what the
   bootcamper saw.
 

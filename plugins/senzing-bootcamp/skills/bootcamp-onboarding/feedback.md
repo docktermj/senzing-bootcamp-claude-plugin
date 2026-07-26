@@ -38,7 +38,10 @@ If `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` does not exist, create th
 ```markdown
 # Senzing Bootcamp Plugin Feedback
 
-Feedback captured during the Senzing Bootcamp. Saved locally only.
+Feedback captured during the Senzing Bootcamp. Every entry is saved here, whatever it turns
+out to be about. Entries routed `mcp-server` may **also** have been forwarded to Senzing —
+only ever with your explicit yes, and with identifying details stripped; each entry's
+`Upstream:` field records what happened.
 
 **Started:** YYYY-MM-DD
 
@@ -74,6 +77,35 @@ context so you do not ask the bootcamper to repeat it):
 If the bootcamper gives everything in one message, do not re-ask: confirm what you
 captured and proceed.
 
+## Step 2b: Triage — plugin issue, or Senzing MCP server issue?
+
+Decide, silently (no 👉 question), which component the report is actually about. This is an
+assessment you make from the captured context, not something to ask the bootcamper — they reported a
+symptom; identifying the component is the plugin's job.
+
+**The discriminating test — ask it both ways:**
+
+- *Would this still happen if the bootcamp plugin were perfect?* If yes → **MCP server**.
+- *Would this still happen if the Senzing MCP server were perfect?* If yes → **plugin**.
+- Yes to both → **both** (the plugin repeated or failed to guard an upstream defect).
+- Neither answer is clear → **unclear**.
+
+| Verdict | Looks like | Examples seen in the field |
+|---|---|---|
+| `plugin` | The bootcamp's own skills, hooks, bundled scripts, questions, gates, banners, ordering, module content or generated deliverables | A question asked twice; a stale instruction; a PDF generator dropping a table off the page; a screenshot helper capturing the wrong tab; a module omitted from the Core path |
+| `mcp-server` | A Senzing MCP **tool** returned wrong, incomplete, truncated or unusable output, or its reference data does not match the installed SDK | `mapping_workflow` step-3 validation rejecting a payload with the reason truncated away; `get_sdk_reference` not covering parameter shapes; a flag documented for one language binding but absent from another; a tool unreachable or erroring |
+| `both` | The plugin's guidance propagated or failed to guard an upstream defect | The plugin's own docs repeated an incorrect flag claim that came from a tool |
+| `unclear` | The symptom is real but the component cannot be identified from the evidence | Wrong entity-resolution results with no way to tell whether the mapping, the SDK, or the guidance caused it |
+
+⛔ **The verdict never changes whether the entry is recorded locally.** Every submitted entry is
+appended to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` regardless of verdict (INV-015) —
+the file is the bootcamper's own durable record and the maintainer's triage input. The verdict
+decides only whether an **additional** upstream submission is *offered* (Step 3c).
+
+Record the verdict in the entry's `**Routing:**` field, with a one-line reason. Do not soften an
+`mcp-server` verdict to `plugin` just because this is the bootcamp's feedback file: a misfiled report
+reaches the wrong maintainer and gets fixed nowhere.
+
 ## Step 3: Append the entry (never overwrite)
 
 Append a formatted entry to the "Your Feedback" section. Append only: never
@@ -86,6 +118,8 @@ rewrite the file, so earlier entries are preserved.
 **Module:** [module name or "General"]
 **Priority:** [High/Medium/Low]
 **Source:** bootcamper-reported
+**Routing:** [plugin | mcp-server | both | unclear] — [one-line reason, per Step 2b]
+**Upstream:** [not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason]
 
 ### What happened
 
@@ -130,6 +164,54 @@ confirm. Only continue once the entry is confirmed on disk. This mirrors the rec
 "verify it landed" step (`module-completion.md` Step 2c) so submitted feedback is
 never silently lost (INV-015).
 
+## Step 3c: Offer to forward an MCP-server issue upstream
+
+Only when Step 2b's verdict is **`mcp-server`** or **`both`**, and only after Step 3b has confirmed
+the local entry is on disk. For `plugin` or `unclear`, skip this step entirely — set
+`**Upstream:** not applicable` and go to Step 4.
+
+The Senzing MCP server accepts reports through its own `submit_feedback` tool, and an upstream defect
+can only be fixed upstream — recording it here alone means the bootcamper hits it again next time,
+and so does everyone else. But this **sends content outside the bootcamper's machine**, so it is
+never automatic.
+
+1. **Draft the upstream message.** Self-contained, because the recipient cannot see this bootcamp:
+   the **tool name**, what was observed, what was expected, and the Senzing SDK version. Include the
+   verbatim error text when there is one. Keep it factual — no speculation about internals.
+
+2. ⛔ **Strip everything identifying.** No hostname, username, file path under a home directory, IP
+   address, email, company name, or data values from the bootcamper's records (INV-065). Entity names
+   and record IDs from their data are **theirs** — describe the shape of the problem, never the
+   content. The bootcamper's own data must never leave the machine as part of a bug report.
+
+3. **Show the exact message and ask.** The `submit_feedback` tool's own contract requires showing the
+   message and confirming before sending, so present the full draft, then this pinned 👉 question
+   (INV-056), and end the turn on it:
+
+   > 👉 **This looks like an issue in the Senzing MCP server rather than the bootcamp. Send the report above to Senzing? Reply with a number:**
+   >
+   > 1. **Yes, send it** — helps get it fixed upstream for everyone.
+   > 2. **No, keep it local** — it stays in your feedback file only.
+
+   State plainly, above the question, that submissions are **anonymous**: the server records no
+   sender identity, so Senzing cannot reply about it. If they want a response, `support@senzing.com`
+   is the channel with a return path. Saying no costs them nothing — the entry is already saved.
+
+4. **On "yes":** call `submit_feedback` with `category` = `bug` for wrong/unusable output, `feature`
+   for a missing capability, and `message` = the approved draft. Relay whatever the server returns
+   **verbatim** — it carries the anonymity notice and the support address, and those are the
+   bootcamper's only follow-up route.
+
+5. **Record the outcome** in the entry's `**Upstream:**` field: `submitted YYYY-MM-DD`,
+   `offered, declined`, or `submission failed: <reason>`. Update the entry in place for this field
+   only — do not rewrite the prose (append-only elsewhere).
+
+6. **A failed or unavailable submission never blocks anything.** If the tool errors or the MCP server
+   is unreachable, say so in one line, record `submission failed: <reason>`, and continue to Step 4.
+   The local entry is the durable record; upstream delivery is a bonus.
+
+⛔ Ask this **once** (INV-006). If the bootcamper declines, do not re-offer for the same entry.
+
 ## Step 4: Confirm and return
 
 - Only after Step 3b confirms the entry is on disk, present the pinned exit banner **verbatim**, marking the return from feedback to the bootcamp:
@@ -141,5 +223,5 @@ never silently lost (INV-015).
   ```
 
   Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
-- Do NOT submit feedback to the Senzing MCP server or anywhere external unless the bootcamper explicitly asks.
+- Do NOT submit feedback anywhere external on your own initiative. The **only** sanctioned external path is Step 3c: an `mcp-server`/`both` verdict, the local entry already saved, the exact message shown, and the bootcamper answering yes to the pinned question. Everything else — `plugin` and `unclear` verdicts, and any other destination — stays local.
 - The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off by **re-presenting the exact pending 👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 ends the turn (INV-005). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.
