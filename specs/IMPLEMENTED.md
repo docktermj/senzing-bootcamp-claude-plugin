@@ -18,6 +18,44 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## artifact-level-verification-for-deliverables
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py` (new), `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `specs/INVARIANTS.md`, `tests/test_normalize_docs_markdown.py` (new)
+- **Summary:** Turned a verification discipline into enforced code plus binding guidance.
+  **(1) Guarded CommonMark pass.** New bundled `normalize_docs_markdown.py` applies the
+  house rules (MD022/MD031/MD032 blank lines, MD040 fence languages, `**Label:**` colon
+  spacing) and enforces the two safety properties the spec cares about *in code*: it
+  fingerprints each file's non-whitespace content line by line and **restores the
+  original** unless every source line survives — the sole permitted change being an
+  opening fence gaining an info string — and it globs top-level `docs/*.md` only, never
+  recursively, so `docs/feedback/` is structurally unreachable (INV-015). Verified the
+  guard rejects a dropped line, rewritten prose and reordering while permitting the fence
+  info string, and that a deliberately lossy transform leaves the file byte-identical on
+  disk. The pass is idempotent, exits 0 even when it skips or cannot write a file
+  (INV-048), and uses pathlib with no shell and no hardcoded separators. Run against the
+  repo's real docs it changed only `README.md` — the shipped example recap was already
+  compliant and still renders at 99% with all nine modules and the certificate.
+  **(2) Graduation verification checklist.** The render step now carries all six checks
+  (rasterize, positive presence probe, unique image XObjects via `pdfimages -list`, open
+  every PNG, re-run `--check --expect-modules`, confirm replacements in both directions),
+  each explicitly best-effort and non-blocking, none a 👉 question. Also replaced the
+  parenthetical that called rasterizing a "dev-only aid, never required at bootcamper
+  runtime" — it pointed away from the very check the spec establishes — and recorded the
+  field toolchain (fpdf2, headless Chrome, poppler present; Playwright, Selenium, PyMuPDF
+  absent) so no capture path is designed around a heavier dependency.
+  **(3) Not graduation-only.** `module-completion.md` now carries the same rule for every
+  artifact-producing module step, with the instruction to describe an artifact from what
+  it shows and never from what the step was supposed to produce.
+  **Carried in from this session's own experience:** a "verify your verification" caution,
+  because a strict-`zlib.decompress` content-stream reader silently dropped a page and
+  looked exactly like a lost module section — the reader was the culprit, not the PDF.
+  `tests/test_normalize_docs_markdown.py` (34 tests) pins the house rules, the content
+  guard, the glob scope with a byte-identical feedback-file assertion, the CLI contract,
+  and the guidance in both skills; 38 assertions fail against the genuine pre-fix state
+  (script absent and both skills reverted). Full suite 255 passed.
+- **Commit:** uncommitted
+
 ## quality-scoring-presence-test
 
 - **Implemented:** 2026-07-26

@@ -318,13 +318,33 @@ Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, i
 (`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
 During the bootcamp these files were written plain (see
 `../bootcamp-onboarding/ground-rules.md` → "Markdown files"); this is where they get prettified.
-Apply the house rules: blank lines around headings (MD022), fenced blocks (MD031), and lists
-(MD032); a language on every fenced block (MD040); and `**Label:**` colon spacing (a space after
-the colon, none before). The pass is **purely cosmetic — structure- and content-preserving**: it
-must never reorder, remove, or rewrite the prose of a completed `## {Module name}` section, nor
-drop any of its four subsections (Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary).
-Like every graduation step it is non-blocking: if normalization fails or is uncertain, warn,
-leave the content as written, and continue — a formatting issue is never a reason to skip the PDF.
+**Run the bundled normalizer** rather than reformatting by hand — it enforces the house rules and,
+more importantly, enforces the content guard below in code:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/normalize_docs_markdown.py"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/normalize_docs_markdown.py
+```
+
+It applies blank lines around headings (MD022), fenced blocks (MD031) and lists (MD032); a language
+on every fenced block (MD040); and `**Label:**` colon spacing (a space after the colon, none
+before). It globs top-level `docs/*.md` only and never recurses, so the feedback file is
+structurally out of reach.
+
+⛔ **The pass is purely cosmetic, and that is checked, not assumed.** It must never reorder, remove,
+or rewrite the prose of a completed `## {Module name}` section, nor drop any of its four subsections
+(Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary). The normalizer
+fingerprints each file's non-whitespace content line by line before and after and **restores the
+original** if the result does not carry every source line forward — the one permitted change being an
+opening fence gaining an info string. This matters because the pass runs *immediately before* the
+render: a cosmetic step that dropped prose would produce a valid, prettier, **shorter** recap, and the
+generator's content-retention figure (INV-110) is computed against the normalized file, so it would
+report success against already-damaged input.
+
+If the normalizer reports a file left as written, that is a normalizer bug — say so and continue with
+the file unformatted; never hand-edit the prose to make formatting pass. Like every graduation step
+this is non-blocking: if it fails or is unavailable, warn, leave the content as written, and continue
+— a formatting issue is never a reason to skip the PDF.
 
 ### 1b. Render the PDF
 
@@ -359,9 +379,10 @@ should look professional). Install it **robustly**, never with a bare `pip`:
   fails (offline, no `ensurepip`, etc.), proceed with the stdlib fallback — it still
   produces a valid, complete PDF, so this never blocks graduation.
 
-(Maintainers can visually verify a render by rasterizing pages to PNG — e.g. with
-`pymupdf` — to confirm the TOC page numbers and the absence of overlaps or blank
-pages; `pymupdf` is a dev-only aid, never required at bootcamper runtime.)
+(Rasterizing pages to PNG to check the layout is **not** a maintainer-only aid — it is part of
+verifying the render, below. `poppler`'s `pdftoppm` is the tool to reach for; `pymupdf` also works
+where it happens to be installed. Neither is required: every check degrades silently when its tool
+is absent.)
 
 Locate and run the bundled script (it ships with this plugin). Use the venv's Python
 if you created one above; otherwise `python3`:
@@ -388,6 +409,48 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
 - **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
+
+⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high
+retention percentage are all necessary and all demonstrably insufficient: in one session four separate
+steps reported success while producing wrong output — three screenshots of the same tab with two
+invented captions, a certificate footer whose glyphs were sliced in half by the page border, an entire
+match-key table drawn off the page, and bullet lists whose item boundaries were invisible. None raised
+an error and two reached a signed keepsake. The retention figure *cannot* catch off-page content,
+because the text is in the content stream and merely positioned outside the page box.
+
+So inspect the rendered artifact. Each check below is **best-effort and non-blocking** — run what the
+toolchain supports, warn on what it finds, and never block graduation on a verification step
+(INV-048, INV-052/INV-066). None of these is a 👉 question; this is agent-side apparatus, not
+bootcamper-facing output (INV-012).
+
+- **Rasterize before trusting text extraction.** `pdftoppm -r 100 -png -f N -l N <pdf> <prefix>` the
+  certificate page and any page whose layout changed, and **look at the image**. Text extraction
+  reports a border-clipped string as present and correct; only the raster shows the glyphs cut in
+  half.
+- **Probe positively for content you know is there.** `pdftotext` the output and grep for a
+  distinctive string from the source — a table header, a match-key pattern, the cover subtitle in
+  full. A count of **0** is the finding. This is the only check that catches content rendered outside
+  the page box.
+- **Count unique image XObjects, not `/Subtype /Image` occurrences.** References are counted more than
+  once, so the naive grep reported 12 for 10 images. `pdfimages -list <pdf>` gives the honest count.
+- **Open every captured PNG before writing its caption** (INV-123, and
+  `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots").
+- **Re-run `--check --expect-modules "…"` after every render**, semicolon-separated — two module
+  display names contain commas.
+- **When you replace text, confirm both directions:** the new string is present **and** the old one is
+  gone. Decompress the content streams rather than assuming the replacement landed.
+
+⚠️ **A caution learned the hard way:** verify your verification. A regex-based content-stream reader
+using strict `zlib.decompress` silently drops any stream whose slice is off by a few bytes, which
+looks exactly like a lost page. Cross-check a suspicious "missing content" result with a second,
+independent tool (`pdftotext`) before concluding the artifact is broken — the reader is the likelier
+culprit.
+
+**Toolchain these assume.** In the field the machine had `fpdf2`, headless Chrome, and poppler
+(`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`); it did **not** have Playwright, Selenium, or
+PyMuPDF. Every check above is doable with plain headless Chrome and poppler, which is why nothing here
+— or in the screenshot capture path — is designed around a heavier dependency. Probe for a tool before
+using it and skip the check when it is missing; never install one to satisfy a verification step.
 
 ## Step 2: Build the production project
 

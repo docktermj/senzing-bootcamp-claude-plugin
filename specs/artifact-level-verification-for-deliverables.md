@@ -160,3 +160,10 @@ graduation-only: whenever a module produces an artifact, the check is on the art
   `specs/recap-pdf-certificate-version-and-list-spacing.md` (the four defects that motivated it),
   `specs/lookup-sdk-response-schemas-before-parsing.md` (INV-115 — the same
   don't-render-the-unverified principle applied to SDK responses).
+
+## Invariants introduced
+
+- `INV-129` — A step producing a bootcamper-facing deliverable MUST verify the rendered artifact,
+  not only the exit status and any self-reported metric; and a cosmetic pass over a deliverable's
+  source MUST prove it preserved content, restoring the original on any reduction (recorded in
+  `specs/INVARIANTS.md`).

@@ -96,6 +96,18 @@ graduation PDF renders exactly these four labeled sections per module):
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
 - **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding the 2-3 curated screenshots is required**, not optional: add them to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>.png)` — in the same turn the capture ran. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
 
+⛔ **Whenever a module step produces a bootcamper-facing artifact — a PDF, a PNG, an HTML
+visualization — verify the artifact itself, not the exit code.** A zero exit, a written file, and a
+self-reported metric are all necessary and none is sufficient: a capture helper exited 0 having
+written three images of the same tab; a generator reported "content retained: 98%" with an entire
+table drawn off the page. Neither raised an error.
+
+So open it: view the PNG, rasterize the PDF page, grep the extracted text for a distinctive string you
+know must be there, load the HTML and confirm the tab renders. Describe the artifact from what it
+actually shows, never from what the step was supposed to produce (INV-115's principle, applied to
+artifacts rather than parsed fields). This is best-effort and never blocks a module — if the tool to
+inspect it is absent, say the artifact could not be verified rather than implying it was.
+
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
 graduation runs one normalization pass over the recap before the PDF renders (see
