@@ -18,12 +18,23 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >   set (`records_total > 0`), consistent with the Truth Set record count loaded in Step 1
 >   (1.2). A snapshot built from zero records is a blank page and does NOT satisfy INV-077.
 >
+> - **The snapshot agrees with the app the bootcamper saw:** its tab set matches the running
+>   server's current tab set. Both are generated from the same source, so this is a cheap textual
+>   comparison — count and compare the tab identifiers in the saved HTML against the server's. A
+>   divergence means the visualization changed after the snapshot was built (Phase 1, 2.4b) and the
+>   snapshot was never rebuilt.
+>
 > If the checkpoints are missing OR the snapshot file does not exist OR the snapshot was built from
 > zero records, the agent MUST execute Steps 1–2 immediately (load `phase1-visualization.md`) and run
 > the visualization server's build-only snapshot step (2.2) — whose `--records` file
 > (`src/system_verification/truthset_data.jsonl`) matches the Truth Set loaded in Step 1
 > (1.2) — so the artifact exists AND is non-empty. Do NOT offer advancement. Do NOT ask the
 > module-transition question. Do NOT save progress. Produce the visualization first.
+>
+> If only the **tab sets diverge**, rebuild the snapshot via 2.2 while the data and server are still
+> up, then re-verify. If the rebuild is not possible, warn the bootcamper that the saved copy shows
+> an earlier version of the app and say how it differs — never let the recap claim a change the
+> keepsake does not carry. This warning does not block module completion.
 
 ## Step 3: Visualization completeness check
 
@@ -62,13 +73,27 @@ They are different questions, so asking this one is **not** an INV-006 violation
 re-asking the same question, not asking a different one about a consequence the first never
 mentioned. Do not reintroduce a "no separate confirmation gate" shortcut here.
 
-1. **Terminate the web service:**
+⛔ **Order matters: everything that needs the data or the server happens BEFORE the purge, and the
+purge is the LAST action of this module.** Once the Truth Set records are gone the snapshot cannot be
+rebuilt and the live server cannot be re-served, so a missed rebuild or a missed capture becomes
+permanent. Work through 1–4 in order; do not hoist the purge.
+
+1. **Rebuild the snapshot if it is stale.** If the visualization changed after the snapshot was built
+   (Phase 1, 2.4b) — or if Step 3's tab-set comparison flagged a divergence — re-run the build-only
+   snapshot step **now**, while the records are still loaded. This is the last moment it is possible.
+
+2. **Capture any missing screenshots from the live server.** Per
+   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", the
+   Search / Probe tab can only show real results against the running engine, so capture it here
+   rather than from the static snapshot. Best-effort and non-blocking.
+
+3. **Terminate the web service:**
    - Send a termination signal to the visualization web service process started in Phase 1 (2.3).
    - Wait up to 5 seconds for the process to exit and release the bound port.
    - If it does not terminate within 5 seconds: force-stop the process and warn the bootcamper that
      the port may need manual release.
 
-2. **Purge the Truth Set data from the database:**
+4. **Purge the Truth Set data from the database** (the module's final action):
    - Remove the Truth Set records loaded in Phase 1 (CUSTOMERS/REFERENCE/WATCHLIST, or the CORD
      substitute's codes) from the Senzing database, using generated Senzing SDK code (via
      `get_sdk_reference` + `sdk_guide`); never direct SQL against `database/G2C.db`.
@@ -76,7 +101,7 @@ mentioned. Do not reintroduce a "no separate confirmation gate" shortcut here.
    - If the purge fails: report a fail status identifying which records could not be removed, with a
      Fix_Instruction advising the bootcamper to re-run cleanup or manually reset the database.
 
-3. **Retain visualization artifacts:** the standalone snapshot
+5. **Retain visualization artifacts:** the standalone snapshot
    (`docs/visualizations/truthset_verification.html`), the generated visualization server under
    `src/server/` (when the chosen language is not Python), and any generated load/registration code
    under `src/system_verification/` remain in place for reference.

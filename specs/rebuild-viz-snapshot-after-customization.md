@@ -131,3 +131,12 @@ bootcamper's permanent record is concerned.
   `specs/visualization-server-lifetime-and-teardown-gate.md` (teardown ordering),
   `specs/per-tab-screenshot-capture-and-grounded-captions.md` (capture must also precede the
   purge), `specs/artifact-level-verification-for-deliverables.md`.
+
+## Invariants introduced
+
+- `INV-130` — A retained visualization snapshot MUST reflect the app at module close, rebuilt after
+  any change made after its initial build, with the completion check comparing snapshot against
+  running app and warning on divergence (recorded in `specs/INVARIANTS.md`).
+- `INV-131` — Irreversible teardown of a module's working state MUST be the last action of that
+  module, after every step that needs the data or the running service (recorded in
+  `specs/INVARIANTS.md`).

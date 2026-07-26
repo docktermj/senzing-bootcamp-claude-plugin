@@ -572,8 +572,8 @@ nav button.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:
 main{padding:0}
 .tab{display:none;padding:16px 20px}
 .tab.active{display:block}
-#graph-container,#network-container{position:relative;height:calc(100vh - 175px);min-height:360px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0}
-#graph-container svg,#network-container svg{width:100%;height:100%;display:block}
+#graph-container{position:relative;height:calc(100vh - 175px);min-height:360px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0}
+#graph-container svg{width:100%;height:100%;display:block}
 .legend{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
@@ -662,8 +662,6 @@ nav{flex-wrap:wrap}
 <nav id="nav"></nav>
 <main>
   <section class="tab active" id="tab-graph"><div id="graph-container"><div class="tooltip" id="tt"></div></div></section>
-  <section class="tab" id="tab-network"><div id="network-container"><div class="tooltip" id="tt2"></div></div></section>
-  <section class="tab" id="tab-merges"><div id="merges"></div></section>
   <section class="tab" id="tab-stats"><div id="hist"></div></section>
   <section class="tab" id="tab-matchkeys"><div id="matchkeys"></div></section>
   <section class="tab" id="tab-features"><div id="features"></div></section>
@@ -672,7 +670,14 @@ nav{flex-wrap:wrap}
 </main>
 <div class="modal-bg" id="modal-bg" onclick="if(event.target.id==='modal-bg')closeModal()"><div class="modal" id="modal"></div></div>
 <script>
-const ALL_TABS=[["graph","Entity Graph"],["network","Relationship Network"],["merges","Record Merges"],["stats","Merge Statistics"],["matchkeys","Match Keys"],["features","Feature Scores"],["overlap","Cross-Source"],["probe","Search / Probe"]];
+// Six tabs. "Record Merges" was removed because Search / Probe's per-entity result is a
+// strict superset of it (name, record count, entity match key -- plus per-record match
+// keys and feature scores); its one unique capability, browsing all merges with no query,
+// moved to the "Show all merged entities" button on that tab. "Relationship Network" was
+// removed because it rendered a filtered view of this tab's own /api/graph data; it is now
+// the "Show only entities with relationships" mode of Entity Graph. Both per the contract's
+// de-duplication rule: when two candidate tabs share their data, they are one tab.
+const ALL_TABS=[["graph","Entity Graph"],["stats","Merge Statistics"],["matchkeys","Match Keys"],["features","Feature Scores"],["overlap","Cross-Source"],["probe","Search / Probe"]];
 // {source_code: {fill, stroke, cycle}} assigned from the sources actually loaded, so a
 // bootcamper's own sources are always distinct. The last-resort literal is for a source
 // absent from the model entirely; it is deliberately NOT equal to any assigned color, so
@@ -688,18 +693,25 @@ function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
 function hexRgb(h){h=(h||"").replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');var n=parseInt(h,16)||0;return [(n>>16)&255,(n>>8)&255,n&255];}
 let STATS=null;
-// A tab is shown only when its data exists: relationships for the network,
-// 2+ sources for cross-source overlap, multi-record entities for match keys /
-// feature scores. The others always apply.
+// A tab is shown only when its data exists: 2+ sources for cross-source overlap,
+// multi-record entities for match keys / feature scores. The others always apply.
+// (The relationship view is no longer a tab -- it is a mode of Entity Graph, gated
+// on the same relationships_total > 0 condition inside addGraphControls.)
 function tabApplicable(id){const s=STATS||{};
-  if(id==="network")return (s.relationships_total||0)>0;
   if(id==="overlap")return (s.data_sources_total||0)>=2;
   if(id==="features")return (s.multi_record_entities||0)>0;
   if(id==="matchkeys")return (s.multi_record_entities||0)>0;
   return true;}
+// "all" shows the full entity population; "network" shows only entities connected by a
+// relationship, with edges styled by relationship type -- what the removed Relationship
+// Network tab rendered. Both modes are served by the same /api/graph payload.
+let graphMode="all";
+// The live force simulation for the graph tab. Toggling the mode re-enters drawGraph, and
+// the previous simulation would otherwise keep ticking against DOM nodes that have been
+// removed — wasted work and a source of jank. Stopped before each redraw.
+let graphSim=null;
 function drawFor(id){
   if(id==="graph")drawGraph();
-  else if(id==="network")drawNetwork();
   else if(id==="stats")drawHist();
   else if(id==="matchkeys")drawMatchKeys();
   else if(id==="features")drawFeatures();
@@ -719,23 +731,49 @@ async function loadBanner(){const s=await getJSON("/api/stats");
 let graphDrawn=false;
 async function drawGraph(){
   const c=document.getElementById("graph-container");const W=c.clientWidth,H=c.clientHeight;
-  const g=await getJSON("/api/graph");
+  const g=await getJSON("/api/graph");const box=d3.select("#graph-container");
   d3.select("#graph-container svg").remove();
-  const svg=d3.select("#graph-container").append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
-  const root=svg.append("g");
-  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
-  const nodes=g.nodes.map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  d3.select("#graph-container .legend").remove();
+  d3.select("#graph-container .empty-note").remove();
+  if(graphSim){graphSim.stop();graphSim=null;}
+  const network=graphMode==="network";
+  const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
+  // In network mode, keep only entities that a relationship actually connects -- the
+  // subgraph the removed Relationship Network tab showed.
+  let nodes;
+  if(network){
+    const connected=new Set();links0.forEach(function(e){connected.add(e.source);connected.add(e.target);});
+    nodes=g.nodes.filter(function(n){return connected.has(n.entity_id);}).map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  }else{
+    nodes=g.nodes.map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  }
+  if(!nodes.length){
+    box.append("div").attr("class","muted empty-note").style("padding","14px")
+       .text(network?"No relationships between entities were found in this data.":"No entities to graph.");
+    addGraphControls("graph-container",0);
+    return;
+  }
   // EDGE-KEY MAPPING: forceLink resolves against id via source/target; map before use.
   const idset=new Set(nodes.map(function(n){return n.id;}));
-  const links=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key};})
-                     .filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
-  const sim=d3.forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(90))
-    .force("charge",d3.forceManyBody().strength(-160))
+  const links=links0.filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
+  const rtypes=Array.from(new Set(links.map(function(e){return e.rtype;})));
+  const rcolor=d3.scaleOrdinal().domain(rtypes).range([C_BLUE,C_GOLD,C_GREEN,"#8b5cf6","#ec4899","#0ea5e9"]);
+  const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
+  const root=svg.append("g");
+  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
+  const sim=graphSim=d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(network?100:90))
+    .force("charge",d3.forceManyBody().strength(network?-180:-160))
     .force("center",d3.forceCenter(W/2,H/2))
     .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
   const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
-  edge.append("line");
+  const line=edge.append("line");
+  // Relationship-type colour plus a dash pattern, so the types stay distinguishable in a
+  // monochrome screenshot (contract: pair colour with a non-colour distinction).
+  if(network){
+    line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
+        .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
+  }
   edge.append("text").text(function(d){return d.match_key||"";});
   const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
     .call(d3.drag().on("start",dstart).on("drag",dragged).on("end",dend))
@@ -755,11 +793,29 @@ async function drawGraph(){
     edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
     node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
   });
-  drawLegend(nodes);
+  if(network){drawRelationshipLegend(box,links,rtypes,rcolor,edge);}
+  else{drawLegend(nodes);}
   addGraphControls("graph-container",nodes.length);
   function dstart(ev,d){if(!ev.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
   function dragged(ev,d){d.fx=ev.x;d.fy=ev.y;}
   function dend(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
+}
+// Relationship-type legend with click-to-filter, carried over unchanged from the removed
+// Relationship Network tab. Built FROM the drawn edges, so an entry cannot exist without
+// matching marks on screen.
+function drawRelationshipLegend(box,links,rtypes,rcolor,edge){
+  const l=box.append("div").attr("class","legend");
+  l.append("div").style("font-weight","600").style("margin-bottom","3px").text("Relationship");
+  const rcount={};links.forEach(function(e){rcount[e.rtype]=(rcount[e.rtype]||0)+1;});
+  const roff={};
+  rtypes.forEach(function(ty){const r=l.append("div").attr("class","row");
+    r.append("span").attr("class","dot").style("background",rcolor(ty));
+    r.append("span").text(humLevel(ty));
+    r.append("span").attr("class","cnt").text(rcount[ty]||0);
+    r.attr("title","Show only this relationship type (click again to restore)");
+    r.on("click",function(){roff[ty]=!roff[ty];d3.select(this).classed("off",!!roff[ty]);
+      const anyOff=rtypes.some(function(x){return roff[x];});
+      edge.style("display",function(d){return (!anyOff||!roff[d.rtype])?null:"none";});});});
 }
 function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
 // Above this node count both label sets default OFF. Chosen because a default
@@ -789,6 +845,16 @@ function addGraphControls(containerId,nodeCount){
     inp.on("change",function(){el.classList.toggle(cls,!this.checked);});}
   toggle("hide-node-labels","Entity name labels",!auto);
   toggle("hide-edge-labels","Match key labels",!auto);
+  // Mode switch: the full entity population, or only the entities a relationship
+  // connects. Replaces the standalone Relationship Network tab, and is shown only when
+  // there are relationships to see — the same condition that used to gate that tab.
+  if(((STATS||{}).relationships_total||0)>0){
+    const row=box.append("label");
+    const inp=row.append("input").attr("type","checkbox").attr("id","graph-network-only")
+                 .property("checked",graphMode==="network");
+    row.append("span").text("Show only entities with relationships");
+    inp.on("change",function(){graphMode=this.checked?"network":"all";drawGraph();});
+  }
   if(auto)box.append("div").attr("class","why")
     .text("Labels hidden — "+nodeCount+" entities would overlap. Use the toggles to show them.");}
 // Built FROM the rendered nodes, never from a static colour config: a legend
@@ -928,18 +994,6 @@ function renderHow(data){const hr=(data.result||{}).HOW_RESULTS||{};const steps=
   return "<div class='verdict'>These records resolved <b>directly</b> into one entity — Senzing found them consistent enough to merge with no intermediate steps.</div>"+
     "<h4>"+n+" record"+(n===1?"":"s")+" in this entity</h4>"+
     "<div class='recs'><div class='rec' style='min-width:auto'>"+_recordChips(members)+"</div></div>";}
-async function drawMerges(){const m=await getJSON("/api/merges");const box=d3.select("#merges");box.html("");
-  if(!m.entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
-  m.entities.forEach(function(e){const card=box.append("div").attr("class","card");
-    card.append("h4").text(e.entity_name+"  ");card.select("h4").append("span").attr("class","chip").text(e.data_sources.join(" + "));
-    // No inline record listing: records are shown on demand via the Records
-    // action, the same as every other entity surface (contract: "No redundant
-    // inline record listings"). Show the summary and the match key instead.
-    const mk=(e.records||[]).map(function(r){return r.match_key;}).filter(function(x){return x;})[0]||"";
-    const meta=card.append("div").attr("class","muted");
-    meta.text(e.record_count+" records · Entity "+e.entity_id);
-    if(mk){const c=card.append("div");mkChips(mk).forEach(function(h){c.html(c.html()+h);});}
-    addEntityActions(card,e.entity_id,e.entity_name);});}
 async function drawHist(){const s=await getJSON("/api/stats");const box=d3.select("#hist");box.html("");
   box.append("p").html("<b>"+s.records_total+"</b> records collapsed into <b>"+s.entities_total+"</b> entities, including <b>"+s.multi_record_entities+"</b> multi-record entities.");
   box.append("p").attr("class","muted").text("Click a bar to list the entities in that bucket.");
@@ -983,69 +1037,30 @@ async function doSearch(){const q=document.getElementById("search-in").value;con
     addEntityActions(card,e.entity_id,e.entity_name);});}
 async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.select("#probe-btns");box.html("");
   m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
-    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
-// Relationship Network: the subgraph of entities connected by relationships
-// (possible matches / disclosed relations), edges colored by relationship type.
-// Distinct from Entity Graph, which shows the full entity population.
-async function drawNetwork(){
-  const c=document.getElementById("network-container");const W=c.clientWidth,H=c.clientHeight;
-  const g=await getJSON("/api/graph");const box=d3.select("#network-container");
-  d3.select("#network-container svg").remove();d3.select("#network-container .legend").remove();
-  const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
-  const connected=new Set();links0.forEach(function(e){connected.add(e.source);connected.add(e.target);});
-  const nodes=g.nodes.filter(function(n){return connected.has(n.entity_id);}).map(function(n){return Object.assign({},n,{id:n.entity_id});});
-  if(!nodes.length){box.append("div").attr("class","muted").style("padding","14px").text("No relationships between entities were found in this data.");return;}
-  const idset=new Set(nodes.map(function(n){return n.id;}));
-  const links=links0.filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
-  const rtypes=Array.from(new Set(links.map(function(e){return e.rtype;})));
-  const rcolor=d3.scaleOrdinal().domain(rtypes).range([C_BLUE,C_GOLD,C_GREEN,"#8b5cf6","#ec4899","#0ea5e9"]);
-  const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
-  const root=svg.append("g");
-  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
-  const sim=d3.forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(100))
-    .force("charge",d3.forceManyBody().strength(-180))
-    .force("center",d3.forceCenter(W/2,H/2))
-    .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
-  const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
-  edge.append("line").attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
-      .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
-  edge.append("text").text(function(d){return d.match_key||"";});
-  const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
-    .call(d3.drag().on("start",ns).on("drag",nd).on("end",ne))
-    .on("click",function(ev,d){openModal(d);})
-    .on("mousemove",function(ev,d){const tt=d3.select("#tt2");
-      tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
-        .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
-    .on("mouseout",function(){d3.select("#tt2").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
-    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
-    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
-  node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
-      .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
-  sim.on("tick",function(){
-    edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
-      .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
-    edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
-    node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
-  });
-  const l=box.append("div").attr("class","legend");
-  l.append("div").style("font-weight","600").style("margin-bottom","3px").text("Relationship");
-  const rcount={};links.forEach(function(e){rcount[e.rtype]=(rcount[e.rtype]||0)+1;});
-  const roff={};
-  rtypes.forEach(function(ty){const r=l.append("div").attr("class","row");
-    r.append("span").attr("class","dot").style("background",rcolor(ty));
-    r.append("span").text(humLevel(ty));
-    r.append("span").attr("class","cnt").text(rcount[ty]||0);
-    r.attr("title","Show only this relationship type (click again to restore)");
-    r.on("click",function(){roff[ty]=!roff[ty];d3.select(this).classed("off",!!roff[ty]);
-      const anyOff=rtypes.some(function(x){return roff[x];});
-      edge.style("display",function(d){return (!anyOff||!roff[d.rtype])?null:"none";});});});
-  addGraphControls("network-container",nodes.length);
-  function ns(ev,d){if(!ev.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
-  function nd(ev,d){d.fx=ev.x;d.fy=ev.y;}
-  function ne(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
-}
+    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});
+  // The one capability the removed Record Merges tab uniquely had: browse every merged
+  // entity with no query. Search / Probe otherwise shows a strict superset per entity,
+  // so this is what keeps the removal lossless rather than a trade.
+  if((m.entities||[]).length){
+    box.append("button").attr("class","probe").attr("id","show-all-merges")
+       .text("Show all merged entities ("+m.entities.length+")")
+       .on("click",function(){showAllMerges(m.entities);});
+  }}
+// Lists every multi-record entity, no query needed. Same per-entity actions as a search
+// result, so the entity surfaces stay consistent (contract: per-entity actions everywhere).
+function showAllMerges(entities){
+  const box=d3.select("#results");box.html("");
+  document.getElementById("search-in").value="";
+  if(!entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
+  box.append("p").attr("class","muted")
+     .text("All "+entities.length+" merged entities. Search above to see per-record match keys and feature scores for one of them.");
+  entities.forEach(function(e){const card=box.append("div").attr("class","card");
+    card.append("h4").text(e.entity_name+"  ");
+    card.select("h4").append("span").attr("class","chip").text((e.data_sources||[]).join(" + "));
+    const mk=(e.records||[]).map(function(r){return r.match_key;}).filter(function(x){return x;})[0]||"";
+    card.append("div").attr("class","muted").text(e.record_count+" records · Entity "+e.entity_id);
+    if(mk){const c=card.append("div");mkChips(mk).forEach(function(h){c.html(c.html()+h);});}
+    addEntityActions(card,e.entity_id,e.entity_name);});}
 // Cross-Source overlap heatmap: entities shared between each pair of data sources.
 async function drawOverlap(){const o=await getJSON("/api/overlap");const box=d3.select("#overlap");box.html("");
   const src=o.sources||[],m=o.matrix||[];
@@ -1135,11 +1150,10 @@ function applyDeepLink(){
   if(tab&&tabApplicable(tab)&&document.getElementById("tab-"+tab)&&document.getElementById("navbtn-"+tab))activate(tab);
   if(q!==null){var box=document.getElementById("search-in");if(box){box.value=q;doSearch();}}
 }
-async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();drawMerges();loadProbes();applyDeepLink();}
+async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();loadProbes();applyDeepLink();}
 init();
 window.addEventListener("resize",function(){
-  if(d3.select("#tab-graph").classed("active"))drawGraph();
-  else if(d3.select("#tab-network").classed("active"))drawNetwork();});
+  if(d3.select("#tab-graph").classed("active"))drawGraph();});
 </script></body></html>
 """
 

@@ -247,6 +247,13 @@ of the Truth Set. It MUST:
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.
+- ⛔ **If the visualization changes after the snapshot is written — a bootcamper request, a fix, a
+  styling tweak — rebuild the snapshot and re-capture its screenshots.** The snapshot is the retained
+  artifact and the one the recap embeds; the server is disposable. A change present only on the
+  server leaves the keepsake showing a version the bootcamper asked to have changed, contradicting
+  the recap prose that describes the change (see
+  `../module-03b-truthset-visualization/phase1-visualization.md` → 2.4b, where the same omission
+  shipped an eight-tab snapshot beside six-tab prose).
 
 ⛔ **The server stays running — screenshot capture must not stop it.** The API probes and the
 screenshot pass above are agent-side verification, not the end of the interaction. Follow the

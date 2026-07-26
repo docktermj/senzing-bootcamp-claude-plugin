@@ -171,3 +171,10 @@ HTTP 200 with the same model, and the standalone snapshot still building.
   control panel this toggle joins),
   `specs/truthset-viz-entity-actions-and-aggregate-drilldowns.md`,
   `specs/rebuild-viz-snapshot-after-customization.md`.
+
+## Invariants introduced
+
+None. This applies the visualization contract's existing **de-duplication** rule ("when two
+candidate tabs share their aggregates, they are one tab") and reverses one ruling made under it;
+it adds no new standing constraint. The tab set is bound by the contract plus
+`tests/test_viz_endpoint_sync.py` and `tests/test_viz_tab_consolidation.py`.

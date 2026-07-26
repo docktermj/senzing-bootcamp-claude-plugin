@@ -279,6 +279,27 @@ content (the largest resolved entities) is now `sample_entities`, rendered on Me
 entity-size distribution is Merge Statistics, and the cross-source entity-relationship view is
 Entity Graph (per `visualization-api-reference.md` → "De-duplication").
 
+### 2.4b Any change to the visualization means rebuilding the snapshot
+
+⛔ **If the visualization's code changes for any reason after 2.2 — a bootcamper request, a bug fix,
+a styling tweak — re-run the build-only snapshot step (2.2) and re-verify it. Do not stop at
+re-verifying the live server.**
+
+This is a numbered step, not a note, because the failure is silent and permanent. The snapshot is
+the artifact the bootcamper keeps and the one embedded in the recap; the live server is torn down at
+module close, and Step 4 then **purges the Truth Set records**, so after that point the snapshot
+cannot be rebuilt at all — the data it needs is gone. A change that is not in the snapshot did not
+happen as far as the bootcamper's permanent record is concerned.
+
+It has happened: two design simplifications were implemented, verified on the live server, and
+approved by the bootcamper, but the snapshot was never rebuilt. The keepsake shipped with the
+eight-tab UI they had asked to change, contradicting the recap prose in the same section — a claim
+and a screenshot that disagree.
+
+After rebuilding, confirm the snapshot's tab set matches the running server's (Step 3's completion
+check in `phase2-close.md` verifies this too) and re-capture any screenshots taken from the stale
+copy.
+
 ### 2.5 Present it and give the guided tour
 
 Tell the bootcamper the app is running and where the saved copy is:

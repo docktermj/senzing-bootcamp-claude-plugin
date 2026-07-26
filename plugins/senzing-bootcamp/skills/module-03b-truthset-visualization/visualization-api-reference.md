@@ -409,14 +409,12 @@ not shown:
 
 | Tab | Endpoint(s) | Shown when |
 |-----|-------------|-----------|
-| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the full entity population; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`) |
-| **Relationship Network** | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | relationships exist (`relationships_total` > 0) — the subgraph of entities connected by relationships, edges styled by relationship type |
-| **Record Merges** | `/api/merges`, `/api/records`, `/api/why`, `/api/how` | always — one card per multi-record entity: name, record count, match key, and the actions. **No inline record listing** |
+| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges coloured and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`) |
 | **Merge Statistics** | `/api/stats`, `/api/records`, `/api/why`, `/api/how` | always — records-per-entity histogram (this **is** the entity-size distribution) with clickable bars drilling down via `bucket_entities`, plus the largest resolved entities from `sample_entities` |
 | **Match Keys** | `/api/matchkeys`, `/api/records`, `/api/why`, `/api/how` | multi-record entities exist — clickable rows drilling down via `match_key_entities` |
 | **Feature Scores** | `/api/features` | multi-record entities exist |
 | **Cross-Source** | `/api/overlap`, `/api/records`, `/api/why`, `/api/how` | 2+ data sources (`data_sources_total` ≥ 2) — clickable cells drilling down via `cell_entities` |
-| **Search / Probe** | `/api/search`, `/api/records`, `/api/why`, `/api/how` | always — with pre-verified example-query chips |
+| **Search / Probe** | `/api/search`, `/api/merges`, `/api/records`, `/api/why`, `/api/how` | always — with pre-verified example-query chips and a **"Show all merged entities"** button that lists every multi-record entity with no query (the one capability the former Record Merges tab uniquely had) |
 
 **De-duplication (required).** Do NOT add a tab whose content is derivable from another tab's
 endpoint. When two candidate tabs share their aggregates, **they are one tab.** Applying that test:
@@ -428,8 +426,17 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
   aggregates as `/api/stats`, and its only unique content — the largest resolved entities — is now
   `sample_entities` on that endpoint, rendered beneath the Merge Statistics histogram. Two tabs
   showing one histogram read as redundant, not complementary.
-- The **Relationship Network** tab *is* distinct (the related-entity subgraph emphasizing
-  relationship type), not a second full-population graph.
+- There is **no "Relationship Network" tab.** This reverses an earlier ruling here that it *was*
+  distinct: the related-entity subgraph is a filtered view of **Entity Graph's own** `/api/graph`
+  data, so by this rule they are one tab. What made it look distinct — the relationship-type edge
+  colouring/dashing and the click-to-filter legend — is preserved as Entity Graph's
+  "Show only entities with relationships" mode, so nothing was lost by folding it in.
+- There is **no "Record Merges" tab.** For any entity present in both, Search / Probe's per-entity
+  result is a strict **superset**: Record Merges showed entity name, record count and one
+  entity-level match key; Search / Probe shows all of that plus per-record match keys and feature
+  scores. Its one unique capability was browsing *all* merged entities with no query, which is now
+  the "Show all merged entities" button on that tab — so the removal is lossless rather than a
+  trade. `/api/merges` is retained: the example-query chips and that button both read it.
 
 ### Tab identifiers and deep-linking (required)
 
@@ -439,13 +446,18 @@ id, so a server in any language (INV-090) must use these exact ids and expose th
 | Tab | Id | Section id | Nav button id | Screenshot slug |
 |---|---|---|---|---|
 | Entity Graph | `graph` | `tab-graph` | `navbtn-graph` | `entity-graph` |
-| Relationship Network | `network` | `tab-network` | `navbtn-network` | `relationship-network` |
-| Record Merges | `merges` | `tab-merges` | `navbtn-merges` | `record-merges` |
+| Relationship Network — **REMOVED** | `network` | `tab-network` | `navbtn-network` | `relationship-network` |
+| Record Merges — **REMOVED** | `merges` | `tab-merges` | `navbtn-merges` | `record-merges` |
 | Merge Statistics | `stats` | `tab-stats` | `navbtn-stats` | `merge-statistics` |
 | Match Keys | `matchkeys` | `tab-matchkeys` | `navbtn-matchkeys` | `match-keys` |
 | Feature Scores | `features` | `tab-features` | `navbtn-features` | `feature-scores` |
 | Cross-Source | `overlap` | `tab-overlap` | `navbtn-overlap` | `cross-source` |
 | Search / Probe | `probe` | `tab-probe` | `navbtn-probe` | `search-probe` |
+
+The two **REMOVED** rows are retained as reserved identifiers, not as tabs to build: a current app
+MUST NOT serve them. They stay listed so the recap screenshot helper still recognises them when
+pointed at a snapshot saved by an earlier, eight-tab run, and so nothing reuses those ids for a
+different view.
 
 The app MUST provide:
 
@@ -475,7 +487,7 @@ subset**:
 | **Why?** | `/api/why?entity_id=` | why the records resolved together |
 | **How?** | `/api/how?entity_id=` | how the entity was constructed |
 
-That set applies to: the Entity Graph node detail, the Relationship Network node detail, Record
+That set applies to: the Entity Graph node detail (in either mode), Record
 Merges cards, the Merge Statistics bucket drill-down **and** its `sample_entities` list, the
 Cross-Source cell drill-down, the Match Keys row drill-down, and Search / Probe results. Implement
 it as **one shared renderer** invoked from every surface — the failure mode this prevents is real:
@@ -489,7 +501,8 @@ shape, so one drill-down renderer serves all three. An aggregate that shows a co
 opened is a dead end and is not acceptable.
 
 **No redundant inline record listings.** Where an entity list offers the Records action, it MUST
-NOT also print the constituent records inline. Record Merges cards show entity name, record count,
+NOT also print the constituent records inline. The "Show all merged entities" cards on Search /
+Probe show entity name, record count,
 and match key plus the actions — nothing more. Showing the same records twice is clutter, and it
 reads as unfinished once "click Records to see records" is the established pattern everywhere else.
 
@@ -501,7 +514,8 @@ reads as unfinished once "click Records to see records" is the established patte
 > for the attribute context, or attach handlers programmatically instead of inlining them. This is
 > language-agnostic front-end JavaScript, not a quirk of any one implementation.
 
-The Record Merges tab and each Search / Probe result carry **Why?** and **How?** actions that call
+Each Search / Probe result — searched or listed via "Show all merged entities" — carries **Why?**
+and **How?** actions that call
 `/api/why` and `/api/how` and render the explanation (match keys, feature scores, construction
 steps) in a modal.
 
@@ -546,7 +560,7 @@ moment.
 
 ### Graph rendering — labels, scale, and legends
 
-Applies to both **Entity Graph** and **Relationship Network**.
+Applies to **Entity Graph** in both of its modes.
 
 - **Independent label toggles.** Separate show/hide controls for **node** (entity name) labels and
   **edge** (match key / relationship type) labels. Two independent dials, not one combined control,
@@ -615,10 +629,12 @@ listing the entities in each bucket and linking each to its **How?** explanation
 **Static snapshot degradation:** the standalone snapshot has no live backend, so `why`/`how` and
 live `search` are unavailable there — those actions show a note directing the viewer to the live
 server. Everything else renders **offline** because the snapshot embeds `stats`, `graph`, `merges`,
-`records`, `overlap`, `matchkeys`, and `features` — so the Entity Graph, Relationship Network,
-Record Merges, Merge Statistics (with bucket drill-down and the largest-entities list), Match Keys
-(with row drill-down), Feature Scores, and Cross-Source (with cell drill-down) tabs all work with no
-network access. **The Records action works offline too**, because `records` is embedded: it needs no
+`records`, `overlap`, `matchkeys`, and `features` — so the Entity Graph (both modes, since the
+relationship subgraph is filtered from the same embedded `graph` payload), Merge Statistics (with
+bucket drill-down and the largest-entities list), Match Keys (with row drill-down), Feature Scores,
+and Cross-Source (with cell drill-down) tabs all work with no network access. `merges` stays embedded
+because Search / Probe's example-query chips and its "Show all merged entities" list both read it —
+that list is therefore available offline even though live search is not. **The Records action works offline too**, because `records` is embedded: it needs no
 engine call at view time, unlike `why`/`how`. The Feature Scores tab shows whatever was computed
 (capped) at build time. (`dashboard` is no longer embedded — the endpoint was removed and its
 content folded into `stats`.)

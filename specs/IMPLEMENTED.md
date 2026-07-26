@@ -18,6 +18,65 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## rebuild-viz-snapshot-after-customization
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase2-close.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `tests/test_viz_tab_consolidation.py` (new)
+- **Summary:** Confirmed all three root causes. `phase1-visualization.md:163` builds the
+  snapshot at 2.2 *before* the live server starts, and nothing re-enters that step after a
+  later change; `phase2-close.md`'s pre-advancement check verified existence and
+  non-emptiness but never that the snapshot matched the app the bootcamper saw; and Step 4
+  terminated the server then purged, with no rebuild opportunity anywhere before the data
+  was gone. Three changes: **(1)** a new numbered step **2.4b** requires re-running the
+  build-only snapshot after *any* post-2.2 change to the visualization — explicitly "do not
+  stop at re-verifying the live server" — and explains why the omission is permanent (the
+  purge removes the records the rebuild needs); **(2)** the completion gate now compares the
+  snapshot's tab set against the running server's, a cheap textual comparison since both are
+  generated from one source, rebuilding while the data is still up on divergence and warning
+  without blocking if it cannot; **(3)** Step 4 is reordered so the purge is the module's
+  **last** action — rebuild-if-stale, then capture live-server screenshots (Search / Probe
+  needs the running engine), then terminate, then purge — with an explicit "do not hoist the
+  purge". Module 7's results visualization gets the same rebuild-after-change rule, since its
+  snapshot is also a retained artifact. Tested by asserting the teardown step order in the
+  file itself, since file order is execution order.
+- **Commit:** uncommitted
+
+## consolidate-truthset-viz-merges-and-network-tabs
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_viz_tab_consolidation.py` (new)
+- **Summary:** Eight tabs to six. **Record Merges** removed: for any entity in both, Search /
+  Probe's result is a strict superset, and its one unique capability — browsing every merged
+  entity with no query — is now a "Show all merged entities" button on that tab, with the same
+  per-entity actions, so the removal is lossless rather than a trade. `/api/merges` is
+  **retained**, since the pre-verified example-query chips and that button both read it.
+  **Relationship Network** removed: `drawNetwork` was a near-duplicate of `drawGraph` over the
+  same `/api/graph` payload, so it is now Entity Graph's `graphMode` ("all" | "network") behind
+  a **"Show only entities with relationships"** toggle, shown only when
+  `relationships_total > 0` — the same condition that used to gate the tab. Carried over
+  unchanged: subgraph filtering, edge colour + dash by `relationship_type`, the click-to-filter
+  relationship legend (extracted to `drawRelationshipLegend`), and the empty-relationship
+  state. Also fixed a real issue the fold introduced: toggling re-enters `drawGraph`, so the
+  previous force simulation is now stopped via a module-scope `graphSim` instead of ticking on
+  against removed DOM. Contract updated — inventory reduced to six, the **de-duplication
+  ruling reversed** (it had explicitly ruled Relationship Network *was* distinct; that reversal
+  is now stated rather than silently dropped), the two ids kept as **REMOVED** reserved
+  identifiers so the screenshot helper can still capture an older eight-tab snapshot, and the
+  stale prose references and offline-snapshot note corrected.
+- **Verification and its limit:** no Senzing engine here, so I drove the real app through the
+  snapshot data shim with a synthetic payload and headless Chrome: the nav renders exactly the
+  six expected buttons in order, the toggle appears, all-mode draws all 9 fixture entities with
+  the data-source legend, and network mode draws exactly the 3 connected ones with the
+  relationship legend and dashed edges. **Not** verified against real resolved data or a live
+  `/api/*` server. One finding worth recording: an early capture showed network-mode nodes
+  collapsed in a corner, which looked like a layout bug. It is not — Chrome services
+  `requestAnimationFrame` only during initial load under `--virtual-time-budget`, and d3's force
+  simulation is rAF-driven, so any redraw triggered after load ticks 0 times (measured: 0 ticks,
+  empty node transforms, no JS errors, correct node count and SVG size). Element creation is
+  synchronous, so the tests count elements rather than reading positions. 40 assertions fail
+  against the pre-fix state; full suite 293 passed.
+- **Commit:** uncommitted
+
 ## artifact-level-verification-for-deliverables
 
 - **Implemented:** 2026-07-26
