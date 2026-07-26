@@ -183,12 +183,20 @@ proceed to the live server: fix the underlying cause (regenerate faulty code fro
 re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
 and retry until the snapshot is written — the module does not complete without it.
 
-**Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
-`docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap —
-`{html}` = `truthset_verification.html`, `{name}` = `truthset_verification` — per
-`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots". If no
-headless capability is available it skips silently; otherwise keep the 2-3 best and embed them in
-this module's recap `Actions Taken`. This is never a 👉 question and never blocks the visualization.
+**Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
+running (2.3) and capture from **`--url http://localhost:8080`**, one image per tab, so the
+Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
+inert. `{name}` = `truthset_verification`. Follow
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
+rule that every caption is derived from the opened image and its tab label, never from the plan.
+
+If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
+and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
+is available it skips silently; otherwise keep the 2-3 best and embed them in this module's recap
+`Actions Taken`. This is never a 👉 question and never blocks the visualization.
+
+⛔ Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) — afterwards the
+server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.
 
 ### 2.3 Start the live web app
 

@@ -125,12 +125,8 @@ def write_doc(directory, text, name="bootcamp_data_discoveries.md"):
     return path
 
 
-def pdf_text(path):
-    """Extract drawn text from a PDF, decompressing streams when needed.
-
-    fpdf2 compresses its content streams, so a raw byte search reports a false
-    negative — the mistake this helper exists to prevent.
-    """
+def _pdf_streams(path):
+    """Every content stream in a PDF, decompressed where possible."""
     with open(path, "rb") as handle:
         raw = handle.read()
     chunks = []
@@ -141,8 +137,45 @@ def pdf_text(path):
         except zlib.error:
             pass
         chunks.append(body.decode("latin-1", "replace"))
-    joined = "\n".join(chunks)
+    return chunks
+
+
+def pdf_text(path):
+    """Extract drawn text from a PDF, decompressing streams when needed.
+
+    fpdf2 compresses its content streams, so a raw byte search reports a false
+    negative — the mistake this helper exists to prevent.
+
+    ⛔ Presence here is NOT proof the text is *visible*: a run positioned outside the
+    page box is still in the content stream. Use `pdf_runs` for that — it is the only
+    thing that catches off-page rendering.
+    """
+    joined = "\n".join(_pdf_streams(path))
     return "".join(re.findall(r"\((.*?)\)\s*Tj", joined))
+
+
+# A4 portrait in PostScript points, the unit the content stream is written in.
+A4_W_PT, A4_H_PT = 595.28, 841.89
+
+
+def pdf_runs(path):
+    """Every drawn text run as ``(x, y, text)`` in points, in document order.
+
+    Positions are what distinguishes "rendered" from "present in the file". The
+    off-page-table defect this guards put full, correct text into the stream at
+    x ≈ 567 pt on a 595 pt page — `pdf_text` saw it, the reader did not.
+    """
+    runs = []
+    # `Td` always follows its two operands. Keying off the operator rather than `BT`
+    # handles both writers: fpdf2 emits `BT /F1 22 Tf ET  q BT x y Td (t) Tj ET Q`,
+    # the stdlib fallback emits `BT /F1 10.5 Tf x y Td (t) Tj ET`.
+    pattern = re.compile(r"([\d.]+)\s+([\d.]+)\s+Td\b(.*?)\bTj", re.S)
+    for stream in _pdf_streams(path):
+        for match in pattern.finditer(stream):
+            body = re.findall(r"\((.*?)\)\s*$", match.group(3).strip())
+            if body:
+                runs.append((float(match.group(1)), float(match.group(2)), body[0]))
+    return runs
 
 
 class TestRendersASoundDocument(unittest.TestCase):
@@ -176,14 +209,197 @@ class TestRendersASoundDocument(unittest.TestCase):
             text = pdf_text(os.path.join(tmp, "docs", "bootcamp_data_discoveries.pdf"))
             for probe in (
                 "Data Discoveries",
+                "What Senzing found in your data",
                 "Headline numbers",
                 "Review queue",
                 "POSSIBLY_SAME",
                 "achievable ceiling",
                 "Relationship networks",
+                # Table content. Its absence was invisible to this test for as long as
+                # the probe list omitted it, while the whole table rendered off-page.
+                "Match key",
+                "+NAME+ADDRESS",
             ):
                 with self.subTest(probe=probe):
                     self.assertIn(probe, text)
+
+
+LAYOUT_DOC = """# Data Discoveries
+
+**Bootcamper:** Ada Lovelace
+**Sources:** ENFORMION, EQUIFAX
+**Records:** 4,012 loaded across two sources with a 3.7% entity collapse observed
+
+## Headline numbers, interpreted
+
+- **Records loaded:** 4,012 across two sources, which is the full mapped set
+- **Resolved entities:** 3,864 with a modest collapse that is expected at this overlap
+- Plain trailing bullet with no bold label at all, closing the list
+
+## Merges and match keys
+
+| Match key pattern | Count | Sources |
+|---|---|---|
+| +NAME+ADDRESS | 118 | ENFORMION, EQUIFAX |
+
+```text
+verbatim code block that must also start at the left margin
+```
+
+## Review queue
+
+- **ABC AUTOMOTIVE INVESTMENTS pair (entities 300099, 300054):** these two agree on name and city but disagree outright on registration date, so Senzing declined the merge.
+- **Short:** stays inline beside its label.
+
+## Why and how: worked examples
+
+Entity 3301 did not merge with 3302 because the two addresses disagreed outright.
+
+## Relationship networks
+
+Multi-hop paths that no single record states on its own were found here.
+
+## What was not found, and why
+
+The two sources shared only 8 organization names, near the achievable ceiling.
+"""
+
+
+class TestEverythingRendersInsideThePage(unittest.TestCase):
+    """fpdf2's `multi_cell` leaves the cursor at the right margin (`new_x=RIGHT`).
+
+    A following full-width `multi_cell` that does not reset x draws from there across
+    the full width — off-sheet, silently. The generator still exits 0 and still
+    reports high content retention, because the text *is* in the content stream.
+    Only position catches it.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        write_doc(self.tmp.name, LAYOUT_DOC)
+        result = run([], self.tmp.name)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.pdf = os.path.join(self.tmp.name, "docs", "bootcamp_data_discoveries.pdf")
+        self.runs = pdf_runs(self.pdf)
+        self.assertTrue(self.runs, "no drawn text runs found")
+
+    def test_no_text_starts_beyond_the_right_margin(self):
+        """The direct detector for the off-page defect."""
+        # fpdf2's default margin is 10 mm ≈ 28.35 pt; allow the full text column plus
+        # a little slack, and fail on anything starting at or past the right margin.
+        limit = A4_W_PT - 25.0
+        offenders = [(x, y, t) for x, y, t in self.runs if x >= limit]
+        self.assertEqual([], offenders, f"text drawn past x={limit:.0f}pt: {offenders[:5]}")
+
+    def test_table_rows_render_in_the_text_column(self):
+        rows = [r for r in self.runs if "NAME+ADDRESS" in r[2] or "Match key" in r[2]]
+        self.assertTrue(rows, "the table did not render at all")
+        for x, _y, text in rows:
+            with self.subTest(text=text):
+                self.assertLess(x, A4_W_PT / 2, "table row drawn outside the text column")
+
+    def test_code_block_renders_in_the_text_column(self):
+        block = [r for r in self.runs if "verbatim code block" in r[2]]
+        self.assertTrue(block, "the code block did not render at all")
+        self.assertLess(block[0][0], A4_W_PT / 2)
+
+    def test_cover_subtitle_renders_in_full_at_the_left_margin(self):
+        subtitle = [r for r in self.runs if "What Senzing found" in r[2]]
+        self.assertTrue(subtitle, "cover subtitle missing")
+        x, _y, text = subtitle[0]
+        self.assertEqual("What Senzing found in your data", text, "subtitle was truncated")
+        self.assertLess(x, 40.0, "subtitle drawn away from the left margin")
+
+    def test_every_metadata_line_renders_in_the_text_column(self):
+        """Only the first meta line was safe: `ln()` reset x, the loop never did."""
+        for key in ("Bootcamper", "Sources", "Records"):
+            hits = [r for r in self.runs if r[2].startswith(key)]
+            with self.subTest(key=key):
+                self.assertTrue(hits, f"meta line {key} missing")
+                self.assertLess(hits[0][0], 40.0, f"meta line {key} drawn off-column")
+
+
+class TestLabelledBulletsStayReadable(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        write_doc(self.tmp.name, LAYOUT_DOC)
+        run([], self.tmp.name)
+        self.runs = pdf_runs(
+            os.path.join(self.tmp.name, "docs", "bootcamp_data_discoveries.pdf")
+        )
+
+    def _run_with(self, needle):
+        hits = [r for r in self.runs if needle in r[2]]
+        self.assertTrue(hits, f"{needle!r} not drawn")
+        return hits[0]
+
+    def test_long_bold_label_breaks_to_its_own_line(self):
+        label = self._run_with("ABC AUTOMOTIVE INVESTMENTS")
+        body = self._run_with("these two agree on name")
+        self.assertLess(body[1], label[1], "long-labelled body did not break to a new line")
+        self.assertLess(body[0], A4_W_PT / 3, "body did not return to (near) the left margin")
+
+    def test_short_label_keeps_its_body_inline(self):
+        label = self._run_with("Short")
+        body = self._run_with("stays inline")
+        self.assertEqual(body[1], label[1], "short label should not break the line")
+
+
+class TestListItemsAreSeparated(unittest.TestCase):
+    """A wrapped bullet's continuation lines sat at the same spacing as the gap
+    between two separate bullets, so multi-line items ran together."""
+
+    def _bullet_baselines(self, runs):
+        markers = [r for r in runs if r[2].strip() == "-"]
+        return sorted({round(r[1], 2) for r in markers}, reverse=True)
+
+    def test_consecutive_bullets_are_further_apart_than_one_line(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, LAYOUT_DOC)
+            run([], tmp)
+            runs = pdf_runs(os.path.join(tmp, "docs", "bootcamp_data_discoveries.pdf"))
+        baselines = self._bullet_baselines(runs)
+        self.assertGreaterEqual(len(baselines), 3, "expected several bullets")
+        # The three "Headline numbers" bullets are single-line, so consecutive markers
+        # are one line (5.5 mm ≈ 15.6 pt) plus the new inter-item gap (2.4 mm ≈ 6.8 pt).
+        gaps = [a - b for a, b in zip(baselines, baselines[1:])]
+        same_list = [g for g in gaps if g < 40]  # exclude cross-section jumps
+        self.assertTrue(same_list, "no within-list bullet gaps found")
+        for gap in same_list:
+            with self.subTest(gap=round(gap, 1)):
+                self.assertGreater(gap, 17.0, "bullets are still only one line apart")
+
+    def test_stdlib_renderer_also_separates_items(self):
+        from pathlib import Path
+
+        module = TestStdlibFallback.load_module(TestStdlibFallback())
+        doc = module.parse_discoveries(LAYOUT_DOC)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "stdlib.pdf"
+            self.assertTrue(module.render_with_stdlib(doc, out))
+            runs = pdf_runs(out)
+        self.assertTrue(runs, "stdlib renderer drew nothing")
+        # The stdlib path prefixes bullets into the wrapped text rather than drawing a
+        # separate marker, so key off the item bodies instead.
+        loaded = [r for r in runs if "Records loaded" in r[2]]
+        resolved = [r for r in runs if "Resolved entities" in r[2]]
+        self.assertTrue(loaded and resolved, "stdlib bullets missing")
+        gap = loaded[0][1] - resolved[0][1]
+        self.assertGreater(gap, 14.0, "stdlib items are still exactly one line apart")
+
+    def test_no_gap_trails_the_last_item_of_a_list(self):
+        """The gap is emitted only when the *next* block is also a list item."""
+        module = TestStdlibFallback.load_module(TestStdlibFallback())
+        blocks = module.parse_discoveries(LAYOUT_DOC).blocks
+        indices = [i for i, b in enumerate(blocks) if b.kind in ("bullet", "subbullet")]
+        self.assertTrue(indices)
+        for i in indices:
+            nxt = blocks[i + 1] if i + 1 < len(blocks) else None
+            expected = nxt is not None and nxt.kind in ("bullet", "subbullet")
+            with self.subTest(index=i, kind=blocks[i].kind):
+                self.assertEqual(expected, module._needs_item_gap(blocks, i))
 
 
 class TestRefusesToShipAnEmptyDeliverable(unittest.TestCase):

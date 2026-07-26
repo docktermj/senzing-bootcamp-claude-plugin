@@ -52,6 +52,17 @@ When the bootcamper hits an error during this module:
 2. Present the matching pitfall/fix for this module (full `common-pitfalls` reference is a
    later porting phase; for now, use `search_docs` to look up the symptom).
 
+Two `mapping_workflow` failure modes have their own handling in
+`phase2-data-mapping.md`, both under "Availability-aware mapping validation" — do not improvise
+either one:
+
+- a **validation script is unavailable** (HTTP 404) → degrade that check to optional/best-effort
+  and proceed;
+- **step-3 validation rejects the payload with no actionable reason** (a truncated error naming no
+  field) → capture the raw rejection to the source's checkpoint, stop after two attempts, and offer
+  the pinned three-option question. Writing the mapper against the Entity Specification is a
+  sanctioned outcome there, with all three quality gates still running.
+
 ## Phases
 
 - **Phase 1: Quality Assessment** (steps 1–7): `phase1-quality-assessment.md`

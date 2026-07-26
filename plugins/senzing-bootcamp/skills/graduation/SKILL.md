@@ -280,6 +280,27 @@ never rewrite a completed section's prose (INV-085), never add a reference that 
 skip any image that is missing or unreadable (INV-048). Like every graduation step it is
 non-blocking: if it is uncertain, warn and continue — never block the PDF on a screenshot.
 
+Captures are named `<name>-<tab-slug>.png` (see
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Tab identifiers and
+deep-linking"), so the **tab slug gives the caption**: use the tab's display name rather than
+inventing a description. A backfilled caption must never assert content that was not confirmed by
+opening the image.
+
+**Verify the screenshots the recap actually carries (warn, never block).** Three checks, each
+best-effort and each non-blocking (INV-048) — the backfill above only maps PNGs that *exist*, so
+none of these are covered by it:
+
+1. **A visualization-producing module with no image.** For each completed module whose recap section
+   references a `docs/visualizations/*.html` artifact, confirm its section has at least one
+   `![...](...)` line. If not, warn: the capture produced nothing and the section will ship without
+   images. This is the case that shipped a Truth Set visualization section with zero screenshots —
+   no PNG existed, so the backfill found nothing to backfill and said nothing.
+2. **Duplicate images within one section.** If two embedded images in the same section are
+   byte-identical, or have identical pixel dimensions and were written within the same second, warn:
+   that is the signature of capturing one tab repeatedly rather than one image per tab.
+3. **Captions that cannot be checked.** If an embedded filename carries no recognised tab slug, warn
+   that its caption cannot be verified against a tab and should be confirmed by opening the image.
+
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
 Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
 `docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into

@@ -1073,7 +1073,18 @@ async function drawFeatures(){const d=await getJSON("/api/features");const box=d
   box.append("p").attr("class","muted").text("Based on "+d.sampled+" of "+d.multi_record_total+" multi-record entities"+(d.capped?" (sampled to bound cost).":"."));
 }
 function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
-async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();drawMerges();loadProbes();}
+// Deep-link support: ?tab=<id> opens that tab, ?q=<text> runs a search on Search /
+// Probe (defaulting the tab to probe). Makes any view of the app a shareable URL, and
+// is how the screenshot helper captures one image per tab — including Search / Probe
+// showing real results, which the static snapshot cannot do (it has no engine).
+function applyDeepLink(){
+  var p=new URLSearchParams(location.search||"");
+  var tab=p.get("tab"), q=p.get("q");
+  if(q!==null&&!tab)tab="probe";
+  if(tab&&tabApplicable(tab)&&document.getElementById("tab-"+tab)&&document.getElementById("navbtn-"+tab))activate(tab);
+  if(q!==null){var box=document.getElementById("search-in");if(box){box.value=q;doSearch();}}
+}
+async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();drawMerges();loadProbes();applyDeepLink();}
 init();
 window.addEventListener("resize",function(){
   if(d3.select("#tab-graph").classed("active"))drawGraph();

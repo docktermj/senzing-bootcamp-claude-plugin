@@ -133,28 +133,54 @@ few screenshots of it so the recap shows what the bootcamper actually built, not
 link. This runs at the visualization step, right after the page exists, and is **non-blocking with
 graceful degradation** — never a 👉 question, and never a reason to stall.
 
-Procedure (parameterized by the visualization's `{html}` file and a short `{name}`):
+The app is a **tabbed** artifact, so capture is **one image per tab** — never several shots of one
+tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and a short
+`{name}`):
 
-1. Run the bundled helper on the **local** HTML file (or the `localhost` URL of the live app):
+1. Run the bundled helper. Prefer the **live app's `localhost` URL** while the server is still up,
+   because that is the only way the Search / Probe tab can show real results; fall back to the
+   standalone snapshot file when the server is already down:
 
    ```bash
-   python3 <helper> --html docs/visualizations/{html} --out-dir docs/visualizations --name {name}
+   # live app (preferred while it is running)
+   python3 <helper> --url http://localhost:{port} --out-dir docs/visualizations \
+       --name {name} --tabs graph,stats,matchkeys,features,overlap,probe --query "{a name in the data}"
+
+   # standalone snapshot (no server needed)
+   python3 <helper> --html docs/visualizations/{html} --out-dir docs/visualizations \
+       --name {name} --tabs graph,stats,matchkeys,features,overlap,probe
    ```
 
    Resolve `<helper>` as `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (command/hook
    context) or `../../scripts/capture_screenshots.py` relative to a module skill. It tries several
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
-   fetches a remote URL (offline — INV-091).
+   fetches a remote URL (offline — INV-091). Pass only tabs the app actually shows for this data —
+   the helper reports any tab that produced no image on stderr rather than dropping it silently.
 2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
    keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
    the `minimal` preset).
-3. **If it succeeds** (prints the PNG paths it wrote under `docs/visualizations/`): review the
-   shots, keep the **2-3 most representative** (delete the rest), and — **as a required step, in the
-   same turn** — embed them in **this module's recap `Actions Taken`** as
-   `![caption](docs/visualizations/{name}-1.png)`. Writing the image lines is not optional once a
-   capture succeeded; record it at the step checkpoint. The graduation PDF embeds these local images
-   and skips any that are missing (INV-048), and graduation backfills any that were captured but
-   never embedded (see `../graduation/SKILL.md` Step 1).
+3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
+   named `{name}-<tab-slug>.png`. Keep the **2-3 most representative** (delete the rest), and —
+   **as a required step, in the same turn** — embed them in **this module's recap `Actions Taken`**
+   as `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
+   optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds
+   these local images and skips any that are missing (INV-048), and graduation backfills any that
+   were captured but never embedded (see `../graduation/SKILL.md` Step 1).
+
+⛔ **Every caption is derived from the capture, never from the plan.** Build it from the tab label
+the helper printed (which matches the filename slug), and — before writing it — **open the image and
+confirm it shows that tab**. Describe only what is visible in it.
+
+A caption asserting content the image does not contain is a defect of the same class INV-115
+forbids: it renders the unverified as verified, in a permanent artifact the bootcamper is
+encouraged to share. It has happened — captions reading "Cross-source overlap and match-key
+frequency tabs" and "Search/Probe with a verified example query chip" were written for two images
+that both showed the Entity Graph, because the app *is* tabbed so the captures were assumed to be
+tab-diverse. Never infer image content from the visualization contract.
+
+If the Search / Probe tab was captured from the **static snapshot** rather than the live server, its
+search box is inert (the snapshot has no engine), so caption it explicitly as the empty/inactive
+state or omit it — never imply a result set that was not captured.
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 

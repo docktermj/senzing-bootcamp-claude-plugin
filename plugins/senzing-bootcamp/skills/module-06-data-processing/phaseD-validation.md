@@ -170,21 +170,69 @@ quality … Aggregate stats hide errors. Always sample and manually review speci
 which is exactly the gap the UAT percentages below leave open.
 
 1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
-   against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')`, a resolved
-   entity's per-record match keys are at `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`, and relationship
-   match keys at `RELATED_ENTITIES[].MATCH_KEY`. Confirm the method and flags via MCP this session.
+   against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')` there are
+   **two reads, and they need two different methods** — confirm both via MCP this session:
+
+   | What | Where | How to obtain it |
+   |---|---|---|
+   | Per-record match keys | `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` | a bulk export (`export_json_entity_report`) is fine |
+   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
+
+   ⛔ **Do not expect `RELATED_ENTITIES` from `export_json_entity_report`.** Every
+   relationship-detail flag — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
+   `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS` — lists only the
+   per-entity, `why_*` and `find_*` methods in its `applies_to`; the export methods are **not**
+   among them (verify with `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`).
+   A live run on SDK 4.3.3 returned entity rows with **no `RELATED_ENTITIES` key at all** and no
+   error. Writing the audit as one pass over an export therefore measures only the first row of the
+   table above while appearing to measure both.
+
+   The two export flag families also do different jobs. `SZ_EXPORT_INCLUDE_*` selects **which
+   entities** appear as rows (`..._POSSIBLY_SAME`, `..._DISCLOSED`, `..._ALL_HAVING_RELATIONSHIPS`
+   — all row filters). It does **not** select what detail a row carries: an export flagged with
+   only those succeeds and yields rows containing nothing but `ENTITY_ID`. The Senzing reporting
+   guidance names this as an anti-pattern — *"Exporting without proper flags … Use
+   `SZ_EXPORT_DEFAULT_FLAGS` or specify exactly which flags you need. Missing flags means missing
+   data in your reports."* — so start from `SZ_EXPORT_DEFAULT_FLAGS` and add row filters, rather
+   than OR-ing row filters alone.
+
+   ⚠️ **Confirm a composite exists on *your* binding before using it.** `SZ_EXPORT_ALL_FLAGS` is
+   documented for the export methods, but it comes from the Java SDK's flag enum and is **absent
+   from the Python binding's `SzEngineFlags`** in 4.3.3 (`AttributeError`). Flag *names* are not
+   uniformly available across bindings — introspect (`dir(SzEngineFlags)`) or confirm via MCP for
+   the bootcamper's language instead of copying a name from cross-language documentation.
+
+   Before parsing the whole reader output, **dump one raw row** and confirm the fields the parser
+   expects are actually present (INV-115).
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
    by frequency, and **separate single-source from cross-source** comparisons — the cross-source
    ones are where a mapping disagreement between two sources shows up.
-3. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
+3. ⛔ **An empty cross-source suppressor list is a plumbing failure until proven otherwise.**
+   "No suppressors found" and "this reader cannot answer the question" render identically — a
+   clean result — so never report the first without ruling out the second. Before making any
+   "no cross-source suppressors" statement, prove the reader can see relationships at all:
+
+   - Take one entity known to have a relationship (any entity with a `POSSIBLY_SAME` /
+     `POSSIBLY_RELATED` link, or use the relationship count you already have from the load
+     summary). If the loaded data genuinely has **zero** relationships, say that instead — the
+     question does not arise.
+   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it.
+
+   If that check fails, report **"the audit could not read relationship match keys"** and name the
+   reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a
+   probable wrong reader before it is real absent data).
+
+4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
    is detracting on a large share of cross-source comparisons, say so plainly and ask the
    bootcamper to check whether the two sources' fields for that feature genuinely measure the same
    thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two
    records really do disagree), and a hard failure here would produce false alarms and train
    bootcampers to dismiss the signal — which would cost more than the check gains.
-4. **Carry the finding into the decision gate below**, alongside the UAT numbers.
+5. **Carry the outcome into the decision gate below**, alongside the UAT numbers. The audit has
+   **three** outcomes, not two — finding, no finding, and could-not-measure — and the gate must be
+   told which one it got.
 
 > **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
 > (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates
@@ -195,10 +243,19 @@ which is exactly the gap the UAT percentages below leave open.
 
 ## Iterate vs. proceed decision gate
 
-Route on the UAT / match-accuracy results, **and present any match-key audit finding alongside
+Route on the UAT / match-accuracy results, **and present the match-key audit outcome alongside
 them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
 iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
 to choose "iterate now" even when the numbers look acceptable.
+
+State which of the audit's three outcomes applies; do **not** collapse the third into the second:
+
+- **A finding** — name the suppressing feature and its share.
+- **No finding** — the audit ran and found nothing of concern.
+- **Could not measure** — the relationship half of the audit did not execute (step 3). Say so
+  plainly rather than letting silence imply a clean result: a gate decided on an unmeasured number
+  is worse than a gate told the measurement failed. This still does not block (INV-117) — it is a
+  third finding that routes, not a new blocker.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong

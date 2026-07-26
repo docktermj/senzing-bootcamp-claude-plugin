@@ -43,19 +43,22 @@ The bootcamp is this ordered sequence. "Required" modules are always included an
 deselected; "Optional" modules are chosen in Customized mode. A module with **Requires** cannot
 run unless its prerequisite is also included.
 
-| # | Module | Rule | Maps to |
-|---|---|---|---|
-| 1 | Bootcamp preparation | Required | this module |
-| 2 | Entity Resolution Concepts | Optional | `module-00-entity-resolution-concepts` |
-| 3 | Discover the Business Problem | Required | `module-01-business-problem` |
-| 4 | SDK setup | Required | `module-02-sdk-setup` |
-| 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` |
-| 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03b-truthset-visualization` |
-| 7 | Data collection | Required | `module-04-data-collection` |
-| 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `module-05-data-quality-mapping` |
-| 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `module-06-data-processing` |
-| 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `module-07-query-visualize-discover` |
-| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` |
+The **State token** column is the exact value to write into `selected_modules` and
+`modules_completed`. Copy it; never derive a token from a display name.
+
+| # | Module | Rule | State token | Maps to |
+|---|---|---|---|---|
+| 1 | Bootcamp preparation | Required | `bootcamp_preparation` | this module |
+| 2 | Entity Resolution Concepts | Optional | `entity_resolution_concepts` | `module-00-entity-resolution-concepts` |
+| 3 | Discover the Business Problem | Required | `business_problem` | `module-01-business-problem` |
+| 4 | SDK setup | Required | `sdk_setup` | `module-02-sdk-setup` |
+| 5 | System verification | Optional — Requires "SDK setup" | `system_verification` | `module-03-system-verification` |
+| 6 | Truth Set visualization | Optional — Requires "System verification" | `truthset_visualization` | `module-03b-truthset-visualization` |
+| 7 | Data collection | Required | `data_collection` | `module-04-data-collection` |
+| 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `data_quality_mapping` | `module-05-data-quality-mapping` |
+| 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `data_processing` | `module-06-data-processing` |
+| 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `query_visualize_discover` | `module-07-query-visualize-discover` |
+| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
 
 Because **Graduation is required** and it requires "Query, Visualize and Discover", which requires
 "Data processing", which requires "Data Quality, Mapping, and Transformation", which requires "Data collection", that
@@ -74,8 +77,29 @@ Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
 
 This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 
-- **Core** → all modules are selected, in order. **Hold** `path: core` and the full ordered
-  `selected_modules` list for the consolidated write in Step 6; skip Step 2.
+- **Core** → **every** module is selected, in order — including all three deselectable ones.
+  "Optional" describes what Customized may drop; it never means Core omits it. **Hold**
+  `path: core` and this exact ordered list for the consolidated write in Step 6, then skip Step 2:
+
+  ```yaml
+  selected_modules:
+    - bootcamp_preparation
+    - entity_resolution_concepts
+    - business_problem
+    - sdk_setup
+    - system_verification
+    - truthset_visualization
+    - data_collection
+    - data_quality_mapping
+    - data_processing
+    - query_visualize_discover
+    - graduation
+  ```
+
+  ⛔ Copy that list verbatim — all eleven tokens. Do **not** rebuild it by translating the module
+  table's display names into tokens: that derivation is what silently dropped
+  `entity_resolution_concepts` from a Core run, so the primer never appeared and the bootcamper was
+  never told a module had been skipped (INV-014 permits only *requested* skips).
 - **Customized** → go to Step 2.
 
 ## 2. Select modules (Customized only)
@@ -234,17 +258,24 @@ write.
 path: core            # or: customized
 selected_modules:     # ordered; drives the journey map and transitions
   - bootcamp_preparation
-  - entity_resolution_concepts   # optional — present only if selected
+  - entity_resolution_concepts   # always in Core; omitted only if Customized drops it
   - business_problem
   - sdk_setup
-  - system_verification          # optional
-  - truthset_visualization       # optional
+  - system_verification          # always in Core; omitted only if Customized drops it
+  - truthset_visualization       # always in Core; omitted only if Customized drops it
   - data_collection
   - data_quality_mapping
   - data_processing
   - query_visualize_discover
   - graduation
 ```
+
+⛔ **Before handing off, verify the list you are about to write** (internal self-check, not
+bootcamper-facing). When `path: core`, confirm `selected_modules` holds all eleven tokens from
+Step 1 in that order; when `path: customized`, confirm it holds the eight Required tokens plus
+exactly the optional ones resolved in Step 2, in module order. If a module is missing, correct it
+**now** — after the handoff in Step 7 the next module has already started and the omission is
+invisible.
 
 Also record the selection into `config/bootcamp_progress.json` where module-completion and the
 journey map read it (a single batched write, INV-012): the ordered `selected_modules` and the

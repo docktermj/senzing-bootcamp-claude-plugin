@@ -18,6 +18,170 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## mapping-workflow-truncated-validation-errors
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/SKILL.md`, `tests/test_mapping_rejection_fallback.py` (new)
+- **Summary:** The skill already degraded gracefully when a validation *script* was
+  unavailable (HTTP 404) but had no handling for a validator that runs and rejects
+  unusably, so the agent's only documented options were to retry blindly or improvise —
+  and a bootcamp hand-authored two of three mappers, exactly what `mapping_workflow`
+  exists to prevent. Added a third failure mode beside the existing one, defined
+  observably (a rejection naming no field and carrying no line or pointer), with:
+  a retry bounded at two attempts; the raw rejection text captured **verbatim** into the
+  source's `config/mapping_state_[datasource].json` under a new `validation_rejections`
+  array before falling back, since that text was the only diagnostic and it was being
+  lost; a pinned three-option 👉 question (INV-051/INV-056, numbered, no "or" per
+  INV-009) replacing the ad hoc one asked in-session; and an explicit statement of what
+  the Entity Specification fallback preserves — attribute names still read from
+  `docs/reference/` and never from training data (INV-080), all three quality gates still
+  run, the cross-source shared-feature collision check still runs, and the result is
+  still only structurally validated (INV-117). A new `mapper_source` field records how
+  each mapper was produced so the deliverable says which sources went through the
+  workflow. `SKILL.md`'s error-handling section now routes both failure modes to this
+  handling rather than leaving them to improvisation. `tests/test_mapping_rejection_fallback.py`
+  (16 tests) pins all of it; 16 assertions fail against the pre-fix skill.
+- **Deferred:** the spec's upstream criterion — filing a `submit_feedback` request for full
+  or structured step-3 validation errors — was **deliberately not done**. It sends content
+  to an external service, so the maintainer chose to file it themselves. Every plugin-side
+  change is complete and verified; the upstream request remains outstanding and is the
+  actual fix for the root cause, which is in the Senzing MCP server, not this repository.
+- **Commit:** uncommitted
+
+## per-tab-screenshot-capture-and-grounded-captions
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_capture_tabs.py` (new)
+- **Summary:** Replaced per-viewport capture with per-tab capture, and made the caption
+  derivable from the capture instead of the plan. **Capture:** `_VIEWS` (three window
+  sizes over one page load, no interaction step) is gone; the helper now takes `--tabs`
+  and writes one `<name>-<tab-slug>.png` per tab. Tab selection happens *in the page*, so
+  no browser-automation dependency is added and all four existing backends work per tab:
+  `--url` appends `?tab=`/`&q=`, while `--html` writes a temp sibling copy with an
+  injected call to the app's own `activate(<id>)` (falling back to clicking
+  `#navbtn-<id>`, retrying 60 × 100 ms past the async init). Chrome gains
+  `--virtual-time-budget=15000`, without which the frame is captured before D3 and the
+  `/api/*` fetches settle. Each written path is printed with its human tab label so the
+  caller has the caption to hand. **Deep-linking:** added `applyDeepLink()` to
+  `senzing_viz_server.py`, awaited at the end of `init()` after `buildNav()`; `?q=`
+  without `?tab=` defaults to `probe`, and an unknown/non-applicable tab leaves the
+  default active. **Bug found while verifying:** requesting a tab the app lacks still
+  wrote a PNG — of the *default* tab — so `viz-feature-scores.png` contained the Entity
+  Graph, a filename lying about its content, i.e. this spec's own defect class. Added a
+  `_tabs_present()` markup pre-flight that skips and reports absent tabs, plus a distinct
+  exit-2 message for "none of the requested tabs exist" so it is never misreported as a
+  missing browser. **Captions:** `module-completion.md` now requires each image be opened
+  and described from what it shows, cites the two fabricated captions as the motivating
+  case, and forbids implying a Search / Probe result set that was not captured; the Truth
+  Set module captures from the **live server** before teardown so that tab can show real
+  results. **Contract:** `visualization-api-reference.md` gains a "Tab identifiers and
+  deep-linking" section making the ids, `activate()` and `?tab=`/`?q=` binding for a
+  server in any language (INV-090). **Graduation:** the backfill derives captions from
+  the tab slug, and three new warn-never-block checks cover a visualization-producing
+  module with no image (the Truth Set case the old backfill was structurally blind to),
+  byte-identical images in one section, and filenames carrying no recognised slug.
+  Verified by capturing five tabs from a contract-shaped fixture with real headless
+  Chrome, **opening the PNGs** to confirm each shows its named tab, and checking all five
+  were byte-distinct with temp copies cleaned up; both `--html` and `--url` modes
+  exercised. `tests/test_capture_tabs.py` (37 tests) pins the tab inventory against the
+  contract table, the guards, the pre-flight, and the exit-2 degradation; full suite
+  173 passed.
+- **Commit:** uncommitted
+
+## match-key-audit-cannot-read-related-entities-from-export
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_related_entities_guidance.py` (new)
+- **Summary:** The spec's root cause was filed **Unverified**; the Senzing MCP server has now
+  confirmed it. `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`
+  shows every relationship-detail flag's `applies_to` covering only the per-entity, `why_*`
+  and `find_*` methods — the export methods are absent from all of them. So an export cannot
+  supply `RELATED_ENTITIES`, and the field observation stands. Changes: (1) phase D's
+  match-key audit now presents the audit as **two reads needing two methods** in a table, with
+  a ⛔ warning that an export supplies no `RELATED_ENTITIES` and a pointer to the MCP query
+  that proves it; (2) the two export flag families are distinguished —
+  `SZ_EXPORT_INCLUDE_*` selects *rows*, not per-row detail, so row filters alone yield rows
+  containing only `ENTITY_ID` — quoting the Senzing reporting guidance's own anti-pattern and
+  directing readers to start from `SZ_EXPORT_DEFAULT_FLAGS`; (3) a defensive step 3 makes an
+  empty cross-source suppressor list a **plumbing failure until proven otherwise**, requiring
+  the reader be shown to return a non-empty `RELATED_ENTITIES` for a known-related entity
+  before any "no suppressors" claim, and reporting "the audit could not read relationship
+  match keys" when it cannot (INV-115); (4) the iterate-vs-proceed gate now carries **three**
+  outcomes — finding / no finding / could-not-measure — so a gate is never decided on an
+  unmeasured number, while staying non-blocking (INV-117); (5) the contradicted bullet in
+  `visualization-api-reference.md`, which offered `SZ_ENTITY_INCLUDE_ALL_RELATIONS` on an
+  export as the remedy, is replaced with the per-entity/network methods, a note that
+  `SZ_EXPORT_INCLUDE_ALL_HAVING_RELATIONSHIPS` is only a row filter, and an empty-edges check.
+  **Correction made during implementation:** a first draft asserted "there is no
+  `SZ_EXPORT_ALL_FLAGS`", per the feedback entry. MCP shows the constant *does* exist for the
+  export methods, sourced from the Java SDK flag enum — it is the **Python** binding that
+  lacks it. The text now qualifies it by binding rather than denying it, since writing a
+  Senzing falsehood into the plugin would breach INV-080 as much as a guess would. Added
+  `tests/test_related_entities_guidance.py` pinning both files' agreement, the empty-result
+  challenge, the three gate outcomes, the binding-specific qualification, and INV-117's
+  no-direct-SQL rule: 13 assertions fail against the pre-fix skills and pass after; full suite
+  120 passed.
+- **Commit:** uncommitted
+
+## core-path-enumerates-every-module
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `tests/test_module_selection_sync.py` (new)
+- **Summary:** Replaced a derivation with an enumeration. Step 1's Core branch said only
+  "all modules are selected, in order", so the agent had to translate eleven display
+  names from the module table into eleven state tokens with no canonical list to copy —
+  and that derivation dropped `entity_resolution_concepts`, the one module labelled
+  "optional". Confirmed the skill's documented *behavior* was already correct; only the
+  copyable artifact was missing. Four changes: (1) Step 1's Core branch now carries the
+  literal eleven-token ordered list with a ⛔ note not to rebuild it from display names,
+  and states that "optional" describes what Customized may drop and never means Core
+  omits it; (2) the module-list table gained a **State token** column, making
+  display-name → token a lookup rather than an inference; (3) the Step 6 YAML example's
+  `# optional — present only if selected` annotation, which read as exclude-by-default,
+  now reads "always in Core; omitted only if Customized drops it"; (4) an internal
+  pre-handoff self-check in Step 6 verifies the list against the expected count for the
+  chosen path and corrects it *before* Step 7 hands off, since after the handoff the
+  omission is invisible. Verified `bootcamp-preparation/SKILL.md` is the sole
+  enumeration of `selected_modules` in the plugin (no competing list to drift against)
+  and that all eleven tokens are the ones other skills actually read. Added
+  `tests/test_module_selection_sync.py` pinning the Core list, the table/list agreement,
+  the deselectable-module inclusion, the wording, and the self-check — 11 assertions
+  fail against the pre-fix skill and pass after; full suite 108 passed.
+- **Commit:** uncommitted
+
+## discoveries-pdf-offpage-blocks-and-list-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `tests/test_discoveries_pdf.py`
+- **Summary:** Four fixes, all verified by rasterizing the rendered pages rather than
+  by exit code. **(1) Silent content loss.** fpdf2's `multi_cell` leaves the cursor at
+  the right margin (measured: x = 200 mm on a 210 mm page), so full-width writes that
+  did not reset x drew off-sheet. Reproduced first against the unmodified script: the
+  test fixture's whole table gave 0 `pdftotext` hits and the cover subtitle extracted
+  as `Wha`, while the generator printed "content retained: 95%" and exited 0. Routed
+  every full-width write through a new `_full_width()` helper that resets x, so a new
+  block kind cannot inherit the bug — only the bullet-body `multi_cell`, which sets x
+  itself, remains outside it. **(2) Long bold labels** crammed their body into a
+  narrow column: the `remaining < 20` guard was an order of magnitude too low
+  (~60 mm of a 190 mm line clears it). Changed to `remaining < max(20, epw * 0.5)`
+  with an `indent + 6` hanging indent, in both this generator and
+  `generate_recap_pdf.py:1124` (audited: all six of the recap generator's `multi_cell`
+  sites were already x-safe, so it needed this fix only). Confirmed layout-neutral on
+  the shipped example recap — 646 drawn runs and 17 pages, identical before and after.
+  **(3) List spacing** (the original request): `_needs_item_gap()` emits a 2.4 mm gap
+  after a bullet only when the next block is also one, so it falls strictly between
+  items; mirrored in the stdlib renderer via a new exact-advance `GAP` token (3 pt),
+  since an ordinary empty token costs a full line. **(4) INV-111 violation:** the
+  `brand_tokens` fallback was a bare silent `except Exception`; it now names the case
+  and the directory searched on stderr and still proceeds. **Test gap closed:** the
+  suite's one presence test passed on the broken output because its probes omitted
+  table content. Added `pdf_runs()`, which extracts `(x, y, text)` from the content
+  stream — the only dependency-free way to tell "rendered" from "present in the file"
+  — plus classes for on-page rendering, label breaking, and item spacing. The new
+  tests fail 13 assertions against the pre-fix script and pass against the fixed one;
+  full suite 99 passed.
+- **Commit:** uncommitted
+
 ## always-produce-data-discoveries-document
 
 - **Implemented:** 2026-07-25

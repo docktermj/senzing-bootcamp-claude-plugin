@@ -65,6 +65,17 @@ On session resume: read the checkpoint, show the user where they left off, resta
 `mapping_workflow`, fast-track through decided steps, and resume from the first incomplete step.
 **Delete the checkpoint when mapping for that source is complete.**
 
+When step-3 validation rejects a payload, append the **verbatim** returned text to a
+`validation_rejections` array on the same checkpoint, and record `mapper_source` once the mapper
+exists (`mapping_workflow` or `entity_specification`, with the reason when it is the latter):
+
+```json
+{"data_source":"NOMINO-RISK","current_step":3,"validation_rejections":["<raw rejection text, unedited>"],"mapper_source":"entity_specification","mapper_source_reason":"step-3 validation rejected twice with a truncated error naming no field"}
+```
+
+Keep the rejection text unedited — truncating or summarising it destroys the only evidence the
+upstream defect can be diagnosed from.
+
 ## File placement during the workflow
 
 `mapping_workflow` downloads workflow resources and later produces output into a workspace
@@ -221,6 +232,45 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
+
+⛔ **When `mapping_workflow`'s step-3 validation rejects the payload without an actionable
+reason.** The block above handles a validator that is *unavailable*; this handles one that runs and
+rejects unusably. Treat a rejection as **unactionable** when its text names no field and carries no
+line or pointer the payload could be corrected against — a truncated error string is the observed
+case.
+
+1. **Bound the retry at two.** After two unactionable rejections for the same source, stop. A third
+   attempt is guesswork with no convergence signal, and guessing costs the bootcamper more than the
+   documented path saves.
+2. **Capture the evidence first.** Before falling back, write the raw rejection text **verbatim**
+   into that source's `config/mapping_state_[datasource].json` (a `validation_rejections` array).
+   It is the only diagnostic the upstream fix has, and it is otherwise lost when the session ends.
+3. **Ask, do not decide.** Present this pinned 👉 question (INV-051/INV-056, numbered, no "or"):
+
+   👉 **The mapping validator rejected this source twice without saying why. How would you like to proceed? Reply with a number:**
+
+   1. **Write the mapper against the Senzing Entity Specification** *(recommended)* — all three quality gates still run.
+   2. **Try the mapping workflow once more** — it may succeed with a different payload.
+   3. **Skip this source** — continue with the sources that mapped successfully.
+
+   *(Internal: end the turn on this question and wait — INV-007.)*
+
+4. **On option 1, the fallback is bounded, not a free hand.** State plainly what still holds:
+   - Attribute names come from the Senzing Entity Specification in `docs/reference/` (see
+     "Entity specification reference" below) — **never** from training data or memory. The
+     "NEVER hand-code or guess Senzing attribute names" rule at the top of this phase is
+     unchanged: reading the specification is not guessing (INV-080).
+   - **All three quality gates still run**, with the same availability-aware handling as above.
+   - The ⛔ cross-source shared-feature collision check still runs — it is cross-source, and the
+     validator never performed it anyway.
+   - The mapping is still only **structurally** validated; Data processing's match-key audit
+     remains the semantic check (INV-117).
+5. **Record how each mapper was produced.** Note the fallback and its reason in the source's
+   mapping-state checkpoint and in its `docs/mapping/` write-up, so a reader of the deliverable can
+   tell which sources went through `mapping_workflow` and which did not.
+
+`mapping_workflow` remains the default and documented path. Never offer this fallback
+pre-emptively — only after two unactionable rejections of the same source.
 
 ⛔ **These gates are structural, not semantic — say so; do not let green be mistaken for correct.**
 Every check above validates **one source at a time** and asks whether the output is *well-formed*:

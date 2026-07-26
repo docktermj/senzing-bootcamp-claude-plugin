@@ -95,17 +95,30 @@ creating a new type the legend does not know about.
 > requirement in Step 2 of `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
-from a default export. `graph_builder.py` SHALL discover relationships explicitly (a plain
-`export_json_entity_report` does not include relationship data by default, so reading
-`RELATED_ENTITIES` from it yields an empty `edges` array). Obtain relationships using either or
-both of:
+from an export. ⛔ **`export_json_entity_report` does not supply `RELATED_ENTITIES` — reading edges
+from an export yields an empty `edges` array, and no error.** Every relationship-detail flag
+(`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members, `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`,
+`SZ_INCLUDE_MATCH_KEY_DETAILS`) lists only the per-entity, `why_*` and `find_*` methods in its
+`applies_to`; the export methods are **not** among them. Confirm with
+`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`.
 
-- **`find_network_by_entity_id`:** for multi-record/related entities, call
-  `find_network_by_entity_id` to retrieve the relationship network and derive edges from the
-  returned links.
-- **Relationship-inclusion export flag:** request the entity export/report with the flag that
-  includes all relations (`SZ_ENTITY_INCLUDE_ALL_RELATIONS`, confirmed via the Senzing MCP
-  server) so `RELATED_ENTITIES` is populated, then build edges from it.
+`graph_builder.py` SHALL therefore discover relationships through a **per-entity or network**
+method:
+
+- **`find_network_by_entity_id`:** for multi-record/related entities, retrieve the relationship
+  network and derive edges from the returned links. (Note the Python binding takes a plain
+  `List[int]` of entity IDs, not an entity-IDs JSON document.)
+- **`get_entity_by_entity_id` / `get_entity_by_record_id`:** per entity, with
+  `SZ_ENTITY_INCLUDE_ALL_RELATIONS` (or `SZ_ENTITY_DEFAULT_FLAGS`, which contains it), then build
+  edges from each entity's `RELATED_ENTITIES[]`.
+
+`SZ_EXPORT_INCLUDE_ALL_HAVING_RELATIONSHIPS` is a **row filter** — it selects which entities appear
+in an export, not what relationship detail each row carries — so it does not substitute for either
+of the above.
+
+⛔ If the resulting `edges` array is empty, treat it as a probable reader failure before reporting
+"no relationships" (INV-115): confirm against the load summary's relationship count, and say the
+edges could not be read rather than rendering a graph that implies there were none.
 
 Map each discovered relationship to an `Edge`: `match_key` is taken from the Senzing
 relationship's match-key string and `relationship_type` reflects the relationship kind (e.g.,
@@ -417,6 +430,36 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
   showing one histogram read as redundant, not complementary.
 - The **Relationship Network** tab *is* distinct (the related-entity subgraph emphasizing
   relationship type), not a second full-population graph.
+
+### Tab identifiers and deep-linking (required)
+
+Tab ids are **contract**, not an implementation detail: the recap screenshot helper selects a tab by
+id, so a server in any language (INV-090) must use these exact ids and expose the two hooks below.
+
+| Tab | Id | Section id | Nav button id | Screenshot slug |
+|---|---|---|---|---|
+| Entity Graph | `graph` | `tab-graph` | `navbtn-graph` | `entity-graph` |
+| Relationship Network | `network` | `tab-network` | `navbtn-network` | `relationship-network` |
+| Record Merges | `merges` | `tab-merges` | `navbtn-merges` | `record-merges` |
+| Merge Statistics | `stats` | `tab-stats` | `navbtn-stats` | `merge-statistics` |
+| Match Keys | `matchkeys` | `tab-matchkeys` | `navbtn-matchkeys` | `match-keys` |
+| Feature Scores | `features` | `tab-features` | `navbtn-features` | `feature-scores` |
+| Cross-Source | `overlap` | `tab-overlap` | `navbtn-overlap` | `cross-source` |
+| Search / Probe | `probe` | `tab-probe` | `navbtn-probe` | `search-probe` |
+
+The app MUST provide:
+
+- **`activate(<id>)`** — a page-scope function that shows that tab. The screenshot helper injects a
+  call to it into a temp copy of the standalone snapshot (falling back to clicking
+  `#navbtn-<id>`), which is how a tab is captured with no browser-automation dependency.
+- **`?tab=<id>` / `?q=<text>` deep-linking** — applied at the end of `init()`, after the async
+  data load and `buildNav()` have settled. `?tab=` activates that tab when it is applicable and
+  present; `?q=` fills the search box and runs the search, defaulting the tab to `probe` when `q` is
+  given without `tab`. This makes any view of the app a shareable URL, and it is what lets the live
+  Search / Probe tab be captured showing **real results** rather than an empty box.
+
+Deep-linking MUST be tolerant: an unknown or non-applicable `tab` value leaves the default tab
+active rather than erroring or blanking the page.
 
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
 them in its own summary sentence.

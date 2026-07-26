@@ -244,7 +244,9 @@ of the Truth Set. It MUST:
   generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
   silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
-  `{name}` = `results_visualization`.
+  `{name}` = `results_visualization`. Capture **one image per tab** from the running server
+  (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
+  several shots of one tab — and derive every caption from the opened image and its tab label.
 
 ⛔ **The server stays running — screenshot capture must not stop it.** The API probes and the
 screenshot pass above are agent-side verification, not the end of the interaction. Follow the

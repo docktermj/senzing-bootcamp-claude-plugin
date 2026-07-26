@@ -1122,7 +1122,13 @@ def _render_line(pdf, epw, line: str) -> None:
         pdf.cell(pdf.get_string_width(bold_prefix) + 1, 5.5, bold_prefix)
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
-    if remaining < 20:
+    # A long bold label (e.g. a "**Q:**" carrying a full question) leaves a narrow
+    # column, and every wrapped line then stacks in it beside a large empty gutter.
+    # A bare 20 mm floor is an order of magnitude too low to catch that: ~60 mm of a
+    # 190 mm line clears it and still reads as a ribbon. Break once the label has
+    # eaten half the width; short labels still render inline, which reads well.
+    if remaining < max(20.0, epw * 0.5):
+        indent = min(indent + 6, epw - 20)
         remaining = epw - indent
         pdf.ln(5.5)
         pdf.set_x(pdf.l_margin + indent)
