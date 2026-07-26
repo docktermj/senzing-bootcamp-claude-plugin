@@ -309,64 +309,45 @@ never count against the one-question-per-turn rule and must not be treated as ga
   and reasoning-effort level and directing the bootcamper to their Claude app's model/effort
   controls, without hardcoding a UI label that may drift.
 
-  ⛔ **Read `model_guidance` from `config/bootcamp_preferences.yaml` first (INV-119).** It was
-  settled once in Bootcamp preparation (Step 3a) — either by the pinned question, or by a value the
-  Bootcamper had already saved, in which case the question was not asked (INV-133). Either way the
-  file is the single source of truth here, so read it rather than assuming a question was answered
-  this run. **Absent, empty, or unreadable → treat as `advisory`.** The three modes:
+  ⛔ **This behavior is unconditional — there is no preference to read and no mode to choose
+  (INV-137).** The bootcamp is never asked how it wants model guidance handled, and there is no
+  `model_guidance` key. Two cases, decided only by whether the recommendation **changed**:
 
-  - **`advisory` (the default) — one line, no question, no gate.** Present the recommendation as
-    part of the apparatus block, beside the time estimate, then continue **straight into Step 1 in
-    the same turn**. It costs zero extra turns. Never end the turn on it, never follow it with a
-    confirmation gate. The line MUST (INV-120):
-    - **Name the bootcamper's current model and effort** next to the recommendation, so the
-      comparison is visible and can be dismissed with confidence.
-    - **Name model and effort separately** — they are independent dials.
-    - **State that either can be changed at any time**, taking effect on the next message; the
-      module boundary is not the only opportunity.
-    - **Say so explicitly when the recommendation is *below* the current setting**, and why the
-      carve-out may not apply, so it never reads as advice to downgrade.
+  - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
+    end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
+    Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
 
-    Shape (CLI; adapt per INV-098 on other surfaces):
+    On the **CLI**, pin the switch question verbatim with the stage's commands:
 
-    > **Recommended here:** Sonnet 5 · high effort (`/model sonnet` · `/effort high`) — you're on **Opus 5 · high**, which is stronger, so staying put is fine; Data processing only needs Opus if you write bespoke load code. Change either any time; it applies from your next message.
+    > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
 
-    When the recommendation matches what they are already on, collapse it to a single line naming
-    both dials and stating they are already set — no comparison needed.
-  - **`off`** — present nothing. No line, no question, no mention. They opted out; respect it.
-  - **`prompt`** — the blocking behavior, unchanged, for bootcampers who asked for it. Two cases:
-    - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
-      end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
-      Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
+    On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
+    stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
 
-      On the **CLI**, pin the switch question verbatim with the stage's commands:
+    > 👉 **Would you like to switch to Opus 5 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
 
-      > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
+    This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
+    telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
+    or use the model and reasoning-effort controls in their Claude app), then end the turn on this
+    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts
+    to the surface) — do NOT show Step 1 yet:
 
-      On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
-      stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
+    > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
-      > 👉 **Would you like to switch to Opus 5 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
+    acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
+    (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
+    turn, ending on Step 1's single 👉 question.
+  - **Recommendation unchanged** → a brief one-line statement; no question, so the bootcamp never
+    asks a pointless "switch?" every module (INV-012). The statement names the recommended model and
+    effort as **separate dials**, notes either can be changed at any time and applies from the next
+    message, and — when the recommendation sits *below* the current setting — says so explicitly with
+    why the carve-out may not apply, so it never reads as advice to downgrade.
 
-      This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
-      telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
-      or use the model and reasoning-effort controls in their Claude app), then end the turn on this
-      pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts
-      to the surface) — do NOT show Step 1 yet:
-
-      > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
-
-      Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
-      acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
-      (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
-      turn, ending on Step 1's single 👉 question.
-    - **Recommendation unchanged** → a brief one-line statement; no question, so the
-      bootcamp never asks a pointless "switch?" every module (INV-012).
-
-  ⛔ **The "Are you done modifying the model and effort?" gate belongs to `prompt` alone.** Under
-  `advisory` and `off` there is nothing to wait for, so it MUST NOT appear. In every mode, you never
-  change the session yourself — only the bootcamper can, which is exactly why the default does not
-  ask permission for it.
+  ⛔ **You never change the session yourself — only the bootcamper can.** That is why the switch is
+  offered as a question rather than performed. The "Are you done modifying the model and effort?"
+  gate follows a **yes** to the switch and nothing else: never after a decline, and never when the
+  recommendation was unchanged.
 
   Switching is always optional — running one model for everything (Opus 5) stays valid. Per-stage
   recommendation — **this table is the authoritative copy** (the one in

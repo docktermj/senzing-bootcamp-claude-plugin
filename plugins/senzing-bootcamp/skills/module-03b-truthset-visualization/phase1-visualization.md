@@ -54,10 +54,10 @@ immediately before Step 1:
 6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,
    varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
    figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
-7. **Model/effort (INV-063/INV-119):** surface the recommended model/effort per ground-rules,
-   honoring the bootcamper's `model_guidance` preference — a one-line advisory by default, nothing
-   at all under `off`. The recommendation is unchanged from System verification (Module 3 tier), so
-   even under `prompt` this is a concise, non-blocking statement rather than a switch question.
+7. **Model/effort (INV-063/INV-137):** surface the recommended model/effort per ground-rules. The
+   recommendation is unchanged from System verification (Module 3 tier), so this is a concise,
+   non-blocking one-line statement rather than a switch question. There is no `model_guidance`
+   preference to read (INV-137).
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)

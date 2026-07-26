@@ -92,7 +92,6 @@ name: Ada Lovelace
 os: Linux
 arch: x86_64
 git_init: true
-model_guidance: advisory
 verbosity:
   preset: standard
 """
@@ -214,7 +213,7 @@ RECORDS = "\n".join(
 FIXTURE_MAP = [
     ("config/bootcamp_progress.json", "makes every hook consider the bootcamp active; mid-module so resume paths run"),
     ("  └ docker_containers", "names an ABSENT container -> warn-and-continue (INV-101)"),
-    ("config/bootcamp_preferences.yaml", "a saved model_guidance to test honor-don't-ask (INV-133)"),
+    ("config/bootcamp_preferences.yaml", "saved verbosity + language to test honor-don't-ask (INV-133)"),
     ("docs/bootcamp_recap.md", "a completed section carrying all four subsections (INV-103)"),
     ("docs/progress/recap_checkpoint.md", "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059); its '— in progress' heading is the only chip long enough to reach the PDF cover's 46-char clip, so FOLD FIRST, then render (INV-048)"),
     ("docs/feedback/...FEEDBACK.md", "a precious entry the normalizer must leave byte-identical (INV-067)"),

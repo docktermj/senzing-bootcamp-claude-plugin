@@ -84,7 +84,6 @@ someone what they already told you is an INV-006 violation, and it is most galli
 |---|---|---|
 | `path` | Step 1 | `core`; or `customized` **and** a valid `selected_modules` list is also saved |
 | `verbosity` | Step 3 | a recognized preset (`minimal`/`concise`/`standard`/`detailed`) |
-| `model_guidance` | Step 3a | `advisory`, `off` or `prompt` |
 | `programming_language` | Step 4 | any non-empty value |
 
 - **`path: customized` with no `selected_modules`** is not honorable — the selection would be
@@ -202,46 +201,22 @@ not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007)
 If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
 as choosing the recommended `standard` and say so — never assume a level before they have replied.
 
-## 3a. Model guidance mode
+## 3a. Model guidance — no question (retired)
 
-Each module has a recommended model and reasoning effort. Ask once, here, how the bootcamper wants
-that surfaced — then honor it for the whole run rather than re-deciding at every module boundary
-(INV-006/INV-119).
+⛔ **There is no model-guidance question and no `model_guidance` preference (INV-137).** Ask nothing
+here and write nothing for it. Model/effort guidance behaves one way for everyone: at each module
+start and graduation start the guide surfaces the stage's recommendation, and **when the
+recommendation changes** it pauses on the pinned switch question followed by the pinned "Are you
+done modifying the model and effort?" gate; when it is unchanged it is a one-line statement. The
+full behavior lives in `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt".
 
-⛔ Skip this step entirely when `model_guidance` is honorable per Step 0 — a valid saved value is
-`advisory`, `off` or `prompt`. Honor it, carry it into the Step 6 write unchanged, and state it in
-the Step 7 recap marked as saved — e.g. "Model guidance: stop and ask me each time (from your saved
-preferences)."
+This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
+stay stable. Skip straight from Step 3 to Step 4.
 
-A bootcamper who always wants the same mode can therefore set it once and never see this question
-again: put `model_guidance: prompt` (or `advisory` / `off`) in
-`config/bootcamp_preferences.yaml` before starting. Mention that affordance when you tell them they
-can change it later — and that the same trick works for `verbosity`, `programming_language` and
-`path` (Step 0).
-
-Only when the preference is **absent or unreadable**, present this pinned 👉 question, verbatim
-(INV-056), and end the turn on it:
-
-> 👉 **How would you like model guidance handled? Reply with a number:**
->
-> 1. **A one-line recommendation at each module** *(recommended)* — shown alongside the time estimate; never interrupts.
-> 2. **Don't show it** — no model or effort guidance at all.
-> 3. **Stop and ask me each time** — pause with a yes/no question whenever the recommendation changes.
-
-Wait for the answer, then **hold** it for the consolidated write in Step 6 as
-`model_guidance: advisory | off | prompt` (option 1 → `advisory`, 2 → `off`, 3 → `prompt`) — do not
-write it now (INV-058).
-
-If they decline to choose, take `advisory` and say so. **An absent or unreadable preference is
-treated as `advisory`** everywhere it is read, so a session that skipped preparation is never left
-without guidance. Tell them they can change it any time ("change model guidance") — and that
-setting `model_guidance` in `config/bootcamp_preferences.yaml` makes the choice stick, so this
-question is not asked again on a future run.
-
-Whichever path produced it, the value written in Step 6 is the bootcamper's — never overwrite a
-saved preference with the recommended default.
-
-Only the bootcamper can change the session's model or effort — the guide never does, in any mode.
+(A previous design asked the bootcamper to choose between `advisory`, `off` and `prompt` and
+persisted the answer. That question is retired: INV-137 supersedes INV-119 and INV-120, restoring
+the unconditional INV-063/INV-069 behavior. Do **not** reintroduce the question, and do not honor a
+stale `model_guidance` key left in an old preferences file.)
 
 ## 4. Programming language selection (gate)
 
@@ -309,9 +284,9 @@ single consolidated write below — no separate write (INV-058).
 
 Persist all setup choices collected in Steps 1-5 to
 `config/bootcamp_preferences.yaml` in a **single** write (INV-058) — `path` (`core`/`customized`),
-`selected_modules`, `verbosity`, `model_guidance` (`advisory`/`off`/`prompt`, Step 3a), the
-programming language, the detected `name` (if any), the detected `os`/`arch`, and the `git_init`
-outcome. (The software-integration and deployment-target answers are
+`selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the
+detected `os`/`arch`, and the `git_init` outcome. **No `model_guidance` key** — that preference is
+retired (INV-137). (The software-integration and deployment-target answers are
 NOT collected here — they are asked in Module 1 Phase 2 and persisted there, per INV-097.) (`path`
 replaces the old `track` preference; downstream readers — graduation, the recap header — read
 `path`.) This is the only setup write of this module; the gates only held their answers, so the
@@ -364,7 +339,6 @@ suppressed, so an honored preference is visible rather than looking like a quest
 • Path: Core (all modules) — or Customized (selected modules)
 • Modules: {ordered selected module names}
 • Detail level: {verbosity}{ — from your saved preferences}
-• Model guidance: {one-line recommendation each module | not shown | stop and ask each time}{ — from your saved preferences}
 • Language: {programming language}{ — from your saved preferences}
 • Version control: {git initialized | existing repo | git unavailable}
 → Next: {first content module name}

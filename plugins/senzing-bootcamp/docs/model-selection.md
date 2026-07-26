@@ -97,21 +97,19 @@ at the start of each module (and `graduation/SKILL.md` at the graduation banner)
 optional; the session-level model/effort persists for the session (unlike per-skill frontmatter),
 and the guide never changes it — only the bootcamper can.
 
-**How it is surfaced is the bootcamper's choice** (INV-119). Bootcamp preparation Step 3a asks once
-and persists `model_guidance` to `config/bootcamp_preferences.yaml`; every reader treats an absent
-or unreadable value as `advisory`:
+**How it is surfaced is not configurable** (INV-137). The bootcamper is never asked, there is no
+`model_guidance` preference, and the behavior depends only on whether the recommendation changed:
 
-| `model_guidance` | Behavior at module/graduation start | Extra turns |
+| At a module or graduation start | Behavior | Extra turns |
 |---|---|---|
-| `advisory` *(default)* | One line in the apparatus block, then Step 1 in the same turn. Names the current model and effort beside the recommendation, treats model and effort as separate dials, says either can change at any time, and flags a recommendation *below* the current setting as a downgrade (INV-120). | 0 |
-| `off` | Nothing is presented. | 0 |
-| `prompt` | The former INV-063/INV-069 flow: a single 👉 switch question when the recommendation changes, then the pinned "Are you done modifying the model and effort?" gate before the first step. | up to 2 |
+| Recommendation **changed** from the stage just completed | A single 👉 switch question, its own turn; on **yes**, a one-line run-commands statement then the pinned "Are you done modifying the model and effort?" gate before the first step; on **no**, the first step lands the same turn. | up to 2 |
+| Recommendation **unchanged** | A concise one-line statement — model and effort named as separate dials, either changeable at any time from the next message, and a recommendation *below* the current setting flagged explicitly so it never reads as advice to downgrade. | 0 |
 
-`prompt` exists because earlier bootcampers explicitly asked for the blocking gates; a later
-bootcamper found them costly, which is why `advisory` is the default rather than the only mode. (The
-originating feedback and the specs that acted on it live in the plugin's development repository, which
-is not shipped — so no path is cited here that a reader of this copy could not open.) The
-"Are you done modifying the model and effort?" gate MUST NOT appear under `advisory` or `off`.
+An earlier design made this a three-mode `model_guidance` preference (`advisory` / `off` /
+`prompt`) chosen in Bootcamp preparation. That question and preference are **retired**: INV-137
+supersedes INV-119 and INV-120 and restores the unconditional INV-063/INV-069 behavior. A stale
+`model_guidance` key in an old preferences file is ignored, not honored. The confirmation gate
+follows a **yes** to the switch and nothing else.
 
 > **`ground-rules.md` is the authoritative copy of this table; the copy below is derived.**
 > `ground-rules.md` is the file the guide actually loads at module start, so the operational values

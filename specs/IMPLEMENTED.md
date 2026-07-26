@@ -18,6 +18,43 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## retire-model-guidance-modes
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_behavior.py` (new, replaces `tests/test_model_guidance_modes.py`), `tests/test_saved_preferences_honored.py`, `.claude/skills/dry-run/scaffold_project.py`
+- **Not a spec** — a maintainer decision taken mid-dry-run, when the model-guidance question came up
+  in the phase-3 walk: "This question should not be asked. The plugin should always: stop and ask me
+  each time." **Invariant established: INV-137**, superseding INV-119 and INV-120.
+- **Scope was ambiguous and I asked rather than guessed.** "Always prompt" could mean *remove the
+  question but keep the modes as a file-only override* (smaller, preserves an `off` escape hatch,
+  consistent with INV-133 and INV-055's opt-out culture) or *remove the modes entirely*. The two
+  differ substantially in work and in whether a bootcamper can silence the prompts at all. The
+  maintainer chose **remove entirely**: no question, no `model_guidance` key, and a stale key in an
+  old preferences file is ignored rather than honored.
+- **This is the fourth swing of the same design** — INV-062 non-blocking → INV-063 blocking switch
+  question → INV-069 plus a confirmation gate → INV-119/INV-120 all of it conditional on a
+  preference → INV-137 unconditional again. Recorded in the test docstring as a table, because the
+  oscillation is the thing most likely to confuse the next reader, and because "someone will
+  reinstate a retired shape" is a demonstrated risk here rather than a hypothetical one.
+- **What INV-137 keeps.** The pause is still conditional on the *recommendation changing* — "stop and
+  ask me each time" means each time it changes, which is what the retired option 3 said too;
+  unchanged still yields a one-line statement, not a question. INV-120's content requirements
+  (separate dials, changeable at any time, a below-current recommendation flagged so it never reads
+  as advice to downgrade) are retained verbatim on that statement rather than dropped with the
+  `advisory` mode that hosted them.
+- **Five superseded-by notes added in place** to INV-119, INV-120, INV-063, INV-069 and INV-133, so
+  each retired invariant points forward. INV-133 needed one because it cited INV-119's question as
+  its worked example; it now governs `path`, `verbosity` and `programming_language` only.
+- **Renamed the test file rather than leaving a misnomer.** `test_model_guidance_modes.py` tested
+  modes that no longer exist; it is now `test_model_guidance_behavior.py`, rewritten to pin the
+  inverse of what it used to: the question exists **nowhere**, no skill reads or honors the key, six
+  retired mode phrasings are absent, the done-gate lives in exactly two files scoped to no mode, and
+  the retained INV-120 content survives. Also dropped `model_guidance` from
+  `test_saved_preferences_honored.py`'s registry and from the dry-run scaffold's fixture.
+- **Test suite:** 433 -> 427 passing (six mode-specific tests retired with the modes; the
+  replacement file adds fourteen).
+- **Commit:** uncommitted
+
 ## dry-run-phase3-findings
 
 - **Implemented:** 2026-07-26

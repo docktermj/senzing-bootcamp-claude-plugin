@@ -7,6 +7,9 @@ be asked." It arrived via the `skip-model-guidance-question` spec, and only
 (programming language) asked unconditionally, so a returning bootcamper who had saved
 `verbosity: minimal` was asked for it again — exactly what the invariant forbids.
 
+(`model_guidance` itself was retired by INV-137 shortly afterwards — the question is no
+longer asked at all — so the registry below covers the three preferences that remain.)
+
 Reading the file suggested it; the phase-3 conversational dry run confirmed it, because
 walking the steps in order shows there is simply no instruction to check.
 
@@ -47,7 +50,6 @@ ONBOARDING = (
 ASKED_PREFERENCES = (
     ("path", "## 1."),
     ("verbosity", "## 3."),
-    ("model_guidance", "## 3a."),
     ("programming_language", "## 4."),
 )
 
@@ -104,7 +106,7 @@ class TestEveryAskedPreferenceIsCovered(unittest.TestCase):
             [],
             missing,
             f"preference(s) absent from Step 0's honor-first table: {missing}. INV-133 "
-            "applies to every setup preference, not only model_guidance.",
+            "applies to every setup preference, not only the one that motivated it.",
         )
 
     def test_each_step_carries_its_own_skip_instruction(self):
@@ -128,7 +130,7 @@ class TestEveryAskedPreferenceIsCovered(unittest.TestCase):
         text = prep_text()
         self.assertGreaterEqual(
             text.count("from your saved preferences"),
-            3,
+            2,
             "the Step 7 recap should mark each honorable preference's line as coming "
             "from the saved file when its question was suppressed (INV-133)",
         )
