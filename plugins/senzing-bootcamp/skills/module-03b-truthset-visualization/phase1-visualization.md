@@ -276,7 +276,8 @@ Tell the bootcamper the app is running and where the saved copy is:
 
 - "Your visualization is running at `http://localhost:8080`, open it in your browser."
 - "A saved copy is at `docs/visualizations/truthset_verification.html`, you can open that file
-  any time, even after we stop the server."
+  any time, even after we stop the server. Every tab still works offline there, except **Why?**,
+  **How?**, and live search — those need the running engine, so use them while the server is up."
 
 Then deliver this guided tour as one message (no interactive pauses):
 
@@ -299,12 +300,17 @@ Then deliver this guided tour as one message (no interactive pauses):
 
 ---
 
-Take your time exploring the visualization.
+Take your time exploring the visualization — the server stays up.
 
 👉 **Are you ready to continue?**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
 exploring. Do not proceed to Phase 2 (the close) until they respond.)*
+
+⛔ **This question does not authorize teardown.** It asks whether the bootcamper is ready to move on
+in the module — nothing more. The server keeps running past it; stopping it and purging the data
+require their own gate in Phase 2 Step 4 (see `visualization-api-reference.md` → "Server lifetime").
+Never treat a yes here as consent to stop the server.
 
 **On failure:** report the specific endpoint or step that failed and the fix:
 

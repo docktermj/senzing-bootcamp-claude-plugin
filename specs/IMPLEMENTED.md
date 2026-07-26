@@ -18,6 +18,53 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## visualization-server-lifetime-and-teardown-gate
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase2-close.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Added a "Server lifetime" contract to
+  `visualization-api-reference.md` — the file both modules already treat as the
+  shared visualization contract — stating that a server, once started, stays up
+  until the bootcamper explicitly approves teardown, that agent-side
+  verification and screenshot capture run **with the server up**, and that the
+  teardown gate must name exactly what that module tears down. Truth Set's Step
+  4 Cleanup lost the "No separate confirmation gate … do NOT re-ask (INV-006)"
+  instruction and gained a pinned gate naming both the server and the data
+  purge, with an explicit statement that this is a *different* question from the
+  Step 2.5 tour check, so INV-006 does not apply. Phase 1 now says the tour
+  question does not authorize teardown, and the snapshot reassurance names the
+  live-only actions (`why`/`how`/search) so consent is informed. Module 7 — which
+  had **no** server lifetime, exploration gate, or cleanup step at all — gained
+  all three, with a gate that names only the server, because nothing there is
+  purged and the bootcamper's loaded data is needed downstream. Verified all 7
+  acceptance criteria by grep; 43 tests pass.
+- **Commit:** uncommitted
+
+## production-volume-question-clarity-and-threading-cutover
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`
+- **Summary:** Rewrote the Phase A step 1 pinned question to contrast production
+  with the bootcamp explicitly and to state that the answer selects the loading
+  program's architecture, with no hardcoded bootcamp record count and
+  non-overlapping tier boundaries (500 and 10,000,000 each now fall in exactly
+  one tier, in both the question text and the classification logic). Added a
+  mandatory echo of the tier *and* the architecture it implies before any code is
+  generated, so a misread surfaces while it is still free to correct. Lowered the
+  threaded cutover to **500 records, sourced from MCP this session** —
+  `sdk_guide`'s `record_count` contract selects the single-threaded demo at ≤500
+  and the threaded production pattern above it, and a live call at 4,000 returned
+  the thread-pool template while labelling the alternative "demo-only,
+  single-threaded — do not use for production volumes (>500)" — so `small` moves
+  to the threaded branch and only `demo` gets a single-threaded loader. Corrected
+  a latent parameter bug the spec inherited: `record_count` belongs to
+  `sdk_guide`, not `generate_scaffold`, which accepts only language/workflow/
+  version. Extended the SQLite pre-load prompt to fire for `small` above the
+  MCP-sourced ~100K SQLite guidance threshold so it stays in step with the new
+  cutover. License framing (expansion paths before downsizing) is unchanged.
+  Verified all 8 acceptance criteria; 43 tests pass.
+- **Commit:** uncommitted
+
 ## post-load-match-key-semantic-audit
 
 - **Implemented:** 2026-07-25

@@ -272,8 +272,8 @@
 
 ### Questions & Responses
 
-- **Q:** How many records do you expect to load in a production system?
-    - **R:** 3 — 500K–10M, medium tier
+- **Q:** In production — not in this bootcamp — how many records do you expect to load?
+    - **R:** 3 — more than 500,000 up to 10,000,000, medium tier
 - **Q:** Loading may take a while — how would you like to proceed?
     - **R:** 2 — proceed on SQLite for now
 - **Q:** Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?

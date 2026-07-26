@@ -568,6 +568,54 @@ content folded into `stats`.)
 Exception: `why`/`how` return a `200` with an `error` field per the shapes above so one entity's
 failure never breaks the tab.
 
+## Server lifetime (required in every module that starts one)
+
+⛔ **A visualization server, once started, stays up until the bootcamper has explicitly approved
+teardown.** Agent-side verification — API probes, endpoint checks, screenshot capture for the recap
+— is a *preliminary* step that runs **while the server keeps running**. It is never the end of the
+interaction, and it MUST NOT stop the server. The bootcamper explores *after* the agent verifies,
+not instead of it.
+
+The sequence in every module that starts a server is therefore:
+
+1. Start the server and verify it (agent-side; server stays up).
+2. Hand the URL to the bootcamper and let them explore at their own pace.
+3. Ask the teardown gate below, and only then clean up.
+
+**The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
+ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is
+about to happen in that module and nothing more, because the consequences differ:
+
+- Where teardown stops the server **and** removes data (Truth Set visualization, whose records are
+  scaffolding): say both. → 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
+- Where teardown stops **only** the server (any module pointed at the bootcamper's own loaded data):
+  say only that, and say the data stays. → 👉 **Ready for me to stop the visualization server?**
+
+⛔ Never ask a vague "and clean up" in a module that has no purge — the bootcamper's own loaded
+data is needed downstream (recap, graduation), and a gate that sounds like it authorizes deleting it
+either frightens them or licenses a destructive step the module never intended.
+
+Tell the bootcamper what they are consenting to before they answer: the live URL goes dead, and the
+standalone snapshot preserves every tab that renders from embedded data but **not** the live
+`why`/`how`/`search` actions, which need the running engine (see "Static snapshot degradation"
+above). A yes given without that is not an informed yes.
+
+⛔ **This is not an INV-006 violation.** INV-006 forbids re-asking *the same* question. An earlier
+"are you ready to continue?" or "done with the tour?" asks whether the bootcamper is ready to move
+on in the module; this asks whether an **irreversible** action may proceed. They are different
+questions with different consequences, and the second MUST be asked on its own. Never cite INV-006
+as a reason to skip it.
+
+**On "no" or "not yet":** acknowledge, leave the server running, and continue with whatever comes
+next. Do not re-ask on a loop — INV-006 *does* apply to this gate — and proceed with teardown when
+the bootcamper says they are done.
+
+**Never design the flow so a restart request is the normal path.** Restarting on request is fine,
+but a bootcamper should not have to ask for a server to come back that they never agreed to stop.
+(This mirrors the Docker container lifecycle handling: containers are stopped, not removed, and are
+surfaced on resume — the same principle that a bootcamper never loses access to something they were
+using.)
+
 ## search_builder.py: Entity Enrichment Specification
 
 The `search_builder.py` module SHALL implement the following enrichment behavior:

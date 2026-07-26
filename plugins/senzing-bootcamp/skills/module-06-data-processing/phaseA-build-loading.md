@@ -39,26 +39,48 @@ bulk-loading issues, threading problems, redo processing, load-order dependencie
 
 ## 1. Assess production record volume
 
-👉 **How many records do you expect to load in a production system?**
+Present this pinned question verbatim (INV-056), including the explanation — the explanation is
+what stops the bootcamper answering with the bootcamp's record count instead of their real target:
 
-Example ranges to help answer:
+> 👉 **In production — not in this bootcamp — how many records do you expect to load? Reply with a number:**
+>
+> This is about the system you're ultimately building, **not** the dataset we're working with here.
+> It changes the loading program's *architecture*: a demo loader and a fifty-million-record loader
+> are genuinely different programs (single-threaded vs. thread-pooled, batching, checkpoint/resume,
+> throughput instrumentation, queue-based distribution). Answer for your real target volume even if
+> it dwarfs the bootcamp dataset. This program is yours to take home.
+>
+> 1. Fewer than 500 — demo/evaluation
+> 2. 500 to 500,000 — small production
+> 3. More than 500,000, up to 10,000,000 — medium production
+> 4. More than 10,000,000 — large production
+>
+> Not sure yet? Give your best estimate — we'll build for that, and it can be revisited.
 
-1. Fewer than 500, demo/evaluation
-2. 500 to 500,000, small production
-3. 500,000 to 10,000,000, medium production
-4. 10,000,000+, large production
+⛔ Never substitute the bootcamp's own record count into this question — reference it dynamically or
+not at all, or the pinned wording goes stale the moment the dataset changes.
 
 *(Internal: end the turn on this question and wait.)*
 
-**Classify and persist the tier.** Map the answer to a tier, `demo` (<500), `small`
-(500–500K), `medium` (500K–10M), `large` (10M+). If the reply is a bare option number (1–4),
+**Classify and persist the tier.** Map the answer to a tier, `demo` (fewer than 500), `small`
+(500 to 500,000), `medium` (more than 500,000 up to 10,000,000), `large` (more than 10,000,000).
+Each boundary value belongs to exactly one tier. If the reply is a bare option number (1–4),
 select that tier directly. If it is free text, parse the number and classify. If it is
 unparseable, ask ONE clarifying follow-up presenting the four numbered tiers, then classify; if
 still unparseable, default to `demo` and tell the bootcamper demo/evaluation was selected as
 the default. Persist `production_volume` (`tier` and `raw_value`) to
 `config/bootcamp_preferences.yaml` and checkpoint step 1 to `config/bootcamp_progress.json`.
+
 (The Kiro helpers `answer_binding.py` / `volume_utils.py` encode this parsing and persistence;
 the script port is a later phase, apply the logic inline for now.)
+
+⛔ **Echo the consequence back before generating any code.** State the tier *and* the architecture
+it selects, and invite a correction — a misread costs nothing to fix here and is expensive to
+discover once the loader is written. For example: "Medium production, so I'll build a thread-pooled
+loader with batching, checkpoint/resume, and throughput reporting — say the word if that volume
+isn't right." For `demo`, name what they are getting and why: "Demo/evaluation, so a single-threaded
+loader — simplest to read, and appropriate below the license limit. If your real target is larger,
+tell me now and I'll build the threaded version instead."
 
 **License framing (default + expansion paths).** After the tier is classified, present
 licensing as a default the bootcamper already has, never as a hard cap:
@@ -101,16 +123,44 @@ generated code must follow the coding standards for the chosen language. (Full
 `CODE_QUALITY_STANDARDS` reference is a later porting phase; apply clean-code conventions for
 the language for now.)
 
-**Volume-aware scaffold.** Read `production_volume` from `config/bootcamp_preferences.yaml`:
+**Volume-aware scaffold.** Read `production_volume` from `config/bootcamp_preferences.yaml`.
 
-- **`medium` or `large`:** call `generate_scaffold(language='<chosen_language>',
-  workflow='add_records', version='current', record_count=<raw_value>)` for threaded loading
-  patterns. Add a code comment stating the tier and the architecture recommendation
-  (multi-threaded with a thread pool for medium; distributed/queue-based for large).
-- **`demo`, `small`, or missing:** call `generate_scaffold(language='<chosen_language>',
-  workflow='add_records', version='current')` without `record_count`. Add a code comment
-  stating the tier (or "no volume selection found") and that single-threaded loading is
-  recommended.
+⛔ **`record_count` is a parameter of `sdk_guide`, not of `generate_scaffold`.** `sdk_guide` is the
+tool that *selects* the threaded or single-threaded template from the record count; passing
+`record_count` to `generate_scaffold` does nothing, because that tool takes only `language`,
+`workflow`, and `version` and returns the whole snippet list. Verify both signatures via
+`get_capabilities` this session rather than trusting this note.
+
+**The cutover is 500 records, sourced from the Senzing MCP server this session** — `sdk_guide`'s own
+contract for `record_count` states that at or below 500 it returns the single-threaded demo, and
+above 500 (or when the count is omitted) it returns the threaded production pattern. A call at a
+few thousand records returns the thread-pool template and labels the single-threaded alternative
+"demo-only, single-threaded — do not use for production volumes (>500)". This matches
+`search_docs(query="loading", category="anti_patterns")` → "Senzing Anti-Patterns: Architecture and
+Performance" → **"Do Not Use Single-Threaded Loading"**, whose remedy is a thread pool of 2–8
+workers per CPU core. Re-confirm the threshold from MCP at implementation time; do not carry this
+number forward as a remembered fact.
+
+So only the `demo` tier — which is below the default license limit anyway — gets a single-threaded
+loader. Every tier that represents a real production system gets the threaded pattern:
+
+- **`small`, `medium`, or `large`:** call `sdk_guide(topic='load', language='<chosen_language>',
+  record_count=<raw_value>)` for the threaded production pattern. Add a code comment stating the
+  tier and the architecture recommendation (thread pool for small and medium; distributed /
+  queue-based for large).
+- **`demo`:** call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
+  — the same call, with a count below the threshold, which returns the single-threaded demo
+  template. Add a code comment stating the tier and that single-threaded loading is appropriate at
+  demo scale **and is a documented anti-pattern above it**, so the bootcamper knows what to change
+  if their volume grows.
+- **Missing or unreadable:** call `sdk_guide(topic='load', language='<chosen_language>')` with no
+  `record_count`. Omitting it yields the threaded pattern, which is the safe default — a loader that
+  is threaded when it need not be merely does extra setup, while one that is single-threaded when it
+  should not be is the anti-pattern above. Add a code comment saying no volume selection was found
+  and that the production pattern was chosen by default.
+
+Use `generate_scaffold(language='<chosen_language>', workflow='add_records', version='current')` to
+see the full set of loading snippets alongside the selected one when it helps to compare.
 
 Do not use inline examples, they may use outdated SDK patterns. Customize the scaffold with
 the bootcamper's file path, data source name, and progress reporting. If the scaffold uses
@@ -149,7 +199,9 @@ The program must include production-quality features:
 ## 4. Use MCP tools for code generation
 
 Call `generate_scaffold` with workflow `add_records` and the chosen language for version-correct
-SDK code. Call `sdk_guide(topic='load')` for platform-specific loading patterns.
+SDK code. Call `sdk_guide(topic='load', record_count=<raw_value>)` for platform-specific loading
+patterns — as in step 3, `record_count` belongs to `sdk_guide` and is what selects the threaded
+versus single-threaded template.
 
 **Checkpoint:** write step 4.
 
@@ -200,10 +252,16 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
    is `decided: true` and its `tier`/`raw_value` match the current selection (or an applicable
    Module 4 SQLite load-time decision covers this same load), skip the prompt and proceed.
-3. **Prompt only when it matters.** Present the prompt only when the tier is `medium` or `large`
-   AND the database is SQLite AND it was not already decided. For demo/small tiers, any
-   non-SQLite engine, indeterminate inputs, or an already-recorded choice: say nothing new about
-   volume/SQLite and proceed to the Phase B load.
+3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
+   not already decided AND the volume is production-scale for SQLite — that is, the tier is
+   `medium` or `large`, **or** the tier is `small` with a `raw_value` above the SQLite guidance
+   threshold. Source that threshold from MCP this session; `search_docs(query="loading",
+   category="anti_patterns")` → "Do Not Use SQLite in Production" gives it as roughly 100,000
+   records ("use SQLite only for quick local testing with small datasets"), well inside the
+   `small` tier's 500–500,000 span, which is why the tier alone is not a sufficient trigger. For
+   `demo`, a small-tier volume below that threshold, any non-SQLite engine, indeterminate inputs,
+   or an already-recorded choice: say nothing new about volume/SQLite and proceed to the Phase B
+   load.
 4. **When prompting**, explain that SQLite entity resolution slows as the database grows, then end
    the turn on this pinned question (INV-056), verbatim — a neutral lead + numbered list (INV-051) —
    and wait (internal stop); do not start the load yet:

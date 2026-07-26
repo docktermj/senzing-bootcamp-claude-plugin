@@ -244,6 +244,35 @@ of the Truth Set. It MUST:
   silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
   `{name}` = `results_visualization`.
 
+⛔ **The server stays running — screenshot capture must not stop it.** The API probes and the
+screenshot pass above are agent-side verification, not the end of the interaction. Follow the
+server-lifetime contract in `../module-03b-truthset-visualization/visualization-api-reference.md` →
+"Server lifetime": verify with the server up, then hand it to the bootcamper:
+
+- "Your visualization is running at `http://localhost:<port>`, open it in your browser and take
+  your time — I'll leave it up."
+- "A saved copy is at `docs/visualizations/results_visualization.html`. Every tab still works
+  offline there, except **Why?**, **How?**, and live search — those need the running engine, so use
+  them while the server is up."
+
+Let them explore at their own pace, then continue through the Discover phase and the Query
+Completeness Gate **with the server still running** — the Discover demonstrations pair naturally
+with a live app to look at.
+
+⛔ **Before stopping it, ask the teardown gate**, pinned verbatim (INV-056), and end the turn on it:
+
+> 👉 **Ready for me to stop the visualization server?**
+
+The gate names the server and **only** the server: unlike the Truth Set module, nothing here is
+purged — the bootcamper's loaded data stays exactly where it is, and later modules and the recap
+depend on it. Say so when asking, and mention that the saved snapshot keeps every tab except the
+live `why`/`how`/`search`.
+
+*(Internal: end the turn on this question and wait.)* On "no" or "not yet", leave it running, say so,
+and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper having to request a
+restart for a server they never agreed to stop. If the module ends with the server still up, say
+plainly that it is still running and how to stop it, rather than stopping it unasked.
+
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
 (offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
 "docs/visualizations/results_visualization.html"}`). The former per-visualization checkpoints

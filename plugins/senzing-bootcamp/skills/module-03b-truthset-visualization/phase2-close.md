@@ -40,8 +40,27 @@ or has `"status": "failed"`:
 
 Terminate the web service and purge the Truth Set data from the database.
 
-**No separate confirmation gate:** the bootcamper already confirmed they were done exploring at the
-end of Phase 1 (Step 2.5), so proceed directly to cleanup — do NOT re-ask (INV-006).
+⛔ **Ask the teardown gate first — do not proceed to the steps below until the bootcamper says
+yes.** Per the server-lifetime contract in `visualization-api-reference.md` → "Server lifetime",
+present this pinned question verbatim (INV-056) and end the turn on it:
+
+> 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
+
+State what they are agreeing to before they answer, so the yes is informed: the live URL goes dead,
+the Truth Set records are removed from the database (exploring further means reloading them), and
+the saved snapshot at `docs/visualizations/truthset_verification.html` keeps every tab that renders
+from embedded data but **not** the live `why`/`how`/`search` actions.
+
+*(Internal: end the turn on this question and wait.)*
+
+**On "no" or "not yet":** leave the server running and the data in place, tell the bootcamper it is
+still at its URL, and wait for their go-ahead. Do not re-ask on a loop.
+
+⛔ **The Step 2.5 tour question does not authorize this.** "Are you ready to continue?" asks whether
+the bootcamper is done with the guided tour; this asks whether an irreversible teardown may proceed.
+They are different questions, so asking this one is **not** an INV-006 violation — INV-006 forbids
+re-asking the same question, not asking a different one about a consequence the first never
+mentioned. Do not reintroduce a "no separate confirmation gate" shortcut here.
 
 1. **Terminate the web service:**
    - Send a termination signal to the visualization web service process started in Phase 1 (2.3).
