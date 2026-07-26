@@ -42,7 +42,7 @@ Entries are newest first. Do not delete history; append or update in place.
   scoped to `prompt`, and the advisory line carries its INV-120 content. Suite is now 56 tests, all
   passing; `tests/test_model_guidance_sync.py` still passes unchanged (the recommendation tables were
   untouched).
-- **Commit:** uncommitted
+- **Commit:** `f3e1199`
 
 ## generate-diagrams-for-generated-scenarios
 
