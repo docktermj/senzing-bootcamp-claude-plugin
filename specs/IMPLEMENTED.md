@@ -41,7 +41,7 @@ Entries are newest first. Do not delete history; append or update in place.
   test-helper fix: the guidance lives in a Markdown blockquote, so whitespace collapsing alone left
   `>` markers mid-phrase — the helper now strips them.
 - **Invariants:** INV-148, INV-149.
-- **Commit:** uncommitted
+- **Commit:** `a2e4363`
 
 ## embed-every-captured-tab-in-tab-order
 
