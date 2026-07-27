@@ -43,7 +43,7 @@ Entries are newest first. Do not delete history; append or update in place.
   self-calibrating — comparing a paragraph break against a plain line advance measured from the same
   document — rather than hardcoded thresholds that a type change would silently invalidate.
 - **Invariants:** INV-142, INV-143.
-- **Commit:** uncommitted
+- **Commit:** `a53f865`
 
 ## reassess-per-module-model-effort-assignments
 
