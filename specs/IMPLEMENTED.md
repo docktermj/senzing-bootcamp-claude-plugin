@@ -18,6 +18,33 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## discoveries-pdf-real-tables-and-paragraph-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `specs/INVARIANTS.md`, `tests/test_discoveries_pdf.py`, `tests/test_recap_pdf_font_safety.py`
+- **Summary:** Reviewed and landed the uncommitted generator work (tables as a real grid, generalised
+  block spacing, `_UNICODE_MAP` additions), then closed the gaps it left. Verified by **rasterizing**
+  pages, not by exit code or retention (INV-129): raw pipe lines **55 → 0** on a stress fixture,
+  grids draw with shaded headers, the header repeats across a page break with the following body row
+  in the **body font** (the regression stays fixed), ragged rows pad/truncate without shifting a
+  column origin, the stdlib fallback emits aligned columns and still announces itself on stderr
+  (INV-111), and the INV-110 guard is unchanged. **Three defects found during verification, all
+  fixed:** (1) two adjacent tables shared an edge and read as one grid with a bold middle row —
+  `_needs_item_gap` gapped a table before prose but not before another table; (2) thirteen further
+  characters still corrupted to `?` (`≈ ≤ ≥ ≠ ∞ € ™ ⇒ ↑ ↓ ←`, non-breaking hyphen, zero-width space)
+  — `↔`/`⚠️` were not the whole gap, and the widened inventory found them immediately; (3) the
+  label-continuation split is now fixed **at the cause** — the parser absorbs continuation lines into
+  the label block, so the paragraph reflows and the gap-suppression carve-out was removed. The empty
+  leading table column is **accepted, not fixed**, reasoned in `parse_table`'s docstring: dropping it
+  would delete a real row-label column's values. Tests **437 → 457**; the new pipe-count,
+  table-structure, adjacent-table, page-break-font, paragraph-gap and font-safety probes were each
+  confirmed to **fail against the pre-change scripts** (rendered from `HEAD`, 55 pipe lines, no grid,
+  paragraph gap identical to the line advance at 15.6 pt). Paragraph-spacing assertions are
+  self-calibrating — comparing a paragraph break against a plain line advance measured from the same
+  document — rather than hardcoded thresholds that a type change would silently invalidate.
+- **Invariants:** INV-142, INV-143.
+- **Commit:** uncommitted
+
 ## reassess-per-module-model-effort-assignments
 
 - **Implemented:** 2026-07-26

@@ -597,6 +597,25 @@ _UNICODE_MAP = {
     "•": "-",
     "…": "...",
     "→": "->",
+    "↔": "<->",
+    "←": "<-",
+    "⇒": "=>",
+    "↑": "^",
+    "↓": "v",
+    "⚠": "!",
+    "\ufe0f": "",  # variation selector-16, trails emoji like the warning sign
+    # Comparison, currency and spacing characters a bootcamper's own
+    # discoveries document carries but the plugin's templates never emit — so
+    # scanning the templates could not find them. Each rendered as "?" until mapped.
+    "≈": "~",
+    "≤": "<=",
+    "≥": ">=",
+    "≠": "!=",
+    "∞": "infinity",
+    "€": "EUR",
+    "™": "(TM)",
+    "‑": "-",  # non-breaking hyphen
+    "​": "",  # zero-width space
     "✅": "[done]",
     "✓": "[x]",
     "⛔": "",

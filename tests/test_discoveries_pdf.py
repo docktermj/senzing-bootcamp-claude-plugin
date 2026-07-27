@@ -181,6 +181,224 @@ def pdf_runs(path):
     return runs
 
 
+def pdf_runs_with_font(path):
+    """``(x, y, font, text)`` per drawn run — the font resource in force.
+
+    Boldness is a *different font resource*, not an attribute, so this is what
+    distinguishes a repeated table header from the body row beneath it. The
+    regression it guards left the font bold after re-emitting a header across a
+    page break, so the first data row on every continuation page rendered as a
+    second header — a defect no text extraction and no retention figure can see.
+    """
+    runs = []
+    font_op = re.compile(r"/(F\d+)\s+[\d.]+\s+Tf")
+    run_op = re.compile(r"([\d.]+)\s+([\d.]+)\s+Td\b(.*?)\bTj", re.S)
+    for stream in _pdf_streams(path):
+        for match in re.finditer(r"/F\d+\s+[\d.]+\s+Tf|[\d.]+\s+[\d.]+\s+Td.*?Tj", stream, re.S):
+            piece = match.group(0)
+            font_match = font_op.fullmatch(piece)
+            if font_match:
+                current = font_match.group(1)
+                continue
+            run_match = run_op.match(piece)
+            if not run_match:
+                continue
+            body = re.findall(r"\((.*?)\)\s*$", run_match.group(3).strip())
+            if body:
+                runs.append(
+                    (float(run_match.group(1)), float(run_match.group(2)),
+                     locals().get("current", "?"), body[0])
+                )
+    return runs
+
+
+# Two adjacent tables, a ragged row, a table long enough to break across a page,
+# consecutive paragraphs, and a soft-wrapped `**Label:**` line — every shape the
+# table/spacing work has to get right, in one document.
+TABLE_DOC = """# Data Discoveries
+
+**Bootcamper:** Ada Lovelace
+
+## Headline numbers, interpreted
+
+First paragraph making a claim about the data that was loaded here today.
+
+Second paragraph supplying the evidence, which must not run together with it.
+
+| Measure | Value |
+|---|---|
+| Records loaded | 4,966 |
+
+| Second table | Adjacent to the first |
+|---|---|
+| separated by | a blank line only |
+
+**Cross-source overlap:** GLEIF and OPEN-OWNERSHIP produced the largest cluster,
+and this continuation line must not be split from its label by a blank line.
+
+## Merges and match keys
+
+| Match key pattern | Count | Source |
+|---|---|---|
+""" + "\n".join(
+    f"| +NAME+ADDRESS+ID{i:02d} | {1000 - i} | source-{i % 3} |" for i in range(1, 46)
+) + """
+| +RAGGED |
+| +NAME+ADDRESS+EXTRA | 1 | source-0 | dropped |
+
+## Review queue
+
+Nothing awaiting review.
+
+## Why and how: worked examples
+
+Nothing to explain.
+
+## Relationship networks
+
+No multi-hop paths.
+
+## What was not found, and why
+
+Low overlap between the two sources explains the small cross-source merge count.
+"""
+
+
+class TestTablesRenderAsAGrid(unittest.TestCase):
+    """Markdown tables are drawn, not printed as their source.
+
+    The generator used to emit one block *per row* and print each row verbatim in
+    a monospace font, by design — its docstring said so. 61 raw pipe lines reached
+    the bootcamper's PDF, in the six passages carrying every quantitative finding
+    in the document.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        write_doc(cls.tmp.name, TABLE_DOC)
+        result = run([], cls.tmp.name)
+        assert result.returncode == 0, result.stderr
+        cls.pdf = os.path.join(cls.tmp.name, "docs", "bootcamp_data_discoveries.pdf")
+        cls.runs = pdf_runs(cls.pdf)
+        cls.typed = pdf_runs_with_font(cls.pdf)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def test_no_raw_pipe_source_survives(self):
+        offenders = [t for _x, _y, t in self.runs if t.strip().startswith("|") or "|---" in t]
+        self.assertEqual(
+            [], offenders, f"raw Markdown table source drawn into the PDF: {offenders[:5]}"
+        )
+
+    def test_cells_are_drawn_as_separate_runs(self):
+        """A grid means one run per cell — not one run per source line."""
+        texts = [t.strip() for _x, _y, t in self.runs]
+        for cell in ("Measure", "Value", "Records loaded", "4,966"):
+            with self.subTest(cell=cell):
+                self.assertIn(cell, texts, f"{cell!r} is not its own drawn cell")
+
+    def test_the_alignment_row_is_dropped(self):
+        self.assertNotIn("---", [t.strip() for _x, _y, t in self.runs])
+
+    def test_a_ragged_row_does_not_desynchronise_the_grid(self):
+        """Short and over-long rows are padded/truncated to the header width."""
+        texts = [t.strip() for _x, _y, t in self.runs]
+        self.assertIn("+RAGGED", texts, "the short row vanished")
+        self.assertIn("+NAME+ADDRESS+EXTRA", texts, "the over-long row vanished")
+        # The extra 4th cell has nowhere to go in a 3-column grid; dropping it is
+        # correct, but it must not shift a neighbouring row's cells along.
+        xs = {t: x for x, _y, t in self.runs}
+        self.assertAlmostEqual(
+            xs["+NAME+ADDRESS+EXTRA"], xs["+NAME+ADDRESS+ID01"], delta=0.5,
+            msg="a ragged row shifted the column origin",
+        )
+
+    def test_two_adjacent_tables_are_visibly_separated(self):
+        """Sharing an edge, two grids read as one table with a bold middle row."""
+        y = {t.strip(): yy for _x, yy, t in self.runs}
+        last_row_of_first = y["Records loaded"]
+        header_of_second = y["Second table"]
+        pitch = abs(y["Measure"] - y["Records loaded"])  # one row's height
+        gap = abs(last_row_of_first - header_of_second)
+        self.assertGreater(
+            gap, pitch * 1.5,
+            f"only {gap:.1f}pt between two tables against a {pitch:.1f}pt row pitch — "
+            "they will read as a single grid",
+        )
+
+    def test_a_repeated_header_leaves_the_body_row_unbolded(self):
+        """The page-break regression: the row after a repeated header went bold."""
+        headers = [r for r in self.typed if r[3].strip() == "Match key pattern"]
+        self.assertGreaterEqual(len(headers), 2, "the table did not span a page break")
+        header_font = headers[-1][2]
+        after = [r for r in self.typed if r[1] < headers[-1][1] and r[3].startswith("+NAME")]
+        self.assertTrue(after, "no body row followed the repeated header")
+        self.assertNotEqual(
+            header_font, after[0][2],
+            f"the first body row after the repeated header uses the header font "
+            f"({header_font}) — it will render as a second header",
+        )
+
+
+class TestParagraphsAreSeparated(unittest.TestCase):
+    """Paragraph breaks are structure: the author used them to separate points."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        write_doc(cls.tmp.name, TABLE_DOC)
+        result = run([], cls.tmp.name)
+        assert result.returncode == 0, result.stderr
+        cls.runs = pdf_runs(os.path.join(cls.tmp.name, "docs", "bootcamp_data_discoveries.pdf"))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.tmp.cleanup()
+
+    def _y(self, needle):
+        hits = [y for _x, y, t in self.runs if needle in t]
+        self.assertTrue(hits, f"{needle!r} did not render")
+        return hits[0]
+
+    def _advance(self, top, bottom):
+        return abs(self._y(top) - self._y(bottom))
+
+    # Calibrated from the document itself rather than hardcoded: a plain line
+    # advance measured ~15.6 pt and a paragraph break ~25.8 pt, but both move with
+    # the font size and leading. Comparing the two distances keeps the assertion
+    # meaningful after a type change; a fixed threshold would not.
+    def test_consecutive_paragraphs_have_a_blank_line_between_them(self):
+        paragraphs = self._advance(
+            "First paragraph making a claim", "Second paragraph supplying the evidence"
+        )
+        line = self._advance("Cross-source overlap", "and this continuation line")
+        self.assertGreater(
+            paragraphs, line * 1.4,
+            f"paragraph break ({paragraphs:.1f}pt) is barely more than a plain line "
+            f"advance ({line:.1f}pt) — the paragraphs read as one wall of text",
+        )
+
+    def test_a_soft_wrapped_label_is_not_split_mid_sentence(self):
+        """`**Label:** text` + continuation is ONE paragraph, not two.
+
+        The parser emits the continuation as its own block, so gapping uniformly
+        put a blank line into the middle of a sentence.
+        """
+        line = self._advance("Cross-source overlap", "and this continuation line")
+        paragraphs = self._advance(
+            "First paragraph making a claim", "Second paragraph supplying the evidence"
+        )
+        self.assertLess(
+            line, paragraphs * 0.85,
+            f"the label and its continuation are {line:.1f}pt apart, close to the "
+            f"{paragraphs:.1f}pt paragraph break — a blank line was inserted "
+            "mid-sentence",
+        )
+
+
 class TestRendersASoundDocument(unittest.TestCase):
     def test_renders_and_reports_retention(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -15,8 +15,8 @@ PDF writer in the plugin.
 
 Supported Markdown: an H1 title, ``**Key:** value`` preamble meta lines, H2/H3
 headings, ``-``/``*`` bullets at two indent levels, ``**Label:** text`` lines,
-fenced code blocks (rendered verbatim), table rows (rendered as their source
-text), and paragraphs. Everything content-bearing is rendered — that is the
+fenced code blocks (rendered verbatim), Markdown tables (rendered as a real
+grid of rows and columns), and paragraphs. Everything content-bearing is rendered — that is the
 point of the audit below.
 
 A valid PDF is ALWAYS produced when the input is sound, via the same tiered
@@ -111,6 +111,10 @@ except Exception as exc:  # pragma: no cover - present but unusable
     BODY_INK = (74, 70, 64)
     WARM_LINE = (229, 223, 211)
 
+# Header-row fill for rendered tables. Derived from the warm line colour so the
+# grid stays inside the brand palette rather than introducing a new tone.
+TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in WARM_LINE)
+
 DEFAULT_INPUT = "docs/bootcamp_data_discoveries.md"
 DEFAULT_OUTPUT = "docs/bootcamp_data_discoveries.pdf"
 
@@ -152,25 +156,58 @@ class Discoveries:
         return [b.text for b in self.blocks if b.kind in ("h2", "h3")]
 
 
-# Vertical separation between consecutive list items, so a multi-line bullet cannot
-# blend into the next one (its wrapped lines sit at the same spacing otherwise).
-ITEM_GAP_MM = 2.4
-ITEM_GAP_PT = 3.0
+# Vertical separation between consecutive blocks — a blank line's worth, so that
+# neither consecutive paragraphs nor consecutive list items merge into one
+# undifferentiated run of text. Sized to roughly one body line so it reads as a
+# paragraph break rather than mere padding.
+ITEM_GAP_MM = 3.6
+ITEM_GAP_PT = 5.0
 
 _LIST_KINDS = ("bullet", "subbullet")
 
 
-def _needs_item_gap(blocks: List[Block], index: int) -> bool:
-    """True when block ``index`` is a list item and the next block is one too.
+# Block kinds that read as prose and therefore need a blank line after them, so
+# consecutive paragraphs do not merge into one wall of text. Headings bring
+# their own leading space; a code or table block delimits itself against prose
+# but NOT against another one of its own kind (see `_needs_item_gap`).
+_PROSE_KINDS = ("text", "label")
 
-    Gating on the *next* block keeps the gap strictly **between** items: it never
-    trails the last item of a list, where the following heading/paragraph already
-    brings its own spacing.
+
+def _needs_item_gap(blocks: List[Block], index: int) -> bool:
+    """True when block ``index`` should be followed by a blank line's space.
+
+    Two cases, both about keeping author-intended boundaries visible:
+
+    * **List items** — a gap between consecutive items, so a multi-line bullet
+      cannot blend into the next one (its wrapped lines sit at the same
+      spacing otherwise).
+    * **Paragraphs** — a gap after prose that is followed by more prose, a
+      list, or a table. Without it, separate paragraphs render as one
+      continuous block and the author's structure is lost.
+
+    Gating on the *next* block keeps the gap strictly **between** things: it
+    never trails the last item before a heading, which already brings its own
+    leading space.
     """
-    if blocks[index].kind not in _LIST_KINDS:
-        return False
+    kind = blocks[index].kind
     nxt = blocks[index + 1] if index + 1 < len(blocks) else None
-    return nxt is not None and nxt.kind in _LIST_KINDS
+    if nxt is None or nxt.kind in ("h2", "h3"):
+        return False
+    if kind in _LIST_KINDS:
+        return nxt.kind in _LIST_KINDS or nxt.kind in _PROSE_KINDS
+    # `label` needs no carve-out: the parser absorbs a soft-wrapped continuation
+    # into the label block itself, so a `text` block after one is a genuinely new
+    # paragraph and takes a gap like any other. Suppressing the gap here was the
+    # workaround for that split, and it hid a real paragraph boundary.
+    if kind in _PROSE_KINDS:
+        return nxt.kind in _PROSE_KINDS + _LIST_KINDS + ("code", "table")
+    if kind in ("code", "table"):
+        # Including code/table in the follow-set matters: two adjacent tables
+        # drawn with no gap share an edge and read as ONE grid whose middle row
+        # happens to be bold — the second table's header. The parser separates
+        # them correctly; only the spacing hid it.
+        return nxt.kind in _PROSE_KINDS + _LIST_KINDS + ("code", "table")
+    return False
 
 
 def _normalize(text: str) -> str:
@@ -185,8 +222,15 @@ def parse_discoveries(text: str) -> Discoveries:
     in_code = False
     in_preamble = True
     paragraph: List[str] = []
+    last_was_table = False
+    # A "**Label:** text" line opens a paragraph that plain following lines
+    # continue, exactly as an unlabelled paragraph does. Holding the block here
+    # lets those lines be absorbed into it instead of becoming a second block —
+    # a split that put a blank line into the middle of a sentence.
+    open_label: List[Block] = []
 
     def flush_paragraph() -> None:
+        open_label.clear()
         if paragraph:
             doc.blocks.append(Block("text", " ".join(paragraph).strip()))
             paragraph.clear()
@@ -194,6 +238,13 @@ def parse_discoveries(text: str) -> Discoveries:
     for raw in text.splitlines():
         line = raw.rstrip()
         stripped = line.strip()
+
+        # Only an *immediately* adjacent pipe row continues the current table.
+        # Reset first and let the table branch re-arm it, so that any other
+        # line — including the blank line between two consecutive tables, which
+        # returns early — separates them.
+        prev_was_table = last_was_table
+        last_was_table = False
 
         if stripped.startswith("```"):
             flush_paragraph()
@@ -229,8 +280,17 @@ def parse_discoveries(text: str) -> Discoveries:
             continue
 
         if stripped.startswith("|") and stripped.endswith("|"):
+            # Consecutive pipe rows form ONE table block, so the renderer can
+            # draw a real grid. Emitting one block per row (as this did before)
+            # forces every renderer to fall back to verbatim pipe text, which
+            # is what reached the deliverable: a Markdown table printed as
+            # source rather than rows and columns.
             flush_paragraph()
-            doc.blocks.append(Block("table", stripped))
+            if prev_was_table and doc.blocks and doc.blocks[-1].kind == "table":
+                doc.blocks[-1].text += "\n" + stripped
+            else:
+                doc.blocks.append(Block("table", stripped))
+            last_was_table = True
             continue
 
         bullet = re.match(r"^(\s*)[-*]\s+(.*)$", line)
@@ -248,7 +308,14 @@ def parse_discoveries(text: str) -> Discoveries:
         lm = re.match(r"^\*\*(.+?):\*\*\s*(.*)$", stripped)
         if lm:
             flush_paragraph()
-            doc.blocks.append(Block("label", lm.group(2).strip(), lm.group(1).strip()))
+            block = Block("label", lm.group(2).strip(), lm.group(1).strip())
+            doc.blocks.append(block)
+            open_label.append(block)
+            continue
+
+        # A plain line directly under a label continues that label's paragraph.
+        if open_label and not paragraph:
+            open_label[0].text = (open_label[0].text + " " + stripped).strip()
             continue
 
         paragraph.append(stripped)
@@ -381,6 +448,121 @@ def render_with_fpdf2(doc: Discoveries, output: Path) -> bool:
         return False
 
 
+def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
+    """Split a Markdown table block into (header, rows).
+
+    The ``|---|---|`` alignment row is dropped; it is presentation, not content.
+    Ragged rows are padded or truncated to the header's column count so a
+    malformed row cannot desynchronise the grid.
+
+    **An empty leading column is kept, deliberately.** A table written
+    ``| | Entity | Name |`` has a blank *header* over a real row-label column;
+    dropping the column would delete the ``1``/``2`` beneath it. Only a wholly
+    empty column could be dropped safely, and telling the two apart requires
+    scanning every row to discard something whose worst case is a narrow empty
+    cell — a poor trade against silently losing a column that carries data.
+    Faithful to the source is the rule here (cf. INV-110).
+    """
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    parsed: List[List[str]] = []
+    for line in lines:
+        if re.fullmatch(r"\|[\s:|-]+\|", line):
+            continue  # alignment row
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        parsed.append(cells)
+    if not parsed:
+        return [], []
+    header, body = parsed[0], parsed[1:]
+    width = len(header)
+    body = [(row + [""] * width)[:width] for row in body]
+    return header, body
+
+
+def _render_table_fpdf2(pdf, epw: float, block: Block) -> None:
+    """Draw a Markdown table as an actual grid of rows and columns.
+
+    Column widths are proportional to the longest cell in each column, so a
+    narrow count column does not get the same width as a long match key, and
+    every column keeps a floor so nothing collapses to a sliver.
+    """
+    header, rows = parse_table(block.text)
+    if not header:
+        return
+
+    plain_header = [_safe(_md_inline_to_text(c)) for c in header]
+    plain_rows = [[_safe(_md_inline_to_text(c)) for c in row] for row in rows]
+
+    # Proportional widths from the longest cell per column, with a floor and a
+    # cap so one very long cell cannot squeeze the others out.
+    spans = []
+    for index in range(len(plain_header)):
+        longest = max(
+            [len(plain_header[index])] + [len(r[index]) for r in plain_rows] or [1]
+        )
+        spans.append(min(max(longest, 6), 60))
+    total = float(sum(spans)) or 1.0
+    widths = [epw * (span / total) for span in spans]
+
+    line_h = 4.6
+    pdf.set_draw_color(*WARM_LINE)
+    pdf.set_line_width(0.15)
+
+    def emit_row(cells: List[str], is_header: bool) -> None:
+        pdf.set_font("Helvetica", "B" if is_header else "", 8.5)
+        # Height = tallest wrapped cell in this row.
+        heights = []
+        for width, cell in zip(widths, cells):
+            lines = pdf.multi_cell(
+                width, line_h, cell or " ", dry_run=True, output="LINES", border=0
+            )
+            heights.append(max(len(lines), 1) * line_h)
+        row_h = max(heights)
+
+        if pdf.will_page_break(row_h):
+            pdf.add_page()
+            # Repeat the header on the new page so a split table stays readable.
+            if not is_header:
+                emit_row(plain_header, True)
+                # That call left the font bold and the fill armed for a header
+                # row; restore this row's own style, or the first body row after
+                # every page break renders as a second header.
+                pdf.set_font("Helvetica", "", 8.5)
+
+        x0, y0 = pdf.l_margin, pdf.get_y()
+        if is_header:
+            pdf.set_fill_color(*TABLE_HEAD_FILL)
+            pdf.set_text_color(*DARK_INK)
+        else:
+            pdf.set_text_color(*BODY_INK)
+
+        x = x0
+        for width, cell in zip(widths, cells):
+            pdf.set_xy(x, y0)
+            pdf.multi_cell(
+                width, line_h, cell or " ", border=1, align="L",
+                fill=is_header, max_line_height=line_h,
+                new_x="RIGHT", new_y="TOP",
+            )
+            # multi_cell only advances by its own wrapped height, so pad the
+            # cell out to the row height and keep the grid square.
+            drawn = max(
+                len(pdf.multi_cell(width, line_h, cell or " ", dry_run=True,
+                                   output="LINES", border=0)),
+                1,
+            ) * line_h
+            if drawn < row_h:
+                pdf.rect(x, y0 + drawn, width, row_h - drawn)
+                if is_header:
+                    pdf.rect(x, y0 + drawn, width, row_h - drawn, style="FD")
+            x += width
+        pdf.set_xy(x0, y0 + row_h)
+
+    emit_row(plain_header, True)
+    for row in plain_rows:
+        emit_row(row, False)
+    pdf.set_text_color(*BODY_INK)
+
+
 def _full_width(pdf, width: float, height: float, text: str, indent: float = 0.0) -> None:
     """``multi_cell`` that always starts at the left margin (plus ``indent``).
 
@@ -425,8 +607,7 @@ def _render_block_fpdf2(pdf, epw: float, block: Block) -> None:
         _full_width(pdf, epw, 4.6, _safe(block.text) or " ")
         return
     if block.kind == "table":
-        pdf.set_font("Courier", "", 8.5)
-        _full_width(pdf, epw, 4.4, _safe(block.text))
+        _render_table_fpdf2(pdf, epw, block)
         return
 
     indent = 0.0
@@ -502,8 +683,31 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                 add("", "F1", 3, 0)
                 add_wrapped(_md_inline_to_text(block.text), "F2", 11.5, 0)
                 continue
-            if block.kind in ("code", "table"):
+            if block.kind == "code":
                 add(block.text[:max_width_chars], "F1", 9, 12)
+                continue
+            if block.kind == "table":
+                # No grid primitives in the stdlib writer, so lay the table out
+                # as space-padded monospace columns. Still rows and columns —
+                # not the raw pipe source the parser was handed.
+                header, rows = parse_table(block.text)
+                if not header:
+                    continue
+                cols = [[_md_inline_to_text(c) for c in header]] + [
+                    [_md_inline_to_text(c) for c in r] for r in rows
+                ]
+                widths = [
+                    min(max(len(row[i]) for row in cols), 46)
+                    for i in range(len(header))
+                ]
+                for row_index, row in enumerate(cols):
+                    line = "  ".join(
+                        cell[:w].ljust(w) for cell, w in zip(row, widths)
+                    ).rstrip()
+                    add(line[:max_width_chars], "F1", 9, 12)
+                    if row_index == 0:
+                        rule = "  ".join("-" * w for w in widths)
+                        add(rule[:max_width_chars], "F1", 9, 12)
                 continue
             indent = 12.0 if block.kind == "bullet" else 24.0 if block.kind == "subbullet" else 0.0
             body = _md_inline_to_text(block.text)

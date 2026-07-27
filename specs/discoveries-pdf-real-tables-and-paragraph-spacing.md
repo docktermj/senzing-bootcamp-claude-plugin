@@ -194,3 +194,27 @@ the output was wrong, and both were caught only by rasterizing pages (INV-129).
   verification), `specs/always-produce-data-discoveries-document.md` (established this deliverable),
   `specs/recap-pdf-certificate-version-and-list-spacing.md` (sibling generator),
   `specs/apply-senzing-style-guide-to-deliverables.md` (INV-081 brand palette)
+
+## Invariants introduced
+
+- `INV-142` — A bundled generator MUST render a Markdown construct as that construct, never as its
+  source text; tables are drawn as a grid, with a repeated header across page breaks that does not
+  leave the following body row bold, ragged rows normalised, and adjacent tables visibly separated
+  (recorded in `specs/INVARIANTS.md`).
+- `INV-143` — Character sanitisation MUST NOT substitute `?` for an unencodable character, and the
+  inventory under test MUST cover what generated deliverables carry, not only what the plugin's own
+  templates emit (recorded in `specs/INVARIANTS.md`).
+
+## Resolution of the known remaining issues
+
+1. **Parser splits soft-wrapped label paragraphs — FIXED at the cause.** `parse_discoveries` now
+   absorbs a plain line following a `**Label:**` line into that label's block, so the paragraph
+   reflows as one. The `_needs_item_gap` carve-out that suppressed the gap after a `label` block was
+   removed with it: a `text` block after a label is now a genuinely new paragraph and takes a normal
+   gap, which the workaround had been hiding.
+2. **Empty leading table column — ACCEPTED, not fixed.** A table written `| | Entity | Name |` has a
+   blank *header* over a real row-label column; dropping the column would delete the values beneath
+   it. Only a *wholly* empty column is safely droppable, and distinguishing the two requires scanning
+   every row to discard something whose worst case is one narrow empty cell — a poor trade against
+   silently losing a column that carries data. Reasoned in `parse_table`'s docstring so it is not
+   "fixed" later by mistake.

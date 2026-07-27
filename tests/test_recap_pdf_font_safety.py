@@ -59,6 +59,21 @@ GEN = load_generator()
 # Characters the plugin's own recap templates and module names actually contain.
 TEMPLATE_CHARS = ("—", "…", "·", "→", "’", "“", "”", "✅", "👉", "⏱️")
 
+# Characters the *bootcamper's own* deliverables carry, which the plugin's
+# templates never emit — so scanning the templates could not find them. `↔` and
+# `⚠️` shipped as `?` in both PDFs for exactly that reason: a source-pair table
+# read "GLEIF ? OPEN-OWNERSHIP" and every caveat began "??". The variation
+# selector that trails an emoji is its own character and needs its own entry.
+#
+# ⛔ This list is about what a *generated deliverable* can contain, not what the
+# plugin writes. Add to it whenever a generator learns to render new content.
+DELIVERABLE_CHARS = (
+    "↔", "⚠️", "⚠", "️", "≈", "±", "×", "–", "•", "⛔",
+    "≤", "≥", "≠", "∞", "€", "™", "⇒", "↑", "↓", "←",
+    "‑",  # non-breaking hyphen — indistinguishable from "-" on sight
+    "​",  # zero-width space — invisible, and it corrupted to "?" all the same
+)
+
 # A title long enough to clip at every width the source uses, built from the longest
 # real module name so the case stays realistic rather than synthetic.
 LONG_TITLE = "Data Quality, Mapping, and Transformation for the Customer Domain"
@@ -110,6 +125,21 @@ class TestClipStaysLatin1(unittest.TestCase):
                 self.assertTrue(
                     latin1_ok(GEN._safe(f"prefix {ch} suffix")),
                     f"_safe does not reduce {ch!r} to Latin-1; add it to _UNICODE_MAP",
+                )
+
+    def test_safe_handles_characters_the_deliverables_carry(self):
+        """Latin-1-encodable is necessary but not sufficient — `?` is encodable."""
+        for ch in DELIVERABLE_CHARS:
+            with self.subTest(char=ch):
+                out = GEN._safe(f"prefix {ch} suffix")
+                self.assertTrue(
+                    latin1_ok(out),
+                    f"_safe does not reduce {ch!r} to Latin-1; add it to _UNICODE_MAP",
+                )
+                self.assertNotIn(
+                    "?", out,
+                    f"_safe replaced {ch!r} with '?' — encodable, but the reader sees "
+                    "a corrupted glyph. Map it to an ASCII equivalent instead.",
                 )
 
 
