@@ -35,7 +35,7 @@ Entries are newest first. Do not delete history; append or update in place.
   the arithmetic, not that the graph reads better at scale — someone with real data should confirm.
   Tests **490 → 506**.
 - **Invariants:** INV-153, INV-154.
-- **Commit:** uncommitted
+- **Commit:** `341bbe4`
 
 ## factory-must-outlive-every-engine-it-creates
 
@@ -48,7 +48,7 @@ Entries are newest first. Do not delete history; append or update in place.
   `senzing_viz_server.py`, which already returns `factory` alongside `engine` for exactly this
   reason: the knowledge existed in a script comment and had never reached bootcamper-facing guidance.
 - **Invariants:** INV-152.
-- **Commit:** uncommitted
+- **Commit:** `341bbe4`
 
 ## redo-batch-drain-must-terminate
 
@@ -62,7 +62,7 @@ Entries are newest first. Do not delete history; append or update in place.
   re-deriving it, and its "monitor queue depth" bullet now distinguishes monitoring from gating. The
   count-sentinel anti-pattern previously existed only in a sample recap's narrative, not in guidance.
 - **Invariants:** INV-151.
-- **Commit:** uncommitted
+- **Commit:** `341bbe4`
 
 ## reconcile-sdk-guide-license-note-with-detected-limit
 
@@ -76,7 +76,7 @@ Entries are newest first. Do not delete history; append or update in place.
   as relaxing INV-080. Premise confirmed at the schema level rather than assumed — `sdk_guide`'s
   `record_count` documentation states that values above 500 "surface license guidance".
 - **Invariants:** INV-150.
-- **Commit:** uncommitted
+- **Commit:** `341bbe4`
 
 ## network-link-fields-and-uncovered-response-schemas
 
