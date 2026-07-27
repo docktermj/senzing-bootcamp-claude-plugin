@@ -5,7 +5,7 @@
 **Completed:** 2026-07-16T18:00:00-07:00
 **Programming language:** Java
 **Path:** Core
-**Plugin version:** 0.3.6
+**Plugin version:** 0.4.0
 **Operating system:** macOS 14.5 (Apple Silicon)
 **Python version:** 3.12.3
 **Language runtime:** OpenJDK 21.0.2
@@ -120,7 +120,7 @@
 
 **Files produced:** database/G2C.db, config/engine_config.json, src/scripts/senzing-env.sh, src/scripts/senzing-env.bat, src/SetupVerify.java, licenses/g2.lic
 
-**Why it matters:** Every later module (loading data in Data processing, querying in Query/Visualize/Discover) depends on a working SDK, a configured database, and the registered default configuration set up here.
+**Why it matters:** Every later module — loading data in Data processing, querying in Query, Visualize and Discover — depends on a working SDK, a configured database, and the registered default configuration set up here.
 
 ---
 
@@ -164,7 +164,7 @@
 ### Information Shared
 
 - The Senzing Truth Set (CUSTOMERS 120, REFERENCE 22, WATCHLIST 17 = 159 records) is the deterministic demo dataset with a published ground-truth key (85 expected entities), sourced via the MCP server's get_sample_data.
-- The interactive visualization is a self-contained web app (four tabs: Entity Graph, Record Merges, Merge Statistics, Search/Probe) that shows the resolved Truth Set — the "wow moment" of seeing entity resolution work on your own machine.
+- The interactive visualization is a self-contained web app (six tabs: Entity Graph — with a toggle for just the entities that have relationships — Merge Statistics, Match Keys, Feature Scores, Cross-Source, and Search/Probe) that shows the resolved Truth Set — the "wow moment" of seeing entity resolution work on your own machine.
 - Match keys (e.g. +NAME+DOB+PHONE), resolution rules, and relationship types (POSSIBLY_SAME, DISCLOSED, AMBIGUOUS) as surfaced in the resolved-entity JSON via getEntity(SzRecordKey, SZ_ENTITY_DEFAULT_FLAGS).
 - On macOS the Python-based bundled app's native SDK is unavailable, so a Java entity export plus an equivalent Python-stdlib/D3 server was used, serving the same four-endpoint contract; it renders fully offline (D3 is vendored in the plugin).
 
@@ -179,7 +179,7 @@
 - Registered the CUSTOMERS/REFERENCE/WATCHLIST data source codes as the default config before loading.
 - Loaded all 159 records (0 failures); they resolved into 84 entities with 71 relationships.
 - Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization with the bundled Senzing viz server: standalone snapshot docs/visualizations/truthset_verification.html plus a live server, all four API endpoints verified.
-- Captured screenshots of the entity graph and kept the most representative one for this recap.
+- Captured one screenshot per visualization tab and embedded them all in this recap, in the app's tab order.
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
 
@@ -202,7 +202,7 @@
 
 - The bootcamp's data-recommendation hierarchy (CORD first, then free-data repo, then synthesized data) — not needed here since the business problem already chose CORD.
 - The license/dataset-size framing: since the bootcamper's Senzing License Key raises the record limit and the collected total (~400) is far below it, no sampling-for-license or SQLite load-time warning applied.
-- Each of the four sources uses a genuinely different schema (flat fields vs. nested NAMES/ADDRESSES arrays), setting up the mapping work in Data quality & mapping.
+- Each of the four sources uses a genuinely different schema (flat fields vs. nested NAMES/ADDRESSES arrays), setting up the mapping work in Data Quality, Mapping, and Transformation.
 
 ### Questions & Responses
 
@@ -224,11 +224,11 @@
 
 **Files produced:** data/raw/ppp_loans.jsonl, data/raw/gleif.jsonl, data/raw/us_labor_violations.jsonl, data/raw/open_ownership.jsonl, config/data_sources.yaml, config/cord_metadata.yaml, docs/data_collection_checklist.md, docs/data_source_locations.md, .gitignore, docs/security_compliance.md
 
-**Why it matters:** These four files, each with a different schema, are exactly what Data quality & mapping will assess and map onto the Senzing Entity Specification.
+**Why it matters:** These four files, each with a different schema, are exactly what Data Quality, Mapping, and Transformation will assess and map onto the Senzing Entity Specification.
 
 ---
 
-## Data quality & mapping — 2026-07-16T14:00:00-07:00
+## Data Quality, Mapping, and Transformation — 2026-07-16T14:00:00-07:00
 
 ### Information Shared
 
@@ -272,8 +272,8 @@
 
 ### Questions & Responses
 
-- **Q:** How many records do you expect to load in a production system?
-    - **R:** 3 — 500K–10M, medium tier
+- **Q:** In production — not in this bootcamp — how many records do you expect to load?
+    - **R:** 3 — more than 500,000 up to 10,000,000, medium tier
 - **Q:** Loading may take a while — how would you like to proceed?
     - **R:** 2 — proceed on SQLite for now
 - **Q:** Would you like a results dashboard showing entity counts, match statistics, and sample resolved entities?
@@ -316,7 +316,7 @@
     - **R:** Add a visualization like the Truth Set one
 - **Q:** Would you like a visualization of the resolved entities as an entity graph?
     - **R:** Yes
-- **Q:** Would you like to return to Data quality & mapping to refine your data mapping?
+- **Q:** Would you like to return to Data Quality, Mapping, and Transformation to refine your data mapping?
     - **R:** No — proceed
 
 ### Actions Taken

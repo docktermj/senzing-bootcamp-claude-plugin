@@ -37,7 +37,13 @@ cause. For a feature: what to add and where it fits the module/flow.>
 
 ## Source
 
-- Feedback: `<feedback file path>` → "<entry title>" (<date>, Module <n>)
+- Feedback: `<feedback file path>` → "<entry title>" (<date>, Module <n>; `Source: <bootcamper-reported | self-observed (assistant retrospective)>`)
 - Priority: <High | Medium | Low | pending>
 - Related specs: <specs/<file>.md, or "none">
 ```
+
+Carry the entry's `Source:` value through into the `## Source` block. It records
+who noticed the problem — a human who hit real friction, or the graduation
+retrospective catching something a bootcamper structurally could not report (e.g.
+output that renders blank instead of erroring). Omit the parenthetical only when
+the feedback entry itself carries no `Source:` line.

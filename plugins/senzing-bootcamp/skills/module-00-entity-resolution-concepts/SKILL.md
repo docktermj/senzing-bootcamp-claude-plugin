@@ -64,14 +64,26 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
 
 1. In `config/bootcamp_progress.json` (a single batched write): add `entity_resolution_concepts`
    to `modules_completed` (idempotent; do not duplicate), set `current_module` to the next module
-   in `selected_modules`, and set `current_step` to `null` — so the next module's journey map
-   renders it as current, not Entity Resolution Concepts.
+   in `selected_modules`, set `current_step` to `null` — so the next module's journey map
+   renders it as current, not Entity Resolution Concepts — and record the quiz outcome under
+   `module_0_concepts` as `quiz_offered` (`true` only if you actually presented the pinned quiz
+   question) and `quiz_taken` (`true` only if the bootcamper accepted and answered at least one
+   question). These two fields make a silent skip visible instead of unrecoverable (INV-112).
+
+   ⛔ **Before writing, assert `quiz_offered` is true.** If you did not present the pinned quiz
+   offer (`concepts.md` → "Optional knowledge-check quiz"), present it **now**, before recording
+   the recap and handing off — the module has not closed yet, so the recovery is free. Record
+   `quiz_offered: false` only if presenting it now is genuinely impossible (e.g. the bootcamper
+   has exited), and say so in the recap's **Questions & Responses** subsection rather than leaving
+   the omission silent. This mirrors how the Truth Set visualization module re-checks its artifact
+   exists before marking itself complete (INV-077).
 2. Append a name-based recap section to `docs/bootcamp_recap.md` per
    `../bootcamp-onboarding/module-completion.md` Step 2 (2b/2c): `## Entity Resolution Concepts —
    {ISO 8601 timestamp}` with the four subsections — **Information Shared** (the entity-resolution
    concepts taught, MCP-sourced), **Questions & Responses** (the "any questions?" gate, the quiz
-   offer/questions if taken, and the readiness gate, each with the bootcamper's answer — or
-   `- {none this module}`), **Actions Taken** (that the primer and optional quiz were presented;
+   offer **and** the bootcamper's answer to it — the offer is always listed because it is always
+   asked (INV-112) — plus the quiz questions if taken, and the readiness gate, each with the
+   bootcamper's answer — or `- {none this module}`), **Actions Taken** (that the primer and optional quiz were presented;
    this preamble creates no project files), and **End-of-Module Summary**. Re-read to confirm the section landed
    (2c). This is the ONLY module-completion step Module 0 runs; it does **not** present the
    bootcamper-facing end-of-module summary (Step 3).

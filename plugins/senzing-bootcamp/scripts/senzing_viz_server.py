@@ -23,7 +23,7 @@ then serves:
   (``why_records`` / ``why_record_in_entity``); ``?entity_id=<id>``
 - ``GET /api/how``     explain HOW an entity was constructed from its records
   (``how_entity_by_entity_id``); ``?entity_id=<id>``
-- ``GET /api/dashboard``  entity/match counts + a sample of resolved entities
+- ``GET /api/records?entity_id=``  the constituent records of one entity
 - ``GET /api/overlap``    cross-source overlap matrix (which sources share entities)
 - ``GET /api/matchkeys``  match-key frequency (which feature combos drive resolutions)
 - ``GET /api/features``   feature-score distribution across a capped sample of
@@ -74,11 +74,28 @@ from urllib.parse import urlparse, parse_qs
 # of the same values if the module is ever unavailable, so this script keeps working
 # in isolation (mirrors the vendored-D3 offline fallback).
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Fallback palette, used only if brand_tokens is unavailable. Named at module scope
+# so tests/test_brand_sync.py can assert it stays equal to brand_tokens.py — the two
+# copies would otherwise drift silently (the runtime prefers the imported values
+# whenever brand_tokens loads, so a stale fallback is never exercised in practice).
+_FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
+_FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
+_FALLBACK_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
+_FALLBACK_BRAND = {
+    "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
+    "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
+    "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
+    "line": "#E5DFD3", "green": "#1D9E75",
+    "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
+    "code_font": "'Fira Code', 'Courier New', Courier, monospace",
+}
 try:
     import brand_tokens as _bt
 
     SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
     FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
+    SOURCE_STROKES = list(_bt.SOURCE_STROKES)
+    color_for_sources = _bt.color_for_sources
     _BRAND = {
         "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
         "ink": _bt.DARK_INK, "muted": _bt.BODY_INK, "accent": _bt.EMBER_CORE,
@@ -86,17 +103,33 @@ try:
         "line": _bt.WARM_LINE, "green": _bt.SIGNAL_GREEN,
         "font": _bt.FONT_STACK, "code_font": _bt.CODE_FONT_STACK,
     }
-except Exception:  # defensive fallback — keep values in sync with brand_tokens.py
-    SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
-    FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
-    _BRAND = {
-        "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
-        "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
-        "accent_hot": "#FF4E1F", "accent_soft": "#FDEEE3",
-        "line": "#E5DFD3", "green": "#1D9E75",
-        "font": "Roboto, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
-        "code_font": "'Fira Code', 'Courier New', Courier, monospace",
-    }
+except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
+    FALLBACK_COLORS = list(_FALLBACK_COLORS)
+    SOURCE_STROKES = list(_FALLBACK_STROKES)
+
+    def color_for_sources(sources):
+        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract)."""
+        codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
+        preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
+        claimed = set(preferred.values())
+        available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+        assigned, nth = {}, 0
+        for code in codes:
+            if code in preferred:
+                fill, cycle = preferred[code], 0
+            else:
+                fill = available[nth % len(available)]
+                cycle = nth // len(available)
+                nth += 1
+            assigned[code] = {
+                "fill": fill,
+                "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+                "cycle": cycle,
+            }
+        return assigned
+
+    _BRAND = dict(_FALLBACK_BRAND)
 
 
 # --------------------------------------------------------------------------- #
@@ -190,6 +223,18 @@ class Model:
                     }
         return self
 
+    def data_sources(self):
+        """Every data-source code present in the model, sorted.
+
+        Drives the node/legend colors: they are assigned from the sources actually
+        loaded, never from a fixed name-keyed palette (a Truth-Set-keyed map renders
+        every real bootcamper's sources in one identical fallback color).
+        """
+        codes = set()
+        for entity in self.entities.values():
+            codes.update(entity.get("data_sources", []))
+        return sorted(str(c) for c in codes if str(c).strip())
+
     # ---- API payloads ---------------------------------------------------- #
     def stats(self):
         ents = list(self.entities.values())
@@ -223,36 +268,49 @@ class Model:
             "data_sources_total": len(all_sources),
             "histogram": hist,
             "bucket_entities": buckets,
+            # The largest resolved entities. Formerly the only content unique to
+            # /api/dashboard; that endpoint and its tab were removed because their
+            # counts and histogram duplicated this payload (contract:
+            # "De-duplication (required)"). Rendered beneath the histogram.
+            "sample_entities": self._sample_entities(),
         }
 
-    def dashboard(self):
-        """Results-dashboard payload: headline counts, the records-per-entity
-        histogram, and a sample of the largest resolved entities."""
-        s = self.stats()
-        sample = []
+    def _sample_entities(self, cap=10):
+        """Multi-record entities, largest first — the 'biggest merges' list."""
+        out = []
         for e in sorted(self.entities.values(), key=lambda x: -x["record_count"]):
-            if e["record_count"] <= 1:
-                continue
-            sample.append(
+            if e["record_count"] < 2:
+                break
+            out.append(
                 {
                     "entity_id": e["entity_id"],
                     "entity_name": e["entity_name"],
                     "record_count": e["record_count"],
-                    "data_sources": e["data_sources"],
+                    "data_sources": sorted(set(e["data_sources"])),
                 }
             )
-            if len(sample) >= 10:
+            if len(out) >= cap:
                 break
+        return out
+
+    def records(self, entity_id):
+        """The constituent records of one entity — backs the Records action.
+
+        Unlike merges(), this covers single-record entities too, and needs no
+        engine call, so it is embedded in the standalone snapshot and works
+        offline (contract: GET /api/records).
+        """
+        try:
+            eid = int(entity_id)
+        except (TypeError, ValueError):
+            return {"entity_id": entity_id, "error": "bad request: entity_id must be an integer"}
+        e = self.entities.get(eid)
+        if e is None:
+            return {"entity_id": eid, "error": "not found: no such entity"}
         return {
-            "counts": {
-                "records_total": s["records_total"],
-                "entities_total": s["entities_total"],
-                "multi_record_entities": s["multi_record_entities"],
-                "cross_source_entities": s["cross_source_entities"],
-                "relationships_total": s["relationships_total"],
-            },
-            "histogram": s["histogram"],
-            "sample_entities": sample,
+            "entity_id": eid,
+            "entity_name": e["entity_name"],
+            "records": e["records"],
         }
 
     def overlap(self):
@@ -275,7 +333,35 @@ class Model:
                     a, b = idx[ds[i]], idx[ds[j]]
                     matrix[a][b] += 1
                     matrix[b][a] += 1
-        return {"sources": sources, "matrix": matrix}
+        # Per-cell entity lists so heatmap cells drill down, mirroring
+        # bucket_entities on /api/stats. Keyed "i,j" with i <= j (the matrix is
+        # symmetric, so each pair is stored once).
+        cells, capped = {}, False
+        for e in self.entities.values():
+            ds = sorted(set(e["data_sources"]))
+            ent = {
+                "entity_id": e["entity_id"],
+                "entity_name": e["entity_name"],
+                "record_count": e["record_count"],
+            }
+            keys = [(idx[s], idx[s]) for s in ds]
+            keys += [
+                (min(idx[ds[i]], idx[ds[j]]), max(idx[ds[i]], idx[ds[j]]))
+                for i in range(len(ds))
+                for j in range(i + 1, len(ds))
+            ]
+            for i, j in keys:
+                lst = cells.setdefault("%d,%d" % (i, j), [])
+                if len(lst) < 200:
+                    lst.append(ent)
+                else:
+                    capped = True
+        return {
+            "sources": sources,
+            "matrix": matrix,
+            "cell_entities": cells,
+            "cell_capped": capped,
+        }
 
     def match_keys(self):
         """Match-key frequency: how often each per-record match key (e.g.
@@ -287,10 +373,34 @@ class Model:
                 if mk:
                     counts[mk] = counts.get(mk, 0) + 1
         items = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        top = [k for k, _ in items[:20]]
+        # Per-key entity lists so Match Keys rows drill down, mirroring
+        # bucket_entities on /api/stats and cell_entities on /api/overlap.
+        by_key, ent_capped = {k: [] for k in top}, False
+        wanted = set(top)
+        for e in self.entities.values():
+            seen = set()
+            for r in e["records"]:
+                mk = r.get("match_key") or ""
+                if mk in wanted and mk not in seen:
+                    seen.add(mk)
+                    lst = by_key[mk]
+                    if len(lst) < 200:
+                        lst.append(
+                            {
+                                "entity_id": e["entity_id"],
+                                "entity_name": e["entity_name"],
+                                "record_count": e["record_count"],
+                            }
+                        )
+                    else:
+                        ent_capped = True
         return {
             "match_keys": [{"match_key": k, "count": v} for k, v in items[:20]],
             "distinct": len(counts),
             "capped": len(counts) > 20,
+            "match_key_entities": by_key,
+            "entities_capped": ent_capped,
         }
 
     def feature_scores(self):
@@ -462,13 +572,24 @@ nav button.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:
 main{padding:0}
 .tab{display:none;padding:16px 20px}
 .tab.active{display:block}
-#graph-container,#network-container{position:relative;height:calc(100vh - 175px);min-height:360px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0}
-#graph-container svg,#network-container svg{width:100%;height:100%;display:block}
+#graph-container{position:relative;height:calc(100vh - 175px);min-height:360px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;padding:0}
+#graph-container svg{width:100%;height:100%;display:block}
 .legend{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{stroke:#fff;stroke-width:1.5px;cursor:pointer}
 .node text{font-size:10px;fill:var(--ink);pointer-events:none}
+/* Label visibility is driven by a class on the container, set explicitly at
+   init -- an unchecked checkbox fires no change event, so the initial state
+   cannot be left to the handler (contract: "Init-state note"). */
+.hide-node-labels .node text{display:none}
+.hide-edge-labels .edge text{display:none}
+.gctl{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;z-index:2}
+.gctl label{display:flex;align-items:center;gap:6px;margin:2px 0;cursor:pointer}
+.gctl .why{color:var(--muted);margin-top:4px;max-width:220px}
+.legend .row{cursor:pointer;user-select:none}
+.legend .row.off{opacity:.35}
+.legend .cnt{color:var(--muted);margin-left:auto;padding-left:8px}
 .edge line{stroke:var(--line);stroke-width:1.5px}
 .edge text{font-size:9px;fill:var(--muted)}
 .tooltip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;padding:6px 9px;border-radius:6px;font-size:12px;opacity:0;max-width:240px}
@@ -482,7 +603,21 @@ main{padding:0}
 button.probe{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 12px;margin:2px;cursor:pointer;font-size:13px}
 .muted{color:var(--muted)}
 .modal-bg{position:fixed;inset:0;background:rgba(15,13,12,.5);display:none;align-items:center;justify-content:center;z-index:50}
-.modal{background:#fff;border-radius:10px;padding:18px 20px;max-width:420px;width:90%}
+/* Entity-detail dialogs are a primary "wow moment" surface and get the same
+   care as the headline tabs: a real header bar separated from the body, a
+   circular close control, and a subtle entrance transition (contract:
+   "Modal chrome"). */
+.modal{background:#fff;border-radius:10px;max-width:420px;width:90%;overflow:hidden;
+  box-shadow:0 18px 48px rgba(15,13,12,.28);animation:modal-in .16s ease-out}
+@keyframes modal-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.modal{animation:none}}
+.modal .mhead{background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:flex-start;gap:12px}
+.modal .mhead h3{margin:0;font-size:16px;color:#fff;flex:1}
+.modal .mhead .muted{color:rgba(255,255,255,.72);font-size:12px;margin-top:2px}
+.modal .mclose{flex:none;width:28px;height:28px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(255,255,255,.15);color:#fff;font-size:16px;line-height:1;padding:0;margin:0}
+.modal .mclose:hover{background:rgba(255,255,255,.28)}
+.modal .mbody{padding:16px 18px 18px}
 .modal h3{margin:0 0 8px}
 .modal button{margin-top:10px;border:none;background:var(--blue);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer}
 .modal.wide{max-width:680px}
@@ -527,42 +662,67 @@ nav{flex-wrap:wrap}
 <nav id="nav"></nav>
 <main>
   <section class="tab active" id="tab-graph"><div id="graph-container"><div class="tooltip" id="tt"></div></div></section>
-  <section class="tab" id="tab-network"><div id="network-container"><div class="tooltip" id="tt2"></div></div></section>
-  <section class="tab" id="tab-merges"><div id="merges"></div></section>
   <section class="tab" id="tab-stats"><div id="hist"></div></section>
   <section class="tab" id="tab-matchkeys"><div id="matchkeys"></div></section>
   <section class="tab" id="tab-features"><div id="features"></div></section>
   <section class="tab" id="tab-overlap"><div id="overlap"></div></section>
-  <section class="tab" id="tab-dashboard"><div id="dashboard"></div></section>
   <section class="tab" id="tab-probe">__PROBE_BODY__</section>
 </main>
 <div class="modal-bg" id="modal-bg" onclick="if(event.target.id==='modal-bg')closeModal()"><div class="modal" id="modal"></div></div>
 <script>
-const ALL_TABS=[["graph","Entity Graph"],["network","Relationship Network"],["merges","Record Merges"],["stats","Merge Statistics"],["matchkeys","Match Keys"],["features","Feature Scores"],["overlap","Cross-Source"],["dashboard","Results Dashboard"],["probe","Search / Probe"]];
+// Six tabs. "Record Merges" was removed because Search / Probe's per-entity result is a
+// strict superset of it (name, record count, entity match key -- plus per-record match
+// keys and feature scores); its one unique capability, browsing all merges with no query,
+// moved to the "Show all merged entities" button on that tab. "Relationship Network" was
+// removed because it rendered a filtered view of this tab's own /api/graph data; it is now
+// the "Show only entities with relationships" mode of Entity Graph. Both per the contract's
+// de-duplication rule: when two candidate tabs share their data, they are one tab.
+const ALL_TABS=[["graph","Entity Graph"],["stats","Merge Statistics"],["matchkeys","Match Keys"],["features","Feature Scores"],["overlap","Cross-Source"],["probe","Search / Probe"]];
+// {source_code: {fill, stroke, cycle}} assigned from the sources actually loaded, so a
+// bootcamper's own sources are always distinct. The last-resort literal is for a source
+// absent from the model entirely; it is deliberately NOT equal to any assigned color, so
+// "unassigned" never masquerades as a real category.
 const SRC_COLORS=__SRC_COLORS__;
-function color(src){return SRC_COLORS[src]||"#8b5cf6";}
+const UNKNOWN_SRC="#9aa0a6";
+function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",cycle:0};}
+function color(src){return srcStyle(src).fill;}
+function srcStroke(src){return srcStyle(src).stroke;}
+function srcCycle(src){return srcStyle(src).cycle||0;}
 const CSSV=getComputedStyle(document.documentElement);
 function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
 function hexRgb(h){h=(h||"").replace('#','');if(h.length===3)h=h.split('').map(function(c){return c+c;}).join('');var n=parseInt(h,16)||0;return [(n>>16)&255,(n>>8)&255,n&255];}
 let STATS=null;
-// A tab is shown only when its data exists: relationships for the network,
-// 2+ sources for cross-source overlap, multi-record entities for match keys /
-// feature scores. The others always apply.
+// A tab is shown only when its data exists: 2+ sources for cross-source overlap,
+// multi-record entities for match keys / feature scores. The others always apply.
+// (The relationship view is no longer a tab -- it is a mode of Entity Graph, gated
+// on the same relationships_total > 0 condition inside addGraphControls.)
 function tabApplicable(id){const s=STATS||{};
-  if(id==="network")return (s.relationships_total||0)>0;
   if(id==="overlap")return (s.data_sources_total||0)>=2;
   if(id==="features")return (s.multi_record_entities||0)>0;
   if(id==="matchkeys")return (s.multi_record_entities||0)>0;
   return true;}
+// "all" shows the full entity population; "network" shows only entities connected by a
+// relationship, with edges styled by relationship type -- what the removed Relationship
+// Network tab rendered. Both modes are served by the same /api/graph payload.
+// Above this many entities the full population is a mesh with no practical way to
+// locate anything, so Entity Graph opens on the relationship subgraph instead. The
+// toggle still switches both ways; only the DEFAULT is scale-aware. Stated in
+// visualization-api-reference.md so a server in any language picks the same value.
+// (Label defaults are already scale-aware; hiding labels does not thin 4,464 edges.)
+const GRAPH_SUBGRAPH_DEFAULT_ABOVE=400;
+let graphMode="all";
+let graphModeAutoSet=false;
+// The live force simulation for the graph tab. Toggling the mode re-enters drawGraph, and
+// the previous simulation would otherwise keep ticking against DOM nodes that have been
+// removed — wasted work and a source of jank. Stopped before each redraw.
+let graphSim=null;
 function drawFor(id){
   if(id==="graph")drawGraph();
-  else if(id==="network")drawNetwork();
   else if(id==="stats")drawHist();
   else if(id==="matchkeys")drawMatchKeys();
   else if(id==="features")drawFeatures();
-  else if(id==="overlap")drawOverlap();
-  else if(id==="dashboard")drawDashboard();}
+  else if(id==="overlap")drawOverlap();}
 function activate(id){d3.selectAll("nav button").classed("active",false);d3.select("#navbtn-"+id).classed("active",true);
   d3.selectAll(".tab").classed("active",false);d3.select("#tab-"+id).classed("active",true);drawFor(id);}
 function buildNav(){const nav=d3.select("#nav");nav.html("");
@@ -578,23 +738,56 @@ async function loadBanner(){const s=await getJSON("/api/stats");
 let graphDrawn=false;
 async function drawGraph(){
   const c=document.getElementById("graph-container");const W=c.clientWidth,H=c.clientHeight;
-  const g=await getJSON("/api/graph");
+  const g=await getJSON("/api/graph");const box=d3.select("#graph-container");
   d3.select("#graph-container svg").remove();
-  const svg=d3.select("#graph-container").append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
-  const root=svg.append("g");
-  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
-  const nodes=g.nodes.map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  d3.select("#graph-container .legend").remove();
+  d3.select("#graph-container .empty-note").remove();
+  if(graphSim){graphSim.stop();graphSim=null;}
+  const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
+  // Scale-aware default, applied once: above the threshold, open on the relationship
+  // subgraph rather than the full population. Only when a subgraph actually exists,
+  // and never overriding a choice the bootcamper has already made with the toggle.
+  if(!graphModeAutoSet){
+    graphModeAutoSet=true;
+    if(g.nodes.length>GRAPH_SUBGRAPH_DEFAULT_ABOVE&&links0.length){graphMode="network";}
+  }
+  const network=graphMode==="network";
+  // In network mode, keep only entities that a relationship actually connects -- the
+  // subgraph the removed Relationship Network tab showed.
+  let nodes;
+  if(network){
+    const connected=new Set();links0.forEach(function(e){connected.add(e.source);connected.add(e.target);});
+    nodes=g.nodes.filter(function(n){return connected.has(n.entity_id);}).map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  }else{
+    nodes=g.nodes.map(function(n){return Object.assign({},n,{id:n.entity_id});});
+  }
+  if(!nodes.length){
+    box.append("div").attr("class","muted empty-note").style("padding","14px")
+       .text(network?"No relationships between entities were found in this data.":"No entities to graph.");
+    addGraphControls("graph-container",0);
+    return;
+  }
   // EDGE-KEY MAPPING: forceLink resolves against id via source/target; map before use.
   const idset=new Set(nodes.map(function(n){return n.id;}));
-  const links=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key};})
-                     .filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
-  const sim=d3.forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(90))
-    .force("charge",d3.forceManyBody().strength(-160))
+  const links=links0.filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
+  const rtypes=Array.from(new Set(links.map(function(e){return e.rtype;})));
+  const rcolor=d3.scaleOrdinal().domain(rtypes).range([C_BLUE,C_GOLD,C_GREEN,"#8b5cf6","#ec4899","#0ea5e9"]);
+  const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
+  const root=svg.append("g");
+  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
+  const sim=graphSim=d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(network?100:90))
+    .force("charge",d3.forceManyBody().strength(network?-180:-160))
     .force("center",d3.forceCenter(W/2,H/2))
     .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
   const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
-  edge.append("line");
+  const line=edge.append("line");
+  // Relationship-type colour plus a dash pattern, so the types stay distinguishable in a
+  // monochrome screenshot (contract: pair colour with a non-colour distinction).
+  if(network){
+    line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
+        .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
+  }
   edge.append("text").text(function(d){return d.match_key||"";});
   const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
     .call(d3.drag().on("start",dstart).on("drag",dragged).on("end",dend))
@@ -603,7 +796,9 @@ async function drawGraph(){
       tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);});
+  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
+    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
+    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
   node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
       .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
   sim.on("tick",function(){
@@ -612,37 +807,167 @@ async function drawGraph(){
     edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
     node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
   });
-  drawLegend();
+  if(network){drawRelationshipLegend(box,links,rtypes,rcolor,edge);}
+  else{drawLegend(nodes);}
+  addGraphControls("graph-container",nodes.length);
   function dstart(ev,d){if(!ev.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
   function dragged(ev,d){d.fx=ev.x;d.fy=ev.y;}
   function dend(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
 }
+// Relationship-type legend with click-to-filter, carried over unchanged from the removed
+// Relationship Network tab. Built FROM the drawn edges, so an entry cannot exist without
+// matching marks on screen.
+function drawRelationshipLegend(box,links,rtypes,rcolor,edge){
+  const l=box.append("div").attr("class","legend");
+  l.append("div").style("font-weight","600").style("margin-bottom","3px").text("Relationship");
+  const rcount={};links.forEach(function(e){rcount[e.rtype]=(rcount[e.rtype]||0)+1;});
+  const roff={};
+  rtypes.forEach(function(ty){const r=l.append("div").attr("class","row");
+    r.append("span").attr("class","dot").style("background",rcolor(ty));
+    r.append("span").text(humLevel(ty));
+    r.append("span").attr("class","cnt").text(rcount[ty]||0);
+    r.attr("title","Show only this relationship type (click again to restore)");
+    r.on("click",function(){roff[ty]=!roff[ty];d3.select(this).classed("off",!!roff[ty]);
+      const anyOff=rtypes.some(function(x){return roff[x];});
+      edge.style("display",function(d){return (!anyOff||!roff[d.rtype])?null:"none";});});});
+}
 function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
-function drawLegend(){d3.select("#graph-container .legend").remove();
-  const srcs=Object.keys(SRC_COLORS);const l=d3.select("#graph-container").append("div").attr("class","legend");
-  srcs.forEach(function(s){const r=l.append("div").attr("class","row");r.append("span").attr("class","dot").style("background",color(s));r.append("span").text(s);});}
+// Above this node count both label sets default OFF. Chosen because a default
+// tuned against the 159-record Truth Set produced ~1000 overlapping labels when
+// the same app was reused for production-scale data in Module 7 (contract:
+// "Scale principle"). Toggles stay available either way.
+const LABEL_AUTO_OFF=150;
+// Non-colour encoding companion to the relationship-type colour, so the types
+// stay distinguishable in a monochrome recap screenshot and for colour-vision
+// deficiency (contract: "Pair color with a non-color distinction").
+const R_DASH={possibly_same:"",possibly_related:"6,4",disclosed:"2,3",ambiguous:"10,3,2,3"};
+function rdash(ty){return R_DASH[String(ty||"").toLowerCase()]||"6,4";}
+function addGraphControls(containerId,nodeCount){
+  const c=d3.select("#"+containerId);
+  c.select(".gctl").remove();
+  const auto=nodeCount>LABEL_AUTO_OFF;
+  // Apply the initial state to the container explicitly -- do NOT rely on the
+  // checkbox change event, which does not fire for an unchecked box at load.
+  const el=document.getElementById(containerId);
+  el.classList.toggle("hide-node-labels",auto);
+  el.classList.toggle("hide-edge-labels",auto);
+  const box=c.append("div").attr("class","gctl");
+  function toggle(cls,label,on){
+    const row=box.append("label");
+    const inp=row.append("input").attr("type","checkbox").property("checked",on);
+    row.append("span").text(label);
+    inp.on("change",function(){el.classList.toggle(cls,!this.checked);});}
+  toggle("hide-node-labels","Entity name labels",!auto);
+  toggle("hide-edge-labels","Match key labels",!auto);
+  // Mode switch: the full entity population, or only the entities a relationship
+  // connects. Replaces the standalone Relationship Network tab, and is shown only when
+  // there are relationships to see — the same condition that used to gate that tab.
+  if(((STATS||{}).relationships_total||0)>0){
+    const row=box.append("label");
+    const inp=row.append("input").attr("type","checkbox").attr("id","graph-network-only")
+                 .property("checked",graphMode==="network");
+    row.append("span").text("Show only entities with relationships");
+    inp.on("change",function(){graphMode=this.checked?"network":"all";drawGraph();});
+  }
+  if(auto)box.append("div").attr("class","why")
+    .text("Labels hidden — "+nodeCount+" entities would overlap. Use the toggles to show them.");
+  // Same reasoning as the label note: without it the bootcamper reads a default as
+  // their data, and concludes the graph is showing everything there is.
+  if(graphMode==="network"&&(STATS||{}).entities_total>GRAPH_SUBGRAPH_DEFAULT_ABOVE)
+    box.append("div").attr("class","why")
+      .text("Showing the "+nodeCount+" entities that have relationships, of "+
+            STATS.entities_total+" total — the full population is too dense to read at this "+
+            "scale. Untick above to show them all.");}
+// Built FROM the rendered nodes, never from a static colour config: a legend
+// entry then cannot exist without matching marks on screen, which is what makes
+// "the legend shows colours that appear nowhere in the graph" impossible.
+// Clicking an entry filters the view and toggles back.
+function drawLegend(nodes){d3.select("#graph-container .legend").remove();
+  const counts={};(nodes||[]).forEach(function(n){(n.data_sources||[]).forEach(function(s){counts[s]=(counts[s]||0)+1;});});
+  const srcs=Object.keys(counts).sort();
+  if(!srcs.length)return;
+  const off={};
+  const l=d3.select("#graph-container").append("div").attr("class","legend");
+  srcs.forEach(function(s){const r=l.append("div").attr("class","row");
+    r.append("span").attr("class","dot").style("background",color(s))
+      .style("box-shadow",srcCycle(s)?("inset 0 0 0 1.5px "+srcStroke(s)):null);
+    r.append("span").text(s);
+    r.append("span").attr("class","cnt").text(counts[s]);
+    r.attr("title","Show only "+s+" (click again to restore)");
+    r.on("click",function(){off[s]=!off[s];d3.select(this).classed("off",!!off[s]);
+      const anyOff=srcs.some(function(x){return off[x];});
+      d3.selectAll("#graph-container .node").style("display",function(d){
+        if(!anyOff)return null;
+        const keep=(d.data_sources||[]).some(function(x){return !off[x];});
+        return keep?null:"none";});});});}
 function openModal(d){const m=d3.select("#modal");document.getElementById("modal").className="modal";
-  m.html("<h3>"+esc(d.entity_name)+"</h3><div class='muted'>Entity ID "+d.entity_id+"</div>"+
-    "<p><b>Data sources:</b> "+d.data_sources.join(", ")+"<br><b>Records:</b> "+d.record_count+"</p>"+
-    "<div>"+d.records.map(function(r){return "<span class='chip'>"+r.data_source+":"+r.record_id+"</span>";}).join("")+"</div>"+
-    "<button onclick='closeModal()'>Close</button>");
+  const body="<p><b>Data sources:</b> "+esc(d.data_sources.join(", "))+"<br><b>Records:</b> "+d.record_count+"</p>"+
+    "<div id='node-actions'></div>";
+  m.html(modalShell(d.entity_name,"Entity "+d.entity_id,body));
+  // Same three actions as every other entity surface -- the graph node modal is
+  // not an exception (contract: "Per-entity actions").
+  addEntityActions(d3.select("#node-actions"),d.entity_id,d.entity_name);
   document.getElementById("modal-bg").style.display="flex";}
 function closeModal(){document.getElementById("modal-bg").style.display="none";}
-function addExplainButtons(sel,eid,name){if(eid===undefined||eid===null)return;
+// Shared modal chrome: header bar (title + subtitle + circular close) and a body
+// wrapper. Every entity dialog -- Records, Why?, How? -- goes through this, so
+// they cannot drift apart visually.
+function modalShell(title,subtitle,bodyHtml){
+  return "<div class='mhead'><div><h3>"+esc(title)+"</h3>"+
+    (subtitle?"<div class='muted'>"+esc(subtitle)+"</div>":"")+
+    "</div><button class='mclose' onclick='closeModal()' title='Close' aria-label='Close'>&times;</button></div>"+
+    "<div class='mbody'>"+bodyHtml+"</div>";}
+// The canonical per-entity action set (contract: "Per-entity actions"). ONE
+// renderer, invoked from every surface that shows an entity — graph node modal,
+// Record Merges cards, every aggregate drill-down, and search results. Adding a
+// button here reaches all of them; that is the point. Wiring actions per
+// code-path is how surfaces previously shipped with different subsets.
+function addEntityActions(sel,eid,name){if(eid===undefined||eid===null)return;
   const a=sel.append("div").attr("class","actions");
+  a.append("button").attr("title","Show the records that make up this entity").text("Records").on("click",function(){showRecords(eid,name);});
   a.append("button").attr("title","Why did these records resolve together?").text("Why?").on("click",function(){explain("why",eid,name);});
   a.append("button").attr("title","How was this entity constructed?").text("How?").on("click",function(){explain("how",eid,name);});}
+// Renders a list of entities with the full action set — shared by every
+// aggregate drill-down (histogram buckets, cross-source cells, match-key rows)
+// and by the largest-entities list, so all of them behave identically.
+function renderEntityList(box,entities,emptyMsg){
+  if(!entities||!entities.length){box.append("p").attr("class","muted").text(emptyMsg||"No entities.");return;}
+  entities.forEach(function(e){
+    const row=box.append("div").attr("class","card");
+    row.append("h4").text(e.entity_name||("Entity "+e.entity_id));
+    const meta=[];
+    if(e.record_count!==undefined)meta.push(e.record_count+" record"+(e.record_count===1?"":"s"));
+    if(e.data_sources&&e.data_sources.length)meta.push(e.data_sources.join(" + "));
+    meta.push("Entity "+e.entity_id);
+    row.append("div").attr("class","muted").text(meta.join(" · "));
+    addEntityActions(row,e.entity_id,e.entity_name);});}
+async function showRecords(eid,name){const m=d3.select("#modal");
+  document.getElementById("modal").className="modal wide explain";
+  const sub=(name||"")+" · Entity "+eid;
+  m.html(modalShell("Records in this entity",sub,"<p class='muted'>Loading…</p>"));
+  document.getElementById("modal-bg").style.display="flex";
+  let data;try{data=await getJSON("/api/records?entity_id="+encodeURIComponent(eid));}catch(e){data={error:String(e)};}
+  let body="";
+  if(data&&data.error){body="<p class='muted'>"+esc(data.error)+"</p>";}
+  else{const recs=(data&&data.records)||[];
+    if(!recs.length){body="<p class='muted'>No records returned for this entity.</p>";}
+    else{body="<table class='tbl'><thead><tr><th>Source</th><th>Record</th><th>Name</th><th>Address</th><th>Phone</th></tr></thead><tbody>";
+      recs.forEach(function(r){body+="<tr><td>"+esc(r.data_source)+"</td><td>"+esc(r.record_id)+"</td><td>"+esc(r.name||"")+
+        "</td><td>"+esc(r.address||"")+"</td><td>"+esc(r.phone||"")+"</td></tr>";});
+      body+="</tbody></table>";}}
+  m.html(modalShell("Records in this entity",sub,body));}
 function explainTitle(kind){return kind==="why"?"Why did these records resolve together?":"How was this entity built?";}
 async function explain(kind,eid,name){const m=d3.select("#modal");
   document.getElementById("modal").className="modal wide explain";
-  const head="<h3>"+esc(explainTitle(kind))+"</h3><div class='muted'>"+esc(name||"")+" · Entity "+eid+"</div>";
-  m.html(head+"<p class='muted'>Loading…</p>");document.getElementById("modal-bg").style.display="flex";
+  const sub=(name||"")+" · Entity "+eid;
+  m.html(modalShell(explainTitle(kind),sub,"<p class='muted'>Loading…</p>"));
+  document.getElementById("modal-bg").style.display="flex";
   let data;try{data=await getJSON("/api/"+kind+"?entity_id="+encodeURIComponent(eid));}catch(e){data={error:String(e)};}
-  let html=head;
-  if(data&&data.error){html+="<p class='muted'>"+esc(data.error)+"</p>";}
-  else{html+=(kind==="why"?renderWhy(data):renderHow(data));
-    html+="<details><summary>Show the raw Senzing response (JSON)</summary><pre>"+esc(JSON.stringify(data&&data.result!==undefined?data.result:data,null,2))+"</pre></details>";}
-  html+="<button onclick='closeModal()'>Close</button>";m.html(html);}
+  let body="";
+  if(data&&data.error){body="<p class='muted'>"+esc(data.error)+"</p>";}
+  else{body=(kind==="why"?renderWhy(data):renderHow(data));
+    body+="<details><summary>Show the raw Senzing response (JSON)</summary><pre>"+esc(JSON.stringify(data&&data.result!==undefined?data.result:data,null,2))+"</pre></details>";}
+  m.html(modalShell(explainTitle(kind),sub,body));}
 function mkChips(mk){return (mk||"").split(/(?=[+-])/).filter(function(p){return p;})
   .map(function(p){return "<span class='chip'>"+esc(p)+"</span>";}).join("")||"<span class='muted'>(none)</span>";}
 function humLevel(l){return ({RESOLVED:"the same entity",POSSIBLY_SAME:"possibly the same entity",
@@ -690,13 +1015,6 @@ function renderHow(data){const hr=(data.result||{}).HOW_RESULTS||{};const steps=
   return "<div class='verdict'>These records resolved <b>directly</b> into one entity — Senzing found them consistent enough to merge with no intermediate steps.</div>"+
     "<h4>"+n+" record"+(n===1?"":"s")+" in this entity</h4>"+
     "<div class='recs'><div class='rec' style='min-width:auto'>"+_recordChips(members)+"</div></div>";}
-async function drawMerges(){const m=await getJSON("/api/merges");const box=d3.select("#merges");box.html("");
-  if(!m.entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
-  m.entities.forEach(function(e){const card=box.append("div").attr("class","card");
-    card.append("h4").text(e.entity_name+"  ");card.select("h4").append("span").attr("class","chip").text(e.data_sources.join(" + "));
-    const rc=card.append("div").attr("class","recs");
-    e.records.forEach(function(r){const d=rc.append("div").attr("class","rec");d.html("<b>"+r.data_source+"</b><br>record "+r.record_id);});
-    addExplainButtons(card,e.entity_id,e.entity_name);});}
 async function drawHist(){const s=await getJSON("/api/stats");const box=d3.select("#hist");box.html("");
   box.append("p").html("<b>"+s.records_total+"</b> records collapsed into <b>"+s.entities_total+"</b> entities, including <b>"+s.multi_record_entities+"</b> multi-record entities.");
   box.append("p").attr("class","muted").text("Click a bar to list the entities in that bucket.");
@@ -714,16 +1032,20 @@ async function drawHist(){const s=await getJSON("/api/stats");const box=d3.selec
     .on("click",function(ev,d){showBucket(s,d.key,d.label);});
   svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(d){return x(d.label)+x.bandwidth()/2;})
     .attr("y",function(d){return y(d.n)-6;}).attr("text-anchor","middle").attr("font-size",13).attr("font-weight",600).text(function(d){return d.n;});
-  box.append("div").attr("id","bucket-list").attr("class","bucket-list");}
+  box.append("div").attr("id","bucket-list").attr("class","bucket-list");
+  // The largest resolved entities — formerly the Results Dashboard's only
+  // unique content, folded in here when that duplicate tab was removed
+  // (contract: "De-duplication (required)"). Headline counts stay in the page
+  // summary strip and are deliberately NOT repeated on this tab.
+  box.append("h3").attr("class","section-h").text("Largest resolved entities");
+  const samp=s.sample_entities||[];
+  const sbox=box.append("div");
+  renderEntityList(sbox,samp,"No multi-record entities.");}
 function showBucket(s,key,label){const box=d3.select("#bucket-list");if(box.empty())return;box.html("");
   const list=(s.bucket_entities&&s.bucket_entities[key])||[];
   const total=(s.histogram&&s.histogram[key])||list.length;
   box.append("h4").text(label+" — "+total+(total===1?" entity":" entities"));
-  if(!list.length){box.append("p").attr("class","muted").text("No entities in this bucket.");return;}
-  const wrap=box.append("div").attr("class","recs");
-  list.forEach(function(en){const d=wrap.append("div").attr("class","rec");
-    d.html("<b>"+esc(en.entity_name)+"</b><br>ID "+en.entity_id+" · "+en.record_count+" record(s)");
-    d.on("click",function(){explain("how",en.entity_id,en.entity_name);});});
+  renderEntityList(box,list,"No entities in this bucket.");
   if(total>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" of "+total+".");}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
   const r=await getJSON("/api/search?q="+encodeURIComponent(q));box.html("");
@@ -733,59 +1055,37 @@ async function doSearch(){const q=document.getElementById("search-in").value;con
     card.append("div").attr("class","muted").text("Entity "+e.entity_id+" · "+(e.record_count||"?")+" record(s) · "+(e.data_sources||[]).join(", "));
     if(e.match_key){const mk=card.append("div").attr("class","mk");e.match_key.split(/(?=[+-])/).forEach(function(p){if(p)mk.append("span").text(p);});}
     if(e.resolution_rule)card.append("div").append("code").text(e.resolution_rule);
-    addExplainButtons(card,e.entity_id,e.entity_name);});}
+    addEntityActions(card,e.entity_id,e.entity_name);});}
 async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.select("#probe-btns");box.html("");
-  m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
-    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
-// Relationship Network: the subgraph of entities connected by relationships
-// (possible matches / disclosed relations), edges colored by relationship type.
-// Distinct from Entity Graph, which shows the full entity population.
-async function drawNetwork(){
-  const c=document.getElementById("network-container");const W=c.clientWidth,H=c.clientHeight;
-  const g=await getJSON("/api/graph");const box=d3.select("#network-container");
-  d3.select("#network-container svg").remove();d3.select("#network-container .legend").remove();
-  const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
-  const connected=new Set();links0.forEach(function(e){connected.add(e.source);connected.add(e.target);});
-  const nodes=g.nodes.filter(function(n){return connected.has(n.entity_id);}).map(function(n){return Object.assign({},n,{id:n.entity_id});});
-  if(!nodes.length){box.append("div").attr("class","muted").style("padding","14px").text("No relationships between entities were found in this data.");return;}
-  const idset=new Set(nodes.map(function(n){return n.id;}));
-  const links=links0.filter(function(e){return idset.has(e.source)&&idset.has(e.target);});
-  const rtypes=Array.from(new Set(links.map(function(e){return e.rtype;})));
-  const rcolor=d3.scaleOrdinal().domain(rtypes).range([C_BLUE,C_GOLD,C_GREEN,"#8b5cf6","#ec4899","#0ea5e9"]);
-  const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
-  const root=svg.append("g");
-  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
-  const sim=d3.forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(100))
-    .force("charge",d3.forceManyBody().strength(-180))
-    .force("center",d3.forceCenter(W/2,H/2))
-    .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
-  const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
-  edge.append("line").attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2);
-  edge.append("text").text(function(d){return d.match_key||"";});
-  const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
-    .call(d3.drag().on("start",ns).on("drag",nd).on("end",ne))
-    .on("click",function(ev,d){openModal(d);})
-    .on("mousemove",function(ev,d){const tt=d3.select("#tt2");
-      tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
-        .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
-    .on("mouseout",function(){d3.select("#tt2").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);});
-  node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
-      .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
-  sim.on("tick",function(){
-    edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
-      .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
-    edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
-    node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
-  });
-  const l=box.append("div").attr("class","legend");
-  l.append("div").style("font-weight","600").style("margin-bottom","3px").text("Relationship");
-  rtypes.forEach(function(t){const r=l.append("div").attr("class","row");r.append("span").attr("class","dot").style("background",rcolor(t));r.append("span").text(humLevel(t));});
-  function ns(ev,d){if(!ev.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
-  function nd(ev,d){d.fx=ev.x;d.fy=ev.y;}
-  function ne(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
-}
+  // The example chips drive the live search box. The static snapshot has none, so they would be
+  // dead controls there — offer only the browse, which needs no engine.
+  const live=!!document.getElementById("search-in");
+  if(live)m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
+    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});
+  // The one capability the removed Record Merges tab uniquely had: browse every merged
+  // entity with no query. Search / Probe otherwise shows a strict superset per entity,
+  // so this is what keeps the removal lossless rather than a trade.
+  if((m.entities||[]).length){
+    box.append("button").attr("class","probe").attr("id","show-all-merges")
+       .text("Show all merged entities ("+m.entities.length+")")
+       .on("click",function(){showAllMerges(m.entities);});
+  }}
+// Lists every multi-record entity, no query needed. Same per-entity actions as a search
+// result, so the entity surfaces stay consistent (contract: per-entity actions everywhere).
+function showAllMerges(entities){
+  const box=d3.select("#results");box.html("");
+  const si=document.getElementById("search-in");
+  if(si)si.value="";
+  if(!entities.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
+  box.append("p").attr("class","muted")
+     .text("All "+entities.length+" merged entities. Search above to see per-record match keys and feature scores for one of them.");
+  entities.forEach(function(e){const card=box.append("div").attr("class","card");
+    card.append("h4").text(e.entity_name+"  ");
+    card.select("h4").append("span").attr("class","chip").text((e.data_sources||[]).join(" + "));
+    const mk=(e.records||[]).map(function(r){return r.match_key;}).filter(function(x){return x;})[0]||"";
+    card.append("div").attr("class","muted").text(e.record_count+" records · Entity "+e.entity_id);
+    if(mk){const c=card.append("div");mkChips(mk).forEach(function(h){c.html(c.html()+h);});}
+    addEntityActions(card,e.entity_id,e.entity_name);});}
 // Cross-Source overlap heatmap: entities shared between each pair of data sources.
 async function drawOverlap(){const o=await getJSON("/api/overlap");const box=d3.select("#overlap");box.html("");
   const src=o.sources||[],m=o.matrix||[];
@@ -801,51 +1101,69 @@ async function drawOverlap(){const o=await getJSON("/api/overlap");const box=d3.
     src.forEach(function(_,j){const v=(m[i]&&m[i][j])||0;const td=tr.append("td").attr("class","cell").text(v);
       if(i===j){td.style("background","var(--bg)").style("font-weight","600");}
       else if(v>0){const a=0.15+0.85*v/max;td.style("background","rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+","+a.toFixed(3)+")");if(a>0.55)td.style("color","#fff");}
+      // Every aggregate drills down (contract: "Drill-down on every aggregate
+      // view"). Cross-Source was previously the one dead end.
+      if(v>0){td.style("cursor","pointer").attr("title","Show these entities")
+        .on("click",function(){showOverlapCell(o,i,j,src[i],src[j]);});}
     });});
+  box.append("div").attr("id","overlap-list");
+  if(o.cell_capped)box.append("p").attr("class","muted").text("Entity lists are capped; the cell counts remain exact.");
 }
-// Results Dashboard: headline counts, records-per-entity histogram, sample entities.
-async function drawDashboard(){const d=await getJSON("/api/dashboard");const box=d3.select("#dashboard");box.html("");
-  const c=d.counts||{};
-  const kpis=[["Records",c.records_total],["Entities",c.entities_total],["Multi-record",c.multi_record_entities],["Cross-source",c.cross_source_entities],["Relationships",c.relationships_total]];
-  const kw=box.append("div").attr("class","kpis");
-  kpis.forEach(function(k){const el=kw.append("div").attr("class","kpi");el.append("div").attr("class","n").text(k[1]!=null?k[1]:"—");el.append("div").attr("class","l").text(k[0]);});
-  box.append("h3").attr("class","section-h").text("Records per entity");
-  const hist=d.histogram||{};const data=[["1 record","1"],["2 records","2"],["3 records","3"],["4+ records","4+"]].map(function(z){return {label:z[0],n:hist[z[1]]||0};});
-  const W=Math.min(560,box.node().clientWidth),H=220,mm={t:16,r:10,b:34,l:44};
-  const svg=box.append("svg").attr("width",W).attr("height",H);
-  const x=d3.scaleBand().domain(data.map(function(z){return z.label;})).range([mm.l,W-mm.r]).padding(0.25);
-  const y=d3.scaleLinear().domain([0,d3.max(data,function(z){return z.n;})||1]).nice().range([H-mm.b,mm.t]);
-  svg.append("g").attr("transform","translate(0,"+(H-mm.b)+")").call(d3.axisBottom(x));
-  svg.append("g").attr("transform","translate("+mm.l+",0)").call(d3.axisLeft(y).ticks(5));
-  svg.selectAll("rect").data(data).join("rect").attr("x",function(z){return x(z.label);}).attr("y",function(z){return y(z.n);})
-    .attr("width",x.bandwidth()).attr("height",function(z){return y(0)-y(z.n);}).attr("rx",4).attr("fill",C_BLUE);
-  svg.selectAll("text.v").data(data).join("text").attr("class","v").attr("x",function(z){return x(z.label)+x.bandwidth()/2;})
-    .attr("y",function(z){return y(z.n)-6;}).attr("text-anchor","middle").attr("font-size",12).attr("font-weight",600).text(function(z){return z.n;});
-  box.append("h3").attr("class","section-h").text("Largest resolved entities");
-  const samp=d.sample_entities||[];
-  if(!samp.length){box.append("p").attr("class","muted").text("No multi-record entities.");return;}
-  const wrap=box.append("div").attr("class","recs");
-  samp.forEach(function(e){const el=wrap.append("div").attr("class","rec");el.style("cursor","pointer");
-    el.html("<b>"+esc(e.entity_name)+"</b><br>"+e.record_count+" records · "+(e.data_sources||[]).join(", "));
-    el.on("click",function(){explain("how",e.entity_id,e.entity_name);});});
-}
+function showOverlapCell(o,i,j,si,sj){const box=d3.select("#overlap-list");if(box.empty())return;box.html("");
+  const key=Math.min(i,j)+","+Math.max(i,j);
+  const list=(o.cell_entities&&o.cell_entities[key])||[];
+  const total=(o.matrix&&o.matrix[i]&&o.matrix[i][j])||list.length;
+  box.append("h4").text(i===j?(si+" — "+total+(total===1?" entity":" entities"))
+    :(si+" ∩ "+sj+" — "+total+(total===1?" shared entity":" shared entities")));
+  renderEntityList(box,list,"No entities in this cell.");
+  if(total>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" of "+total+".");}
 // Match Keys: which feature combinations drove the most resolutions.
 async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box=d3.select("#matchkeys");box.html("");
   const items=d.match_keys||[];
   box.append("p").html("Which feature combinations (match keys) drove the most resolutions across your data.");
   if(!items.length){box.append("p").attr("class","muted").text("No match keys were recorded for the resolved records.");return;}
-  const W=Math.min(720,box.node().clientWidth),barh=26,mm={t:6,r:44,b:6,l:190},H=mm.t+mm.b+items.length*barh;
+  // Gutter sized from the data, then labels fitted to it. Real match keys run to
+  // 70+ chars ("+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+..."), and a
+  // fixed 190px gutter with text-anchor:end pushed the head of every long key off
+  // the left edge of the SVG -- so the four highest bars all rendered as
+  // "...ISTRATION_COUNTRY+LEI_NUMBER" and could not be told apart. Counts were
+  // right, labels useless, and the chart looked fine.
+  const W=Math.min(720,box.node().clientWidth),barh=26;
+  const longest=d3.max(items,function(z){return (z.match_key||"").length;})||0;
+  const gutter=Math.max(150,Math.min(320,longest*5.9+14));
+  const mm={t:6,r:44,b:6,l:Math.min(gutter,W*0.55)},H=mm.t+mm.b+items.length*barh;
+  // MIDDLE-ellipsize, never left-trim. Right-trimming alone is not enough: real
+  // keys are "+A+B+C..." sequences that often share a long prefix and differ only
+  // in the last segment, so head-only truncation renders the top bars identically
+  // -- the same unreadable chart, just failing from the other end. Keeping both
+  // ends makes keys that differ at either end distinguishable.
+  const maxChars=Math.max(8,Math.floor((mm.l-10)/5.9));
+  function fitKey(k){k=k||"";if(k.length<=maxChars)return k;
+    const tail=Math.max(6,Math.floor((maxChars-1)*0.5)),head=maxChars-1-tail;
+    return k.slice(0,head)+"…"+k.slice(k.length-tail);}
   const svg=box.append("svg").attr("width",W).attr("height",H);
   const x=d3.scaleLinear().domain([0,d3.max(items,function(z){return z.count;})||1]).range([mm.l,W-mm.r]);
   const y=d3.scaleBand().domain(items.map(function(z){return z.match_key;})).range([mm.t,H-mm.b]).padding(0.2);
   svg.selectAll("rect").data(items).join("rect").attr("x",mm.l).attr("y",function(z){return y(z.match_key);})
     .attr("width",function(z){return Math.max(0,x(z.count)-mm.l);}).attr("height",y.bandwidth()).attr("rx",3).attr("fill",C_BLUE);
   svg.selectAll("text.k").data(items).join("text").attr("class","k").attr("x",mm.l-8).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
-    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z){return z.match_key;});
+    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z){return fitKey(z.match_key);})
+    .append("title").text(function(z){return z.match_key;});
   svg.selectAll("text.c").data(items).join("text").attr("class","c").attr("x",function(z){return x(z.count)+5;}).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
     .attr("dominant-baseline","middle").attr("font-size",11).attr("font-weight",600).text(function(z){return z.count;});
   if(d.capped)box.append("p").attr("class","muted").text("Showing the top "+items.length+" of "+d.distinct+" distinct match keys.");
+  // Clickable rows -> the entities carrying that match key (contract:
+  // "Drill-down on every aggregate view"). Match Keys was the last dead end.
+  svg.selectAll("rect").style("cursor","pointer").append("title").text(function(z){return z.match_key+" — click to show the entities with this match key";});
+  svg.selectAll("rect").on("click",function(ev,z){showMatchKey(d,z.match_key,z.count);});
+  box.append("div").attr("id","matchkey-list");
+  if(d.entities_capped)box.append("p").attr("class","muted").text("Entity lists are capped; the counts remain exact.");
 }
+function showMatchKey(d,key,count){const box=d3.select("#matchkey-list");if(box.empty())return;box.html("");
+  const list=(d.match_key_entities&&d.match_key_entities[key])||[];
+  box.append("h4").text(key+" — "+count+(count===1?" record":" records"));
+  renderEntityList(box,list,"No entities recorded for this match key.");
+  if(list.length&&count>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" entities.");}
 // Feature Scores: how tightly each feature agreed across resolved records
 // (from a capped why_records sample; the sample size is always shown).
 async function drawFeatures(){const d=await getJSON("/api/features");const box=d3.select("#features");box.html("");
@@ -865,11 +1183,21 @@ async function drawFeatures(){const d=await getJSON("/api/features");const box=d
   box.append("p").attr("class","muted").text("Based on "+d.sampled+" of "+d.multi_record_total+" multi-record entities"+(d.capped?" (sampled to bound cost).":"."));
 }
 function esc(s){return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
-async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();drawMerges();loadProbes();}
+// Deep-link support: ?tab=<id> opens that tab, ?q=<text> runs a search on Search /
+// Probe (defaulting the tab to probe). Makes any view of the app a shareable URL, and
+// is how the screenshot helper captures one image per tab — including Search / Probe
+// showing real results, which the static snapshot cannot do (it has no engine).
+function applyDeepLink(){
+  var p=new URLSearchParams(location.search||"");
+  var tab=p.get("tab"), q=p.get("q");
+  if(q!==null&&!tab)tab="probe";
+  if(tab&&tabApplicable(tab)&&document.getElementById("tab-"+tab)&&document.getElementById("navbtn-"+tab))activate(tab);
+  if(q!==null){var box=document.getElementById("search-in");if(box){box.value=q;doSearch();}}
+}
+async function init(){STATS=await getJSON("/api/stats");await loadBanner();buildNav();drawGraph();loadProbes();applyDeepLink();}
 init();
 window.addEventListener("resize",function(){
-  if(d3.select("#tab-graph").classed("active"))drawGraph();
-  else if(d3.select("#tab-network").classed("active"))drawNetwork();});
+  if(d3.select("#tab-graph").classed("active"))drawGraph();});
 </script></body></html>
 """
 
@@ -897,7 +1225,7 @@ def _d3_script():
         return '<script src="https://d3js.org/d3.v7.min.js"></script>'
 
 
-def render_page(title, data_shim="", probe_body=None):
+def render_page(title, data_shim="", probe_body=None, sources=None):
     # Replace D3 and the data shim LAST so their contents are never rescanned for
     # the other placeholders.
     root_vars = (
@@ -913,7 +1241,12 @@ def render_page(title, data_shim="", probe_body=None):
         .replace("__CODE_FONT__", _BRAND["code_font"])
         .replace("__ACCENT_HOT__", _BRAND["accent_hot"])
         .replace("__ACCENT__", _BRAND["accent"])
-        .replace("__SRC_COLORS__", json.dumps(SOURCE_COLORS))
+        # Built from the sources actually present, so each renders distinctly. Falling
+        # back to the preferred-name keys keeps a caller that passes nothing working.
+        .replace(
+            "__SRC_COLORS__",
+            _script_json(color_for_sources(sources if sources else SOURCE_COLORS.keys())),
+        )
         .replace("__DATA_SHIM__", data_shim)
         .replace("__D3_SCRIPT__", _d3_script())
     )
@@ -940,17 +1273,22 @@ def make_handler(model, engine, flags, sz, title):
             path = parsed.path
             try:
                 if path in ("/", "/index.html"):
-                    return self._send(200, render_page(title), "text/html; charset=utf-8")
+                    return self._send(
+                        200,
+                        render_page(title, sources=model.data_sources()),
+                        "text/html; charset=utf-8",
+                    )
                 if path == "/api/stats":
                     return self._send(200, json.dumps(model.stats()))
                 if path == "/api/graph":
                     return self._send(200, json.dumps(model.graph()))
                 if path == "/api/merges":
                     return self._send(200, json.dumps(model.merges()))
-                if path == "/api/dashboard":
-                    return self._send(200, json.dumps(model.dashboard()))
                 if path == "/api/overlap":
                     return self._send(200, json.dumps(model.overlap()))
+                if path == "/api/records":
+                    eid = parse_qs(parsed.query).get("entity_id", [""])[0]
+                    return self._send(200, json.dumps(model.records(eid)))
                 if path == "/api/matchkeys":
                     return self._send(200, json.dumps(model.match_keys()))
                 if path == "/api/features":
@@ -987,8 +1325,11 @@ def build_model(settings, patterns):
     # single-record-only data set never blocks the model/snapshot build (INV-077).
     try:
         model.compute_feature_dist(engine, SzEngineFlags)
-    except Exception:
-        pass
+    except Exception as exc:  # non-fatal (INV-077): leave a breadcrumb, don't block
+        sys.stderr.write(
+            f"feature-score distribution unavailable (non-fatal): "
+            f"{type(exc).__name__}: {exc}\n"
+        )
     # Return the flags class too, so the why/how endpoints can use the
     # MCP-confirmed default flag groups (SZ_HOW_ENTITY_DEFAULT_FLAGS, etc.).
     return factory, model, engine, flags, SzEngineFlags
@@ -1000,6 +1341,20 @@ def _esc_html(s):
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
+    )
+
+
+def _script_json(obj):
+    """json.dumps safe to embed inside an inline <script> block. json.dumps does
+    not escape "<", so a data-sourced string containing "</script>" would close
+    the element early and let the remainder parse as HTML (a stored-XSS vector in
+    the self-contained snapshot). Escaping "<"/">"/"&" as \\uXXXX keeps the JSON
+    valid and byte-identical once parsed, but inert to the HTML parser."""
+    return (
+        json.dumps(obj)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
     )
 
 
@@ -1073,7 +1428,11 @@ def _snapshot_probe_html(model, engine, flags):
                 (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
                 hits[0] if hits else None,
             )
-        except Exception:
+        except Exception as exc:  # non-fatal (INV-077): fall back to merge data
+            sys.stderr.write(
+                f"snapshot probe search failed for {name!r} (non-fatal): "
+                f"{type(exc).__name__}: {exc}\n"
+            )
             res = None
         if res is None:  # search unavailable — render from the merge data itself
             res = {
@@ -1090,9 +1449,14 @@ def _snapshot_probe_html(model, engine, flags):
         "example searches run against this Truth Set. In the live app "
         "(<code>http://localhost:8080</code>) you can search any name.</p>"
     )
+    # #probe-btns must exist here too, or `loadProbes()` has nothing to render into and the
+    # snapshot silently loses the "Show all merged entities" browse — the one capability the
+    # removed Record Merges tab uniquely had, and one that previously worked offline. It needs
+    # no engine: it reads the embedded `merges` payload, so it works with no server.
+    browse = '<div id="probe-btns"></div>'
     if not cards:
-        return note + '<p class="muted">No multi-record entities to show.</p>'
-    return note + '<div id="results">' + "".join(cards) + "</div>"
+        return note + browse + '<p class="muted">No multi-record entities to show.</p>'
+    return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
 def write_snapshot(model, engine, flags, title, out_path):
@@ -1102,7 +1466,11 @@ def write_snapshot(model, engine, flags, title, out_path):
         "stats": model.stats(),
         "graph": model.graph(),
         "merges": model.merges(),
-        "dashboard": model.dashboard(),
+        # Records for every entity, so the Records action works offline in the
+        # snapshot (it needs no engine call, unlike why/how).
+        "records": {
+            str(eid): model.records(eid) for eid in model.entities
+        },
         "overlap": model.overlap(),
         "matchkeys": model.match_keys(),
         "features": model.feature_scores(),
@@ -1110,7 +1478,7 @@ def write_snapshot(model, engine, flags, title, out_path):
     # The embedded-data shim runs after D3 and before the page bootstrap, replacing
     # the fetch-based bootstrap with the inlined data.
     shim = (
-        "<script>const __DATA__=" + json.dumps(payload) + ";"
+        "<script>const __DATA__=" + _script_json(payload) + ";"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
@@ -1118,7 +1486,10 @@ def write_snapshot(model, engine, flags, title, out_path):
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
     page = render_page(
-        title, data_shim=shim, probe_body=_snapshot_probe_html(model, engine, flags)
+        title,
+        data_shim=shim,
+        probe_body=_snapshot_probe_html(model, engine, flags),
+        sources=model.data_sources(),
     )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:
@@ -1139,7 +1510,8 @@ def main(argv=None):
     args = ap.parse_args(argv)
 
     if os.path.exists(args.settings):
-        settings = open(args.settings, encoding="utf-8").read()
+        with open(args.settings, encoding="utf-8") as _sf:
+            settings = _sf.read()
     else:
         settings = os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", "")
     if not settings:

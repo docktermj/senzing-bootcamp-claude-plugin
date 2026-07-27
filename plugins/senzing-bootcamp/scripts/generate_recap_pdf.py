@@ -23,6 +23,36 @@ Success signal (matches the graduation skill's contract): on success it prints
 a line beginning ``PDF generated:`` and exits 0. Any other outcome means no PDF
 was written.
 
+Required input structure. This is NOT a general-purpose Markdown renderer: it
+reads the bootcamp recap structure specifically —
+
+    # <Recap title>
+    **Bootcamper:** <name>          <- preamble "**Key:** value" meta lines
+
+    ## <Module name> — <date>       <- one H2 section per completed module
+    ### Information Shared          <- content lives under these H3 headings
+    ### Questions & Responses
+    ### Actions Taken
+    ### End-of-Module Summary
+
+Body text is kept only when it sits under an H3 sub-heading of a module section
+(see ``parse_recap``), so a document whose H2 sections have no recognised
+sub-headings renders as headings with empty bodies. To keep that from shipping
+as a plausible-looking but empty deliverable, the input is audited **before**
+rendering and two outcomes are distinguished:
+
+* **Incomplete but recognisable** (e.g. one module missing a sub-section) —
+  warn on stderr, render, exit 0. Graduation is non-blocking, so an imperfect
+  recap still produces its PDF.
+* **Not a recap, or catastrophic content loss** (no module sections, no section
+  carrying any recognised sub-section, or content retention below
+  ``MIN_CONTENT_RETENTION``) — write the reason to stderr, print no
+  ``PDF generated:`` line, write no PDF, and exit non-zero. Here an empty
+  deliverable would be worse than none.
+
+Every successful render also reports a content-retention figure, so silent
+truncation is visible without extracting the PDF's text.
+
 Usage:
     python3 generate_recap_pdf.py [--input docs/bootcamp_recap.md]
                                   [--output docs/bootcamp_recap.pdf]
@@ -57,6 +87,31 @@ REQUIRED_SECTIONS = [
     "Actions Taken",
     "End-of-Module Summary",
 ]
+
+# Shown on the Certificate of Completion (INV-100) when the recap carries no
+# bootcamper name. Both renderers reach it through `_cert_fields`; `main()` warns
+# on stderr whenever it is used (INV-113) — a certificate is the one artifact
+# where a placeholder name is immediately visible and permanently wrong, so the
+# substitution must never be silent.
+CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
+
+# Fence markers the durability hooks (INV-059) wrap their folded checkpoint in.
+# They must match `scripts/recap_checkpoint.py`; a block still present at render
+# time means a module was never finalized (module-completion step 2d).
+RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
+RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
+
+# Minimum share of the input's content-bearing characters that must survive into
+# the parsed recap. Below this the input is treated as "not a recap" rather than
+# "an imperfect recap" and no PDF is written (see the module docstring).
+#
+# Calibration: the shipped reference recap
+# (docs/examples/bootcamp_recap.example.md) retains ~99%, because a well-formed
+# recap keeps essentially everything except blank lines and `---` separators. A
+# document with H2 headings but no recognised H3 sub-headings retains ~19%, since
+# only the headings survive. 0.60 sits far from both, so ordinary slack (a stray
+# lead line under an H2) never trips it, while real content loss always does.
+MIN_CONTENT_RETENTION = 0.60
 
 
 # --------------------------------------------------------------------------- #
@@ -110,6 +165,57 @@ def _split_title_date(rest: str) -> Tuple[str, str]:
             if re.match(r"^\d{4}\b", right.strip()):
                 return left.strip(), right.strip()
     return rest.strip(), ""
+
+
+# --- Inter-item spacing in the long bullet lists -------------------------------- #
+# These three lists are the substance of the recap — what was taught, what was done,
+# what was achieved per module — and they carry its longest bullets. A bullet ends with
+# a `multi_cell` at line height 5.5 and no trailing gap, so the space between two
+# separate items equals the space between a wrapped item's own lines, and multi-line
+# items run together. A small gap between items (never after the last) fixes it.
+_ITEM_GAP_MM = 2.4
+_ITEM_GAP_PT = 3.0
+
+# Compared through _normalize_heading, so the "Action Taken" singular variant is covered.
+_SPACED_SUBSECTIONS = ("information shared", "actions taken")
+
+# Spaced only where they appear as a `**Label:**` block, so that within End-of-Module
+# Summary the accomplishments list is spaced while "Files produced" — a short list of
+# one-line paths — stays tight.
+_SPACED_LABELS = ("what you accomplished",)
+
+# Deliberately NOT spaced:
+# * "Questions & Responses" — its responses are indented sub-bullets under their
+#   questions; spacing every bullet would separate each answer from its question and
+#   read worse, not better.
+# * "Files produced" — a short reference list of paths.
+
+
+def _block_label(line: str) -> str:
+    """The normalized `**Label:**` of a line, or "" when it carries none.
+
+    Used to switch spacing on inside a subsection: End-of-Module Summary holds both a
+    list that wants spacing and one that does not.
+    """
+    m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
+    return _normalize_heading(m.group(1)) if m else ""
+
+
+def _is_bullet(line: str) -> bool:
+    return bool(re.match(r"^\s*[-*]\s+\S", line))
+
+
+def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
+    """True when the next content-bearing line after ``index`` is also a bullet.
+
+    Gating on the *next* line keeps the gap strictly between items: it never trails the
+    last bullet of a list, where the subsection's own spacing already applies.
+    """
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            continue
+        return _is_bullet(line)
+    return False
 
 
 def _normalize_heading(name: str) -> str:
@@ -245,6 +351,27 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
         if missing:
             label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+
+    # A module appearing twice renders twice in the keepsake PDF. The usual cause
+    # is a missed module-completion step 2d: the finalized '## {Name}' section was
+    # appended while the durability hooks' folded checkpoint block — which carries
+    # its own copy of that section — was left in place. INV-085 gives each
+    # completed module *its own* section, singular.
+    seen: set = set()
+    reported: set = set()
+    for mod in recap.modules:
+        key = (mod.title or "").strip().lower()
+        if not key:
+            continue
+        if key in seen and key not in reported:
+            reported.add(key)
+            problems.append(
+                f"module '{mod.title}' has more than one recap section — it will "
+                "render twice; keep the finalized section and remove the leftover "
+                "RECAP-CHECKPOINT block (module-completion step 2d)"
+            )
+        seen.add(key)
+
     if expected_titles:
         present = {(m.title or "").strip().lower() for m in recap.modules}
         for title in expected_titles:
@@ -252,6 +379,131 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
             if norm and norm not in present:
                 problems.append(f"expected module '{title}' has no recap section at all")
     return problems
+
+
+def _source_content_chars(text: str) -> int:
+    """Count content-bearing characters in the source Markdown.
+
+    Blank lines and the ``---`` separators between module sections are excluded:
+    the renderers legitimately drop them, so counting them would understate
+    retention for a perfectly good recap.
+    """
+    total = 0
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line == "---":
+            continue
+        total += len(line)
+    return total
+
+
+def _rendered_content_chars(recap: Recap) -> int:
+    """Count the characters a parsed recap actually carries into the PDF.
+
+    Mirrors what both renderers draw: the title, the preamble meta pairs, and per
+    module its title/date plus each sub-section's heading and body lines.
+    """
+    total = len(recap.title)
+    for key, val in recap.meta:
+        total += len(key) + len(val)
+    for mod in recap.modules:
+        total += len(mod.title) + len(mod.date)
+        for heading, lines in mod.subsections:
+            total += len(heading)
+            total += sum(len(line.strip()) for line in lines if line.strip())
+    return total
+
+
+@dataclass
+class RecapAudit:
+    """A parsed recap's problems, split by severity.
+
+    ``fatal`` means the input is not a recap, or rendering it would silently drop
+    most of its content — an empty deliverable would be worse than none, so no
+    PDF is written. ``warnings`` means an imperfect but recognisable recap:
+    render it and continue, because graduation is non-blocking.
+    """
+
+    fatal: List[str]
+    warnings: List[str]
+    source_chars: int
+    rendered_chars: int
+
+    @property
+    def retention(self) -> float:
+        if self.source_chars <= 0:
+            return 0.0
+        return self.rendered_chars / self.source_chars
+
+    def retention_note(self) -> str:
+        return (
+            f"rendered {self.rendered_chars} of {self.source_chars} "
+            f"source characters ({self.retention:.0%})"
+        )
+
+
+def audit_recap(
+    recap: Recap,
+    source_text: str,
+    expected_titles: Optional[List[str]] = None,
+) -> RecapAudit:
+    """Classify a parsed recap's problems by severity.
+
+    Builds on :func:`verify_recap` — which stays the ``--check`` contract and
+    reports per-section completeness — and adds the two content-loss checks a
+    per-section list cannot express: an input with no recap sections at all, and
+    one whose sections carry no recognised sub-sections (so the parser keeps
+    their headings and discards their bodies).
+    """
+    warnings = verify_recap(recap, expected_titles)
+
+    # A surviving checkpoint block means a module was never finalized: the
+    # durability hooks (INV-059) fence their fold in these markers, and
+    # module-completion step 2d removes the block once the finalized section is
+    # appended. The markers themselves are HTML comments, so the renderers drop
+    # them silently — which is exactly why their presence has to be reported here
+    # rather than left to be noticed in the PDF.
+    if RECAP_CHECKPOINT_START in source_text or RECAP_CHECKPOINT_END in source_text:
+        warnings.append(
+            f"recap still contains a {RECAP_CHECKPOINT_START} … "
+            f"{RECAP_CHECKPOINT_END} block — a module was folded by the "
+            "durability hooks but never finalized (module-completion step 2d)"
+        )
+
+    source_chars = _source_content_chars(source_text)
+    rendered_chars = _rendered_content_chars(recap)
+    retention = (rendered_chars / source_chars) if source_chars > 0 else 0.0
+
+    fatal: List[str] = []
+    if not recap.modules:
+        fatal.append(
+            "input does not look like a bootcamp recap: no "
+            "'## <Module name>' sections found"
+        )
+    else:
+        bodyless = sum(1 for mod in recap.modules if not mod.subsections)
+        if bodyless == len(recap.modules):
+            fatal.append(
+                f"input does not look like a bootcamp recap: 0 of "
+                f"{len(recap.modules)} '##' sections carry any recognised "
+                f"sub-section (expected one or more of: "
+                f"{', '.join(REQUIRED_SECTIONS)})"
+            )
+
+    if source_chars > 0 and retention < MIN_CONTENT_RETENTION:
+        fatal.append(
+            f"catastrophic content loss: only {retention:.0%} of the input's "
+            f"content would reach the PDF (minimum "
+            f"{MIN_CONTENT_RETENTION:.0%}) — body text is kept only under a "
+            f"module section's '### ' sub-headings"
+        )
+
+    return RecapAudit(
+        fatal=fatal,
+        warnings=warnings,
+        source_chars=source_chars,
+        rendered_chars=rendered_chars,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -262,6 +514,14 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
 # visualization. Falls back to an inlined copy of the same values if that module is
 # unavailable, so a valid PDF is still always produced (INV-048/INV-066).
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+# Fallback palette (RGB), used only if brand_tokens is unavailable. Named at module
+# scope so tests/test_brand_sync.py can assert it stays equal to the brand_tokens
+# values — the two copies would otherwise drift silently (INV-048/INV-066).
+_FALLBACK_RGB = {
+    "NAVY": (24, 22, 15), "BLUE": (245, 120, 38), "SLATE": (74, 70, 64),
+    "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
+    "GREEN": (29, 158, 117), "LINE": (229, 223, 211),
+}
 try:
     import brand_tokens as _bt
 
@@ -274,15 +534,15 @@ try:
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
-except Exception:  # defensive fallback — keep in sync with brand_tokens.py
-    NAVY = (24, 22, 15)
-    BLUE = (245, 120, 38)
-    SLATE = (74, 70, 64)
-    LIGHT = (250, 248, 243)
-    ACCENT = (255, 78, 31)
-    INK = (24, 22, 15)
-    GREEN = (29, 158, 117)
-    LINE = (229, 223, 211)
+except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    NAVY = _FALLBACK_RGB["NAVY"]
+    BLUE = _FALLBACK_RGB["BLUE"]
+    SLATE = _FALLBACK_RGB["SLATE"]
+    LIGHT = _FALLBACK_RGB["LIGHT"]
+    ACCENT = _FALLBACK_RGB["ACCENT"]
+    INK = _FALLBACK_RGB["INK"]
+    GREEN = _FALLBACK_RGB["GREEN"]
+    LINE = _FALLBACK_RGB["LINE"]
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -337,6 +597,25 @@ _UNICODE_MAP = {
     "•": "-",
     "…": "...",
     "→": "->",
+    "↔": "<->",
+    "←": "<-",
+    "⇒": "=>",
+    "↑": "^",
+    "↓": "v",
+    "⚠": "!",
+    "\ufe0f": "",  # variation selector-16, trails emoji like the warning sign
+    # Comparison, currency and spacing characters a bootcamper's own
+    # discoveries document carries but the plugin's templates never emit — so
+    # scanning the templates could not find them. Each rendered as "?" until mapped.
+    "≈": "~",
+    "≤": "<=",
+    "≥": ">=",
+    "≠": "!=",
+    "∞": "infinity",
+    "€": "EUR",
+    "™": "(TM)",
+    "‑": "-",  # non-breaking hyphen
+    "​": "",  # zero-width space
     "✅": "[done]",
     "✓": "[x]",
     "⛔": "",
@@ -376,7 +655,25 @@ def _logo_info() -> Optional[Tuple[str, int, int]]:
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
     try:
         from fpdf import FPDF  # type: ignore
-    except Exception:
+    except ModuleNotFoundError:
+        # Not installed for THIS interpreter — the common, expected case. Naming
+        # the interpreter turns the most confusing variant (fpdf2 installed into a
+        # venv, script run with a different python3) from silence into a legible
+        # message, instead of looking like "fpdf2 is absent from this machine".
+        sys.stderr.write(
+            f"fpdf2 is not installed for {sys.executable}; "
+            "falling back to the stdlib renderer.\n"
+        )
+        return False
+    except Exception as exc:
+        # Present but unusable: broken build, ABI mismatch, partial install.
+        # Distinct from the above because the remedy is different (reinstall or
+        # repair, not install).
+        sys.stderr.write(
+            f"fpdf2 is installed for {sys.executable} but could not be "
+            f"imported: {exc.__class__.__name__}: {exc}; "
+            "falling back to the stdlib renderer.\n"
+        )
         return False
 
     class RecapPDF(FPDF):
@@ -452,9 +749,13 @@ def _is_env_key(key: str) -> bool:
 def _partition_meta(
     meta: List[Tuple[str, str]]
 ) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
-    """Split header meta into (identity rows, run-environment rows). Identity rows
-    (bootcamper, dates, language, path, plugin version) drive the cover card and the
-    certificate; environment rows render as their own block."""
+    """Split header meta into (identity rows, run-environment rows).
+
+    Identity rows (bootcamper, dates, language, path, plugin version) drive the cover
+    card; environment rows render as their own block. The certificate does **not**
+    consume this partition — it takes exactly the fields it prints via ``_cert_fields``
+    and ``_cert_plugin_version``.
+    """
     ident = [(k, v) for k, v in meta if not _is_env_key(k)]
     env = [(k, v) for k, v in meta if _is_env_key(k)]
     return ident, env
@@ -625,7 +926,11 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
             completed = v
         elif k in ("started", "date") and not started:
             started = v
-    name = name or "Bootcamper"
+    # Substitution is silent here on purpose: the fpdf2 renderer runs a measure
+    # pass plus a real pass, so this helper is called twice per render. The
+    # user-facing warning is emitted once from main() via
+    # `recap_missing_certificate_name` instead.
+    name = name or CERTIFICATE_NAME_PLACEHOLDER
     raw_date = completed or started
     date = _format_date(raw_date) if raw_date else ""
     labels = [
@@ -633,6 +938,48 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
         for m in recap.modules
     ]
     return name, date, labels
+
+
+def _cert_plugin_version(recap: Recap) -> str:
+    """The plugin version for the certificate face, or "" when it is not recorded.
+
+    The certificate is the page most likely to be detached from the rest of the recap —
+    shared, printed, or attached to something on its own — so it has to be
+    self-describing about which bootcamp produced it. Graduation already stamps
+    ``**Plugin version:**`` into the recap header for the cover card; this reads the same
+    row.
+
+    Returns "" rather than a placeholder: an unknown version must be **omitted**, never
+    printed as "v(unknown)" on a certificate.
+    """
+    for key, val in recap.meta:
+        if key.strip().lower().rstrip(":") == "plugin version":
+            return _md_inline_to_text(val).strip()
+    return ""
+
+
+def _cert_attribution(recap: Recap) -> List[str]:
+    """The certificate's footer attribution lines, top to bottom."""
+    lines = ["Senzing Bootcamp"]
+    version = _cert_plugin_version(recap)
+    if version:
+        lines.append(f"Senzing Bootcamp Claude plugin v{version.lstrip('v')}")
+    return lines
+
+
+def recap_missing_certificate_name(recap: Recap) -> bool:
+    """True when the recap carries no bootcamper name for the certificate.
+
+    The Certificate of Completion (INV-100) then renders
+    ``CERTIFICATE_NAME_PLACEHOLDER``. Callers warn on this rather than letting a
+    placeholder name ship silently — it is the one artifact where a wrong name is
+    immediately visible and permanently wrong.
+    """
+    for key, val in recap.meta:
+        k = key.strip().lower().rstrip(":")
+        if k in ("bootcamper", "name") and _md_inline_to_text(val).strip():
+            return False
+    return True
 
 
 def _render_certificate(pdf, recap: Recap) -> None:
@@ -699,10 +1046,18 @@ def _render_certificate(pdf, recap: Recap) -> None:
         pdf.set_font("Helvetica", "", 10)
         pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
 
-    pdf.set_xy(0, h - 22)
+    # ⚠️ The inner ember border's bottom edge sits at y = h - 14 (the rect above), so a
+    # line placed at h - 17 is clipped by it — text extraction reports the string present
+    # and correct while the glyphs are visually sliced in half. Both attribution lines
+    # must clear it: h - 28 and h - 22. Verify by rasterizing, never by pdftotext.
+    attribution = _cert_attribution(recap)
+    # One line keeps its long-standing h - 22; a second stacks above it at h - 28.
+    offsets = (22,) if len(attribution) == 1 else (28, 22)
     pdf.set_text_color(*SLATE)
     pdf.set_font("Helvetica", "I", 8)
-    pdf.cell(w, 6, "Senzing Bootcamp", align="C")
+    for offset, line in zip(offsets, attribution):
+        pdf.set_xy(0, h - offset)
+        pdf.cell(w, 6, _safe(line), align="C")
     # Leave suppress_footer set: this is the last page.
 
 
@@ -787,8 +1142,18 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
         pdf.multi_cell(epw, 6, "(not recorded)")
         pdf.ln(1)
         return
-    for line in content:
+    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    active_label = ""
+    for index, line in enumerate(content):
+        label = _block_label(line)
+        if label:
+            active_label = label
         _render_line(pdf, epw, line)
+        if not _is_bullet(line):
+            continue
+        if spaced_section or active_label in _SPACED_LABELS:
+            if _next_nonblank_is_bullet(content, index):
+                pdf.ln(_ITEM_GAP_MM)
     pdf.ln(2)
 
 
@@ -876,7 +1241,13 @@ def _render_line(pdf, epw, line: str) -> None:
         pdf.cell(pdf.get_string_width(bold_prefix) + 1, 5.5, bold_prefix)
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
-    if remaining < 20:
+    # A long bold label (e.g. a "**Q:**" carrying a full question) leaves a narrow
+    # column, and every wrapped line then stacks in it beside a large empty gutter.
+    # A bare 20 mm floor is an order of magnitude too low to catch that: ~60 mm of a
+    # 190 mm line clears it and still reads as a ribbon. Break once the label has
+    # eaten half the width; short labels still render inline, which reads well.
+    if remaining < max(20.0, epw * 0.5):
+        indent = min(indent + 6, epw - 20)
         remaining = epw - indent
         pdf.ln(5.5)
         pdf.set_x(pdf.l_margin + indent)
@@ -884,7 +1255,23 @@ def _render_line(pdf, epw, line: str) -> None:
 
 
 def _clip(s: str, n: int) -> str:
-    return s if len(s) <= n else s[: n - 1] + "…"
+    """Truncate to ``n`` characters with an ASCII ellipsis.
+
+    ⛔ **The ellipsis must stay ASCII.** Every call site is ``_clip(_safe(x), n)`` —
+    ``_safe`` runs *first*, so anything ``_clip`` appends afterwards is never sanitized.
+    A U+2026 "…" here therefore reached fpdf2's Latin-1 core font unescaped and raised
+    ``Character "…" … outside the range of characters supported``, which
+    ``render_with_fpdf2`` catches — so the only symptom was every affected bootcamper
+    silently getting the plainer stdlib PDF instead of the designed one (INV-048).
+
+    Found by the 2026-07-26 dry run on the cover's module chips (``_clip(..., 46)``):
+    "Data Quality, Mapping, and Transformation" is 41 characters and survives bare, but
+    clips the moment a number prefix or a timestamp is appended. ``_UNICODE_MAP`` maps
+    "…" to "..." already; the defect was purely the order of operations, which is why the
+    fix is here rather than at the three call sites — an ASCII suffix cannot be got wrong.
+    ``tests/test_recap_pdf_font_safety.py`` pins this.
+    """
+    return s if len(s) <= n else s[: n - 1] + "..."
 
 
 # --------------------------------------------------------------------------- #
@@ -926,6 +1313,15 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         for chunk in _wrap("  -  ".join(labels), 110):
             center(chunk, "F1", 9, y)
             y -= 14
+
+    # Footer attribution, bottom-anchored so it matches the fpdf2 certificate rather
+    # than following the variable-length module list. 22 mm and 28 mm above the page
+    # bottom, expressed in points (1 mm ≈ 2.835 pt) — well clear of this renderer's
+    # border, whose bottom edge is at y = 22 pt.
+    attribution = _cert_attribution(recap)
+    baselines = (62.4,) if len(attribution) == 1 else (79.4, 62.4)
+    for baseline, line in zip(baselines, attribution):
+        center(line, "F1", 8, baseline)
     return "\n".join(ops)
 
 
@@ -998,16 +1394,22 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                 pages.append("\n".join(buf))
 
         for text, font, size, indent in tokens:
-            if y - line_h < margin:
+            # A "GAP" token is pure vertical space of exactly `size` points; it emits no
+            # text op, so it never references a font resource. Needed because an ordinary
+            # empty token costs 0.6 of a line — too much for an inter-item gap.
+            gap = font == "GAP"
+            advance = size if gap else (line_h if text else line_h * 0.6)
+            if y - advance < margin:
                 flush_page()
                 buf = []
                 y = page_h - margin
-            esc = _pdf_escape(text)
-            x = margin + indent
-            buf.append(
-                f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({esc}) Tj ET"
-            )
-            y -= line_h if text else line_h * 0.6
+            if not gap:
+                esc = _pdf_escape(text)
+                x = margin + indent
+                buf.append(
+                    f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({esc}) Tj ET"
+                )
+            y -= advance
         flush_page()
         if not pages:
             pages = [f"BT /F1 11 Tf 1 0 0 1 {margin} {page_h - margin} Tm (Bootcamp recap) Tj ET"]
@@ -1032,7 +1434,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
     if content is None or not any(l.strip() for l in content):
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
-    for line in content:
+    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    active_label = ""
+    for index, line in enumerate(content):
         s = line.strip()
         if not s:
             add("", "F1", 4, 0)
@@ -1041,6 +1445,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
             continue
         if s.startswith("<!--") and s.endswith("-->"):
             continue  # HTML comment (e.g. a maintainer note): never rendered
+        label = _block_label(line)
+        if label:
+            active_label = label
         indent = 6.0
         m = re.match(r"^(\s*)([-*])\s+(.*)$", line)
         if m:
@@ -1049,6 +1456,10 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         else:
             s = _md_inline_to_text(s)
         add_wrapped(s, "F1", 10.5, indent)
+        # Mirror the fpdf2 path's inter-item gap so the two renderers do not drift.
+        if m and (spaced_section or active_label in _SPACED_LABELS):
+            if _next_nonblank_is_bullet(content, index):
+                add("", "GAP", _ITEM_GAP_PT, 0)
 
 
 def _wrap(text: str, width: int) -> List[str]:
@@ -1208,19 +1619,49 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stderr.write(f"Recap not found: {inp}\n")
         return 1
 
-    recap = parse_recap(inp.read_text(encoding="utf-8"))
+    source_text = inp.read_text(encoding="utf-8")
+    recap = parse_recap(source_text)
+    expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
+    audit = audit_recap(recap, source_text, expected or None)
 
     if args.check:
-        expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
-        problems = verify_recap(recap, expected or None)
+        problems = audit.fatal + audit.warnings
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
+            sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
         print("Recap complete: all module sections carry the required subsections.")
         return 0
 
     out = Path(args.output)
+
+    # Audit BEFORE rendering. A structurally wrong input must never reach the
+    # "PDF generated:" line, which is the graduation skill's success signal — a
+    # valid-looking PDF with none of the content is the failure nobody checks.
+    if audit.fatal:
+        sys.stderr.write(f"ERROR: refusing to render {inp}\n")
+        for problem in audit.fatal:
+            sys.stderr.write(f"  - {problem}\n")
+        sys.stderr.write(f"  ({audit.retention_note()})\n")
+        sys.stderr.write(
+            "This generator renders the bootcamp recap structure only "
+            "('## <Module name>' sections whose body sits under '### " +
+            REQUIRED_SECTIONS[0] + "' and its siblings); it is not a "
+            "general-purpose Markdown renderer. No PDF was written.\n"
+        )
+        return 1
+
+    # Input-quality warning, emitted once (the fpdf2 renderer itself runs two
+    # passes). Never fatal: graduation is non-blocking and a certificate with a
+    # placeholder name still beats no PDF — but it must not be silent.
+    if recap_missing_certificate_name(recap):
+        sys.stderr.write(
+            f'WARNING: no bootcamper name found in {inp}; the Certificate of '
+            f'Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
+            f'"**Bootcamper:** <name>" line to the recap preamble to fix it.\n'
+        )
+
     used = "fpdf2"
     ok = render_with_fpdf2(recap, out)
     if not ok:
@@ -1228,15 +1669,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         ok = render_with_stdlib(recap, out)
 
     if ok:
-        # Non-fatal content warning (never blocks; graduation is non-blocking).
-        problems = verify_recap(recap)
-        if problems:
+        # Recognisable but imperfect: warn and still ship the PDF (never blocks;
+        # graduation is non-blocking). Distinct from the fatal class above.
+        if audit.warnings:
             sys.stderr.write(
                 "WARNING: recap PDF generated but some sections are incomplete:\n"
             )
-            for p in problems:
-                sys.stderr.write(f"  - {p}\n")
-        print(f"PDF generated: {out} (renderer: {used})")
+            for problem in audit.warnings:
+                sys.stderr.write(f"  - {problem}\n")
+        # Report retention on success too, so partial truncation is visible
+        # without extracting the PDF's text.
+        print(f"PDF generated: {out} (renderer: {used}, {audit.retention_note()})")
         return 0
 
     sys.stderr.write("Failed to generate a PDF by any strategy.\n")

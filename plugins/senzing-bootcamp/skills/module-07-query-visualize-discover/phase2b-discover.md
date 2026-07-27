@@ -26,10 +26,56 @@ connections between entities using `find_network` and `find_path`.
    attributes. State which and why: "I'll use Entities [ID1], [ID2], and [ID3], which have
    disclosed relationships or shared attributes. These give us a connected set of entities to
    explore as a network."
-2. **Flag lookup:** before generating the `find_network` or `find_path` calls, look up available
-   flags:
-   - `get_sdk_reference(method='find_network', topic='flags')` for network exploration.
-   - `get_sdk_reference(method='find_path', topic='flags')` for path finding.
+2. **Flag and response-shape lookup:** before generating the `find_network` or `find_path` calls,
+   look up available flags **and the response structure** (the narrowing parameter is `filter`,
+   not `method`):
+   - `get_sdk_reference(topic='flags', filter='find_network')` and
+     `get_sdk_reference(topic='response_schemas', filter='find_network')` for network exploration.
+   - `get_sdk_reference(topic='flags', filter='find_path')` and
+     `get_sdk_reference(topic='response_schemas', filter='find_path')` for path finding.
+
+   ⛔ **Look up the response structure before writing any code that parses the response — never
+   infer field names from an example snippet** (INV-115).
+
+   ⚠️ **Expect that lookup to stop at the top level here.** For the graph methods
+   `response_schemas` returns the outer arrays (`ENTITY_PATHS[]`, `ENTITIES[]`,
+   `ENTITY_NETWORK_LINKS[]`) and **not** the fields inside a link element. That is coverage, not a
+   failed call — do not retry it. Dump one raw link element and read its keys before writing the
+   parser. In particular, do **not** assume a link's two endpoints use the `ENTITY_ID` /
+   `RELATED_ENTITY_ID` pairing that related-entity records use; a reported session found both
+   endpoints blank under those names while `MATCH_KEY` rendered fine. See
+   `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
+   paths" for the full caution.
+
+   ⛔ **If some fields of a row populate and others come back blank, suspect the blank ones' names
+   — not the data.** A half-populated row reads as a real result precisely because part of it
+   worked, which makes it more deceptive than an empty one (INV-115).
+
+   ⛔ **Neither of those topics tells you the ARGUMENT types — so ask the topic that does, before
+   writing the call.** `topic='flags'` covers flags and `topic='response_schemas'` covers the
+   response; the parameter shape comes from
+   `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')`, which returns the
+   binding's own signature. Read the one for the bootcamper's language: cross-language
+   documentation is **not** authoritative for the shape you pass, and it is wrong for Python here.
+
+   For **Python**, both graph methods take native collections, not an entity-IDs JSON document:
+
+   ```text
+   find_network_by_entity_id(entity_ids: List[int], max_degrees: int,
+                             build_out_degrees: int, build_out_max_entities: int, flags: int)
+   find_path_by_entity_id(start_entity_id: int, end_entity_id: int, max_degrees: int, ...)
+   ```
+
+   So pass `[300418, 501752, 500174]` — **not**
+   `json.dumps({"ENTITIES": [{"ENTITY_ID": 300418}, ...]})`, which the flags documentation and the
+   Java/C# signatures imply and which raises
+   `SzSdkError: value {"ENTITIES": [...]} has type str, should be a list of int(s)`. (Credit to
+   the SDK: that error names the expected signature outright, so recovery is immediate — but the
+   round trip is avoidable.)
+
+   For any other language, confirm the shape from the installed binding (its own reference,
+   `help()`, or equivalent introspection) rather than copying Python's or another language's form
+   (INV-002 — this module is language-agnostic; only the *known-divergent* case is spelled out).
 
    Select flags appropriate for relationship exploration and explain each: "I'm using [flag] so
    we can see [what it provides]." For example: "I'm using [relationship detail flag] so we can
@@ -40,7 +86,7 @@ connections between entities using `find_network` and `find_path`.
    structure:
    - **Which entities are connected:** list each entity and its connections, with entity IDs
      and brief identifying information (name, data source).
-   - **What attributes they share:** for each connection, explain the common attributes , 
+   - **What attributes they share:** for each connection, explain the common attributes —
      shared addresses, phone numbers, names, or other features that create the link.
    - **Degrees of separation:** show how many hops separate each pair. "Entity A is directly
      connected to Entity B (1 degree), and Entity B connects to Entity C (so A and C are 2
@@ -117,7 +163,8 @@ status in `config/bootcamp_progress.json` under `module_7_query`:
   opt-in prompt or exits early at any transition point.
 
 (The former step 4e — data-specific visualization suggestions — are now tabs of the Phase 1
-step-3c visualization app (Match Keys, Feature Scores, Cross-Source, Relationship Network) and are
+step-3c visualization app (Match Keys, Feature Scores, Cross-Source, and Entity Graph's
+relationship mode) and are
 no longer part of the Discover phase.)
 
 The full checkpoint structure in `config/bootcamp_progress.json` is:

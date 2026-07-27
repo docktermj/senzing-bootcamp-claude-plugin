@@ -1,13 +1,41 @@
 #!/usr/bin/env python3
-"""Capture screenshots of a bootcamp visualization for the recap.
+"""Capture one screenshot per tab of a bootcamp visualization, for the recap.
 
 Best-effort and dependency-optional (INV-052/INV-066): this helper renders a
 **local** HTML file (or a localhost URL served by the bundled visualization app)
-to one or more PNG screenshots, so the graduation recap PDF can show what the
-bootcamper actually built. It tries several headless backends in order and uses
-the first that works; if none is available it exits with code 2 so the caller
-degrades gracefully — keeping the HTML link and never blocking graduation
-(INV-048).
+to one PNG **per tab**, so the graduation recap PDF can show what the bootcamper
+actually built. It tries several headless backends in order and uses the first
+that works; if none is available it exits with code 2 so the caller degrades
+gracefully — keeping the HTML link and never blocking graduation (INV-048).
+
+⛔ **One capture per tab, never per viewport.** This script used to vary the
+browser window size across a single page load — ``(1280,800)``, ``(1280,1600)``,
+``(1024,768)`` — and had no interaction step at all, so every image showed
+whichever tab was active by default. Three files were written, the script exited
+0, and nothing looked wrong; the recap shipped three near-identical Entity Graph
+shots with captions describing tabs that were never captured. Tab diversity was
+not achievable, so the captions could not have been right.
+
+Two consequences are designed in here:
+
+* Output is named ``<name>-<tab-slug>.png``. A tab-named file makes a drifting
+  caption structurally hard, and lets graduation's screenshot backfill map images
+  to sections and tabs deterministically instead of by guesswork.
+* Each written path is printed with its human tab label, tab-separated, so the
+  caller derives the caption from the capture rather than from its plan.
+
+How a tab is selected, without adding a browser-automation dependency:
+
+* ``--url http://localhost:PORT`` — appended as ``?tab=<id>``, which the
+  visualization app honors on load (``applyDeepLink``). ``--query`` adds ``&q=``
+  so Search / Probe can be captured showing real results against the live engine.
+* ``--html path/to/snapshot.html`` — a temp sibling copy is written with a small
+  script injected before ``</body>`` that calls the app's own ``activate(<id>)``
+  (falling back to clicking ``#navbtn-<id>``), retrying until the app's async
+  init settles. Temp copies are always deleted.
+
+Because selection happens *in the page*, every backend below works per tab —
+including the ones with no interaction API.
 
 Offline guarantee (INV-091): only local files and ``localhost``/``127.0.0.1``
 URLs are ever opened. A non-local ``http(s)`` host is refused — this helper
@@ -21,32 +49,77 @@ Backends tried, in order (each optional):
 
 Usage::
 
+    # static snapshot, all applicable tabs
     python3 capture_screenshots.py --html docs/visualizations/foo.html \
-        --out-dir docs/visualizations --name foo [--count 3]
+        --out-dir docs/visualizations --name foo
 
-On success it prints one written PNG path per line and exits 0. The agent then
-reviews the shots, keeps the 2-3 most representative, and embeds them into the
-matching recap section. Exit codes: 0 = wrote at least one PNG; 2 = no headless
-capability available (caller should skip screenshots); 1 = bad arguments.
+    # live server, specific tabs, with a real search for Search / Probe
+    python3 capture_screenshots.py --url http://localhost:8080 \
+        --name results_visualization --tabs graph,stats,probe --query "Acme"
+
+On success it prints one ``<png path>\\t<tab label>`` line per capture and exits 0.
+Exit codes: 0 = wrote at least one PNG; 2 = no headless capability available
+(caller should skip screenshots); 1 = bad arguments.
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 
-# Viewport sizes to capture, giving the agent a few shots to compare and pick
-# the 2-3 best from. (width, height, label)
-_VIEWS = [
-    (1280, 800, "wide"),
-    (1280, 1600, "tall"),
-    (1024, 768, "compact"),
-]
+# The visualization contract's tab inventory: id -> (filename slug, human label).
+# Ids are the app's DOM ids (`tab-<id>`, `navbtn-<id>`) and are contract, not an
+# implementation detail, so a server written in any language (INV-090) is capturable.
+# The slug is what makes a caption hard to get wrong.
+TABS = {
+    "graph": ("entity-graph", "Entity Graph"),
+    "network": ("relationship-network", "Relationship Network"),
+    "merges": ("record-merges", "Record Merges"),
+    "stats": ("merge-statistics", "Merge Statistics"),
+    "matchkeys": ("match-keys", "Match Keys"),
+    "features": ("feature-scores", "Feature Scores"),
+    "overlap": ("cross-source", "Cross-Source"),
+    "probe": ("search-probe", "Search / Probe"),
+}
+
+# Captured when --tabs is not given. Ordered as the app presents them. A tab whose
+# data is absent simply renders its empty state; the caller keeps what is useful.
+DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
+
+# Chrome needs a virtual-time budget or the frame is captured before the D3 layout
+# and the /api/* fetches settle — the difference between a graph and a blank panel.
+_CHROME_VIRTUAL_TIME_MS = 15000
+_WINDOW = (1440, 900)
+
+# Injected into a temp copy of a snapshot. Retries because the app activates its
+# first tab only after an async init; 60 × 100 ms is far longer than that takes.
+_ACTIVATE_JS = """
+<script>
+(function(){
+  var target = "__TAB__", tries = 0;
+  function go(){
+    tries++;
+    try {
+      if (typeof activate === "function" && document.getElementById("tab-" + target)) {
+        activate(target);
+        return;
+      }
+      var btn = document.getElementById("navbtn-" + target);
+      if (btn) { btn.click(); return; }
+    } catch (e) { /* keep retrying */ }
+    if (tries < 60) setTimeout(go, 100);
+  }
+  go();
+})();
+</script>
+"""
 
 
 def _is_local_target(target: str) -> bool:
@@ -68,11 +141,83 @@ def _to_url(target: str) -> str:
     return Path(target).resolve().as_uri()
 
 
-def _out_paths(out_dir: Path, name: str, count: int) -> list:
-    return [out_dir / f"{name}-{i + 1}.png" for i in range(count)]
+def _out_path(out_dir: Path, name: str, tab: str) -> Path:
+    slug = TABS.get(tab, (tab, tab))[0]
+    return out_dir / f"{name}-{slug}.png"
 
 
-def _capture_playwright(url: str, outs: list) -> bool:
+def _tab_url(url: str, tab: str, query: str = "") -> str:
+    """Append ?tab=/&q= deep-link parameters to a live-server URL."""
+    params = {"tab": tab}
+    if query and tab == "probe":
+        params["q"] = query
+    joiner = "&" if urlparse(url).query else "?"
+    return f"{url}{joiner}{urlencode(params)}"
+
+
+def _page_source(target: str, is_url: bool) -> str:
+    """The page's HTML, for the tab-presence pre-flight. Empty string if unreadable."""
+    try:
+        if is_url:
+            import urllib.request
+
+            with urllib.request.urlopen(target, timeout=10) as response:  # localhost only
+                return response.read().decode("utf-8", "replace")
+        return Path(target).read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return ""
+
+
+def _tabs_present(source: str, tabs) -> tuple:
+    """Split ``tabs`` into (present, absent) according to the page's own markup.
+
+    ⛔ This pre-flight is what keeps a filename honest. Without it, asking for a tab the
+    app does not have still produces a PNG: the injected ``activate()`` finds no
+    ``tab-<id>`` element, exhausts its retries, and the **default** tab is captured — so
+    e.g. ``viz-feature-scores.png`` would contain the Entity Graph. A file named for a
+    tab it does not show is the exact defect tab-naming exists to prevent, so a tab that
+    is not in the page is skipped and reported rather than captured wrongly.
+
+    A tab hidden at runtime by ``tabApplicable`` still has its ``tab-<id>`` section in
+    the markup and still activates, so this only rejects genuinely absent tabs. When the
+    source cannot be read, every tab is treated as present (best-effort — never let an
+    unreadable page block capture).
+    """
+    if not source:
+        return list(tabs), []
+    present, absent = [], []
+    for tab in tabs:
+        if re.search(rf'id\s*=\s*["\']tab-{re.escape(tab)}["\']', source) or re.search(
+            rf'["\']{re.escape(tab)}["\']\s*,\s*["\']', source
+        ):
+            present.append(tab)
+        else:
+            absent.append(tab)
+    return present, absent
+
+
+def _snapshot_copy(html: Path, tab: str) -> Path:
+    """Write a temp sibling copy of ``html`` that activates ``tab`` on load.
+
+    A sibling (not /tmp) so any relative asset reference still resolves, and so the
+    offline guarantee is unaffected.
+    """
+    source = html.read_text(encoding="utf-8", errors="surrogateescape")
+    script = _ACTIVATE_JS.replace("__TAB__", tab)
+    if "</body>" in source:
+        patched = source.replace("</body>", script + "</body>", 1)
+    else:
+        patched = source + script
+    handle, path = tempfile.mkstemp(
+        prefix=f".{html.stem}-{tab}-", suffix=".html", dir=str(html.parent)
+    )
+    os.close(handle)
+    temp = Path(path)
+    temp.write_text(patched, encoding="utf-8", errors="surrogateescape")
+    return temp
+
+
+def _capture_playwright(url: str, out: Path) -> bool:
     try:
         from playwright.sync_api import sync_playwright  # type: ignore
     except Exception:
@@ -80,20 +225,21 @@ def _capture_playwright(url: str, outs: list) -> bool:
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
-            wrote = False
-            for out, (w, h, _label) in zip(outs, _VIEWS):
-                page = browser.new_page(viewport={"width": w, "height": h})
-                page.goto(url, wait_until="networkidle")
-                page.screenshot(path=str(out), full_page=(_label == "tall"))
-                page.close()
-                wrote = out.is_file() or wrote
+            page = browser.new_page(viewport={"width": _WINDOW[0], "height": _WINDOW[1]})
+            # A self-contained file:// page produces no network events, so
+            # "networkidle" can hang or fire inconsistently; wait for "load"
+            # and give the D3 force layout a bounded moment to settle.
+            page.goto(url, wait_until="load")
+            page.wait_for_timeout(2500)
+            page.screenshot(path=str(out))
+            page.close()
             browser.close()
-            return wrote
+        return out.is_file() and out.stat().st_size > 0
     except Exception:
         return False
 
 
-def _capture_selenium(url: str, outs: list) -> bool:
+def _capture_selenium(url: str, out: Path) -> bool:
     try:
         from selenium import webdriver  # type: ignore
         from selenium.webdriver.chrome.options import Options  # type: ignore
@@ -107,13 +253,12 @@ def _capture_selenium(url: str, outs: list) -> bool:
     except Exception:
         return False
     try:
-        wrote = False
-        for out, (w, h, _label) in zip(outs, _VIEWS):
-            driver.set_window_size(w, h)
-            driver.get(url)
-            if driver.save_screenshot(str(out)):
-                wrote = True
-        return wrote
+        driver.set_window_size(*_WINDOW)
+        driver.get(url)
+        import time
+
+        time.sleep(2.5)
+        return bool(driver.save_screenshot(str(out)))
     except Exception:
         return False
     finally:
@@ -123,8 +268,7 @@ def _capture_selenium(url: str, outs: list) -> bool:
             pass
 
 
-def _capture_chrome_cli(url: str, outs: list) -> bool:
-    exe = None
+def _chrome_exe():
     for cand in (
         "google-chrome",
         "google-chrome-stable",
@@ -140,54 +284,59 @@ def _capture_chrome_cli(url: str, outs: list) -> bool:
     ):
         if "/" in cand:
             if os.path.exists(cand):
-                exe = cand
-                break
+                return cand
         elif shutil.which(cand):
-            exe = cand
-            break
+            return cand
+    return None
+
+
+def _capture_chrome_cli(url: str, out: Path) -> bool:
+    exe = _chrome_exe()
     if exe is None:
         return False
-    wrote = False
-    for out, (w, h, _label) in zip(outs, _VIEWS):
-        try:
-            subprocess.run(
-                [
-                    exe,
-                    "--headless",
-                    "--no-sandbox",
-                    "--disable-gpu",
-                    f"--window-size={w},{h}",
-                    f"--screenshot={out}",
-                    url,
-                ],
-                check=False,
-                capture_output=True,
-                timeout=60,
-            )
-        except Exception:
-            continue
-        if out.is_file() and out.stat().st_size > 0:
-            wrote = True
-    return wrote
+    try:
+        subprocess.run(
+            [
+                exe,
+                "--headless=new",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--hide-scrollbars",
+                f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
+                f"--virtual-time-budget={_CHROME_VIRTUAL_TIME_MS}",
+                f"--screenshot={out}",
+                url,
+            ],
+            check=False,
+            capture_output=True,
+            timeout=90,
+        )
+    except Exception:
+        return False
+    return out.is_file() and out.stat().st_size > 0
 
 
-def _capture_wkhtmltoimage(url: str, outs: list) -> bool:
+def _capture_wkhtmltoimage(url: str, out: Path) -> bool:
     if not shutil.which("wkhtmltoimage"):
         return False
-    wrote = False
-    for out, (w, _h, _label) in zip(outs, _VIEWS):
-        try:
-            subprocess.run(
-                ["wkhtmltoimage", "--width", str(w), url, str(out)],
-                check=False,
-                capture_output=True,
-                timeout=60,
-            )
-        except Exception:
-            continue
-        if out.is_file() and out.stat().st_size > 0:
-            wrote = True
-    return wrote
+    try:
+        subprocess.run(
+            [
+                "wkhtmltoimage",
+                "--width",
+                str(_WINDOW[0]),
+                "--javascript-delay",
+                "3000",
+                url,
+                str(out),
+            ],
+            check=False,
+            capture_output=True,
+            timeout=90,
+        )
+    except Exception:
+        return False
+    return out.is_file() and out.stat().st_size > 0
 
 
 _BACKENDS = (
@@ -198,31 +347,95 @@ _BACKENDS = (
 )
 
 
-def capture(target: str, out_dir: Path, name: str, count: int) -> list:
-    """Capture up to ``count`` screenshots; return the list of PNGs actually written."""
+def _capture_one(url: str, out: Path, backend=None):
+    """Capture ``url`` to ``out``; return the backend that worked, else None.
+
+    Returning the winner lets the caller reuse it for the remaining tabs instead of
+    re-walking the list — which would multiply the cost of every missing backend by
+    the number of tabs.
+    """
+    for candidate in (backend,) if backend else _BACKENDS:
+        if candidate(url, out):
+            return candidate
+    return None
+
+
+def resolve_tabs(spec: str) -> list:
+    """Parse a --tabs value into known tab ids, preserving the given order."""
+    if not spec:
+        return list(DEFAULT_TABS)
+    wanted, unknown = [], []
+    for raw in re.split(r"[,\s]+", spec.strip()):
+        if not raw:
+            continue
+        tab = raw.strip().lower()
+        if tab in TABS:
+            if tab not in wanted:
+                wanted.append(tab)
+        else:
+            unknown.append(raw)
+    if unknown:
+        raise ValueError(
+            f"unknown tab id(s): {', '.join(unknown)}. Known ids: {', '.join(TABS)}"
+        )
+    return wanted
+
+
+def capture(
+    target: str,
+    out_dir: Path,
+    name: str,
+    tabs,
+    query: str = "",
+    is_url: bool = False,
+) -> list:
+    """Capture one PNG per tab; return ``(path, label)`` for each one written."""
     if not _is_local_target(target):
         raise ValueError(
             f"refusing non-local target {target!r}: only local files and "
             "localhost URLs are captured (offline guarantee, INV-091)"
         )
     out_dir.mkdir(parents=True, exist_ok=True)
-    count = max(1, min(count, len(_VIEWS)))
-    outs = _out_paths(out_dir, name, count)
-    url = _to_url(target)
-    for backend in _BACKENDS:
-        if backend(url, outs):
-            return [o for o in outs if o.is_file() and o.stat().st_size > 0]
-    return []
+    html = None if is_url else Path(target)
+    if html is not None and not html.is_file():
+        raise ValueError(f"no such HTML file: {target}")
+
+    written = []
+    working_backend = None
+    for tab in tabs:
+        out = _out_path(out_dir, name, tab)
+        temp = None
+        try:
+            if is_url:
+                url = _tab_url(target, tab, query)
+            else:
+                temp = _snapshot_copy(html, tab)
+                url = _to_url(str(temp))
+            winner = _capture_one(url, out, working_backend)
+            if winner is not None:
+                working_backend = winner
+                written.append((out, TABS[tab][1]))
+            elif working_backend is None:
+                # Nothing worked for the first tab: no headless capability at all,
+                # so stop rather than failing identically for every remaining tab.
+                break
+        finally:
+            if temp is not None:
+                try:
+                    temp.unlink()
+                except OSError:
+                    pass
+    return written
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
-        description="Capture PNG screenshots of a local bootcamp visualization."
+        description="Capture one PNG per tab of a local bootcamp visualization."
     )
-    ap.add_argument(
-        "--html",
-        help="Path to a local HTML file (or a localhost URL) to screenshot.",
-        required=True,
+    source = ap.add_mutually_exclusive_group(required=True)
+    source.add_argument("--html", help="Path to a local HTML snapshot to screenshot.")
+    source.add_argument(
+        "--url", help="localhost URL of the running visualization app (enables ?tab=/&q=)."
     )
     ap.add_argument(
         "--out-dir",
@@ -235,15 +448,63 @@ def main(argv=None) -> int:
         help="Base name for the PNG files (default: visualization).",
     )
     ap.add_argument(
-        "--count",
-        type=int,
-        default=len(_VIEWS),
-        help=f"How many shots to attempt, up to {len(_VIEWS)}.",
+        "--tabs",
+        default="",
+        help=f"Comma-separated tab ids (default: {','.join(DEFAULT_TABS)}). "
+        f"Known: {','.join(TABS)}.",
+    )
+    ap.add_argument(
+        "--query",
+        default="",
+        help="Search text for the Search / Probe tab; requires --url (the static "
+        "snapshot has no engine to search).",
     )
     args = ap.parse_args(argv)
 
     try:
-        written = capture(args.html, Path(args.out_dir), args.name, args.count)
+        tabs = resolve_tabs(args.tabs)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    if not tabs:
+        print("no tabs to capture", file=sys.stderr)
+        return 1
+    if args.query and not args.url:
+        print(
+            "--query needs --url: the static snapshot has no running engine, so its "
+            "Search / Probe tab cannot show results (see snapshot-static-search-results).",
+            file=sys.stderr,
+        )
+        return 1
+
+    target = args.url or args.html
+    is_url = bool(args.url)
+    if not is_url and not Path(target).is_file():
+        print(f"no such HTML file: {target}", file=sys.stderr)
+        return 1
+
+    # Pre-flight: never capture a tab the page does not have (see _tabs_present).
+    tabs, absent = _tabs_present(_page_source(target, is_url), tabs)
+    for tab in absent:
+        print(
+            f"tab {tab!r} is not present in this visualization; skipping it rather than "
+            "capturing the default tab under its name.",
+            file=sys.stderr,
+        )
+    if not tabs:
+        # Distinct from "no headless backend" — saying the wrong reason here would be
+        # the same class of defect this script exists to stop.
+        print(
+            "None of the requested tabs exist in this visualization; nothing to capture. "
+            f"Requested: {', '.join(absent)}.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        written = capture(
+            target, Path(args.out_dir), args.name, tabs, query=args.query, is_url=is_url
+        )
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -257,8 +518,17 @@ def main(argv=None) -> int:
         )
         return 2
 
-    for path in written:
-        print(os.path.relpath(path))
+    captured = [p for p, _ in written]
+    missed = [t for t in tabs if _out_path(Path(args.out_dir), args.name, t) not in captured]
+    if missed:
+        # Never a silent partial result: say which tabs produced nothing.
+        print(
+            f"Captured {len(written)}/{len(tabs)} tabs; no image for: {', '.join(missed)}.",
+            file=sys.stderr,
+        )
+
+    for path, label in written:
+        print(f"{os.path.relpath(path)}\t{label}")
     return 0
 
 

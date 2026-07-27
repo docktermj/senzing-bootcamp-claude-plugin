@@ -18,6 +18,1483 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## visualization-legibility-at-production-scale
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `specs/INVARIANTS.md`, `tests/test_viz_defaults_at_scale.py`
+- **Summary:** Match Keys now sizes its label gutter from the longest key present and
+  **middle-ellipsizes** to fit, with the full key on hover for both bar and label; the Entity Graph
+  opens on the relationship subgraph above 400 entities, latched so a redraw cannot undo the
+  Bootcamper's toggle, with an inline note stating both counts. Both are stated as numbers in the
+  any-language contract (INV-090). **The spec's own fix was half wrong:** right-truncation preserves
+  the prefix as asked and still renders the four highest bars identically, because they share a
+  52-character prefix — measured during implementation and now pinned by
+  `test_head_only_truncation_would_not_pass`. **Verification limitation:** real resolved data at
+  ~2,800 entities was unavailable, so the shipped expressions were transcribed and exercised at 84 /
+  2,799 / 5,000 entities and both changed functions syntax-checked with `node --check`. That proves
+  the arithmetic, not that the graph reads better at scale — someone with real data should confirm.
+  Tests **490 → 506**.
+- **Invariants:** INV-153, INV-154.
+- **Commit:** `341bbe4`
+
+## factory-must-outlive-every-engine-it-creates
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** Added the factory-lifetime rule to the MCP-first section's SDK discipline, framed as
+  ownership rather than a Python idiom (INV-002), with the verbatim `engine object has been
+  destroyed` error recorded and explained as *collected* rather than explicitly destroyed — the
+  reading that sends people hunting for a `destroy()` call that does not exist. Cites the bundled
+  `senzing_viz_server.py`, which already returns `factory` alongside `engine` for exactly this
+  reason: the knowledge existed in a script comment and had never reached bootcamper-facing guidance.
+- **Invariants:** INV-152.
+- **Commit:** `341bbe4`
+
+## redo-batch-drain-must-terminate
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `specs/INVARIANTS.md`
+- **Summary:** Phase B step 9 now specifies the terminating loop shape language-agnostically, warns
+  that the MCP redo templates target streaming ingest and that the observed one never returns on an
+  empty queue (hanging the session with no error), requires checking and adapting the snippet, bans
+  a redo-count method as the loop sentinel with the O(n²) reason, and requires reporting the count
+  processed and that the queue emptied. Phase C's coordinated drain defers to it rather than
+  re-deriving it, and its "monitor queue depth" bullet now distinguishes monitoring from gating. The
+  count-sentinel anti-pattern previously existed only in a sample recap's narrative, not in guidance.
+- **Invariants:** INV-151.
+- **Commit:** `341bbe4`
+
+## reconcile-sdk-guide-license-note-with-detected-limit
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** `phaseA` now states that the same `sdk_guide` call returning the load template also
+  returns a licensing verdict computed from `record_count` alone, and requires reconciling it against
+  the already-detected `license_record_limit` before relaying or acting on it — suppressed entirely
+  at `0` or a limit at/above the dataset size. Generalised once in the ground rules: a measured
+  environment value governs over generic guidance about that same value, scoped so it cannot be read
+  as relaxing INV-080. Premise confirmed at the schema level rather than assumed — `sdk_guide`'s
+  `record_count` documentation states that values above 500 "surface license guidance".
+- **Invariants:** INV-150.
+- **Commit:** `341bbe4`
+
+## network-link-fields-and-uncovered-response-schemas
+
+- **Implemented:** 2026-07-26 (one criterion deliberately unmet — see below)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `specs/INVARIANTS.md`, `tests/test_partial_row_and_schema_coverage.py`
+- **Summary:** The contract and the Discover call site now state that `response_schemas` for the
+  graph methods **stops at the top-level arrays**, require dumping one raw link element before
+  writing the parser, and carry the new partial-row rule: when some fields of a row populate and
+  others are blank, the blanks are a wrong field name, not thin data. `get_version` / `get_license`
+  are named as methods with an empty entry, at the contract and at Module 4's licence parse.
+  **Two of this spec's claims were wrong and were corrected by querying the server:** `find_network`
+  *does* have a `response_schemas` entry (it just documents only `ENTITY_PATHS[]`, `ENTITIES[]`,
+  `ENTITY_NETWORK_LINKS[]`), while `get_license`'s empty result is confirmed.
+  **⚠️ Deliberately unmet criterion:** documenting the `MIN_ENTITY_ID` / `MAX_ENTITY_ID` endpoint
+  keys "verified from a dumped raw response". Verification needs a live loaded engine, unavailable
+  here, and the keys are in no MCP source — writing them would assert an unverified Senzing fact
+  (INV-080), the error this repo already retracted once for `SZ_EXPORT_ALL_FLAGS`. The defence
+  shipped instead of the datum: the divergence is recorded as a caution marked *not MCP-confirmable*
+  and *never the names to code against*, and the tests assert **no** specific field name. To close
+  it, dump one link element on a loaded engine and promote the caution to a verified field list.
+  Tests **481 → 490**; all seven new assertions confirmed to fail against the pre-change files. One
+  test-helper fix: the guidance lives in a Markdown blockquote, so whitespace collapsing alone left
+  `>` markers mid-phrase — the helper now strips them.
+- **Invariants:** INV-148, INV-149.
+- **Commit:** `a2e4363`
+
+## embed-every-captured-tab-in-tab-order
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `specs/INVARIANTS.md`, `tests/test_screenshot_retention_and_order.py`
+- **Summary:** Dropped the "2-3 most representative (delete the rest)" cap at `module-completion.md`
+  and the matching "2-3 best per module" in graduation's backfill; both now keep **every** captured
+  tab, since per-tab capture (INV-122) makes each file a distinct view and the cap could only delete
+  unique content. Added the ordering rule to both call sites: embed in the app's tab order, sourced
+  from the tab table in `visualization-api-reference.md`, which now declares itself the ordering
+  authority so neither call site restates the list. The example recap modelled the retired behaviour
+  in prose and was updated, which made its committed `.pdf` stale — caught by
+  `tests/test_example_recap_sync.py` and re-rendered from `plugins/senzing-bootcamp/` as that test
+  requires (121 KB, image objects intact). Tests **471 → 481**; all eight new assertions confirmed to
+  **fail against the pre-change files**. Two of my own first-draft assertions were false positives
+  and were narrowed rather than worked around: a loose count-cap regex matched graduation's innocent
+  "you keep two things — a recap PDF and a project", and the explanation of *why* the cap was removed
+  originally quoted the retired phrase, tripping the no-occurrence check.
+- **Invariants:** INV-146, INV-147.
+- **Commit:** `94eb5e3`
+
+## analyzer-legacy-sublist-format-false-errors
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`, `specs/INVARIANTS.md`, `tests/test_legacy_sublist_format_is_supported.py`
+- **Summary:** Split the analyzer's output into **structural invalidity** (blocking) and
+  **conformance to the recommended schema** (informational) in `phase2`, with the exit code removed
+  as a gate, the Entity Specification's "While we still support that" quoted and marked for
+  per-session MCP re-confirmation (INV-080), `No NAME features found` explained as an artefact of
+  where the analyzer looks, a one-record load probe made the arbiter with its conclusion recorded
+  (INV-125), and hand-writing a mapper to clear a conformance finding forbidden outright.
+  **The defect was in three files, not the one the spec named.** `phase3-test-load.md` instructed
+  "Fix the structural errors ... in the transformation program" for the flat format — literally the
+  five-mapper rewrite the spec exists to prevent — and `phase1-quality-assessment.md`'s CORD
+  fast-path readiness check required a `FEATURES` array, classifying every legacy-shaped CORD source
+  as not-ready at the earliest gate and routing loadable data into a mapping phase it did not need.
+  Both fixed. **Two claims in the spec were corrected by verifying against the MCP server rather
+  than trusting it:** (1) the legacy shape is not "the sub-list format" but "a flat JSON structure
+  *with* a separate sub-list for each feature that had multiple values" — sampling showed London/
+  `GLOBALDATA` returns a `FEATURES` array while Las Vegas/`PPP_LOANS` returns flat root attributes
+  with **no** sub-lists, so a sub-list-keyed check would still have misjudged it, and CORD is now
+  documented as shipping both forms; (2) the analyzer does not contradict the specification — the
+  same section's validation rules do say `FEATURES (required, array)`, so the analyzer applies the
+  *recommended* schema's rules while the prose grants continued support for the *legacy* shape.
+  Both true, answering different questions; the guidance says so instead of calling the analyzer
+  wrong. Tests **457 → 471**; all nine new guidance assertions were confirmed to **fail against the
+  pre-change files**. Not verifiable here: the end-to-end criterion "a CORD run reaches the test
+  load without a hand-written conversion" — verified instead by removing every instruction that
+  would cause one (grep across the plugin plus the new tests), not by running a bootcamp.
+- **Invariants:** INV-144, INV-145.
+- **Commit:** `9d2c43f`
+
+## discoveries-pdf-real-tables-and-paragraph-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `specs/INVARIANTS.md`, `tests/test_discoveries_pdf.py`, `tests/test_recap_pdf_font_safety.py`
+- **Summary:** Reviewed and landed the uncommitted generator work (tables as a real grid, generalised
+  block spacing, `_UNICODE_MAP` additions), then closed the gaps it left. Verified by **rasterizing**
+  pages, not by exit code or retention (INV-129): raw pipe lines **55 → 0** on a stress fixture,
+  grids draw with shaded headers, the header repeats across a page break with the following body row
+  in the **body font** (the regression stays fixed), ragged rows pad/truncate without shifting a
+  column origin, the stdlib fallback emits aligned columns and still announces itself on stderr
+  (INV-111), and the INV-110 guard is unchanged. **Three defects found during verification, all
+  fixed:** (1) two adjacent tables shared an edge and read as one grid with a bold middle row —
+  `_needs_item_gap` gapped a table before prose but not before another table; (2) thirteen further
+  characters still corrupted to `?` (`≈ ≤ ≥ ≠ ∞ € ™ ⇒ ↑ ↓ ←`, non-breaking hyphen, zero-width space)
+  — `↔`/`⚠️` were not the whole gap, and the widened inventory found them immediately; (3) the
+  label-continuation split is now fixed **at the cause** — the parser absorbs continuation lines into
+  the label block, so the paragraph reflows and the gap-suppression carve-out was removed. The empty
+  leading table column is **accepted, not fixed**, reasoned in `parse_table`'s docstring: dropping it
+  would delete a real row-label column's values. Tests **437 → 457**; the new pipe-count,
+  table-structure, adjacent-table, page-break-font, paragraph-gap and font-safety probes were each
+  confirmed to **fail against the pre-change scripts** (rendered from `HEAD`, 55 pipe lines, no grid,
+  paragraph gap identical to the line advance at 15.6 pt). Paragraph-spacing assertions are
+  self-calibrating — comparing a paragraph break against a plain line advance measured from the same
+  document — rather than hardcoded thresholds that a type change would silently invalidate.
+- **Invariants:** INV-142, INV-143.
+- **Commit:** `a53f865`
+
+## reassess-per-module-model-effort-assignments
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_sync.py`, `tests/test_model_guidance_behavior.py`
+- **Summary:** Re-rated every stage against what the modules do **today** and rebuilt both
+  per-stage tables as one row per stage in module order (identical row-for-row). Changed:
+  System verification medium → **high** effort; Truth Set visualization Sonnet 5 / medium →
+  **Opus 5 / high** (rated "mostly run / render" before INV-090 made the module *generate* the
+  server); Data processing's unpinnable "Sonnet 5, high (Opus if bespoke load code)" resolved to
+  **Opus 5 / high**; Query, Visualize and Discover Sonnet 5 / medium → **Opus 5 / high** (three of
+  the 2026-07-26 self-observed defects landed there, plus INV-115's originating incident); and a
+  missing **Entity Resolution Concepts** row added. The back half — Data Quality, Mapping, and
+  Transformation through Graduation — is now flat at Opus 5 / high, so a Bootcamper who switches
+  there is asked nothing further. Separately, the ask trigger now compares against **what the
+  Bootcamper is running**, not the previous stage's recommendation (the previous stage is a
+  fallback only), names only the dial that differs, and frames a below-current recommendation as a
+  step down inside the switch question. Graduation's hardcoded "always steps up from the Module 7
+  recommendation" premise was removed — it now shares Opus 5 / high with Module 7 and derives its
+  behavior from the table like every other stage. The INV-137 flow itself is unchanged: pinned
+  switch question as its own yielding turn, the "Are you done modifying the model and effort?" gate
+  after a **yes** and nothing else, first step deferred to the turn after confirmation. The pause is
+  **symmetric** — downgrades ask exactly as upgrades do (maintainer decision, 2026-07-26), as does
+  the Truth Set visualization rating. Acceptance criteria verified: both tables parse identical and
+  cover every canonical module (`test_model_guidance_sync.py`); no conditional cell survives; the
+  Opus-5/high-throughout path produces zero switch questions after its first; **448 tests pass**
+  (437 → 448, 11 added) and all 11 new assertions were confirmed to **fail against `HEAD`**, so they
+  can detect the original defects. Test phrase assertions were made whitespace-tolerant via a new
+  `flat()` helper — two false failures came from re-flowing wrapped prose, which is an edit with no
+  meaning.
+- **Invariants:** INV-138, INV-139, INV-140, INV-141 (INV-137's trigger superseded in place; nothing
+  renumbered or deleted).
+- **Commit:** `cfb2cf9`
+
+## close-dry-run-open-items
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `specs/INVARIANTS.md`, `.claude/skills/dry-run/scaffold_project.py`, `.claude/skills/dry-run/phase3-conversational.md`, `tests/test_saved_preferences_honored.py`, `tests/test_dry_run_scaffold.py`
+- **Not a spec** — the five items left open when the dry run was stopped. **Establishes no new
+  invariant**; INV-105 is clarified in place and the rest tighten existing rules or the maintainer
+  skill.
+- **The preface's verbosity-awareness could not fire on a fresh run.** `onboarding-flow.md` said to
+  show the version line "verbosity-aware — suppress under the `minimal` preset", and INV-105 requires
+  it, but INV-075 moved the verbosity question into Bootcamp preparation, which runs *after* the
+  preface — and the preface writes no preferences. So on a first run the suppression condition was
+  unreachable while reading as always-applicable: the same unsatisfiable-instruction class as the
+  acknowledgment rule, and corrosive for the same reason. The preface now states that a fresh run has
+  no preset and the line is simply shown, that the suppression path is reachable only on a resumed or
+  pre-seeded run, and — guarded by a test — that the fix must **not** drift into asking for verbosity
+  in the preface. INV-105 carries a dated clarification so the ordering is not rediscovered.
+  **Worth noting why the mechanised guards missed it:** the symptom is a semantic dependency, an
+  instruction outliving the ordering it assumed, not stale vocabulary or a broken reference. That is
+  a real limit of the drift guards and an argument for keeping the human walk in the rotation.
+- **Ask-once did not cover an unanswered question.** `ground-rules.md` forbade re-asking a question
+  the bootcamper "already answered", which left every interruption that stranded a *pending* question
+  uncovered — a compaction, a session boundary, or a maintainer tangent. `feedback.md` Step 4
+  mandates re-presenting it verbatim, but only for the feedback detour. The general rule now covers
+  it, with the reasoning stated: ask-once protects the bootcamper from answering twice, an unanswered
+  question has no answer to protect, and **skipping it is the real violation** because it advances on
+  an answer nobody gave (INV-007).
+- **Step 4's language annotations implied precision their cited source lacks.** It said to annotate
+  each language with its install path "using the Module 2 routing rules as the source", but those
+  rules resolve a *platform*, not per-language install mechanics — so on Linux they distinguish
+  nothing and the instruction invited invention. Now enumerated per platform (the macOS/Windows cases
+  the rules genuinely produce), with Linux stated explicitly as "nothing to differentiate — say it
+  once", a ⛔ against manufacturing an annotation, and a pointer to `sdk_guide(topic='install')` in
+  Module 2 for real install detail. **Prose-only: verified by inspection, no test** — the honest
+  reason being that asserting "these annotations are sourced" is not something a string match can do.
+- **The honor-don't-ask path had only ever been exercised inert.** Every preference was asked in the
+  walk, so Step 0 was proven not to fire when it shouldn't and nothing more. Added `--seeded` to the
+  scaffold, pre-filling exactly the three honorable preferences (with `verbosity: minimal`, chosen
+  because honouring it wrongly is immediately visible), and `phase3-conversational.md` now prescribes
+  a second short walk with it, saying why one walk is insufficient.
+- **The walk's blind spots are now written down** in a "What this walk cannot test" section:
+  administrative write noise (a walk writes config via Bash, so it sees tool output rather than an
+  inline diff and cannot judge whether INV-058's noise reduction works — only the write *count*), the
+  hooks not firing, anything past the SDK, and the sharpest one — **the assistant's own compliance is
+  not evidence**, so findings are trustworthy while clean stretches are weaker than they feel.
+- **Six negative controls**, all confirmed: hiding the fresh-run ordering, drifting into asking for
+  verbosity, deleting the unanswered-question rule, un-seeding a preference, and dropping either the
+  why-two-walks rationale or the coverage-limits section.
+- **Test suite:** 427 -> 437 passing.
+- **Commit:** uncommitted
+
+## retire-model-guidance-modes
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_behavior.py` (new, replaces `tests/test_model_guidance_modes.py`), `tests/test_saved_preferences_honored.py`, `.claude/skills/dry-run/scaffold_project.py`
+- **Not a spec** — a maintainer decision taken mid-dry-run, when the model-guidance question came up
+  in the phase-3 walk: "This question should not be asked. The plugin should always: stop and ask me
+  each time." **Invariant established: INV-137**, superseding INV-119 and INV-120.
+- **Scope was ambiguous and I asked rather than guessed.** "Always prompt" could mean *remove the
+  question but keep the modes as a file-only override* (smaller, preserves an `off` escape hatch,
+  consistent with INV-133 and INV-055's opt-out culture) or *remove the modes entirely*. The two
+  differ substantially in work and in whether a bootcamper can silence the prompts at all. The
+  maintainer chose **remove entirely**: no question, no `model_guidance` key, and a stale key in an
+  old preferences file is ignored rather than honored.
+- **This is the fourth swing of the same design** — INV-062 non-blocking → INV-063 blocking switch
+  question → INV-069 plus a confirmation gate → INV-119/INV-120 all of it conditional on a
+  preference → INV-137 unconditional again. Recorded in the test docstring as a table, because the
+  oscillation is the thing most likely to confuse the next reader, and because "someone will
+  reinstate a retired shape" is a demonstrated risk here rather than a hypothetical one.
+- **What INV-137 keeps.** The pause is still conditional on the *recommendation changing* — "stop and
+  ask me each time" means each time it changes, which is what the retired option 3 said too;
+  unchanged still yields a one-line statement, not a question. INV-120's content requirements
+  (separate dials, changeable at any time, a below-current recommendation flagged so it never reads
+  as advice to downgrade) are retained verbatim on that statement rather than dropped with the
+  `advisory` mode that hosted them.
+- **Five superseded-by notes added in place** to INV-119, INV-120, INV-063, INV-069 and INV-133, so
+  each retired invariant points forward. INV-133 needed one because it cited INV-119's question as
+  its worked example; it now governs `path`, `verbosity` and `programming_language` only.
+- **Renamed the test file rather than leaving a misnomer.** `test_model_guidance_modes.py` tested
+  modes that no longer exist; it is now `test_model_guidance_behavior.py`, rewritten to pin the
+  inverse of what it used to: the question exists **nowhere**, no skill reads or honors the key, six
+  retired mode phrasings are absent, the done-gate lives in exactly two files scoped to no mode, and
+  the retained INV-120 content survives. Also dropped `model_guidance` from
+  `test_saved_preferences_honored.py`'s registry and from the dry-run scaffold's fixture.
+- **Test suite:** 433 -> 427 passing (six mode-specific tests retired with the modes; the
+  replacement file adds fourteen).
+- **Commit:** uncommitted
+
+## dry-run-phase3-findings
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `tests/test_saved_preferences_honored.py` (new), `tests/test_model_guidance_modes.py`
+- **Not a spec** — the three findings from phase 3 of the dry run, the conversational walk with the
+  maintainer answering as the Bootcamper. **Establishes no new invariant**; all three make existing
+  invariants (INV-133, INV-006, INV-012, INV-003) actually hold in the flow.
+- **INV-133 covered only one of the four preferences it names.** The invariant is phrased generally —
+  "A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be honored and its
+  capture question MUST NOT be asked" — but arrived via `skip-model-guidance-question`, and only
+  `model_guidance` ever got the read-first check. Steps 1 (path), 3 (verbosity) and 4 (programming
+  language) asked unconditionally, so a returning Bootcamper who had saved `verbosity: minimal` was
+  asked for it again. Reading the file suggested this in the first audit; **walking the steps in
+  order is what confirmed it**, because the absence of any check is invisible until you follow the
+  sequence looking for one. Added a shared **Step 0** stating the rule once with an honorability
+  table, plus a skip instruction on each of the four steps so an agent reading only its own step
+  still obeys it. Two edge cases the general rule needed: `path: customized` with no
+  `selected_modules` is **not** honorable (the selection would be undefined), and an unrecognised
+  value falls through to the question rather than being guessed at.
+- **A silently-honored preference is indistinguishable from a question you forgot**, so the Step 7
+  recap now marks each honored line ` — from your saved preferences` and closes with how to change
+  them. INV-133 already required stating the value in force; it was only wired up for
+  `model_guidance`.
+- **The documented health probe was not lightweight.** `onboarding-flow.md` step 0b called for "a
+  lightweight call such as `search_docs(query="health check")`" — which returns a multi-page FAQ
+  article (~5 KB) to answer "did the server answer at all". Meanwhile `ground-rules.md` already
+  requires `get_capabilities` once before any other Senzing MCP call, so the preface was making two
+  liveness calls where one would do. The probe is now `get_capabilities`, whose response is also the
+  tool manifest the guide needs.
+- **An instruction the guide is told it must follow and provably cannot.** `ground-rules.md` requires
+  every acknowledgment to reference "at least one specific thing they said" and forbids a bare "Got
+  it." — but the answer to "any questions before we get started?" is usually just "no", where there
+  is nothing specific to quote and no carve-out existed. This is the finding class unique to phase 3:
+  not a wrong instruction but an unsatisfiable one, which teaches the model to read the surrounding
+  rules as advisory. Added a carve-out that keeps the intent (prove you read the answer) by naming
+  what the answer selected or causes, explicitly forbidding a manufactured quote or padding to reach
+  two sentences.
+- **`tests/test_saved_preferences_honored.py`** (8 tests) pins that every preference with a capture
+  question appears in Step 0's table **and** carries a skip instruction on its own step, that
+  detected values are not misfiled as questions, that the recap marks honored values, and that the
+  health probe reuses `get_capabilities`. Negative-controlled on all three findings.
+- **Updated `tests/test_model_guidance_modes.py` rather than working around it.** It pinned Step 3a's
+  literal sentence "First, read `config/bootcamp_preferences.yaml`", which the generalisation moved
+  to Step 0 — so a test written to protect a guarantee would have blocked strengthening it. Rewritten
+  to assert the guarantee (a read step exists, precedes the question, and the step defers to it) with
+  a note saying why. Verified it still catches a real regression: deleting Step 0 fails 3 assertions
+  across the two files.
+- **Test suite:** 425 -> 433 passing.
+- **Commit:** uncommitted
+
+## dry-run-skill
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `.claude/skills/dry-run/SKILL.md`, `.claude/skills/dry-run/phase1-mcp-contracts.md`, `.claude/skills/dry-run/phase2-hooks-and-scripts.md`, `.claude/skills/dry-run/phase3-conversational.md`, `.claude/skills/dry-run/scaffold_project.py`, `tests/test_dry_run_scaffold.py` (all new)
+- **Not a spec** — maintainer request: turn the three-phase dry-run exercise into a reusable
+  maintainer skill. **Establishes no new invariant** (it is a development tool, not plugin
+  behaviour). Lives under `.claude/`, which `propagate.sh` does not mirror, so none of it ships.
+- **Why a skill rather than notes.** The methodology found a module-breaking defect chain and a
+  silent renderer downgrade that three prose audits and 399 tests had missed, and its value is
+  almost entirely in the *discipline* — which is what gets lost first. The skill states the
+  organising idea plainly: static analysis can only confirm the plugin agrees with **itself**; each
+  phase points it at something external (the MCP server's real schemas, the filesystem and rendered
+  artifacts, a human answering questions).
+- **Structure.** `SKILL.md` carries the phase table, the absolute rules and the
+  finding-to-test-to-ledger workflow; one file per phase carries the procedure, the defect patterns
+  each phase finds, and the traps. Phase 3's file states explicitly that it **cannot be self-played**
+  — fabricating the Bootcamper's answers violates INV-007 and `ground-rules.md`, and an assistant
+  grading its own 👉 discipline cannot distinguish "the files produce this" from "I was careful".
+- **The hard-won process rules are recorded as absolute rules**, because each cost real work in the
+  originating session: commit or `cp` aside before mutating the tree (`git restore` cannot tell your
+  fix from an injected defect — this ate work twice); clear `__pycache__` after a same-size revert
+  (`"…"` and `"..."` are both three bytes, so a restored file with a same-second mtime lets Python
+  reuse the mutated bytecode); never call `submit_feedback`; negative-control every guard; and state
+  coverage limits explicitly rather than implying clean coverage.
+- **`scaffold_project.py`** builds the realistic fixture the exercise depends on — mid-bootcamp
+  progress, an unfinalized checkpoint block, a precious feedback entry, messy Markdown, an absent
+  Docker container, sample records — and `--explain` prints which fixture exercises which invariant.
+  It refuses to build inside the repo or under `/tmp`, and `--fresh` produces the empty-state variant
+  phase 3 needs.
+- ⚠️ **The skill's own first version shipped the exact bug it warns about, and validating it caught
+  that.** The scaffold's longest recap chip was 41 characters against the recap cover's
+  46-character clip — reproducing the precise blind spot the skill documents as the reason the
+  renderer crash survived three audits — while a comment claimed it was "deliberately longer". No
+  real module name reaches 46; the realistic trigger is the durability hooks folding an unfinalized
+  heading with its "— in progress" suffix attached (55 characters). Fixed, and then **verified end to
+  end**: with the `_clip` fix in place the fixture renders `renderer: fpdf2`; with the fix reverted it
+  reproduces `fpdf2 render failed → renderer: stdlib`. Writing the methodology down without running
+  it would have shipped a fixture that could never fail.
+- **`tests/test_dry_run_scaffold.py`** (8 tests) pins the one numeric claim the exercise rests on:
+  the scaffold's in-progress heading must exceed the narrowest `_clip` width, with **both** values
+  read from source rather than hardcoded, so shortening the heading or changing the generator's
+  widths fails the build. Also pins the guardrails and that a bare module name would *not* reach the
+  clip (which is why the fold is required). Negative-controlled: reverting the heading to a short one
+  fails two assertions.
+- **Test suite:** 417 -> 425 passing.
+- **Commit:** uncommitted
+
+## dry-run-phase2-hooks-and-scripts
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `tests/test_recap_pdf_font_safety.py` (new)
+- **Not a spec** — phase 2 of the dry run: executing all six hooks and every bundled script against
+  a realistic scratch bootcamp project (populated `config/`, a mid-module recap, an unfinalized
+  checkpoint block, a feedback file, messy Markdown) rather than reading them. **Establishes no new
+  invariant**; it enforces INV-048's designed-render intent, and everything else it touched was
+  found already correct.
+- **One real defect, and it was silent by construction.** `_clip()` truncated with a U+2026 "…",
+  but every call site is `_clip(_safe(x), n)` — `_safe` runs **first**, so it never saw the character
+  `_clip` appended. fpdf2's Latin-1 core font then raised, `render_with_fpdf2` caught it exactly as
+  designed (INV-111 reported the cause on stderr, which is how it was noticed at all), and the only
+  symptom was the bootcamper quietly receiving the plainer stdlib PDF instead of the designed one
+  (INV-048). `_UNICODE_MAP` already mapped "…" to "..."; the defect was purely order of operations.
+  Fixed in `_clip` with an ASCII suffix rather than at the three call sites, so the ordering hazard
+  cannot recur. **Why no test caught it:** it fires on the cover's module chips at width 46, and
+  "Data Quality, Mapping, and Transformation" is 41 characters — the shipped example fixture sits
+  five characters under the threshold, so it clips only once a number prefix or timestamp is
+  appended. A swept audit of every other fpdf2 text path found all of them sanitized
+  (`_render_line` even documents its bullet as "middle dot (Latin-1 safe)").
+- **Verified working, against real state rather than by reading.** All six hooks no-op silently
+  outside a bootcamp and behave correctly inside it; the write-gate blocks `/tmp`, `~/Downloads`,
+  `C:\Windows\Temp` and both secret classes while allowing project-relative writes (INV-109/INV-001);
+  `feedback-capture` injects the full triage/durability guidance on a feedback prompt and stays
+  silent on an unrelated one; `stop-nudge` stays silent both when the transcript is unreadable and
+  when `stop_hook_active` is set (INV-054); the recap fold run three times produced one checkpoint
+  block, one section, and left the completed section intact (INV-059); the normalizer left the
+  feedback file **byte-identical** and the recap's word count unchanged (INV-067/INV-060); the
+  discoveries generator refused junk input and wrote no PDF (INV-110); `capture_screenshots` skipped
+  an absent tab with a message on stderr instead of saving the default tab under its name, and named
+  its output by tab slug (INV-122); `docker_lifecycle` reported a stopped container and
+  warned-and-continued on a missing one (INV-101); the viz server refused to write a snapshot when
+  the entity model could not be built, rather than emitting a blank page (INV-077); and
+  `color_for_sources` gave a bootcamper's own four sources four distinct fills, varied `cycle`
+  rather than reusing a colour when the palette exhausted at nine, and was order-independent
+  (INV-127).
+- **Coverage limit, stated rather than glossed:** this environment has no Senzing SDK (`libSz.so`
+  absent), so the live viz server, the loads, and every SDK-dependent path were **not** exercised.
+  The suite's own fake-model tests cover the snapshot HTML generation. The conversational layer
+  (👉 discipline, banners, gates) remains untested and cannot be tested by the assistant alone —
+  it needs a human bootcamper (phase 3).
+- **Test suite:** 411 -> 417 passing. The new guard is negative-controlled: reverting the ellipsis
+  fails four assertions including the end-to-end "still renders with fpdf2" one.
+- ⚠️ **Two process notes, both recorded because they nearly produced false confidence.** (1) I
+  repeated the previous entry's `git restore` mistake — reverting an injected mutation while the fix
+  was still uncommitted, which discarded it again. Use `cp`/`mv` for a backup when the tree is
+  dirty; the lesson only stuck the second time. (2) After restoring, the suite kept failing on
+  already-fixed code: `"…"` and `"..."` are both 3 bytes, so the restored file had the same size and
+  a same-second mtime as the mutated one, and Python reused the stale `__pycache__` bytecode. Clear
+  `__pycache__` after any same-size revert before trusting a test result.
+- **Commit:** uncommitted
+
+## dry-run-mcp-call-contracts
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `.../phase3-test-load.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `.../feedback.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `specs/INVARIANTS.md`, `tests/test_mcp_call_contracts.py` (new), `tests/test_sdk_parameter_shapes.py`
+- **Not a spec** — phase 1 of the maintainer-requested dry run: verifying the plugin's MCP calls
+  against the **live** Senzing MCP server rather than reading the plugin. Everything prior had been
+  static analysis; this asked the different question of whether the documented calls work.
+- **Invariant established:** **INV-136** (satisfy required parameters and enumerated values before
+  calling any MCP tool) and **INV-135** (the evaluation-license request is consent-gated). INV-132
+  corrected in place.
+- **Module 5's mapping workflow could not execute as documented** — two independent defects on the
+  path every data source takes. (1) `mapping_workflow(action='start')` requires both `file_paths`
+  and `data.workspace_dir` — the tool's words are "The call WILL FAIL without both" and "do NOT
+  assume /tmp exists" — and `workspace_dir` appeared **nowhere** in the plugin, so the first call
+  failed. `analyze_record` requires it too and never passed it. (2) Five of eight
+  `mapping_workflow` action names were payload FIELD names written as actions
+  (`profile_summary`, `entity_plan`, `schema_mappings`, `paths`, `verdict`); only
+  start/advance/back/status/reset are valid. Added an explicit call contract plus a table mapping
+  this module's steps 8-18 onto the workflow's four, since only four advances occur and the two
+  numberings had been conflated.
+- **Probable mis-triage of the plugin's own upstream bug report.** INV-125 and
+  `mapping-workflow-truncated-validation-errors` were built around "**step-3** validation rejects
+  the payload with no actionable reason", filed as an `mcp-server` defect. Step 3 is Map — the line
+  calling `action='schema_mappings'`. Not provable after the fact, but step number, invalid call and
+  "no field named" align exactly. Separately, the tool documents that a client read cap under 64 KB
+  "silently TRUNCATES step guidance mid-text and **reads as a server bug**" — a cause the plugin
+  never mentioned. INV-136 now requires excluding the read cap before attributing a truncation
+  upstream, and recording the concluded cause.
+- **A privacy gap, backwards from where the rigour was.** `submit_feedback(category='license_request')`
+  requires a first name and a **work** email and mails back an evaluation licence. Module 4
+  specified it in one clause — no mention that it collects personal data, that it leaves the
+  machine, or any consent gate — while *defect* reports had a full pinned gate and stripped every
+  identifier. INV-065 as written also forbade the email the call requires, so the plugin both
+  required and forbade it. Added Step 8a.6a: confirm the fields from the tool, ask one 👉 per turn,
+  show the exact request, send only on an explicit yes, hold the values for the call alone, never
+  persist them. Scoped `feedback.md`'s stripping rule to the defect categories.
+- **A routing rule that sent the guide away from MCP.** INV-132 asserted `get_sdk_reference` cannot
+  reach parameter shapes, so the guide should introspect the installed binding.
+  `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')` returns
+  `find_network_by_entity_id(entity_ids: List[int], …)` — the exact shape INV-132 cites as
+  unreachable. The `methods`/`functions`/`classes`/`api` topic was missing from the tool-routing
+  table entirely, while `module-06/phaseD` already used it. Corrected INV-132 in place, added the
+  topic to the routing table, and fixed the same false premise in `phase2b-discover.md`.
+  `tests/test_sdk_parameter_shapes.py` had **pinned the wrong premise**, which is how it survived;
+  its docstring and assertions now pin the correction and guard against reverting it.
+- **Self-check on a fix from the previous session.** Module 2's `{record limit}` lookup said "a
+  Senzing MCP tool"; `search_docs` does not answer it (returns EULA/pricing prose). The route that
+  does is `sdk_guide(topic='load', record_count=1000)`, whose `compatibility_notes` name the limit.
+  Also found Module 2 hardcoding `SENZING_LICENSE_PATH` where `sdk_guide` returns
+  `SENZING_LICENSE_FILE` — a one-word difference in the category the server itself flags as a common
+  confabulation — so that note now requires an MCP lookup rather than naming either.
+- **New guard:** `tests/test_mcp_call_contracts.py` (9 tests) pins required parameters, the action
+  enum, project-local `workspace_dir`, the parameter-shape routing, and the licence consent gate.
+  Static by design (offline, stdlib-only per INV-108) with `CONTRACT_VERIFIED_ON` recorded, since a
+  static copy of a live contract can go stale. **All seven negative controls confirmed**: each
+  defect reintroduced, guard confirmed to fail, then reverted.
+- ⚠️ **Process note, recorded because it cost real work.** During those negative controls I used
+  `git restore` to revert each mutation while my fixes were still **uncommitted** — which discarded
+  six of the seven fixes along with the mutations. Every negative control passed and the suite then
+  failed. Redone from the conversation with no loss. The lesson: commit (or copy aside) before
+  mutating a tree to test a guard; `git restore` does not distinguish your change from the one you
+  injected.
+- **Test suite:** 399 -> 411 passing.
+- **Commit:** uncommitted
+
+## invariant-drift-guards
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `tests/test_retired_vocabulary.py`, `tests/test_spec_ledger_invariants.py`, `tests/test_deferral_freshness.py`, `tests/test_canonical_module_names.py`, `tests/test_graduation_ending_surfaces.py`, `tests/test_markdown_hygiene.py` (all new), `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`
+- **Not a spec** — maintainer-requested follow-up to `deep-dive-audit-2026-07-26`. **These guards
+  establish no new invariant**; they mechanise enforcement of invariants that already exist
+  (INV-003, INV-004, INV-057, INV-076, INV-079, INV-084, INV-085, INV-103, INV-104, and the
+  INVARIANTS.md maintenance rules).
+- **Why.** Fourteen of that audit's seventeen findings were one defect class: an invariant
+  supersedes another, the new behaviour ships, and prose elsewhere keeps describing the retired
+  model. Three audits found it; the worst instance survived eight days and two of them. Re-reading
+  finds those one at a time — with 134 invariants and ~24 supersession chains, the class regenerates
+  faster than audits retire it. Six checks, stdlib-only, in the repo-level `tests/` per INV-108.
+- **The six.** (1) **Retired vocabulary** — a registry of eight retired terms; each may appear only
+  on a line that frames it as retired, which keeps honest back-compat notes ("older sessions may
+  store this as `track`") and fails bare ones. (2) **Spec-ledger accounting** — a post-cutoff
+  IMPLEMENTED entry must be cited as a `Source:`, name the invariant it established, or say it
+  established none; plus the reverse direction, that no invariant cites a spec which does not exist.
+  (3) **Deferral freshness** — the *inverse* check: a "later porting phase" note is
+  self-invalidating evidence, so any path it names must NOT resolve, and no note may call a module
+  unported when its skill directory ships. (4) **Canonical module names** — parsed from Bootcamp
+  preparation's module table (already self-declared as source of truth) rather than hardcoded, so a
+  rename is a one-place edit; bans seven off-canon variants and asserts the public README omits no
+  module. (5) **Graduation ending surfaces** — both surfaces that describe the ending must name the
+  terminal banner, condition it on a decline, and place it after the closing question; plus the
+  graduation offer must be worded identically across the two files that present it, which
+  `module-completion.md` demands and nothing enforced. (6) **Markdown hygiene** — no
+  space-before-comma, no trailing whitespace.
+- **Two findings the guards surfaced immediately,** which the audit's own reading had missed:
+  modules 2 and 4 titled themselves "SDK Installation and Configuration" and "Identify and Collect
+  Data Sources" in their frontmatter and H1 — the text the agent reads immediately before announcing
+  the module, so the off-canon name was one step from the banner and every transition question
+  (INV-079). Retitled to **SDK setup** and **Data collection** with the descriptive phrase kept as
+  subtitle prose. Case-only H1 styling ("System Verification") is deliberately out of scope and
+  documented as such.
+- **Every guard is negative-controlled.** Each defect was reintroduced and the guard confirmed to
+  fail, then reverted — seven controls across the six files (canonical names has two arms). This is
+  the discipline finding 17 of the prior audit was about: a guard whose docstring claims more than
+  its assertion checks is worse than none, because it certifies what it never tested. Four of the
+  six also carry a vacuity assertion (a glob or regex that stopped matching would otherwise pass
+  silently), and three carry a self-check pinning the literal string that shipped.
+- **Test suite:** 373 -> 399 passing.
+- **Commit:** uncommitted
+
+## deep-dive-audit-2026-07-26
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `specs/INVARIANTS.md`, `README.md`, `docs/README.md`, `.claude-plugin/marketplace.json`, `plugins/senzing-bootcamp/commands/graduate.md`, `plugins/senzing-bootcamp/hooks/README.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` + `.pdf`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/{SKILL.md,phase1-query-visualize.md,phase2-discover.md,phase2b-discover.md}`
+- **Not a spec** — a full-repo invariant-conformance and coherence audit the maintainer requested
+  directly. Recorded here so the work is traceable alongside the spec ledger. Every
+  mechanically-enforced invariant already held (372/372 tests green before and after); the 16
+  findings were coherence/staleness defects, one of them behavioral.
+- **Invariant established:** **INV-134** — the Bootcamper's `name` is detected silently in Bootcamp
+  preparation and never asked. The `bootcamp-prep-name-never-asked` spec was implemented and
+  ledgered but registered no invariant, so its guarantee had no ID; INV-113 and
+  `graduation/SKILL.md` had both been citing **INV-076** (the Core-vs-Customized path choice, which
+  says nothing about the name) as its authority. INV-113's parenthetical was corrected in place.
+- **Behavioral fix:** `module-07-query-visualize-discover/SKILL.md` still described the retired
+  A/B/C "track" model — "Paths B/C (shorter paths) may stop here … Preserve that gate exactly" —
+  which contradicted INV-076 (Graduation is Required in every path) and the same module's own
+  `phase1-query-visualize.md`. It could have let a bootcamper end before a mandatory module, an
+  unrequested skip (INV-014). Replaced with an explicit "graduation always follows" gate note.
+- **Other coherence fixes:** `commands/graduate.md` omitted INV-057's terminal
+  `END OF SENZING BOOTCAMP` banner and implied graduation ends on the closing question;
+  `phase1-query-visualize.md` claimed Module 5 was unported (it ships three phase files) and cited
+  INV-077 where INV-129 governs artifact verification; `hooks/README.md` credited the onboarding
+  preface with the consolidated setup write that INV-075 places in Bootcamp preparation; the root
+  `README.md` omitted Bootcamp preparation from the module list, used four off-canon module names,
+  and never linked the CLI install path in `docs/README.md`; Module 5's quality template showed
+  `78% ✅ Ready for mapping` against its own 70-79% warn band; Module 2 baked the evaluation
+  license's `500 records` into presented prose while the instruction below it said to source the
+  figure from MCP; four ` , ` artifacts from a botched em-dash pass sat in bootcamper-facing
+  dialogue; and the abbreviations "Data quality & mapping" / "Query/Visualize/Discover" were
+  replaced with canonical module names everywhere (INV-079).
+- **INV-050 clarified in place:** the layout tree now names three always-produced deliverables it
+  had omitted (`docs/bootcamp_data_discoveries.md`/`.pdf`, `docs/REVISIT_BOOTCAMP.md`) and no longer
+  annotates `backups/` as "reserved", since INV-094 requires the revisit bundle there. All three
+  already lived under enumerated directories, so this records what the layout already permitted.
+- **Model/effort table:** the per-stage Stage column now separates stages with **semicolons** in
+  both authoritative copies, because two canonical module names contain commas of their own — the
+  same pitfall graduation's `--expect-modules` note already documents. `test_model_guidance_sync.py`
+  compares the two tables verbatim, so both were changed together.
+- **Example recap regenerated:** bumped to the shipped `0.4.0` and re-rendered with `fpdf2`;
+  verified per INV-126/INV-129 by rasterizing the certificate page (v0.4.0 renders on the
+  certificate face, both attribution lines clear the inner ember border) and by confirming the
+  replaced strings landed in both directions.
+- **17th finding, surfaced by that verification — `tests/test_example_recap_sync.py` did not guard
+  what its docstring claimed.** `test_screenshot_is_embedded` asserted only `images > 0`, and the
+  cover logo resolves relative to the *script* rather than the cwd, so it always embeds: a
+  wrong-directory render loses the Truth Set screenshot yet still carries 2 image objects (logo +
+  soft mask) and passed. The docstring's "0 images" figure was wrong. Found the honest way — the
+  first regeneration attempt ran from `docs/examples/`, silently dropped the screenshot, and the
+  suite stayed green; the loss showed up only in a `pdftotext` diff against the committed PDF, which
+  is exactly the failure mode INV-129 exists to catch. Tightened to `>= 3` image objects with the
+  reasoning recorded, added `test_screenshot_caption_is_rendered` as an independent check that does
+  not depend on the cover's object count, and corrected the docstring's measured figures.
+  **Negative-controlled:** the tightened guard fails on renders from both the repo root *and*
+  `docs/examples/`, and passes on the correct render (373 tests, up from 372).
+- **Commit:** uncommitted
+
+## feedback-routing-plugin-vs-mcp-server
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `plugins/senzing-bootcamp/commands/bootcamp-feedback.md`, `plugins/senzing-bootcamp/scripts/feedback-capture.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_feedback_routing.py` (new)
+- **Not a spec** — a feature the maintainer requested directly: when a Bootcamper submits
+  bootcamp feedback, analyse whether the issue is in the plugin or in the Senzing MCP server,
+  record plugin issues in the feedback file, and submit MCP-server issues via the MCP server's
+  `submit_feedback` tool. Recorded here so the work is traceable alongside the spec ledger.
+- **Design decision, stated because it diverges from the literal request.** The request could be
+  read as routing *exclusively* — plugin issues to the file, MCP issues upstream. **INV-015 is
+  unconditional** ("Submitted bootcamp feedback is captured in
+  `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`"), so routing an MCP-server report away from
+  the file would breach it and would also cost the Bootcamper their own durable record. Implemented
+  as: **every entry is recorded locally regardless of verdict**, and an `mcp-server`/`both` verdict
+  *additionally* offers the upstream forward. The triage verdict decides whether an extra submission
+  happens, never whether the entry is saved.
+- **Step 2b — triage (silent, no 👉 question).** The Bootcamper reported a symptom; naming the
+  component is the plugin's job, not another question for them. Four verdicts (`plugin`,
+  `mcp-server`, `both`, `unclear`) with a discriminating test stated both ways — *would this still
+  happen if the plugin were perfect?* / *…if the MCP server were perfect?* — and a table of concrete
+  examples drawn from real findings (`mapping_workflow` truncated validation errors and
+  `get_sdk_reference`'s missing parameter shapes on the MCP side; a PDF generator dropping a table
+  off the page and a screenshot helper capturing the wrong tab on the plugin side). Includes an
+  explicit warning not to soften an `mcp-server` verdict to `plugin` just because this is the
+  bootcamp's own feedback file — a misfiled report reaches the wrong maintainer and gets fixed
+  nowhere.
+- **Step 3c — the upstream offer**, placed **after** Step 3b's durability check so a failed send can
+  never cost the Bootcamper their record. Requires: a self-contained message (tool name, observed,
+  expected, SDK version, verbatim error) because the recipient cannot see the bootcamp; ⛔ stripping
+  every identifying detail, with the Bootcamper's own entity names and record IDs called out as
+  theirs — describe the shape of the problem, never the content (INV-065); showing the exact draft
+  before asking, which is `submit_feedback`'s own documented contract; a pinned numbered 👉 question
+  (INV-051/INV-056) asked **once** (INV-006); disclosing that submissions are **anonymous** with no
+  reply channel *before* they answer, and pointing at `support@senzing.com` for a response; and
+  relaying the server's return verbatim. Failure or unavailability never blocks.
+- **New `Routing:` and `Upstream:` entry fields** record the verdict with a one-line reason and the
+  outcome (`not applicable` / `offered, declined` / `submitted YYYY-MM-DD` /
+  `submission failed: reason`), so a maintainer reading the file later knows what was decided and
+  what left the machine. The shipped file header now states the local-always guarantee and the
+  consent rule in the artifact itself.
+- **Reconciled the old blanket prohibition.** `feedback.md` previously said "Do NOT submit feedback
+  to the Senzing MCP server or anywhere external unless the bootcamper explicitly asks", which would
+  have contradicted the new path. It now names Step 3c as the *only* sanctioned external route and
+  keeps everything else local.
+- **Applied to the graduation retrospective too** (INV-116), which files with the same template:
+  self-observed findings skew toward MCP-server issues — a tool behaving differently than documented
+  is precisely the defect class a Bootcamper cannot report — so each is triaged rather than defaulted
+  to `plugin`, and the offer is **batched** into one question so the retrospective stays a single
+  non-blocking step.
+- **All three entry points updated** (workflow, slash command, `UserPromptSubmit` hook) so they
+  describe the same flow (INV-003); the hook's injected context was verified to carry the triage,
+  routing, `INV-015`, `INV-065` and show-the-message instructions, and to stay silent on unrelated
+  prompts and outside an active bootcamp. `tests/test_feedback_routing.py` (29 tests) pins the
+  unconditional local capture, the consent gate, the PII boundary and the three-surface agreement:
+  35 assertions fail against the pre-feature state. Full suite 372 passed.
+- **Commit:** uncommitted
+
+## audit-2-any-language-contract-and-windows-temp
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/scripts/write-gate.py`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md` (INV-106 clarified in place), `tests/test_any_language_contract_complete.py` (new)
+- **Not a spec** — findings from a second full audit against @INVARIANTS.md, fixed directly at
+  the maintainer's request. Recorded here so the work is traceable alongside the spec ledger.
+- **Finding 5 (MEDIUM-HIGH, security).** INV-106's stored-XSS guard reached only the Python path.
+  It mandated escaping by naming `senzing_viz_server.py`'s `_script_json`, but INV-090 requires the
+  visualization server be built in the Bootcamper's chosen language from
+  `visualization-api-reference.md` — and that contract mentioned escaping **zero times** (verified by
+  grep for `_script_json`, `\u003c`, `escape`, `</script>`, `XSS`, `inject`). So a Java/C#/Go/TS
+  bootcamp built strictly to the contract shipped the exact `</script>` breakout vector the invariant
+  exists to close, in the standalone snapshot — the artifact designed to be saved and shared. What
+  marked it a gap rather than an accepted limit: the sibling requirement *did* get through —
+  offline/no-CDN (INV-091) is stated plainly in `phase1-visualization.md:134`. Added an
+  **"Escaping data-sourced strings (required — security)"** section to the contract covering both
+  contexts (inline `<script>` payloads: escape `<`/`>`/`&` as `\uXXXX` because JSON does not escape
+  `<`; rendered HTML: escape before insertion), naming `application/json` responses as exempt, and
+  labelling `_script_json`/`_esc_html` as the *Python reference implementation, not the requirement*.
+  Also added an **"Offline rendering (required)"** section so the contract states it too rather than
+  relying on the sibling file. **INV-106 was clarified in place** (permitted by INVARIANTS.md's own
+  rules — wording only, no meaning change, dated note added): the requirement is now the escaping
+  behaviour, satisfiable in any language, with the Python helpers named as the reference. The guard
+  always applied to generated HTML in any language; naming only the Python helper left it
+  unsatisfiable for a non-Python server.
+- **Finding 6 (LOW-MEDIUM).** `docs/model-selection.md:111` — a **shipped** doc — cited
+  `specs/model-effort-change-prompt.md` and `specs/model-effort-switch-done-confirmation.md`, but
+  `propagate-to-public/SKILL.md:43` lists `specs/**` as never propagated, so those were dangling
+  pointers in the public repo (INV-003). Reworded to describe the provenance without citing a path a
+  reader of that copy cannot open. A scan of every shipped file against the full exclusion list found
+  this as the only real hit; the other seven were the bootcamper project's own `src/resources/`,
+  Senzing install paths under `/opt/senzing/er/resources/`, and a `DATABASE_MIGRATION.md` substring.
+- **Finding 7 (LOW).** Executed `write-gate.py` against 14 cases. Correct on 12; two Windows gaps
+  under INV-001: `C:\Windows\Temp` (the SYSTEM account's temp, the Windows counterpart of `/tmp`)
+  was not blocked, and the gate consulted `$TMPDIR` for macOS's per-user temp but never `%TEMP%` /
+  `%TMP%`, so a relocated Windows temp was covered less well than a relocated macOS one. Added
+  `/windows/temp/` to `TEMP_SUBSTRINGS` and made the env-var check iterate `TMPDIR`, `TEMP`, `TMP`.
+  Re-verified: all four Windows shapes now block, a relocated `%TEMP%` blocks, POSIX/macOS unchanged,
+  in-project paths and a project living under a `tmp`-ish name still allowed;
+  `tests/test_write_gate.py` still passes.
+- **New test.** `tests/test_any_language_contract_complete.py` (11 tests) asserts, for ten
+  requirements an any-language builder must satisfy, that the build guidance states each **as
+  behaviour**; that no requirement is expressed only as a Python identifier (every
+  `_script_json`/`_esc_html`/`json.dumps` mention must sit in a passage labelling it the Python
+  reference); that the Python reference has not drifted from the contract it references; and that no
+  shipped file cites a never-propagated path. Against the pre-fix state it fails 7 assertions and
+  names exactly what a Java bootcamp would not have received.
+- **Verified clean this pass:** all six hooks executed (routing, silence, loop-safety, no crashes);
+  `INVARIANTS.md` internally consistent across 24 supersession claims; 296 plugin-internal file
+  references, none broken; no dead INV-050 tree entries (all three unwritten files already marked
+  `(reserved)`); module prerequisite chain sound, with no Required module depending on an Optional
+  one. Full suite 343 passed.
+- **Commit:** uncommitted
+
+## skip-model-guidance-question
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `tests/test_model_guidance_modes.py`
+- **Summary:** Implemented the spec's own recommended resolution rather than its literal
+  request, at the maintainer's direction. Step 3a now **reads
+  `config/bootcamp_preferences.yaml` first** and, when it already carries a valid
+  `model_guidance` (`advisory` | `off` | `prompt`), does **not** ask the question: it honors
+  the saved value, carries it into the Step 6 write unchanged, and states the mode in one line
+  in the Step 7 setup-choices recap (INV-099), which gained a `• Model guidance:` row so the
+  bootcamper is told which mode is in force on either path. The affordance is documented so a
+  bootcamper who always wants one mode can set it once and never see the question again. Also
+  added an explicit rule that a saved preference is never overwritten with the recommended
+  default. The question itself is unchanged and still the path when nothing is saved, so
+  INV-119's question-capture clause and the absent-or-unreadable → `advisory` default both
+  stand — no invariant amendment was needed.
+- **Why not the literal request:** the bootcamper asked for Step 3a to be deleted and
+  `model_guidance: prompt` hardcoded for every run. That conflicts with INV-119, and it would
+  re-impose on **every** bootcamper the blocking gate that
+  `model-effort-guidance-advisory-not-gate` existed to remove. The maintainer chose the
+  pre-set-preference route, which gives this bootcamper the outcome they wanted — never asked
+  again, always `prompt` — without changing anyone else's default. Recorded here because the
+  spec's `## Proposed change` describes both routes and only one was built.
+- **Commit:** uncommitted
+
+## verify-sdk-parameter-shapes-and-flag-families
+
+- **Implemented:** 2026-07-26 (two of three findings; see the correction below)
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `tests/test_sdk_parameter_shapes.py` (new)
+- **Summary:** Extended the pre-code lookup discipline from a method's **outputs** to its
+  **inputs**. Confirmed the root cause: `ground-rules.md:74-87` required looking up
+  `response_schemas` before parsing, and `phase2b-discover.md:29-38` faithfully required both
+  the `flags` and `response_schemas` lookups before generating the `find_network` call — yet
+  neither topic documents parameter shapes, so a correctly-performed lookup still could not
+  have prevented the failure. Added two ground rules: **parameter shapes must be confirmed for
+  the bootcamper's binding** before calling a method, with cross-language documentation
+  declared non-authoritative and binding introspection (`inspect.signature`,
+  `dir(SzEngineFlags)`) named as the fallback; and **flag families answer different
+  questions** — on the export methods `SZ_EXPORT_INCLUDE_*` selects which entities become rows
+  while `SZ_ENTITY_INCLUDE_*` selects what detail each row carries, so row filters alone yield
+  rows containing nothing but `ENTITY_ID`. Step 4d now gives the Python signatures for
+  `find_network_by_entity_id` / `find_path_by_entity_id`, names the wrong JSON-document form
+  explicitly with the `SzSdkError` it produces, and keeps the framing language-agnostic
+  (INV-002) by spelling out only the known-divergent case. Phase D gained a runnable,
+  MCP-confirmed export flag expression starting from `SZ_EXPORT_DEFAULT_FLAGS`, marked as
+  needing per-session re-confirmation (INV-080) and using Python's `close_export_report`.
+- **Third finding NOT implemented as written — the spec is wrong on a fact.** Its Problem
+  section and one acceptance criterion assert "there is no `SZ_EXPORT_ALL_FLAGS`". MCP
+  (`get_sdk_reference(topic='flags', filter='export_json_entity_report')`) shows the constant
+  **does** exist for `export_json_entity_report` / `export_csv_entity_report`, sourced from the
+  Java SDK flag enum; it is the **Python** binding that lacks it, which is what produced the
+  reported `AttributeError`. Writing the spec's claim into bootcamper-facing guidance would put
+  a Senzing falsehood in the plugin, which INV-080 forbids as much as a guess. The guidance
+  instead qualifies the constant by binding — already landed in `phaseD-validation.md` during
+  `match-key-audit-cannot-read-related-entities-from-export`, and now also in `ground-rules.md`
+  — and `tests/test_sdk_parameter_shapes.py` asserts that neither file ever denies it outright.
+  **Resolved 2026-07-26:** the spec has since been corrected in all five places (finding 1's heading
+  and body, the proposed-change bullet, the upstream request wording, the acceptance criterion, and
+  the affected-files description) to state the per-binding rule, with a
+  `## Correction applied` note and the original entry title kept verbatim under `## Source` for
+  traceability. All three of the spec's findings are therefore now covered, and the corrected
+  acceptance criterion matches what ships.
+- **Upstream requests FILED 2026-07-26** (previously deferred). All three of this spec's upstream
+  asks were submitted via `submit_feedback` at the maintainer's direction, after the exact message
+  text was reviewed and approved: `reporting_guide(topic='export')` composite availability
+  per binding plus the row-set vs per-row-detail split (`bug`); a runnable Python
+  `find_network_by_entity_id` / `find_path_by_entity_id` call in `reporting_guide(topic='graph')`
+  (`feature`); and **parameter-shape coverage in `get_sdk_reference`** (`feature`) — the
+  class-level fix that makes the other two unnecessary. Each message named the tool, the observed
+  behavior and the SDK version (4.3.3 / build 4.3.3.26191), and carried no hostname, username,
+  email, or path (INV-065 discipline). The export request was reworded first so it no longer rests
+  on the corrected `SZ_EXPORT_ALL_FLAGS` premise. Submissions are anonymous — the server records no
+  sender identity, so there is no reply channel; the plugin-side guidance stands as the mitigation
+  until upstream lands, and should be trimmed then.
+- **Commit:** uncommitted
+
+## rebuild-viz-snapshot-after-customization
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase2-close.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `tests/test_viz_tab_consolidation.py` (new)
+- **Summary:** Confirmed all three root causes. `phase1-visualization.md:163` builds the
+  snapshot at 2.2 *before* the live server starts, and nothing re-enters that step after a
+  later change; `phase2-close.md`'s pre-advancement check verified existence and
+  non-emptiness but never that the snapshot matched the app the bootcamper saw; and Step 4
+  terminated the server then purged, with no rebuild opportunity anywhere before the data
+  was gone. Three changes: **(1)** a new numbered step **2.4b** requires re-running the
+  build-only snapshot after *any* post-2.2 change to the visualization — explicitly "do not
+  stop at re-verifying the live server" — and explains why the omission is permanent (the
+  purge removes the records the rebuild needs); **(2)** the completion gate now compares the
+  snapshot's tab set against the running server's, a cheap textual comparison since both are
+  generated from one source, rebuilding while the data is still up on divergence and warning
+  without blocking if it cannot; **(3)** Step 4 is reordered so the purge is the module's
+  **last** action — rebuild-if-stale, then capture live-server screenshots (Search / Probe
+  needs the running engine), then terminate, then purge — with an explicit "do not hoist the
+  purge". Module 7's results visualization gets the same rebuild-after-change rule, since its
+  snapshot is also a retained artifact. Tested by asserting the teardown step order in the
+  file itself, since file order is execution order.
+- **Commit:** uncommitted
+
+## consolidate-truthset-viz-merges-and-network-tabs
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` + `.pdf`, `tests/test_viz_tab_consolidation.py` (new), `tests/test_tab_set_is_singular.py` (new)
+- **Corrected 2026-07-26 after an invariant audit.** The first pass was **recorded as complete when
+  it was not**, and this entry's original "Files changed" listed only the two surfaces I had edited.
+  A deep-dive against @INVARIANTS.md found **nine locations across four module-instruction files**
+  still telling the agent to build the removed tabs — including `phase1-query-visualize.md:222`
+  ("Serve/render every applicable tab … Entity Graph, Relationship Network, Record Merges, …") and
+  `phase1-visualization.md:252,256`, the numbered list of tabs the server MUST render. The spec had
+  listed `phase1-visualization.md` as an affected file; I skipped it and the ledger omitted it rather
+  than flagging it, breaching this skill's "never mark a spec implemented that isn't" guardrail. Also
+  found: the consolidation **silently removed offline merge-browsing from the snapshot** (see below),
+  and the shipped example recap still described a four-tab app. All fixed; see the follow-up notes.
+- **Summary:** Eight tabs to six. **Record Merges** removed: for any entity in both, Search /
+  Probe's result is a strict superset, and its one unique capability — browsing every merged
+  entity with no query — is now a "Show all merged entities" button on that tab, with the same
+  per-entity actions, so the removal is lossless rather than a trade. `/api/merges` is
+  **retained**, since the pre-verified example-query chips and that button both read it.
+  **Relationship Network** removed: `drawNetwork` was a near-duplicate of `drawGraph` over the
+  same `/api/graph` payload, so it is now Entity Graph's `graphMode` ("all" | "network") behind
+  a **"Show only entities with relationships"** toggle, shown only when
+  `relationships_total > 0` — the same condition that used to gate the tab. Carried over
+  unchanged: subgraph filtering, edge colour + dash by `relationship_type`, the click-to-filter
+  relationship legend (extracted to `drawRelationshipLegend`), and the empty-relationship
+  state. Also fixed a real issue the fold introduced: toggling re-enters `drawGraph`, so the
+  previous force simulation is now stopped via a module-scope `graphSim` instead of ticking on
+  against removed DOM. Contract updated — inventory reduced to six, the **de-duplication
+  ruling reversed** (it had explicitly ruled Relationship Network *was* distinct; that reversal
+  is now stated rather than silently dropped), the two ids kept as **REMOVED** reserved
+  identifiers so the screenshot helper can still capture an older eight-tab snapshot, and the
+  stale prose references and offline-snapshot note corrected.
+- **Verification and its limit:** no Senzing engine here, so I drove the real app through the
+  snapshot data shim with a synthetic payload and headless Chrome: the nav renders exactly the
+  six expected buttons in order, the toggle appears, all-mode draws all 9 fixture entities with
+  the data-source legend, and network mode draws exactly the 3 connected ones with the
+  relationship legend and dashed edges. **Not** verified against real resolved data or a live
+  `/api/*` server. One finding worth recording: an early capture showed network-mode nodes
+  collapsed in a corner, which looked like a layout bug. It is not — Chrome services
+  `requestAnimationFrame` only during initial load under `--virtual-time-budget`, and d3's force
+  simulation is rAF-driven, so any redraw triggered after load ticks 0 times (measured: 0 ticks,
+  empty node transforms, no JS errors, correct node count and SVG size). Element creation is
+  synchronous, so the tests count elements rather than reading positions. 40 assertions fail
+  against the pre-fix state; full suite 293 passed.
+- **Commit:** uncommitted
+
+## artifact-level-verification-for-deliverables
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/normalize_docs_markdown.py` (new), `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `specs/INVARIANTS.md`, `tests/test_normalize_docs_markdown.py` (new)
+- **Summary:** Turned a verification discipline into enforced code plus binding guidance.
+  **(1) Guarded CommonMark pass.** New bundled `normalize_docs_markdown.py` applies the
+  house rules (MD022/MD031/MD032 blank lines, MD040 fence languages, `**Label:**` colon
+  spacing) and enforces the two safety properties the spec cares about *in code*: it
+  fingerprints each file's non-whitespace content line by line and **restores the
+  original** unless every source line survives — the sole permitted change being an
+  opening fence gaining an info string — and it globs top-level `docs/*.md` only, never
+  recursively, so `docs/feedback/` is structurally unreachable (INV-015). Verified the
+  guard rejects a dropped line, rewritten prose and reordering while permitting the fence
+  info string, and that a deliberately lossy transform leaves the file byte-identical on
+  disk. The pass is idempotent, exits 0 even when it skips or cannot write a file
+  (INV-048), and uses pathlib with no shell and no hardcoded separators. Run against the
+  repo's real docs it changed only `README.md` — the shipped example recap was already
+  compliant and still renders at 99% with all nine modules and the certificate.
+  **(2) Graduation verification checklist.** The render step now carries all six checks
+  (rasterize, positive presence probe, unique image XObjects via `pdfimages -list`, open
+  every PNG, re-run `--check --expect-modules`, confirm replacements in both directions),
+  each explicitly best-effort and non-blocking, none a 👉 question. Also replaced the
+  parenthetical that called rasterizing a "dev-only aid, never required at bootcamper
+  runtime" — it pointed away from the very check the spec establishes — and recorded the
+  field toolchain (fpdf2, headless Chrome, poppler present; Playwright, Selenium, PyMuPDF
+  absent) so no capture path is designed around a heavier dependency.
+  **(3) Not graduation-only.** `module-completion.md` now carries the same rule for every
+  artifact-producing module step, with the instruction to describe an artifact from what
+  it shows and never from what the step was supposed to produce.
+  **Carried in from this session's own experience:** a "verify your verification" caution,
+  because a strict-`zlib.decompress` content-stream reader silently dropped a page and
+  looked exactly like a lost module section — the reader was the culprit, not the PDF.
+  `tests/test_normalize_docs_markdown.py` (34 tests) pins the house rules, the content
+  guard, the glob scope with a byte-identical feedback-file assertion, the CLI contract,
+  and the guidance in both skills; 38 assertions fail against the genuine pre-fix state
+  (script absent and both skills reverted). Full suite 255 passed.
+- **Commit:** uncommitted
+
+## quality-scoring-presence-test
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/SKILL.md`, `tests/test_quality_presence_test.py` (new)
+- **Summary:** Confirmed the durable root cause: `phase1-quality-assessment.md:144` said only
+  "compute a quality score based on field completeness…" and `SKILL.md:38` confirms the helper
+  is authored fresh each run until the standalone guide is ported — so what counts as a
+  *present* value was re-derived every session, with the result feeding the ≥80/70-79/<70
+  gate. Defined the presence test in Phase 1 step 6: a value is present unless the key is
+  missing or `null`, it is an empty/whitespace-only string, an empty container, or a container
+  whose every element is itself empty. Stated the two consequences explicitly — **`false`,
+  `0` and `0.0` count as present** (a truthiness test is wrong), and **presence is a property
+  of the value, never of the key** (the key test reports 100% for a field that is an empty
+  array in every record, which is how `IDENTIFIER_LIST` was reported as 100% when the true
+  figure was 0%). Added a sanity check requiring any exactly-0% or exactly-100% figure to be
+  confirmed against one printed sample value before it routes the gate, mirroring INV-115's
+  discipline for blank parsed fields; it warns rather than blocking and adds no 👉 question.
+  `SKILL.md`'s reference note now routes to that definition and names both traps, including
+  for the eventual port. Thresholds and the structural-not-semantic caveat are untouched —
+  this defines a measurement, it does not move a gate.
+- **Spec correction recorded, not applied:** the spec marks the reported mechanism
+  **Unverified**, and it does not reproduce. `value not in (None, "", [], {})` counts an empty
+  list as *absent* (correct) and `False`/`0` as *present* (also correct, and what the fix
+  asks for), so it cannot have produced the 100%. `tests/test_quality_presence_test.py`
+  encodes this as executable evidence and demonstrates that a key-presence test does produce
+  exactly the reported inversion over 14,119 all-empty records. The spec text was left
+  unedited. 12 assertions fail against the pre-fix skill; full suite 221 passed.
+- **Commit:** uncommitted
+
+## source-colors-from-discovered-data-sources
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/brand_tokens.py`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_brand_sync.py`
+- **Summary:** Colors are now assigned from the data sources actually loaded instead of
+  looked up by name. Confirmed the root cause: `senzing_viz_server.py:639` was
+  `function color(src){return SRC_COLORS[src]||"#8b5cf6";}` over a map keyed by the Truth
+  Set's three source names, and `FALLBACK_COLORS` — the six-colour palette that exists for
+  exactly this purpose — was imported at `:95` and **never used anywhere**. The mechanism
+  was already shipped; nothing wired it up, and the JS literal happened to equal
+  `FALLBACK_COLORS[0]`, which is why one source looked right and the rest looked identical
+  to it. Added `brand_tokens.color_for_sources()` returning
+  `{code: {fill, stroke, cycle}}`: Truth Set names keep their preferred assignment, every
+  other source takes the next palette entry **not** claimed by a preferred one (so no
+  collision), ordering is deterministic via sorting (a rebuilt snapshot must still match
+  the screenshot the recap describes), a second visual channel (`SOURCE_STROKES`)
+  distinguishes sources beyond the first cycle, and `SIGNAL_GREEN` is never assigned.
+  Added `Model.data_sources()`, threaded `sources=` through `render_page()` from both
+  callers (live handler and `write_snapshot`), and replaced the JS accessor with
+  `srcStyle`/`color`/`srcStroke`/`srcCycle` plus an `UNKNOWN_SRC` grey that is
+  deliberately unequal to any assigned colour so "unassigned" cannot masquerade as a real
+  category. Mirrored the helper in the import-failure fallback and made
+  `tests/test_brand_sync.py` assert the two produce **identical** output rather than
+  merely both existing. Made it contract in `visualization-api-reference.md` beside the
+  existing legends-from-data rule, so an any-language server (INV-090) inherits it.
+  Verified: the reported case (`PPP_LOANS`, `EQUIFAX`, `NOMINO-RISK`) goes from 1 colour to
+  3 distinct; Truth Set unchanged with `CUSTOMERS` still ember `#F57826`; a mixed model
+  gives 3 distinct with no reuse of the preferred colour; 9 sources yield 9 unique
+  (fill, stroke) pairs. 14 assertions fail against the pre-fix scripts; full suite
+  203 passed.
+- **Follow-up fixes (2026-07-26, same day).** (a) All nine stale locations updated: the tab build
+  list in `phase1-visualization.md` folded to six items with the relationship subgraph documented as
+  a *mode* of Entity Graph; the guided tour now points at the toggle instead of two removed tabs; the
+  Module 7 "serve every applicable tab" instruction reduced to the six and made explicit ("That is
+  the whole set: **six** tabs"); the Module 6/7 cross-references reworded. (b) **Snapshot regression
+  fixed.** Verified empirically that `#probe-btns` existed only in `PROBE_BODY_LIVE`, so
+  `loadProbes()` — the only client-side reader of `/api/merges` — no-opped in the snapshot and the
+  "Show all merged entities" browse never rendered there. Before the consolidation, `drawMerges()`
+  made that capability work offline, and the contract said so. So the removal was lossless live but a
+  **net loss in the keepsake**. Added `#probe-btns` to the snapshot probe body, made the example-query
+  chips live-only (they drive a search box a static file lacks, so they were dead controls), and made
+  `showAllMerges` snapshot-safe. Confirmed by running a real `write_snapshot` output in headless
+  Chrome with **no server**: the button renders, labelled "Show all merged entities (4)", chips
+  suppressed, pre-rendered cards intact. Corrected the contract sentence, which had claimed the
+  browse was available offline when it was not. (c) Example recap's "four tabs" sentence fixed and the
+  example PDF re-rendered (19 pages, 3 images). (d) New `tests/test_tab_set_is_singular.py` (14 tests)
+  scans **every** shipped Markdown file for a removed tab presented as live and cross-checks the
+  server, the contract, and the screenshot helper against one another — the check the original suite
+  lacked, which is why 318 tests passed over an incoherent plugin. It reproduces all nine original
+  offending lines by exact `file:line`. Full suite 332 passed.
+- **Commit:** uncommitted
+
+## recap-pdf-certificate-version-and-list-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `tests/test_recap_pdf_guard.py`, `tests/test_example_recap_sync.py`, `tests/test_discoveries_pdf.py`
+- **Summary:** Three changes. **(1) Plugin version on the certificate.** Added
+  `_cert_plugin_version()` (returns `""` when the meta row is absent — omit, never a
+  placeholder) and `_cert_attribution()`, rendered in both `_render_certificate` and
+  `_stdlib_certificate_stream` so the two paths cannot drift. The inner ember border's
+  bottom edge sits at `y = h - 14`, so the two lines sit at `h - 28` and `h - 22`; a
+  single line keeps its long-standing `h - 22`, leaving the no-version render
+  byte-comparable. **Verified by rasterizing** the certificate page — text extraction
+  reported the string present and correct in the original field report while the glyphs
+  were sliced in half, so presence was never accepted as proof. The stdlib certificate
+  previously had no attribution line at all; it now matches, bottom-anchored at the
+  equivalent point offsets. **(2) List spacing.** `_SPACED_SUBSECTIONS`
+  (`information shared`, `actions taken`, compared through `_normalize_heading` so the
+  singular "Action Taken" of INV-048 is covered), `_SPACED_LABELS`
+  (`what you accomplished`) with `_block_label()`, and a 2.4 mm gap emitted only when
+  `_next_nonblank_is_bullet()` — strictly between items, never trailing the last.
+  Mirrored in the stdlib renderer via a new exact-advance `GAP` token (3 pt), since an
+  ordinary empty token there costs 0.6 of a line. Measured per list on a rasterized
+  render: Information Shared 31.1 pt, Actions Taken 22.4 pt, accomplishments 22.4 pt
+  (spaced); Files produced 15.6 pt and Q/R pairing 15.6 pt (deliberately tight, so each
+  response stays attached to its question). **(3) Certificate-name test broadened.**
+  `graduation/SKILL.md` now leads with the governing test and presents the cases as
+  examples, dropping the "identical to the OS username" qualifier that let the handle
+  `docktermj` onto a certificate; a bare single-token lowercase handle is unusable either
+  way. Also corrected `_partition_meta`'s docstring, which claimed identity rows drive
+  the certificate — they never did. Re-rendered the shipped example PDF (17 → 19 pages,
+  3 embedded images preserved per `pdfimages -list`, certificate intact).
+- **Verification note:** a first pass appeared to lose the whole System-verification
+  module section. It had not — my regex-based stream extractor used strict
+  `zlib.decompress`, which rejects a slice whose tail is off by a few bytes and silently
+  dropped that page. `pdftotext` confirmed the content was present, and
+  `zlib.decompressobj()` recovered its 5844 bytes. The same latent fragility was making
+  `tests/test_example_recap_sync.py` fail falsely after the re-render, so all three test
+  extractors now use tolerant decompression. Worth remembering: the verification tool was
+  the thing that was wrong, which is exactly the failure mode INV-121 describes.
+- **Commit:** uncommitted
+
+## mapping-workflow-truncated-validation-errors
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/SKILL.md`, `tests/test_mapping_rejection_fallback.py` (new)
+- **Summary:** The skill already degraded gracefully when a validation *script* was
+  unavailable (HTTP 404) but had no handling for a validator that runs and rejects
+  unusably, so the agent's only documented options were to retry blindly or improvise —
+  and a bootcamp hand-authored two of three mappers, exactly what `mapping_workflow`
+  exists to prevent. Added a third failure mode beside the existing one, defined
+  observably (a rejection naming no field and carrying no line or pointer), with:
+  a retry bounded at two attempts; the raw rejection text captured **verbatim** into the
+  source's `config/mapping_state_[datasource].json` under a new `validation_rejections`
+  array before falling back, since that text was the only diagnostic and it was being
+  lost; a pinned three-option 👉 question (INV-051/INV-056, numbered, no "or" per
+  INV-009) replacing the ad hoc one asked in-session; and an explicit statement of what
+  the Entity Specification fallback preserves — attribute names still read from
+  `docs/reference/` and never from training data (INV-080), all three quality gates still
+  run, the cross-source shared-feature collision check still runs, and the result is
+  still only structurally validated (INV-117). A new `mapper_source` field records how
+  each mapper was produced so the deliverable says which sources went through the
+  workflow. `SKILL.md`'s error-handling section now routes both failure modes to this
+  handling rather than leaving them to improvisation. `tests/test_mapping_rejection_fallback.py`
+  (16 tests) pins all of it; 16 assertions fail against the pre-fix skill.
+- **Upstream request FILED 2026-07-26** (previously deferred). Submitted via `submit_feedback`
+  as category `bug` at the maintainer's direction, after the exact message text was reviewed and
+  approved: it reports that step-3 validation rejected a payload twice with the error truncated
+  before naming the offending field, states the consequence (the documented path becomes unusable
+  and the fallback is the hand-authoring the tool exists to prevent, for two of three sources), and
+  asks for the full error or a structured per-field list — noting even a bounded "first 10 problems,
+  N total" would make it recoverable. No hostname, username, email, or path was included
+  (INV-065 discipline). Submissions are anonymous, so there is no reply channel. This remains the
+  actual fix for the root cause, which is in the Senzing MCP server, not this repository; the
+  plugin-side fallback handling stands as the mitigation.
+- **Commit:** uncommitted
+
+## per-tab-screenshot-capture-and-grounded-captions
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_capture_tabs.py` (new)
+- **Summary:** Replaced per-viewport capture with per-tab capture, and made the caption
+  derivable from the capture instead of the plan. **Capture:** `_VIEWS` (three window
+  sizes over one page load, no interaction step) is gone; the helper now takes `--tabs`
+  and writes one `<name>-<tab-slug>.png` per tab. Tab selection happens *in the page*, so
+  no browser-automation dependency is added and all four existing backends work per tab:
+  `--url` appends `?tab=`/`&q=`, while `--html` writes a temp sibling copy with an
+  injected call to the app's own `activate(<id>)` (falling back to clicking
+  `#navbtn-<id>`, retrying 60 × 100 ms past the async init). Chrome gains
+  `--virtual-time-budget=15000`, without which the frame is captured before D3 and the
+  `/api/*` fetches settle. Each written path is printed with its human tab label so the
+  caller has the caption to hand. **Deep-linking:** added `applyDeepLink()` to
+  `senzing_viz_server.py`, awaited at the end of `init()` after `buildNav()`; `?q=`
+  without `?tab=` defaults to `probe`, and an unknown/non-applicable tab leaves the
+  default active. **Bug found while verifying:** requesting a tab the app lacks still
+  wrote a PNG — of the *default* tab — so `viz-feature-scores.png` contained the Entity
+  Graph, a filename lying about its content, i.e. this spec's own defect class. Added a
+  `_tabs_present()` markup pre-flight that skips and reports absent tabs, plus a distinct
+  exit-2 message for "none of the requested tabs exist" so it is never misreported as a
+  missing browser. **Captions:** `module-completion.md` now requires each image be opened
+  and described from what it shows, cites the two fabricated captions as the motivating
+  case, and forbids implying a Search / Probe result set that was not captured; the Truth
+  Set module captures from the **live server** before teardown so that tab can show real
+  results. **Contract:** `visualization-api-reference.md` gains a "Tab identifiers and
+  deep-linking" section making the ids, `activate()` and `?tab=`/`?q=` binding for a
+  server in any language (INV-090). **Graduation:** the backfill derives captions from
+  the tab slug, and three new warn-never-block checks cover a visualization-producing
+  module with no image (the Truth Set case the old backfill was structurally blind to),
+  byte-identical images in one section, and filenames carrying no recognised slug.
+  Verified by capturing five tabs from a contract-shaped fixture with real headless
+  Chrome, **opening the PNGs** to confirm each shows its named tab, and checking all five
+  were byte-distinct with temp copies cleaned up; both `--html` and `--url` modes
+  exercised. `tests/test_capture_tabs.py` (37 tests) pins the tab inventory against the
+  contract table, the guards, the pre-flight, and the exit-2 degradation; full suite
+  173 passed.
+- **Commit:** uncommitted
+
+## match-key-audit-cannot-read-related-entities-from-export
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `tests/test_related_entities_guidance.py` (new)
+- **Summary:** The spec's root cause was filed **Unverified**; the Senzing MCP server has now
+  confirmed it. `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`
+  shows every relationship-detail flag's `applies_to` covering only the per-entity, `why_*`
+  and `find_*` methods — the export methods are absent from all of them. So an export cannot
+  supply `RELATED_ENTITIES`, and the field observation stands. Changes: (1) phase D's
+  match-key audit now presents the audit as **two reads needing two methods** in a table, with
+  a ⛔ warning that an export supplies no `RELATED_ENTITIES` and a pointer to the MCP query
+  that proves it; (2) the two export flag families are distinguished —
+  `SZ_EXPORT_INCLUDE_*` selects *rows*, not per-row detail, so row filters alone yield rows
+  containing only `ENTITY_ID` — quoting the Senzing reporting guidance's own anti-pattern and
+  directing readers to start from `SZ_EXPORT_DEFAULT_FLAGS`; (3) a defensive step 3 makes an
+  empty cross-source suppressor list a **plumbing failure until proven otherwise**, requiring
+  the reader be shown to return a non-empty `RELATED_ENTITIES` for a known-related entity
+  before any "no suppressors" claim, and reporting "the audit could not read relationship
+  match keys" when it cannot (INV-115); (4) the iterate-vs-proceed gate now carries **three**
+  outcomes — finding / no finding / could-not-measure — so a gate is never decided on an
+  unmeasured number, while staying non-blocking (INV-117); (5) the contradicted bullet in
+  `visualization-api-reference.md`, which offered `SZ_ENTITY_INCLUDE_ALL_RELATIONS` on an
+  export as the remedy, is replaced with the per-entity/network methods, a note that
+  `SZ_EXPORT_INCLUDE_ALL_HAVING_RELATIONSHIPS` is only a row filter, and an empty-edges check.
+  **Correction made during implementation:** a first draft asserted "there is no
+  `SZ_EXPORT_ALL_FLAGS`", per the feedback entry. MCP shows the constant *does* exist for the
+  export methods, sourced from the Java SDK flag enum — it is the **Python** binding that
+  lacks it. The text now qualifies it by binding rather than denying it, since writing a
+  Senzing falsehood into the plugin would breach INV-080 as much as a guess would. Added
+  `tests/test_related_entities_guidance.py` pinning both files' agreement, the empty-result
+  challenge, the three gate outcomes, the binding-specific qualification, and INV-117's
+  no-direct-SQL rule: 13 assertions fail against the pre-fix skills and pass after; full suite
+  120 passed.
+- **Commit:** uncommitted
+
+## core-path-enumerates-every-module
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `tests/test_module_selection_sync.py` (new)
+- **Summary:** Replaced a derivation with an enumeration. Step 1's Core branch said only
+  "all modules are selected, in order", so the agent had to translate eleven display
+  names from the module table into eleven state tokens with no canonical list to copy —
+  and that derivation dropped `entity_resolution_concepts`, the one module labelled
+  "optional". Confirmed the skill's documented *behavior* was already correct; only the
+  copyable artifact was missing. Four changes: (1) Step 1's Core branch now carries the
+  literal eleven-token ordered list with a ⛔ note not to rebuild it from display names,
+  and states that "optional" describes what Customized may drop and never means Core
+  omits it; (2) the module-list table gained a **State token** column, making
+  display-name → token a lookup rather than an inference; (3) the Step 6 YAML example's
+  `# optional — present only if selected` annotation, which read as exclude-by-default,
+  now reads "always in Core; omitted only if Customized drops it"; (4) an internal
+  pre-handoff self-check in Step 6 verifies the list against the expected count for the
+  chosen path and corrects it *before* Step 7 hands off, since after the handoff the
+  omission is invisible. Verified `bootcamp-preparation/SKILL.md` is the sole
+  enumeration of `selected_modules` in the plugin (no competing list to drift against)
+  and that all eleven tokens are the ones other skills actually read. Added
+  `tests/test_module_selection_sync.py` pinning the Core list, the table/list agreement,
+  the deselectable-module inclusion, the wording, and the self-check — 11 assertions
+  fail against the pre-fix skill and pass after; full suite 108 passed.
+- **Commit:** uncommitted
+
+## discoveries-pdf-offpage-blocks-and-list-spacing
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `tests/test_discoveries_pdf.py`
+- **Summary:** Four fixes, all verified by rasterizing the rendered pages rather than
+  by exit code. **(1) Silent content loss.** fpdf2's `multi_cell` leaves the cursor at
+  the right margin (measured: x = 200 mm on a 210 mm page), so full-width writes that
+  did not reset x drew off-sheet. Reproduced first against the unmodified script: the
+  test fixture's whole table gave 0 `pdftotext` hits and the cover subtitle extracted
+  as `Wha`, while the generator printed "content retained: 95%" and exited 0. Routed
+  every full-width write through a new `_full_width()` helper that resets x, so a new
+  block kind cannot inherit the bug — only the bullet-body `multi_cell`, which sets x
+  itself, remains outside it. **(2) Long bold labels** crammed their body into a
+  narrow column: the `remaining < 20` guard was an order of magnitude too low
+  (~60 mm of a 190 mm line clears it). Changed to `remaining < max(20, epw * 0.5)`
+  with an `indent + 6` hanging indent, in both this generator and
+  `generate_recap_pdf.py:1124` (audited: all six of the recap generator's `multi_cell`
+  sites were already x-safe, so it needed this fix only). Confirmed layout-neutral on
+  the shipped example recap — 646 drawn runs and 17 pages, identical before and after.
+  **(3) List spacing** (the original request): `_needs_item_gap()` emits a 2.4 mm gap
+  after a bullet only when the next block is also one, so it falls strictly between
+  items; mirrored in the stdlib renderer via a new exact-advance `GAP` token (3 pt),
+  since an ordinary empty token costs a full line. **(4) INV-111 violation:** the
+  `brand_tokens` fallback was a bare silent `except Exception`; it now names the case
+  and the directory searched on stderr and still proceeds. **Test gap closed:** the
+  suite's one presence test passed on the broken output because its probes omitted
+  table content. Added `pdf_runs()`, which extracts `(x, y, text)` from the content
+  stream — the only dependency-free way to tell "rendered" from "present in the file"
+  — plus classes for on-page rendering, label breaking, and item spacing. The new
+  tests fail 13 assertions against the pre-fix script and pass against the fixed one;
+  full suite 99 passed.
+- **Commit:** uncommitted
+
+## always-produce-data-discoveries-document
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py` (new), `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2-discover.md`, `tests/test_discoveries_pdf.py` (new)
+- **Summary:** Split the tutorial from the deliverable. The Discover opt-in still
+  governs only whether the bootcamper is walked through why/how/networks; the
+  findings are now produced on every path. All four branches (decline, both
+  early exits, full completion) return to the Query Completeness Gate, so the
+  instruction lives at that convergence point rather than being duplicated four
+  times — with a pointer in the decline branch stating that declining skips the
+  walkthrough, not the findings. Six required sections are specified, including
+  "what was not found, and why" with the measurement that distinguishes low data
+  overlap from pipeline underperformance. New sibling renderer
+  `generate_discoveries_pdf.py` renders a general Markdown subset (headings,
+  bullets, labels, fenced code, tables, paragraphs) using fpdf2 when importable
+  and a stdlib writer otherwise, reusing the recap generator's PDF plumbing so
+  the plugin keeps one hand-rolled page writer. Per INV-110 it audits before
+  rendering: a partial document warns and renders (exit 0), while a recap-shaped
+  or heading-less document gets no PDF, no success line, and a non-zero exit —
+  verified against the exact recap-shaped input that previously produced a
+  near-empty PDF at exit 0. Both renderers were verified by extracting and
+  decompressing the PDF text, not by trusting the success line. New
+  `tests/test_discoveries_pdf.py` (16 tests); suite is now 72, all passing.
+- **Commit:** `9c248fb`
+
+## model-effort-guidance-advisory-not-gate
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_modes.py`
+- **Summary:** Replaced the unconditional blocking model/effort nudge with a mode the bootcamper
+  picks once. Bootcamp preparation Step 3a asks a pinned question and holds `model_guidance`
+  (`advisory` | `off` | `prompt`) for the consolidated Step 6 write (INV-058); every reader treats an
+  absent or unreadable value as `advisory`. Under `advisory` — the default — the recommendation is
+  one line in the apparatus block and Step 1 lands in the same turn, naming the bootcamper's current
+  model and effort beside it, treating the two as separate dials, stating either can change at any
+  time, and flagging a recommendation below the current setting as a downgrade. Under `off` nothing
+  is presented. Under `prompt` the former INV-063/INV-069 flow runs unchanged, both pinned questions
+  verbatim — which is what keeps the two earlier bootcampers who requested those gates satisfied
+  rather than reverted. The "Are you done modifying the model and effort?" gate is now explicitly
+  confined to `prompt` in both `ground-rules.md` and `graduation/SKILL.md`. The behavior lives in
+  `ground-rules.md`, so the eight module skills that reference INV-063 needed no edit; the ninth,
+  `module-03b/phase1-visualization.md`, carried a local restatement ("never omitted — INV-063
+  requires it at every module start") that contradicted `off` and was corrected.
+  `docs/model-selection.md` documents the three modes. New `tests/test_model_guidance_modes.py`
+  (13 tests) guards the parts most likely to drift back: the question is asked once and only in
+  preparation, every reader defaults to `advisory`, the gate never appears in a skill without being
+  scoped to `prompt`, and the advisory line carries its INV-120 content. Suite is now 56 tests, all
+  passing; `tests/test_model_guidance_sync.py` still passes unchanged (the recommendation tables were
+  untouched).
+- **Commit:** `f3e1199`
+
+## generate-diagrams-for-generated-scenarios
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`
+- **Summary:** Split Module 1 Step 9 on scenario provenance. **9a** (bootcamper-described case) asks
+  the pinned diagram-sharing question verbatim exactly as before, `[variable]`-placeholder handling
+  intact. **9b** (Business Case Offer accepted) does not ask it — there are no diagrams to share for
+  a scenario the bootcamp authored minutes earlier — and instead generates
+  `docs/data_architecture.md` with a data-architecture diagram (generated sources → Senzing engine →
+  datastore) and a data-flow diagram (raw → mapped → loaded → resolved → queried), announced in one
+  line rather than gated behind a yes/no. Diagrams are Mermaid fences in Markdown: diffable,
+  offline (INV-091), no binary images, no CDN, no headless renderer. Step 11's generated-scenario
+  branch now links the file from `docs/business_problem.md`, and 9b requires listing it under
+  **Files produced** (INV-032) and in the recap section. The provenance signal is the Phase 1 Step
+  4a outcome — the same decision Step 11 already branches on — with the
+  `> 🤖 Bootcamp-generated business case` marker named as its persisted form for resumed sessions;
+  no second mechanism was introduced. Verified all 7 acceptance criteria by grep; 43 tests pass.
+- **Commit:** `d4213fd`
+
+## visualization-server-lifetime-and-teardown-gate
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase2-close.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`
+- **Summary:** Added a "Server lifetime" contract to
+  `visualization-api-reference.md` — the file both modules already treat as the
+  shared visualization contract — stating that a server, once started, stays up
+  until the bootcamper explicitly approves teardown, that agent-side
+  verification and screenshot capture run **with the server up**, and that the
+  teardown gate must name exactly what that module tears down. Truth Set's Step
+  4 Cleanup lost the "No separate confirmation gate … do NOT re-ask (INV-006)"
+  instruction and gained a pinned gate naming both the server and the data
+  purge, with an explicit statement that this is a *different* question from the
+  Step 2.5 tour check, so INV-006 does not apply. Phase 1 now says the tour
+  question does not authorize teardown, and the snapshot reassurance names the
+  live-only actions (`why`/`how`/search) so consent is informed. Module 7 — which
+  had **no** server lifetime, exploration gate, or cleanup step at all — gained
+  all three, with a gate that names only the server, because nothing there is
+  purged and the bootcamper's loaded data is needed downstream. Verified all 7
+  acceptance criteria by grep; 43 tests pass.
+- **Commit:** `659cbd2`
+
+## production-volume-question-clarity-and-threading-cutover
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`
+- **Summary:** Rewrote the Phase A step 1 pinned question to contrast production
+  with the bootcamp explicitly and to state that the answer selects the loading
+  program's architecture, with no hardcoded bootcamp record count and
+  non-overlapping tier boundaries (500 and 10,000,000 each now fall in exactly
+  one tier, in both the question text and the classification logic). Added a
+  mandatory echo of the tier *and* the architecture it implies before any code is
+  generated, so a misread surfaces while it is still free to correct. Lowered the
+  threaded cutover to **500 records, sourced from MCP this session** —
+  `sdk_guide`'s `record_count` contract selects the single-threaded demo at ≤500
+  and the threaded production pattern above it, and a live call at 4,000 returned
+  the thread-pool template while labelling the alternative "demo-only,
+  single-threaded — do not use for production volumes (>500)" — so `small` moves
+  to the threaded branch and only `demo` gets a single-threaded loader. Corrected
+  a latent parameter bug the spec inherited: `record_count` belongs to
+  `sdk_guide`, not `generate_scaffold`, which accepts only language/workflow/
+  version. Extended the SQLite pre-load prompt to fire for `small` above the
+  MCP-sourced ~100K SQLite guidance threshold so it stays in step with the new
+  cutover. License framing (expansion paths before downsizing) is unchanged.
+  Verified all 8 acceptance criteria; 43 tests pass.
+- **Commit:** `659cbd2`
+
+## post-load-match-key-semantic-audit
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseD-validation.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+- **Summary:** Added a "Match-key audit" section to Phase D that runs before the
+  iterate-vs-proceed gate: extract `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` via the
+  MCP-generated SDK code (never direct SQL), tabulate the `+`/`-` suppressor
+  notation, separate single-source from cross-source keys, and surface the result
+  as a finding — never a pass/fail — into the gate's routing bullets. The `+`/`-`
+  semantics are cited from `get_sdk_reference(topic='response_schemas')`; the
+  approach is backed by the `reporting_guide(topic='quality')` anti-pattern
+  "aggregate stats hide errors — always sample and manually review specific
+  entities". Module 5 gained the upstream half: an explicit statement that the
+  validation stack is structural, not semantic, and a cross-source shared-feature
+  collision check at the Map step (date and identifier features, with the
+  `year established`/`filing date` and `BID`/`EFX_ID` cases named). Phase 1 gained
+  a "What this score does not measure" note so a green quality score is not read as
+  a correct mapping. Verified all 11 acceptance criteria by grep; 43 tests pass.
+- **Commit:** `0c0ec44`
+
+## detect-dynamic-key-document-shaped-sources
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+- **Summary:** Step 9 (Profile) now interprets the field count instead of
+  reporting it. Above ~100 fields or ~50 distinct patterns the source is treated
+  as document-shaped rather than wide: look for dynamic/value-shaped root keys
+  (report count plus a sample, not the full table), cross-check whether those key
+  names also appear as values elsewhere in the record, recommend pre-process ->
+  re-profile explicitly as the sanctioned route, and require before/after proof
+  that the dropped data was redundant and record counts are unchanged. The
+  presentation block suppresses the full column table in verbose mode and leads
+  with the diagnosis rather than the bare count in concise mode. It is a finding,
+  never a gate — genuinely wide sources exist. Phase 1 notes that a score averaged
+  over phantom fields is provisional until re-profiled. Verified all 9 acceptance
+  criteria by grep; 43 tests pass.
+- **Commit:** `0c0ec44`
+
+## java-scaffold-json-dependency-gap
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`
+- **Summary:** Confirmed the spec's claim **directly against the source**: `generate_scaffold(language='java', workflow='add_records')` returns `loading/LoadWithInfoViaFutures.java`, and fetching it shows `import javax.json.*;` at line 5 with `Json.createReader(...)` at lines 59 and 167. `javax.json` (JSON-P) is not in the Java SE standard library, and the bootcamp compiles with plain `javac` having never set up Maven or Gradle — so the authoritative scaffold does not compile as written. Grep confirmed the plugin mentioned `javax.json`/JSON-P **zero** times. Added guidance in three places: module-02 explains the dependency and states the safety asymmetry — **replacing the JSON library is safe, altering the SDK calls is not** — which is the line that matters, because a bootcamper hitting an import error in code they were told was authoritative may otherwise "fix" it by rewriting the Senzing calls, exactly the failure `generate_scaffold` exists to prevent; module-06 Phase A step 3 now checks scaffold imports **before** compiling rather than surfacing a raw `javac` error, verifying against the actual install rather than assuming; module-05 step 13 (the first Java the bootcamp generates) requires the mapper's JSON reader to be dependency-free and reused downstream, so the pattern is stated once rather than re-derived per module. All three require the substitution to be recorded in the source header so the take-home code shows what deviated and why, and the guidance is written as "verify per install" rather than asserting universal absence — only one workstation was ever checked. Upstream fix (having `generate_scaffold` declare JSON-P in its `dependencies` field) remains out of scope; `submit_feedback` is the channel.
+- **Commit:** `b3205b7`
+
+## macos-jvm-launch-environment-guidance
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Root cause confirmed — grep across `module-02-sdk-setup/` for the launch-environment terms returned exactly one hit, the unrelated never-modify-global-shell-config rule. **But MCP verification contradicted two of the spec's four technical claims, and the spec's own criterion required MCP sourcing over its own text, so the MCP-grounded version was implemented.** (1) The spec said SIP strips `DYLD_*` so `-Djava.library.path` is required instead; `sdk_guide(topic='install', platform='macos_arm', language='java')` states the opposite — "**-Djava.library.path alone is insufficient. DYLD_LIBRARY_PATH must be set at the shell level before JVM launch.**" Documented the authoritative direction, with the reason a JVM flag cannot substitute (a process cannot repair its own dynamic-linker search path after start), which also explains why the guess is so costly. (2) The spec said the build directory must precede the SDK jar; the MCP example puts the jar first, so that claim was dropped and the real distinction documented instead — the **jar** lives under `sdk/java/` while the **native** library lives under `lib/`, and confusing them yields class-not-found versus library-not-found. The two non-Senzing claims (zsh does not word-split unquoted variables; `timeout` is absent from a stock macOS shell) are shell/OS facts outside MCP's domain and were documented as-is, the latter framed as affecting any timed shell-out, not just Java. Key structural finding the spec missed: the plugin **already** prescribes `src/scripts/senzing-env.sh` and forbids `~/.zshrc`, so the fix is smaller than proposed — the section now explains that the env script must be *sourced in the same shell that launches the JVM*, which is precisely what a project-local launcher script guarantees, tying the existing prohibition and the new requirement into one policy. Also captured MCP gotchas the spec omitted (never symlink `.dylib`/`.so`; re-run the install lookup for version-specific rpath issues), framed all of it as launch-environment rather than Senzing misconfiguration, cross-referenced from the `macos_arm` branch of the platform decision tree, and stated explicitly what applies on Linux (`LD_LIBRARY_PATH`; zsh and `timeout` caveats do **not** apply) and Windows (`.bat`, `;` separator, no DYLD/LD) so the section is not read as macOS-only trivia (INV-001/INV-002).
+- **Commit:** `b3205b7`
+
+## consolidate-merge-statistics-and-results-dashboard-tabs
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{visualization-api-reference.md,phase1-visualization.md}`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** `/api/dashboard` was a near-superset of `/api/stats` (its own docs said `counts` and `histogram` were "drawn from the same aggregates"), so two tabs rendered the same histogram and Merge Statistics additionally repeated the page summary strip's counts. Removed the endpoint, the tab, and `drawDashboard()`; folded its only unique content — the largest resolved entities — into `/api/stats` as `sample_entities`, rendered beneath the histogram with the standard action set. Nine tabs became eight. Generalized the de-duplication rule from an enumeration of known collisions to the actual test: **a tab MUST NOT be added whose content is derivable from another tab's endpoint; when two candidates share their aggregates, they are one tab.** Headline counts are now specified to appear once, in the page summary strip. Snapshot embeds `records` in place of `dashboard`. Verified: 8 tabs, no `tab-dashboard` section, no `/api/dashboard` route or model method, `sample_entities` present in the built snapshot.
+- **Commit:** `bf0339b`
+
+## relationship-network-edge-color-and-legend-filter
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{visualization-api-reference.md,phase1-visualization.md}`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** The contract said "edges colored by relationship type" but left `relationship_type` an open-ended "e.g." list, so the legend's labels and the edges' actual values could be built independently and fail to correspond — the reported symptom. Enumerated the vocabulary as a **closed set** (`possibly_same`, `possibly_related`, `disclosed`, `ambiguous`) derived from MCP-confirmed Senzing fields: `get_sdk_reference(topic='response_schemas')` documents `RELATED_ENTITIES[].MATCH_LEVEL_CODE` (`POSSIBLY_SAME`/`POSSIBLY_RELATED`), `IS_DISCLOSED`, and `IS_AMBIGUOUS` (verified 2026-07-25, cited in the contract), with each type carrying its bootcamper-facing label so legend text and edge data share one source; an unrecognized relationship falls back rather than inventing a legend-less type. Required legends to be **generated from the rendered marks** — which makes a legend entry without matching edges structurally impossible — with click-to-filter, per-type counts, and a **non-colour** companion encoding (line dash) so the distinction survives a monochrome recap screenshot and colour-vision deficiency. In the reference server the Entity Graph legend was worse than reported: built from the static `SRC_COLORS` config rather than the data. Rewrote it to derive from the drawn nodes, with counts and click-to-filter; added dash patterns and legend filtering to the Relationship Network.
+- **Commit:** `bf0339b`
+
+## truthset-viz-readable-why-how-and-modal-polish
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{visualization-api-reference.md,phase1-visualization.md}`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** The contract specified the payload (`result` is the SDK response "verbatim") and was silent on rendering, so `JSON.stringify` into a `<pre>` satisfied it literally while defeating the feature's purpose. Added a **Rendering contract**: plain-language summary is the primary view (Why? → match level, match key, rule, plus a per-feature score table; How? → numbered merge narrative), score buckets as colour-coded badges that always keep the bucket name as text, and the raw SDK response available but **collapsed behind a `<details>` twistie**, never the default. Restated "verbatim" as *the API returns verbatim; the UI summarizes and offers verbatim on demand*. Added modal-chrome requirements and the note that entity-detail dialogs are a primary "wow moment" surface, so brand tokens (INV-081) apply **inside** the modal, not only to the app shell. **Correction found during implementation:** the spec (and my first contract draft) required badge colours to come from `brand_tokens.py` — but that palette deliberately supplies no status colours (`SIGNAL_GREEN` is reserved for resolved states and explicitly excluded from source colours). Softened to: use `SIGNAL_GREEN` for the positive bucket, define caution/negative once as named constants, never scatter hex literals. The Python reference already had human-readable `renderWhy`/`renderHow`, the twistie, and bucket badges — the gap was chrome, so added a single shared `modalShell()` (header bar, subtitle, circular close, entrance transition with `prefers-reduced-motion` respected) used by all three entity dialogs so they cannot drift apart.
+- **Commit:** `bf0339b`
+
+## truthset-viz-graph-label-toggles-and-scale-aware-defaults
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{visualization-api-reference.md,phase1-visualization.md}`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** Three reports, one defect: the contract fixed a single label configuration chosen against a 159-record Truth Set — edge labels always on, node labels hover-only, no toggles, no scale sensitivity — and Module 7 reuses the same app over production-scale data, where it rendered ~1,000 overlapping labels. Specified **independent** node-label and edge-label toggles for both graph tabs, **scale-dependent defaults** (both off above ~150 nodes) with an on-screen note saying why, an overlap-avoidance requirement for on-canvas node labels (hover-only tooltips explicitly do not satisfy it, since the complaint is being unable to read the graph without hovering every node), and the init-state note that an unchecked toggle fires no change event so its render state must be applied explicitly at load. Added a general **scale principle**: any default chosen against the Truth Set must be reviewed at 100×, because the same app serves both scales and the bootcamper cannot distinguish a bad default from bad data. Implemented in the reference server as a shared `addGraphControls()` used by both tabs, with `LABEL_AUTO_OFF=150` and CSS-class-driven visibility applied explicitly at init. Echoed the scale warning into Module 7's reuse instruction, where the failure actually appeared.
+- **Commit:** `bf0339b`
+
+## truthset-viz-entity-actions-and-aggregate-drilldowns
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{visualization-api-reference.md,phase1-visualization.md}`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** Nine convergent reports across two bootcamps, one root cause: the contract specified data and tabs but never the **interaction set**, so each entity-rendering path was wired independently and drifted. Defined **Records · Why? · How?** once as the canonical set shown wherever an entity appears — never a subset — and required it to be built as one shared renderer, since wiring per code-path is exactly how surfaces shipped with different subsets. Added `GET /api/records?entity_id=` (covers single-record entities, unlike `/api/merges`, and is embedded in the snapshot so Records works offline), and extended the two dead-end aggregates with parallel entity lists: `cell_entities` on `/api/overlap` (keyed `"i,j"`, `i<=j`) and `match_key_entities` on `/api/matchkeys`, both capped with a surfaced `*_capped` flag and sharing `bucket_entities`' entity shape so one drill-down renderer serves all three. Required no redundant inline record listings (Record Merges shows name/count/match key plus actions), pre-verified search-hint chips that fill **and** run the query, and documented the `onclick`+JSON-serialization quoting pitfall as language-agnostic guidance — it silently truncates the attribute and masks itself because calling the function from the console works. Reference server: added `Model.records()`, `cell_entities`, `match_key_entities`, a shared `addEntityActions()`/`renderEntityList()` pair, drill-downs on histogram buckets, cross-source cells and match-key rows, the action set on the graph-node modal, and removed the inline record listing from Record Merges. Verified end-to-end by building a snapshot and asserting all 14 behaviours.
+- **Commit:** `bf0339b`
+
+## lookup-sdk-response-schemas-before-parsing
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/{SKILL.md,phase1-query-visualize.md,phase2-discover.md,phase2b-discover.md}`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`
+- **Summary:** `response_schemas` appeared **0** times plugin-wide; guidance was thorough about flags and silent about response shapes, so field names were inferred from example snippets and rendered blank rather than erroring. Verified the topic against the MCP server as the spec required, and **that check changed the implementation**: `get_sdk_reference(topic='response_schemas')` is real (narrowing parameter is `filter`, as the spec assumed) but returns only **top-level** shape — it confirms `RESOLVED_ENTITY.RECORDS[].MATCH_LEVEL_CODE`, `HOW_RESULTS.RESOLUTION_STEPS[]`, `WHY_RESULTS[]`, `RESOLVED_ENTITIES[]`, and **not** four of the five deep paths the spec wanted written in (`MATCH_INFO.FEATURE_SCORES`, `MATCH_KEY_DETAILS.CONFIRMATIONS[].FTYPE_CODE`, `RESOLUTION_STEPS[].VIRTUAL_ENTITY_1|2`). Writing those unverified would have repeated the very defect being fixed, so `visualization-api-reference.md` now carries only an MCP-confirmed, dated path table plus an explicit "these payloads illustrate shape, not field names" warning, and prescribes a raw-response dump for deeper nesting. `search_docs` additionally confirmed a trap the spec missed and the contract now names: with `SZ_INCLUDE_MATCH_KEY_DETAILS`, `why_*` puts **`WHY_KEY_DETAILS`** under `MATCH_INFO` while `how_entity_by_entity_id` puts **`MATCH_KEY_DETAILS`** under each step's `MATCH_INFO` — one parser across both silently yields nothing. Paired every `topic='flags'` site with a `response_schemas` lookup; the audit found **7**, not the spec's 5, because its grep pattern missed two written `get_sdk_reference(method='find_network', topic='flags')` — **which exposed a real latent bug: `method=` is not a parameter** (the schema accepts only `topic`/`filter`/`version`), so both `phase2b-discover.md` calls would have failed; corrected to `filter=`. Added the defensive-parsing rule (blank ⇒ suspect the field name first) to the plugin-wide MCP-grounding block in `ground-rules.md` so it reaches every module, and a blank-vs-absent rendering requirement to the visualization contract. Verified: `response_schemas` references 0 → 16 across 6 files; all 7 flag sites paired; no `method=` remains; 43 tests pass.
+- **Commit:** `fb8ce24`
+
+## graduation-assistant-retrospective-feedback
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `.claude/skills/feedback-to-specs/SKILL.md`, `.claude/skills/feedback-to-specs/spec-template.md`
+- **Summary:** The plugin's improvement loop had exactly one sensor — the bootcamper — and it is blind to the defect class that looks like it worked. Confirmed no retrospective language existed anywhere in `skills/graduation/`, and that the feedback workflow is reachable only via a bootcamper utterance. Added **Step 0: Session retrospective** to graduation, placed after Pre-checks and before Step 1's PDF render, reviewing the session for false starts, errors, course corrections, and learnings, and appending each as a normal `## Improvement:` entry using the existing template plus the Step 3b durability re-read. It states the inclusion test verbatim ("would this happen to another bootcamper?" — not "did the assistant look bad?"), is strictly non-blocking, is announced in one line rather than gated behind a 👉 question, suppresses the feedback-flow entry/exit banners (INV-088, which mark the bootcamper-driven flow this is not), and carries the INV-065 PII boundary with the OS/model-context carve-out. Added `**Source:**` to the feedback template (`bootcamper-reported` by default; retrospective entries `self-observed (assistant retrospective)`). Also added the step to graduation's preface enumeration, since INV-031 requires listing the module's steps and it produces visible output. Taught the triage side to parse and carry `Source:` through into each spec's `## Source` block, with explicit guidance **not** to down-rank self-observed items — they are often more severe precisely because a bootcamper structurally cannot report them (a wrong field name renders blank, which reads as "no data" rather than a bug).
+- **Commit:** `fb8ce24`
+
+## certificate-name-fallback-at-graduation
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`
+- **Summary:** `_cert_fields` silently substituted `"Bootcamper"` when the recap carried no name (`generate_recap_pdf.py`, `name = name or "Bootcamper"`), and graduation read `name` from preferences with no validity check — so a failed auto-detection printed a placeholder on the Certificate of Completion with no signal. Added a Pre-checks step 4 to `graduation/SKILL.md`: validate the detected name against a stated conservative unusable-name test (missing/empty, known system accounts, no letters, email/@handle, bare lowercase token matching the OS username), and only then ask one pinned verbatim 👉 question for the certificate name, persisting it so it is never asked twice (INV-006). A plausible real name never triggers the question; declining never blocks graduation; a rejected system-account value is never printed or recorded (INV-065). In the generator, extracted `recap_missing_certificate_name()` and moved the warning to `main()` — **the naive placement inside `_cert_fields` fired twice**, because the fpdf2 renderer runs a measure pass (for TOC page numbers) plus a real pass. Verified: a nameless recap warns exactly once and still renders; a named recap warns zero times; decompressing the fpdf2 content streams confirms the certificate text, one landscape page of two, and the correct name in each case (INV-100/INV-066 intact). 43 tests pass.
+- **Commit:** `840312c`
+
+## guarantee-quiz-offer-is-presented
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/concepts.md`, `plugins/senzing-bootcamp/skills/module-00-entity-resolution-concepts/SKILL.md`
+- **Summary:** The pinned quiz offer was correctly specified (`concepts.md:92`, INV-056) but surrounded by three signals that presenting it was optional — "entirely optional and never blocks" (:88), "This is optional, NOT a ⛔ gate" (:95), and the mandatory readiness gate immediately after — so collapsing the two questions read as rational under brevity pressure, and nothing detected the omission. Replaced the ambiguous framing with an explicit ⛔ block separating **asking** (mandatory, every run, verbatim) from **answering** (free, blocks nothing), deleted "This is optional, NOT a ⛔ gate.", and added "do not collapse it into the readiness gate". Applied the same clarification to the questions/discussion invitation at `:73`, which carried the identical wording and the identical exposure. Module 0's close now records `quiz_offered`/`quiz_taken` under `module_0_concepts` in `config/bootcamp_progress.json` and asserts `quiz_offered` before closing — presenting the offer then if it was missed, mirroring the INV-077 artifact re-check — with the recap's Questions & Responses subsection required to list the offer because it is always asked. Left `:116` ("the quiz never replaces the mandatory gate") intact — correct and load-bearing. The quiz remains genuinely declinable and never becomes a ⛔ gate.
+- **Commit:** `840312c`
+
+## rename-data-quality-mapping-display-name
+
+- **Implemented:** 2026-07-25
+- **Files changed:** 12 files under `plugins/senzing-bootcamp/` (skills, `docs/model-selection.md`, `docs/examples/bootcamp_recap.example.md`), plus `README.md`
+- **Summary:** Renamed the display name "Data quality & mapping" / "Data Quality & Mapping" → "Data Quality, Mapping, and Transformation" across **20 lines in 12 files** — matching the inventory in the spec, which was broader than the feedback's 8-files/13-lines estimate. The rename script asserted internal-token counts (`data_quality_mapping`, `module-05-data-quality-mapping`) were byte-identical before and after, so no progress key, directory, frontmatter `name:`, or `modules_completed` token moved (INV-079). Verified the four high-risk surfaces individually: the pinned Module 7 return question (still one meaning, INV-008/009/056), the Bootcamp preparation prerequisite keys (label and prose now agree), the example recap's `## ` section header, and the `✅ Module complete:` template. No hardcoded banner exists, so "MODULE: DATA QUALITY, MAPPING, AND TRANSFORMATION" derives at runtime per INV-079. The new name contains **two** commas, making the semicolon `--expect-modules` separator load-bearing: confirmed `--check` passes with the name passed semicolon-separated and **fails** comma-separated, and strengthened the guidance in `graduation/SKILL.md` to cite it as the two-comma example. Also fixed `README.md:19`, which still listed the old name — out of the spec's stated scope but exactly the "renamed in one place" defect it warns about. Historical records (`specs/`, `IMPLEMENTED.md`, feedback files) deliberately keep the old name. No new invariant — a content change under existing INV-079/INV-003.
+- **Commit:** `840312c`
+
+## refresh-model-guidance-to-current-top-tier-model
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/docs/model-selection.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`, `docs/README.md`, `tests/test_model_guidance_sync.py`
+- **Summary:** Updated all **17** confirmed Opus 4.8 references to Opus 5, including the copy-pasteable `/model claude-opus-4-8` → `/model claude-opus-5` (a functional change — the name and ID must move together), plus `docs/README.md:38` outside the spec's scope. `/model opus` sites needed no change: the alias resolves to the current Opus. Pinned nudge and switch questions keep their verbatim wording and INV-098 surface-aware CLI/non-CLI variants. **The spec's pricing caution turned out not to apply** — verified against current Claude documentation that Opus 5 is priced identically to Opus 4.8 ($5/$25 per MTok), so the `~$5 / ~$25` row is correct as-is rather than stale; added a dated "last verified 2026-07-25" staleness note recording that, plus Sonnet 5's introductory rate through 2026-08-31. **Criterion 4 was implemented in the inverted direction, with maintainer approval:** rather than deleting the `ground-rules.md` table, that copy is now declared authoritative (it is the file loaded at module start, so the INV-063 nudge never depends on fetching a maintainer doc — the spec's direction risked a silent misfire), and `docs/model-selection.md` is explicitly marked derived. Drift is prevented by enforcement instead of by deletion: `tests/test_model_guidance_sync.py` (5 tests) asserts the two tables are row-for-row identical, that no superseded model name or ID survives in any shipped or repo-level user-facing doc, that no `/model` command names a stale ID, and that the staleness note carries a date. Negative-tested: perturbing one table cell fails with a diff; reintroducing "Opus 4.8" in `docs/README.md` fails naming the file. 43 tests pass.
+- **Commit:** `840312c`
+
+## recap-pdf-generator-fail-loudly-on-content-loss
+
+- **Implemented:** 2026-07-25
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `tests/test_recap_pdf_guard.py`, `tests/README.md`
+- **Summary:** The generator printed `PDF generated:` and exited 0 after dropping essentially all of its input, because `verify_recap` ran *after* rendering and every problem was a warning. Added a pre-render audit (`RecapAudit` / `audit_recap`) that splits problems into two classes: **recognisable but incomplete** (a module missing a subsection) still warns, renders, and exits 0 — the non-blocking graduation guarantee is untouched — while **not-a-recap or catastrophic content loss** writes no PDF, prints no success line, and exits non-zero. Fatal conditions: no `## ` sections, no section carrying any recognised `### ` subsection, or content retention below `MIN_CONTENT_RETENTION` (0.60, calibrated against the shipped example recap's 99% vs. a non-recap document's 19%). Retention is now reported on success, failure, and `--check`, so partial truncation is visible without extracting the PDF's text. Replaced the silent `except Exception: return False` around the `fpdf` import with two distinct messages — "not installed for `<sys.executable>`" vs. "installed but could not be imported" — so a venv mismatch is legible and a renderer downgrade is never inferred from silence. Documented the required input structure in the module docstring and rejected non-recap input rather than generalizing the renderer (the generic-Markdown need belongs to `always-produce-data-discoveries-document`, which now requires a sibling renderer). `graduation/SKILL.md` Step 1b gained the three-outcome contract so the assistant reports a hard failure instead of announcing a PDF. Verified: all 9 acceptance criteria hold; `tests/test_recap_pdf_guard.py` adds 17 tests (38 total, all passing) covering both exit-code classes, the absence of a false success line, the retention figure, both import-diagnostic branches, `--check` semantics, and the stdlib fallback's landscape Certificate of Completion (INV-066/INV-100 confirmed intact — 10 pages, exactly 1 landscape page carrying the certificate). `--check` exit semantics unchanged, so the graduation content-check contract still holds.
+- **Commit:** `e69f346`
+
+## module02-postgres-credentials-hardening
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`
+- **Summary:** Replaced the guessable `POSTGRES_PASSWORD=senzing` default in the Docker Postgres option with a generated per-project password (`python3 -c "import secrets; print(secrets.token_hex(16))"`), bound the published port to `127.0.0.1:5432:5432` instead of all interfaces, and documented reusing the baked-in password via `docker start` on resume (never regenerate). The engine-config step now notes the `SQL.CONNECTION` URL uses the generated value. Verified: no `PASSWORD=senzing` remains; port is localhost-bound; engine config still generated via `sdk_guide` (MCP-grounded).
+- **Commit:** uncommitted
+
+## model-effort-table-name-based
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/docs/model-selection.md`
+- **Summary:** Replaced bare "Module N" tokens in the model/effort guidance (prose + stage table) with module names, resolving the collision with the bootcamp-preparation 1–11 catalog (an LLM agent could otherwise apply Opus to the wrong module). Opus 4.8/high → SDK setup, Data quality & mapping, Graduation; Sonnet 5/high → Data processing; Sonnet 5/medium → the rest. Applied the identical fix to `model-selection.md`'s mirror stage table (which also had the bare numbers — the spec assumed only its per-skill table was affected) to keep the two in sync. Verified: no bare "Module N" remains in either stage table; mapping matches the per-skill table; remaining "Module N" hits are the INV-079 rule text and prose cross-references (out of scope). No bootcamper-facing change.
+- **Commit:** uncommitted
+
+## write-gate-tests
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `tests/test_write_gate.py` (new), `tests/README.md` (new)
+- **Summary:** Added a stdlib-`unittest` harness for the security-critical write-gate in a **top-level `tests/`** directory (not under `plugins/`, so `propagate.sh` never ships it). Tests invoke `write-gate.py` as a subprocess (it reads stdin at import time) with a temp project holding `config/bootcamp_progress.json`, asserting exit codes: location allow/block (`/tmp`, `/var/tmp`, Downloads, `%TEMP%`, `$TMPDIR`, home-relative), `..`-traversal, the project-under-`/tmp` exemption, the case-folded exemption, and secret detection (PEM/AWS/`AQAAAD`, with `.lic` paths and bare "AQAAAD" prose allowed). One-command run documented: `python3 -m unittest discover -s tests`. Verified: 23 tests pass; `tests/` is outside the propagation allowlist.
+- **Commit:** uncommitted
+
+## pr4-review-minor-fixes
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/scripts/capture_screenshots.py`, `plugins/senzing-bootcamp/scripts/write-gate.py`, `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`, `tests/test_brand_sync.py` (new)
+- **Summary:** Batched low-severity fixes: (1) `senzing_viz_server.py` settings file read via `with open(...)`; (2) `build_model` and snapshot-probe swallow-paths now write a `stderr` breadcrumb (still never raise, INV-077 preserved); (3) promoted the inlined brand-palette fallbacks in `senzing_viz_server.py` and `generate_recap_pdf.py` to named module-scope constants and added `tests/test_brand_sync.py`, which asserts they equal the `brand_tokens.py`-derived values (fails loudly on drift); (4) `capture_screenshots.py` waits on `load` + a bounded settle instead of `networkidle` for `file://` targets; (5) annotated the Module 3 checkpoint fields — `expected_merge_record_count` (pre-load expectation) vs `matches_verified` (post-load verified) are intentionally distinct, not a rename; (6) `write-gate.py` temp-path checks expressed as iterated `TEMP_PREFIXES`/`TEMP_SUBSTRINGS` tuples. Optional d3 SHA-pin left undone (version already in the file header). Verified: all scripts compile; brand-sync + write-gate tests pass; blocking behavior unchanged.
+- **Commit:** uncommitted
+
+## harden-write-gate
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/write-gate.py`, `specs/harden-write-gate.md`
+- **Summary:** Hardened the PreToolUse write-gate: (1) `os.path.expanduser` now expands a leading `~` before path classification, so home-relative system-temp/Downloads targets resolve to their real location; (2) the in-project exemption is case-folded with the same rule as the temp/Downloads checks, so a case-variant in-project path is exempted, not blocked; (3) the secret regex now flags `AQAAAD…` Senzing license blobs (long base64 tail keeps it off prose and `.lic` paths). Corrected the spec's first acceptance criterion, which wrongly listed `~/tmp/x` (a personal dir) as blocked — the gate blocks *system* temp/Downloads, not "outside the project" (per `PreToolUseWriteError.md`), so `~/tmp` correctly stays allowed. Verified via subprocess tests (see `write-gate-tests`): all criteria hold; PEM/AWS still blocked; gate still disabled outside a bootcamp and fail-open on bad payload.
+- **Commit:** uncommitted
+
+## escape-viz-snapshot-script-payload
+
+- **Implemented:** 2026-07-24
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`
+- **Summary:** Fixed the stored-XSS in the self-contained visualization snapshot: added a `_script_json` helper (escapes `<`/`>`/`&` as `\uXXXX`) and used it for the `write_snapshot` `__DATA__` payload embed and the `__SRC_COLORS__` embed, replacing bare `json.dumps` inside inline `<script>`. Verified: a `</script>`/`<img onerror=...>` in a data field is emitted as inert escaped text (no early script termination); the payload round-trips byte-identically once parsed; pure string transform, so the offline guarantee (INV-091) is preserved. Live `/api/*` JSON responses left unchanged (not an HTML-embed surface).
+- **Commit:** uncommitted
+
 ## show-plugin-version-and-record-environment
 
 - **Implemented:** 2026-07-23

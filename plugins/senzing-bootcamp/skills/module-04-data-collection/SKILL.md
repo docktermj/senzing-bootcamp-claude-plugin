@@ -1,9 +1,14 @@
 ---
 name: module-04-data-collection
-description: "Bootcamp Module 4: Identify and Collect Data Sources. Use when the bootcamper starts or resumes Module 4, or needs to gather source data into data/raw/."
+description: "Bootcamp Module 4: Data collection (identifying and collecting data sources). Use when the bootcamper starts or resumes Module 4, or needs to gather source data into data/raw/."
 ---
 
-# Module 4: Identify and Collect Data Sources
+# Module 4: Data collection
+
+The Bootcamper-facing name of this module is **Data collection** — the spelling in
+`../bootcamp-preparation/SKILL.md`'s module table. Use it in the module-start banner, the
+journey map, and every transition question (INV-079); "identifying and collecting data
+sources" describes what the module does but is not its name.
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
@@ -60,7 +65,7 @@ gate at Step 8a writes it after a custom license is configured) and drive the de
 - **Present and greater than 0** (custom license with a finite record cap): the effective limit
   is that value. Recommend sampling for license reasons only when the dataset total genuinely
   exceeds it.
-- **Present and equal to 0** (custom license with no record cap): the license imposes no cap:   do **not** recommend sampling for license reasons, and support loading the full dataset.
+- **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
 - **Absent or null** (no custom license detected yet): fall back to the **built-in evaluation
   license** the bootcamper already has by default, whose capacity is confirmed via the Senzing
   MCP server at request time (never a hardcoded or remembered figure).
@@ -109,7 +114,7 @@ verbatim (INV-051), never joining the choices with "or":
 4. Use an API endpoint.
 5. I don't have my own data — generate/synthesize it for me.
 
-*(Internal: end the turn on this question and wait.)*
+_(Internal: end the turn on this question and wait.)_
 
 **If the bootcamper chose option 5** — or otherwise doesn't have their own data, or wants free
 data to practice with — recommend CORD data as the primary alternative:
@@ -129,6 +134,7 @@ Use `get_sample_data(dataset='list')` to show available CORD datasets. Present t
 **If the bootcamper declines CORD data** or needs something different, offer secondary options:
 
 > "If CORD doesn't meet your needs, there are other options:
+>
 > - **Free raw data:** A curated collection of 35+ free data sources at
 >   <https://github.com/docktermj/senzing-bootcamp-free-data>: these include raw samples
 >   (great for practicing mapping) and pre-mapped files.
@@ -192,8 +198,8 @@ Module 5 can evaluate.
 > `file_path`, `format`, `record_count` (if known, else null), `file_size_bytes`,
 > `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`, `added_at` and
 > `updated_at` to the current ISO 8601 timestamp. If an entry already exists for that
-> DATA_SOURCE key, update it and set `updated_at`. *(The Kiro registry helpers are a later
-> porting phase; write/update the YAML directly for now.)*
+> DATA_SOURCE key, update it and set `updated_at`. _(The Kiro registry helpers are a later
+> porting phase; write/update the YAML directly for now.)_
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, plausible record count) and update the registry with the
@@ -201,15 +207,15 @@ Module 5 can evaluate.
 > and move on to the next data source. If any check fails, show the failure details and
 > remediation guidance, then help the bootcamper resolve the issue (re-upload, convert format,
 > fix encoding, etc.) before proceeding. Re-check after each fix attempt until the file passes.
-> *(The Kiro `validate_data_files.py` validator is a later porting phase; perform the checks
-> directly for now.)*
+> _(The Kiro `validate_data_files.py` validator is a later porting phase; perform the checks
+> directly for now.)_
 
 > **CORD Metadata Capture:** If the bootcamper chose their own data instead of CORD data, skip
 > this. Otherwise, after CORD data has been downloaded via `get_sample_data` and validated,
 > capture a metadata snapshot (dataset name, file paths, a content hash or size/mtime) so
 > Module 6 can detect if files changed between download and load time. Store it in
-> `config/cord_metadata.yaml`. *(The Kiro `cord_metadata.py` helper is a later porting phase;
-> record the snapshot directly for now.)*
+> `config/cord_metadata.yaml`. _(The Kiro `cord_metadata.py` helper is a later porting phase;
+> record the snapshot directly for now.)_
 
 > **CORD Provenance Recording:** After each data source file is collected and its registry
 > entry created/updated in `config/data_sources.yaml`, set the `provenance` field based on the
@@ -250,9 +256,9 @@ Get-Content data\raw\vendor_api.json -TotalCount 5
 (INV-012). Create `docs/data_collection_checklist.md` with a Data Inventory Table (one row per
 data source) and a Validation Checklist, and guide the bootcamper to fill in one row per source
 and complete the checklist before Module 5. Announce it as a produced file in the Step 9
-end-of-module summary's "Files produced" list (INV-032). *(The Kiro
+end-of-module summary's "Files produced" list (INV-032). _(The Kiro
 `templates/data_collection_checklist.md` port is a later porting phase; compose the checklist
-directly for now.)*
+directly for now.)_
 
 Also create or update `docs/data_source_locations.md`:
 
@@ -260,6 +266,7 @@ Also create or update `docs/data_source_locations.md`:
 # Data Source Locations
 
 ## Data Source 1: Customer CRM
+
 - **Type**: CSV file
 - **Location**: `data/raw/customer_crm.csv`
 - **Original Source**: Uploaded by user from local system
@@ -268,6 +275,7 @@ Also create or update `docs/data_source_locations.md`:
 - **Access Method**: One-time upload
 
 ## Data Source 2: Vendor API
+
 - **Type**: JSON API
 - **Location**: Sample data in `data/raw/vendor_api_sample.json`
 - **Original Source**: https://api.vendor.com/v1/suppliers
@@ -276,6 +284,7 @@ Also create or update `docs/data_source_locations.md`:
 - **Access Method**: API call with Bearer token authentication
 - **API Documentation**: https://api.vendor.com/docs
 - **Sample API Call**:
+
   ```bash
   # Linux / macOS
   curl -H "Authorization: Bearer $API_TOKEN" \
@@ -304,7 +313,6 @@ Also create or update `docs/data_source_locations.md`:
   WHERE active = true
   LIMIT 1000;
   ```
-
 ````
 
 The SQL above documents the bootcamper's own external source system, not the Senzing database.
@@ -365,6 +373,7 @@ before proceeding.
 
 ```markdown
 Data Source Collection Status:
+
 - ✅ Customer CRM - Collected (data/raw/customer_crm.csv)
 - ✅ Vendor API - Sample collected (data/raw/vendor_api_sample.json)
 - ⬜ Legacy Database - Pending (requires VPN access)
@@ -404,7 +413,6 @@ training data.
    Four-option form (when `submit_feedback` is available):
 
    👉 **Which best describes your Senzing License Key situation? Reply with a number:**
-
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.
    3. No — I'll obtain one another way (a license I get elsewhere, or Senzing support).
@@ -413,16 +421,14 @@ training data.
    Three-option form (when `submit_feedback` is unavailable):
 
    👉 **Which best describes your Senzing License Key situation? Reply with a number:**
-
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.
    3. No — I need to obtain one.
 
-   *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper answers.)*
+   _(Internal: end the turn on this question and wait. Do not proceed until the bootcamper answers.)_
 
 5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
    into chat. Decode/place it to `licenses/g2.lic`:
-
    - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;
      Windows (PowerShell):
      `[System.Convert]::FromBase64String('<BASE64_STRING>') | Set-Content -Path licenses\g2.lic -AsByteStream`.
@@ -434,22 +440,56 @@ training data.
    `config/bootcamp_preferences.yaml`. Continue to sub-step 7 to detect the limit.
 
 6. **Obtain a Senzing License Key (option 3, or option 4's in-flow request).** Consult the Senzing
-   MCP server first: `search_docs(query='larger or temporary evaluation license for datasets over
-   500 records')` and present the returned guidance. Present the available paths as distinct,
-   individually selectable options — the in-flow MCP request (invoke `submit_feedback` once with the
-   `license_request` category; only when reported available), the external channel
-   (<support@senzing.com>; include name, org, expected record count, use case; production licenses
-   via <sales@senzing.com>), and apply-an-existing-key (sub-step 5). The bootcamp **continues on the
-   built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the email;
-   the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even in a
-   later session. Retrieve any capacity/validity figures from MCP at runtime, never a remembered
-   figure. Record `license: evaluation` when no custom key is applied.
+   MCP server first: `search_docs(query='temporary evaluation license for a dataset larger than the
+   default limit')` and present the returned guidance. Present the available paths as distinct,
+   individually selectable options — the in-flow MCP request (sub-step 6a below), the external
+   channel, and apply-an-existing-key (sub-step 5). Source the request channel's address and any
+   capacity/validity figures from MCP at runtime rather than this file (they have changed before, and
+   the eval and production channels differ), never a remembered figure. The bootcamp **continues on
+   the built-in evaluation license** meanwhile, so the bootcamper is never blocked waiting for the
+   email; the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even
+   in a later session. Record `license: evaluation` when no custom key is applied.
+
+   ### 6a. The in-flow license request sends the Bootcamper's name and work email — gate it
+
+   ⛔ **This is the only step in the entire bootcamp that transmits the Bootcamper's personal
+   details off their machine, and it MUST NOT happen without their explicit yes.** The
+   `submit_feedback` tool's `license_request` category **requires** a first name and a **work**
+   email address (personal domains are rejected), optionally a last name and how they heard about
+   Senzing; it emails back a time- and volume-limited evaluation license. Those are the
+   Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every
+   identifier (INV-065, `../bootcamp-onboarding/feedback.md` Step 3c) cannot apply here — the call
+   does not work without them. What carries over is the **consent discipline**, and it applies with
+   more force, not less:
+
+   1. **Confirm the current requirements from the tool itself** before asking for anything, so you
+      request exactly the fields it needs and no more. Never collect a field "in case".
+   2. **Ask for the values, one 👉 question per turn**, saying plainly that a work email is required
+      and that a personal address will be rejected. Never put them in a config file, the recap, or
+      the feedback file (INV-065) — hold them for the call alone.
+   3. **Show the exact request, then ask permission**, pinned verbatim (INV-056), ending the turn on
+      it. State what is sent, to whom, and what comes back:
+
+      > 👉 **Send this evaluation-license request, including your name and work email, to Senzing? Reply with a number:**
+      >
+      > 1. **Yes, send it** — Senzing emails the license to that address.
+      > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.
+
+   4. **Send only on an explicit yes.** On anything else, record `license: evaluation`, continue,
+      and do not re-ask (INV-006). Relay whatever the server returns verbatim.
+   5. **A failure never blocks.** Report it in one line and continue on the built-in evaluation
+      license.
+
+   Declining costs the Bootcamper nothing: option 3's external channel and sub-step 5 remain open,
+   and the bootcamp proceeds either way.
 
 7. **Detect the active license's record limit (after a custom key is applied in sub-step 5).**
    Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',
-   language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
+language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
    cap). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
-   `config/license.json`, parse `recordLimit`, and write `license_record_limit` into
+   `config/license.json` — `get_license` has **no** `response_schemas` entry (an empty `data` array
+   is the expected result there, not a failed lookup), so read the saved JSON to confirm the shape
+   before parsing it (INV-115) — parse `recordLimit`, and write `license_record_limit` into
    `config/bootcamp_progress.json`. Report the detected limit to the bootcamper (e.g. "Your license
    allows up to N records," or "no record cap (unlimited)" when `0`).
 
@@ -461,7 +501,7 @@ a key is pending). Once resolved — or when the volume was within the limit —
 
 ### 8b. SQLite load-time warning (collection-time heads-up)
 
-This is a *time/performance* heads-up, deliberately **distinct** from the license-capacity
+This is a _time/performance_ heads-up, deliberately **distinct** from the license-capacity
 sampling framing at the top of this module: it judges the Module 6 SQLite load time from the
 actual collected dataset and fires even when the effective license imposes no record cap. It is
 **not a mandatory gate**: the bootcamper may always proceed on SQLite with the full dataset.
@@ -477,7 +517,6 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
    is above the load-time threshold. Otherwise (total at or below the threshold, any non-SQLite
    engine, or indeterminate inputs) say nothing about load time and continue to the Step 9
    transition.
-
    - **Warn:** consult the **Senzing MCP server** at request time for the timing figures
      (expected throughput, throughput degradation, expected load duration, redo-phase
      duration). Any figure the server does not return, or that errors, stays unavailable: never
@@ -485,16 +524,14 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
      returned, then end the turn on the question below and wait for the bootcamper's choice.
 
    👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
-
    1. Load all records into SQLite.
    2. Sample down to a smaller record count.
    3. Switch to an alternative database like PostgreSQL.
 
-   *(Internal: end the turn on this question and wait.)*
+   _(Internal: end the turn on this question and wait.)_
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.
-
    - **Load all collected records on SQLite:** first obtain an **explicit confirmation** that
      the bootcamper accepts the expected load time before continuing with the full dataset. Then
      record the decision (sub-step 4) and continue to Step 9.
@@ -515,9 +552,9 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
    Module 6 SQLite heads-up does not redundantly re-ask about this same load.
 
 Refer to the Senzing MCP server by name only (never a URL). Use only synthetic/persisted values
-: never echo credentials or connection strings. *(The Kiro `volume_utils` and
+: never echo credentials or connection strings. _(The Kiro `volume_utils` and
 `load_time_warning` helpers, and the shared marker/identity logic, are a later porting phase;
-apply the behavior directly for now.)*
+apply the behavior directly for now.)_
 
 **Checkpoint:** write step 8b to `config/bootcamp_progress.json`.
 

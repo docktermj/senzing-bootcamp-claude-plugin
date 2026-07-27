@@ -76,6 +76,23 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    specification, extract the list of required top-level structural indicators for a
    Senzing-loadable record (e.g., presence of a FEATURES array, DATA_SOURCE, RECORD_ID).
 
+   ⛔ **Loadable is a wider test than "has a FEATURES array".** The same specification states that
+   the older shape — "a flat JSON structure with a separate sub-list for each feature that had
+   multiple values" — is **still supported**. Treat **both** forms as Senzing-ready:
+
+   - the recommended **`FEATURES` array**; or
+   - the legacy **flat structure**: feature attributes at the record root
+     (`BUSINESS_NAME_ORG`, `RECORD_TYPE`, …), with a per-feature root sub-list (`NAMES`,
+     `ADDRESSES`, `IDENTIFIERS`) wherever a feature repeats. A source with no repeating feature is
+     in this shape with no sub-list at all — flat root attributes only.
+
+   **CORD ships both, so neither may be assumed.** Verified against the MCP server this session:
+   London/`GLOBALDATA` returns a `FEATURES` array, while Las Vegas/`PPP_LOANS` returns flat root
+   attributes. Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
+   sends data that already loads and resolves through a mapping phase it does not need. Sample the
+   actual records rather than assuming a dataset's shape, and confirm the still-supported statement
+   from the specification you retrieved (INV-080), not from this file.
+
 2. **Perform the readiness check:** Examine up to 100 sample records from the source file. For
    each record, verify:
    - The record is valid JSON.
@@ -93,6 +110,9 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 4. **If Senzing-ready: present the fast-path offer:**
 
    👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+
+   *(The wording holds for both supported shapes — "properly structured features" covers a
+   `FEATURES` array and the still-supported per-feature sub-lists alike.)*
 
    *(Internal: end the turn on this question and wait.)*
 
@@ -142,7 +162,35 @@ lineage write failure MUST NOT block the fast-path.
 ## 6. Assess data quality and apply thresholds
 
 For each data source, compute a quality score based on field completeness, format consistency,
-and duplicate rate. Use these thresholds to guide the decision:
+and duplicate rate.
+
+⛔ **Define "present" this way — do not re-invent it.** Completeness feeds the score that gates this
+module, so the presence test is part of the measurement, not an implementation detail. A field value
+is **present** unless it is:
+
+- absent — the key is missing from the record — or `null`;
+- an empty or whitespace-only string;
+- an empty container (a list, dict, set or tuple of length 0);
+- a container whose every element is itself empty by these rules (e.g. `[""]`, `[{}]`, `[null]`).
+
+Everything else is present. Two consequences to get right:
+
+- **`false`, `0` and `0.0` count as PRESENT.** They are values, not absences. A truthiness test
+  (`if value:`) is wrong: it silently reports real data as missing.
+- **Presence is a property of the VALUE, never of the key.** Testing "does the record have this
+  field?" reports 100% coverage for a field that is an empty array in every record — which is
+  exactly how one bootcamp reported `IDENTIFIER_LIST` coverage as **100%** when the true figure was
+  **0%**, on the field family that supplies exclusive identifiers, feeding the number straight into
+  the mapping decision.
+
+⛔ **Sanity-check any 0% or 100% figure before it routes the gate.** A field family reporting
+*exactly* full or *exactly* zero coverage across every record is the signature of a presence test
+measuring the wrong thing. Print one sample value for that field and confirm the figure against it
+before reporting. Treat a suspiciously uniform result as a probable measurement failure first and a
+real finding second — the same discipline INV-115 applies to blank parsed SDK fields, applied here to
+profiling.
+
+Use these thresholds to guide the decision:
 
 - **≥80% quality score** → Proceed to Phase 2 (mapping). Data quality is strong enough for
   meaningful entity resolution.
@@ -153,6 +201,25 @@ and duplicate rate. Use these thresholds to guide the decision:
   resolution results will be poor. Help the user identify the biggest quality issues and create
   a remediation plan. Only proceed if the user explicitly chooses to continue.
 
+**What this score does not measure.** It scores completeness, format consistency, and duplicate
+rate — all *structural* properties of one source in isolation. It says nothing about whether a
+field will be mapped to a feature that **means** the same thing, and nothing about how two sources
+will interact once resolved. A source can score 86% and still carry a mapping that suppresses
+legitimate merges. Present the number as "the data is clean enough to map", never as "the mapping
+will be correct" — semantic correctness is only established after loading, by the match-key audit
+in Data processing.
+
+**If the field list itself looks implausible, this score is not yet meaningful.** The dynamic-key
+sanity check (>~100 fields or >50 distinct field patterns — INV-118) runs on the `mapping_workflow`
+profile in Phase 2 step 9, *after* this step, so on the first pass you will not have its verdict
+here. Two consequences:
+
+- **Now:** if the field list you compared against the Entity Specification in step 4 already looks
+  implausibly wide, say so, treat this score as provisional, and expect step 9 to confirm it.
+- **On return from Phase 2 step 9:** when that check trips, re-run this step after pre-processing
+  and re-profiling rather than keeping the first score — a score averaged over hundreds of phantom
+  fields is not meaningful, and it is this score that routes the gate below.
+
 Present the assessment clearly:
 
 ```text
@@ -162,7 +229,7 @@ Source: CUSTOMERS_CRM
   Field completeness:  82%  (name: 99%, phone: 75%, email: 68%)
   Format consistency:  90%
   Duplicate rate:       3%
-  Overall quality:     78%  ✅ Ready for mapping
+  Overall quality:     78%  ⚠ Acceptable — some gaps (see below)
 
 Source: VENDORS_LEGACY
   Field completeness:  45%  (name: 90%, phone: 20%, email: 15%)
@@ -171,6 +238,11 @@ Source: VENDORS_LEGACY
   Overall quality:     42%  ⚠ Recommend fixing before mapping
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+⛔ **The status label MUST match the band above** — `✅` only at ≥80%, `⚠ Acceptable — some gaps`
+at 70-79%, `⚠ Recommend fixing before mapping` below 70%. Derive the label from the computed score
+rather than copying one from this example; a `✅` beside a 78% tells the bootcamper the gate said
+"proceed" when it is about to ask them to choose.
 
 > **Data source registry:** After computing the quality score, update the source's
 > `quality_score` field in `config/data_sources.yaml` and set `updated_at`. If the score is

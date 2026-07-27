@@ -1,9 +1,14 @@
 ---
 name: module-02-sdk-setup
-description: 'Bootcamp Module 2: SDK Installation and Configuration. Use when the bootcamper starts or resumes Module 2, or needs to install/configure the Senzing SDK, set up the database, or run the verification test.'
+description: 'Bootcamp Module 2: SDK setup (installing and configuring the Senzing SDK). Use when the bootcamper starts or resumes Module 2, or needs to install/configure the Senzing SDK, set up the database, or run the verification test.'
 ---
 
-# Module 2: SDK Installation and Configuration
+# Module 2: SDK setup
+
+The Bootcamper-facing name of this module is **SDK setup** — the spelling in
+`../bootcamp-preparation/SKILL.md`'s module table. Use it in the module-start banner, the
+journey map, and every transition question (INV-079); "installing and configuring the SDK"
+describes what the module does but is not its name.
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
@@ -148,7 +153,9 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
    SDK is only supported on Linux; on macOS/Windows it must run in a container.
 2. macOS Intel → **`platform='docker'`**. There is no native Intel-Mac install: the Homebrew
    tap is Apple Silicon (ARM64) only.
-3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**.
+3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. If the chosen language runs
+   on the JVM (Java), also read "The launch environment" in Step 3 before the first run —
+   installing the SDK is not the same as being able to launch against it.
 4. Windows without Scoop (non-Python) → **`platform='docker'`**. With Scoop available →
    **`platform='windows'`**.
 5. Linux → **`platform='linux_apt'`** or **`platform='linux_yum'`** based on the package
@@ -202,7 +209,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 The Senzing SDK requires EULA acceptance before use. Tell the bootcamper they can review it at
 <https://senzing.com/end-user-license-agreement/>, then present the EULA question:
 
-👉 **Do you accept the Senzing End User License Agreement (EULA)? Respond yes or no.**
+👉 **Do you accept the Senzing End User License Agreement (EULA)?** (respond yes or no)
 
 *(Internal: end the turn on this question and wait. Do not proceed until the bootcamper
 answers.)*
@@ -313,6 +320,75 @@ environment script at `src/scripts/senzing-env.sh` (or `.bat` for Windows) that 
 before running bootcamp tasks. This keeps the bootcamp self-contained and avoids side effects on
 the user's system.
 
+### The launch environment (JVM languages, and macOS generally)
+
+Installing the SDK is not the same as being able to **launch** against it. These are
+launch-environment problems, **not** Senzing misconfigurations — say so when one appears, so the
+bootcamper does not go hunting through their engine config for a fault that is not there. Each
+presents as an error far from its cause.
+
+⛔ **Confirm the specifics for the bootcamper's platform via
+`sdk_guide(topic='install', platform='<platform>', language='<language>')` this session** — the
+library path, the jar path, and the platform gotchas come from MCP, never from memory or from this
+file (INV-080). What follows is the shape of the problem, not a substitute for that lookup.
+
+**macOS + a JVM language (a first-class combination here: `macos_arm` plus Java or C#).**
+
+- **The native library is found through the shell environment, not a JVM flag.** Per the MCP
+  install guidance for `macos_arm`, `DYLD_LIBRARY_PATH` must be set **at the shell level before the
+  JVM starts**, and `-Djava.library.path` **alone is insufficient**. This is the opposite of the
+  natural guess — that a JVM flag can fix a JVM library-path error — which is what makes it cost
+  time. A process cannot repair its own dynamic-linker search path after it has started, so the
+  variable has to be in the environment of the shell that launches `java`.
+- **That is why `senzing-env.sh` must be sourced in the same shell that launches the JVM** — not
+  merely created. Because the global shell config is off-limits (the rule above), a **project-local
+  launcher script** that sources the env script and then executes `java` in one step is the reliable
+  pattern: it keeps "set the environment" and "start the JVM" inseparable, which is precisely what
+  the requirement demands. Generate one and use it for every subsequent JVM invocation.
+- **Do not pass flags through an unquoted variable.** `java $SENZING_JAVA_OPTS` does not word-split
+  in zsh (macOS's default shell), so multiple flags arrive as a single argument. Write the flags
+  explicitly in the launcher script.
+- **Classpath:** the MCP install guidance's example is
+  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:<your classes>" MyApp`. Note the SDK **jar** lives
+  under `sdk/java/`, while the **native** library lives under `lib/` — two different paths for two
+  different things, and confusing them produces a class-not-found or a library-not-found error
+  depending on which you get wrong. Confirm both paths via `sdk_guide`.
+- **If you see `.dylib`/`.so` "not found" errors, do not symlink or copy Senzing libraries.** Per
+  the MCP anti-patterns, Senzing tries both extensions and may report one even when the other works;
+  the real cause is usually a missing dependency or an unset `DYLD_LIBRARY_PATH`. Re-run the
+  `sdk_guide` install lookup and follow its gotchas for the installed version.
+
+**MCP Java scaffolds may need a JSON library the install does not provide.** The authoritative Java
+snippets from `generate_scaffold` (e.g. `loading/LoadWithInfoViaFutures.java`) `import javax.json.*`
+and call `Json.createReader(...)` to parse records and `WITH_INFO` responses. `javax.json` (JSON-P)
+is an external dependency: it is **not** part of the Java SE standard library, and the bootcamp
+compiles with plain `javac` and never sets up Maven or Gradle. So:
+
+1. **Verify before compiling, not after.** When a scaffold imports a package outside the standard
+   library, check whether the environment actually provides it (inspect the install's jars) and
+   resolve it *then* — rather than surfacing a raw `javac` import error the bootcamper has to
+   diagnose. Verify per install; do not assume it is present or absent.
+2. **State the safety asymmetry plainly when it comes up — this is the line that matters.**
+   Replacing the **JSON library** is safe. Altering the **SDK calls** is not. Without that, a
+   bootcamper facing an import error may "fix" it by rewriting the Senzing calls, which is exactly
+   the failure `generate_scaffold` exists to prevent.
+3. **Prefer a dependency-free JSON reader** for the bootcamp's own generated Java, so the code
+   compiles under plain `javac`. Reuse one reader across modules rather than re-deriving it.
+4. **Record the deviation in the source header** — what was substituted and why — so the take-home
+   code shows where it departs from the authoritative scaffold. Never silently strip the import.
+
+**`timeout` is not available on a stock macOS shell** (it is GNU coreutils; `gtimeout` exists only
+if the user installed them). This is not Java-specific — it affects **any** command you wrap in a
+timeout on macOS. Use a background process plus a polling loop with a deadline instead, or skip the
+timeout. Check before relying on it rather than assuming a Linux userland.
+
+**Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. On
+**Windows**, the DYLD/LD variables do not apply at all and the env script is a `.bat`; the
+classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
+`timeout` caveat is macOS-specific — **neither applies on Linux**, where both behave as expected.
+Non-JVM languages need none of the JVM-specific items above.
+
 **Checkpoint:** write step 3 to `config/bootcamp_progress.json`.
 
 ## Step 4: Verify Installation
@@ -334,9 +410,15 @@ troubleshooting.
 > per INV-093. SDK setup only confirms that the built-in evaluation license is active; the
 > "License Key" reference notes below are kept for context.
 
-> **License check order:** Senzing checks for licenses in this order: project-local
-> `licenses/g2.lic` → `SENZING_LICENSE_PATH` env var → system CONFIGPATH → built-in evaluation
-> (500 records).
+> **License check order:** project-local `licenses/g2.lic` → a license-path environment variable →
+> system CONFIGPATH → the built-in evaluation license.
+>
+> ⛔ **Confirm the environment variable's exact name from MCP before naming it to the bootcamper**
+> (`sdk_guide(topic='configure', …)` or `search_docs`). This note previously hardcoded
+> `SENZING_LICENSE_PATH` while `sdk_guide` returns `SENZING_LICENSE_FILE`; the two differ by one
+> word and neither was verified here. Wrong environment-variable names are on the MCP server's own
+> list of common confabulations, so state whichever the server returns this session and never the
+> remembered one (INV-080). The record capacity is likewise looked up, not written here.
 
 > **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
 > *runtime-capacity* license (it sets how many records Senzing will resolve) — supplied as a `.lic`
@@ -356,18 +438,28 @@ re-ask (INV-006). Confirm any SDK facts against the Senzing MCP server rather th
 Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
 **not a question:**
 
-"Your Senzing SDK uses a **built-in evaluation license limited to 500 records** automatically when
-no custom license is present — no license file needed. That's enough for the demo modules that come
-next (System verification and Truth Set visualization), which run on small synthetic and Truth Set
-data. If your **own** data later exceeds the evaluation limit, we'll set up a Senzing License Key in
-the Data collection module, where your data volume is known. Nothing to do here."
+⛔ **Fill `{record limit}` below from the MCP server before presenting this — the figure is not
+written into this skill on purpose.** The route that answers it is `sdk_guide` with a
+`record_count` above the default limit, whose `compatibility_notes` name the limit outright:
 
-When presenting the evaluation license's record capacity or validity period, retrieve those values
-from a Senzing MCP server tool during this session and present exactly what the tool returns. The
-**500 records** figure is a published value that can change: confirm it against the Senzing MCP
-server rather than training data. Wait up to 30 seconds; if the tool does not return a value, omit
-the specific figure and tell the bootcamper the current value is unavailable from the MCP server.
-Never substitute a hardcoded or remembered figure.
+```text
+sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
+```
+
+`search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
+EULA and pricing prose with no figure (checked 2026-07-26), which is why the tool is named here
+rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
+seconds). If it returns no figure, drop the parenthetical entirely and say the current limit is
+unavailable from the MCP server. Never substitute a hardcoded or remembered figure — the published
+capacity has changed before, and a stale number here is a Senzing fact asserted from memory
+(INV-080), in the one place the bootcamper is most likely to plan against it.
+
+"Your Senzing SDK uses a **built-in evaluation license** automatically when no custom license is
+present (limited to {record limit} records) — no license file needed. That's enough for the demo
+modules that come next (System verification and Truth Set visualization), which run on small
+synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll set up a
+Senzing License Key in the Data collection module, where your data volume is known. Nothing to do
+here."
 
 > **Where the License Key is handled now:** the interactive License-Key setup (asking whether the
 > bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, requesting an
@@ -432,14 +524,27 @@ the engine config with `sdk_guide(topic='configure', ...)` — never hand-constr
 
 **Option 1 — PostgreSQL in a Docker container:**
 
-1. Run an official `postgres` image with a stable `--name`, a **project-local volume** (data
-   persists in the working directory, not an ephemeral layer), and credentials:
+1. Generate a strong, project-specific database password **once** — it is baked into the
+   project-local volume on first initialization, so reuse the same value everywhere below and
+   never regenerate it on a later restart:
+
+   ```bash
+   python3 -c "import secrets; print(secrets.token_hex(16))"
+   ```
+
+   Then run an official `postgres` image with a stable `--name`, a **project-local volume** (data
+   persists in the working directory, not an ephemeral layer), the generated password (never the
+   guessable default `senzing`), and the port **bound to localhost only** (`127.0.0.1:`, so the
+   database is not exposed on other network interfaces):
 
    ```bash
    docker run -d --name bootcamp-postgres \
-     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=senzing -e POSTGRES_DB=G2 \
-     -p 5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
+     -e POSTGRES_USER=senzing -e POSTGRES_PASSWORD=<generated-password> -e POSTGRES_DB=G2 \
+     -p 127.0.0.1:5432:5432 -v "$(pwd)/database/postgres:/var/lib/postgresql/data" postgres:16
    ```
+
+   On a later resume, restart the existing container with `docker start bootcamp-postgres` (which
+   preserves the baked-in password) rather than a fresh `docker run`.
 
 2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
    `config/bootcamp_progress.json` (at least its `name`) so the SessionEnd hook stops it on exit
@@ -458,7 +563,8 @@ the engine config with `sdk_guide(topic='configure', ...)` — never hand-constr
    Re-confirm the exact path via MCP; the Windows/macOS SDK install path differs (see the
    initialization anti-patterns doc).
 5. Wire the connection into the engine config (Step 8): the `SQL.CONNECTION` URL is
-   `postgresql://user:password@host:port/database` (MCP-confirmed). Generate the full engine config
+   `postgresql://user:password@host:port/database` (MCP-confirmed), where `password` is the
+   generated value from Step 1 (not the old `senzing` default). Generate the full engine config
    via `sdk_guide(topic='configure', ...)` and save it to `config/engine_config.json`.
 
 **Option 2 — Install PostgreSQL locally:** install and start a local PostgreSQL server, create the

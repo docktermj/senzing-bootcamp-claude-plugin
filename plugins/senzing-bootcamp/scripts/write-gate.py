@@ -26,6 +26,14 @@ SECRET_MSG = (
     "variables instead."
 )
 
+# System temp / Downloads locations to block (outside-project writes only). Prefix
+# entries match the start of the normalized, lower-cased path; substring entries
+# match anywhere (Downloads and the Windows temp dir can appear mid-path).
+TEMP_PREFIXES = ("/tmp/", "/var/tmp/", "/private/tmp/", "/private/var/folders/")
+# `/windows/temp/` is the SYSTEM account's temp dir on Windows (%SystemRoot%\Temp) — the
+# Windows counterpart of /tmp, and previously the one uncovered system temp location.
+TEMP_SUBSTRINGS = ("/downloads/", "/appdata/local/temp/", "/windows/temp/")
+
 
 def block(message):
     sys.stderr.write(message + "\n")
@@ -41,6 +49,12 @@ try:
 except (ValueError, AttributeError):
     m = re.search(r'"file_path"\s*:\s*"([^"]*)"', data)
     file_path = m.group(1) if m else ""
+
+# Expand a leading ~ / ~user so a home-relative target (e.g. ~/Downloads/x) is
+# classified by its real location instead of being treated as a bogus in-project
+# segment joined onto the cwd. (No-op on empty/absolute/%TEMP% paths.)
+if file_path:
+    file_path = os.path.expanduser(file_path)
 
 # An unexpanded Windows temp env-var reference (%TEMP%/%TMP%) is always a temp
 # target, independent of the project directory. Windows env-var names are
@@ -85,31 +99,39 @@ def norm(path):
 if abs_path:
     target = norm(abs_path)          # `..` resolved, so escapes can't slip the block
     here = norm(os.getcwd())
-    if target == here or target.startswith(here + "/"):
+    # Case-fold both sides of the exemption with the SAME rule the temp/Downloads
+    # checks use below (Windows/macOS filesystems are case-insensitive), so an
+    # in-project path whose case differs from the cwd is exempted, not blocked.
+    low = target.lower()
+    here_low = here.lower()
+    if low == here_low or low.startswith(here_low + "/"):
         pass  # inside the project -> allowed on location grounds (checked FIRST)
     else:
-        # Temp/Downloads checks are case-insensitive (Windows/macOS filesystems are
-        # case-insensitive). This only ever tightens the block on OUTSIDE-project
-        # paths — in-project paths already passed the exemption above.
-        low = target.lower()
-        if (
-            low.startswith("/tmp/")
-            or low.startswith("/var/tmp/")
-            or low.startswith("/private/tmp/")
-            or low.startswith("/private/var/folders/")
-            or "/downloads/" in low
-            or "/appdata/local/temp/" in low
+        if any(low.startswith(p) for p in TEMP_PREFIXES) or any(
+            s in low for s in TEMP_SUBSTRINGS
         ):
             block(LOC_MSG)
         else:
-            # macOS puts the per-user temp dir under $TMPDIR (e.g. /var/folders/...).
-            tmpdir = os.environ.get("TMPDIR", "")
-            if tmpdir:
-                tmp_norm = norm(tmpdir.rstrip("/")).lower()
-                if low.startswith(tmp_norm + "/"):
+            # Per-user / relocated temp dirs the prefix lists cannot enumerate: macOS puts
+            # its under $TMPDIR (e.g. /var/folders/...), Windows under %TEMP%/%TMP%. Consult
+            # all three so no platform is covered less well than the others (INV-001).
+            for var in ("TMPDIR", "TEMP", "TMP"):
+                env_tmp = os.environ.get(var, "")
+                if not env_tmp:
+                    continue
+                tmp_norm = norm(env_tmp.rstrip("/\\")).lower()
+                if tmp_norm and low.startswith(tmp_norm + "/"):
                     block(LOC_MSG)
 
-if re.search(r"BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY|AKIA[0-9A-Z]{16}", data):
+# Secrets: PEM private keys, AWS access-key IDs, and raw Senzing license payloads
+# (base64 blobs with the documented AQAAAD prefix). The long base64 tail keeps the
+# check off prose that merely mentions "AQAAAD" and off .lic file *paths*.
+if re.search(
+    r"BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY"
+    r"|AKIA[0-9A-Z]{16}"
+    r"|AQAAAD[A-Za-z0-9+/=]{16,}",
+    data,
+):
     block(SECRET_MSG)
 
 sys.exit(0)

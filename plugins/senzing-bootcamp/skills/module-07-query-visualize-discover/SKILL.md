@@ -1,9 +1,9 @@
 ---
 name: module-07-query-visualize-discover
-description: 'Bootcamp Module 7: Query, Visualize, and Discover. Use when the bootcamper starts or resumes Module 7, or needs to query resolved entities, visualize them, and explore results against the business problem.'
+description: 'Bootcamp Module 7: Query, Visualize and Discover. Use when the bootcamper starts or resumes Module 7, or needs to query resolved entities, visualize them, and explore results against the business problem.'
 ---
 
-# Module 7: Query, Visualize, and Discover
+# Module 7: Query, Visualize and Discover
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
@@ -32,8 +32,8 @@ discover capabilities (why, how, relationship networks).
 - ✅ No critical loading errors.
 
 **Success indicator:** ✅ Query programs created and tested + queries answer the business
-problem + the single interactive visualization app offered (entity graph and results dashboard
-are tabs within it) + Discover phase completed or explicitly skipped.
+problem + the single interactive visualization app offered (the entity graph and every results
+view are tabs within it) + Discover phase completed or explicitly skipped.
 
 ## No direct SQL (module-critical)
 
@@ -42,8 +42,11 @@ Senzing database (`database/G2C.db`) or its internal tables (`RES_ENT`, `OBS_ENT
 `DSRC_RECORD`, `LIB_FEAT`, `RES_REL`, etc.). Every entity operation goes through the SDK:
 
 - **Search, get entity, why-matched, how-built, network, path** → generate SDK code via
-  `get_sdk_reference` (flags and method signatures) plus `sdk_guide` / `reporting_guide`
-  (topic `entity_views` for get/why/how patterns, topic `graph` for network/path patterns).
+  `get_sdk_reference` (flags, method signatures, **and response structures** — topics `flags`
+  and `response_schemas`, narrowed with `filter='<method>'`) plus `sdk_guide` /
+  `reporting_guide` (topic `entity_views` for get/why/how patterns, topic `graph` for
+  network/path patterns). Look up the response shape **before** writing code that parses it
+  (INV-115); a wrong field name renders blank rather than raising.
 - **Counts, stats, quality, reporting and visualization data** → `reporting_guide` (topics
   `reports`, `quality`, `evaluation`, `dashboard`, `graph`).
 
@@ -78,6 +81,14 @@ already checkpointed.
 
 ## Module position
 
-Module 7 is the last content module before graduation. The Query Completeness Gate at the end of Phase 1 is the
-module transition: Path A (full bootcamp) proceeds to graduation; Paths B/C
-(shorter paths) may stop here with working query programs. Preserve that gate exactly.
+Module 7 is the last content module before graduation, and it is **required in every path**
+(INV-076). The Query Completeness Gate at the end of Phase 1 is this module's transition: once it is
+satisfied, run module completion and offer graduation. Preserve that gate exactly.
+
+⛔ **Graduation always follows — there is no path that ends here.** Graduation is a Required module
+in both Core and Customized (`../bootcamp-preparation/SKILL.md` → module list), so never tell the
+bootcamper this is where the bootcamp may stop. A bootcamper who wants to keep exploring before
+graduating is welcome to; the offer is simply re-presented when they are ready (INV-014 permits only
+*requested* skips, and graduation cannot be deselected). The retired A/B/C "track" model that once
+allowed a short path ended here was superseded by the Core-vs-Customized path choice (INV-076
+supersedes INV-025).

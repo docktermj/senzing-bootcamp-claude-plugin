@@ -55,8 +55,8 @@ single-source entities to confirm no cross-source matches were missed.
 
 This is validation work only — do **not** produce a visualization here. All results and
 cross-source relationship visualization is offered once, in Module 7 (Query, Visualize and
-Discover), where it is delivered as tabs of the single interactive app (Entity Graph, Cross-Source,
-and Relationship Network) rather than a separate static page (INV-104). Module 6 no longer offers a
+Discover), where it is delivered as tabs of the single interactive app (Entity Graph — including
+its relationship-subgraph mode — and Cross-Source) rather than a separate static page (INV-104). Module 6 no longer offers a
 cross-source visualization, to avoid a duplicate/misplaced offer.
 
 **Checkpoint:** write step 23.
@@ -156,13 +156,135 @@ If a source fails during orchestration, present three options:
 2. **Retry after fix:** pause, fix the issue, retry the failed source.
 3. **Restore and restart:** restore from backup, fix, restart orchestration.
 
+## Match-key audit (run before the iterate-vs-proceed gate)
+
+Every mapping gate the bootcamp runs before this point is **static, single-source, and
+structural** — the analyzer, the verbatim check, the routing report, the quality score. None of
+them evaluates *meaning*. So a whole defect class survives them: two source fields that measure
+different things mapped to the same Senzing feature. Senzing is then told a conflict exists where
+none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
+
+This is the reading that catches it. It also matches the Senzing reporting guidance directly —
+`reporting_guide(topic='quality')`'s anti-patterns say *"Only checking aggregate statistics for
+quality … Aggregate stats hide errors. Always sample and manually review specific entities"* —
+which is exactly the gap the UAT percentages below leave open.
+
+1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
+   against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')` there are
+   **two reads, and they need two different methods** — confirm both via MCP this session:
+
+   | What | Where | How to obtain it |
+   |---|---|---|
+   | Per-record match keys | `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` | a bulk export (`export_json_entity_report`) is fine |
+   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
+
+   ⛔ **Do not expect `RELATED_ENTITIES` from `export_json_entity_report`.** Every
+   relationship-detail flag — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
+   `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS` — lists only the
+   per-entity, `why_*` and `find_*` methods in its `applies_to`; the export methods are **not**
+   among them (verify with `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`).
+   A live run on SDK 4.3.3 returned entity rows with **no `RELATED_ENTITIES` key at all** and no
+   error. Writing the audit as one pass over an export therefore measures only the first row of the
+   table above while appearing to measure both.
+
+   The two export flag families also do different jobs. `SZ_EXPORT_INCLUDE_*` selects **which
+   entities** appear as rows (`..._POSSIBLY_SAME`, `..._DISCLOSED`, `..._ALL_HAVING_RELATIONSHIPS`
+   — all row filters). It does **not** select what detail a row carries: an export flagged with
+   only those succeeds and yields rows containing nothing but `ENTITY_ID`. The Senzing reporting
+   guidance names this as an anti-pattern — *"Exporting without proper flags … Use
+   `SZ_EXPORT_DEFAULT_FLAGS` or specify exactly which flags you need. Missing flags means missing
+   data in your reports."* — so start from `SZ_EXPORT_DEFAULT_FLAGS` and add row filters, rather
+   than OR-ing row filters alone.
+
+   ⚠️ **Confirm a composite exists on *your* binding before using it.** `SZ_EXPORT_ALL_FLAGS` is
+   documented for the export methods, but it comes from the Java SDK's flag enum and is **absent
+   from the Python binding's `SzEngineFlags`** in 4.3.3 (`AttributeError`). Flag *names* are not
+   uniformly available across bindings — introspect (`dir(SzEngineFlags)`) or confirm via MCP for
+   the bootcamper's language instead of copying a name from cross-language documentation.
+
+   A worked expression for a detail-carrying export in Python — start here rather than assembling
+   row filters and hoping:
+
+   ```python
+   from senzing import SzEngineFlags
+
+   # SZ_EXPORT_DEFAULT_FLAGS carries the per-entity detail; add row filters only to widen
+   # WHICH entities appear. Re-confirm both names via MCP this session (INV-080) — this is a
+   # worked example, not a substitute for the lookup.
+   flags = (
+       SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS
+       | SzEngineFlags.SZ_EXPORT_INCLUDE_ALL_ENTITIES
+   )
+   handle = sz_engine.export_json_entity_report(flags)
+   try:
+       row = sz_engine.fetch_next(handle)   # dump this ONE row and read it before parsing
+       print(row)
+   finally:
+       sz_engine.close_export_report(handle)   # close_export_report, not close_export
+   ```
+
+   Before parsing the whole reader output, **dump one raw row** and confirm the fields the parser
+   expects are actually present (INV-115). This is the check that turns "4,587 rows exported
+   successfully, all containing only `ENTITY_ID`" from a wasted validation pass into one line of
+   output.
+2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
+   and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
+   `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
+   by frequency, and **separate single-source from cross-source** comparisons — the cross-source
+   ones are where a mapping disagreement between two sources shows up.
+3. ⛔ **An empty cross-source suppressor list is a plumbing failure until proven otherwise.**
+   "No suppressors found" and "this reader cannot answer the question" render identically — a
+   clean result — so never report the first without ruling out the second. Before making any
+   "no cross-source suppressors" statement, prove the reader can see relationships at all:
+
+   - Take one entity known to have a relationship (any entity with a `POSSIBLY_SAME` /
+     `POSSIBLY_RELATED` link, or use the relationship count you already have from the load
+     summary). If the loaded data genuinely has **zero** relationships, say that instead — the
+     question does not arise.
+   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it.
+
+   If that check fails, report **"the audit could not read relationship match keys"** and name the
+   reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a
+   probable wrong reader before it is real absent data).
+
+4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
+   is detracting on a large share of cross-source comparisons, say so plainly and ask the
+   bootcamper to check whether the two sources' fields for that feature genuinely measure the same
+   thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two
+   records really do disagree), and a hard failure here would produce false alarms and train
+   bootcampers to dismiss the signal — which would cost more than the check gains.
+5. **Carry the outcome into the decision gate below**, alongside the UAT numbers. The audit has
+   **three** outcomes, not two — finding, no finding, and could-not-measure — and the gate must be
+   told which one it got.
+
+> **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
+> (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates
+> before it incorporates, so the two disagreed on up to 676 records and `-REGISTRATION_DATE`
+> appeared on nearly every cross-source match key. All five static gates passed; the quality score
+> was 86.3%. Routing one field to payload instead — no other change — took cross-source merges from
+> 1 to 4 and links from 160 to 170. The signal was there the whole time; nothing was reading it.
+
 ## Iterate vs. proceed decision gate
 
-Route on the UAT / match-accuracy results:
+Route on the UAT / match-accuracy results, **and present the match-key audit outcome alongside
+them** — the percentages alone cannot see a suppressor problem, so a bootcamper choosing between
+iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
+to choose "iterate now" even when the numbers look acceptable.
+
+State which of the audit's three outcomes applies; do **not** collapse the third into the second:
+
+- **A finding** — name the suppressing feature and its share.
+- **No finding** — the audit ran and found nothing of concern.
+- **Could not measure** — the relationship half of the audit did not execute (step 3). Say so
+  plainly rather than letting silence imply a clean result: a gate decided on an unmeasured number
+  is worse than a gate told the measurement failed. This still does not block (INV-117) — it is a
+  third finding that routes, not a new blocker.
 
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
-  transition question.
-- **UAT <80%:** state "Results need improvement — I recommend going back to Data quality & mapping
+  transition question. **If the audit produced a finding, say so in the same breath** — strong
+  numbers plus a suppressing feature is exactly the case this audit exists to surface, and the
+  bootcamper should hear it before moving on.
+- **UAT <80%:** state "Results need improvement — I recommend going back to Data Quality, Mapping, and Transformation
   to refine the mapping." and proceed to the transition question.
 - **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
   (neutral lead + numbered list, INV-051):

@@ -54,9 +54,10 @@ immediately before Step 1:
 6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,
    varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
    figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
-7. **Model/effort (INV-063):** surface the recommended model/effort per ground-rules; it is
-   unchanged from System verification (Module 3 tier), so a concise, non-blocking statement (never
-   omitted — INV-063 requires it at every module start).
+7. **Model/effort (INV-063/INV-137):** surface the recommended model/effort per ground-rules. The
+   recommendation is unchanged from System verification (Module 3 tier), so this is a concise,
+   non-blocking one-line statement rather than a switch question. There is no `model_guidance`
+   preference to read (INV-137).
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)
@@ -182,12 +183,20 @@ proceed to the live server: fix the underlying cause (regenerate faulty code fro
 re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
 and retry until the snapshot is written — the module does not complete without it.
 
-**Capture screenshots for the recap (optional, non-blocking).** With the snapshot at
-`docs/visualizations/truthset_verification.html`, capture a few screenshots for the recap —
-`{html}` = `truthset_verification.html`, `{name}` = `truthset_verification` — per
-`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots". If no
-headless capability is available it skips silently; otherwise keep the 2-3 best and embed them in
-this module's recap `Actions Taken`. This is never a 👉 question and never blocks the visualization.
+**Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
+running (2.3) and capture from **`--url http://localhost:8080`**, one image per tab, so the
+Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
+inert. `{name}` = `truthset_verification`. Follow
+`../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
+rule that every caption is derived from the opened image and its tab label, never from the plan.
+
+If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
+and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
+is available it skips silently; otherwise keep the 2-3 best and embed them in this module's recap
+`Actions Taken`. This is never a 👉 question and never blocks the visualization.
+
+⛔ Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) — afterwards the
+server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.
 
 ### 2.3 Start the live web app
 
@@ -217,7 +226,7 @@ The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeo
 | `GET /api/search?q=Robert Smith` | HTTP 200; `results` array with resolved entities, each carrying `match_key` and `resolution_rule` |
 | `GET /api/why?entity_id=<id>` | HTTP 200; real `WHY_RESULTS` (or an `error` field) explaining why the entity's records resolved together |
 | `GET /api/how?entity_id=<id>` | HTTP 200; real `HOW_RESULTS` (or an `error` field) explaining how the entity was constructed |
-| `GET /api/dashboard` | HTTP 200; `counts`, `histogram`, and `sample_entities` for the results dashboard |
+| `GET /api/records?entity_id=<id>` | HTTP 200; `entity_id`, `entity_name`, and a `records` array carrying each constituent record's `data_source`, `record_id`, and fields — backs the Records action on every entity surface |
 | `GET /api/overlap` | HTTP 200; `sources` + square `matrix` of cross-source shared-entity counts |
 | `GET /api/matchkeys` | HTTP 200; `match_keys` (most-frequent first) + `distinct` + `capped` |
 | `GET /api/features` | HTTP 200; `features` (per-feature score-bucket counts), `sampled`, `multi_record_total`, `capped` |
@@ -226,36 +235,74 @@ The live page is a **single consolidated, tabbed app** — the one visualization
 separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
 shown:
 
+**Every entity shown with actions gets the same three buttons — Records / Why? / How? — with no
+exceptions**, and **every aggregate view drills down** to the entities behind it. Those two rules,
+the Why?/How? rendering contract, the graph label/legend rules, and the search-hint requirement are
+specified in `visualization-api-reference.md` → "Per-entity actions" and "Rendering contract".
+Build to that contract; the summaries below are the tab inventory, not the full requirements.
+
 1. **Entity Graph** (default): D3 v7 force-directed graph of the full entity population. Nodes
    colored by data source (CUSTOMERS ember/orange, REFERENCE blue, WATCHLIST gold/amber), sized by
-   record count, edges labeled with match keys, hover tooltip, click-to-detail modal, zoom/pan, and
-   a color legend. This is also the cross-source entity-relationship view (it subsumes the former
-   `multi_source_results.html`). (Your server MUST perform the edge-key mapping,
-   `source_entity_id`/`target_entity_id` → `source`/`target` before `forceLink` — per Step 2's
-   intro; omitting it renders an empty graph.)
-2. **Relationship Network** (when relationships exist): the subgraph of entities connected by
-   relationships (possible matches / disclosed relations), edges colored by relationship type with a
-   type legend — distinct from Entity Graph, which shows the full population.
-3. **Record Merges:** cards showing each multi-record entity's constituent records, each with
-   **Why?** and **How?** actions that call `/api/why` and `/api/how` and render Senzing's
-   explanation (match keys, feature scores, construction steps) in a modal.
-4. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) with a summary sentence —
-   this **is** the entity-size distribution; the bars are **clickable** (backed by `bucket_entities`)
-   and drill down to the entities in each bucket, each linking to its **How?** explanation.
-5. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
-   combinations) that drove resolutions.
-6. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
-   resolved records, from a capped `why_records` sample; the tab always shows the sample size.
-7. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
-   sources shares.
-8. **Results Dashboard:** headline counts, the records-per-entity histogram, and a sample of the
-   largest resolved entities.
-9. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it, plus the same **Why?** / **How?** actions.
+   record count, hover tooltip, click-to-detail modal with the three actions, zoom/pan, and a
+   click-to-filter source legend generated from the data. Independent node-label and edge-label
+   toggles, defaulting off above ~150 nodes with an on-screen note saying why. This is also the
+   cross-source entity-relationship view (it subsumes the former `multi_source_results.html`).
+   (Your server MUST perform the edge-key mapping, `source_entity_id`/`target_entity_id` →
+   `source`/`target` before `forceLink` — per Step 2's intro; omitting it renders an empty graph.)
 
-Do **not** add redundant tabs — the entity-size distribution is Merge Statistics, and the
-cross-source entity-relationship view is Entity Graph (per `visualization-api-reference.md` →
-"De-duplication").
+   It also carries a **"Show only entities with relationships"** toggle, shown only when
+   `relationships_total > 0`. Switched on, the graph filters to the subgraph of entities that a
+   relationship connects and styles edges by `relationship_type` (colour **plus** line style), with
+   a click-to-filter type legend built from the types actually present. Same label toggles and
+   scale-aware defaults in both modes. This is a **mode of this tab, not a second tab** — both modes
+   are served by the same `/api/graph` payload, so a standalone "Relationship Network" tab would be
+   a duplicate (contract: "De-duplication (required)").
+2. **Merge Statistics:** records-per-entity histogram (1 / 2 / 3 / 4+) — this **is** the entity-size
+   distribution; the bars are **clickable** (backed by `bucket_entities`) and drill down to the
+   entities in each bucket. Beneath it, the largest resolved entities from `sample_entities`. Both
+   lists use the three actions. Headline counts live in the page summary strip and are **not**
+   repeated here.
+3. **Match Keys** (when multi-record entities exist): frequency of the match keys (feature
+   combinations) that drove resolutions; **rows are clickable** (backed by `match_key_entities`) and
+   drill down to the entities carrying that key.
+4. **Feature Scores** (when multi-record entities exist): how tightly each feature agreed across
+   resolved records, from a capped `why_records` sample; the tab always shows the sample size.
+5. **Cross-Source** (when 2+ data sources): overlap heatmap of how many entities each pair of
+   sources shares; **cells are clickable** (backed by `cell_entities`) and drill down to the
+   entities in that cell.
+6. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
+   match key / resolution rule that linked it, plus the three actions. Ships with pre-verified
+   example-query chips that fill **and** run the search on click, and a **"Show all merged
+   entities"** button that lists every multi-record entity with no query — the no-query browse that
+   the former Record Merges tab uniquely offered. This must work in the standalone snapshot too, so
+   it reads the embedded `merges` payload rather than the live search.
+
+Do **not** add a tab whose content is derivable from another tab's endpoint. In particular there is
+**no "Results Dashboard" tab** — its counts and histogram duplicated `/api/stats`, and its unique
+content (the largest resolved entities) is now `sample_entities`, rendered on Merge Statistics. The
+entity-size distribution is Merge Statistics, and the cross-source entity-relationship view is
+Entity Graph (per `visualization-api-reference.md` → "De-duplication").
+
+### 2.4b Any change to the visualization means rebuilding the snapshot
+
+⛔ **If the visualization's code changes for any reason after 2.2 — a bootcamper request, a bug fix,
+a styling tweak — re-run the build-only snapshot step (2.2) and re-verify it. Do not stop at
+re-verifying the live server.**
+
+This is a numbered step, not a note, because the failure is silent and permanent. The snapshot is
+the artifact the bootcamper keeps and the one embedded in the recap; the live server is torn down at
+module close, and Step 4 then **purges the Truth Set records**, so after that point the snapshot
+cannot be rebuilt at all — the data it needs is gone. A change that is not in the snapshot did not
+happen as far as the bootcamper's permanent record is concerned.
+
+It has happened: two design simplifications were implemented, verified on the live server, and
+approved by the bootcamper, but the snapshot was never rebuilt. The keepsake shipped with the
+eight-tab UI they had asked to change, contradicting the recap prose in the same section — a claim
+and a screenshot that disagree.
+
+After rebuilding, confirm the snapshot's tab set matches the running server's (Step 3's completion
+check in `phase2-close.md` verifies this too) and re-capture any screenshots taken from the stale
+copy.
 
 ### 2.5 Present it and give the guided tour
 
@@ -263,7 +310,8 @@ Tell the bootcamper the app is running and where the saved copy is:
 
 - "Your visualization is running at `http://localhost:8080`, open it in your browser."
 - "A saved copy is at `docs/visualizations/truthset_verification.html`, you can open that file
-  any time, even after we stop the server."
+  any time, even after we stop the server. Every tab still works offline there, except **Why?**,
+  **How?**, and live search — those need the running engine, so use them while the server is up."
 
 Then deliver this guided tour as one message (no interactive pauses):
 
@@ -279,19 +327,25 @@ Then deliver this guided tour as one message (no interactive pauses):
   bars at 2/3/4+ are where Senzing found duplicates.
 - **Search / Probe:** type a name (try "Robert Smith") to see the resolved entity and why it
   matched.
-- **More tabs:** the **Results Dashboard** summarizes the run at a glance; **Match Keys** and
-  **Feature Scores** show what drove the resolutions; **Cross-Source** (with 2+ sources) maps where
-  your sources overlap; **Relationship Network** shows how entities connect. (Point these out
-  briefly — one line — under `concise`/`minimal` verbosity, or skip the list.)
+- **More tabs:** **Match Keys** and **Feature Scores** show what drove the resolutions;
+  **Cross-Source** (with 2+ sources) maps where your sources overlap. On **Entity Graph**, the
+  "Show only entities with relationships" toggle narrows the picture to just the entities that
+  connect to something else. (Point these out briefly — one line — under `concise`/`minimal`
+  verbosity, or skip the list.)
 
 ---
 
-Take your time exploring the visualization.
+Take your time exploring the visualization — the server stays up.
 
 👉 **Are you ready to continue?**
 
 *(Internal: end the turn on this question and wait for the bootcamper to confirm they are done
 exploring. Do not proceed to Phase 2 (the close) until they respond.)*
+
+⛔ **This question does not authorize teardown.** It asks whether the bootcamper is ready to move on
+in the module — nothing more. The server keeps running past it; stopping it and purging the data
+require their own gate in Phase 2 Step 4 (see `visualization-api-reference.md` → "Server lifetime").
+Never treat a yes here as consent to stop the server.
 
 **On failure:** report the specific endpoint or step that failed and the fix:
 

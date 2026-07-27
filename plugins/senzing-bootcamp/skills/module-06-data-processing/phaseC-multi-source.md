@@ -150,11 +150,19 @@ Drain the redo queue, critical after multi-source loading for cross-source match
 Use `generate_scaffold(language='<chosen_language>', workflow='redo', version='current')` and
 override paths to `database/G2C.db`.
 
+⛔ **Same batch-drain requirement as Phase B, step 9** — read it there rather than re-deriving it.
+In short: the MCP redo templates target streaming ingest and the observed one never terminates on an
+empty queue, so check the returned snippet and, if it loops, replace the sleep-and-continue with a
+break. The loop sentinel is the **fetch returning no record**, never a redo-count method (full table
+scan per call, and processing redo generates more redo). Report the count processed and that the
+queue reached empty.
+
 **Production redo patterns:**
 
 - Process redos after all sources are loaded (not between sources) to minimize redundant
   re-evaluations
-- Monitor redo queue depth during processing, a growing queue may indicate data-quality issues
+- Monitor redo queue depth during processing, a growing queue may indicate data-quality issues —
+  monitoring depth is not the same as using it as the loop condition, which the batch drain forbids
 - Log redo processing statistics: total redos processed, duration, entities affected
 
 Tell the bootcamper: "Processing the redo queue now. This refines cross-source entity resolution.

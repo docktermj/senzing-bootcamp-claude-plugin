@@ -1,0 +1,94 @@
+# Phase 2 — Hooks and bundled scripts
+
+Execute all six hooks and every bundled script against a **realistic** bootcamp
+project. The realism is the whole point: an empty directory exercises the gating
+branch and nothing else, and most of these scripts only misbehave when the state
+they read is mid-flight.
+
+## Build the project first
+
+```bash
+python3 .claude/skills/dry-run/scaffold_project.py "$HOME/senzing-bootcamp-dryrun"
+```
+
+The scaffold prints which fixture exercises which invariant. Each one is there
+because a naive fixture hid a defect:
+
+- **A mid-module recap** with a completed section and all four subsections — an empty
+  recap never exercises the parser.
+- **An unfinalized `<!-- RECAP-CHECKPOINT -->` block** — the state the durability
+  hooks produce and module-completion is supposed to clear (INV-059).
+- **A feedback file with a precious entry** — graduation must never touch it (INV-067).
+- **Deliberately messy Markdown** — the normalizer needs something to normalize.
+- **A `docker_containers` list** naming a container that does not exist — the
+  warn-and-continue path (INV-101).
+- **A long module name** — the recap generator's cover chips clip at 46 characters and
+  "Data Quality, Mapping, and Transformation" is 41, so the shipped example fixture
+  sits *under* the threshold and hid a renderer crash.
+
+## Order of operations
+
+### 1. Hooks outside a bootcamp (the gating claim)
+
+`hooks/README.md` claims every hook "no-ops unless a `config/bootcamp_progress.json`
+file exists". Test that first, from a directory with no such file: all six must exit
+0 and emit nothing. A hook that fires in an unrelated session is a serious defect —
+the plugin is installed globally.
+
+### 2. Hooks inside the bootcamp
+
+Feed each its real stdin shape (`{"prompt": …}` for `UserPromptSubmit`,
+`{"tool_name","tool_input"}` for `PreToolUse`, `{"stop_hook_active","transcript_path"}`
+for `Stop`) and assert on behavior, not just exit status:
+
+- **write-gate** — must block `/tmp/…`, `~/Downloads/…`, `C:\Windows\Temp\…`, a
+  relocated `%TEMP%`, a PEM key, an AWS key id and an `AQAAAD…` licence blob, while
+  **allowing** project-relative writes (INV-109, INV-001). Include a project whose
+  own path contains `tmp` — it must not trip.
+- **feedback-capture** — must inject guidance for a feedback prompt and stay
+  **silent** on an unrelated one.
+- **stop-nudge** — must stay silent when the transcript is unreadable *and* when
+  `stop_hook_active` is true (INV-054: a missed nudge is far cheaper than a duplicate
+  question), and must honor both documented opt-outs (INV-055).
+- **The three fold hooks** — run `precompact-recap` **three times** and assert the
+  recap has one checkpoint block, one section per module, and an untouched completed
+  section. Idempotency is the invariant (INV-059); one run cannot show it.
+
+### 3. Bundled scripts
+
+Drive each and **inspect the artifact, not the exit code** (INV-129):
+
+- `normalize_docs_markdown.py` — the feedback file must be **byte-identical** after
+  (hash it before and after), and the recap's non-whitespace word count must not drop.
+- `generate_recap_pdf.py` — check which renderer it reports. A `PDF generated:` line
+  with `renderer: stdlib` when `fpdf2` is installed means something crashed the
+  preferred path and was caught; that is a defect, not a fallback. Then `--check
+  --expect-modules "…"` with **semicolons** (two module names contain commas).
+- `generate_discoveries_pdf.py` — feed it junk and confirm it writes **no** PDF
+  (INV-110).
+- `capture_screenshots.py` — pass a tab that is not in the page; it must skip it with
+  a message on stderr rather than saving the default tab under that name (INV-122),
+  and name files by tab slug.
+- `senzing_viz_server.py --no-serve --snapshot …` — without `libSz.so` it must fail
+  loudly and write **no** snapshot; a blank page would satisfy the file-exists check
+  while failing INV-077.
+- `brand_tokens.color_for_sources()` — pass sources that are **not** the Truth Set's
+  names, which is every real bootcamper's case (INV-127). Assert distinct encodings,
+  including more sources than palette entries (it must vary a second channel, not
+  reuse a colour), and that the result is order-independent.
+
+## Interpreting a caught exception
+
+Several scripts catch broadly and degrade on purpose — that is INV-066/INV-111
+behavior and it is correct. The trap is that **a correct fallback hides an incorrect
+cause**. When you see a fallback message, ask why the preferred path failed rather
+than accepting the degradation. The `_clip` ellipsis defect was found exactly this
+way: the renderer reported its own failure honestly, and the reported *reason* was
+the bug.
+
+## Do not
+
+⛔ Trust `grep -c` on a restored file without clearing `__pycache__` first — see the
+SKILL's absolute rules.
+
+⛔ Leave the scratch project behind. `rm -rf "$HOME/senzing-bootcamp-dryrun"`.

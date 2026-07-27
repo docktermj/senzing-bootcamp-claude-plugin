@@ -10,12 +10,23 @@ steering files.)
 - Check `config/bootcamp_progress.json`. If present, resume; if not, run onboarding.
 - Call the Senzing MCP `get_capabilities` tool once at session start, before other Senzing
   MCP calls.
+- **A value you measured on this machine governs over generic guidance about that same value.**
+  MCP output is authoritative for Senzing *facts* (INV-080) — method names, attribute names, flags,
+  behaviour. It is **not** authoritative about the state of *this* installation when the tool never
+  saw it: a note computed from a parameter you supplied is a conditional, not a measurement. Where
+  the bootcamp already holds a detected value for the same thing — the licence record limit, the
+  installed SDK version, the platform — the detected value decides, the generic note is suppressed
+  rather than relayed (INV-012), and the divergence is recorded in the checkpoint rather than shown
+  to the bootcamper. This is **not** licence to answer from training data: both sides are still
+  MCP-sourced, one generically and one by measuring the bootcamper's own machine.
 - **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
   best-value recommendation (see "Module start banners and transitions" below): a single 👉 switch
-  question when the recommendation changes from the current stage, otherwise a brief statement. The
-  heavier Modules 2 and 5 and graduation warrant Opus 4.8 + high effort, lighter modules Sonnet 5.
+  question when the recommendation differs from what they are running, otherwise a brief statement.
+  The code-heavy stages — SDK setup, Truth Set visualization, and everything from Data Quality,
+  Mapping, and Transformation through graduation — warrant Opus 5 + high effort; the lighter
+  conversational and collection stages Sonnet 5.
   Do not change the session yourself — only the bootcamper can.
 
 ## Conversation protocol (the 👉 rules)
@@ -29,6 +40,15 @@ steering files.)
 - Each 👉 question has exactly one meaning for "yes" and one for "no". For two or more
   alternatives, use a neutral lead question plus a numbered list. Confirm first; ask for
   corrections only if the answer is no.
+- **The one sanctioned "or" — an answer-FORMAT hint on a yes/no question, never a choice.** A
+  yes/no question MAY carry an answer-format hint; the canonical form is a trailing
+  `(respond yes or no)`. INV-051 exempts exactly this, because it clarifies the answer shape rather
+  than joining two alternatives. It is optional and used sparingly (a handful of confirm-style gates
+  carry it); do **not** add or remove it from a question whose wording is pinned verbatim (INV-056).
+- **Nowhere else.** Never use "or" in a 👉 question for anything but that hint — above all never to
+  join the choices themselves (INV-051), and not to offer an escape option on a numbered question
+  either. A multi-select's "select nothing" answer is written as its own clause, not with "or":
+  `Reply with the numbers …, comma-separated — reply "none" for just the required modules.`
 - **Never fabricate or simulate the bootcamper's response.** Never emit text starting with
   "Human:" or "User:". Stop and wait at every 👉 question and every gate.
 - `🛑 STOP` and `⛔ MANDATORY GATE` are INTERNAL control directives - never render them to the
@@ -37,6 +57,15 @@ steering files.)
   referencing at least one specific thing they said. Never a bare "Got it." / "Okay." A
   dead-end acknowledgment (no next step, no question) is a violation - always follow with the
   next step or the next 👉 question.
+  - **When the answer carries nothing to reference, name the consequence instead.** A bare
+    readiness signal ("no", "ready", "let's go"), a bare option number, or a one-word decline has
+    no specific content to quote, so the requirement above is unsatisfiable as literally written.
+    Satisfy its **intent** — prove you read the answer — by naming what that answer selected or
+    what happens because of it: "Core it is — that includes all eleven modules" rather than a bare
+    "Got it." Do not manufacture a quote, and do not pad the reply to reach two sentences.
+
+    Once the bootcamper says something substantive, the reference-something-specific form applies
+    again; this carve-out is for content-free answers only.
 - **Continuation requests** ("continue", "keep going", "next", "proceed", "move on") -> give
   the next step this same turn. Never suggest pausing, "take a break", or "pick this up later".
 - After the bootcamper answers a pending 👉 question, processing that answer is the FIRST
@@ -57,8 +86,12 @@ steering files.)
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
 - **Tool routing:** attribute names / JSON mappings -> `mapping_workflow`; SDK code ->
-  `generate_scaffold` or `sdk_guide`; method signatures and flags -> `get_sdk_reference`; error
-  codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
+  `generate_scaffold` or `sdk_guide`; **method signatures and parameter types** ->
+  `get_sdk_reference` topic `methods` (aliases `functions` / `classes` / `api`), which searches the
+  SDK docs for signatures, parameters and examples — narrow with `filter='<method or class>'`;
+  flags **and response structures** ->
+  `get_sdk_reference` (topics `flags` and `response_schemas`; narrow with `filter='<method>'`);
+  error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
 - Never hand-code Senzing JSON mappings or SDK method names.
@@ -66,8 +99,65 @@ steering files.)
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
   returns no answer, say so and point to <https://docs.senzing.com> / <support@senzing.com>.
 - **Flags:** before an SDK call that accepts flags, look them up with
-  `get_sdk_reference(topic='flags')`, pick the flags matching the bootcamper's intent, explain
-  the choice in one sentence, and reuse that knowledge within the module.
+  `get_sdk_reference(topic='flags', filter='<method>')`, pick the flags matching the
+  bootcamper's intent, explain the choice in one sentence, and reuse that knowledge within the
+  module.
+- **Response structures (INV-115).** Flags are only half the lookup. Before writing any code
+  that **parses** an SDK response, call
+  `get_sdk_reference(topic='response_schemas', filter='<method>')`. **Never infer field names
+  from an example snippet** — including the illustrative payloads in this plugin's own docs.
+  This matters more than flags do: a wrong flag usually yields a visible error, whereas a wrong
+  field name yields `None`, which renders as blank text. The output then looks like "Senzing
+  found nothing" instead of a defect, so nobody reports it.
+- **Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
+  **probable wrong field name first and absent data second** — verify against
+  `response_schemas`, or dump one raw response and read it, before rendering. Never present a
+  blank value as a real result: say "no value returned for X" so the failure is visible. Note
+  `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
+  under `MATCH_INFO`), the raw-response dump is the authority.
+- **Parameter shapes, for the bootcamper's binding.** The `flags` and `response_schemas` topics
+  cover what a method *returns*, not what it *takes* — but **`get_sdk_reference` does answer
+  parameter shapes, via `topic='methods'`**, and that is the first place to look before **calling**
+  an SDK method:
+
+  ```text
+  get_sdk_reference(topic='methods', filter='find_network_by_entity_id')
+  ```
+
+  returns the binding's own signature —
+  `find_network_by_entity_id(entity_ids: List[int], max_degrees: int, build_out_degrees: int,
+  build_out_max_entities: int, flags: int) -> str` — alongside the Java/C#/Rust equivalents.
+  (Verified against the live server 2026-07-26. An earlier version of this rule asserted the MCP
+  reference could not reach parameter shapes and sent you straight to local introspection; that was
+  wrong, and routing away from MCP is the one thing the MCP-first invariant forbids.)
+  ⛔ **Cross-language documentation is still not authoritative for the shape you must pass:** the
+  same method takes a JSON document in one binding and a native collection in another. Python's
+  `find_network_by_entity_id` takes a plain `List[int]` of entity IDs, not the
+  `{"ENTITIES": [{"ENTITY_ID": n}]}` document the flags docs and the Java/C# signatures imply —
+  passing the document raises `SzSdkError`. So read the signature **for the bootcamper's language**,
+  not the first one returned. Only when `topic='methods'` genuinely does not cover it, fall back to
+  **introspecting the installed binding** (`help(...)`, `inspect.signature(...)`,
+  `dir(SzEngineFlags)`) — never to another language's example.
+- **Flag families answer different questions.** Confirm what a flag family *selects*, not just
+  that the name exists. On the export methods, `SZ_EXPORT_INCLUDE_*` chooses **which entities**
+  appear as rows while `SZ_ENTITY_INCLUDE_*` chooses **what detail** each row carries, so an
+  export flagged with only the former succeeds and writes rows containing nothing but
+  `ENTITY_ID` — a valid-looking result with no usable fields. A composite's availability is also
+  per-binding: `SZ_EXPORT_ALL_FLAGS` is documented for the export methods but is absent from the
+  Python binding's `SzEngineFlags`, so confirm a composite exists on *your* binding before
+  reaching for it.
+- **The factory must outlive every engine it creates.** Object lifetime, not just thread-safety:
+  an engine does not keep its factory (environment) alive, so a helper that builds the factory in a
+  local and returns only the engine returns a **dead** engine. In a garbage-collected language the
+  factory is collected when the helper returns, and the first engine call then fails with
+  `SzSdkError - engine object has been destroyed and can no longer be used, create a new one`.
+  That message means *collected*, not explicitly destroyed — there is no `destroy()` to hunt for —
+  and it surfaces at the first call, far from the line that caused it. Hold the factory for the
+  process lifetime, or return it alongside whatever it created. The framing is ownership, not a
+  Python idiom (INV-002): however your language expresses it, the factory's lifetime must enclose
+  every engine's. Worked example in the bundled reference server: `scripts/senzing_viz_server.py`
+  returns `factory` next to `engine` for exactly this reason. Confirm the error text against the
+  installed SDK rather than trusting this note (INV-080).
 - **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
   bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
   examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via
@@ -193,6 +283,14 @@ never count against the one-question-per-turn rule and must not be treated as ga
   one, and do not advance.
 - **Ask-once:** ask each question only once. Do not re-ask a question the bootcamper already
   answered unless they request the repeat.
+  - **A pending, *unanswered* question is different — re-present it verbatim.** After any
+    interruption that left a 👉 question hanging — a compaction, a session boundary, the feedback
+    detour, or the bootcamper going off on a tangent and coming back — re-present that exact
+    question rather than skipping it or inventing a new one. This is **not** a re-ask: ask-once
+    protects the bootcamper from answering the same thing twice, and an unanswered question has no
+    answer to protect. Skipping it is the real violation, because it advances on an answer nobody
+    gave (INV-007). `feedback.md` Step 4 mandates this for the feedback detour specifically; the
+    same rule applies to every other interruption.
 
 ## Module start banners and transitions
 
@@ -239,53 +337,111 @@ never count against the one-question-per-turn rule and must not be treated as ga
   Code (CLI)** present the exact `/model` and `/effort` commands; on **Desktop, web, or an IDE
   extension** — or when the surface is unknown — phrase it by intent, naming the recommended model
   and reasoning-effort level and directing the bootcamper to their Claude app's model/effort
-  controls, without hardcoding a UI label that may drift. Two cases:
-  - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
-    end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
-    Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
+  controls, without hardcoding a UI label that may drift.
 
-    On the **CLI**, pin the switch question verbatim with the stage's commands:
+  ⛔ **This behavior is unconditional — there is no preference to read and no mode to choose
+  (INV-137).** The bootcamp is never asked how it wants model guidance handled, and there is no
+  `model_guidance` key.
 
-    > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
+  ⛔ **Compare the recommendation against what the bootcamper is running right now — not against
+  the previous stage's recommendation.** You are told which model you are running, so read the
+  model side from that; for effort, use the value in force when you can determine it. **Only when
+  the current setting cannot be determined**, fall back to comparing against the stage just
+  completed. Comparing recommendation-to-recommendation asks a bootcamper already on Opus 5 at high
+  effort "would you like to switch to Opus 5 at high effort?" — a question whose answer changes
+  nothing, which is exactly what INV-006 and INV-012 forbid. Running one model for the whole
+  bootcamp is a supported choice, so this is the common case, not an edge case.
+
+  Two cases, decided only by that comparison:
+
+  - **The recommendation differs from the current setting** — in **either** direction. A step down
+    asks just as a step up does: the choice is the bootcamper's both ways. End the turn with a
+    **single** 👉 yes/no question offering the switch, and do NOT also show Step 1 this turn
+    (exactly one 👉 per turn — INV-008/INV-009).
+
+    **Name only the dial that differs.** Model and effort are **separate dials**: a bootcamper on
+    Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
+    the effort only, never told to re-set the model they are already on.
+
+    On the **CLI**, pin the switch question verbatim, substituting only the bracketed values — the
+    stage's commands, and just the one dial when only one differs:
+
+    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current model.)
 
     On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
     stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to Opus 4.8 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+
+    ⛔ **When the recommendation sits *below* the current setting, say so in the question itself.**
+    Add one clause naming it as a step down, stating that the recommendation is about cost rather
+    than capability and that staying put costs them nothing — e.g. "this is a step down from your
+    current {current}; it is a cost saving, not a capability the module needs, so staying put is
+    fine." Without it the bootcamper is being asked to accept a worse experience for no stated
+    reason. It never reads as advice to downgrade.
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
     telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
-    or use the model and reasoning-effort controls in their Claude app), then end the turn on this
-    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts
-    to the surface) — do NOT show Step 1 yet:
+    or use the model and reasoning-effort controls in their Claude app — naming only the dial that
+    is moving), then end the turn on this pinned confirmation gate (its question verbatim,
+    INV-056/INV-069 — only the answer hint adapts to the surface) — do NOT show Step 1 yet:
 
     > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
     Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
     acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
     (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
-    turn, ending on Step 1's single 👉 question. You never change the session yourself — only the
-    bootcamper can.
-  - **Recommendation unchanged** → a brief one-line statement; no question, so the
-    bootcamp never asks a pointless "switch?" every module (INV-012).
+    turn, ending on Step 1's single 👉 question.
+  - **The recommendation matches what they are already running** → a brief one-line statement; no
+    question, so the bootcamp never asks a pointless "switch?" every module (INV-012). The statement
+    names the recommended model and effort as **separate dials**, notes either can be
+    changed at any time and applies from the next message, and — when the recommendation sits
+    *below* the current setting — says so explicitly with why the carve-out may not apply, so it
+    never reads as advice to downgrade.
 
-  Switching is always optional — running one model for everything (Opus 4.8) stays valid. Per-stage
-  recommendation (keep in sync with `../../docs/model-selection.md`):
+  ⛔ **You never change the session yourself — only the bootcamper can.** That is why the switch is
+  offered as a question rather than performed. The "Are you done modifying the model and effort?"
+  gate follows a **yes** to the switch and nothing else: never after a decline, and never when the
+  recommendation already matched.
+
+  Switching is always optional — running one model for everything (Opus 5) stays valid. Per-stage
+  recommendation — **this table is the authoritative copy** (the one in
+  `../../docs/model-selection.md` is derived from it; change this one first). Model names, IDs, and
+  the values below are point-in-time and go stale when a new model ships; `docs/model-selection.md`
+  carries the dated verification note, and `tests/test_model_guidance_sync.py` fails if the two
+  tables drift or if any superseded model name survives (INV-114):
+
+  **One row per stage, in the order the bootcamp runs them** — so the next stage's recommendation
+  can be read off directly, and so no stage is ever missing a value to compare against. Each row
+  names exactly **one** model and **one** effort: a conditional recommendation cannot be pinned into
+  a verbatim question (INV-056) and gives the comparison above two answers.
 
   | Stage | Recommended | CLI commands |
   |---|---|---|
-  | Onboarding, Bootcamp preparation, Modules 1, 3, 4, 7, Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-  | Modules 2, 5 | Opus 4.8, high effort | `/model opus` · `/effort high` |
-  | Module 6 | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
-  | Graduation | Opus 4.8, high effort | `/model opus` · `/effort high` |
+  | Onboarding | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Bootcamp preparation | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Entity Resolution Concepts | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Discover the Business Problem | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | SDK setup | Opus 5, high effort | `/model opus` · `/effort high` |
+  | System verification | Sonnet 5, high effort | `/model sonnet` · `/effort high` |
+  | Truth Set visualization | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Data collection | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Data processing | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
   The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
   model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
   the Claude Code equivalent (INV-098).
 
-  Onboarding and Bootcamp preparation appear in this table only so the nudge can detect whether the
-  recommendation **changes** at the next module; being apparatus-exempt (INV-075/INV-078), those
-  setup stages present no model/effort nudge themselves (see the carve-out above).
+  From Data Quality, Mapping, and Transformation onward the recommendation is **flat** — a
+  bootcamper who switches there is asked nothing further for the rest of the bootcamp.
+
+  Onboarding, Bootcamp preparation and Entity Resolution Concepts appear in this table only so the
+  nudge always has a value on both sides of the comparison; being apparatus-exempt
+  (INV-075/INV-078), those setup stages present no model/effort nudge themselves (see the carve-out
+  above).
 
 - Module start banner:
 
@@ -298,10 +454,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
   banner + journey map + before/after + step overview + estimated time to complete + best-value
   model/effort prompt. When that
-  prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
+  prompt is a 👉 switch question (the recommendation differs from what they are running), the turn
+  ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
   statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with
-  Step 1 on the turn after the bootcamper confirms. When the recommendation is unchanged (no
+  Step 1 on the turn after the bootcamper confirms. When the recommendation already matches (no
   switch question), continue straight into Step 1 the same turn. Never reply with just "." or
   fewer than 50 characters.
 

@@ -5,7 +5,7 @@ render them. Signal a stop by ending the turn on the single 👉 question and wa
 
 > **This phase is optional.** Bootcampers who prefer to write custom loading programs can skip
 > Phase 3 and proceed directly to Data processing. Phase 3 uses `mapping_workflow` steps 5–8 to give
-> immediate feedback on ER quality without leaving Data quality & mapping.
+> immediate feedback on ER quality without leaving Data Quality, Mapping, and Transformation.
 
 > **Entry from the Step 5 `detect_environment` menu:** Phase 3 is entered from the
 > `detect_environment` menu handled in `phase2-data-mapping.md` (step 11). When the bootcamper
@@ -230,7 +230,9 @@ re-run evaluation without reloading. If the session was interrupted before the d
   contract.
 - Never generate direct SQL against `database/G2C.db`: all data access goes through Senzing
   SDK methods (counts/stats via `reporting_guide`).
-- Always validate with `analyze_record` before loading.
+- Always validate with `analyze_record` before loading, passing its **required**
+  `workspace_dir='data/mapping'` — the call fails without it, and the parameter is what keeps the
+  analyzer script and its reports inside the project rather than in `/tmp`.
 
 ## Success criteria
 
@@ -240,11 +242,27 @@ re-run evaluation without reloading. If the session was interrupted before the d
 
 ## Interpreting `analyze_record` results
 
-Structural errors from `analyze_record` (e.g., flat format instead of a FEATURES array, missing
-required fields) can leave the Feature Analysis table empty with headers but no rows. This is
-expected, not a bug: feature analysis is skipped when structural errors block feature
-extraction. Fix the structural errors listed above the table in the transformation program,
-then re-validate.
+Errors from `analyze_record` can leave the Feature Analysis table empty with headers but no rows.
+The table being empty is expected in that case, not a bug: feature analysis is skipped when the
+record does not present features where the analyzer looks for them.
+
+⛔ **Before fixing anything, sort the findings the way `phase2-data-mapping.md` requires** — the
+analyzer reports conformance to the *recommended* schema, which is a different question from
+whether the data loads:
+
+- **Genuinely structural** (malformed JSON, missing `DATA_SOURCE`, unparseable record): the data
+  cannot load. Fix it in the transformation program, then re-validate.
+- **Conformance to the recommended schema** — above all the older **flat** format: feature
+  attributes at the record root, with a per-feature root sub-list (`NAMES`/`ADDRESSES`/
+  `IDENTIFIERS`) wherever a feature repeats. It is reported as "Missing or non-array FEATURES" and
+  "Feature attribute 'X' must be inside FEATURES array", and the Entity Specification states the
+  shape is **still supported**. It loads and resolves. Report it as a notice and continue. Do
+  **not** rewrite the transformation program to clear it, and do not read the accompanying
+  `No NAME features found` as evidence that names are absent — they are extracted normally at load.
+
+The arbiter is this phase's own instrument: load one unmodified record and read back the features
+Senzing extracted. Extracted features settle it in favour of loadability, whatever the analyzer's
+exit code was.
 
 ## Encoding
 

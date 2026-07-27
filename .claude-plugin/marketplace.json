@@ -9,7 +9,7 @@
       "name": "senzing-bootcamp",
       "source": "./plugins/senzing-bootcamp",
       "description": "Guided bootcamp for learning Senzing entity resolution with Claude Code, from first demo to production deployment.",
-      "keywords": ["senzing", "bootcamp", "entity-resolution", "tutorial", "learning-track"]
+      "keywords": ["senzing", "bootcamp", "entity-resolution", "tutorial", "guided-learning"]
     }
   ]
 }

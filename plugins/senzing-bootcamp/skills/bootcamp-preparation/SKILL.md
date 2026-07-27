@@ -43,27 +43,65 @@ The bootcamp is this ordered sequence. "Required" modules are always included an
 deselected; "Optional" modules are chosen in Customized mode. A module with **Requires** cannot
 run unless its prerequisite is also included.
 
-| # | Module | Rule | Maps to |
-|---|---|---|---|
-| 1 | Bootcamp preparation | Required | this module |
-| 2 | Entity Resolution Concepts | Optional | `module-00-entity-resolution-concepts` |
-| 3 | Discover the Business Problem | Required | `module-01-business-problem` |
-| 4 | SDK setup | Required | `module-02-sdk-setup` |
-| 5 | System verification | Optional — Requires "SDK setup" | `module-03-system-verification` |
-| 6 | Truth Set visualization | Optional — Requires "System verification" | `module-03b-truthset-visualization` |
-| 7 | Data collection | Required | `module-04-data-collection` |
-| 8 | Data quality & mapping | Required — Requires "Data collection" | `module-05-data-quality-mapping` |
-| 9 | Data processing | Required — Requires "Data quality & mapping" | `module-06-data-processing` |
-| 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `module-07-query-visualize-discover` |
-| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` |
+The **State token** column is the exact value to write into `selected_modules` and
+`modules_completed`. Copy it; never derive a token from a display name.
+
+| # | Module | Rule | State token | Maps to |
+|---|---|---|---|---|
+| 1 | Bootcamp preparation | Required | `bootcamp_preparation` | this module |
+| 2 | Entity Resolution Concepts | Optional | `entity_resolution_concepts` | `module-00-entity-resolution-concepts` |
+| 3 | Discover the Business Problem | Required | `business_problem` | `module-01-business-problem` |
+| 4 | SDK setup | Required | `sdk_setup` | `module-02-sdk-setup` |
+| 5 | System verification | Optional — Requires "SDK setup" | `system_verification` | `module-03-system-verification` |
+| 6 | Truth Set visualization | Optional — Requires "System verification" | `truthset_visualization` | `module-03b-truthset-visualization` |
+| 7 | Data collection | Required | `data_collection` | `module-04-data-collection` |
+| 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `data_quality_mapping` | `module-05-data-quality-mapping` |
+| 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `data_processing` | `module-06-data-processing` |
+| 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `query_visualize_discover` | `module-07-query-visualize-discover` |
+| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
 
 Because **Graduation is required** and it requires "Query, Visualize and Discover", which requires
-"Data processing", which requires "Data quality & mapping", which requires "Data collection", that
+"Data processing", which requires "Data Quality, Mapping, and Transformation", which requires "Data collection", that
 whole downstream chain is always included. So the genuinely deselectable modules are exactly three:
 **Entity Resolution Concepts**, **System verification**, and **Truth Set visualization** (and
 deselecting System verification forces deselecting Truth Set visualization, which requires it).
 
+## 0. Read the saved preferences first — honor them, do not ask (INV-133)
+
+⛔ **Before Step 1, read `config/bootcamp_preferences.yaml` once.** Every capture question below is
+governed by the same rule, and it applies to **all** of them, not just model guidance:
+
+> A setup preference already recorded in `config/bootcamp_preferences.yaml` MUST be honored, its
+> capture question MUST NOT be asked, and the saved value MUST NEVER be overwritten with a
+> recommended default (INV-133).
+
+This is what lets a returning bootcamper settle a recurring choice permanently — put
+`programming_language: Python` and `verbosity: {preset: minimal}` in the file before starting and
+those two questions never appear again — without changing the default for anyone else. Asking
+someone what they already told you is an INV-006 violation, and it is most galling on a second run.
+
+| Preference | Question it suppresses | Honor when |
+|---|---|---|
+| `path` | Step 1 | `core`; or `customized` **and** a valid `selected_modules` list is also saved |
+| `verbosity` | Step 3 | a recognized preset (`minimal`/`concise`/`standard`/`detailed`) |
+| `programming_language` | Step 4 | any non-empty value |
+
+- **`path: customized` with no `selected_modules`** is not honorable — the selection would be
+  undefined. Ask Step 1 (and Step 2) in that case, and say why in one line.
+- **An unrecognized or unreadable value is not honorable.** Fall through to the question rather than
+  guessing what was meant.
+- **Nothing here is a question.** Read the file quietly (INV-012) and hold each honored value for the
+  Step 6 consolidated write, unchanged.
+- **`name`, `os`/`arch` and `git_init` are detected, never asked** (INV-134/INV-061/INV-095), so they
+  have no question to suppress — but a saved `name` is still honored rather than re-detected.
+
+⛔ **State every honored value once in the Step 7 recap**, marked as coming from the saved file, so
+the bootcamper can see what is in force and correct it. A silently-honored preference is
+indistinguishable from a question you forgot to ask.
+
 ## 1. Choose the bootcamp path
+
+⛔ Skip this step entirely when `path` is honorable per Step 0.
 
 Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
 
@@ -74,8 +112,29 @@ Present this pinned 👉 question, verbatim (INV-056), and end the turn on it:
 
 This is a ⛔ gate: wait for the real choice, do not assume one (INV-007).
 
-- **Core** → all modules are selected, in order. **Hold** `path: core` and the full ordered
-  `selected_modules` list for the consolidated write in Step 6; skip Step 2.
+- **Core** → **every** module is selected, in order — including all three deselectable ones.
+  "Optional" describes what Customized may drop; it never means Core omits it. **Hold**
+  `path: core` and this exact ordered list for the consolidated write in Step 6, then skip Step 2:
+
+  ```yaml
+  selected_modules:
+    - bootcamp_preparation
+    - entity_resolution_concepts
+    - business_problem
+    - sdk_setup
+    - system_verification
+    - truthset_visualization
+    - data_collection
+    - data_quality_mapping
+    - data_processing
+    - query_visualize_discover
+    - graduation
+  ```
+
+  ⛔ Copy that list verbatim — all eleven tokens. Do **not** rebuild it by translating the module
+  table's display names into tokens: that derivation is what silently dropped
+  `entity_resolution_concepts` from a Core run, so the primer never appeared and the bootcamper was
+  never told a module had been skipped (INV-014 permits only *requested* skips).
 - **Customized** → go to Step 2.
 
 ## 2. Select modules (Customized only)
@@ -85,7 +144,7 @@ always included) — present only the module **names** and their required/option
 render the internal "#" or "Maps to" columns (catalog numbers and skill-directory names are
 internal — INV-079/INV-012). Then end the turn on this single pinned 👉 question, verbatim (INV-056):
 
-> 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated (or reply none):**
+> 👉 **Which optional modules would you like to include? Reply with the numbers from the list below, comma-separated — reply "none" for just the required modules:**
 >
 > 1. **Entity Resolution Concepts** — a short primer on how entity resolution works.
 > 2. **System verification** — end-to-end checks that Senzing works on your machine.
@@ -93,8 +152,11 @@ internal — INV-079/INV-012). Then end the turn on this single pinned 👉 ques
 
 Apply the prerequisite rules when recording the selection:
 
-- All Required modules (Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, Data
-  quality & mapping, Data processing, Query/Visualize/Discover, Graduation) are always included.
+- All Required modules are always included. Name them exactly as the module table above spells them
+  — Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, **Data Quality,
+  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Graduation —
+  never an abbreviation, since these names are what the bootcamper reads here and in every later
+  journey map and transition question (INV-079).
 - If the bootcamper chooses **Truth Set visualization** (3) without **System verification** (2),
   tell them Truth Set visualization requires System verification, and include System verification
   too (do not silently drop the choice; state what you included and why).
@@ -104,6 +166,8 @@ Apply the prerequisite rules when recording the selection:
 write in Step 6. Keep the list in module order so the journey map and transitions follow it.
 
 ## 3. Level of detail (verbosity)
+
+⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
 
 > 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 >
@@ -137,7 +201,28 @@ not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007)
 If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
 as choosing the recommended `standard` and say so — never assume a level before they have replied.
 
+## 3a. Model guidance — no question (retired)
+
+⛔ **There is no model-guidance question and no `model_guidance` preference (INV-137).** Ask nothing
+here and write nothing for it. Model/effort guidance behaves one way for everyone: at each module
+start and graduation start the guide surfaces the stage's recommendation, and **when the
+recommendation changes** it pauses on the pinned switch question followed by the pinned "Are you
+done modifying the model and effort?" gate; when it is unchanged it is a one-line statement. The
+full behavior lives in `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt".
+
+This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
+stay stable. Skip straight from Step 3 to Step 4.
+
+(A previous design asked the bootcamper to choose between `advisory`, `off` and `prompt` and
+persisted the answer. That question is retired: INV-137 supersedes INV-119 and INV-120, restoring
+the unconditional INV-063/INV-069 behavior. Do **not** reintroduce the question, and do not honor a
+stale `model_guidance` key left in an old preferences file.)
+
 ## 4. Programming language selection (gate)
+
+⛔ Skip the **programming-language question** when `programming_language` is honorable per Step 0.
+Platform detection and name detection below still run either way — they are detections, not
+questions.
 
 - **Detect the platform first (do not ask).** Determine the OS and architecture from the
   environment/system context (else run `uname`/`systeminfo`), and state it in one line
@@ -164,12 +249,24 @@ as choosing the recommended `standard` and say so — never assume a level befor
   languages on that platform.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned options as a **numbered list**, annotating each option with its install path for the detected
-  platform so the trade-off is visible at the decision point — e.g. on macOS Apple Silicon:
-  "Python — runs via Docker (the SDK is Linux-only); Java / C# — native." Use the Module 2 routing
-  rules (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") as the source of the per-platform
-  paths. If the MCP server flags a language as discouraged/unsupported on the platform, relay that
-  and suggest alternatives.
+- Present the MCP-returned options as a **numbered list**. Annotate an option **only where the
+  Module 2 routing rules actually distinguish it** — that is, where the platform forces a language
+  into a container — so the trade-off is visible at the decision point:
+  - **macOS Apple Silicon:** "Python — runs via Docker (the SDK is Linux-only); Java / C# —
+    native." (routing rules 1 and 3)
+  - **macOS Intel:** every language runs via Docker; there is no native Intel-Mac install. (rule 2)
+  - **Windows:** Python runs via Docker; other languages need Scoop, else Docker. (rules 1 and 4)
+  - **Linux:** the rules distinguish nothing per language — all supported languages install
+    natively via the platform's package manager (rule 5). Say that once rather than annotating
+    each option with the same thing, and do **not** invent per-language install detail to fill the
+    space.
+
+  ⛔ **Do not manufacture an annotation the routing rules do not support.** Those rules
+  (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") resolve a *platform*, not per-language
+  install mechanics, so on Linux there is genuinely nothing to differentiate. Precise install
+  commands come from `sdk_guide(topic='install', platform=…, language=…)` in Module 2, at the point
+  they are needed — not from memory here (INV-080). If the MCP server flags a language as
+  discouraged or unsupported on the platform, relay that and suggest alternatives.
 
   👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 
@@ -199,8 +296,9 @@ single consolidated write below — no separate write (INV-058).
 
 Persist all setup choices collected in Steps 1-5 to
 `config/bootcamp_preferences.yaml` in a **single** write (INV-058) — `path` (`core`/`customized`),
-`selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the detected
-`os`/`arch`, and the `git_init` outcome. (The software-integration and deployment-target answers are
+`selected_modules`, `verbosity`, the programming language, the detected `name` (if any), the
+detected `os`/`arch`, and the `git_init` outcome. **No `model_guidance` key** — that preference is
+retired (INV-137). (The software-integration and deployment-target answers are
 NOT collected here — they are asked in Module 1 Phase 2 and persisted there, per INV-097.) (`path`
 replaces the old `track` preference; downstream readers — graduation, the recap header — read
 `path`.) This is the only setup write of this module; the gates only held their answers, so the
@@ -211,17 +309,24 @@ write.
 path: core            # or: customized
 selected_modules:     # ordered; drives the journey map and transitions
   - bootcamp_preparation
-  - entity_resolution_concepts   # optional — present only if selected
+  - entity_resolution_concepts   # always in Core; omitted only if Customized drops it
   - business_problem
   - sdk_setup
-  - system_verification          # optional
-  - truthset_visualization       # optional
+  - system_verification          # always in Core; omitted only if Customized drops it
+  - truthset_visualization       # always in Core; omitted only if Customized drops it
   - data_collection
   - data_quality_mapping
   - data_processing
   - query_visualize_discover
   - graduation
 ```
+
+⛔ **Before handing off, verify the list you are about to write** (internal self-check, not
+bootcamper-facing). When `path: core`, confirm `selected_modules` holds all eleven tokens from
+Step 1 in that order; when `path: customized`, confirm it holds the eight Required tokens plus
+exactly the optional ones resolved in Step 2, in module order. If a module is missing, correct it
+**now** — after the handoff in Step 7 the next module has already started and the omission is
+invisible.
 
 Also record the selection into `config/bootcamp_progress.json` where module-completion and the
 journey map read it (a single batched write, INV-012): the ordered `selected_modules` and the
@@ -236,16 +341,23 @@ NOT added to `modules_completed` and NOT written as a `docs/bootcamp_recap.md` s
 Respect the active verbosity preset — shorten under `concise`, and keep it to a single line under
 `minimal`.
 
+Every line states the value **in force**, whether it came from a question this run or from the
+saved file (INV-133). Append ` — from your saved preferences` to any line whose question Step 0
+suppressed, so an honored preference is visible rather than looking like a question you skipped:
+
 ```text
 ✅ Bootcamp preparation complete
 ────────────────────────────────
 • Path: Core (all modules) — or Customized (selected modules)
 • Modules: {ordered selected module names}
-• Detail level: {verbosity}
-• Language: {programming language}
+• Detail level: {verbosity}{ — from your saved preferences}
+• Language: {programming language}{ — from your saved preferences}
 • Version control: {git initialized | existing repo | git unavailable}
 → Next: {first content module name}
 ```
+
+When Step 0 honored anything, close the recap with one line telling them how to change it: "Edit
+`config/bootcamp_preferences.yaml` to change any saved choice, or just tell me."
 
 Then hand off to the first module in `selected_modules` after `bootcamp_preparation`:
 

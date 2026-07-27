@@ -58,10 +58,22 @@ language='<lang>', version='current')`.
 **Flags:** when generated query code calls SDK methods that accept flags (`get_entity`,
 `get_entity_by_record_id`, `search_by_attributes`, `how_entity`, `why_entities`, `why_records`,
 `why_record_in_entity`, `find_network`, `find_path`), look up available flags via
-`get_sdk_reference(topic='flags')` (filter by method name) and select the flags matching the
+`get_sdk_reference(topic='flags', filter='<method>')` and select the flags matching the
 bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag] so we can see
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
 and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
+
+⛔ **Response shapes (INV-115).** Flags are only half the lookup. Before writing any code that
+*parses* a response, also call `get_sdk_reference(topic='response_schemas', filter='<method>')`
+— **never infer field names from an example snippet.** Wrong field names do not raise: they
+render as blank text, so the output looks like "Senzing found nothing" rather than a bug.
+`response_schemas` documents the top-level shape per method; for deeper nesting (anything under
+`MATCH_INFO`), dump one raw response and read it before writing the parser.
+
+**Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
+**probable wrong field name first and absent data second**. Verify against `response_schemas` or
+a dumped raw response before rendering. Never render a blank value as though it were a real
+result — say "no value returned for X" so the failure is visible.
 
 **CRITICAL, file placement:** if the generated scaffold uses `/tmp/`, `ExampleEnvironment`, or
 any path outside the working directory, override the database path to `database/G2C.db` and
@@ -95,9 +107,9 @@ something is broken. Tell the bootcamper: "Entity resolution found very few matc
 mean: (a) your records are genuinely distinct with no duplicates, (b) the matching criteria
 need adjustment, perhaps key fields weren't mapped or data quality is too low, or (c) you're
 working with a single source that has no internal duplicates. Let's investigate which one."
-Check: are name/address/phone fields populated? Were they mapped correctly during Data quality &
-mapping? Is the data-quality score above 70%? If the data genuinely has no duplicates, that's a valid
-finding, document it.
+Check: are name/address/phone fields populated? Were they mapped correctly during Data Quality,
+Mapping, and Transformation? Is the data-quality score above 70%? If the data genuinely has no
+duplicates, that's a valid finding, document it.
 
 **Matching-concepts reminder.** When presenting results, briefly remind the bootcamper of the
 matching concepts introduced earlier in the bootcamp, a sentence or two each, not a full re-explanation:
@@ -157,7 +169,7 @@ Explain first, as a statement: their loaded data and query programs will be pres
 remapping, they'll reload the affected sources and re-evaluate here. Then end the turn on this
 single question:
 
-👉 **Would you like to return to the Data quality & mapping module to refine your data mapping?**
+👉 **Would you like to return to the Data Quality, Mapping, and Transformation module to refine your data mapping?**
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -167,8 +179,8 @@ If accepted:
    `quality_iteration` key.
 2. Set `current_module` to `data_quality_mapping` (Module 5's name token — `current_module` holds
    a name token, never a catalog number, per INV-086) and `current_step` to the Phase 2 start step.
-3. Load the Module 5 skill and begin at its Phase 2. (Module 5 port is a later phase; when it
-   lands, route to its Phase 2 entry point.)
+3. Load `../module-05-data-quality-mapping/phase2-data-mapping.md` and begin at its Phase 2
+   (step 8, "Start") for the source being refined.
 
 **Checkpoint:** write step 3b.
 
@@ -177,26 +189,29 @@ If accepted:
 This module's results visualization is delivered as **one** interactive, tabbed app — the same
 Truth-Set-style visualization built in the Truth Set module, now pointed at the bootcamper's own
 resolved data. It is the single visualization artifact: the entity graph, relationship network,
-results dashboard, cross-source overlap heatmap, match-key frequency, and feature-score views are
-all **tabs** of this one app, not separate offers or static pages (see the full tab set and the
-de-duplication rules in `../module-03b-truthset-visualization/visualization-api-reference.md`).
-This is also where Module 6's cross-source relationship view now lives — the Entity Graph,
-Cross-Source, and Relationship Network tabs replace the former Module 6 `multi_source_results.html`
-static page (Module 6 no longer offers a visualization). Offer it here, after the query results
+record merges, merge statistics, cross-source overlap heatmap, match-key frequency, and
+feature-score views are all **tabs** of this one app, not separate offers or static pages (see the
+full tab set and the de-duplication rules in
+`../module-03b-truthset-visualization/visualization-api-reference.md`).
+This is also where Module 6's cross-source relationship view now lives — the Entity Graph tab
+(including its "Show only entities with relationships" mode) and the Cross-Source tab replace the
+former Module 6 `multi_source_results.html` static page (Module 6 no longer offers a
+visualization). Offer it here, after the query results
 (3a) and quality evaluation (3b) are in hand. The
 Discover-phase opt-in in step 4 is asked **independently** of this decision and covers only the
 why/how/network demonstrations — it is not gated on, or bundled with, the visualization choice.
 
 Pin the offer verbatim:
 
-> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, results dashboard, cross-source overlap, and match/feature analysis, all in one app?**
+> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, merge statistics, cross-source overlap, and match/feature analysis, all in one app?**
 
 *(Internal: end the turn on this question and wait.)*
 
 - **Declines:** skip the visualization and continue to "Next: Discover phase (step 4)". This
-  question is itself the visualization offer for the Query Completeness Gate (it covers the entity
-  graph and results dashboard as tabs) — checkpoint `m7_visualizations` as `{"offered": true,
-  "accepted": false}` under `module_7_query`.
+  question is itself the visualization offer for the Query Completeness Gate (one offer covers
+  the entity graph and the results summary INV-046 asks for; both live inside the single app) —
+  checkpoint `m7_visualizations` as `{"offered": true, "accepted": false}` under
+  `module_7_query`.
 - **Accepts:** build and present the app (below), then checkpoint `m7_visualizations` as
   `{"offered": true, "accepted": true, "artifact": "docs/visualizations/<file>.html"}`.
 
@@ -205,12 +220,23 @@ and the `../module-03b-truthset-visualization/visualization-api-reference.md` co
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. It MUST:
 
-- Serve/render every applicable tab from that contract — Entity Graph, Relationship Network, Record
-  Merges, Merge Statistics, Match Keys, Feature Scores, Cross-Source, Results Dashboard, and
-  Search / Probe. Tabs whose data is absent are simply not shown (e.g. Cross-Source needs 2+
-  sources; Match Keys / Feature Scores need multi-record entities). Do **not** produce separate
-  static pages, and do **not** add redundant tabs — the entity-size distribution is Merge
-  Statistics and the cross-source entity-relationship view is Entity Graph.
+- Serve/render every applicable tab from that contract — Entity Graph, Merge Statistics, Match
+  Keys, Feature Scores, Cross-Source, and Search / Probe. That is the whole set: **six** tabs. Tabs
+  whose data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys /
+  Feature Scores need multi-record entities). Entity Graph carries the relationship subgraph as a
+  **mode** (its "Show only entities with relationships" toggle), and Search / Probe carries the
+  no-query merge browse as its "Show all merged entities" button. Do **not** produce separate static
+  pages, and do **not** add a tab whose content is derivable from another tab's endpoint — the
+  entity-size distribution is Merge Statistics, the cross-source entity-relationship view is Entity
+  Graph, and there is no separate Results Dashboard, Relationship Network, or Record Merges tab.
+- Honor the contract's **"Per-entity actions"** and **"Rendering contract"** sections in full:
+  Records / Why? / How? on every entity surface, drill-down from every aggregate, plain-language
+  Why?/How? with the raw JSON behind a twistie, and pre-verified search-hint chips.
+- **Mind the scale.** This module points the app at the bootcamper's real data, which is usually far
+  larger than the Truth Set it was designed against — the graph label defaults are scale-aware
+  (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable
+  hairball at ~4,000. Re-check any other visual default at your actual entity count before
+  presenting; the bootcamper cannot tell a bad default from bad data.
 - Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
   `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
@@ -221,7 +247,45 @@ of the Truth Set. It MUST:
   generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
   silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
-  `{name}` = `results_visualization`.
+  `{name}` = `results_visualization`. Capture **one image per tab** from the running server
+  (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
+  several shots of one tab — and derive every caption from the opened image and its tab label.
+- ⛔ **If the visualization changes after the snapshot is written — a bootcamper request, a fix, a
+  styling tweak — rebuild the snapshot and re-capture its screenshots.** The snapshot is the retained
+  artifact and the one the recap embeds; the server is disposable. A change present only on the
+  server leaves the keepsake showing a version the bootcamper asked to have changed, contradicting
+  the recap prose that describes the change (see
+  `../module-03b-truthset-visualization/phase1-visualization.md` → 2.4b, where the same omission
+  shipped an eight-tab snapshot beside six-tab prose).
+
+⛔ **The server stays running — screenshot capture must not stop it.** The API probes and the
+screenshot pass above are agent-side verification, not the end of the interaction. Follow the
+server-lifetime contract in `../module-03b-truthset-visualization/visualization-api-reference.md` →
+"Server lifetime": verify with the server up, then hand it to the bootcamper:
+
+- "Your visualization is running at `http://localhost:<port>`, open it in your browser and take
+  your time — I'll leave it up."
+- "A saved copy is at `docs/visualizations/results_visualization.html`. Every tab still works
+  offline there, except **Why?**, **How?**, and live search — those need the running engine, so use
+  them while the server is up."
+
+Let them explore at their own pace, then continue through the Discover phase and the Query
+Completeness Gate **with the server still running** — the Discover demonstrations pair naturally
+with a live app to look at.
+
+⛔ **Before stopping it, ask the teardown gate**, pinned verbatim (INV-056), and end the turn on it:
+
+> 👉 **Ready for me to stop the visualization server?**
+
+The gate names the server and **only** the server: unlike the Truth Set module, nothing here is
+purged — the bootcamper's loaded data stays exactly where it is, and later modules and the recap
+depend on it. Say so when asking, and mention that the saved snapshot keeps every tab except the
+live `why`/`how`/`search`.
+
+*(Internal: end the turn on this question and wait.)* On "no" or "not yet", leave it running, say so,
+and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper having to request a
+restart for a server they never agreed to stop. If the module ends with the server still up, say
+plainly that it is still running and how to stop it, rather than stopping it unasked.
 
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
 (offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
@@ -239,7 +303,8 @@ or exit early at any demonstration point.
   analysis).
 - Then load `phase2b-discover.md` for step 4d (relationship networks) and Discover Phase
   Completion. (The former step 4e data-specific visualization suggestions are now tabs of the
-  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Relationship Network.)
+  step-3c visualization app — Match Keys, Feature Scores, Cross-Source, and Entity Graph's
+  relationship mode.)
 
 Steps 4a–4d each checkpoint individually to `config/bootcamp_progress.json`. After the Discover
 phase completes or is skipped, return here for the Query Completeness Gate.
@@ -248,9 +313,65 @@ phase completes or is skipped, return here for the Query Completeness Gate.
 
 - ✅ Query programs created and tested.
 - ✅ Visualization offered (the single interactive-visualization gate in step 3c was presented; the
-  tabbed app — entity graph, relationship network, results dashboard, cross-source overlap, and
+  tabbed app — entity graph, relationship network, merge statistics, cross-source overlap, and
   match/feature analysis — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
+
+## Data-discoveries deliverable (produced on every path)
+
+⛔ **Produce `docs/bootcamp_data_discoveries.md` and `.pdf` before the gate below, whether the
+bootcamper accepted the Discover opt-in, declined it, or exited part-way.** Every branch of
+`phase2-discover.md` returns here, which is why this lives at the convergence point rather than in
+each branch.
+
+The opt-in governs **the tutorial** — whether the bootcamper is walked through why/how/networks
+interactively. It must not govern **the findings**, which are the payoff for every preceding module:
+collection, mapping, loading, resolution. A bootcamper who declines a walkthrough at the end of a
+long session should still leave knowing what Senzing found in *their* data. Generate and announce it
+in one line (no yes/no gate).
+
+Source every figure through generated SDK code and `reporting_guide` — never direct SQL against
+`database/G2C.db`. Write these six sections; the generator checks for them by name:
+
+1. **`## Headline numbers, interpreted`** — records loaded, entities resolved, merge count, and what
+   those numbers *mean* here. Never bare counts.
+2. **`## Merges and match keys`** — every merge with the match key that drove it, so each is
+   explainable and auditable.
+3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
+   the most business value: each row is one human decision away from being actioned.
+4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
+   **near-miss**. Why something did *not* merge teaches more than why something did.
+5. **`## Relationship networks`** — multi-hop paths no single record states.
+6. **`## What was not found, and why`** — ⛔ the section most likely to be dropped, and the one that
+   changes how the whole document reads. State the measurement (e.g. how many names or identifiers
+   the sources actually share) and say explicitly which case applies: **the data had little overlap
+   to find**, or **the pipeline underperformed**. Without it, a correct result on a
+   low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
+   suppressor findings belong here.
+
+Then render the PDF:
+
+```bash
+python3 scripts/generate_discoveries_pdf.py
+```
+
+That script is the discoveries **sibling** of the recap generator — do not point
+`generate_recap_pdf.py` at this document, which parses recap-shaped module sections and would
+produce a near-empty PDF. It uses `fpdf2` when importable and a stdlib renderer otherwise, so no
+optional PDF dependency is required; and per INV-110 it refuses to write a PDF at all if the
+document would lose most of its content, rather than reporting success over an empty deliverable.
+
+⛔ **Verify the PDF carries the findings — a `PDF generated:` line is not verification** (INV-129).
+Extract text from the written PDF and confirm real findings appear (fpdf2 compresses its content
+streams, so decompress before searching). If extraction shows an empty or near-empty document, say
+so and fix the Markdown rather than shipping it.
+
+**Non-blocking.** If either file cannot be produced, report exactly what failed and continue — this
+never blocks the gate below or graduation. Say plainly that the deliverable is missing, so its
+absence is visible rather than silent.
+
+**Announce both files** in the end-of-module summary's **Files produced** list (INV-032) and in this
+module's recap section.
 
 ## Query Completeness Gate
 
@@ -259,11 +380,14 @@ Before wrapping up the module, confirm:
 1. **Query programs created and tested?** At least one query program runs successfully
    against the resolved data.
 2. **Visualization offered?** The step-3c visualization gate was presented (the single
-   interactive-visualization question, which covers the entity graph and results dashboard as tabs)
+   interactive-visualization question, which is the single offer covering every view in the app)
    — this counts as offered whether the bootcamper accepted or declined it.
 3. **Discover phase status?** The Discover phase was either completed (all steps 4a–4d
    checkpointed) or explicitly skipped by the bootcamper.
-4. **Ready to proceed?**
+4. **Data-discoveries deliverable produced?** `docs/bootcamp_data_discoveries.md` and `.pdf` exist
+   and the PDF's extracted text carries the findings — or, if they could not be produced, the
+   bootcamper was told why. Never silently absent.
+5. **Ready to proceed?**
 
 Module 7 is the **last content module before graduation** (required in every path). Once the gate
 is satisfied, run the standard **Module Completion** process in

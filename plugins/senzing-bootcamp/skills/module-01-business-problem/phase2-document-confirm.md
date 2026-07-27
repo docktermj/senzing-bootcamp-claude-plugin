@@ -4,6 +4,15 @@ Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal direc
 
 ## 9. Encourage visual explanations
 
+⛔ **Branch on scenario provenance first — never ask a bootcamper for diagrams of a scenario the
+bootcamp invented.** The provenance is the Phase 1 Step 4a outcome: whether the Business Case Offer
+was accepted. That is the same decision Step 11's generated-scenario branch acts on; do not
+introduce a second mechanism. (Step 11 persists it as the `> 🤖 Bootcamp-generated business case`
+marker in `docs/business_problem.md`, but that file does not exist yet at this step — on a resumed
+session where it does, the marker is the authoritative form of the same signal.)
+
+### 9a. Bootcamper-described case (offer declined, or their own data)
+
 Invite the bootcamper to share any diagrams. Ask this single, pinned 👉 question, verbatim
 (INV-056), and end the turn on it:
 
@@ -13,7 +22,41 @@ It has exactly one meaning each (INV-008): "yes" means they will share diagrams 
 architecture, data flows, or example records); "no" alone means proceed with the scenario as
 described. Do NOT fold the "proceed" branch into the question — no "or"-joined choices
 (INV-009/INV-051). If they share an image containing placeholders like `[variable]`, ask what
-each represents. **Checkpoint:** write step 9.
+each represents.
+
+### 9b. Generated scenario (Business Case Offer accepted)
+
+Do **not** ask the question — there are no diagrams to share, because the bootcamp authored the
+scenario minutes ago. Generate them instead, and announce rather than offer (no yes/no gate):
+
+Write `docs/data_architecture.md` containing two diagrams built from the accepted scenario:
+
+- **Data architecture** — the generated data sources, the Senzing engine, and the datastore.
+- **Data flow** — raw → mapped / Senzing-ready → loaded → resolved → queried.
+
+Then say in one line that you created it and what it shows.
+
+**Format: Mermaid fenced blocks in Markdown**, never binary images. That keeps the artifact
+diffable, offline (INV-091), viewable without a headless browser, and identical on every platform.
+
+⛔ **Do not embed the Mermaid source into `docs/bootcamp_recap.md`.** `scripts/generate_recap_pdf.py`
+renders headings, bullets, `**Label:**` lines, plain text, and `![alt](path)` images — it has **no**
+fenced-code handling, so a Mermaid block would reach the PDF as literal backticked text. Reference
+the file by path in the recap instead (see below).
+
+Name the real generated sources, but keep the engine and datastore generic — the programming
+language and database are not chosen until later modules, so do not assume either here. Never
+invent CORD names or record counts; use only what MCP returned in Step 4b.
+
+**Reference it from the problem statement** when Step 11 writes `docs/business_problem.md`, so the
+diagrams are discoverable rather than incidental (Step 11's generated-scenario branch carries the
+instruction).
+
+**List it in the end-of-module summary** (INV-032) under **Files produced**, as
+`docs/data_architecture.md` described as the data architecture and data flow diagrams for the
+generated scenario, and in this module's recap section, so the bootcamper knows it exists.
+
+**Checkpoint:** write step 9 (record which branch ran, and the diagram path when 9b applies).
 
 ## 10. Identify the scenario
 
@@ -111,6 +154,11 @@ would, plus:
 
 - Insert the generated marker on its own line directly below the `# Business Problem Statement`
   title, exactly: `> 🤖 Bootcamp-generated business case`.
+- Link the diagrams written in Step 9b so they are discoverable from the problem statement:
+  `See [data architecture and data flow diagrams](data_architecture.md).` (Relative link — both
+  files live in `docs/`.) If Step 9b did not run or the file is missing, omit the line rather than
+  writing a dead link. This is a supplementary pointer, not a dependency: the statement still reads
+  completely on its own, per the self-containment rule below.
 - Record each distinct scenario source into `config/data_sources.yaml` (one entry per source).
 - Keep `docs/business_problem.md` self-contained (problem, category, sources, success), not
   dependent on the registry.

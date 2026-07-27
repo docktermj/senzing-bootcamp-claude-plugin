@@ -96,6 +96,18 @@ graduation PDF renders exactly these four labeled sections per module):
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
 - **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding the 2-3 curated screenshots is required**, not optional: add them to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>.png)` — in the same turn the capture ran. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
 
+⛔ **Whenever a module step produces a bootcamper-facing artifact — a PDF, a PNG, an HTML
+visualization — verify the artifact itself, not the exit code.** A zero exit, a written file, and a
+self-reported metric are all necessary and none is sufficient: a capture helper exited 0 having
+written three images of the same tab; a generator reported "content retained: 98%" with an entire
+table drawn off the page. Neither raised an error.
+
+So open it: view the PNG, rasterize the PDF page, grep the extracted text for a distinctive string you
+know must be there, load the HTML and confirm the tab renders. Describe the artifact from what it
+actually shows, never from what the step was supposed to produce (INV-115's principle, applied to
+artifacts rather than parsed fields). This is best-effort and never blocks a module — if the tool to
+inspect it is absent, say the artifact could not be verified rather than implying it was.
+
 Append the section as plain, functional Markdown. Do not spend effort on CommonMark
 prettification here (blank-line rules, `**Label:**` colon spacing, fence info strings):
 graduation runs one normalization pass over the recap before the PDF renders (see
@@ -133,28 +145,70 @@ few screenshots of it so the recap shows what the bootcamper actually built, not
 link. This runs at the visualization step, right after the page exists, and is **non-blocking with
 graceful degradation** — never a 👉 question, and never a reason to stall.
 
-Procedure (parameterized by the visualization's `{html}` file and a short `{name}`):
+The app is a **tabbed** artifact, so capture is **one image per tab** — never several shots of one
+tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and a short
+`{name}`):
 
-1. Run the bundled helper on the **local** HTML file (or the `localhost` URL of the live app):
+1. Run the bundled helper. Prefer the **live app's `localhost` URL** while the server is still up,
+   because that is the only way the Search / Probe tab can show real results; fall back to the
+   standalone snapshot file when the server is already down:
 
    ```bash
-   python3 <helper> --html docs/visualizations/{html} --out-dir docs/visualizations --name {name}
+   # live app (preferred while it is running)
+   python3 <helper> --url http://localhost:{port} --out-dir docs/visualizations \
+       --name {name} --tabs graph,stats,matchkeys,features,overlap,probe --query "{a name in the data}"
+
+   # standalone snapshot (no server needed)
+   python3 <helper> --html docs/visualizations/{html} --out-dir docs/visualizations \
+       --name {name} --tabs graph,stats,matchkeys,features,overlap,probe
    ```
 
    Resolve `<helper>` as `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (command/hook
    context) or `../../scripts/capture_screenshots.py` relative to a module skill. It tries several
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
-   fetches a remote URL (offline — INV-091).
+   fetches a remote URL (offline — INV-091). Pass only tabs the app actually shows for this data —
+   the helper reports any tab that produced no image on stderr rather than dropping it silently.
 2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
    keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
    the `minimal` preset).
-3. **If it succeeds** (prints the PNG paths it wrote under `docs/visualizations/`): review the
-   shots, keep the **2-3 most representative** (delete the rest), and — **as a required step, in the
-   same turn** — embed them in **this module's recap `Actions Taken`** as
-   `![caption](docs/visualizations/{name}-1.png)`. Writing the image lines is not optional once a
-   capture succeeded; record it at the step checkpoint. The graduation PDF embeds these local images
-   and skips any that are missing (INV-048), and graduation backfills any that were captured but
-   never embedded (see `../graduation/SKILL.md` Step 1).
+3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
+   named `{name}-<tab-slug>.png`. **Keep every captured tab** — and, **as a required step, in the
+   same turn** — embed them all in **this module's recap `Actions Taken`** as
+   `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
+   optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds
+   these local images and skips any that are missing (INV-048), and graduation backfills any that
+   were captured but never embedded (see `../graduation/SKILL.md` Step 1).
+
+   ⛔ **Do not prune to a "best" few.** Capture is one image per tab (INV-122), so every file is
+   already a distinct view — there is nothing redundant to remove, and a count cap can only delete
+   unique content. Delete only a true duplicate: two images of the *same* tab, which per-tab capture
+   should not produce. Judging which shots are worth keeping is what previously dropped Merge
+   Statistics, Match Keys and Feature Scores from a six-tab app — the three *analytical* tabs, since
+   any such judgement pulls toward the most visually striking. The recap then showed the same three
+   tabs in both visualization sections and the app looked narrower than it was.
+
+   ⛔ **Embed in the app's tab order, never in capture or append order.** The order is the row order
+   of the tab table in
+   `../module-03b-truthset-visualization/visualization-api-reference.md` → "Tab identifiers and
+   deep-linking" — read it there rather than restating the list, so a tab change updates one file.
+   A tab that produced no image is simply skipped; the rest keep their relative order. The recap is
+   a walkthrough of the app, so a reader must be able to line the images up against the interface
+   left to right.
+
+⛔ **Every caption is derived from the capture, never from the plan.** Build it from the tab label
+the helper printed (which matches the filename slug), and — before writing it — **open the image and
+confirm it shows that tab**. Describe only what is visible in it.
+
+A caption asserting content the image does not contain is a defect of the same class INV-115
+forbids: it renders the unverified as verified, in a permanent artifact the bootcamper is
+encouraged to share. It has happened — captions reading "Cross-source overlap and match-key
+frequency tabs" and "Search/Probe with a verified example query chip" were written for two images
+that both showed the Entity Graph, because the app *is* tabbed so the captures were assumed to be
+tab-diverse. Never infer image content from the visualization contract.
+
+If the Search / Probe tab was captured from the **static snapshot** rather than the live server, its
+search box is inert (the snapshot has no engine), so caption it explicitly as the empty/inactive
+state or omit it — never imply a result set that was not captured.
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 

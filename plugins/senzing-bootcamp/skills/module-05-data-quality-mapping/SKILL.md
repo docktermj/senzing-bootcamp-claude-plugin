@@ -1,9 +1,9 @@
 ---
 name: module-05-data-quality-mapping
-description: 'Bootcamp Module 5: Data Quality & Mapping. Use when the bootcamper starts or resumes Module 5, or needs to assess data quality and map records to the Senzing Entity Specification.'
+description: 'Bootcamp Module 5: Data Quality, Mapping, and Transformation. Use when the bootcamper starts or resumes Module 5, or needs to assess data quality and map records to the Senzing Entity Specification.'
 ---
 
-# Module 5: Data Quality & Mapping
+# Module 5: Data Quality, Mapping, and Transformation
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
@@ -37,6 +37,12 @@ transformation programs tested + output validated with quality >70%.
   definitions in Phase 1 (field completeness, format consistency, duplicate rate). The
   standalone `QUALITY_SCORING_METHODOLOGY` guide is a later porting phase; for now use
   `search_docs` for any Senzing-specific quality guidance.
+  ⛔ Because the completeness helper is authored fresh each run until that guide is ported, use
+  the **presence test defined in Phase 1 step 6** rather than writing one from scratch. Two traps
+  it exists to close: never use a truthiness test (`if value:`) — `false` and `0` are present
+  values — and never use key presence as coverage, which reports 100% for a field that is an
+  empty array in every record. When the guide is ported, implement presence exactly as Phase 1
+  defines it and carry the caution into the ported methodology.
 - **Multi-language data:** If a source contains non-Latin characters (Chinese, Arabic,
   Cyrillic, etc.), call `search_docs(query="globalization")` for current guidance on UTF-8
   encoding, non-Latin character support, cross-script name matching, and multi-language data
@@ -51,6 +57,17 @@ When the bootcamper hits an error during this module:
    recommended fix. If it returns nothing, continue to step 2.
 2. Present the matching pitfall/fix for this module (full `common-pitfalls` reference is a
    later porting phase; for now, use `search_docs` to look up the symptom).
+
+Two `mapping_workflow` failure modes have their own handling in
+`phase2-data-mapping.md`, both under "Availability-aware mapping validation" — do not improvise
+either one:
+
+- a **validation script is unavailable** (HTTP 404) → degrade that check to optional/best-effort
+  and proceed;
+- **step-3 validation rejects the payload with no actionable reason** (a truncated error naming no
+  field) → capture the raw rejection to the source's checkpoint, stop after two attempts, and offer
+  the pinned three-option question. Writing the mapper against the Entity Specification is a
+  sanctioned outcome there, with all three quality gates still running.
 
 ## Phases
 

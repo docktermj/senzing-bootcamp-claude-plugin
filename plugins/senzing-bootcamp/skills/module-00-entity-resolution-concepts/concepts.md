@@ -70,7 +70,8 @@ Then end the turn on this single, pinned 👉 question, asked **verbatim** (INV-
 
 It is a single yes/no with exactly one meaning each (INV-008), no "or"-joined choices (INV-051,
 INV-009): "yes" means "I have something to ask or discuss", "no" means "nothing right now, continue".
-This is NOT a ⛔ gate — it never blocks.
+**Presenting it is MANDATORY (INV-005/INV-056/INV-112)**; what "never blocks" means is that the
+bootcamper's *answer* never holds up progress — not that the question may be skipped.
 
 - On **yes**, or an actual question: answer it via `search_docs`, **verified with a second confirming
   MCP call** (see "Verify substantive answers" above), present it, then re-present this pinned
@@ -85,14 +86,21 @@ there.
 ## Optional knowledge-check quiz (offer before the readiness gate)
 
 After the primer and before the mandatory exploration gate below, offer an optional short quiz.
-It reinforces the concepts and drives curiosity; it is entirely optional and never blocks. Give a
-one-line encouragement ("It may help you understand entity resolution better — worth a try!"),
-then end the turn on this single, pinned 👉 question, asked **verbatim** (INV-056):
+It reinforces the concepts and drives curiosity.
+
+⛔ **Presenting this question is MANDATORY (INV-005/INV-056/INV-112) — ask it, verbatim, every time
+this module runs.** Taking the quiz is what is optional. "Optional" and "never blocks" describe the
+bootcamper's **answer**, not whether you ask: declining is free and costs them nothing, but
+skipping the question is a violation, not a shortcut. Do **not** collapse it into the mandatory
+readiness gate that follows — they are two separate questions on two separate turns.
+
+Give a one-line encouragement ("It may help you understand entity resolution better — worth a
+try!"), then end the turn on this single, pinned 👉 question, asked **verbatim** (INV-056):
 
 > 👉 **Would you like to test your knowledge of entity resolution with a short quiz?**
 
 It is a single yes/no with exactly one meaning each (INV-008), no "or"-joined choices (INV-051,
-INV-009). This is optional, NOT a ⛔ gate.
+INV-009).
 
 On **decline** ("no", "skip", "not now"): acknowledge briefly and proceed to the mandatory
 exploration gate below.

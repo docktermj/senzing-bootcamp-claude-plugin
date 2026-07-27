@@ -39,8 +39,13 @@ record in the recap.
 Confirm the Senzing MCP server is reachable before starting. It is required: it generates SDK
 code in the chosen language, looks up Senzing facts, and provides working examples.
 
-- **Probe:** make a lightweight call such as `search_docs(query="health check")` (about a
-  10-second timeout).
+- **Probe:** call `get_capabilities` (about a 10-second timeout). This is the call
+  `ground-rules.md` → "Session start" already requires once before any other Senzing MCP call, so
+  it doubles as the reachability probe and the preface makes **one** MCP call here, not two. Its
+  response is also the tool manifest the guide needs anyway.
+  - Do **not** probe with `search_docs`. It was specified here as "a lightweight call such as
+    `search_docs(query="health check")`", which it is not: that query returns a multi-page FAQ
+    article (~5 KB) for a question that only needed "did the server answer at all".
 - **Success** (any response, even empty results): proceed silently.
 - **Failure** (timeout or error): display a blocking message and STOP. Do not proceed until the
   bootcamper fixes the connection and says "retry":
@@ -91,8 +96,15 @@ then display the WELCOME banner:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Then show the plugin version as a one-line statement (verbosity-aware — suppress under the
-`minimal` preset, one line otherwise, INV-011/INV-012): `Senzing Bootcamp vX.Y.Z`.
+Then show the plugin version as a one-line statement (INV-105): `Senzing Bootcamp vX.Y.Z`.
+
+**Verbosity applies here only if a preset already exists.** Read `verbosity` from
+`config/bootcamp_preferences.yaml`: when it is `minimal`, suppress this line; otherwise show it.
+⛔ On a **fresh** bootcamp there is no preset yet — verbosity is chosen in Bootcamp preparation
+(INV-075 moved it out of the preface, superseding INV-024), and step 4 below writes no preferences —
+so the line is simply shown, and that is correct rather than an oversight. The suppression path is
+reachable only on a resumed run, or when the bootcamper pre-seeded the file (INV-133). Do not stall
+trying to honor a preference that cannot exist yet, and do not ask for verbosity here.
 
 Then give the overview (cover naturally, do not ask a question yet):
 
@@ -103,7 +115,7 @@ Then give the overview (cover naturally, do not ask a question yet):
   module, to keep and share with your team.
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
   Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
-  *Truth Set visualization* (optional), **Data collection**, **Data quality & mapping**, **Data
+  *Truth Set visualization* (optional), **Data collection**, **Data Quality, Mapping, and Transformation**, **Data
   processing**, **Query, Visualize and Discover**, and **Graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
   the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
