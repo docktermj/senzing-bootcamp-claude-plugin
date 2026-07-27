@@ -78,6 +78,13 @@ from urllib.parse import urlparse, urlencode
 # Ids are the app's DOM ids (`tab-<id>`, `navbtn-<id>`) and are contract, not an
 # implementation detail, so a server written in any language (INV-090) is capturable.
 # The slug is what makes a caption hard to get wrong.
+#
+# ⛔ `network` and `merges` are RESERVED, not tabs to capture from a current app — a
+# current server MUST NOT serve them, and DEFAULT_TABS excludes them. They stay here
+# so this helper still names them correctly when pointed at a snapshot saved by an
+# earlier eight-tab run, and so nothing reuses those ids for a different tab. Deleting
+# them as "dead" silently re-slugs old snapshots to `<id>-<id>.png` (see _out_path's
+# fallback) and breaks graduation's caption mapping.
 TABS = {
     "graph": ("entity-graph", "Entity Graph"),
     "network": ("relationship-network", "Relationship Network"),
@@ -122,6 +129,12 @@ _ACTIVATE_JS = """
 """
 
 
+_NON_LOCAL_TARGET = (
+    "refusing non-local target {target!r}: only local files and "
+    "localhost URLs are captured (offline guarantee, INV-091)"
+)
+
+
 def _is_local_target(target: str) -> bool:
     """True for a local file path or a localhost URL; False for a remote host."""
     parsed = urlparse(target)
@@ -156,12 +169,20 @@ def _tab_url(url: str, tab: str, query: str = "") -> str:
 
 
 def _page_source(target: str, is_url: bool) -> str:
-    """The page's HTML, for the tab-presence pre-flight. Empty string if unreadable."""
+    """The page's HTML, for the tab-presence pre-flight. Empty string if unreadable.
+
+    ⛔ The locality check is *outside* the ``try`` on purpose. Everything inside it
+    degrades to ``""`` so an unreachable page never blocks graduation — but a non-local
+    target must never reach ``urlopen`` at all, and swallowing that as "unreadable"
+    would fetch it first and then hide the fact (offline guarantee, INV-091).
+    """
+    if is_url and not _is_local_target(target):
+        raise ValueError(_NON_LOCAL_TARGET.format(target=target))
     try:
         if is_url:
             import urllib.request
 
-            with urllib.request.urlopen(target, timeout=10) as response:  # localhost only
+            with urllib.request.urlopen(target, timeout=10) as response:
                 return response.read().decode("utf-8", "replace")
         return Path(target).read_text(encoding="utf-8", errors="replace")
     except Exception:
@@ -391,10 +412,7 @@ def capture(
 ) -> list:
     """Capture one PNG per tab; return ``(path, label)`` for each one written."""
     if not _is_local_target(target):
-        raise ValueError(
-            f"refusing non-local target {target!r}: only local files and "
-            "localhost URLs are captured (offline guarantee, INV-091)"
-        )
+        raise ValueError(_NON_LOCAL_TARGET.format(target=target))
     out_dir.mkdir(parents=True, exist_ok=True)
     html = None if is_url else Path(target)
     if html is not None and not html.is_file():
@@ -479,6 +497,12 @@ def main(argv=None) -> int:
 
     target = args.url or args.html
     is_url = bool(args.url)
+    # Refuse a non-local target *before* the pre-flight below reads the page. The same
+    # check in capture() runs later, which is too late to keep the promise: the
+    # pre-flight would already have fetched the remote host (offline guarantee, INV-091).
+    if not _is_local_target(target):
+        print(_NON_LOCAL_TARGET.format(target=target), file=sys.stderr)
+        return 1
     if not is_url and not Path(target).is_file():
         print(f"no such HTML file: {target}", file=sys.stderr)
         return 1

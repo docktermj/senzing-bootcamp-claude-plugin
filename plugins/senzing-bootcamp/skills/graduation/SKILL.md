@@ -147,7 +147,7 @@ Gather context before any step. Do this silently.
 
    Be conservative in the other direction: a plausible real name must **never** trigger the
    question, because asking someone their name right after correctly detecting it is its own defect
-   (INV-006). A value containing a space and normal capitalisation ("Ada Lovelace") is a display
+   (INV-006). A value containing a space and normal capitalization ("Ada Lovelace") is a display
    name; a single lowercase token is not.
 
    When it is unusable, ask this once, pinned verbatim (INV-056), **before** Step 1 renders the PDF:
@@ -326,7 +326,7 @@ none of these are covered by it:
 2. **Duplicate images within one section.** If two embedded images in the same section are
    byte-identical, or have identical pixel dimensions and were written within the same second, warn:
    that is the signature of capturing one tab repeatedly rather than one image per tab.
-3. **Captions that cannot be checked.** If an embedded filename carries no recognised tab slug, warn
+3. **Captions that cannot be checked.** If an embedded filename carries no recognized tab slug, warn
    that its caption cannot be verified against a tab and should be confirmed by opening the image.
 
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
@@ -423,7 +423,7 @@ python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py
 The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
 - **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over.
-- **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognisable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
+- **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
 - **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.

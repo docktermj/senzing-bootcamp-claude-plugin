@@ -12,12 +12,12 @@ steering files.)
   MCP calls.
 - **A value you measured on this machine governs over generic guidance about that same value.**
   MCP output is authoritative for Senzing *facts* (INV-080) — method names, attribute names, flags,
-  behaviour. It is **not** authoritative about the state of *this* installation when the tool never
+  behavior. It is **not** authoritative about the state of *this* installation when the tool never
   saw it: a note computed from a parameter you supplied is a conditional, not a measurement. Where
-  the bootcamp already holds a detected value for the same thing — the licence record limit, the
+  the bootcamp already holds a detected value for the same thing — the license record limit, the
   installed SDK version, the platform — the detected value decides, the generic note is suppressed
   rather than relayed (INV-012), and the divergence is recorded in the checkpoint rather than shown
-  to the bootcamper. This is **not** licence to answer from training data: both sides are still
+  to the bootcamper. This is **not** license to answer from training data: both sides are still
   MCP-sourced, one generically and one by measuring the bootcamper's own machine.
 - **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see

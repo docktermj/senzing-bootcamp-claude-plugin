@@ -782,8 +782,8 @@ async function drawGraph(){
     .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
   const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
   const line=edge.append("line");
-  // Relationship-type colour plus a dash pattern, so the types stay distinguishable in a
-  // monochrome screenshot (contract: pair colour with a non-colour distinction).
+  // Relationship-type color plus a dash pattern, so the types stay distinguishable in a
+  // monochrome screenshot (contract: pair color with a non-color distinction).
   if(network){
     line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
         .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
@@ -837,8 +837,8 @@ function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
 // the same app was reused for production-scale data in Module 7 (contract:
 // "Scale principle"). Toggles stay available either way.
 const LABEL_AUTO_OFF=150;
-// Non-colour encoding companion to the relationship-type colour, so the types
-// stay distinguishable in a monochrome recap screenshot and for colour-vision
+// Non-color encoding companion to the relationship-type color, so the types
+// stay distinguishable in a monochrome recap screenshot and for color-vision
 // deficiency (contract: "Pair color with a non-color distinction").
 const R_DASH={possibly_same:"",possibly_related:"6,4",disclosed:"2,3",ambiguous:"10,3,2,3"};
 function rdash(ty){return R_DASH[String(ty||"").toLowerCase()]||"6,4";}
@@ -877,10 +877,10 @@ function addGraphControls(containerId,nodeCount){
     box.append("div").attr("class","why")
       .text("Showing the "+nodeCount+" entities that have relationships, of "+
             STATS.entities_total+" total — the full population is too dense to read at this "+
-            "scale. Untick above to show them all.");}
-// Built FROM the rendered nodes, never from a static colour config: a legend
+            "scale. Uncheck the toggle above to show them all.");}
+// Built FROM the rendered nodes, never from a static color config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
-// "the legend shows colours that appear nowhere in the graph" impossible.
+// "the legend shows colors that appear nowhere in the graph" impossible.
 // Clicking an entry filters the view and toggles back.
 function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const counts={};(nodes||[]).forEach(function(n){(n.data_sources||[]).forEach(function(s){counts[s]=(counts[s]||0)+1;});});
@@ -951,9 +951,16 @@ async function showRecords(eid,name){const m=d3.select("#modal");
   if(data&&data.error){body="<p class='muted'>"+esc(data.error)+"</p>";}
   else{const recs=(data&&data.records)||[];
     if(!recs.length){body="<p class='muted'>No records returned for this entity.</p>";}
-    else{body="<table class='tbl'><thead><tr><th>Source</th><th>Record</th><th>Name</th><th>Address</th><th>Phone</th></tr></thead><tbody>";
-      recs.forEach(function(r){body+="<tr><td>"+esc(r.data_source)+"</td><td>"+esc(r.record_id)+"</td><td>"+esc(r.name||"")+
-        "</td><td>"+esc(r.address||"")+"</td><td>"+esc(r.phone||"")+"</td></tr>";});
+    // Columns come from the fields the endpoint actually returned, never from a fixed
+    // list: this server's /api/records carries data_source/record_id/match_key, so a
+    // hardcoded Name/Address/Phone header rendered three empty columns for every row
+    // and read as missing data rather than as a payload that never had those fields.
+    else{const cols=[["match_key","Match key"],["name","Name"],["address","Address"],["phone","Phone"]]
+        .filter(function(c){return recs.some(function(r){return r[c[0]];});});
+      body="<table class='tbl'><thead><tr><th>Source</th><th>Record</th>"+
+        cols.map(function(c){return "<th>"+esc(c[1])+"</th>";}).join("")+"</tr></thead><tbody>";
+      recs.forEach(function(r){body+="<tr><td>"+esc(r.data_source)+"</td><td>"+esc(r.record_id)+"</td>"+
+        cols.map(function(c){return "<td>"+esc(r[c[0]]||"")+"</td>";}).join("")+"</tr>";});
       body+="</tbody></table>";}}
   m.html(modalShell("Records in this entity",sub,body));}
 function explainTitle(kind){return kind==="why"?"Why did these records resolve together?":"How was this entity built?";}
@@ -1084,7 +1091,8 @@ function showAllMerges(entities){
     card.select("h4").append("span").attr("class","chip").text((e.data_sources||[]).join(" + "));
     const mk=(e.records||[]).map(function(r){return r.match_key;}).filter(function(x){return x;})[0]||"";
     card.append("div").attr("class","muted").text(e.record_count+" records · Entity "+e.entity_id);
-    if(mk){const c=card.append("div");mkChips(mk).forEach(function(h){c.html(c.html()+h);});}
+    // mkChips returns one HTML string, already escaped per chip — set it, do not iterate it.
+    if(mk)card.append("div").html(mkChips(mk));
     addEntityActions(card,e.entity_id,e.entity_name);});}
 // Cross-Source overlap heatmap: entities shared between each pair of data sources.
 async function drawOverlap(){const o=await getJSON("/api/overlap");const box=d3.select("#overlap");box.html("");
@@ -1481,23 +1489,37 @@ def write_snapshot(model, engine, flags, title, out_path):
         "stats": model.stats(),
         "graph": model.graph(),
         "merges": model.merges(),
-        # Records for every entity, so the Records action works offline in the
-        # snapshot (it needs no engine call, unlike why/how).
-        "records": {
-            str(eid): model.records(eid) for eid in model.entities
-        },
+        # No "records" key: /api/records is per-entity, and graph.nodes already
+        # carries every entity with its constituent records, so the shim below
+        # indexes those instead. A second full copy would have embedded the same
+        # records twice in a file whose size grows with the bootcamper's dataset.
         "overlap": model.overlap(),
         "matchkeys": model.match_keys(),
         "features": model.feature_scores(),
     }
     # The embedded-data shim runs after D3 and before the page bootstrap, replacing
     # the fetch-based bootstrap with the inlined data.
+    #
+    # ⛔ /api/records is the one endpoint whose response depends on the query string.
+    # Returning the whole collection for it — as the aggregate endpoints below
+    # correctly do — hands showRecords() an object with no `records` array, so every
+    # entity in a standalone snapshot reported "No records returned for this entity"
+    # while the live server showed them. Resolve the entity_id here instead.
     shim = (
         "<script>const __DATA__=" + _script_json(payload) + ";"
+        "var __RECS__=null;"
+        "function __recordsFor(id){if(!__RECS__){__RECS__={};"
+        "(((__DATA__.graph||{}).nodes)||[]).forEach(function(n){"
+        "__RECS__[String(n.entity_id)]={entity_id:n.entity_id,entity_name:n.entity_name,"
+        "records:n.records||[]};});}"
+        "return __RECS__[id]||{entity_id:id,error:'not found: no such entity'};}"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
         "if(p==='why'||p==='how'){return Promise.resolve({json:function(){return Promise.resolve({error:'Why/How explanations run only against the live visualization server (start it with: python3 senzing_viz_server.py --records ...).'});}});}"
+        "if(p==='records'){var m=q.match(/entity_id=([^&]*)/);"
+        "var r=__recordsFor(m?decodeURIComponent(m[1]):'');"
+        "return Promise.resolve({json:function(){return Promise.resolve(r);}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
     page = render_page(

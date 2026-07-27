@@ -271,7 +271,7 @@ Build to that contract; the summaries below are the tab inventory, not the full 
 
    It also carries a **"Show only entities with relationships"** toggle, shown only when
    `relationships_total > 0`. Switched on, the graph filters to the subgraph of entities that a
-   relationship connects and styles edges by `relationship_type` (colour **plus** line style), with
+   relationship connects and styles edges by `relationship_type` (color **plus** line style), with
    a click-to-filter type legend built from the types actually present. Same label toggles and
    scale-aware defaults in both modes. This is a **mode of this tab, not a second tab** — both modes
    are served by the same `/api/graph` payload, so a standalone "Relationship Network" tab would be

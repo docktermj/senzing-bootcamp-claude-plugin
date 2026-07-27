@@ -436,7 +436,7 @@ not shown:
 
 | Tab | Endpoint(s) | Shown when |
 |-----|-------------|-----------|
-| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges coloured and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`). **Above 400 entities that toggle defaults ON** — see "Defaults at production scale" below |
+| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges colored and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`). **Above 400 entities that toggle defaults ON** — see "Defaults at production scale" below |
 | **Merge Statistics** | `/api/stats`, `/api/records`, `/api/why`, `/api/how` | always — records-per-entity histogram (this **is** the entity-size distribution) with clickable bars drilling down via `bucket_entities`, plus the largest resolved entities from `sample_entities` |
 | **Match Keys** | `/api/matchkeys`, `/api/records`, `/api/why`, `/api/how` | multi-record entities exist — clickable rows drilling down via `match_key_entities` |
 | **Feature Scores** | `/api/features` | multi-record entities exist |
@@ -456,7 +456,7 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
 - There is **no "Relationship Network" tab.** This reverses an earlier ruling here that it *was*
   distinct: the related-entity subgraph is a filtered view of **Entity Graph's own** `/api/graph`
   data, so by this rule they are one tab. What made it look distinct — the relationship-type edge
-  colouring/dashing and the click-to-filter legend — is preserved as Entity Graph's
+  coloring/dashing and the click-to-filter legend — is preserved as Entity Graph's
   "Show only entities with relationships" mode, so nothing was lost by folding it in.
 - There is **no "Record Merges" tab.** For any entity present in both, Search / Probe's per-entity
   result is a strict **superset**: Record Merges showed entity name, record count and one
@@ -475,7 +475,7 @@ and are therefore contract, not implementation detail:
 (`+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+REGISTRATION_COUNTRY+LEI_NUMBER`). A fixed
 label gutter with right-anchored text pushes the **head** of each key off the left edge, so the
 highest bars all render as the same trailing fragment and cannot be told apart — counts correct,
-labels useless, chart looking fine. Required behaviour:
+labels useless, chart looking fine. Required behavior:
 
 - Size the label gutter from the longest key present, up to a cap, before truncating anything.
 - **Middle-ellipsize** (`+NAME+ADDRESS+NATIONAL_ID+…RATION_COUNTRY+LEI_NUMBER`); never trim from the
@@ -499,7 +499,7 @@ ways, a bootcamper's explicit choice is never overridden, and an inline note sta
 "Showing the N entities that have relationships, of M total" — for the same reason the label note
 exists: otherwise a default reads as the data.
 
-State the threshold as a number so every language implementation (INV-090) picks the same behaviour.
+State the threshold as a number so every language implementation (INV-090) picks the same behavior.
 Re-check these against the bootcamper's **actual** scale, not the Truth Set: both defects pass every
 check 84 entities can run.
 
@@ -526,7 +526,7 @@ app; images in capture or append order cannot be lined up against the interface.
 | Search / Probe | `probe` | `tab-probe` | `navbtn-probe` | `search-probe` |
 
 The two **REMOVED** rows are retained as reserved identifiers, not as tabs to build: a current app
-MUST NOT serve them. They stay listed so the recap screenshot helper still recognises them when
+MUST NOT serve them. They stay listed so the recap screenshot helper still recognizes them when
 pointed at a snapshot saved by an earlier, eight-tab run, and so nothing reuses those ids for a
 different view.
 

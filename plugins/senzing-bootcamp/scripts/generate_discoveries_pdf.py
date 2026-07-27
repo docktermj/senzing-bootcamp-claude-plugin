@@ -6,9 +6,9 @@ Reads ``docs/bootcamp_data_discoveries.md`` and writes
 
 This is the **sibling** of ``generate_recap_pdf.py``, not a replacement for it.
 That script is deliberately recap-shaped: it keeps body text only when it sits
-under one of four recognised ``### `` sub-headings, so aiming it at a
+under one of four recognized ``### `` sub-headings, so aiming it at a
 discoveries document produced a valid-but-nearly-empty PDF. Rather than
-generalise a parser whose strictness is load-bearing for the recap, this script
+generalize a parser whose strictness is load-bearing for the recap, this script
 renders a general Markdown subset and reuses the recap generator's low-level PDF
 plumbing (page writer, wrapping, escaping) so there is exactly one hand-rolled
 PDF writer in the plugin.
@@ -30,7 +30,7 @@ strategy as the recap generator:
 Per INV-110 the input is audited **before** rendering and two outcomes are
 distinguished:
 
-* **Incomplete but recognisable** (some required sections missing) — warn on
+* **Incomplete but recognizable** (some required sections missing) — warn on
   stderr, render, exit 0. A partial findings document still has value.
 * **Not a discoveries document, or catastrophic content loss** (no headings at
   all, none of the required sections present, or content retention below
@@ -111,7 +111,7 @@ except Exception as exc:  # pragma: no cover - present but unusable
     BODY_INK = (74, 70, 64)
     WARM_LINE = (229, 223, 211)
 
-# Header-row fill for rendered tables. Derived from the warm line colour so the
+# Header-row fill for rendered tables. Derived from the warm line color so the
 # grid stays inside the brand palette rather than introducing a new tone.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in WARM_LINE)
 
@@ -224,7 +224,7 @@ def parse_discoveries(text: str) -> Discoveries:
     paragraph: List[str] = []
     last_was_table = False
     # A "**Label:** text" line opens a paragraph that plain following lines
-    # continue, exactly as an unlabelled paragraph does. Holding the block here
+    # continue, exactly as an unlabeled paragraph does. Holding the block here
     # lets those lines be absorbed into it instead of becoming a second block —
     # a split that put a blank line into the middle of a sentence.
     open_label: List[Block] = []
@@ -453,7 +453,7 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
 
     The ``|---|---|`` alignment row is dropped; it is presentation, not content.
     Ragged rows are padded or truncated to the header's column count so a
-    malformed row cannot desynchronise the grid.
+    malformed row cannot desynchronize the grid.
 
     **An empty leading column is kept, deliberately.** A table written
     ``| | Entity | Name |`` has a blank *header* over a real row-label column;
@@ -551,9 +551,11 @@ def _render_table_fpdf2(pdf, epw: float, block: Block) -> None:
                 1,
             ) * line_h
             if drawn < row_h:
-                pdf.rect(x, y0 + drawn, width, row_h - drawn)
-                if is_header:
-                    pdf.rect(x, y0 + drawn, width, row_h - drawn, style="FD")
+                # One call, styled by row type — the recap generator's mirror of this
+                # function (INV-142) does exactly this. Stroking first and then
+                # re-drawing headers with "FD" painted the same rectangle twice.
+                pdf.rect(x, y0 + drawn, width, row_h - drawn,
+                         style="FD" if is_header else "D")
             x += width
         pdf.set_xy(x0, y0 + row_h)
 

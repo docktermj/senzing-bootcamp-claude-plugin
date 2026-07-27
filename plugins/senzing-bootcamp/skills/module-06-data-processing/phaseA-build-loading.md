@@ -50,8 +50,8 @@ what stops the bootcamper answering with the bootcamp's record count instead of 
 > throughput instrumentation, queue-based distribution). Answer for your real target volume even if
 > it dwarfs the bootcamp dataset. This program is yours to take home.
 >
-> 1. Fewer than 500 — demo/evaluation
-> 2. 500 to 500,000 — small production
+> 1. 500 or fewer — demo/evaluation
+> 2. More than 500, up to 500,000 — small production
 > 3. More than 500,000, up to 10,000,000 — medium production
 > 4. More than 10,000,000 — large production
 >
@@ -62,9 +62,13 @@ not at all, or the pinned wording goes stale the moment the dataset changes.
 
 *(Internal: end the turn on this question and wait.)*
 
-**Classify and persist the tier.** Map the answer to a tier, `demo` (fewer than 500), `small`
-(500 to 500,000), `medium` (more than 500,000 up to 10,000,000), `large` (more than 10,000,000).
-Each boundary value belongs to exactly one tier. If the reply is a bare option number (1–4),
+**Classify and persist the tier.** Map the answer to a tier, `demo` (500 or fewer), `small`
+(more than 500 up to 500,000), `medium` (more than 500,000 up to 10,000,000), `large` (more than
+10,000,000). Each boundary value belongs to exactly one tier. **500 itself is `demo`**, and that is
+deliberate: `sdk_guide` returns the single-threaded demo template at or below 500 (see "The cutover
+is 500 records" below), so classifying exactly 500 as `small` would route the bootcamper to the
+threaded-pattern instructions and then hand them a loader the tool itself labels "demo-only".
+If the reply is a bare option number (1–4),
 select that tier directly. If it is free text, parse the number and classify. If it is
 unparseable, ask ONE clarifying follow-up presenting the four numbered tiers, then classify; if
 still unparseable, default to `demo` and tell the bootcamper demo/evaluation was selected as
@@ -143,26 +147,26 @@ number forward as a remembered fact.
 
 ⛔ **The same call also returns a licensing verdict — and it is computed from the record count
 alone.** `sdk_guide`'s own contract for `record_count` states that values above 500 "surface license
-guidance (default Senzing license limit)". The tool has no way to know what licence is installed, so
-above the threshold it emits a `LICENSE REQUIRED` note prescribing an evaluation licence or sampling
+guidance (default Senzing license limit)". The tool has no way to know what license is installed, so
+above the threshold it emits a `LICENSE REQUIRED` note prescribing an evaluation license or sampling
 to the first 500 records — **whether or not any of that applies to this bootcamper**.
 
-**Reconcile it against the licence already detected before relaying or acting on it.** Read
-`license_record_limit` from `config/bootcamp_progress.json` (Module 4's licence gate, Step 8a,
+**Reconcile it against the license already detected before relaying or acting on it.** Read
+`license_record_limit` from `config/bootcamp_progress.json` (Module 4's license gate, Step 8a,
 persists it from `SzProduct.get_license()`) and apply the same effective-limit rule as
 `phaseB-load-first-source.md`:
 
 - **`0` (no cap), or ≥ the dataset size** — the note does not apply. **Suppress it entirely**: say
-  nothing about licences or sampling, take the returned code, and ignore the licensing prose. A
+  nothing about licenses or sampling, take the returned code, and ignore the licensing prose. A
   warning the bootcamper cannot act on is noise (INV-012).
 - **Positive and below the dataset size** — the note applies. The single License Key gate (Module 4,
   Step 8a) already offered to expand capacity; restate that as a choice, never force downsizing.
-- **Absent or null** — no custom licence was detected, so the default-limit note is the right
+- **Absent or null** — no custom license was detected, so the default-limit note is the right
   assumption. Relay it.
 
-Acting on the unreconciled note is not harmless: it sends a bootcamper with an unlimited licence to
+Acting on the unreconciled note is not harmless: it sends a bootcamper with an unlimited license to
 sample down to 500 records, and the shrunken dataset then under-demonstrates the cross-source
-resolution that Modules 6 and 7 exist to show. Observed with `record_count=23152` against a licence
+resolution that Modules 6 and 7 exist to show. Observed with `record_count=23152` against a license
 reporting `recordLimit: 0`.
 
 So only the `demo` tier — which is below the default license limit anyway — gets a single-threaded
@@ -223,7 +227,8 @@ The program must include production-quality features:
 ## 4. Use MCP tools for code generation
 
 Call `generate_scaffold` with workflow `add_records` and the chosen language for version-correct
-SDK code. Call `sdk_guide(topic='load', record_count=<raw_value>)` for platform-specific loading
+SDK code. Call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
+for platform-specific loading
 patterns — as in step 3, `record_count` belongs to `sdk_guide` and is what selects the threaded
 versus single-threaded template.
 
@@ -282,7 +287,8 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    threshold. Source that threshold from MCP this session; `search_docs(query="loading",
    category="anti_patterns")` → "Do Not Use SQLite in Production" gives it as roughly 100,000
    records ("use SQLite only for quick local testing with small datasets"), well inside the
-   `small` tier's 500–500,000 span, which is why the tier alone is not a sufficient trigger. For
+   `small` tier's span (above 500, up to 500,000), which is why the tier alone is not a sufficient
+   trigger. For
    `demo`, a small-tier volume below that threshold, any non-SQLite engine, indeterminate inputs,
    or an already-recorded choice: say nothing new about volume/SQLite and proceed to the Phase B
    load.

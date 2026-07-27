@@ -36,16 +36,16 @@ reads the bootcamp recap structure specifically —
     ### End-of-Module Summary
 
 Body text is kept only when it sits under an H3 sub-heading of a module section
-(see ``parse_recap``), so a document whose H2 sections have no recognised
+(see ``parse_recap``), so a document whose H2 sections have no recognized
 sub-headings renders as headings with empty bodies. To keep that from shipping
 as a plausible-looking but empty deliverable, the input is audited **before**
 rendering and two outcomes are distinguished:
 
-* **Incomplete but recognisable** (e.g. one module missing a sub-section) —
+* **Incomplete but recognizable** (e.g. one module missing a sub-section) —
   warn on stderr, render, exit 0. Graduation is non-blocking, so an imperfect
   recap still produces its PDF.
 * **Not a recap, or catastrophic content loss** (no module sections, no section
-  carrying any recognised sub-section, or content retention below
+  carrying any recognized sub-section, or content retention below
   ``MIN_CONTENT_RETENTION``) — write the reason to stderr, print no
   ``PDF generated:`` line, write no PDF, and exit non-zero. Here an empty
   deliverable would be worse than none.
@@ -108,7 +108,7 @@ RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 # Calibration: the shipped reference recap
 # (docs/examples/bootcamp_recap.example.md) retains ~99%, because a well-formed
 # recap keeps essentially everything except blank lines and `---` separators. A
-# document with H2 headings but no recognised H3 sub-headings retains ~19%, since
+# document with H2 headings but no recognized H3 sub-headings retains ~19%, since
 # only the headings survive. 0.60 sits far from both, so ordinary slack (a stray
 # lead line under an H2) never trips it, while real content loss always does.
 MIN_CONTENT_RETENTION = 0.60
@@ -246,7 +246,7 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
 
     The ``|---|---|`` alignment row is dropped; it is presentation, not content.
     Ragged rows are padded or truncated to the header's column count so a
-    malformed row cannot desynchronise the grid. An empty leading column is
+    malformed row cannot desynchronize the grid. An empty leading column is
     kept deliberately — a blank header over a real row-label column is common,
     and dropping the column would delete the values beneath it.
 
@@ -469,7 +469,7 @@ class RecapAudit:
 
     ``fatal`` means the input is not a recap, or rendering it would silently drop
     most of its content — an empty deliverable would be worse than none, so no
-    PDF is written. ``warnings`` means an imperfect but recognisable recap:
+    PDF is written. ``warnings`` means an imperfect but recognizable recap:
     render it and continue, because graduation is non-blocking.
     """
 
@@ -501,7 +501,7 @@ def audit_recap(
     Builds on :func:`verify_recap` — which stays the ``--check`` contract and
     reports per-section completeness — and adds the two content-loss checks a
     per-section list cannot express: an input with no recap sections at all, and
-    one whose sections carry no recognised sub-sections (so the parser keeps
+    one whose sections carry no recognized sub-sections (so the parser keeps
     their headings and discards their bodies).
     """
     warnings = verify_recap(recap, expected_titles)
@@ -534,7 +534,7 @@ def audit_recap(
         if bodyless == len(recap.modules):
             fatal.append(
                 f"input does not look like a bootcamp recap: 0 of "
-                f"{len(recap.modules)} '##' sections carry any recognised "
+                f"{len(recap.modules)} '##' sections carry any recognized "
                 f"sub-section (expected one or more of: "
                 f"{', '.join(REQUIRED_SECTIONS)})"
             )
@@ -593,7 +593,7 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     GREEN = _FALLBACK_RGB["GREEN"]
     LINE = _FALLBACK_RGB["LINE"]
 
-# Header-row fill for rendered tables. Derived from the warm line colour so the
+# Header-row fill for rendered tables. Derived from the warm line color so the
 # header reads as a band rather than a second body row, and so it cannot drift
 # from the brand palette (INV-081/INV-107) — it is not a new token.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
@@ -1891,7 +1891,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         ok = render_with_stdlib(recap, out)
 
     if ok:
-        # Recognisable but imperfect: warn and still ship the PDF (never blocks;
+        # Recognizable but imperfect: warn and still ship the PDF (never blocks;
         # graduation is non-blocking). Distinct from the fatal class above.
         if audit.warnings:
             sys.stderr.write(

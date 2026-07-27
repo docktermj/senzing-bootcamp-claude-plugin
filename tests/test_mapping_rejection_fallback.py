@@ -49,10 +49,10 @@ class TestUnactionableRejectionIsHandled(unittest.TestCase):
     def test_retry_is_bounded_at_two_attempts(self):
         self.assertRegex(rejection_section(), r"(?i)after two unactionable rejections")
 
-    def test_fallback_is_not_offered_pre_emptively(self):
+    def test_fallback_is_not_offered_preemptively(self):
         self.assertRegex(
             read(PHASE2),
-            r"(?s)Never offer this fallback\s*\n?\s*pre-emptively",
+            r"(?s)Never offer this fallback\s*\n?\s*preemptively",
             "mapping_workflow must remain the default path",
         )
 
@@ -68,10 +68,10 @@ class TestRawRejectionIsCaptured(unittest.TestCase):
         self.assertIn("validation_rejections", text)
         self.assertIn("mapper_source", text)
 
-    def test_text_must_not_be_truncated_or_summarised(self):
+    def test_text_must_not_be_truncated_or_summarized(self):
         self.assertRegex(
             read(PHASE2),
-            r"(?s)truncating or summarising it destroys",
+            r"(?s)truncating or summarizing it destroys",
             "the capture must forbid editing the evidence",
         )
 

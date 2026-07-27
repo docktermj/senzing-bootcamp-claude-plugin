@@ -342,7 +342,7 @@ Source every figure through generated SDK code and `reporting_guide` — never d
 2. **`## Merges and match keys`** — every merge with the match key that drove it, so each is
    explainable and auditable.
 3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
-   the most business value: each row is one human decision away from being actioned.
+   the most business value: each row is one human decision away from being acted on.
 4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
    **near-miss**. Why something did *not* merge teaches more than why something did.
 5. **`## Relationship networks`** — multi-hop paths no single record states.

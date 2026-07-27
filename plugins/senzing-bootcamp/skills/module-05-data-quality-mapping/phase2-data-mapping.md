@@ -73,7 +73,7 @@ exists (`mapping_workflow` or `entity_specification`, with the reason when it is
 {"data_source":"NOMINO-RISK","current_step":3,"validation_rejections":["<raw rejection text, unedited>"],"mapper_source":"entity_specification","mapper_source_reason":"step-3 validation rejected twice with a truncated error naming no field"}
 ```
 
-Keep the rejection text unedited — truncating or summarising it destroys the only evidence the
+Keep the rejection text unedited — truncating or summarizing it destroys the only evidence the
 upstream defect can be diagnosed from.
 
 ## File placement during the workflow
@@ -404,7 +404,7 @@ case.
    tell which sources went through `mapping_workflow` and which did not.
 
 `mapping_workflow` remains the default and documented path. Never offer this fallback
-pre-emptively — only after two unactionable rejections of the same source.
+preemptively — only after two unactionable rejections of the same source.
 
 ⛔ **These gates are structural, not semantic — say so; do not let green be mistaken for correct.**
 Every check above validates **one source at a time** and asks whether the output is *well-formed*:
