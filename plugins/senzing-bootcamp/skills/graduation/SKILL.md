@@ -79,15 +79,23 @@ forward is the recap PDF and the `production/` project.
 ## Best-value model/effort prompt
 
 After the preface, surface the best-value model/effort before the heavier graduation work.
-Graduation is correctness-critical (Opus 5 + high effort) and steps up from the Module 7
-recommendation.
+Graduation is correctness-critical: **Opus 5 + high effort**.
 
-⛔ **This is unconditional — no preference to read, no mode to choose (INV-137).** Graduation always
-steps up from the Module 7 recommendation, so the recommendation has **changed** and the switch
-question below always applies here. There is no `model_guidance` key; do not read one, and do not
-honor a stale one left in an old preferences file.
+⛔ **This is unconditional — no preference to read, no mode to choose (INV-137).** There is no
+`model_guidance` key; do not read one, and do not honor a stale one left in an old preferences file.
 
-End this turn with a single 👉 yes/no question — its own turn, not combined with another 👉:
+⛔ **Whether to ask is decided the same way as at any module start** — compare graduation's
+recommendation against **what the bootcamper is running right now**, not against the previous
+stage's recommendation (`../bootcamp-onboarding/ground-rules.md` → "Module start banners and
+transitions"). Graduation shares its recommendation with Query, Visualize and Discover, so a
+bootcamper arriving on Opus 5 at high effort is **already there**: give them the one-line statement
+and go straight into Step 1. Do not assume graduation is always a step up — it is not, and asking a
+bootcamper to switch to the model they are already running is the pointless question INV-006 and
+INV-012 forbid. Name only the dial that differs, and when the recommendation sits *below* their
+current setting, say so in the question itself.
+
+When it **does** differ, end this turn with a single 👉 yes/no question — its own turn, not combined
+with another 👉:
 
 On the **CLI**, pin the switch question verbatim:
 
@@ -110,9 +118,12 @@ they need more time, acknowledge and wait, then continue — do not re-ask this 
 INV-006). On **no**, continue straight into the graduation work the same reply turn: run the
 Pre-checks and proceed to the first step, ending that turn on its own 👉 question.
 
-⛔ The confirmation gate follows a **yes** to the switch and nothing else — never after a decline.
-You never change the session yourself; only the bootcamper can, which is why the switch is offered
-as a question rather than performed. See `../../docs/model-selection.md`.
+⛔ The confirmation gate follows a **yes** to the switch and nothing else — never after a decline,
+and never when no switch question was asked because the recommendation already matched. In that
+matching case there is no gate and no question: the one-line statement is followed straight by the
+Pre-checks and the first step, in the same turn. You never change the session yourself; only the
+bootcamper can, which is why the switch is offered as a question rather than performed. See
+`../../docs/model-selection.md`.
 
 ## Pre-checks
 

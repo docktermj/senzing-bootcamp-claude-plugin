@@ -18,6 +18,39 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## reassess-per-module-model-effort-assignments
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/docs/model-selection.md`, `specs/INVARIANTS.md`, `tests/test_model_guidance_sync.py`, `tests/test_model_guidance_behavior.py`
+- **Summary:** Re-rated every stage against what the modules do **today** and rebuilt both
+  per-stage tables as one row per stage in module order (identical row-for-row). Changed:
+  System verification medium → **high** effort; Truth Set visualization Sonnet 5 / medium →
+  **Opus 5 / high** (rated "mostly run / render" before INV-090 made the module *generate* the
+  server); Data processing's unpinnable "Sonnet 5, high (Opus if bespoke load code)" resolved to
+  **Opus 5 / high**; Query, Visualize and Discover Sonnet 5 / medium → **Opus 5 / high** (three of
+  the 2026-07-26 self-observed defects landed there, plus INV-115's originating incident); and a
+  missing **Entity Resolution Concepts** row added. The back half — Data Quality, Mapping, and
+  Transformation through Graduation — is now flat at Opus 5 / high, so a Bootcamper who switches
+  there is asked nothing further. Separately, the ask trigger now compares against **what the
+  Bootcamper is running**, not the previous stage's recommendation (the previous stage is a
+  fallback only), names only the dial that differs, and frames a below-current recommendation as a
+  step down inside the switch question. Graduation's hardcoded "always steps up from the Module 7
+  recommendation" premise was removed — it now shares Opus 5 / high with Module 7 and derives its
+  behavior from the table like every other stage. The INV-137 flow itself is unchanged: pinned
+  switch question as its own yielding turn, the "Are you done modifying the model and effort?" gate
+  after a **yes** and nothing else, first step deferred to the turn after confirmation. The pause is
+  **symmetric** — downgrades ask exactly as upgrades do (maintainer decision, 2026-07-26), as does
+  the Truth Set visualization rating. Acceptance criteria verified: both tables parse identical and
+  cover every canonical module (`test_model_guidance_sync.py`); no conditional cell survives; the
+  Opus-5/high-throughout path produces zero switch questions after its first; **448 tests pass**
+  (437 → 448, 11 added) and all 11 new assertions were confirmed to **fail against `HEAD`**, so they
+  can detect the original defects. Test phrase assertions were made whitespace-tolerant via a new
+  `flat()` helper — two false failures came from re-flowing wrapped prose, which is an edit with no
+  meaning.
+- **Invariants:** INV-138, INV-139, INV-140, INV-141 (INV-137's trigger superseded in place; nothing
+  renumbered or deleted).
+- **Commit:** uncommitted
+
 ## close-dry-run-open-items
 
 - **Implemented:** 2026-07-26

@@ -3,7 +3,7 @@
 Renamed from `test_model_guidance_modes.py` on 2026-07-26, because the modes it was
 written to protect are gone and a test file named after them would mislead.
 
-**This design has now swung four times**, every swing a deliberate decision:
+**This design has now swung five times**, every swing a deliberate decision:
 
 | | Behavior |
 |---|---|
@@ -11,7 +11,8 @@ written to protect are gone and a test file named after them would mislead.
 | INV-063 | blocking switch question when the recommendation changes |
 | INV-069 | plus a second confirmation gate |
 | INV-119/INV-120 | all of it conditional on an `advisory`/`off`/`prompt` preference |
-| **INV-137** | unconditional again; the preference and its question retired |
+| INV-137 | unconditional again; the preference and its question retired |
+| **2026-07-26** | the trigger becomes the Bootcamper's *current setting*, not the previous stage |
 
 So the risk this file guards is specific and has materialised before: a future edit
 quietly reinstating one of the retired shapes, or a stale `model_guidance` read
@@ -22,7 +23,12 @@ surviving in a file nobody thought to check. What must hold now:
 3. The done-modifying gate lives in exactly two files and is scoped to **no** mode.
 4. The requirements INV-137 explicitly retains from INV-120 — separate dials,
    changeable at any time, a below-current recommendation flagged as a downgrade —
-   still appear, now on the recommendation-unchanged statement.
+   still appear. The downgrade flagging now applies to **both** branches: the pause
+   is symmetric, so a step down is asked, and an unexplained downgrade prompt reads
+   as being asked to accept a worse experience.
+5. The switch fires only when the recommendation differs from what the Bootcamper is
+   **running**, so someone already on the recommended setting is never asked, and
+   only the dial that actually differs is named.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -61,6 +67,17 @@ RETIRED_MODE_PHRASINGS = (
 def read(path):
     with open(path, encoding="utf-8") as handle:
         return handle.read()
+
+
+def flat(path):
+    """`read`, with runs of whitespace collapsed to single spaces.
+
+    These files are wrapped prose. A phrase assertion against the raw text is
+    really an assertion about where the line breaks fall, so re-flowing a
+    paragraph — an edit with no meaning — fails it. Use this for any check about
+    what a file *says*; use `read` only when layout genuinely matters.
+    """
+    return re.sub(r"\s+", " ", read(path))
 
 
 def shipped_markdown():
@@ -180,7 +197,7 @@ class TestRetainedInv120Content(unittest.TestCase):
     """INV-137 keeps these requirements; only their host sentence moved."""
 
     def setUp(self):
-        self.text = read(GROUND_RULES)
+        self.text = flat(GROUND_RULES)
 
     def test_separate_dials(self):
         self.assertRegex(self.text, r"separate dials|independent dials")
@@ -190,6 +207,95 @@ class TestRetainedInv120Content(unittest.TestCase):
 
     def test_a_downgrade_is_flagged(self):
         self.assertIn("advice to downgrade", self.text)
+
+
+class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
+    """Ask because a change is needed — not because the table moved.
+
+    The trigger used to be "did the recommendation change from the stage just
+    completed", which asks a Bootcamper already running Opus 5 / high to switch
+    to Opus 5 / high. Running one model throughout is a supported choice, so that
+    was the common case: six questions on the full path, none of which needed
+    asking (INV-006, INV-012).
+    """
+
+    def test_both_nudge_readers_compare_against_the_current_setting(self):
+        for path in (GROUND_RULES, GRADUATION):
+            with self.subTest(path=os.path.basename(path)):
+                self.assertRegex(
+                    flat(path),
+                    r"running right now|currently running|what the bootcamper is running",
+                    "the nudge must compare the recommendation against what the "
+                    "Bootcamper is running, not against the previous stage",
+                )
+
+    def test_the_previous_stage_is_only_a_fallback(self):
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"[Oo]nly when the current setting cannot be determined",
+            "comparing against the previous stage is the fallback for an "
+            "undeterminable current setting — not the primary rule",
+        )
+
+    def test_only_the_differing_dial_is_named(self):
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"[Nn]ame only the dial that differs",
+            "model and effort are separate dials: a Bootcamper already on the "
+            "recommended model must not be told to re-set it",
+        )
+
+    def test_graduation_does_not_assume_it_is_always_a_step_up(self):
+        """Graduation shares Opus 5 / high with Module 7, so it usually is not."""
+        text = flat(GRADUATION)
+        self.assertNotRegex(
+            text,
+            r"switch\s+question below always applies|always\s+steps up",
+            "graduation must derive its behavior from the table like every other "
+            "stage; it no longer steps up from Query, Visualize and Discover",
+        )
+        self.assertRegex(
+            text,
+            r"already there|already matched|already running",
+            "graduation must say what to do when the Bootcamper is already on "
+            "Opus 5 at high effort",
+        )
+
+
+class TestTheDowngradeIsFramedWhereItHappens(unittest.TestCase):
+    """A step down is asked, so it must be explained in the question.
+
+    The pause is symmetric (maintainer decision, 2026-07-26): downgrades ask
+    exactly as upgrades do. The below-current flagging previously lived only on
+    the recommendation-matches branch — the one case where a downgrade cannot
+    arise — so every real downgrade prompt shipped unexplained.
+    """
+
+    def test_the_switch_question_flags_a_step_down(self):
+        text = flat(GROUND_RULES)
+        self.assertRegex(
+            text,
+            r"sits \*below\* the current setting, say so in the question itself"
+            r"|step down.{0,200}in the question",
+            "the switch question itself must name a below-current recommendation "
+            "as a step down",
+        )
+
+    def test_it_says_declining_costs_nothing(self):
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"cost saving, not a capability|staying put (is fine|costs)",
+            "a downgrade prompt must state that the recommendation is about cost "
+            "rather than capability, so declining reads as free",
+        )
+
+    def test_the_pause_is_symmetric(self):
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"in \*\*either\*\* direction|either direction",
+            "a differing recommendation asks whether it is higher or lower — "
+            "there is no direction-based asymmetry",
+        )
 
 
 class TestMaintainerDocMatches(unittest.TestCase):

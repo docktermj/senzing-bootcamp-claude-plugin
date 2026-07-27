@@ -138,6 +138,70 @@ class StageTablesAgree(unittest.TestCase):
             self.assertIn("/effort", commands, f"{stage!r}: no /effort command")
 
 
+class EveryStageHasExactlyOneRecommendation(unittest.TestCase):
+    """Total coverage, single-valued cells.
+
+    Change detection compares this stage's recommendation against what the
+    Bootcamper is running; where the current setting is undeterminable it falls
+    back to the previous stage's row. Both need a value on each side, so a stage
+    missing from the table leaves the comparison undefined — Entity Resolution
+    Concepts was absent this way. And a cell offering two answers ("Sonnet 5,
+    high effort (Opus if bespoke load code)") cannot be pinned into a verbatim
+    switch question (INV-056) nor compared against a single current setting.
+    """
+
+    def setUp(self):
+        self.rows = stage_table(GROUND_RULES)
+        self.stages = [stage for stage, _, _ in self.rows]
+
+    def test_every_canonical_module_has_a_row(self):
+        # Parsed from bootcamp-preparation's module table — the one place display
+        # names are canonical (INV-079) — so adding a module fails this until it
+        # is rated.
+        prep = os.path.join(PLUGIN, "skills", "bootcamp-preparation", "SKILL.md")
+        with open(prep, encoding="utf-8") as fh:
+            canonical = [
+                m.group(1).strip()
+                for m in re.finditer(
+                    r"^\|\s*\d+\s*\|\s*([^|]+?)\s*\|\s*[^|]+?\s*\|\s*`[a-z_]+`", fh.read(), re.M
+                )
+            ]
+        self.assertTrue(canonical, "could not parse the canonical module table")
+        missing = [name for name in canonical if name not in self.stages]
+        self.assertEqual(
+            [],
+            missing,
+            f"module(s) with no model/effort row: {missing}. Every stage the bootcamp "
+            "can run needs one, including apparatus-exempt stages, so change "
+            "detection always has a value to compare against.",
+        )
+
+    def test_onboarding_is_rated_too(self):
+        """Not in the prep table, but it is a stage the nudge compares against."""
+        self.assertIn("Onboarding", self.stages)
+
+    def test_no_row_offers_a_conditional_recommendation(self):
+        offenders = [
+            f"{stage}: {recommended!r}"
+            for stage, recommended, _ in self.rows
+            if "(" in recommended or re.search(r"\bif\b|\bor\b", recommended)
+        ]
+        self.assertEqual(
+            [],
+            offenders,
+            f"conditional recommendation(s): {offenders}. A row must name exactly one "
+            "model and one effort — the nudge cannot resolve a condition at module "
+            "start, and INV-056 requires the question be pinnable.",
+        )
+
+    def test_one_stage_per_row(self):
+        """Grouped rows hid the sequence; the order is now readable down the column."""
+        offenders = [stage for stage in self.stages if ";" in stage]
+        self.assertEqual(
+            [], offenders, f"row(s) still group several stages: {offenders}"
+        )
+
+
 class StalenessNotePresent(unittest.TestCase):
     """Point-in-time data must say so, with the date it was checked."""
 

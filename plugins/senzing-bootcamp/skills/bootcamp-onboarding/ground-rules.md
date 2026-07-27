@@ -14,9 +14,10 @@ steering files.)
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
   best-value recommendation (see "Module start banners and transitions" below): a single 👉 switch
-  question when the recommendation changes from the current stage, otherwise a brief statement. The
-  heavier SDK setup and Data Quality, Mapping, and Transformation modules and graduation warrant Opus 5 + high
-  effort, lighter modules Sonnet 5.
+  question when the recommendation differs from what they are running, otherwise a brief statement.
+  The code-heavy stages — SDK setup, Truth Set visualization, and everything from Data Quality,
+  Mapping, and Transformation through graduation — warrant Opus 5 + high effort; the lighter
+  conversational and collection stages Sonnet 5.
   Do not change the session yourself — only the bootcamper can.
 
 ## Conversation protocol (the 👉 rules)
@@ -319,26 +320,50 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ⛔ **This behavior is unconditional — there is no preference to read and no mode to choose
   (INV-137).** The bootcamp is never asked how it wants model guidance handled, and there is no
-  `model_guidance` key. Two cases, decided only by whether the recommendation **changed**:
+  `model_guidance` key.
 
-  - **Recommendation changed** from the stage just completed (e.g. entering a heavier module) →
-    end the turn with a **single** 👉 yes/no question offering the switch, and do NOT also show
-    Step 1 this turn (exactly one 👉 per turn — INV-008/INV-009):
+  ⛔ **Compare the recommendation against what the bootcamper is running right now — not against
+  the previous stage's recommendation.** You are told which model you are running, so read the
+  model side from that; for effort, use the value in force when you can determine it. **Only when
+  the current setting cannot be determined**, fall back to comparing against the stage just
+  completed. Comparing recommendation-to-recommendation asks a bootcamper already on Opus 5 at high
+  effort "would you like to switch to Opus 5 at high effort?" — a question whose answer changes
+  nothing, which is exactly what INV-006 and INV-012 forbid. Running one model for the whole
+  bootcamp is a supported choice, so this is the common case, not an edge case.
 
-    On the **CLI**, pin the switch question verbatim with the stage's commands:
+  Two cases, decided only by that comparison:
 
-    > 👉 **Would you like to switch to `/model opus` + `/effort high` for this module?** (Recommended for best value; reply no to keep your current model.)
+  - **The recommendation differs from the current setting** — in **either** direction. A step down
+    asks just as a step up does: the choice is the bootcamper's both ways. End the turn with a
+    **single** 👉 yes/no question offering the switch, and do NOT also show Step 1 this turn
+    (exactly one 👉 per turn — INV-008/INV-009).
+
+    **Name only the dial that differs.** Model and effort are **separate dials**: a bootcamper on
+    Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
+    the effort only, never told to re-set the model they are already on.
+
+    On the **CLI**, pin the switch question verbatim, substituting only the bracketed values — the
+    stage's commands, and just the one dial when only one differs:
+
+    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current model.)
 
     On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
     stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to Opus 5 at high reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+
+    ⛔ **When the recommendation sits *below* the current setting, say so in the question itself.**
+    Add one clause naming it as a step down, stating that the recommendation is about cost rather
+    than capability and that staying put costs them nothing — e.g. "this is a step down from your
+    current {current}; it is a cost saving, not a capability the module needs, so staying put is
+    fine." Without it the bootcamper is being asked to accept a worse experience for no stated
+    reason. It never reads as advice to downgrade.
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
     telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
-    or use the model and reasoning-effort controls in their Claude app), then end the turn on this
-    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts
-    to the surface) — do NOT show Step 1 yet:
+    or use the model and reasoning-effort controls in their Claude app — naming only the dial that
+    is moving), then end the turn on this pinned confirmation gate (its question verbatim,
+    INV-056/INV-069 — only the answer hint adapts to the surface) — do NOT show Step 1 yet:
 
     > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
@@ -346,16 +371,17 @@ never count against the one-question-per-turn rule and must not be treated as ga
     acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
     (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
     turn, ending on Step 1's single 👉 question.
-  - **Recommendation unchanged** → a brief one-line statement; no question, so the bootcamp never
-    asks a pointless "switch?" every module (INV-012). The statement names the recommended model and
-    effort as **separate dials**, notes either can be changed at any time and applies from the next
-    message, and — when the recommendation sits *below* the current setting — says so explicitly with
-    why the carve-out may not apply, so it never reads as advice to downgrade.
+  - **The recommendation matches what they are already running** → a brief one-line statement; no
+    question, so the bootcamp never asks a pointless "switch?" every module (INV-012). The statement
+    names the recommended model and effort as **separate dials**, notes either can be
+    changed at any time and applies from the next message, and — when the recommendation sits
+    *below* the current setting — says so explicitly with why the carve-out may not apply, so it
+    never reads as advice to downgrade.
 
   ⛔ **You never change the session yourself — only the bootcamper can.** That is why the switch is
   offered as a question rather than performed. The "Are you done modifying the model and effort?"
   gate follows a **yes** to the switch and nothing else: never after a decline, and never when the
-  recommendation was unchanged.
+  recommendation already matched.
 
   Switching is always optional — running one model for everything (Opus 5) stays valid. Per-stage
   recommendation — **this table is the authoritative copy** (the one in
@@ -364,24 +390,37 @@ never count against the one-question-per-turn rule and must not be treated as ga
   carries the dated verification note, and `tests/test_model_guidance_sync.py` fails if the two
   tables drift or if any superseded model name survives (INV-114):
 
-  Stages are separated by **semicolons**, not commas — "Query, Visualize and Discover" and "Data
-  Quality, Mapping, and Transformation" each contain a comma, so a comma-separated list would read as
-  extra stages.
+  **One row per stage, in the order the bootcamp runs them** — so the next stage's recommendation
+  can be read off directly, and so no stage is ever missing a value to compare against. Each row
+  names exactly **one** model and **one** effort: a conditional recommendation cannot be pinned into
+  a verbatim question (INV-056) and gives the comparison above two answers.
 
   | Stage | Recommended | CLI commands |
   |---|---|---|
-  | Onboarding; Bootcamp preparation; Discover the Business Problem; System verification; Data collection; Query, Visualize and Discover; Truth Set visualization | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
-  | SDK setup; Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
-  | Data processing | Sonnet 5, high effort (Opus if bespoke load code) | `/model sonnet` · `/effort high` |
+  | Onboarding | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Bootcamp preparation | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Entity Resolution Concepts | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Discover the Business Problem | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | SDK setup | Opus 5, high effort | `/model opus` · `/effort high` |
+  | System verification | Sonnet 5, high effort | `/model sonnet` · `/effort high` |
+  | Truth Set visualization | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Data collection | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |
+  | Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Data processing | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
   | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
   The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
   model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
   the Claude Code equivalent (INV-098).
 
-  Onboarding and Bootcamp preparation appear in this table only so the nudge can detect whether the
-  recommendation **changes** at the next module; being apparatus-exempt (INV-075/INV-078), those
-  setup stages present no model/effort nudge themselves (see the carve-out above).
+  From Data Quality, Mapping, and Transformation onward the recommendation is **flat** — a
+  bootcamper who switches there is asked nothing further for the rest of the bootcamp.
+
+  Onboarding, Bootcamp preparation and Entity Resolution Concepts appear in this table only so the
+  nudge always has a value on both sides of the comparison; being apparatus-exempt
+  (INV-075/INV-078), those setup stages present no model/effort nudge themselves (see the carve-out
+  above).
 
 - Module start banner:
 
@@ -394,10 +433,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - After an affirmative module-transition ("Ready to move on to the next module?"), immediately produce the
   banner + journey map + before/after + step overview + estimated time to complete + best-value
   model/effort prompt. When that
-  prompt is a 👉 switch question (recommendation changed), the turn ends there. On the reply:
+  prompt is a 👉 switch question (the recommendation differs from what they are running), the turn
+  ends there. On the reply:
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
   statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with
-  Step 1 on the turn after the bootcamper confirms. When the recommendation is unchanged (no
+  Step 1 on the turn after the bootcamper confirms. When the recommendation already matches (no
   switch question), continue straight into Step 1 the same turn. Never reply with just "." or
   fewer than 50 characters.
 
