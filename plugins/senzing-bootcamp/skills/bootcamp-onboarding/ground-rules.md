@@ -10,6 +10,15 @@ steering files.)
 - Check `config/bootcamp_progress.json`. If present, resume; if not, run onboarding.
 - Call the Senzing MCP `get_capabilities` tool once at session start, before other Senzing
   MCP calls.
+- **A value you measured on this machine governs over generic guidance about that same value.**
+  MCP output is authoritative for Senzing *facts* (INV-080) — method names, attribute names, flags,
+  behaviour. It is **not** authoritative about the state of *this* installation when the tool never
+  saw it: a note computed from a parameter you supplied is a conditional, not a measurement. Where
+  the bootcamp already holds a detected value for the same thing — the licence record limit, the
+  installed SDK version, the platform — the detected value decides, the generic note is suppressed
+  rather than relayed (INV-012), and the divergence is recorded in the checkpoint rather than shown
+  to the bootcamper. This is **not** licence to answer from training data: both sides are still
+  MCP-sourced, one generically and one by measuring the bootcamper's own machine.
 - **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
   `../../docs/model-selection.md`). At each module start you **proactively** surface this stage's
@@ -137,6 +146,18 @@ steering files.)
   per-binding: `SZ_EXPORT_ALL_FLAGS` is documented for the export methods but is absent from the
   Python binding's `SzEngineFlags`, so confirm a composite exists on *your* binding before
   reaching for it.
+- **The factory must outlive every engine it creates.** Object lifetime, not just thread-safety:
+  an engine does not keep its factory (environment) alive, so a helper that builds the factory in a
+  local and returns only the engine returns a **dead** engine. In a garbage-collected language the
+  factory is collected when the helper returns, and the first engine call then fails with
+  `SzSdkError - engine object has been destroyed and can no longer be used, create a new one`.
+  That message means *collected*, not explicitly destroyed — there is no `destroy()` to hunt for —
+  and it surfaces at the first call, far from the line that caused it. Hold the factory for the
+  process lifetime, or return it alongside whatever it created. The framing is ownership, not a
+  Python idiom (INV-002): however your language expresses it, the factory's lifetime must enclose
+  every engine's. Worked example in the bundled reference server: `scripts/senzing_viz_server.py`
+  returns `factory` next to `engine` for exactly this reason. Confirm the error text against the
+  installed SDK rather than trusting this note (INV-080).
 - **Make grounding visible (attribution).** When you present MCP-sourced Senzing content to the
   bootcamper (e.g. the business-problem pattern gallery, concept explanations, generated
   examples), add a brief, unobtrusive attribution so the grounding is traceable — e.g. "via

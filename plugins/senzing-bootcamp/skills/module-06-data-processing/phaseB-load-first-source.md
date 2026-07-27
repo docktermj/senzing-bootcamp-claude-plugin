@@ -91,9 +91,35 @@ all pending redos until the queue is empty. If the generated redo scaffold uses 
 `ExampleEnvironment`, or any path outside the working directory, override the database path to
 `database/G2C.db`.
 
+⛔ **The bootcamp needs a batch drain that terminates. Check the returned snippet before running
+it.** The MCP redo templates target *streaming ingest*, where never stopping is the point: the
+observed `sdk_guide(topic='redo')` answer prints "pausing for 30 seconds" on an empty queue and
+loops forever. Run that unmodified after a batch load and the session simply hangs — no error, no
+output, indistinguishable from slow work, which is the worst shape a failure can take here.
+
+If the snippet loops on an empty queue, adapt it: keep its structure and concurrency, and replace
+the sleep-and-continue with a break. The shape the batch step needs, stated language-agnostically
+(INV-002):
+
+1. Fetch the next redo record.
+2. If none was returned, the queue is empty — exit the loop.
+3. Otherwise process it, and repeat.
+
+**The fetch's return value is the loop sentinel.** ⛔ Do **not** poll a redo-*count* method as the
+loop condition: it is a full table scan per call, so the drain becomes O(n²) — and because
+processing a redo record generates more redo records, the loop runs longer than the initial count
+suggests (a backlog of 384 took 400 processed calls in the reported session). Confirm the method
+names for the chosen binding from MCP (INV-080/INV-132), and confirm the anti-pattern itself via
+`search_docs(query="redo", category="anti_patterns")` rather than trusting this note.
+
+Report the terminal condition: how many redo records were processed, and that the queue reached
+empty. A drain that finishes silently cannot be told from one still running.
+
 Include a code comment explaining that in production, redos are typically handled by an
 always-running redo processor that wakes, checks for pending redos, processes them, and sleeps
-when the queue is empty.
+when the queue is empty — that is the **streaming** pattern, and it is deliberately *not* what this
+batch step runs. Naming the difference is what stops the non-terminating template looking like the
+correct answer.
 
 Tell the bootcamper: "Processing the redo queue now. This refines entity resolution, without
 it, some matches would be incomplete."

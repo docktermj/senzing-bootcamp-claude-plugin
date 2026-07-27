@@ -111,3 +111,9 @@ the bootcamp is where the mismatch bites.
   shapes per binding), `specs/mcp-grounding-in-every-skill.md` (INV-080),
   `specs/production-volume-question-clarity-and-threading-cutover.md` (the other place a
   `sdk_guide` load-topic answer is adapted to the bootcamp's context)
+
+## Invariants introduced
+
+- `INV-151` — The redo drain MUST terminate, sentinelled on the fetch returning no record, never on
+  a redo-count method; an MCP-returned snippet MUST be checked for non-termination and adapted, and
+  the drain MUST report its terminal condition (recorded in `specs/INVARIANTS.md`).

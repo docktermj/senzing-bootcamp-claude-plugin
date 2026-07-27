@@ -118,3 +118,15 @@ reconciliation below is the durable fix.
   `specs/mcp-grounding-in-every-skill.md` (INV-080),
   `specs/production-volume-question-clarity-and-threading-cutover.md` (the other consumer of
   `record_count`)
+
+## Invariants introduced
+
+- `INV-150` — A note computed from a caller-supplied parameter is a conditional, not a measurement;
+  a detected value for the same thing governs, the generic note is suppressed, and the divergence is
+  recorded (recorded in `specs/INVARIANTS.md`).
+
+## Implementation note
+
+The premise was confirmed at the schema level rather than assumed: `sdk_guide`'s own `record_count`
+parameter documentation states "Values > 500 also surface license guidance (default Senzing license
+limit)" — so the note is emitted from the count alone, with no knowledge of the installed licence.

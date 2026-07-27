@@ -142,3 +142,32 @@ them (INV-090/INV-124), and implement them in the Python reference.
   tuned-against-the-Truth-Set failure class), `specs/visualization-why-how-and-clickable-histogram.md`,
   `specs/truthset-viz-entity-actions-and-aggregate-drilldowns.md` (the match-key drill-down this
   must not disturb)
+
+## Invariants introduced
+
+- `INV-153` — A truncated chart label MUST stay distinguishable, expose its full value on hover, and
+  never lose its leading characters; match keys require middle-ellipsis (recorded in
+  `specs/INVARIANTS.md`).
+- `INV-154` — A legibility-governing visualization default MUST be scale-dependent with the
+  threshold stated as a number in the any-language contract (recorded in `specs/INVARIANTS.md`).
+
+## Correction applied during implementation (2026-07-26)
+
+This spec's proposed fix — "truncate from the **right** (or middle-ellipsize)" — is only half
+correct, and the obvious reading of it does not work. Right-truncation preserves the prefix, which is
+the direction the report asked for, and the four highest bars in the reported dataset **still**
+render identically: they share a 52-character prefix and differ only in the final segment. Measured
+during implementation, then pinned by `test_head_only_truncation_would_not_pass` so the
+plausible-looking fix cannot return. Middle-ellipsis is what distinguishes them, and the contract now
+requires it rather than offering it as an alternative.
+
+## Verification limitation
+
+The acceptance criterion asked for verification "against a dataset of at least ~2,000 entities and
+~4,000 relationships, by opening the rendered app". Real resolved Senzing output at that scale was
+not available in the implementation environment. Instead the shipped expressions were transcribed and
+exercised at 84 / 2,799 / 5,000 entities (label distinctness, gutter fit, prefix survival, threshold
+behaviour, the no-relationships case), and both changed functions were syntax-checked with
+`node --check`. That proves the arithmetic guarantees; it does **not** prove the graph reads better at
+2,799 entities. Someone with real resolved data should open the app and confirm the subgraph default
+is the right call at that scale.

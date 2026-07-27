@@ -18,6 +18,66 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## visualization-legibility-at-production-scale
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `specs/INVARIANTS.md`, `tests/test_viz_defaults_at_scale.py`
+- **Summary:** Match Keys now sizes its label gutter from the longest key present and
+  **middle-ellipsizes** to fit, with the full key on hover for both bar and label; the Entity Graph
+  opens on the relationship subgraph above 400 entities, latched so a redraw cannot undo the
+  Bootcamper's toggle, with an inline note stating both counts. Both are stated as numbers in the
+  any-language contract (INV-090). **The spec's own fix was half wrong:** right-truncation preserves
+  the prefix as asked and still renders the four highest bars identically, because they share a
+  52-character prefix — measured during implementation and now pinned by
+  `test_head_only_truncation_would_not_pass`. **Verification limitation:** real resolved data at
+  ~2,800 entities was unavailable, so the shipped expressions were transcribed and exercised at 84 /
+  2,799 / 5,000 entities and both changed functions syntax-checked with `node --check`. That proves
+  the arithmetic, not that the graph reads better at scale — someone with real data should confirm.
+  Tests **490 → 506**.
+- **Invariants:** INV-153, INV-154.
+- **Commit:** uncommitted
+
+## factory-must-outlive-every-engine-it-creates
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** Added the factory-lifetime rule to the MCP-first section's SDK discipline, framed as
+  ownership rather than a Python idiom (INV-002), with the verbatim `engine object has been
+  destroyed` error recorded and explained as *collected* rather than explicitly destroyed — the
+  reading that sends people hunting for a `destroy()` call that does not exist. Cites the bundled
+  `senzing_viz_server.py`, which already returns `factory` alongside `engine` for exactly this
+  reason: the knowledge existed in a script comment and had never reached bootcamper-facing guidance.
+- **Invariants:** INV-152.
+- **Commit:** uncommitted
+
+## redo-batch-drain-must-terminate
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseC-multi-source.md`, `specs/INVARIANTS.md`
+- **Summary:** Phase B step 9 now specifies the terminating loop shape language-agnostically, warns
+  that the MCP redo templates target streaming ingest and that the observed one never returns on an
+  empty queue (hanging the session with no error), requires checking and adapting the snippet, bans
+  a redo-count method as the loop sentinel with the O(n²) reason, and requires reporting the count
+  processed and that the queue emptied. Phase C's coordinated drain defers to it rather than
+  re-deriving it, and its "monitor queue depth" bullet now distinguishes monitoring from gating. The
+  count-sentinel anti-pattern previously existed only in a sample recap's narrative, not in guidance.
+- **Invariants:** INV-151.
+- **Commit:** uncommitted
+
+## reconcile-sdk-guide-license-note-with-detected-limit
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`, `specs/INVARIANTS.md`
+- **Summary:** `phaseA` now states that the same `sdk_guide` call returning the load template also
+  returns a licensing verdict computed from `record_count` alone, and requires reconciling it against
+  the already-detected `license_record_limit` before relaying or acting on it — suppressed entirely
+  at `0` or a limit at/above the dataset size. Generalised once in the ground rules: a measured
+  environment value governs over generic guidance about that same value, scoped so it cannot be read
+  as relaxing INV-080. Premise confirmed at the schema level rather than assumed — `sdk_guide`'s
+  `record_count` documentation states that values above 500 "surface license guidance".
+- **Invariants:** INV-150.
+- **Commit:** uncommitted
+
 ## network-link-fields-and-uncovered-response-schemas
 
 - **Implemented:** 2026-07-26 (one criterion deliberately unmet — see below)

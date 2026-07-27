@@ -436,7 +436,7 @@ not shown:
 
 | Tab | Endpoint(s) | Shown when |
 |-----|-------------|-----------|
-| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges coloured and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`) |
+| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges coloured and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`). **Above 400 entities that toggle defaults ON** — see "Defaults at production scale" below |
 | **Merge Statistics** | `/api/stats`, `/api/records`, `/api/why`, `/api/how` | always — records-per-entity histogram (this **is** the entity-size distribution) with clickable bars drilling down via `bucket_entities`, plus the largest resolved entities from `sample_entities` |
 | **Match Keys** | `/api/matchkeys`, `/api/records`, `/api/why`, `/api/how` | multi-record entities exist — clickable rows drilling down via `match_key_entities` |
 | **Feature Scores** | `/api/features` | multi-record entities exist |
@@ -464,6 +464,40 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
   scores. Its one unique capability was browsing *all* merged entities with no query, which is now
   the "Show all merged entities" button on that tab — so the removal is lossless rather than a
   trade. `/api/merges` is retained: the example-query chips and that button both read it.
+
+### Defaults at production scale (required)
+
+Every visual default here was chosen against the Truth Set's 84 entities, and Module 7 points this
+same app at the bootcamper's own data — routinely thousands. Two defaults do **not** survive that
+and are therefore contract, not implementation detail:
+
+**1. Match-key labels must stay distinguishable.** Real match keys run to 70+ characters
+(`+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+REGISTRATION_COUNTRY+LEI_NUMBER`). A fixed
+label gutter with right-anchored text pushes the **head** of each key off the left edge, so the
+highest bars all render as the same trailing fragment and cannot be told apart — counts correct,
+labels useless, chart looking fine. Required behaviour:
+
+- Size the label gutter from the longest key present, up to a cap, before truncating anything.
+- **Middle-ellipsize** (`+NAME+ADDRESS+NATIONAL_ID+…RATION_COUNTRY+LEI_NUMBER`); never trim from the
+  left. Right-truncation alone is **not** sufficient: match keys are `+A+B+C…` sequences that
+  commonly share a long prefix and differ only in the final segment, so head-only truncation renders
+  the top bars identically — the same unreadable chart, failing from the other end. Keeping both
+  ends distinguishes keys that differ at either.
+- Guarantee that **no two rendered labels are identical unless their keys are identical** — that is
+  the testable property; the exact ellipsis strategy is not.
+- Expose the full, untruncated key on hover (`<title>` or equivalent), on both the bar and its label.
+
+**2. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
+at that density the graph conveys shape only, with no practical way to locate an entity. Required:
+**above 400 entities, Entity Graph opens on the relationship subgraph** rather than the full
+population, provided a subgraph exists (`relationships_total` > 0). The toggle still switches both
+ways, a bootcamper's explicit choice is never overridden, and an inline note states both counts —
+"Showing the N entities that have relationships, of M total" — for the same reason the label note
+exists: otherwise a default reads as the data.
+
+State the threshold as a number so every language implementation (INV-090) picks the same behaviour.
+Re-check these against the bootcamper's **actual** scale, not the Truth Set: both defects pass every
+check 84 entities can run.
 
 ### Tab identifiers and deep-linking (required)
 

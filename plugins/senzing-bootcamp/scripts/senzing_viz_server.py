@@ -705,7 +705,14 @@ function tabApplicable(id){const s=STATS||{};
 // "all" shows the full entity population; "network" shows only entities connected by a
 // relationship, with edges styled by relationship type -- what the removed Relationship
 // Network tab rendered. Both modes are served by the same /api/graph payload.
+// Above this many entities the full population is a mesh with no practical way to
+// locate anything, so Entity Graph opens on the relationship subgraph instead. The
+// toggle still switches both ways; only the DEFAULT is scale-aware. Stated in
+// visualization-api-reference.md so a server in any language picks the same value.
+// (Label defaults are already scale-aware; hiding labels does not thin 4,464 edges.)
+const GRAPH_SUBGRAPH_DEFAULT_ABOVE=400;
 let graphMode="all";
+let graphModeAutoSet=false;
 // The live force simulation for the graph tab. Toggling the mode re-enters drawGraph, and
 // the previous simulation would otherwise keep ticking against DOM nodes that have been
 // removed — wasted work and a source of jank. Stopped before each redraw.
@@ -736,8 +743,15 @@ async function drawGraph(){
   d3.select("#graph-container .legend").remove();
   d3.select("#graph-container .empty-note").remove();
   if(graphSim){graphSim.stop();graphSim=null;}
-  const network=graphMode==="network";
   const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
+  // Scale-aware default, applied once: above the threshold, open on the relationship
+  // subgraph rather than the full population. Only when a subgraph actually exists,
+  // and never overriding a choice the bootcamper has already made with the toggle.
+  if(!graphModeAutoSet){
+    graphModeAutoSet=true;
+    if(g.nodes.length>GRAPH_SUBGRAPH_DEFAULT_ABOVE&&links0.length){graphMode="network";}
+  }
+  const network=graphMode==="network";
   // In network mode, keep only entities that a relationship actually connects -- the
   // subgraph the removed Relationship Network tab showed.
   let nodes;
@@ -856,7 +870,14 @@ function addGraphControls(containerId,nodeCount){
     inp.on("change",function(){graphMode=this.checked?"network":"all";drawGraph();});
   }
   if(auto)box.append("div").attr("class","why")
-    .text("Labels hidden — "+nodeCount+" entities would overlap. Use the toggles to show them.");}
+    .text("Labels hidden — "+nodeCount+" entities would overlap. Use the toggles to show them.");
+  // Same reasoning as the label note: without it the bootcamper reads a default as
+  // their data, and concludes the graph is showing everything there is.
+  if(graphMode==="network"&&(STATS||{}).entities_total>GRAPH_SUBGRAPH_DEFAULT_ABOVE)
+    box.append("div").attr("class","why")
+      .text("Showing the "+nodeCount+" entities that have relationships, of "+
+            STATS.entities_total+" total — the full population is too dense to read at this "+
+            "scale. Untick above to show them all.");}
 // Built FROM the rendered nodes, never from a static colour config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
 // "the legend shows colours that appear nowhere in the graph" impossible.
@@ -1101,20 +1122,39 @@ async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box
   const items=d.match_keys||[];
   box.append("p").html("Which feature combinations (match keys) drove the most resolutions across your data.");
   if(!items.length){box.append("p").attr("class","muted").text("No match keys were recorded for the resolved records.");return;}
-  const W=Math.min(720,box.node().clientWidth),barh=26,mm={t:6,r:44,b:6,l:190},H=mm.t+mm.b+items.length*barh;
+  // Gutter sized from the data, then labels fitted to it. Real match keys run to
+  // 70+ chars ("+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+..."), and a
+  // fixed 190px gutter with text-anchor:end pushed the head of every long key off
+  // the left edge of the SVG -- so the four highest bars all rendered as
+  // "...ISTRATION_COUNTRY+LEI_NUMBER" and could not be told apart. Counts were
+  // right, labels useless, and the chart looked fine.
+  const W=Math.min(720,box.node().clientWidth),barh=26;
+  const longest=d3.max(items,function(z){return (z.match_key||"").length;})||0;
+  const gutter=Math.max(150,Math.min(320,longest*5.9+14));
+  const mm={t:6,r:44,b:6,l:Math.min(gutter,W*0.55)},H=mm.t+mm.b+items.length*barh;
+  // MIDDLE-ellipsize, never left-trim. Right-trimming alone is not enough: real
+  // keys are "+A+B+C..." sequences that often share a long prefix and differ only
+  // in the last segment, so head-only truncation renders the top bars identically
+  // -- the same unreadable chart, just failing from the other end. Keeping both
+  // ends makes keys that differ at either end distinguishable.
+  const maxChars=Math.max(8,Math.floor((mm.l-10)/5.9));
+  function fitKey(k){k=k||"";if(k.length<=maxChars)return k;
+    const tail=Math.max(6,Math.floor((maxChars-1)*0.5)),head=maxChars-1-tail;
+    return k.slice(0,head)+"…"+k.slice(k.length-tail);}
   const svg=box.append("svg").attr("width",W).attr("height",H);
   const x=d3.scaleLinear().domain([0,d3.max(items,function(z){return z.count;})||1]).range([mm.l,W-mm.r]);
   const y=d3.scaleBand().domain(items.map(function(z){return z.match_key;})).range([mm.t,H-mm.b]).padding(0.2);
   svg.selectAll("rect").data(items).join("rect").attr("x",mm.l).attr("y",function(z){return y(z.match_key);})
     .attr("width",function(z){return Math.max(0,x(z.count)-mm.l);}).attr("height",y.bandwidth()).attr("rx",3).attr("fill",C_BLUE);
   svg.selectAll("text.k").data(items).join("text").attr("class","k").attr("x",mm.l-8).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
-    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z){return z.match_key;});
+    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z){return fitKey(z.match_key);})
+    .append("title").text(function(z){return z.match_key;});
   svg.selectAll("text.c").data(items).join("text").attr("class","c").attr("x",function(z){return x(z.count)+5;}).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
     .attr("dominant-baseline","middle").attr("font-size",11).attr("font-weight",600).text(function(z){return z.count;});
   if(d.capped)box.append("p").attr("class","muted").text("Showing the top "+items.length+" of "+d.distinct+" distinct match keys.");
   // Clickable rows -> the entities carrying that match key (contract:
   // "Drill-down on every aggregate view"). Match Keys was the last dead end.
-  svg.selectAll("rect").style("cursor","pointer").append("title").text("Show the entities with this match key");
+  svg.selectAll("rect").style("cursor","pointer").append("title").text(function(z){return z.match_key+" — click to show the entities with this match key";});
   svg.selectAll("rect").on("click",function(ev,z){showMatchKey(d,z.match_key,z.count);});
   box.append("div").attr("id","matchkey-list");
   if(d.entities_capped)box.append("p").attr("class","muted").text("Entity lists are capped; the counts remain exact.");

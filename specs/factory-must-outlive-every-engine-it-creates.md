@@ -96,3 +96,8 @@ the one that is missing.
 - Related specs: `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132 — the sibling
   rule for call shapes), `specs/lookup-sdk-response-schemas-before-parsing.md` (INV-115),
   `specs/mcp-grounding-in-every-skill.md` (INV-080 — confirm the error text from the installed SDK)
+
+## Invariants introduced
+
+- `INV-152` — The Senzing factory MUST outlive every engine it creates; a helper returning only the
+  engine returns a dead engine (recorded in `specs/INVARIANTS.md`).

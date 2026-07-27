@@ -141,6 +141,30 @@ Performance" → **"Do Not Use Single-Threaded Loading"**, whose remedy is a thr
 workers per CPU core. Re-confirm the threshold from MCP at implementation time; do not carry this
 number forward as a remembered fact.
 
+⛔ **The same call also returns a licensing verdict — and it is computed from the record count
+alone.** `sdk_guide`'s own contract for `record_count` states that values above 500 "surface license
+guidance (default Senzing license limit)". The tool has no way to know what licence is installed, so
+above the threshold it emits a `LICENSE REQUIRED` note prescribing an evaluation licence or sampling
+to the first 500 records — **whether or not any of that applies to this bootcamper**.
+
+**Reconcile it against the licence already detected before relaying or acting on it.** Read
+`license_record_limit` from `config/bootcamp_progress.json` (Module 4's licence gate, Step 8a,
+persists it from `SzProduct.get_license()`) and apply the same effective-limit rule as
+`phaseB-load-first-source.md`:
+
+- **`0` (no cap), or ≥ the dataset size** — the note does not apply. **Suppress it entirely**: say
+  nothing about licences or sampling, take the returned code, and ignore the licensing prose. A
+  warning the bootcamper cannot act on is noise (INV-012).
+- **Positive and below the dataset size** — the note applies. The single License Key gate (Module 4,
+  Step 8a) already offered to expand capacity; restate that as a choice, never force downsizing.
+- **Absent or null** — no custom licence was detected, so the default-limit note is the right
+  assumption. Relay it.
+
+Acting on the unreconciled note is not harmless: it sends a bootcamper with an unlimited licence to
+sample down to 500 records, and the shrunken dataset then under-demonstrates the cross-source
+resolution that Modules 6 and 7 exist to show. Observed with `record_count=23152` against a licence
+reporting `recordLimit: 0`.
+
 So only the `demo` tier — which is below the default license limit anyway — gets a single-threaded
 loader. Every tier that represents a real production system gets the threaded pattern:
 
