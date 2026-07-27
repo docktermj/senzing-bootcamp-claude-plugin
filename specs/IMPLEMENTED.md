@@ -88,7 +88,7 @@ Entries are newest first. Do not delete history; append or update in place.
      removed the name-keyed data-source palette wording that modelled the pattern INV-127 forbids.
 - **Verified:** `python3 -m pytest tests/ -q` → 514 passed, 283 subtests, 0 failed (was 506 before;
   8 new tests). `python3 -m unittest discover -s tests` green (INV-108).
-- **Commit:** uncommitted
+- **Commit:** `1f63b73`
 
 ## visualization-legibility-at-production-scale
 
