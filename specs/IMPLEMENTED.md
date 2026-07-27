@@ -18,6 +18,31 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## network-link-fields-and-uncovered-response-schemas
+
+- **Implemented:** 2026-07-26 (one criterion deliberately unmet — see below)
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `specs/INVARIANTS.md`, `tests/test_partial_row_and_schema_coverage.py`
+- **Summary:** The contract and the Discover call site now state that `response_schemas` for the
+  graph methods **stops at the top-level arrays**, require dumping one raw link element before
+  writing the parser, and carry the new partial-row rule: when some fields of a row populate and
+  others are blank, the blanks are a wrong field name, not thin data. `get_version` / `get_license`
+  are named as methods with an empty entry, at the contract and at Module 4's licence parse.
+  **Two of this spec's claims were wrong and were corrected by querying the server:** `find_network`
+  *does* have a `response_schemas` entry (it just documents only `ENTITY_PATHS[]`, `ENTITIES[]`,
+  `ENTITY_NETWORK_LINKS[]`), while `get_license`'s empty result is confirmed.
+  **⚠️ Deliberately unmet criterion:** documenting the `MIN_ENTITY_ID` / `MAX_ENTITY_ID` endpoint
+  keys "verified from a dumped raw response". Verification needs a live loaded engine, unavailable
+  here, and the keys are in no MCP source — writing them would assert an unverified Senzing fact
+  (INV-080), the error this repo already retracted once for `SZ_EXPORT_ALL_FLAGS`. The defence
+  shipped instead of the datum: the divergence is recorded as a caution marked *not MCP-confirmable*
+  and *never the names to code against*, and the tests assert **no** specific field name. To close
+  it, dump one link element on a loaded engine and promote the caution to a verified field list.
+  Tests **481 → 490**; all seven new assertions confirmed to fail against the pre-change files. One
+  test-helper fix: the guidance lives in a Markdown blockquote, so whitespace collapsing alone left
+  `>` markers mid-phrase — the helper now strips them.
+- **Invariants:** INV-148, INV-149.
+- **Commit:** uncommitted
+
 ## embed-every-captured-tab-in-tab-order
 
 - **Implemented:** 2026-07-26

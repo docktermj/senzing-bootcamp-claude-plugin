@@ -37,6 +37,20 @@ connections between entities using `find_network` and `find_path`.
    ⛔ **Look up the response structure before writing any code that parses the response — never
    infer field names from an example snippet** (INV-115).
 
+   ⚠️ **Expect that lookup to stop at the top level here.** For the graph methods
+   `response_schemas` returns the outer arrays (`ENTITY_PATHS[]`, `ENTITIES[]`,
+   `ENTITY_NETWORK_LINKS[]`) and **not** the fields inside a link element. That is coverage, not a
+   failed call — do not retry it. Dump one raw link element and read its keys before writing the
+   parser. In particular, do **not** assume a link's two endpoints use the `ENTITY_ID` /
+   `RELATED_ENTITY_ID` pairing that related-entity records use; a reported session found both
+   endpoints blank under those names while `MATCH_KEY` rendered fine. See
+   `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
+   paths" for the full caution.
+
+   ⛔ **If some fields of a row populate and others come back blank, suspect the blank ones' names
+   — not the data.** A half-populated row reads as a real result precisely because part of it
+   worked, which makes it more deceptive than an empty one (INV-115).
+
    ⛔ **Neither of those topics tells you the ARGUMENT types — so ask the topic that does, before
    writing the call.** `topic='flags'` covers flags and `topic='response_schemas'` covers the
    response; the parameter shape comes from

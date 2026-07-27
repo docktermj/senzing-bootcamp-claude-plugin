@@ -257,6 +257,33 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > Field names *inside* those `CONFIRMATIONS` entries, and the exact `FEATURE_SCORES` path, are
 > **not** documented by `response_schemas` — dump a raw response to confirm them. Do not copy
 > field names from any prior implementation, this file included.
+>
+> **The graph methods stop at the top level, and their link elements are the next trap.** Verified
+> 2026-07-26: `get_sdk_reference(topic='response_schemas', filter='find_network')` **does** return an
+> entry, but it documents only the three arrays above — `ENTITY_NETWORK_LINKS[]` is described as
+> "Network link details between entities" with **no element fields**. So the lookup succeeds and
+> still leaves you guessing at the very field names you are about to parse. Dump one raw link
+> element and read its keys before writing the parser (INV-115).
+>
+> ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** A bootcamp
+> session reported that parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
+> `RELATED_ENTITY_ID` pairing used elsewhere yielded `None` for **both** endpoints while `MATCH_KEY`
+> rendered correctly, and that the endpoints were instead carried under normalized low-to-high keys.
+> That observation is **not MCP-confirmable** — it is not in `response_schemas` and not in the
+> indexed documentation — so treat it as a **warning about where to look, never as the field names
+> to code against**. Dump the element and use what is actually there.
+>
+> ⛔ **A partially populated row is a wrong field name, not partial data.** This is the shape the
+> above failure takes: `MATCH_KEY` renders, both endpoints are blank, and the row looks like a
+> relationship Senzing could not fully describe. An all-blank row invites suspicion; a half-populated
+> one does not, because the fields that *did* populate signal that the parse worked. When some fields
+> of a parsed record populate and others do not, suspect the blank ones' names first (INV-115) and
+> confirm against a dumped response before rendering.
+>
+> **Methods with no `response_schemas` entry at all.** `get_version` and `get_license` return an
+> empty `data` array (verified 2026-07-26) — the lookup is not failing, the coverage is simply
+> absent. An empty result is the expected outcome for those, not an error to retry: dump the response
+> and read the shape from it.
 
 **`GET /api/why?entity_id=<id>`:** Explain WHY the records in an entity resolved together
 

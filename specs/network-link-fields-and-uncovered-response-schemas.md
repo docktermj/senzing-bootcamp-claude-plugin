@@ -123,3 +123,42 @@ should carry entries for `get_version`, `get_license`, `find_network_*` and `fin
   `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132 — the same step's *input* shapes),
   `specs/match-key-audit-cannot-read-related-entities-from-export.md`,
   `specs/mcp-grounding-in-every-skill.md` (INV-080)
+
+## Invariants introduced
+
+- `INV-148` — A partially populated parsed row MUST be treated as a probable wrong field name, not
+  partial data; the blank fields' names are confirmed against a dumped response before rendering
+  (recorded in `specs/INVARIANTS.md`).
+- `INV-149` — An empty or top-level-only `response_schemas` result is coverage, not a failed call;
+  the raw dump is the authority below it, and an unconfirmable field name MUST NOT be written as the
+  name to parse with (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-07-26)
+
+**Two claims here were wrong, corrected by querying the server at implementation time.**
+
+1. *"`find_network_by_entity_id` has no `response_schemas` entry."* It has one.
+   `get_sdk_reference(topic='response_schemas', filter='find_network')` returns a `find_network`
+   entry documenting `ENTITY_PATHS[]`, `ENTITIES[]` and `ENTITY_NETWORK_LINKS[]`. What is true — and
+   what the shipped guidance now says — is that the entry **stops at those three arrays**: the link
+   element's own fields are absent, so the lookup succeeds and still leaves the parser guessing.
+2. *`get_license` / `get_version` return an empty `data` array.* Confirmed.
+
+**One acceptance criterion is deliberately unmet.** The criterion required documenting the
+`ENTITY_NETWORK_LINKS[]` endpoint keys — reported as `MIN_ENTITY_ID` / `MAX_ENTITY_ID` — "verified
+from a dumped raw response at implementation time". That verification needs a live engine with
+loaded data, which the implementation environment does not have. The keys appear in **no** MCP
+source: not in `response_schemas`, not in the indexed documentation. Writing them into shipped
+guidance would assert an unverified Senzing fact, which INV-080 forbids and which this repository has
+already had to retract once (`verify-sdk-parameter-shapes-and-flag-families` shipped
+"`SZ_EXPORT_ALL_FLAGS` does not exist" and needed a five-place correction).
+
+So the **defence** was implemented rather than the **datum**: the contract states that the graph
+entry stops at the top level, requires dumping one raw link element before parsing, and carries the
+endpoint-key divergence as a caution explicitly marked *not MCP-confirmable* and *never the field
+names to code against*. That closes the reported failure mode — a half-populated row that reads as
+real — without shipping a guess. `tests/test_partial_row_and_schema_coverage.py` asserts the
+discipline and deliberately asserts **no** specific endpoint field name.
+
+To close the criterion properly, someone with a loaded engine should dump one link element, confirm
+the keys, and promote the caution to a documented field list marked verified-when.

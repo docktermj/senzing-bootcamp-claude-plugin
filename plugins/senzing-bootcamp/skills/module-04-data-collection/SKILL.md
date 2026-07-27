@@ -487,7 +487,9 @@ training data.
    Confirm the SDK facts via `sdk_guide(topic='configure', platform='<user_platform>',
 language='<chosen_language>', version='current')` (`recordLimit`: `0` = unlimited, positive = the
    cap). Generate a scaffold that calls `SzProduct.get_license()`, save the returned JSON to
-   `config/license.json`, parse `recordLimit`, and write `license_record_limit` into
+   `config/license.json` — `get_license` has **no** `response_schemas` entry (an empty `data` array
+   is the expected result there, not a failed lookup), so read the saved JSON to confirm the shape
+   before parsing it (INV-115) — parse `recordLimit`, and write `license_record_limit` into
    `config/bootcamp_progress.json`. Report the detected limit to the bootcamper (e.g. "Your license
    allows up to N records," or "no record cap (unlimited)" when `0`).
 
