@@ -49,7 +49,7 @@ Entries are newest first. Do not delete history; append or update in place.
   meaning.
 - **Invariants:** INV-138, INV-139, INV-140, INV-141 (INV-137's trigger superseded in place; nothing
   renumbered or deleted).
-- **Commit:** uncommitted
+- **Commit:** `cfb2cf9`
 
 ## close-dry-run-open-items
 
