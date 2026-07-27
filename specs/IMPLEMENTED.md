@@ -47,7 +47,7 @@ Entries are newest first. Do not delete history; append or update in place.
   load without a hand-written conversion" — verified instead by removing every instruction that
   would cause one (grep across the plugin plus the new tests), not by running a bootcamp.
 - **Invariants:** INV-144, INV-145.
-- **Commit:** uncommitted
+- **Commit:** `9d2c43f`
 
 ## discoveries-pdf-real-tables-and-paragraph-spacing
 
