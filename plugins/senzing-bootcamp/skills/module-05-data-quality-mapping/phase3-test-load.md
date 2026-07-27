@@ -8,8 +8,10 @@ render them. Signal a stop by ending the turn on the single 👉 question and wa
 > immediate feedback on ER quality without leaving Data Quality, Mapping, and Transformation.
 
 > **Entry from the Step 5 `detect_environment` menu:** Phase 3 is entered from the
-> `detect_environment` menu handled in `phase2-data-mapping.md` (step 11). When the bootcamper
-> explicitly chooses **test_load** or **load+resolve** at that menu, follow the workflow below
+> `detect_environment` menu handled in `phase2-data-mapping.md` at **step 18a** — after that
+> source's mapper has been written, run, reviewed and documented (steps 12–18), so the
+> transformation output step 22 samples below actually exists. When the bootcamper explicitly
+> chooses **test_load** or **load+resolve** at that menu, follow the workflow below
 > (`mapping_workflow` steps 5–8, Steps 21–26) unchanged. When sources remain unmapped, the
 > Phase 2 guidance instead recommends **skip** and continues to the next source: the real
 > production load is still deferred to Data processing in either case.

@@ -196,14 +196,20 @@ Module 5 can evaluate.
 > `config/data_sources.yaml` so later modules can track it. If the file doesn't exist, create
 > it with `version: "1"` and an empty `sources:` mapping first. For each source set: `name`,
 > `file_path`, `format`, `record_count` (if known, else null), `file_size_bytes`,
-> `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`, `added_at` and
+> `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`,
+> `validation_status: pending`, `validation_checks: {}`, and `added_at` and
 > `updated_at` to the current ISO 8601 timestamp. If an entry already exists for that
 > DATA_SOURCE key, update it and set `updated_at`. _(The Kiro registry helpers are a later
 > porting phase; write/update the YAML directly for now.)_
+>
+> `validation_status` (`pending` | `passed` | `failed`) and `validation_checks` (one key per check
+> with its outcome) are written by the Data File Validation step below and read back by Step 7 —
+> Step 7 cannot confirm what this entry never recorded, so both fields belong in the schema here.
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
 > non-empty, expected format/encoding, plausible record count) and update the registry with the
-> results. Present the outcome to the bootcamper. If all checks pass, confirm the file is ready
+> results — set that source's `validation_status` to `passed` or `failed` and record each check's
+> outcome under `validation_checks`, which is what Step 7 reads. Present the outcome to the bootcamper. If all checks pass, confirm the file is ready
 > and move on to the next data source. If any check fails, show the failure details and
 > remediation guidance, then help the bootcamper resolve the issue (re-upload, convert format,
 > fix encoding, etc.) before proceeding. Re-check after each fix attempt until the file passes.

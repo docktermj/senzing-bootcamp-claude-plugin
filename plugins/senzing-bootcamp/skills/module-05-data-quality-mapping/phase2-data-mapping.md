@@ -143,8 +143,9 @@ a documented cause is part of that record.
 
 ### This module's steps vs. the workflow's steps
 
-The workflow has 4 core steps; this module splits them across steps 8-18, so **the two numbering
-schemes are not the same** and only four `advance` calls happen:
+The workflow has **8 steps: 4 core mapping steps (1–4) plus 4 optional sandbox steps (5–8)**. This
+phase covers the four core steps across module steps 8-18, so **the two numbering schemes are not
+the same** and only four `advance` calls happen in Phase 2:
 
 | This module | Workflow step | Advances with |
 |---|---|---|
@@ -154,10 +155,13 @@ schemes are not the same** and only four `advance` calls happen:
 | 11 Map | 3 map_fields | `action='advance'`, `data={'schema_mappings': [...]}` |
 | 12-16 | 4 generate_validate | **one** `advance` at step 15, `data={'verdict': ...}` |
 | 17-18 | — | no advance; `rework_*` verdicts route back |
+| 18a | 5 detect_environment | the menu returned by step 15's advance; answering it may enter Phase 3 |
+| Phase 3 (21-26) | 6-8 | the optional sandbox test load — see `phase3-test-load.md` |
 
 Steps 12, 13, 14 and 16 do **not** advance the workflow — they are work performed *inside* workflow
 step 4 (generate sample JSON, lint, write and run the mapper, analyze output) before its single
-verdict advance.
+verdict advance. Workflow steps 5-8 are optional: step 15's `approve` returns the Step 5 menu, and
+step 18a is where it is answered.
 
 ## Workflow (per data source)
 
@@ -416,33 +420,6 @@ valid**, and it is not **semantically validated** until data is loaded and the m
 Data processing's match-key audit is where that happens. A bootcamper who hears "all gates green"
 and infers "the mapping is correct" has been misled by omission.
 
-> **Step 5 `detect_environment` menu handling (after this step's approval):** After a source's
-> mapping is approved, `mapping_workflow` returns its Step 5 (`detect_environment`) with a
-> four-option menu. Do NOT stop here: explain the menu and relay a recommendation so the
-> bootcamper never hits a dead end.
->
-> **`mapping_workflow` Steps 5–8 are optional sandbox validation** (Phase 3). They let you
-> trial-load the mapped source into a throwaway sandbox to preview entity resolution. They are
-> NOT the production load: the real load happens in **Data processing**. The four options are:
->
-> - **skip:** skip the per-source sandbox test load and move on. **Recommended when one or
->   more unmapped sources remain.**
-> - **test_load:** run the optional sandbox test load (enters Phase 3) for this source.
-> - **load+resolve:** run the optional sandbox test load and resolve entities (enters Phase 3)
->   for this source.
-> - **done:** finish the mapping workflow for this source without a sandbox test load.
->
-> **Multi-source continuation (recommended path):** When one or more unmapped sources remain,
-> recommend **skip**: the real load is deferred to Data processing, so a per-source sandbox test load
-> adds little here: and automatically continue to the next unmapped source by starting its own
-> `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sandbox preview; since
-> you still have sources to map and the real load happens in Data processing, I'll skip the per-source
-> test load and move on to the next unmapped source."
->
-> **Explicit choice is preserved:** If the bootcamper explicitly chooses **test_load** or
-> **load+resolve**, follow that path into Phase 3 (`phase3-test-load.md`) unchanged. The real
-> production load still happens in Data processing regardless.
-
 **Checkpoint:** write step 11.
 
 ### 12. Generate starter code
@@ -505,7 +482,9 @@ sample record, any observations.
 Run on 1000+ records. Evaluate feature distribution, coverage, quality scores. This is workflow
 step 4's single advance: `action='advance'`, carrying `verdict` in `data` — `approve`,
 `rework_mapping`, or `rework_code` — plus `output_path` and `records_output`. A `rework_*` verdict
-is what routes step 17's iterate path. Tell the user: overall score, per-feature coverage with what
+is what routes step 17's iterate path. On `approve`, the response carries the workflow's Step 5
+(`detect_environment`) menu; keep its `state` and handle that menu at **step 18a**, after this
+source's mapper is written, reviewed and documented — not here. Tell the user: overall score, per-feature coverage with what
 it means for matching, any issues found.
 
 > **Presentation (conditional on `mapping_verbosity`):**
@@ -605,6 +584,48 @@ If issues are found, go back to the relevant step. Retest after changes.
   ```
 
 **Checkpoint:** write step 18.
+
+### 18a. Step 5 `detect_environment` menu handling (the optional-sandbox decision)
+
+The `approve` verdict at step 15 advances workflow step 4, and the response to that advance carries
+the workflow's **Step 5 (`detect_environment`)** with a four-option menu. Handle it **here**, once
+this source's mapper is written, run, reviewed and documented (steps 12–18) — not at the moment the
+response arrives.
+
+⛔ **Why the placement matters.** This block previously sat under step 11 (Map), and
+`phase3-test-load.md` pointed at step 11 as its entry. Both were wrong in the same direction:
+choosing `test_load` there entered Phase 3 before the transformation program existed, so Phase 3's
+step 22 had no "Phase 2 transformation output" to sample, and Phase 3's step 26 closes the module —
+which would have skipped steps 12–18 entirely, including the transform code INV-042/INV-043 require
+and step 19's mandatory per-source `docs/mapping/{source_name}_mapper.md` gate. Entering from 18a,
+every prerequisite Phase 3 assumes is already on disk.
+
+Do NOT stop at the menu: explain it and relay a recommendation so the bootcamper never hits a dead
+end.
+
+**`mapping_workflow` Steps 5–8 are optional sandbox validation** (Phase 3). They let you
+trial-load the mapped source into a throwaway sandbox to preview entity resolution. They are
+NOT the production load: the real load happens in **Data processing**. The four options are:
+
+- **skip:** skip the per-source sandbox test load and move on. **Recommended when one or
+  more unmapped sources remain.**
+- **test_load:** run the optional sandbox test load (enters Phase 3) for this source.
+- **load+resolve:** run the optional sandbox test load and resolve entities (enters Phase 3)
+  for this source.
+- **done:** finish the mapping workflow for this source without a sandbox test load.
+
+**Multi-source continuation (recommended path):** When one or more unmapped sources remain,
+recommend **skip**: the real load is deferred to Data processing, so a per-source sandbox test load
+adds little here — and automatically continue to the next unmapped source (step 19) by starting its
+own `mapping_workflow` run. Tell the bootcamper: "Steps 5–8 are an optional sandbox preview; since
+you still have sources to map and the real load happens in Data processing, I'll skip the per-source
+test load and move on to the next unmapped source."
+
+**Explicit choice is preserved:** If the bootcamper explicitly chooses **test_load** or
+**load+resolve**, follow that path into Phase 3 (`phase3-test-load.md`) unchanged. The real
+production load still happens in Data processing regardless.
+
+**Checkpoint:** write step 18a.
 
 ### 19. Repeat for remaining data sources
 

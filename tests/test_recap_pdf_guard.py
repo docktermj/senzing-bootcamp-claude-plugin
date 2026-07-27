@@ -573,5 +573,111 @@ class UnfinalizedModuleIsReported(unittest.TestCase):
         self.assertNotIn("RECAP-CHECKPOINT", stderr)
 
 
+TABLE_RECAP = """# Senzing Bootcamp Recap
+
+**Bootcamper:** Ada Lovelace
+**Started:** 2026-07-27T10:00:00-04:00
+**Plugin version:** 9.9.9
+
+---
+
+## Data processing - 2026-07-27T11:00:00-04:00
+
+### Information Shared
+- Match-key frequency across the loaded sources:
+
+| Match key | Count |
+|---|---|
+| +NAME+ADDRESS | 412 |
+| +RAGGED |
+| +NAME+PHONE | 88 | extra |
+
+### Questions & Responses
+- **Q:** Ready to load?
+    - **R:** Yes
+
+### Actions Taken
+- Loaded 23,152 records.
+
+### End-of-Module Summary
+**What you accomplished:**
+- Loaded and resolved every source.
+
+**Files produced:**
+- `src/load/load_all.py` - the loader
+
+**Why it matters:** The data is resolved.
+
+---
+"""
+
+
+class TablesInTheRecapRenderAsTables(unittest.TestCase):
+    """A Markdown table in a recap section is drawn, not printed as its source.
+
+    INV-142 binds "a bundled generator", not one of them. The fix landed in
+    `generate_discoveries_pdf.py` only, so this generator kept emitting pipe rows as
+    literal text — `|---|---|` alignment row and all — into the crown-jewel keepsake,
+    while `PDF generated:`, exit 0 and a 91% retention figure all reported success.
+    The characters *were* in the content stream; they just did not render as a table,
+    which is precisely what a retention count cannot see.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pdf = render_to(TABLE_RECAP)
+        cls.runs = drawn_runs(cls.pdf)
+        cls.texts = [t.strip() for _x, _y, t in cls.runs]
+
+    def test_no_raw_pipe_source_survives(self):
+        offenders = [t for t in self.texts if t.startswith("|") or "|---" in t]
+        self.assertEqual(
+            [], offenders, f"raw Markdown table source drawn into the recap PDF: {offenders[:5]}"
+        )
+
+    def test_the_alignment_row_is_dropped(self):
+        self.assertNotIn("---", self.texts)
+
+    def test_cells_are_drawn_as_separate_runs(self):
+        """A grid means one run per cell, not one run per source line."""
+        for cell in ("Match key", "Count", "+NAME+ADDRESS", "412", "+NAME+PHONE", "88"):
+            with self.subTest(cell=cell):
+                self.assertIn(cell, self.texts, f"{cell!r} is not its own drawn cell")
+
+    def test_a_ragged_row_does_not_desynchronise_the_grid(self):
+        """Short rows are padded and over-long rows truncated to the header width."""
+        self.assertIn("+RAGGED", self.texts, "the short row vanished")
+        self.assertNotIn("extra", self.texts, "a 3rd cell rendered in a 2-column grid")
+
+    def test_every_cell_renders_inside_the_text_column(self):
+        """Positional, not presence: off-page content extracts fine (INV-121/INV-129)."""
+        page_w, margin = 595.28, 10.0
+        offenders = [(x, t) for x, _y, t in self.runs if x < margin or x > page_w - margin]
+        self.assertEqual([], offenders, f"text drawn outside the page: {offenders[:5]}")
+
+    def test_the_stdlib_fallback_also_renders_a_table(self):
+        """INV-142 binds both renderers; the fallback may align columns but never
+        emit pipe source. It needs a monospace face to align at all."""
+        gen = load_generator()
+        import pathlib
+
+        out = pathlib.Path(tempfile.mkdtemp()) / "stdlib.pdf"
+        self.assertTrue(gen.render_with_stdlib(gen.parse_recap(TABLE_RECAP), out))
+        texts = [t.strip() for _x, _y, t in drawn_runs(str(out))]
+        self.assertEqual(
+            [], [t for t in texts if t.startswith("|") or "|---" in t],
+            "the stdlib fallback emitted raw pipe source",
+        )
+        self.assertTrue(
+            any("Match key" in t and "Count" in t for t in texts),
+            "the header cells are not laid out as a row",
+        )
+        with open(out, "rb") as handle:
+            self.assertIn(
+                b"/Courier", handle.read(),
+                "space-padded columns in a proportional face are not aligned columns",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

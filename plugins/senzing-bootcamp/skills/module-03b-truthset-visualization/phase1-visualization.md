@@ -54,10 +54,18 @@ immediately before Step 1:
 6. **Estimated time (INV-096):** give an honest, range-based estimate (a handful of minutes,
    varying with Truth Set download and render speed), stated as "hard to estimate" if no meaningful
    figure is possible; suppress under the `minimal` verbosity preset, one line under `concise`.
-7. **Model/effort (INV-063/INV-137):** surface the recommended model/effort per ground-rules. The
-   recommendation is unchanged from System verification (Module 3 tier), so this is a concise,
-   non-blocking one-line statement rather than a switch question. There is no `model_guidance`
-   preference to read (INV-137).
+7. **Model/effort (INV-063/INV-137/INV-138):** surface this module's recommended model/effort per
+   `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt", whose table is the
+   authoritative source for the values. There is no `model_guidance` preference to read (INV-137).
+
+   ⛔ **Do not pre-decide whether to ask — compare against what the bootcamper is running right
+   now** (INV-138), not against the previous module's recommendation. This step used to assert the
+   recommendation was "unchanged from System verification" and therefore a statement rather than a
+   question; that became false when this module was re-rated to Opus 5 / high effort while System
+   verification stayed on Sonnet 5, so a bootcamper who took the previous module's recommendation
+   was never offered the switch for the module that *generates* the visualization server. Read the
+   table, compare, and let the comparison decide: differing → the pinned 👉 switch question naming
+   only the dial that differs; matching → the one-line statement.
 
 Then proceed to Step 1 below. (Its end-of-module summary and `✅ Module complete: Truth Set
 visualization` line are presented at this module's close — `phase2-close.md`.)
@@ -126,18 +134,27 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   requesting the default entity flags (which include all relations) so it never queries the
   database directly. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
   (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data (INV-080).
-- Serve the JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/search`, `/api/why`,
-  `/api/how`, `/api/dashboard`, `/api/overlap`, `/api/matchkeys`, `/api/features` — with the exact
-  response shapes in `visualization-api-reference.md`.
+- Serve the JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/records`, `/api/search`,
+  `/api/why`, `/api/how`, `/api/overlap`, `/api/matchkeys`, `/api/features` — with the exact
+  response shapes in `visualization-api-reference.md`. That contract is the authority on the
+  endpoint set: **`/api/dashboard` was removed** and MUST NOT be implemented (its counts and
+  histogram duplicated `/api/stats`, which now also carries its one unique payload,
+  `sample_entities`), while **`/api/records` is required** — it backs the Records action that every
+  entity surface must offer.
 - Serve the live D3 v7 page as a **single consolidated, tabbed app** (all tabs in 2.4), and write a
   self-contained standalone HTML snapshot.
 - **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
 - **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
-  tokens (`scripts/brand_tokens.py`, mirrored in `senzing_viz_server.py`) — data sources CUSTOMERS
-  ember/orange, REFERENCE blue, WATCHLIST gold/amber. A non-Python server cannot import the Python
-  module, so replicate the token **values** from the reference; never invent an ad-hoc palette.
+  tokens (`scripts/brand_tokens.py`, mirrored in `senzing_viz_server.py`). A non-Python server
+  cannot import the Python module, so replicate the token **values** from the reference; never
+  invent an ad-hoc palette. ⛔ **Assign data-source colors from the sources actually present in the
+  data, never by lookup in a map keyed by expected source names** (INV-127) — the Truth Set happens
+  to carry CUSTOMERS, REFERENCE and WATCHLIST, but a name-keyed map collapses every *other*
+  bootcamper's sources to one fallback color, and this same server is re-pointed at their own data
+  in Query, Visualize and Discover. The rule is specified in
+  `visualization-api-reference.md` → "Rendering contract".
 - **Map edges correctly:** expose `source`/`target` (from `source_entity_id`/`target_entity_id`)
   **before** `forceLink().links(...)`, preserving node `id`/`entity_id` — omitting this renders an
   empty graph.
@@ -192,8 +209,10 @@ rule that every caption is derived from the opened image and its tab label, neve
 
 If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
 and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
-is available it skips silently; otherwise keep the 2-3 best and embed them in this module's recap
-`Actions Taken`. This is never a 👉 question and never blocks the visualization.
+is available it skips silently; otherwise **keep every captured tab and embed them all** in this
+module's recap `Actions Taken`, in the app's tab order — capture is one image per tab (INV-122), so
+there is nothing redundant to drop and a count cap can only delete unique content (INV-146). This is
+never a 👉 question and never blocks the visualization.
 
 ⛔ Capture **before** the module's teardown and purge (`phase2-close.md` Step 4) — afterwards the
 server is gone and the Truth Set data cannot be re-served, so a missed capture is permanent.

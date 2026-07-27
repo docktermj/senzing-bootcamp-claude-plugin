@@ -1141,13 +1141,28 @@ async function drawMatchKeys(){const d=await getJSON("/api/matchkeys");const box
   function fitKey(k){k=k||"";if(k.length<=maxChars)return k;
     const tail=Math.max(6,Math.floor((maxChars-1)*0.5)),head=maxChars-1-tail;
     return k.slice(0,head)+"…"+k.slice(k.length-tail);}
+  // The requirement is DISTINCTNESS, not the ellipsis strategy: no two rendered
+  // labels may be identical unless their underlying values are. Middle-ellipsis
+  // reduces collisions but cannot prevent them -- two keys sharing a long head AND
+  // a long tail, differing only in the elided middle, still render identically, and
+  // the top bars again cannot be told apart. So check, and disambiguate the ones
+  // that collide with a positional suffix; the full value stays on hover either way.
+  const fitted=items.map(function(z){return fitKey(z.match_key);});
+  const seen={};
+  fitted.forEach(function(label,i){
+    if(seen[label]===undefined){seen[label]=i;return;}
+    // Only a real collision (different source values) needs disambiguating.
+    if(items[seen[label]].match_key===items[i].match_key)return;
+    fitted[i]=label+" ("+(i+1)+")";
+  });
+  function labelFor(i){return fitted[i];}
   const svg=box.append("svg").attr("width",W).attr("height",H);
   const x=d3.scaleLinear().domain([0,d3.max(items,function(z){return z.count;})||1]).range([mm.l,W-mm.r]);
   const y=d3.scaleBand().domain(items.map(function(z){return z.match_key;})).range([mm.t,H-mm.b]).padding(0.2);
   svg.selectAll("rect").data(items).join("rect").attr("x",mm.l).attr("y",function(z){return y(z.match_key);})
     .attr("width",function(z){return Math.max(0,x(z.count)-mm.l);}).attr("height",y.bandwidth()).attr("rx",3).attr("fill",C_BLUE);
   svg.selectAll("text.k").data(items).join("text").attr("class","k").attr("x",mm.l-8).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
-    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z){return fitKey(z.match_key);})
+    .attr("text-anchor","end").attr("dominant-baseline","middle").attr("font-size",11).attr("font-family","__CODE_FONT__").text(function(z,i){return labelFor(i);})
     .append("title").text(function(z){return z.match_key;});
   svg.selectAll("text.c").data(items).join("text").attr("class","c").attr("x",function(z){return x(z.count)+5;}).attr("y",function(z){return y(z.match_key)+y.bandwidth()/2;})
     .attr("dominant-baseline","middle").attr("font-size",11).attr("font-weight",600).text(function(z){return z.count;});

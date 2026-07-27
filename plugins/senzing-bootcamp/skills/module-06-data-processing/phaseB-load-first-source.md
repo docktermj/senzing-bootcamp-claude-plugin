@@ -61,12 +61,22 @@ hardcoded figure:
 actual loaded count in `config/data_sources.yaml`. On failure, set `load_status` to `failed` and
 add an `issues` entry describing the error. Update `updated_at` either way.
 
-**⚠️ SQLite performance note:** on SQLite with single-threaded loading, entity resolution gets
-progressively slower as the database grows. For the bootcamp learning experience, recommend
-loading ≤1,000 records initially, enough to see meaningful entity resolution without long
-waits. If the bootcamper has more data, suggest: "Let's start with the first 1,000 records so we
-can see results quickly. Once we validate the results here, we can load the full dataset, or
-switch to PostgreSQL for better performance with larger volumes (a production follow-up; see the graduation migration checklist)."
+**⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with
+single-threaded loading, entity resolution gets progressively slower as the database grows.
+
+⛔ **Check first whether this was already decided, and say nothing if it was.** Read the
+`sqlite_volume_prompt` marker in `config/bootcamp_preferences.yaml` (Phase A's pre-load check) and
+the Module 4 Step 8b load decision. If either records a choice for this same load — `proceed`,
+`sample`, or a database switch — **honor it silently and load what it says**. Two gates already put
+this to the bootcamper; re-opening it here would be a third ask on a settled question (INV-006) and
+would push a dataset smaller than the one they chose, which is exactly what leaves Modules 6 and 7
+under-demonstrating cross-source resolution (INV-150).
+
+Only when **no** decision is recorded and the database is SQLite may you suggest starting smaller:
+"Let's start with the first 1,000 records so we can see results quickly. Once we validate the
+results here, we can load the full dataset, or switch to PostgreSQL for better performance with
+larger volumes (a production follow-up; see the graduation migration checklist)." Record the
+resulting choice in `sqlite_volume_prompt` so the question stays asked once.
 
 **Checkpoint:** write step 7.
 

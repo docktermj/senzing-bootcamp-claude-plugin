@@ -484,7 +484,11 @@ labels useless, chart looking fine. Required behaviour:
   the top bars identically — the same unreadable chart, failing from the other end. Keeping both
   ends distinguishes keys that differ at either.
 - Guarantee that **no two rendered labels are identical unless their keys are identical** — that is
-  the testable property; the exact ellipsis strategy is not.
+  the testable property; the exact ellipsis strategy is not. Middle-ellipsis reduces collisions but
+  does **not** guarantee this: two keys sharing a long head *and* a long tail, differing only in the
+  elided middle, still render identically. So compare the fitted labels and disambiguate any that
+  collide while their keys differ (the Python reference appends a positional suffix); the full key
+  stays reachable on hover regardless.
 - Expose the full, untruncated key on hover (`<title>` or equivalent), on both the bar and its label.
 
 **2. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;

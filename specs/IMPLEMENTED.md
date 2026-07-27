@@ -18,6 +18,78 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## deep-dive-audit-2026-07-27
+
+- **Implemented:** 2026-07-27
+- **Files changed:** `specs/INVARIANTS.md`, `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py`, `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`, `plugins/senzing-bootcamp/hooks/README.md`, `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/{phase1-visualization.md,visualization-api-reference.md}`, `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/{phase2-data-mapping.md,phase3-test-load.md}`, `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`, `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`, `tests/test_recap_pdf_guard.py`, `tests/test_screenshot_retention_and_order.py`, `tests/test_viz_endpoint_sync.py`
+- **Not a spec** — a second full-repo invariant-conformance and coherence audit the maintainer
+  requested directly, then asked to have fixed in place. Recorded here so the work is traceable
+  alongside the spec ledger. All 506 tests were green before the audit and none of the eight
+  findings was mechanically enforced; three were invisible to prose review as well.
+- **Invariant established:** **INV-155** — the consolidated visualization app's tab set is exactly
+  six, the relationship-network view is a *mode* of Entity Graph, no-query merge browsing is a
+  *button* on Search / Probe, there is no Results Dashboard tab and no `/api/dashboard`, and
+  `/api/records` is required. INV-104's own text (2026-07-23) enumerated "relationship network" and
+  "results dashboard" as tabs; `consolidate-merge-statistics-and-results-dashboard-tabs` and
+  `consolidate-truthset-viz-merges-and-network-tabs` removed them and registered **no** invariant
+  (the latter's entry says "No new invariant"), so the shipped six-tab app was non-conformant with a
+  still-standing invariant. INV-104 is annotated in place as superseded on its enumeration only.
+- **Findings fixed:**
+  1. **INV-142 violated in the recap PDF (reproducible).** `generate_recap_pdf.py` had no table
+     renderer, so a Markdown table in a recap section reached the keepsake PDF as raw pipe source,
+     `|---|---|` row included, behind `PDF generated:`, exit 0 and a 91% retention figure. The
+     INV-142 fix had landed only in `generate_discoveries_pdf.py`, though the invariant binds "a
+     bundled generator". Added `parse_table` / `_table_run` / `_render_table_fpdf2` (bordered grid,
+     filled header band, alignment row dropped, header repeated after a page break with the
+     following body row restored to the body font, short cells padded to row height) plus
+     `_stdlib_table` for the fallback. Registered **Courier as `/F3`** in the shared `_write_pdf`
+     resource dictionary and switched *both* stdlib table paths to it — the discoveries fallback had
+     been space-padding a proportional face, which is not the "aligned monospace columns" INV-142
+     permits. Verified by rasterizing and by extraction: zero pipe lines, cells drawn as separate
+     runs, every run inside the text column.
+  2. **INV-138 violated in Truth Set visualization.** Its module-start step asserted the model/effort
+     recommendation was "unchanged from System verification" and therefore a statement rather than a
+     switch question. `reassess-per-module-model-effort-assignments` had re-rated the module to
+     Opus 5 / high while System verification stayed Sonnet 5, so the claim was false and the switch
+     question was suppressed for the module that *generates* the visualization server. Replaced with
+     the compare-against-current rule.
+  3. **INV-146 violated in three places.** "2-3 curated screenshots" survived in
+     `module-completion.md` — in the file whose own ⛔ block says keep every tab — and "keep/embed the
+     2-3 best" in both capture-point instructions. `test_screenshot_retention_and_order.py` missed
+     all three: its regex required "most"|"best" after "2-3", and it scanned only two call sites.
+     Rewrote the guard to sweep every shipped Markdown file and match by shape.
+  4. **Module 5's Phase 3 entry point was at the wrong step.** The `detect_environment` menu block
+     sat under step 11 (Map) and `phase3-test-load.md` pointed there, but workflow step 4's verdict
+     advance happens at step 15 — so `test_load` entered Phase 3 before the transformation program
+     existed (step 22 samples output built at steps 13-14) and Phase 3's step 26 closes the module,
+     skipping the transform code INV-042/INV-043 require and step 19's mandatory per-source mapping
+     spec. Moved to a new **step 18a**, after the mapper is written, run, reviewed and documented;
+     updated step 15's pointer, the workflow-step table (now stating 8 steps: 4 core + 4 optional
+     sandbox), and phase 3's cross-reference.
+  5. **Removed endpoint requested, required endpoint omitted.** The "Serve the JSON APIs" list asked
+     a language-native server (INV-090) for `/api/dashboard` — REMOVED / "Do NOT implement it" in the
+     contract beside it — and omitted `/api/records`, which backs the Records action. Fixed and
+     guarded: `test_viz_endpoint_sync.py` gained a class covering the *build* instruction, not just
+     the probe table it had been scanning.
+  6. **Stale tab names in Module 7.** Section 3c's prose and its pinned offer described "relationship
+     network" and "record merges" as tabs while the same file's build list said six tabs and named
+     both as removed. Re-pinned the offer as "entity graph with its relationship view" and corrected
+     the prose and the success criterion.
+  7. **Minor.** `hooks/README.md` still listed "model guidance" among the setup choices Bootcamp
+     preparation collects (retired by INV-137); Module 4 Step 7 read `validation_status` /
+     `validation_checks` that Step 2's registry schema never defined (added to the schema and to the
+     validation step that writes them); Module 6 Phase B's "start with the first 1,000 records"
+     re-opened a volume decision that Module 4 Step 8b and Phase A's `sqlite_volume_prompt` had both
+     already recorded (now honored silently, INV-006/INV-150).
+  8. **INV-153 hardened.** Middle-ellipsis reduces but cannot prevent label collisions — two match
+     keys sharing a long head *and* tail render identically — and the invariant makes distinctness,
+     not the strategy, the requirement. `senzing_viz_server.py` now compares fitted labels and
+     disambiguates real collisions; the contract states the rule for any-language servers. Also
+     removed the name-keyed data-source palette wording that modelled the pattern INV-127 forbids.
+- **Verified:** `python3 -m pytest tests/ -q` → 514 passed, 283 subtests, 0 failed (was 506 before;
+  8 new tests). `python3 -m unittest discover -s tests` green (INV-108).
+- **Commit:** `1f63b73`
+
 ## visualization-legibility-at-production-scale
 
 - **Implemented:** 2026-07-26
