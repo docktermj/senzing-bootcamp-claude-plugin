@@ -188,11 +188,14 @@ If accepted:
 
 This module's results visualization is delivered as **one** interactive, tabbed app — the same
 Truth-Set-style visualization built in the Truth Set module, now pointed at the bootcamper's own
-resolved data. It is the single visualization artifact: the entity graph, relationship network,
-record merges, merge statistics, cross-source overlap heatmap, match-key frequency, and
-feature-score views are all **tabs** of this one app, not separate offers or static pages (see the
-full tab set and the de-duplication rules in
-`../module-03b-truthset-visualization/visualization-api-reference.md`).
+resolved data. It is the single visualization artifact: the entity graph, merge statistics,
+match-key frequency, feature scores, cross-source overlap heatmap, and search/probe views are all
+**tabs** of this one app, not separate offers or static pages. The relationship-network view is a
+**mode** of the Entity Graph tab and no-query merge browsing is a **button** on Search / Probe —
+neither is a tab of its own, and there is no Results Dashboard tab (see the full tab set and the
+de-duplication rules in
+`../module-03b-truthset-visualization/visualization-api-reference.md`, which is the authority on
+both).
 This is also where Module 6's cross-source relationship view now lives — the Entity Graph tab
 (including its "Show only entities with relationships" mode) and the Cross-Source tab replace the
 former Module 6 `multi_source_results.html` static page (Module 6 no longer offers a
@@ -203,7 +206,7 @@ why/how/network demonstrations — it is not gated on, or bundled with, the visu
 
 Pin the offer verbatim:
 
-> 👉 **Would you like an interactive visualization of your resolved data — entity graph, relationship network, merge statistics, cross-source overlap, and match/feature analysis, all in one app?**
+> 👉 **Would you like an interactive visualization of your resolved data — entity graph with its relationship view, merge statistics, cross-source overlap, and match/feature analysis, all in one app?**
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -246,7 +249,8 @@ of the Truth Set. It MUST:
 - Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070); after
   generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
-  silently with no headless capability, otherwise embed the 2-3 best in this module's recap).
+  silently with no headless capability, otherwise embed **every** captured tab in this module's
+  recap, in the app's tab order — no count cap, INV-146).
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.
@@ -313,8 +317,8 @@ phase completes or is skipped, return here for the Query Completeness Gate.
 
 - ✅ Query programs created and tested.
 - ✅ Visualization offered (the single interactive-visualization gate in step 3c was presented; the
-  tabbed app — entity graph, relationship network, merge statistics, cross-source overlap, and
-  match/feature analysis — was built when accepted).
+  tabbed app — entity graph with its relationship view, merge statistics, match keys, feature
+  scores, cross-source overlap, and search/probe — was built when accepted).
 - ✅ Discover phase completed or explicitly skipped.
 
 ## Data-discoveries deliverable (produced on every path)

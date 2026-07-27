@@ -704,10 +704,13 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
                     line = "  ".join(
                         cell[:w].ljust(w) for cell, w in zip(row, widths)
                     ).rstrip()
-                    add(line[:max_width_chars], "F1", 9, 12)
+                    # F3 is monospace. Space-padding a PROPORTIONAL face produces
+                    # ragged pseudo-columns, which is not the aligned monospace
+                    # rendering INV-142 permits as the lesser path.
+                    add(line[:max_width_chars], "F3", 9, 12)
                     if row_index == 0:
                         rule = "  ".join("-" * w for w in widths)
-                        add(rule[:max_width_chars], "F1", 9, 12)
+                        add(rule[:max_width_chars], "F3", 9, 12)
                 continue
             indent = 12.0 if block.kind == "bullet" else 24.0 if block.kind == "subbullet" else 0.0
             body = _md_inline_to_text(block.text)

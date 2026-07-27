@@ -75,18 +75,30 @@ class NoCountCapSurvives(unittest.TestCase):
             "content — and it drops the analytical tabs first.",
         )
 
-    def test_no_call_site_caps_the_number_kept(self):
-        # Scoped to the two shipped cap phrasings — "2-3 most representative
-        # (delete the rest)" and "2-3 best per module". A looser pattern matches
-        # innocent prose: graduation's "you keep two things — a recap PDF and a
-        # project" is not a screenshot cap.
-        for path in CALL_SITES:
-            with self.subTest(file=os.path.basename(path)):
-                self.assertNotRegex(
-                    flat(path),
-                    r"\b2-3\b\s+(most|best)|delete the rest",
-                    "a count cap deletes unique content now that capture is per-tab",
-                )
+    def test_no_shipped_file_caps_the_number_kept(self):
+        # Scoped by shape, not by the exact adjective, and swept across EVERY
+        # shipped file rather than the two call sites.
+        #
+        # Both narrowings let real caps ship. The adjective list ("most"|"best")
+        # missed `module-completion.md`'s surviving "embedding the 2-3 **curated**
+        # screenshots is required" — in the very file whose ⛔ block says keep every
+        # tab. The two-file scope missed the operative instruction at each capture
+        # point: `module-03b/phase1-visualization.md` ("keep the 2-3 best") and
+        # `module-07/phase1-query-visualize.md` ("embed the 2-3 best"), which is what
+        # the agent actually reads when the screenshots are taken.
+        pattern = re.compile(r"\b\d\s*-\s*\d\b\s+\w+\s+(?:screenshots?|images?)"
+                             r"|\b\d\s*-\s*\d\b\s+(?:most|best|curated)"
+                             r"|delete the rest")
+        offenders = []
+        for path in shipped_markdown():
+            hit = pattern.search(flat(path))
+            if hit:
+                offenders.append(f"{os.path.relpath(path, REPO_ROOT)}: {hit.group(0)!r}")
+        self.assertEqual(
+            [], offenders,
+            "a count cap deletes unique content now that capture is per-tab "
+            f"(INV-146): {offenders}",
+        )
 
     def test_module_completion_says_keep_every_tab(self):
         self.assertRegex(

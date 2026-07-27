@@ -218,6 +218,55 @@ def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
     return False
 
 
+def _is_table_row(line: str) -> bool:
+    """True for a Markdown table row (``| cell | cell |``).
+
+    Same rule as ``generate_discoveries_pdf.py`` uses, so the two generators
+    classify a table identically (INV-142).
+    """
+    stripped = line.strip()
+    return len(stripped) > 1 and stripped.startswith("|") and stripped.endswith("|")
+
+
+def _table_run(lines: List[str], index: int) -> int:
+    """How many consecutive lines starting at ``index`` form ONE table block.
+
+    Consecutive pipe rows are one table, so a renderer can draw a real grid. A
+    blank line ends the run, which keeps two adjacent tables separate rather than
+    merging them into one grid whose middle row happens to be bold (INV-142).
+    """
+    end = index
+    while end < len(lines) and _is_table_row(lines[end]):
+        end += 1
+    return end - index
+
+
+def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
+    """Split a Markdown table block into (header, rows).
+
+    The ``|---|---|`` alignment row is dropped; it is presentation, not content.
+    Ragged rows are padded or truncated to the header's column count so a
+    malformed row cannot desynchronise the grid. An empty leading column is
+    kept deliberately — a blank header over a real row-label column is common,
+    and dropping the column would delete the values beneath it.
+
+    Mirrors ``generate_discoveries_pdf.parse_table``; both are bound by INV-142,
+    so they must behave the same on the same input.
+    """
+    rows_in = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    parsed: List[List[str]] = []
+    for line in rows_in:
+        if re.fullmatch(r"\|[\s:|-]+\|", line):
+            continue  # alignment row
+        parsed.append([c.strip() for c in line.strip("|").split("|")])
+    if not parsed:
+        return [], []
+    header, body = parsed[0], parsed[1:]
+    width = len(header)
+    body = [(row + [""] * width)[:width] for row in body]
+    return header, body
+
+
 def _normalize_heading(name: str) -> str:
     """Normalize a heading for tolerant comparison.
 
@@ -543,6 +592,11 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     INK = _FALLBACK_RGB["INK"]
     GREEN = _FALLBACK_RGB["GREEN"]
     LINE = _FALLBACK_RGB["LINE"]
+
+# Header-row fill for rendered tables. Derived from the warm line colour so the
+# header reads as a band rather than a second body row, and so it cannot drift
+# from the brand palette (INV-081/INV-107) — it is not a new token.
+TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -1144,16 +1198,25 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
         return
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
-    for index, line in enumerate(content):
+    index = 0
+    while index < len(content):
+        line = content[index]
+        # A run of pipe rows is ONE table and is drawn as a grid (INV-142). It is
+        # handled here rather than in _render_line because a table spans lines and
+        # _render_line only ever sees one.
+        run = _table_run(content, index)
+        if run:
+            _render_table_fpdf2(pdf, epw, "\n".join(content[index : index + run]))
+            index += run
+            continue
         label = _block_label(line)
         if label:
             active_label = label
         _render_line(pdf, epw, line)
-        if not _is_bullet(line):
-            continue
-        if spaced_section or active_label in _SPACED_LABELS:
+        if _is_bullet(line) and (spaced_section or active_label in _SPACED_LABELS):
             if _next_nonblank_is_bullet(content, index):
                 pdf.ln(_ITEM_GAP_MM)
+        index += 1
     pdf.ln(2)
 
 
@@ -1199,6 +1262,116 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
         pdf.ln(2)
     except Exception:
         return  # any embedding failure → skip the image, keep the PDF valid
+
+
+def _table_widths(header: List[str], rows: List[List[str]], epw: float) -> List[float]:
+    """Column widths proportional to the longest cell per column.
+
+    Each column keeps a floor so nothing collapses to a sliver, and a cap so one
+    very long cell cannot squeeze the others out.
+    """
+    spans = []
+    for index in range(len(header)):
+        longest = max([len(header[index])] + [len(r[index]) for r in rows] or [1])
+        spans.append(min(max(longest, 6), 60))
+    total = float(sum(spans)) or 1.0
+    return [epw * (span / total) for span in spans]
+
+
+def _render_table_monospace(pdf, epw: float, header, rows) -> None:
+    """Last-resort table rendering: aligned monospace columns, never pipe source.
+
+    Reached only if the grid path raises (an old fpdf2 without ``will_page_break``,
+    for instance). INV-142 permits aligned columns as a lesser rendering; it does
+    NOT permit falling back to the Markdown source text.
+    """
+    widths = [min(max(len(r[i]) for r in [header] + rows), 46) for i in range(len(header))]
+    pdf.set_font("Courier", "", 8.5)
+    pdf.set_text_color(*INK)
+    for row_index, row in enumerate([header] + rows):
+        pdf.set_x(pdf.l_margin)
+        text = "  ".join(c[:w].ljust(w) for c, w in zip(row, widths)).rstrip()
+        pdf.multi_cell(epw, 4.6, _safe(text) or " ")
+        if row_index == 0:
+            pdf.set_x(pdf.l_margin)
+            pdf.multi_cell(epw, 4.6, "  ".join("-" * w for w in widths))
+    pdf.set_font("Helvetica", "", 10.5)
+
+
+def _render_table_fpdf2(pdf, epw: float, text: str) -> None:
+    """Draw a Markdown table in a recap section as an actual grid (INV-142).
+
+    Without this the pipe rows reached the keepsake PDF as source text — the
+    ``|---|---|`` alignment row and all — while every success signal (exit 0,
+    ``PDF generated:``, a high content-retention figure) reported success, because
+    the characters *were* in the content stream, merely unreadable. The retention
+    figure cannot see this: it counts characters, not whether they render as the
+    construct they describe.
+
+    Mirrors ``generate_discoveries_pdf._render_table_fpdf2``: bordered cells, a
+    filled header band, the alignment row dropped, the header repeated after a
+    page break (with the following body row restored to the body font), and short
+    cells padded to the row height so the grid stays square.
+    """
+    header, rows = parse_table(text)
+    if not header:
+        return
+    plain_header = [_safe(_md_inline_to_text(c)) for c in header]
+    plain_rows = [[_safe(_md_inline_to_text(c)) for c in row] for row in rows]
+    widths = _table_widths(plain_header, plain_rows, epw)
+    line_h = 4.6
+
+    pdf.ln(1)
+    try:
+        pdf.set_draw_color(*LINE)
+        pdf.set_line_width(0.15)
+
+        def cell_height(width: float, cell: str) -> float:
+            lines = pdf.multi_cell(
+                width, line_h, cell or " ", dry_run=True, output="LINES", border=0
+            )
+            return max(len(lines), 1) * line_h
+
+        def emit_row(cells: List[str], is_header: bool) -> None:
+            pdf.set_font("Helvetica", "B" if is_header else "", 8.5)
+            row_h = max(cell_height(w, c) for w, c in zip(widths, cells))
+            if pdf.will_page_break(row_h):
+                pdf.add_page()
+                if not is_header:
+                    # Repeat the header on the new page, then restore THIS row's
+                    # style — otherwise the first body row after every page break
+                    # renders as a second header.
+                    emit_row(plain_header, True)
+                    pdf.set_font("Helvetica", "", 8.5)
+            x0, y0 = pdf.l_margin, pdf.get_y()
+            if is_header:
+                pdf.set_fill_color(*TABLE_HEAD_FILL)
+            pdf.set_text_color(*INK)
+            x = x0
+            for width, cell in zip(widths, cells):
+                pdf.set_xy(x, y0)
+                pdf.multi_cell(
+                    width, line_h, cell or " ", border=1, align="L",
+                    fill=is_header, max_line_height=line_h,
+                    new_x="RIGHT", new_y="TOP",
+                )
+                drawn = cell_height(width, cell)
+                if drawn < row_h:
+                    pdf.rect(x, y0 + drawn, width, row_h - drawn,
+                             style="FD" if is_header else "D")
+                x += width
+            pdf.set_xy(x0, y0 + row_h)
+
+        emit_row(plain_header, True)
+        for row in plain_rows:
+            emit_row(row, False)
+    except Exception:
+        _render_table_monospace(pdf, epw, plain_header, plain_rows)
+    # Separate two adjacent tables visibly, so they cannot read as one grid.
+    pdf.set_text_color(*INK)
+    pdf.set_font("Helvetica", "", 10.5)
+    pdf.set_x(pdf.l_margin)
+    pdf.ln(2)
 
 
 def _render_line(pdf, epw, line: str) -> None:
@@ -1428,6 +1601,36 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         return False
 
 
+def _stdlib_table(add, text: str) -> None:
+    """Lay a Markdown table out as space-padded monospace columns (INV-142).
+
+    The stdlib writer has no grid primitives, so this is the sanctioned lesser
+    rendering: still rows and columns, in the monospace F3 face so they actually
+    line up — and never the pipe source the parser was handed. A rule under the
+    header keeps the header distinguishable, and a blank line after the block keeps
+    two adjacent tables from reading as one.
+    """
+    header, rows = parse_table(text)
+    if not header:
+        return
+    cols = [[_md_inline_to_text(c) for c in header]] + [
+        [_md_inline_to_text(c) for c in r] for r in rows
+    ]
+    widths = [min(max(len(row[i]) for row in cols), 40) for i in range(len(header))]
+    # This writer does not wrap, so a row wider than the text column would run off
+    # the page — the off-page failure INV-121 names, reached from the other
+    # renderer. Clip to what fits: 8.5pt Courier is 5.1pt per character across a
+    # 487pt text column, minus the 6pt indent.
+    budget = int((595.0 - 2 * 54.0 - 6) / (8.5 * 0.6))
+    add("", "F1", 3, 0)
+    for row_index, row in enumerate(cols):
+        line = "  ".join(c[:w].ljust(w) for c, w in zip(row, widths)).rstrip()
+        add(line[:budget], "F3", 8.5, 6)
+        if row_index == 0:
+            add("  ".join("-" * w for w in widths)[:budget], "F3", 8.5, 6)
+    add("", "F1", 3, 0)
+
+
 def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]) -> None:
     add("", "F1", 4, 0)
     add(name, "F2", 12, 0)
@@ -1436,7 +1639,17 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         return
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
-    for index, line in enumerate(content):
+    cursor = 0
+    while cursor < len(content):
+        index, line = cursor, content[cursor]
+        # A table becomes aligned monospace columns here — there are no grid
+        # primitives in this writer — but never the raw pipe source (INV-142).
+        run = _table_run(content, index)
+        if run:
+            _stdlib_table(add, "\n".join(content[index : index + run]))
+            cursor += run
+            continue
+        cursor += 1
         s = line.strip()
         if not s:
             add("", "F1", 4, 0)
@@ -1533,6 +1746,14 @@ def _write_pdf(output: Path, pages: List[str], page_sizes: List[Tuple[float, flo
     font_bold = add_obj(
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"
     )
+    # F3 is monospace, for the one thing a proportional font cannot do: hold a
+    # space-padded table's columns in line. Both stdlib table fallbacks (this
+    # generator's and the discoveries generator's, which imports this writer) use
+    # it — space-padding Helvetica produces ragged pseudo-columns, which is not the
+    # "aligned monospace columns" INV-142 permits as the lesser rendering.
+    font_mono = add_obj(
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>"
+    )
 
     page_obj_nums: List[int] = []
     # We need the Pages object number ahead of the page objects; compute it.
@@ -1548,9 +1769,10 @@ def _write_pdf(output: Path, pages: List[str], page_sizes: List[Tuple[float, flo
         page_num = add_obj(
             (
                 "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2f %.2f] "
-                "/Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> "
+                "/Resources << /Font << /F1 %d 0 R /F2 %d 0 R /F3 %d 0 R >> >> "
                 "/Contents %d 0 R >>"
-                % (pages_obj_num, pw, ph, font_regular, font_bold, content_num)
+                % (pages_obj_num, pw, ph, font_regular, font_bold, font_mono,
+                   content_num)
             ).encode("latin-1")
         )
         page_obj_nums.append(page_num)

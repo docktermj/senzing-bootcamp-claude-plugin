@@ -110,5 +110,48 @@ class TestContractCoversTheServer(unittest.TestCase):
                 )
 
 
+class TestBuildInstructionsMatchTheContract(unittest.TestCase):
+    """The prose that tells the agent which APIs to *build*, not just which to probe.
+
+    The probe-table checks above look for `GET /api/x` rows, so they never saw the
+    "Serve the JSON APIs — …" enumeration a few dozen lines earlier. That list asked a
+    language-native server (INV-090) to serve `/api/dashboard` — which the contract in
+    the same directory marks REMOVED and "Do NOT implement it" — and omitted
+    `/api/records`, which backs the Records action every entity surface must offer.
+    Only a non-Python bootcamper would have hit it, and nothing was checking.
+    """
+
+    def build_instruction_files(self):
+        yield VERIFY_TABLE
+        yield os.path.join(
+            PLUGIN, "skills", "module-07-query-visualize-discover",
+            "phase1-query-visualize.md",
+        )
+
+    def test_a_removed_route_is_only_ever_named_as_removed(self):
+        for path in self.build_instruction_files():
+            text = read(path)
+            for route in sorted(REMOVED):
+                for match in re.finditer(re.escape(route), text):
+                    # The sentence around the mention must disown it, not request it.
+                    window = text[max(0, match.start() - 160) : match.end() + 160]
+                    with self.subTest(file=os.path.basename(path), route=route):
+                        self.assertRegex(
+                            window,
+                            r"removed|REMOVED|MUST NOT|Do NOT|do not implement",
+                            f"{route} is named in {os.path.basename(path)} without "
+                            "being marked removed — an implementer would build it.",
+                        )
+
+    def test_every_served_route_is_named_in_the_build_instruction(self):
+        text = read(VERIFY_TABLE)
+        missing = sorted(r for r in server_routes() if r not in text)
+        self.assertEqual(
+            [], missing,
+            f"Served by the reference but never named where the server is specified: "
+            f"{missing}. A language-native server is built from that list.",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
