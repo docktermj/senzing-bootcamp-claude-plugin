@@ -158,3 +158,19 @@ would itself prune a full set.
   `specs/enforce-screenshot-embed-and-backfill.md` (the backfill this reorders),
   `specs/consolidate-truthset-viz-merges-and-network-tabs.md` (which tabs exist),
   `specs/artifact-level-verification-for-deliverables.md` (INV-129)
+
+## Invariants introduced
+
+- `INV-146` — Every captured screenshot MUST reach the recap; no count cap or "best of" selection at
+  either the capture-time embed or graduation's backfill, only true duplicates removed (recorded in
+  `specs/INVARIANTS.md`).
+- `INV-147` — Screenshots MUST be embedded in the app's tab order, sourced from the contract's tab
+  table rather than a restated list, at both call sites (recorded in `specs/INVARIANTS.md`).
+
+## Implementation note
+
+The shipped example recap (`docs/examples/bootcamp_recap.example.md`) modelled the retired behaviour
+in prose — "kept the most representative one for this recap" — so it was updated too, and its
+committed `.pdf` re-rendered from `plugins/senzing-bootcamp/` as `tests/test_example_recap_sync.py`
+requires (rendering from any other directory silently drops the screenshot). The suite caught the
+staleness; the Markdown edit alone would have shipped a reference PDF contradicting its own source.

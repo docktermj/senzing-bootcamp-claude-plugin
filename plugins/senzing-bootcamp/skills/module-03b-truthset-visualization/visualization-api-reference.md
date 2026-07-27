@@ -443,6 +443,12 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
 Tab ids are **contract**, not an implementation detail: the recap screenshot helper selects a tab by
 id, so a server in any language (INV-090) must use these exact ids and expose the two hooks below.
 
+**The row order below is also the order the app presents its tabs, left to right, and therefore the
+order screenshots are embedded in the recap** — by `module-completion.md`'s capture step and by
+graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
+list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
+app; images in capture or append order cannot be lined up against the interface.
+
 | Tab | Id | Section id | Nav button id | Screenshot slug |
 |---|---|---|---|---|
 | Entity Graph | `graph` | `tab-graph` | `navbtn-graph` | `entity-graph` |

@@ -172,12 +172,28 @@ tab. Procedure (parameterized by the visualization's `{html}` file or live `{url
    keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
    the `minimal` preset).
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
-   named `{name}-<tab-slug>.png`. Keep the **2-3 most representative** (delete the rest), and —
-   **as a required step, in the same turn** — embed them in **this module's recap `Actions Taken`**
-   as `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
+   named `{name}-<tab-slug>.png`. **Keep every captured tab** — and, **as a required step, in the
+   same turn** — embed them all in **this module's recap `Actions Taken`** as
+   `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
    optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds
    these local images and skips any that are missing (INV-048), and graduation backfills any that
    were captured but never embedded (see `../graduation/SKILL.md` Step 1).
+
+   ⛔ **Do not prune to a "best" few.** Capture is one image per tab (INV-122), so every file is
+   already a distinct view — there is nothing redundant to remove, and a count cap can only delete
+   unique content. Delete only a true duplicate: two images of the *same* tab, which per-tab capture
+   should not produce. Judging which shots are worth keeping is what previously dropped Merge
+   Statistics, Match Keys and Feature Scores from a six-tab app — the three *analytical* tabs, since
+   any such judgement pulls toward the most visually striking. The recap then showed the same three
+   tabs in both visualization sections and the app looked narrower than it was.
+
+   ⛔ **Embed in the app's tab order, never in capture or append order.** The order is the row order
+   of the tab table in
+   `../module-03b-truthset-visualization/visualization-api-reference.md` → "Tab identifiers and
+   deep-linking" — read it there rather than restating the list, so a tab change updates one file.
+   A tab that produced no image is simply skipped; the rest keep their relative order. The recap is
+   a walkthrough of the app, so a reader must be able to line the images up against the interface
+   left to right.
 
 ⛔ **Every caption is derived from the capture, never from the plan.** Build it from the tab label
 the helper printed (which matches the filename slug), and — before writing it — **open the image and

@@ -179,7 +179,7 @@
 - Registered the CUSTOMERS/REFERENCE/WATCHLIST data source codes as the default config before loading.
 - Loaded all 159 records (0 failures); they resolved into 84 entities with 71 relationships.
 - Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization with the bundled Senzing viz server: standalone snapshot docs/visualizations/truthset_verification.html plus a live server, all four API endpoints verified.
-- Captured screenshots of the entity graph and kept the most representative one for this recap.
+- Captured one screenshot per visualization tab and embedded them all in this recap, in the app's tab order.
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
 

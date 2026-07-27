@@ -285,7 +285,9 @@ sections.
 
 **Backfill orphaned screenshots (before rendering).** Scan `docs/visualizations/*.png`. For any PNG
 **not already referenced** by an `![...](...)` image line in `docs/bootcamp_recap.md`, embed it into
-the matching `## {Module name}` section's **Actions Taken** — 2-3 best per module. Map each PNG to
+the matching `## {Module name}` section's **Actions Taken** — **all** of them, not a "best" few: each
+capture is a distinct tab (INV-122), so a count cap deletes unique content, and this backfill is the
+safety net for captures whose embed step was missed. Map each PNG to
 its module by the visualization it came from: match the PNG's base name against the `<name>.html`
 referenced in a module's recap section (e.g. `truthset_verification-*` → Truth Set visualization;
 `results_visualization-*` (Module 7's single interactive visualization app),
@@ -304,6 +306,13 @@ Captures are named `<name>-<tab-slug>.png` (see
 deep-linking"), so the **tab slug gives the caption**: use the tab's display name rather than
 inventing a description. A backfilled caption must never assert content that was not confirmed by
 opening the image.
+
+⛔ **Insert in the app's tab order, not in filename-discovery order.** That same tab table's row
+order is the embedding order. Backfilling by directory scan is what produced a recap whose images
+ran Entity Graph → Cross-Source → Search/Probe → Merge Statistics → Match Keys → Feature Scores —
+append order, against an app whose tabs run left to right in a different sequence. Ordering the
+image lines within a section is not a prose rewrite: the append-only rule (INV-085) protects the
+section's **narrative**, and these lines are the backfill's own output.
 
 **Verify the screenshots the recap actually carries (warn, never block).** Three checks, each
 best-effort and each non-blocking (INV-048) — the backfill above only maps PNGs that *exist*, so

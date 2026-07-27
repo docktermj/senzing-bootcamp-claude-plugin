@@ -18,6 +18,26 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## embed-every-captured-tab-in-tab-order
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md`, `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf`, `specs/INVARIANTS.md`, `tests/test_screenshot_retention_and_order.py`
+- **Summary:** Dropped the "2-3 most representative (delete the rest)" cap at `module-completion.md`
+  and the matching "2-3 best per module" in graduation's backfill; both now keep **every** captured
+  tab, since per-tab capture (INV-122) makes each file a distinct view and the cap could only delete
+  unique content. Added the ordering rule to both call sites: embed in the app's tab order, sourced
+  from the tab table in `visualization-api-reference.md`, which now declares itself the ordering
+  authority so neither call site restates the list. The example recap modelled the retired behaviour
+  in prose and was updated, which made its committed `.pdf` stale — caught by
+  `tests/test_example_recap_sync.py` and re-rendered from `plugins/senzing-bootcamp/` as that test
+  requires (121 KB, image objects intact). Tests **471 → 481**; all eight new assertions confirmed to
+  **fail against the pre-change files**. Two of my own first-draft assertions were false positives
+  and were narrowed rather than worked around: a loose count-cap regex matched graduation's innocent
+  "you keep two things — a recap PDF and a project", and the explanation of *why* the cap was removed
+  originally quoted the retired phrase, tripping the no-occurrence check.
+- **Invariants:** INV-146, INV-147.
+- **Commit:** uncommitted
+
 ## analyzer-legacy-sublist-format-false-errors
 
 - **Implemented:** 2026-07-26
