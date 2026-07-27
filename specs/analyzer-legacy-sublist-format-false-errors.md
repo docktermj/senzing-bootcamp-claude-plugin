@@ -140,3 +140,36 @@ mitigation below is the durable one, not a stopgap.
   unactionable-rejection path this sits beside), `specs/post-load-match-key-semantic-audit.md` (the
   same validation stack, and the audit that catches what these gates cannot),
   `specs/mcp-grounding-in-every-skill.md` (INV-080), `specs/detect-dynamic-key-document-shaped-sources.md`
+
+## Invariants introduced
+
+- `INV-144` — A validator's non-zero exit MUST NOT by itself gate a step; findings are classified
+  into structural invalidity (blocking) and conformance-to-recommendation (informational), a
+  conformance finding never triggers a rewrite, and a tool-vs-specification disagreement is resolved
+  by an empirical load probe whose result is recorded (recorded in `specs/INVARIANTS.md`).
+- `INV-145` — A record-shape check MUST accept every shape the Entity Specification supports — the
+  `FEATURES` array and the legacy flat structure — and MUST determine shape by sampling records
+  rather than inferring it from provenance (recorded in `specs/INVARIANTS.md`).
+
+## Correction applied during implementation (2026-07-26)
+
+This spec described the legacy shape as the "per-feature sub-list format". That is **half of it**.
+Verified against the MCP server at implementation time: the Entity Specification's wording is "a
+flat JSON structure **with** a separate sub-list for each feature that had multiple values" — the
+sub-lists are a *part* of the legacy shape, not the whole. A source with no repeating feature is in
+that shape with **no sub-list at all**, which is exactly what Las Vegas/`PPP_LOANS` returns
+(root-level `BUSINESS_NAME_ORG`, `RECORD_TYPE`, no `FEATURES`). A check keyed on sub-lists would
+still have misjudged it. The shipped guidance describes the flat shape correctly.
+
+Also corrected: this spec framed the analyzer as contradicting the Entity Specification. It does
+not. The same specification section's *Schema Validation Rules* state `FEATURES (required, array)`;
+the analyzer applies the **recommended** schema's rules while the prose grants continued support for
+the **legacy** shape. Both are true and answer different questions — the analyzer measures
+conformance, the module needs loadability. The guidance says that rather than calling the analyzer
+wrong.
+
+Two further call sites the spec did not name were found and fixed: `phase3-test-load.md` instructed
+"Fix the structural errors ... in the transformation program" for the flat format (the rewrite this
+spec exists to prevent), and `phase1-quality-assessment.md`'s CORD fast-path readiness check
+required a `FEATURES` array, classifying every legacy-shaped CORD source as not-ready at the
+earliest gate.

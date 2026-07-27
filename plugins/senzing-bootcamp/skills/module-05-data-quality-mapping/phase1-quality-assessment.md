@@ -76,6 +76,23 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    specification, extract the list of required top-level structural indicators for a
    Senzing-loadable record (e.g., presence of a FEATURES array, DATA_SOURCE, RECORD_ID).
 
+   ⛔ **Loadable is a wider test than "has a FEATURES array".** The same specification states that
+   the older shape — "a flat JSON structure with a separate sub-list for each feature that had
+   multiple values" — is **still supported**. Treat **both** forms as Senzing-ready:
+
+   - the recommended **`FEATURES` array**; or
+   - the legacy **flat structure**: feature attributes at the record root
+     (`BUSINESS_NAME_ORG`, `RECORD_TYPE`, …), with a per-feature root sub-list (`NAMES`,
+     `ADDRESSES`, `IDENTIFIERS`) wherever a feature repeats. A source with no repeating feature is
+     in this shape with no sub-list at all — flat root attributes only.
+
+   **CORD ships both, so neither may be assumed.** Verified against the MCP server this session:
+   London/`GLOBALDATA` returns a `FEATURES` array, while Las Vegas/`PPP_LOANS` returns flat root
+   attributes. Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
+   sends data that already loads and resolves through a mapping phase it does not need. Sample the
+   actual records rather than assuming a dataset's shape, and confirm the still-supported statement
+   from the specification you retrieved (INV-080), not from this file.
+
 2. **Perform the readiness check:** Examine up to 100 sample records from the source file. For
    each record, verify:
    - The record is valid JSON.
@@ -93,6 +110,9 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 4. **If Senzing-ready: present the fast-path offer:**
 
    👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+
+   *(The wording holds for both supported shapes — "properly structured features" covers a
+   `FEATURES` array and the still-supported per-feature sub-lists alike.)*
 
    *(Internal: end the turn on this question and wait.)*
 

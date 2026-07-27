@@ -285,7 +285,9 @@ it produces silently suppressed merges that only the post-load match-key audit w
 >
 > 1. **`sz_json_analyzer.py` (primary validation):** structural + Entity-Specification
 >    validation, currently hosted (HTTP 200). When available, run it and use its result as the
->    authoritative check. It is **sufficient to proceed**: when the verbatim/routing scripts
+>    authoritative check **for what it actually measures** — conformance to the *recommended*
+>    schema, which is not the same question as "will this data load and resolve" (see the ⛔
+>    conformance block below). It is **sufficient to proceed**: when the verbatim/routing scripts
 >    below are unavailable, a passing `sz_json_analyzer.py` result lets you continue.
 > 2. **`sz_verbatim_check.py` (verbatim-fidelity, optional/best-effort):** if available, run it
 >    and report the result; if unavailable (HTTP 404 / no working inline fallback), tell the
@@ -297,6 +299,69 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
+
+⛔ **Separate structural invalidity from conformance-to-recommendation before acting on the
+analyzer's output.** The analyzer's exit code alone is NOT the gate — its findings fall into two
+kinds, and only one of them blocks:
+
+- **Structural invalidity — blocking.** Malformed JSON, a missing `DATA_SOURCE`, an unparseable
+  record. The data cannot load. Fix it before proceeding.
+- **Conformance to the recommended schema — informational.** The record loads and resolves, but
+  does not use the shape Senzing now recommends. Report it as a notice. It is **never** a reason
+  to remap a source.
+
+The observed instance of the second kind is the older **flat** format: feature attributes at the
+record root, with a per-feature root sub-list (`NAMES`, `ADDRESSES`, `IDENTIFIERS`) wherever a
+feature repeats. A source with no repeating feature is in this shape with no sub-list at all.
+Against such a source the analyzer returns a non-zero exit with errors of the form:
+
+```text
+Line 1: Missing or non-array FEATURES
+Line 1: Feature attribute 'RECORD_TYPE' must be inside FEATURES array
+```
+
+— hundreds per source, plus the warning `No NAME features found`.
+
+**That data is supported.** The Senzing Entity Specification, § "Recommended JSON schema", says so
+in as many words:
+
+> "In prior versions we allowed a flat JSON structure with a separate sub-list for each feature
+> that had multiple values. **While we still support that**, we now recommend the following JSON
+> schema that has just one list for all features."
+
+Re-confirm that statement from the MCP server this session rather than trusting this file
+(`search_docs(category='data_mapping')`, or `download_resource(filename='senzing_entity_specification.md')`) —
+INV-080 applies to this claim as much as to any attribute name.
+
+**Do not assume a source's shape from its provenance.** CORD ships both forms: verified against the
+MCP server, London/`GLOBALDATA` returns a `FEATURES` array while Las Vegas/`PPP_LOANS` returns flat
+root attributes. Read the actual records.
+
+⚠️ **Why the analyzer is not wrong, and still must not block.** The same specification section's
+*Schema Validation Rules* state `FEATURES (required, array)`. The analyzer applies the
+**recommended** schema's rules; the prose above grants continued support for the **legacy** shape.
+Both statements are true, and they answer different questions. The analyzer measures conformance;
+the gate this module needs is loadability.
+
+**`No NAME features found` does not mean the names are missing.** It is an artefact of the analyzer
+not looking inside the sub-list — it reports `NAMES` and `ADDRESSES` as *payload* attributes and
+skips feature analysis entirely. Names in sub-list records are extracted normally at load. This is
+the single most misleading line in the report, because a bootcamper cannot tell "the analyzer did
+not look there" from "there are no names", and the natural conclusion is that the source is unusable.
+
+**When the analyzer and the specification disagree, resolve it empirically — do not pick a
+document.** Load **one** unmodified record and inspect the features Senzing extracted. If they come
+back extracted, the data is loadable and every finding of this kind is conformance advice. Record
+the probe's result and the conclusion you drew in that source's
+`config/mapping_state_[datasource].json` (INV-125 already requires recording the raw failure and the
+concluded cause). Module 5's own test load (`phase3-test-load.md`) is the same instrument one phase
+later — this is that check, run early and on a single record.
+
+⛔ **Never hand-write a mapper to convert a supported format into the recommended one in order to
+clear this finding.** That is real work — five sources in the reported session — spent to satisfy a
+notice. Converting is a legitimate *optional* improvement, on the grounds that new Senzing work
+should target the recommended shape; offer it that way, never as remediation of a defect, and never
+as a precondition for continuing.
 
 ⛔ **When `mapping_workflow`'s step-3 validation rejects the payload without an actionable
 reason.** The block above handles a validator that is *unavailable*; this handles one that runs and

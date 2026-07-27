@@ -18,6 +18,37 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## analyzer-legacy-sublist-format-false-errors
+
+- **Implemented:** 2026-07-26
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase3-test-load.md`, `specs/INVARIANTS.md`, `tests/test_legacy_sublist_format_is_supported.py`
+- **Summary:** Split the analyzer's output into **structural invalidity** (blocking) and
+  **conformance to the recommended schema** (informational) in `phase2`, with the exit code removed
+  as a gate, the Entity Specification's "While we still support that" quoted and marked for
+  per-session MCP re-confirmation (INV-080), `No NAME features found` explained as an artefact of
+  where the analyzer looks, a one-record load probe made the arbiter with its conclusion recorded
+  (INV-125), and hand-writing a mapper to clear a conformance finding forbidden outright.
+  **The defect was in three files, not the one the spec named.** `phase3-test-load.md` instructed
+  "Fix the structural errors ... in the transformation program" for the flat format — literally the
+  five-mapper rewrite the spec exists to prevent — and `phase1-quality-assessment.md`'s CORD
+  fast-path readiness check required a `FEATURES` array, classifying every legacy-shaped CORD source
+  as not-ready at the earliest gate and routing loadable data into a mapping phase it did not need.
+  Both fixed. **Two claims in the spec were corrected by verifying against the MCP server rather
+  than trusting it:** (1) the legacy shape is not "the sub-list format" but "a flat JSON structure
+  *with* a separate sub-list for each feature that had multiple values" — sampling showed London/
+  `GLOBALDATA` returns a `FEATURES` array while Las Vegas/`PPP_LOANS` returns flat root attributes
+  with **no** sub-lists, so a sub-list-keyed check would still have misjudged it, and CORD is now
+  documented as shipping both forms; (2) the analyzer does not contradict the specification — the
+  same section's validation rules do say `FEATURES (required, array)`, so the analyzer applies the
+  *recommended* schema's rules while the prose grants continued support for the *legacy* shape.
+  Both true, answering different questions; the guidance says so instead of calling the analyzer
+  wrong. Tests **457 → 471**; all nine new guidance assertions were confirmed to **fail against the
+  pre-change files**. Not verifiable here: the end-to-end criterion "a CORD run reaches the test
+  load without a hand-written conversion" — verified instead by removing every instruction that
+  would cause one (grep across the plugin plus the new tests), not by running a bootcamp.
+- **Invariants:** INV-144, INV-145.
+- **Commit:** uncommitted
+
 ## discoveries-pdf-real-tables-and-paragraph-spacing
 
 - **Implemented:** 2026-07-26
