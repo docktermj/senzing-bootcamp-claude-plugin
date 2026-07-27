@@ -36,7 +36,7 @@ Entries are newest first. Do not delete history; append or update in place.
   "you keep two things — a recap PDF and a project", and the explanation of *why* the cap was removed
   originally quoted the retired phrase, tripping the no-occurrence check.
 - **Invariants:** INV-146, INV-147.
-- **Commit:** uncommitted
+- **Commit:** `94eb5e3`
 
 ## analyzer-legacy-sublist-format-false-errors
 
