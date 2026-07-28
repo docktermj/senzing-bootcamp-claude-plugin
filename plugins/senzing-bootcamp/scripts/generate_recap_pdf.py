@@ -76,7 +76,7 @@ import struct
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 DEFAULT_INPUT = "docs/bootcamp_recap.md"
 DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
@@ -120,6 +120,31 @@ CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
 # time means a module was never finalized (module-completion step 2d).
 RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
+
+# Recap image references: `![alt](path)` on a line of its own.
+IMAGE_LINE_RE = re.compile(r"^!\[(.*?)\]\((.+?)\)$")
+
+# A URL rather than a local file. Remote images are NEVER fetched (offline, INV-081).
+IMAGE_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*://")
+
+# Where a relative recap image path is resolved from, and what happened to each
+# image. Set by `main()` (via `set_image_context`) before rendering.
+#
+# The recap's image paths are written **relative to the recap document** — that is
+# what every Markdown renderer expects, and what graduation Step 1a instructs — so
+# the recap's own directory is the base, NOT the process working directory. The
+# generator is normally invoked from the project root, where `Path.cwd()` made
+# `visualizations/x.png` resolve to `<project>/visualizations/x.png` while the file
+# sits at `<project>/docs/visualizations/x.png`; every image was silently dropped and
+# the success line still reported ~99% of characters rendered, because the characters
+# did render. `Path.cwd()` is kept as a second candidate so an invocation that already
+# worked keeps working.
+#
+# Outcomes are keyed by the path as written, because the fpdf2 renderer builds the
+# document twice (a measure pass for TOC page numbers, then the real one) and so
+# reaches every image twice: two visits to one image must count once and report once.
+_IMAGE_BASE_DIRS: List[Path] = []
+_IMAGE_OUTCOMES: Dict[str, str] = {}
 
 # Minimum share of the input's content-bearing characters that must survive into
 # the parsed recap. Below this the input is treated as "not a recap" rather than
@@ -556,6 +581,112 @@ def _rendered_content_chars(recap: Recap) -> int:
             total += len(heading)
             total += sum(len(line.strip()) for line in lines if line.strip())
     return total
+
+
+def set_image_context(recap_path: Path) -> None:
+    """Set where relative recap image paths resolve from, and reset the tally.
+
+    The recap document's own directory comes first: its `![alt](path)` targets are
+    written relative to it (graduation Step 1a), so that is the only base under which
+    the Markdown and the PDF agree. `Path.cwd()` follows as a fallback so an
+    invocation that already resolved its images keeps working.
+    """
+    global _IMAGE_BASE_DIRS
+    base_dirs = [recap_path.resolve().parent]
+    cwd = Path.cwd().resolve()
+    if cwd not in base_dirs:
+        base_dirs.append(cwd)
+    _IMAGE_BASE_DIRS = base_dirs
+    _IMAGE_OUTCOMES.clear()
+
+
+def resolve_recap_image(
+    path: str, base_dirs: Optional[Sequence[Path]] = None
+) -> Optional[Path]:
+    """The first existing file a recap image reference resolves to, or ``None``.
+
+    An absolute path is used as given. A relative one is tried under each base dir
+    in order — the recap's directory, then the working directory.
+    """
+    if IMAGE_URL_RE.match(path):
+        return None
+    p = Path(path)
+    if p.is_absolute():
+        return p if p.is_file() else None
+    for base in (base_dirs if base_dirs is not None else _IMAGE_BASE_DIRS) or [Path.cwd()]:
+        candidate = base / p
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def recap_image_targets(source_text: str) -> List[str]:
+    """Every ``![alt](path)`` target in the recap source, in document order.
+
+    Read from the source rather than from render callbacks so the count of images
+    the recap *references* is known even when the renderer embeds none — the stdlib
+    fallback renders no images at all, and "embedded 0 of 0" would misreport a recap
+    that references six.
+    """
+    targets: List[str] = []
+    for line in source_text.splitlines():
+        match = IMAGE_LINE_RE.match(line.strip())
+        if match:
+            targets.append(match.group(2).strip())
+    return targets
+
+
+def unresolvable_image_targets(
+    source_text: str, base_dirs: Optional[Sequence[Path]] = None
+) -> List[str]:
+    """Recap image references that resolve to no file (remote URLs excluded).
+
+    Used by ``--check`` so a lost screenshot is reported at the step that can still
+    fix it, rather than discovered by counting image objects in the finished PDF.
+    """
+    missing: List[str] = []
+    for target in recap_image_targets(source_text):
+        if IMAGE_URL_RE.match(target):
+            continue
+        if resolve_recap_image(target, base_dirs) is None and target not in missing:
+            missing.append(target)
+    return missing
+
+
+def _record_image_outcome(path: str, outcome: str) -> None:
+    """Record what happened to one image, once, and report anything but success.
+
+    Keyed by the path as written: the fpdf2 renderer builds the document twice, so
+    each image is reached twice and must be counted and reported once.
+    """
+    if path in _IMAGE_OUTCOMES:
+        return
+    _IMAGE_OUTCOMES[path] = outcome
+    if outcome == "embedded":
+        return
+    if outcome == "remote":
+        sys.stderr.write(
+            f"skipped image (remote URL, never fetched): {path}\n"
+        )
+        return
+    if outcome == "missing":
+        tried = ", ".join(str(base) for base in _IMAGE_BASE_DIRS) or str(Path.cwd())
+        sys.stderr.write(
+            f"skipped image (not found): {path} — looked in: {tried}\n"
+        )
+        return
+    sys.stderr.write(f"skipped image ({outcome}): {path}\n")
+
+
+def image_embed_note(referenced: int) -> str:
+    """``embedded N of M images`` for the success line.
+
+    The character-retention figure cannot see a dropped image — the characters do
+    render — so a recap that lost every screenshot still reported ~99%. This is the
+    figure that makes the loss visible (INV-110).
+    """
+    embedded = sum(1 for outcome in _IMAGE_OUTCOMES.values() if outcome == "embedded")
+    return f"embedded {embedded} of {referenced} images"
 
 
 @dataclass
@@ -1837,15 +1968,19 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
     """Embed a local visualization screenshot into the recap, best-effort and non-fatal.
 
     A missing/unreadable image, an fpdf2 build without image support, or a bad
-    file is skipped silently — an optional decoration must never break the
-    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-081).
+    file is skipped — an optional decoration must never break the recap PDF
+    (INV-048) — but the skip is recorded and reported, never silent (INV-111):
+    the bootcamper's own screenshots are the most visual content in the keepsake,
+    and losing them used to produce no error, no warning, and a success line
+    reporting ~99% of characters rendered. Remote URLs are never fetched
+    (offline — INV-081).
     """
-    if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
+    if IMAGE_URL_RE.match(path):
+        _record_image_outcome(path, "remote")
         return  # never fetch a remote URL (offline guarantee)
-    p = Path(path)
-    if not p.is_absolute():
-        p = Path.cwd() / p
-    if not p.is_file():
+    p = resolve_recap_image(path)
+    if p is None:
+        _record_image_outcome(path, "missing")
         return
     try:
         pdf.ln(1)
@@ -1859,8 +1994,13 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
             pdf.multi_cell(epw, 4.5, _safe(alt))
             pdf.set_text_color(*INK)
         pdf.ln(2)
-    except Exception:
-        return  # any embedding failure → skip the image, keep the PDF valid
+    except Exception as exc:
+        # Any embedding failure → skip the image, keep the PDF valid. Reported
+        # rather than swallowed: "found but unusable" needs a different remedy
+        # from "not found" (INV-111).
+        _record_image_outcome(path, f"unreadable ({exc.__class__.__name__})")
+        return
+    _record_image_outcome(path, "embedded")
 
 
 def _table_widths(header: List[str], rows: List[List[str]], epw: float) -> List[float]:
@@ -2604,8 +2744,19 @@ def main(argv: Optional[List[str]] = None) -> int:
     expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
     audit = audit_recap(recap, source_text, expected or None)
 
+    # Resolve the recap's images against the recap's own directory, not the process
+    # working directory — the paths are document-relative (graduation Step 1a).
+    set_image_context(inp)
+    referenced_images = recap_image_targets(source_text)
+
     if args.check:
         problems = audit.fatal + audit.warnings
+        # An `![](...)` target that resolves to no file would be dropped from the
+        # PDF; report it here, where it can still be fixed.
+        problems = problems + [
+            f"embedded image not found: {target} (relative to {inp.parent})"
+            for target in unresolvable_image_targets(source_text)
+        ]
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
@@ -2675,8 +2826,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             for problem in audit.warnings:
                 sys.stderr.write(f"  - {problem}\n")
         # Report retention on success too, so partial truncation is visible
-        # without extracting the PDF's text.
-        print(f"PDF generated: {out} (renderer: {used}, {audit.retention_note()})")
+        # without extracting the PDF's text — and the embedded-image count
+        # alongside it, which retention structurally cannot see (INV-110).
+        note = audit.retention_note()
+        if referenced_images:
+            note = f"{note}, {image_embed_note(len(referenced_images))}"
+            if used == "stdlib":
+                # The stdlib renderer embeds no images at all; say so rather than
+                # letting "embedded 0 of 6" read as a lookup failure.
+                note = f"{note} (the stdlib renderer embeds no images)"
+        print(f"PDF generated: {out} (renderer: {used}, {note})")
         return 0
 
     sys.stderr.write("Failed to generate a PDF by any strategy.\n")

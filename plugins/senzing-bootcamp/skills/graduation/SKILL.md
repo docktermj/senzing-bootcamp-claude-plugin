@@ -430,8 +430,8 @@ should look professional). Install it **robustly**, never with a bare `pip`:
 
 (Rasterizing pages to PNG to check the layout is **not** a maintainer-only aid — it is part of
 verifying the render, below. `poppler`'s `pdftoppm` is the tool to reach for; `pymupdf` also works
-where it happens to be installed. Neither is required: every check degrades silently when its tool
-is absent.)
+where it happens to be installed. Neither is required — but a check that does not run MUST be
+reported as skipped rather than degrading silently, per "Say what you could not verify" below.)
 
 Locate and run the bundled script (it ships with this plugin). Use the venv's Python
 if you created one above; otherwise `python3`:
@@ -453,10 +453,11 @@ python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py
 
 The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
-- **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over.
+- **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over. When the recap references screenshots it additionally reports `embedded N of M images` — **read this, and do not treat the retention figure as covering it.** Retention counts characters, so a PDF that lost every screenshot still reports ~99%; `embedded 0 of 6` is the only line that says so. Any shortfall means an image path did not resolve, and the generator names each one on stderr as `skipped image (not found): …` with the directories it searched.
+- **Image paths in the recap are relative to `docs/bootcamp_recap.md`, and the generator resolves them that way.** Write them exactly as Step 1a says — `![alt](visualizations/<file>.png)` — which is what a Markdown reader of the recap needs, and what the PDF now needs too. Do **not** "fix" a path to `docs/visualizations/...` to suit the PDF: that breaks the Markdown recap (it resolves to `docs/docs/...`) and is no longer necessary. Equally, do not `cd docs` before rendering to make images appear; if images are missing, the path or the file is wrong, not the working directory.
 - **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), flags any `![](…)` image target that resolves to no file (reported as `embedded image not found: …`, so a lost screenshot surfaces here rather than in the finished PDF), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high
@@ -481,7 +482,13 @@ bootcamper-facing output (INV-012).
   full. A count of **0** is the finding. This is the only check that catches content rendered outside
   the page box.
 - **Count unique image XObjects, not `/Subtype /Image` occurrences.** References are counted more than
-  once, so the naive grep reported 12 for 10 images. `pdfimages -list <pdf>` gives the honest count.
+  once, so the naive grep reported 12 for 10 images. Reach for these in order, and use the first
+  available: (1) the generator's own `embedded N of M images` line, which needs no tool at all and is
+  the count the renderer actually achieved; (2) **Pillow**, which `fpdf2` already pulls in — so when
+  you created the project-local venv above it is *already importable in that same interpreter*, and
+  opening the embedded images there gives an honest count and their dimensions with **no new
+  dependency**; (3) `pdfimages -list <pdf>` where poppler exists; (4) the `/Subtype /Image` grep,
+  **which overcounts** — if you fall back to it, label the number as approximate and say so.
 - **Open every captured PNG before writing its caption** (INV-123, and
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots").
 - **Re-run `--check --expect-modules "…"` after every render**, semicolon-separated — two module
@@ -495,11 +502,36 @@ looks exactly like a lost page. Cross-check a suspicious "missing content" resul
 independent tool (`pdftotext`) before concluding the artifact is broken — the reader is the likelier
 culprit.
 
-**Toolchain these assume.** In the field the machine had `fpdf2`, headless Chrome, and poppler
-(`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`); it did **not** have Playwright, Selenium, or
-PyMuPDF. Every check above is doable with plain headless Chrome and poppler, which is why nothing here
-— or in the screenshot capture path — is designed around a heavier dependency. Probe for a tool before
-using it and skip the check when it is missing; never install one to satisfy a verification step.
+**Toolchain these assume, and what it looks like per platform.** Every check above is doable with
+plain headless Chrome and poppler, which is why nothing here — or in the screenshot capture path — is
+designed around a heavier dependency. Probe for a tool before using it and skip the check when it is
+missing; **never install one to satisfy a verification step** (INV-129) — that includes poppler, so do
+not offer `scoop install poppler` / `brew install poppler` / `apt install poppler-utils` to make a
+check pass.
+
+- **Linux / macOS:** poppler is usually present (`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`),
+  so the full check set normally runs. One field machine had `fpdf2`, headless Chrome and poppler, and
+  did **not** have Playwright, Selenium, or PyMuPDF.
+- **Windows: poppler is typically absent.** On one Windows 11 workstation only `pdftotext` resolved —
+  `pdftoppm`, `pdfinfo` and `pdfimages` were all missing. That is the normal Windows case, not a
+  broken setup, and it removes exactly the two checks text extraction cannot substitute for: the page
+  raster and the honest image count. Use the Pillow route above for the count, keep the positive
+  `pdftotext` probe, and **report the page raster as not verified** — do not imply the layout was
+  checked.
+
+⛔ **Say what you could not verify.** Any check skipped for a missing tool MUST be recorded as skipped,
+naming the check and the tool, and the closing announcement MUST state which verification steps did
+not run. "Verified" that silently means "verified except for the two strongest checks" is the same
+class of overstatement this section exists to prevent: a keepsake whose layout nobody could inspect is
+acceptable, one described as verified when its layout was never inspected is not. A skipped check
+still never blocks graduation (INV-048, INV-052/INV-066), and this stays agent-side apparatus rather
+than bootcamper-facing output (INV-012).
+
+⚠️ **Spend a reduced check set on what only it can catch.** When tools are missing, prioritize: the
+positive `pdftotext` content probe (the only check that catches content positioned outside the page
+box) and the image count (which catches silently-dropped screenshots — the failure that shipped a
+recap with 2 images where 8 were expected, detectable *only* by counting). The page raster is the one
+genuinely tool-gated check; its absence is the thing to announce.
 
 ## Step 2: Build the production project
 
@@ -647,6 +679,8 @@ This runs exactly once, after the report, before graduation is reported finished
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
 2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+
+   **If any Step 1b verification check was skipped for a missing tool, say so here in one plain sentence** — name what was not checked, not the tool names. On Windows this is the common case (poppler is typically absent, so the page raster could not run). One sentence is enough: *"One note: I verified the PDF's contents but couldn't check its page layout on this machine, so if anything looks visually off, tell me and I'll re-render."* Never describe the keepsake as verified when a check did not run — and never turn this into a 👉 question or a to-do for the bootcamper.
 
 Example (list only what exists):
 
