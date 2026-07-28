@@ -83,6 +83,8 @@ and starting the Bootcamp.
     Start the bootcamp
     ```
 
+    (Or use the `/start-bootcamp` command. See [Bootcamp commands] for the other two.)
+
 ## What you finish with
 
 The bootcamp is a guided, module-by-module tutorial.
@@ -103,5 +105,6 @@ the issue may be with an incomplete installation of Claude Desktop.
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
 [Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli
+[Bootcamp commands]: docs/README.md#bootcamp-commands
 [Senzing MCP server]: https://mcp.senzing.com/mcp
 [Senzing]: https://senzing.com

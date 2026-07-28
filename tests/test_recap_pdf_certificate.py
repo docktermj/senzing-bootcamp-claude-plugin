@@ -273,6 +273,18 @@ class TheFixedPageCannotBeOverrun(unittest.TestCase):
         below = [(y_mm(y), text) for _x, y, text in self.runs if y_mm(y) > floor]
         self.assertEqual([], below, f"drawn below the card: {below[:3]}")
 
+    def test_a_pathological_name_is_clipped_at_the_shrink_floor(self):
+        """Shrinking stops at 12 pt, so it alone does not bound the line: a ~78-character
+        name drew from x = -18 mm, off the card and off the page (INV-121)."""
+        runs = certificate_runs(render(recap_source(["Concepts"], name="W" * 120)))
+        drawn = [(x, text) for x, _y, text in runs if text.startswith("WWW")]
+        self.assertTrue(drawn, "the recipient name was not drawn")
+        x, text = drawn[0]
+        self.assertGreaterEqual(
+            x / MM, self.module._CERT_CARD_X, f"name starts outside the card: {text[:20]}…"
+        )
+        self.assertTrue(text.endswith("..."), "an unfittable name must be clipped, not run off")
+
     def test_a_long_name_shrinks_instead_of_running_off_the_card(self):
         runs = certificate_runs(
             render(recap_source(["Concepts"], name="Bartholomew Featherstonehaugh-Wentworth"))

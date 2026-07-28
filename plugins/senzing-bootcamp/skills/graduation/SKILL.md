@@ -146,6 +146,14 @@ Gather context before any step. Do this silently.
    - **a bare single-token handle** — one lowercase word with no space, e.g. `docktermj`, `jsmith42`,
      `mdockter`. This holds whether or not it matches the OS username: a handle is a handle either
      way, and requiring it to equal the OS username let one through onto a certificate.
+   - **a name the recap PDF cannot print** — one written in a script the generator's built-in fonts
+     do not carry (Chinese, Japanese, Korean, Cyrillic, Arabic, Hebrew, Greek, Devanagari, Thai …).
+     The PDF is set in Latin-1 core fonts, so those characters are dropped rather than rendered, and
+     `generate_recap_pdf.py` warns on stderr naming them (INV-143 forbids printing them as `?`, which
+     it used to). Do **not** transliterate the name yourself — how it should be spelled in Latin
+     script is the bootcamper's decision, which is exactly what the question below asks. Ask it, and
+     record their answer; if they decline, the certificate reads "Bootcamper" and graduation
+     continues (INV-048).
 
    Be conservative in the other direction: a plausible real name must **never** trigger the
    question, because asking someone their name right after correctly detecting it is its own defect

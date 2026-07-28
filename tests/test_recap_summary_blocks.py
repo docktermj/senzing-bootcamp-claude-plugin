@@ -90,6 +90,39 @@ VARIANT_SUMMARY = PREAMBLE + """### End-of-Module Summary
 Why it matters: The resolved entities are what the next module explores in depth.
 """
 
+# Colon-less labels: a bold line or a sub-heading above its content. Ordinary Markdown,
+# and the 2026-07-28 audit found it reported as three missing blocks — after which the
+# renderer printed "(not recorded)" beneath content that was right there.
+COLONLESS_SUMMARY = PREAMBLE + """### End-of-Module Summary
+
+**What you accomplished**
+
+- Built a production loader and loaded all four of the data sources.
+
+**Files produced**
+
+- `src/load/ProductionLoader.java` — the loader
+
+**Why it matters**
+
+The resolved entities are what the query and visualization module explores next.
+"""
+
+HEADING_SUMMARY = PREAMBLE + """### End-of-Module Summary
+
+#### What you accomplished
+
+Built a production loader and loaded all four of the data sources into Senzing.
+
+#### Files produced
+
+`src/load/ProductionLoader.java`
+
+#### Why it matters
+
+The resolved entities are what the query and visualization module explores next.
+"""
+
 # Pre-INV-103 recap: the fourth subsection was a free-narrative Journal.
 LEGACY_JOURNAL = PREAMBLE.replace(
     "### Actions Taken", "### Actions Taken"
@@ -228,6 +261,31 @@ class PresentBlocksAreNeverCalledMissing(unittest.TestCase):
     def test_emphasis_and_bullet_variants_all_count(self):
         code, _stdout, stderr, _ = run(VARIANT_SUMMARY, args=("--check",))
         self.assertEqual(0, code, stderr)
+
+    def test_a_colonless_bold_label_counts(self):
+        """`**Files produced**` above a bullet list carries the block."""
+        code, _stdout, stderr, _ = run(COLONLESS_SUMMARY, args=("--check",))
+        self.assertEqual(0, code, stderr)
+
+    def test_a_subheading_label_counts(self):
+        code, _stdout, stderr, _ = run(HEADING_SUMMARY, args=("--check",))
+        self.assertEqual(0, code, stderr)
+
+    def test_a_colonless_summary_is_not_annotated_over_its_own_content(self):
+        """The worst outcome: "(not recorded)" printed beneath the files that are there."""
+        for source in (COLONLESS_SUMMARY, HEADING_SUMMARY):
+            with self.subTest(source=source.splitlines()[-1][:20]):
+                _code, _stdout, _stderr, out = run(source)
+                self.assertNotIn("(not recorded)", pdf_text(out))
+
+    def test_only_the_canonical_labels_pass_without_a_colon(self):
+        """A colon-less line is matched exactly, so arbitrary bold text is not a label."""
+        module = load_generator()
+        self.assertEqual("files produced", module._summary_block_label("**Files produced**"))
+        self.assertEqual("files produced", module._summary_block_label("#### Files produced"))
+        for other in ("**Loading went smoothly**", "**Notes**", "## Data processing"):
+            with self.subTest(line=other):
+                self.assertEqual("", module._summary_block_label(other))
 
     def test_label_matcher_accepts_the_forms_a_live_recap_produces(self):
         module = load_generator()

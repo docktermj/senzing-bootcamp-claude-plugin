@@ -18,6 +18,66 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## deep-dive-audit-2026-07-28
+
+- **Implemented:** 2026-07-28
+- **Files changed:** `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`, `plugins/senzing-bootcamp/skills/graduation/SKILL.md`, `plugins/senzing-bootcamp/.claude-plugin/plugin.json`, `README.md`, `docs/README.md`, `specs/INVARIANTS.md`, `tests/test_recap_pdf_font_safety.py`, `tests/test_recap_summary_blocks.py`, `tests/test_recap_pdf_certificate.py`
+- **Not a spec** — a third full-repo invariant-conformance and coherence audit the maintainer requested
+  directly, then asked to have fixed in place. Recorded here so the work is traceable alongside the
+  spec ledger. 573 tests were green before it and none of the findings was mechanically enforced.
+  Static analysis plus execution probes and page rasterization; the conversational invariants
+  (INV-005–INV-009, gate ordering) are out of reach of this method and still need a `dry-run`.
+- **Invariant established:** **INV-159** — no generator may reduce a Bootcamper-authored character to
+  `?`; unprintable characters are folded to ASCII where possible (including atomic Latin letters) or
+  dropped, never encoded; a name in a non-Latin script is not transliterated by the plugin but warned
+  about, placeholder-substituted, and routed to INV-113's question; the font-safety inventory covers
+  names.
+- **Findings fixed:**
+  1. **INV-143 violated on the certificate (HIGH, verified by rasterizing).** `_safe()` ended in
+     `.encode("latin-1", "replace")`, so a name in any non-Latin script printed as `?` — a Bootcamper
+     named 李明 got **`?? (Li Ming)`** at 34 pt on the page they frame, at exit 0 with no warning.
+     INV-134 detects the name from `git config user.name`, so this is the ordinary path, not an edge
+     case, and it affects CJK, Cyrillic, Arabic, Hebrew, Greek, Devanagari and Thai names alike.
+     `_safe` now folds (NFKD + `_LATIN_FOLD` for `Ł Đ Œ …`, which have no decomposition — "ukasz" is
+     not a lesser rendering of "Łukasz") and drops the rest; `_unrepresentable()` reports what was
+     lost; `_cert_fields` substitutes the placeholder rather than a blank recipient line; `main()`
+     warns naming the characters; graduation's INV-113 test gains "a name the recap PDF cannot print"
+     with an explicit instruction *not* to transliterate it for them. The font-safety inventory
+     covered punctuation and symbols only — it now covers names (8 scripts + 4 folding cases).
+  2. **The INV-157 guard shipped that morning misfired (MEDIUM).** `_summary_block_label` required a
+     colon, so `**Files produced**` above a bullet list — or `#### Files produced` — read as absent:
+     `--check` failed a complete recap, the PDF printed "Files produced: (not recorded)" *beneath the
+     files that were there*, and graduation was directed to backfill content it already had (INV-085).
+     Colon-less lines are now matched exactly against the canonical labels, so an arbitrary bold
+     phrase still cannot pass for one.
+  3. **INV-050 misattributed `config/license.json` to Module 2 (LOW-MED).** It is written in Module 4
+     Step 7, where `single-license-gate-at-data-processing` moved licence detection; Module 2 only
+     reads the limit. Same stale-enumeration class as INV-104's tab list. Corrected in place with a
+     note; the file and its purpose are unchanged.
+  4. **Two of three shipped slash commands were undocumented (LOW-MED, INV-003).** `/start-bootcamp`
+     and `/graduate` appeared in no user-facing doc. `docs/README.md` now documents all three in a
+     table and `README.md` points at it.
+  5. **The certificate name had no final clip (LOW).** Shrinking stops at 12 pt, so a ~78-character
+     name drew from x = −18 mm — off the card and off the page, the INV-121 class, on the one page
+     with the auto page-break disabled. Now clipped against a strictly decreasing budget. (The first
+     attempt looped forever, because `_clip(s, n)` returns n + 2 characters; the new test caught it
+     within a minute.)
+  6. **INV-063 and INV-120 still described the nudge in pre-INV-158 vocabulary (LOW, coherence).**
+     Both cross-reference INV-098, which was clarified the day before; their parentheticals are now
+     aligned, no meaning change.
+  7. **Plugin version frozen across three behaviour changes (OBSERVATION → fixed).** `0.4.1` dated
+     2026-07-26 while the certificate redesign, the recap-PDF fix and the interface rename all shipped
+     on 2026-07-28 — two of them changing the keepsake. No invariant requires a bump, but INV-126
+     exists so the certificate identifies the plugin that produced the run, which one version spanning
+     materially different output undermines. Bumped to **0.5.0** (keepsake redesign + INV-157/158/159).
+- **Verified clean:** 158→159 invariant IDs contiguous with no duplicates · no citation anywhere to a
+  nonexistent INV id · all 6 test-enforcement claims in INVARIANTS.md resolve to existing files · all
+  6 hooks `python3` exec-form with scripts present (INV-052) · every hook purpose begins with "to"
+  (INV-016) · INV-055 opt-out both ways · INV-114's dated note · INV-051 clean · no stale `.sh` hook
+  references · AST scan of all 12 scripts clean · cross-script imports unaffected by the certificate
+  renames · INV-050's other writer attributions correct.
+- **Commit:** uncommitted
+
 ## name-the-claude-interface
 
 - **Implemented:** 2026-07-28

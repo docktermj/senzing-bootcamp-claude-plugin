@@ -74,6 +74,32 @@ DELIVERABLE_CHARS = (
     "​",  # zero-width space — invisible, and it corrupted to "?" all the same
 )
 
+# The Bootcamper's own **name**, which INV-134 detects from `git config user.name` and the
+# certificate prints in 34 pt. The inventory above is punctuation and symbols, so nothing
+# covered a name in a non-Latin script and `_safe` reduced 李明 to "??" on the one page a
+# Bootcamper frames — silently, at exit 0. A name is what a generated deliverable carries
+# most certainly of all.
+NAME_PROBES = (
+    "李明",                 # Chinese
+    "山田太郎",              # Japanese
+    "김민준",                # Korean
+    "Владимир Петров",      # Cyrillic
+    "أحمد حسن",             # Arabic
+    "Δημήτρης Παπαδόπουλος",  # Greek
+    "אברהם לוי",            # Hebrew
+    "李明 (Li Ming)",        # mixed: the Latin part must survive
+)
+
+# Latin-script names whose letters the core fonts lack. These MUST fold to readable ASCII
+# rather than being dropped: "ukasz" is not a lesser rendering of "Łukasz", it is a
+# different name.
+FOLDING_NAMES = {
+    "Łukasz Wiśniewski": "Lukasz Wisniewski",
+    "Ngô Bảo Châu": "Ngo Bao Chau",
+    "Đặng Thị Hương": "Dang Thi Huong",
+    "Ólafur Ægisson": "Ólafur Ægisson",  # already Latin-1; must pass through untouched
+}
+
 # A title long enough to clip at every width the source uses, built from the longest
 # real module name so the case stays realistic rather than synthetic.
 LONG_TITLE = "Data Quality, Mapping, and Transformation for the Customer Domain"
@@ -141,6 +167,49 @@ class TestClipStaysLatin1(unittest.TestCase):
                     f"_safe replaced {ch!r} with '?' — encodable, but the reader sees "
                     "a corrupted glyph. Map it to an ASCII equivalent instead.",
                 )
+
+
+class TestNamesAreNeverCorrupted(unittest.TestCase):
+    """The Bootcamper's name, which the certificate prints at 34 pt (INV-143/INV-113)."""
+
+    def test_a_non_latin_name_never_becomes_question_marks(self):
+        for name in NAME_PROBES:
+            with self.subTest(name=name):
+                out = GEN._safe(name)
+                self.assertNotIn(
+                    "?", out,
+                    f"_safe turned {name!r} into {out!r} — '??' on a certificate is the "
+                    "exact failure INV-143 forbids.",
+                )
+                self.assertTrue(latin1_ok(out))
+
+    def test_the_latin_part_of_a_mixed_name_survives(self):
+        """Dropping the unprintable half must not take the printable half with it."""
+        self.assertIn("Li Ming", GEN._safe("李明 (Li Ming)"))
+
+    def test_latin_script_names_fold_rather_than_lose_letters(self):
+        for name, expected in FOLDING_NAMES.items():
+            with self.subTest(name=name):
+                self.assertEqual(expected, GEN._safe(name))
+
+    def test_unprintable_characters_are_reported_not_just_dropped(self):
+        self.assertEqual(["李", "明"], GEN._unrepresentable("李明"))
+        self.assertEqual([], GEN._unrepresentable("Ada Lovelace"))
+        self.assertEqual([], GEN._unrepresentable("Łukasz"), "a foldable letter is not lost")
+
+    def test_an_unprintable_name_is_flagged_for_the_INV_113_question(self):
+        recap = GEN.parse_recap("# R\n\n**Bootcamper:** 李明\n\n## M — 2026-07-20\n")
+        name, lost = GEN.recap_certificate_name_unprintable(recap)
+        self.assertEqual("李明", name)
+        self.assertEqual(["李", "明"], lost)
+        self.assertEqual(("", []), GEN.recap_certificate_name_unprintable(
+            GEN.parse_recap("# R\n\n**Bootcamper:** Ada Lovelace\n\n## M — 2026-07-20\n")
+        ))
+
+    def test_the_certificate_falls_back_rather_than_printing_a_blank_name(self):
+        recap = GEN.parse_recap("# R\n\n**Bootcamper:** 李明\n\n## M — 2026-07-20\n")
+        printed, _date, _labels = GEN._cert_fields(recap)
+        self.assertEqual(GEN.CERTIFICATE_NAME_PLACEHOLDER, printed)
 
 
 class TestRealisticRecapUsesThePreferredRenderer(unittest.TestCase):

@@ -253,13 +253,27 @@ def _summary_block_label(line: str) -> str:
     be reported as missing — a false "missing" sends graduation off to backfill content
     that is already there, or worse, to rewrite a finished section (INV-085).
 
+    A label needs no colon when the line is *only* the label — `**Files produced**` above a
+    bullet list, or `### Files produced` as a sub-heading. Both are ordinary Markdown and
+    both carry the block. Requiring the colon reported them missing, and the renderer then
+    printed "Files produced: (not recorded)" directly beneath the files that were there,
+    while `--check` failed a complete recap and graduation was sent to backfill content it
+    already had (INV-085). The colon-less form is matched only against the canonical labels
+    exactly, so an arbitrary bold phrase still cannot pass for one.
+
     Deliberately separate from `_block_label`, whose narrower job is to switch list spacing
     on for a standalone label and which must therefore keep ignoring `- **Q:**` bullets.
     """
     text = re.sub(r"^\s*[-*+]\s+", "", line.strip())
+    text = re.sub(r"^#{1,6}\s+", "", text)
     text = text.replace("**", "").replace("__", "").replace("*", "")
     m = re.match(r"^([A-Za-z][^:]{0,60}?)\s*:", text)
-    return _normalize_heading(m.group(1)) if m else ""
+    if m:
+        return _normalize_heading(m.group(1))
+    bare = _normalize_heading(text)
+    if bare in {_normalize_heading(block) for block in END_SUMMARY_BLOCKS}:
+        return bare
+    return ""
 
 
 def _is_legacy_journal(heading: str) -> bool:
@@ -770,11 +784,83 @@ _UNICODE_MAP = {
 }
 
 
+# Latin letters with no NFKD decomposition — a stroke or bar is part of the glyph, not a
+# combining mark — so folding by decomposition alone deletes them. Dropping the first
+# letter of "Łukasz" is not a lesser rendering, it is a different name.
+_LATIN_FOLD = {
+    "Ł": "L", "ł": "l", "Đ": "D", "đ": "d", "Ħ": "H", "ħ": "h", "Ŧ": "T", "ŧ": "t",
+    "Ŋ": "N", "ŋ": "n", "Œ": "OE", "œ": "oe", "Ə": "E", "ə": "e", "ı": "i", "ſ": "s",
+    "Ɨ": "I", "ɨ": "i", "Ƶ": "Z", "ƶ": "z", "Ǥ": "G", "ǥ": "g", "Ɖ": "D", "ɗ": "d",
+}
+
+
+def _fold_to_latin1(s: str) -> str:
+    """Best-effort ASCII fold of characters `_UNICODE_MAP` does not cover.
+
+    Latin-script letters carrying marks the core fonts lack — `ā ő ș ğ ẹ` — decompose under
+    NFKD into a base letter plus combining marks; dropping the marks leaves a readable
+    letter. `_LATIN_FOLD` covers the ones that do not decompose.
+
+    Characters from a non-Latin script (CJK, Cyrillic, Arabic, Hebrew, Greek, Devanagari,
+    Thai) are **dropped**, which INV-143 permits, never encoded as `?`, which it forbids.
+    They are deliberately not transliterated: a transliteration table would serve one
+    script and still drop the rest, and how a name should be spelled in Latin script is
+    the Bootcamper's call, not a lookup table's — Владимир is Vladimir, Wladimir or
+    Volodymyr depending on whose name it is. So the generator drops, warns, and INV-113's
+    pinned question asks the one person who knows.
+    """
+    import unicodedata
+
+    out = []
+    for ch in unicodedata.normalize("NFKD", s):
+        if unicodedata.combining(ch):
+            continue
+        if ch in _LATIN_FOLD:
+            out.append(_LATIN_FOLD[ch])
+            continue
+        try:
+            ch.encode("latin-1")
+        except UnicodeEncodeError:
+            continue
+        out.append(ch)
+    return "".join(out)
+
+
 def _safe(s: str) -> str:
-    """Return a string safe for fpdf2's Latin-1 core fonts."""
+    """Return a string safe for fpdf2's Latin-1 core fonts.
+
+    ⚠️ Never lets a character become `?`. `.encode("latin-1", "replace")` did, and `?` is
+    itself encodable, so every encoding check passed while the page was wrong (INV-143) —
+    a Bootcamper named 李明 had `??` printed on their Certificate of Completion, silently,
+    at exit 0. Names come from `git config user.name` (INV-134), so non-Latin-1 text
+    reaches the deliverable by the most ordinary route there is.
+
+    Characters that cannot be folded are dropped. That can empty a string, so callers who
+    print an identity — the certificate — MUST check printability rather than assume
+    (`recap_certificate_name_unprintable`) and warn instead of shipping a blank.
+    """
     for uni, rep in _UNICODE_MAP.items():
         s = s.replace(uni, rep)
-    return s.encode("latin-1", "replace").decode("latin-1")
+    try:
+        s.encode("latin-1")
+        return s
+    except UnicodeEncodeError:
+        return _fold_to_latin1(s)
+
+
+def _unrepresentable(text: str) -> List[str]:
+    """The distinct characters `_safe` cannot represent, in order of appearance.
+
+    Reported rather than silently dropped: a deliverable that quietly loses characters is
+    the failure `?` used to make visible in the worst possible way (INV-143/INV-111).
+    """
+    lost: List[str] = []
+    for ch in text:
+        if ch in lost or ch.isspace():
+            continue
+        if _safe(ch) == "" and ch.strip():
+            lost.append(ch)
+    return lost
 
 
 def _logo_info() -> Optional[Tuple[str, int, int]]:
@@ -1132,7 +1218,14 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
     # Substitution is silent here on purpose: the fpdf2 renderer runs a measure
     # pass plus a real pass, so this helper is called twice per render. The
     # user-facing warning is emitted once from main() via
-    # `recap_missing_certificate_name` instead.
+    # `recap_missing_certificate_name` / `recap_certificate_name_unprintable` instead.
+    #
+    # A name the core fonts cannot render — 李明, Владимир — folds to nothing (`_safe`), so
+    # printing it would leave the recipient line blank. The placeholder is the same answer
+    # as for an absent name, and main() warns so graduation can ask for a printable one
+    # (INV-113).
+    if name and not _safe(name).strip():
+        name = ""
     name = name or CERTIFICATE_NAME_PLACEHOLDER
     raw_date = completed or started
     date = _format_date(raw_date) if raw_date else ""
@@ -1189,6 +1282,30 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
         if k in ("bootcamper", "name") and _md_inline_to_text(val).strip():
             return False
     return True
+
+
+def recap_certificate_name(recap: Recap) -> str:
+    """The raw bootcamper name recorded in the recap header, or "" when absent."""
+    for key, val in recap.meta:
+        if key.strip().lower().rstrip(":") in ("bootcamper", "name"):
+            value = _md_inline_to_text(val).strip()
+            if value:
+                return value
+    return ""
+
+
+def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
+    """(name, lost characters) when the recorded name cannot be printed as written.
+
+    The core fonts are Latin-1, and `_safe` drops what it cannot fold, so a name in a
+    non-Latin script survives as nothing. Callers warn: this is INV-113's condition — a
+    name that is present but not certificate-quality — reached by a route INV-113's own
+    wording ("missing, empty, or clearly not a display name") did not anticipate, and one
+    that used to print as `??` (INV-143). Returns ("", []) when the name prints fine.
+    """
+    name = recap_certificate_name(recap)
+    lost = _unrepresentable(name) if name else []
+    return (name, lost) if lost else ("", [])
 
 
 # --------------------------------------------------------------------------- #
@@ -1378,6 +1495,19 @@ def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
     while max_w and width > max_w and size > 12.0:
         size -= 1.0
         width = _cert_text_width(pdf, text, size, style, spacing)
+    # Shrinking has a floor, so it alone does not bound the line: at 12 pt a ~78-character
+    # name still ran off the card and off the page — content drawn outside the page box,
+    # which no retention figure can see (INV-121). Clip once the floor is reached, against a
+    # strictly decreasing budget: `_clip(s, n)` returns n + 2 characters, so looping on
+    # `_clip(text, len(text) - 2)` never shortens anything and spins forever.
+    if max_w and width > max_w:
+        full, keep = text, len(text)
+        while keep > 4:
+            keep -= 2
+            text = full[:keep].rstrip() + "..."
+            width = _cert_text_width(pdf, text, size, style, spacing)
+            if width <= max_w:
+                break
     pdf.set_font("Helvetica", style, size)
     setter = getattr(pdf, "set_char_spacing", None)
     if setter and spacing:
@@ -2514,6 +2644,20 @@ def main(argv: Optional[List[str]] = None) -> int:
             f'Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
             f'"**Bootcamper:** <name>" line to the recap preamble to fix it.\n'
         )
+    else:
+        # A recorded-but-unprintable name is the same defect with a worse failure mode: it
+        # looks recorded, so nothing upstream asks about it (INV-113/INV-143).
+        unprintable, lost = recap_certificate_name_unprintable(recap)
+        if unprintable:
+            printable = _safe(unprintable).strip()
+            shown = printable or CERTIFICATE_NAME_PLACEHOLDER
+            sys.stderr.write(
+                f'WARNING: the bootcamper name "{unprintable}" in {inp} contains '
+                f'{len(lost)} character(s) the recap PDF\'s built-in fonts cannot render '
+                f'({" ".join(lost)}); the Certificate of Completion will read "{shown}". '
+                f'Ask the bootcamper for the name to print (INV-113) and record it as '
+                f'"**Bootcamper:** <name>".\n'
+            )
 
     used = "fpdf2"
     ok = render_with_fpdf2(recap, out)
