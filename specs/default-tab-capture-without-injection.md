@@ -101,3 +101,47 @@ Two contributing facts:
   `specs/embed-every-captured-tab-in-tab-order.md` (INV-146 — the bad image still reaches the recap),
   `specs/windows-headless-browser-discovery-for-screenshots.md` (the sibling capture-path fix),
   `specs/visualization-legibility-at-production-scale.md` (the graph's other scale-dependent defaults)
+
+## Deviations from this spec, and why (2026-07-28)
+
+**The fix is an idempotent `activate()`, not a caller-side skip — because the spec's detection
+strategy is impossible and its scope was too narrow.**
+
+`## Proposed change` items 1 and 2 said to determine the page's default tab, skip the injection when
+the requested tab matches it, and fall back to injecting (with a stderr note) when the default cannot
+be determined — "prefer detecting it from the markup". Two findings at implementation time:
+
+1. **The default tab is not in the markup.** `senzing_viz_server.py`'s `buildNav()` builds the nav at
+   runtime and marks index 0 active (`.attr("class", i===0?"active":"")`), so the served HTML contains
+   no nav buttons at all and no active marker. A markup probe cannot work, and the "fall back safely"
+   branch would have been the only branch ever taken.
+2. **The defect is not limited to the injected path.** `applyDeepLink()` calls `activate(tab)` for
+   `?tab=<id>`, which is how the **live server** is captured — so a caller-side skip in
+   `capture_screenshots.py` would have left the live-capture route still restarting the simulation.
+   The spec described only the injection route.
+
+So the guard went into `activate()` itself: called for the tab already active, it returns before
+`drawFor()`. That covers the injected route, the deep-link route, and a user clicking the
+already-active nav button, and it needs no default-tab detection anywhere. The requirement is stated
+in `visualization-api-reference.md` so a server in any language inherits it (INV-090/INV-124) —
+which a fix living in the Python capture script could not have achieved.
+
+Item 3 (a longer settle budget for an animated tab) was implemented as specified:
+`_virtual_time_ms(tab)` returns 30s for the force-directed tabs and the base 15s for the static ones,
+threaded to the Chrome backend through module state rather than a new backend parameter, because
+`_BACKENDS` is invoked uniformly and an existing test substitutes two-argument callables for it.
+
+**Acceptance criteria status.** All met except the visual one — "the Entity Graph capture shows a
+spread layout, verified by opening the image, and a file-size floor a collapsed-graph capture fails".
+That needs a live server with loaded data, which this environment does not have; it is **not
+runtime-verified**. What is asserted instead is the mechanism: the early return precedes `drawFor()`,
+the contract requires idempotence, and the graph's budget exceeds the static tabs'
+(`tests/test_snapshot_and_capture_fidelity.py`). The capture guidance now also tells the reader to
+open the graph image and check the nodes are spread, with file size named as the tell.
+
+## Invariants introduced
+
+- `INV-171` — Capture apparatus MUST NOT perturb what it captures: a view-switching function MUST be
+  idempotent (no redraw when the view is already shown), the guard MUST live in that function rather
+  than in one caller, and animated content MUST be allowed longer to settle than static content
+  (recorded in `specs/INVARIANTS.md`).

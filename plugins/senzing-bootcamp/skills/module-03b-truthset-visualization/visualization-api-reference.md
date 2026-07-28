@@ -598,6 +598,17 @@ The app MUST provide:
 - **`activate(<id>)`** — a page-scope function that shows that tab. The screenshot helper injects a
   call to it into a temp copy of the standalone snapshot (falling back to clicking
   `#navbtn-<id>`), which is how a tab is captured with no browser-automation dependency.
+
+  ⛔ **`activate()` MUST be idempotent: called for the tab that is already active, it MUST
+  return without redrawing.** Redrawing rebuilds the tab, and for a tab whose layout
+  *animates* — the Entity Graph's force simulation — that restarts the animation from
+  scratch. Mid-capture that yields a screenshot of every node collapsed in a corner: a
+  valid PNG, at exit 0, of a graph that looks like it found nothing (47 KB where 227 KB
+  was expected), which then reaches the recap with a caption describing the graph the
+  image does not show. Both capture routes trigger it — the injected `activate('<tab>')`
+  and `?tab=<id>` deep-linking, since deep-linking calls `activate()` too — so the guard
+  belongs in `activate()` itself rather than in either caller. It also stops a user's
+  click on the already-active nav button from restarting the layout.
 - **`?tab=<id>` / `?q=<text>` deep-linking** — applied at the end of `init()`, after the async
   data load and `buildNav()` have settled. `?tab=` activates that tab when it is applicable and
   present; `?q=` fills the search box and runs the search, defaulting the tab to `probe` when `q` is
@@ -606,6 +617,15 @@ The app MUST provide:
 
 Deep-linking MUST be tolerant: an unknown or non-applicable `tab` value leaves the default tab
 active rather than erroring or blanking the page.
+
+⛔ **The snapshot's own text MUST NOT hardcode a port or name a dataset the caller did not
+supply.** The standalone snapshot is the retained keepsake, so anything it asserts about the
+environment ships permanently. Derive the URL it prints from the **parsed `--port`**, and take the
+dataset wording from the caller — defaulting to neutral wording ("the loaded data") rather than
+naming the Truth Set. One code path serves the Truth Set in its own module and the bootcamper's own
+data in Query, Visualize and Discover: a snapshot that says "this Truth Set" on a `--port 9001` run
+tells the reader to open a port nothing is listening on **and** mislabels their data, silently, in
+the artifact they keep.
 
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
 them in its own summary sentence.

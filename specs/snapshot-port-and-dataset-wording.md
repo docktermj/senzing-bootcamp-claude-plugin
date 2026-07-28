@@ -93,3 +93,10 @@ at the point the text is built — the fix has to thread them in, not just rewor
   made "this Truth Set" wrong), `specs/visualization-server-in-chosen-language.md` (INV-090),
   `specs/escape-viz-snapshot-script-payload.md`,
   `specs/rebuild-viz-snapshot-after-customization.md` (INV-130 — the snapshot is the kept artifact)
+
+## Invariants introduced
+
+- `INV-172` — A retained artifact MUST NOT hardcode an environment fact (a port) nor assert a dataset
+  identity the caller did not supply; the port comes from the parsed value in use, dataset wording
+  from the caller with a neutral default, and a caller-supplied label reaching HTML is escaped
+  (recorded in `specs/INVARIANTS.md`).

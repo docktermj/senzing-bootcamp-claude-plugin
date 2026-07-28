@@ -102,3 +102,10 @@ rendered, so no content is missing (INV-110 measures loss, not correctness).
   `specs/recap-pdf-generator-fail-loudly-on-content-loss.md` (INV-110/INV-111 — why retention could
   not catch this, and the reporting rule the divergence warning follows),
   `specs/artifact-level-verification-for-deliverables.md` (INV-129 — the probe that caught it)
+
+## Invariants introduced
+
+- `INV-170` — A value the Bootcamper was asked for MUST outrank any value auto-detected before the
+  question was asked, MUST be persisted everywhere the artifact is generated from, and a generator
+  choosing between two sources MUST prefer the answer and report a disagreement on stderr (recorded
+  in `specs/INVARIANTS.md`).

@@ -188,7 +188,13 @@ tab. Procedure (parameterized by the visualization's `{html}` file or live `{url
    both Edge and Chrome was once told no capability was available, which sent the reader to install
    software they already had.
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
-   named `{name}-<tab-slug>.png`. **Keep every captured tab** — and, **as a required step, in the
+   named `{name}-<tab-slug>.png`. ⚠️ **Open the Entity Graph image and check the nodes are spread,
+   not bunched in one corner.** A graph tab whose force simulation was restarted or captured too
+   early produces a valid PNG of an empty-looking graph at exit 0 — the helper gives animated tabs a
+   longer settle budget and the app's `activate()` no longer redraws an already-active tab, but this
+   is the one image where "it rendered" and "it is right" come apart, and INV-123 requires the
+   caption to come from the opened image anyway. A graph PNG far smaller than its siblings is the
+   tell. **Keep every captured tab** — and, **as a required step, in the
    same turn** — embed them all in **this module's recap `Actions Taken`** as
    `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
    optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds

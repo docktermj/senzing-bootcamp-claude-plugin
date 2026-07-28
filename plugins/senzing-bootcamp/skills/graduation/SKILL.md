@@ -164,8 +164,24 @@ Gather context before any step. Do this silently.
 
    > 👉 **What name would you like printed on your Certificate of Completion?**
 
-   Persist the answer as `name` in `config/bootcamp_preferences.yaml` so a re-render or a resumed
-   session never asks again (INV-006). If the bootcamper declines or gives nothing usable, continue
+   Persist the answer **in both places**, or the certificate prints the value you just rejected:
+
+   1. As `name` in `config/bootcamp_preferences.yaml`, so a re-render or a resumed session never
+      asks again (INV-006). The generator reads this **first** for the certificate — it is the
+      Bootcamper's answer, and it outranks anything detected earlier.
+   2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, which Bootcamp
+      preparation wrote at the **start** of the run from the auto-detected value. Leaving it means
+      the recap a reader opens still shows the rejected handle, and any re-render driven from the
+      recap alone reproduces it. Amending a preamble meta line is not a rewrite of a completed
+      module section, so the append-only rule (INV-085) does not forbid it.
+
+   ⛔ **Both, not either.** Preferences alone once printed `docktermj` on a signed certificate at
+   exit 0 with 99% content retention and no warning, because the generator read only the recap line
+   — the pre-check asked the question, the Bootcamper answered, and the answer was discarded
+   (INV-065). The generator now prefers preferences and prints a `NOTE:` on stderr when the two
+   disagree; treat that note as work still to do, not as confirmation.
+
+   If the bootcamper declines or gives nothing usable, continue
    — graduation is non-blocking and the generator still renders a certificate, warning on stderr
    that it used the "Bootcamper" placeholder. **Never print a rejected system-account value** on the
    certificate or into the recap (INV-065); ask, and use the answer.

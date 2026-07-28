@@ -103,6 +103,26 @@ DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
 _CHROME_VIRTUAL_TIME_MS = 15000
+
+# Tabs whose content ANIMATES to its final position need longer than the static ones.
+# This is settle time, not a timeout: the Entity Graph runs a d3 force simulation, and a
+# capture taken before it spreads shows every node bunched in a corner — a valid PNG of a
+# graph that looks like it found nothing. The static tabs (tables, histograms) are done as
+# soon as their data lands, so raising the budget globally would slow every capture to pay
+# for one tab.
+_CHROME_VIRTUAL_TIME_MS_ANIMATED = 30000
+_ANIMATED_TABS = frozenset({"graph", "network"})
+
+
+def _virtual_time_ms(tab: str = "") -> int:
+    """Virtual-time budget for ``tab`` — longer where the layout animates."""
+    return (
+        _CHROME_VIRTUAL_TIME_MS_ANIMATED
+        if tab in _ANIMATED_TABS
+        else _CHROME_VIRTUAL_TIME_MS
+    )
+
+
 _WINDOW = (1440, 900)
 
 # Injected into a temp copy of a snapshot. Retries because the app activates its
@@ -392,7 +412,7 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
                 "--disable-gpu",
                 "--hide-scrollbars",
                 f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
-                f"--virtual-time-budget={_CHROME_VIRTUAL_TIME_MS}",
+                f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
                 f"--screenshot={out}",
                 url,
             ],
@@ -436,13 +456,21 @@ _BACKENDS = (
 )
 
 
-def _capture_one(url: str, out: Path, backend=None):
+# The tab currently being captured, so a backend can size its settle time without every
+# backend signature growing a parameter — `_BACKENDS` is called uniformly, and tests
+# substitute two-argument callables for it.
+_CURRENT_TAB = ""
+
+
+def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     """Capture ``url`` to ``out``; return the backend that worked, else None.
 
     Returning the winner lets the caller reuse it for the remaining tabs instead of
     re-walking the list — which would multiply the cost of every missing backend by
     the number of tabs.
     """
+    global _CURRENT_TAB
+    _CURRENT_TAB = tab
     for candidate in (backend,) if backend else _BACKENDS:
         if candidate(url, out):
             return candidate
@@ -497,7 +525,7 @@ def capture(
             else:
                 temp = _snapshot_copy(html, tab)
                 url = _to_url(str(temp))
-            winner = _capture_one(url, out, working_backend)
+            winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner
                 written.append((out, TABS[tab][1]))

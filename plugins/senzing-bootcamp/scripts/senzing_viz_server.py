@@ -760,7 +760,16 @@ function drawFor(id){
   else if(id==="matchkeys")drawMatchKeys();
   else if(id==="features")drawFeatures();
   else if(id==="overlap")drawOverlap();}
-function activate(id){d3.selectAll("nav button").classed("active",false);d3.select("#navbtn-"+id).classed("active",true);
+function activate(id){
+  // Re-activating the tab that is ALREADY active must not redraw it. drawFor() rebuilds
+  // the tab, and for the Entity Graph that means a fresh d3.forceSimulation — so
+  // re-activating the default tab mid-capture restarts the layout and the screenshot
+  // catches the nodes still collapsed in a corner: a plausible-looking empty graph, at
+  // exit 0, in the keepsake. Both capture paths hit this (an injected activate('<tab>')
+  // and ?tab=<id> deep-linking), and a user clicking the active nav button did too.
+  const already=d3.select("#tab-"+id);
+  if(!already.empty()&&already.classed("active")&&d3.select("#navbtn-"+id).classed("active"))return;
+  d3.selectAll("nav button").classed("active",false);d3.select("#navbtn-"+id).classed("active",true);
   d3.selectAll(".tab").classed("active",false);d3.select("#tab-"+id).classed("active",true);drawFor(id);}
 function buildNav(){const nav=d3.select("#nav");nav.html("");
   const tabs=ALL_TABS.filter(function(t){return tabApplicable(t[0]);});
@@ -1479,7 +1488,7 @@ def _result_card(searched, res):
     return "".join(html)
 
 
-def _snapshot_probe_html(model, engine, flags):
+def _snapshot_probe_html(model, engine, flags, port=8080, dataset=""):
     """Build the static snapshot's Search/Probe tab: a note plus a fixed set of
     pre-rendered example search results (no live search box, which cannot work in a
     static file). Examples are drawn from this snapshot's own multi-record entities
@@ -1534,10 +1543,16 @@ def _snapshot_probe_html(model, engine, flags):
                 "resolution_rule": "",
             }
         cards.append(_result_card(name, res))
+    # The port comes from the parsed --port and the dataset wording from the caller: this
+    # text ships into docs/visualizations/*.html, which is the retained keepsake. Hardcoding
+    # them told a Module 7 bootcamper to open a port nothing was listening on and called
+    # their own data "this Truth Set" — the app serves the Truth Set in one module and the
+    # bootcamper's data in another, from this one code path.
+    where = _esc_html(dataset.strip()) if dataset and dataset.strip() else "the loaded data"
     note = (
         '<p class="muted">This is a saved snapshot, so live search is disabled. Below are '
-        "example searches run against this Truth Set. In the live app "
-        "(<code>http://localhost:8080</code>) you can search any name.</p>"
+        f"example searches run against {where}. In the live app "
+        f"(<code>http://localhost:{int(port)}</code>) you can search any name.</p>"
     )
     # #probe-btns must exist here too, or `loadProbes()` has nothing to render into and the
     # snapshot silently loses the "Show all merged entities" browse — the one capability the
@@ -1549,7 +1564,7 @@ def _snapshot_probe_html(model, engine, flags):
     return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
-def write_snapshot(model, engine, flags, title, out_path):
+def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset=""):
     """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
     renders with no server and no network access."""
     payload = {
@@ -1592,7 +1607,7 @@ def write_snapshot(model, engine, flags, title, out_path):
     page = render_page(
         title,
         data_shim=shim,
-        probe_body=_snapshot_probe_html(model, engine, flags),
+        probe_body=_snapshot_probe_html(model, engine, flags, port=port, dataset=dataset),
         sources=model.data_sources(),
     )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
@@ -1607,6 +1622,10 @@ def main(argv=None):
                     help="JSONL file(s)/glob(s) of the records that were loaded")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--title", default="Senzing Entity Resolution")
+    ap.add_argument("--dataset", default="",
+                    help="what the loaded data IS, for snapshot wording (e.g. 'the Senzing "
+                         "Truth Set', 'your CUSTOMERS and REFERENCE data'). Left empty the "
+                         "snapshot says 'the loaded data' — never assume the Truth Set.")
     ap.add_argument("--snapshot", default=None,
                     help="also write a self-contained standalone HTML to this path")
     ap.add_argument("--no-serve", action="store_true",
@@ -1636,7 +1655,8 @@ def main(argv=None):
           f"{s['relationships_total']} relationships")
 
     if args.snapshot:
-        write_snapshot(model, engine, flags, args.title, args.snapshot)
+        write_snapshot(model, engine, flags, args.title, args.snapshot,
+                       port=args.port, dataset=args.dataset)
         print(f"Snapshot written: {args.snapshot}")
 
     if args.no_serve:

@@ -1346,6 +1346,10 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
             completed = v
         elif k in ("started", "date") and not started:
             started = v
+    # Preferences outrank the recap header: they hold the Bootcamper's answer to the
+    # INV-113 certificate-name question, while the header carries whatever was
+    # auto-detected before that question was asked.
+    name = _CERTIFICATE_NAME_OVERRIDE or name
     # Substitution is silent here on purpose: the fpdf2 renderer runs a measure
     # pass plus a real pass, so this helper is called twice per render. The
     # user-facing warning is emitted once from main() via
@@ -1400,6 +1404,63 @@ def _cert_attribution(recap: Recap) -> List[str]:
     return lines
 
 
+# The certificate name the Bootcamper was actually asked for, when preferences carry
+# one. Set by `main()` from `config/bootcamp_preferences.yaml`; "" means "not supplied".
+#
+# Graduation's pre-check judges the auto-detected name and, when it is not
+# certificate-quality, asks the Bootcamper what to print and persists the answer as
+# `name` in preferences (INV-113). The recap's `**Bootcamper:**` line was written by
+# Bootcamp preparation at the *start* of the run, from the pre-detection value — so the
+# recap and preferences disagree by design after the question is asked, and the answer is
+# the newer of the two. Reading only the recap printed the rejected handle on a signed
+# certificate at exit 0, with 99% content retention and no warning (INV-065).
+_CERTIFICATE_NAME_OVERRIDE = ""
+
+DEFAULT_PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
+
+
+def read_preferences_name(path=DEFAULT_PREFERENCES) -> str:
+    """The top-level ``name:`` value from the preferences YAML, or "" if absent.
+
+    Scanned line-by-line so no third-party parser is required (INV-052: python3 only) —
+    the same approach `scripts/stop-nudge.py` uses on this file. Any read problem yields
+    "" rather than raising: a missing or malformed preferences file must degrade to the
+    recap's name, never break the render (INV-048).
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            for line in handle:
+                if line[:1] in (" ", "\t"):
+                    continue  # nested key, not the top-level `name:`
+                stripped = line.strip()
+                if stripped.startswith("#") or ":" not in stripped:
+                    continue
+                key, _, value = stripped.partition(":")
+                if key.strip() != "name":
+                    continue
+                value = value.split(" #", 1)[0].strip().strip("\"'")
+                if value:
+                    return value
+    except (OSError, UnicodeDecodeError):
+        pass
+    return ""
+
+
+def set_certificate_name_override(name: str) -> None:
+    """Record the preferences-supplied certificate name (or "" to clear it)."""
+    global _CERTIFICATE_NAME_OVERRIDE
+    _CERTIFICATE_NAME_OVERRIDE = (name or "").strip()
+
+
+def certificate_name(recap: Recap) -> str:
+    """The name to print on the certificate: preferences first, then the recap.
+
+    Preferences hold the Bootcamper's *answer* to the INV-113 question, so they outrank a
+    value written before that question was asked.
+    """
+    return _CERTIFICATE_NAME_OVERRIDE or recap_certificate_name(recap)
+
+
 def recap_missing_certificate_name(recap: Recap) -> bool:
     """True when the recap carries no bootcamper name for the certificate.
 
@@ -1408,6 +1469,8 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
     placeholder name ship silently — it is the one artifact where a wrong name is
     immediately visible and permanently wrong.
     """
+    if _CERTIFICATE_NAME_OVERRIDE:
+        return False  # preferences supplied the answer to the INV-113 question
     for key, val in recap.meta:
         k = key.strip().lower().rstrip(":")
         if k in ("bootcamper", "name") and _md_inline_to_text(val).strip():
@@ -1434,7 +1497,7 @@ def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
     wording ("missing, empty, or clearly not a display name") did not anticipate, and one
     that used to print as `??` (INV-143). Returns ("", []) when the name prints fine.
     """
-    name = recap_certificate_name(recap)
+    name = certificate_name(recap)  # the name that will actually print
     lost = _unrepresentable(name) if name else []
     return (name, lost) if lost else ("", [])
 
@@ -2719,6 +2782,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--input", default=DEFAULT_INPUT)
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument(
+        "--preferences",
+        default=str(DEFAULT_PREFERENCES),
+        help=(
+            "Bootcamp preferences YAML. Its top-level `name:` is the certificate name "
+            "the Bootcamper was asked for (INV-113) and outranks the recap header."
+        ),
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="Verify required sections exist; do not render.",
@@ -2786,13 +2857,28 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         return 1
 
+    # The certificate name the Bootcamper was asked for lives in preferences (INV-113);
+    # the recap header carries whatever was auto-detected at the start of the run. Prefer
+    # the answer, and say so when the two disagree — a silent divergence is what printed a
+    # rejected handle on a signed certificate (INV-111).
+    preferred_name = read_preferences_name(Path(args.preferences))
+    set_certificate_name_override(preferred_name)
+    header_name = recap_certificate_name(recap)
+    if preferred_name and header_name and preferred_name != header_name:
+        sys.stderr.write(
+            f'NOTE: certificate name "{preferred_name}" from {args.preferences} '
+            f'differs from "{header_name}" in {inp}; printing the preferences value '
+            f'(it is the answer to the certificate-name question). Update the recap\'s '
+            f'"**Bootcamper:**" line so both agree.\n'
+        )
+
     # Input-quality warning, emitted once (the fpdf2 renderer itself runs two
     # passes). Never fatal: graduation is non-blocking and a certificate with a
     # placeholder name still beats no PDF — but it must not be silent.
     if recap_missing_certificate_name(recap):
         sys.stderr.write(
-            f'WARNING: no bootcamper name found in {inp}; the Certificate of '
-            f'Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
+            f'WARNING: no bootcamper name found in {inp} or {args.preferences}; the '
+            f'Certificate of Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
             f'"**Bootcamper:** <name>" line to the recap preamble to fix it.\n'
         )
     else:
