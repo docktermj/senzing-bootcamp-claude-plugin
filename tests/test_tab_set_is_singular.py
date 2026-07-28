@@ -218,7 +218,18 @@ class SnapshotKeepsTheNoQueryBrowse(unittest.TestCase):
         self.assertRegex(
             page, r'const live=!!document\.getElementById\("search-in"\);'
         )
-        self.assertRegex(page, r"if\(live\)m\.entities\.slice")
+        # Chip construction must sit inside the `live` guard, so the snapshot — which has
+        # no search box — never renders them as dead controls. Asserted structurally
+        # rather than by pinning the guard's exact one-liner, which changed when chips
+        # gained live verification (organization-search-requires-name-org).
+        probes = page[
+            page.index("async function loadProbes") : page.index("function showAllMerges")
+        ]
+        self.assertLess(
+            probes.index("if(live)"),
+            probes.index(".text(e.entity_name)"),
+            "chips must be created only inside the live guard",
+        )
 
     def test_show_all_merges_does_not_require_a_search_box(self):
         """It runs in the snapshot, where #search-in does not exist."""

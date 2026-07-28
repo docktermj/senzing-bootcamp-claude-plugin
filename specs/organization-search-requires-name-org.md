@@ -134,3 +134,13 @@ hint that returns nothing is worse than no hint, which is this defect's exact sh
   any-language server contract), `specs/snapshot-static-search-results.md`,
   `specs/visualization-why-how-and-clickable-histogram.md`,
   `specs/mcp-grounding-in-every-skill.md` (INV-080)
+
+## Invariants introduced
+
+- `INV-164` — A name search MUST NOT use `NAME_FULL` alone; it MUST also try `NAME_ORG`, MUST report
+  the attributes tried, and MUST render a zero-result search as "nothing matched the attributes
+  tried" rather than as absence from the data. Binds a server or query program in any language
+  (recorded in `specs/INVARIANTS.md`).
+- `INV-165` — An example, hint, or suggested query offered to the Bootcamper MUST be verified by
+  actually running it and returning at least one result; one that returns nothing MUST be dropped
+  with a reported reason, never shipped as a dead control (recorded in `specs/INVARIANTS.md`).

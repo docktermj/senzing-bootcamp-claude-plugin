@@ -235,6 +235,15 @@ of the Truth Set. It MUST:
 - Honor the contract's **"Per-entity actions"** and **"Rendering contract"** sections in full:
   Records / Why? / How? on every entity surface, drill-down from every aggregate, plain-language
   Why?/How? with the raw JSON behind a twistie, and pre-verified search-hint chips.
+- ⛔ **Search organizations with `NAME_ORG`, not `NAME_FULL` alone** — in the query program *and* in
+  the visualization. Per the Senzing Entity Specification (Name > Feature: NAME — confirm via
+  `search_docs`, do not take it from here), `NAME_ORG` is the organization name attribute while
+  `NAME_FULL` is for a single-field name whose type is unknown; an organization name sent as
+  `NAME_FULL` matches nothing **and raises no error**. Try `NAME_FULL`, then `NAME_ORG` when the
+  first returns nothing (or send both and merge by `ENTITY_ID`). This module points at the
+  bootcamper's own data, which is frequently half organizations: a search that quietly finds none of
+  them reads as a failed load, not as a wrong query. Report an empty result as "nothing matched the
+  attributes tried", naming them — never as "not in your data" (INV-115).
 - **Mind the scale.** This module points the app at the bootcamper's real data, which is usually far
   larger than the Truth Set it was designed against — the graph label defaults are scale-aware
   (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable

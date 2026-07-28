@@ -202,6 +202,50 @@ steering files.)
 - The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
   placement is your responsibility.
 
+## Windows and PowerShell
+
+Windows is a supported platform (INV-001) and several modules ship PowerShell command blocks
+alongside their bash ones. **`>` and `Out-File` are not equivalent to bash `>`, and `Get-Content` is
+not `cat`.** Assume **Windows PowerShell 5.1** — the default `powershell.exe` on Windows 11 — unless
+you have verified otherwise; `pwsh` is 7+ and has features 5.1 lacks.
+
+**Prefer not to use the shell at all.** Write generated files through Python or your file tools, not
+PowerShell redirection, and put multi-line or quote-heavy code in a script file under `src/`
+(INV-018) and run the file. Both encoding corruptions below came from PowerShell; every file written
+through Python or a file tool in the same session was clean.
+
+**Text encoding — both directions corrupt silently:**
+
+- ⛔ **`-Encoding utf8` writes a BOM on 5.1.** `Out-File -Encoding utf8` prefixed a generated JSONL
+  with `EF BB BF`, so the BOM became part of the first JSON key and record 1 failed to parse —
+  158 of 159 records fine, which reads as one bad source record rather than an encoding fault. For
+  BOM-free UTF-8 use
+  `[System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding($false)))`.
+- ⛔ **`Get-Content` decodes as the system ANSI codepage** for a file with no BOM. Appending with
+  `Add-Content -Value (Get-Content $src -Raw)` read UTF-8 as Windows-1252 and wrote the mojibake
+  back out as UTF-8: 25 em dashes became `â€”`. Always pass `-Encoding utf8`, or use
+  `[System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)`.
+
+The second one is the more instructive failure, because **every obvious check passes**: 0 BOM
+sequences, no U+FFFD, and the file is valid UTF-8 that decodes without error. It is simply wrong, and
+only rendering it reveals that. So do not treat "it decoded" as "it is correct" — compare rendered
+text against a known-good stretch of the same document. (The docs normalizer flags this class before
+the recap renders; see `../graduation/SKILL.md`.)
+
+**Syntax limits of 5.1 that break bash-shaped commands.** Each is a *parser* error, so the message
+points at syntax rather than at the real cause — a command written for another shell:
+
+| Bash-shaped | Why it fails on 5.1 | Use instead |
+|---|---|---|
+| `A && B`, `A \|\| B` | no pipeline chaining operators | `A; if ($?) { B }` |
+| `x=$(cond ? a : b)` | `if` is not an expression; no ternary, no `??` | assign in an `if` block first |
+| `python -c "…"` | quotes/parens reinterpreted before Python sees them | write a `.py` file under `src/scripts/` and run it |
+| `Start-Process … --title "Truth Set"` | quoted args re-split (`Unknown argument: Truth`) | escape the quoting inside `-ArgumentList` |
+| `<<'EOF'` heredoc | not a here-string (`unexpected EOF`) | `@'` … `'@` with the closing `'@` at column 0 |
+
+When a PowerShell counterpart to a bash block is offered anywhere in the bootcamp, it MUST use the
+PowerShell form — never a copied `&&`.
+
 ## Markdown files
 
 - **Write plain, functional Markdown during the bootcamp; defer CommonMark prettification to

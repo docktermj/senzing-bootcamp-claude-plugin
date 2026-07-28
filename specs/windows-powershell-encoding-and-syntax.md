@@ -179,3 +179,14 @@ in `ground-rules.md` plus one general rule. Splitting them would put two specs o
   corrupted-deliverable-reported-as-success class),
   `specs/windows-headless-browser-discovery-for-screenshots.md`,
   `specs/pdf-layout-verification-without-poppler.md` (the other Windows findings from this session)
+
+## Invariants introduced
+
+- `INV-166` — Every file the Bootcamp writes MUST be byte-correct UTF-8 with no BOM; generated files
+  MUST be written through Python or the agent's file tools rather than PowerShell redirection; and
+  Windows-1252 mojibake MUST be detected and **reported** (never silently repaired) over `docs/*.md`
+  before the recap renders (recorded in `specs/INVARIANTS.md`).
+- `INV-167` — A PowerShell counterpart to a shell command MUST use PowerShell syntax and MUST NOT
+  carry bash-shaped constructs (`&&`/`||`, `if` as an expression, ternary/null-coalescing, heredocs,
+  inline `python -c`); quote-heavy or multi-line code MUST be run from a script file under `src/`
+  (recorded in `specs/INVARIANTS.md`).

@@ -53,6 +53,43 @@ _TABLE_ROW = re.compile(r"^\s*\|")
 
 DEFAULT_FENCE_LANG = "text"
 
+# Mojibake: UTF-8 text that was decoded as Windows-1252 and re-encoded as UTF-8.
+#
+# The failure this catches is silent past every obvious check — the file is valid UTF-8,
+# it decodes without error, and it contains no U+FFFD. It is simply wrong, and only
+# rendering it shows that: on Windows, `Add-Content -Value (Get-Content $src -Raw)` read a
+# UTF-8 recap as Windows-1252 and wrote the result back as UTF-8, turning 25 em dashes
+# into `â€”`. Detection is a round-trip: the suspect text re-encoded as Windows-1252 and
+# decoded as UTF-8 must yield a *different, sensible* string.
+#
+# The round-trip is the whole test, so the pre-filter only has to be cheap: any non-ASCII
+# character is a candidate. Ordinary accented prose ("café", "naïve", "£20") does not
+# survive it, because those cp1252 bytes are not valid UTF-8 — which is what makes this
+# specific rather than a blanket complaint about non-ASCII text. Reported only, never
+# repaired: a repair is a content change, and this script's contract is that it changes
+# formatting only (the `_signatures_compatible` guard would reject it anyway).
+_NON_ASCII = re.compile(r"[^\x00-\x7f]")
+
+
+def mojibake_lines(text: str) -> list:
+    """1-based line numbers whose text round-trips out of Windows-1252 mojibake.
+
+    A hit means the line almost certainly began as UTF-8, was decoded as Windows-1252,
+    and was written back out as UTF-8.
+    """
+    hits = []
+    for number, line in enumerate(text.splitlines(), 1):
+        if not _NON_ASCII.search(line):
+            continue
+        try:
+            repaired = line.encode("cp1252").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            continue  # not representable either way: ordinary accented text, not mojibake
+        if repaired == line or "�" in repaired:
+            continue
+        hits.append(number)
+    return hits
+
 
 def _signature(text: str) -> list:
     """Each non-blank line's content with all whitespace removed, in order.
@@ -204,6 +241,22 @@ def normalize_file(path: Path, dry_run: bool = False) -> str:
     except (OSError, UnicodeDecodeError) as exc:
         sys.stderr.write(f"{path}: could not read ({exc}); left untouched.\n")
         return "error"
+
+    # Reported before the formatting decision, so a file that needs no formatting change
+    # still gets its encoding checked. Never fatal and never repaired here (INV-048): the
+    # remedy is to rewrite the source correctly, per ground-rules → "Windows and
+    # PowerShell", not to mutate content in a cosmetic pass.
+    suspect = mojibake_lines(original)
+    if suspect:
+        shown = ", ".join(str(n) for n in suspect[:10])
+        more = f" (+{len(suspect) - 10} more)" if len(suspect) > 10 else ""
+        sys.stderr.write(
+            f"{path}: WARNING: {len(suspect)} line(s) look like Windows-1252 mojibake "
+            f"— UTF-8 text read as ANSI and rewritten as UTF-8 (e.g. 'â€”' for an em "
+            f"dash). Line(s): {shown}{more}. The file is valid UTF-8, so nothing else "
+            "will flag it; re-read the source as UTF-8 and rewrite it (see ground-rules "
+            "-> 'Windows and PowerShell').\n"
+        )
 
     normalized = normalize_text(original)
     if normalized == original:

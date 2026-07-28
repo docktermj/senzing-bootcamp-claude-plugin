@@ -429,21 +429,55 @@ class Model:
         out.sort(key=lambda e: -e["record_count"])
         return {"entities": out}
 
+    # Name attributes a search tries, in order.
+    #
+    # Per the Senzing Entity Specification (Name > Feature: NAME): `NAME_ORG` is the
+    # organization name attribute, `NAME_FULL` is the "single-field name when type
+    # (person vs org) is unknown", and the rule is "use NAME_ORG for organizations;
+    # use NAME_FULL only when the type is unknown or only a single field exists".
+    #
+    # Searching NAME_FULL alone therefore returns **nothing** for an organization,
+    # with no error — indistinguishable from "not in the data". On a dataset that is
+    # roughly half organizations that silently made half the population
+    # unsearchable: "ABSOLUTE DENTAL" returned 0 results while a person name
+    # returned a hit immediately, which is the only reason the empty result looked
+    # wrong rather than believable.
+    SEARCH_NAME_ATTRS = ("NAME_FULL", "NAME_ORG")
+
+    def _search_one(self, engine, flags, attr, query):
+        """One `search_by_attributes` call under a single name attribute."""
+        attrs = json.dumps({attr: query})
+        try:
+            raw = engine.search_by_attributes(attrs, flags)
+        except TypeError:
+            raw = engine.search_by_attributes(attrs, flags, "")
+        return json.loads(raw)
+
     def search(self, engine, flags, query):
         query = (query or "").strip()
         if not query:
             return {"results": []}
-        attrs = json.dumps({"NAME_FULL": query})
-        try:
+        items = []
+        tried = []
+        for attr in self.SEARCH_NAME_ATTRS:
+            tried.append(attr)
             try:
-                raw = engine.search_by_attributes(attrs, flags)
-            except TypeError:
-                raw = engine.search_by_attributes(attrs, flags, "")
-            resp = json.loads(raw)
-        except Exception as exc:
-            return {"results": [], "error": str(exc)}
+                resp = self._search_one(engine, flags, attr, query)
+            except Exception as exc:
+                # A later attribute failing must not discard a hit an earlier one
+                # already produced; only report the error if nothing matched at all.
+                if not items:
+                    return {
+                        "results": [],
+                        "error": str(exc),
+                        "attributes_tried": tried,
+                    }
+                break
+            items.extend(resp.get("RESOLVED_ENTITIES", []))
+            if items:
+                break  # first attribute that matches wins; no need to pay for the rest
         results = []
-        for item in resp.get("RESOLVED_ENTITIES", [])[:10]:
+        for item in items[:10]:
             ent = item.get("ENTITY", {}).get("RESOLVED_ENTITY", {})
             eid = ent.get("ENTITY_ID")
             match = item.get("MATCH_INFO", {})
@@ -458,7 +492,10 @@ class Model:
                     "resolution_rule": match.get("ERRULE_CODE", ""),
                 }
             )
-        return {"results": results}
+        # `attributes_tried` lets the UI say what was searched when nothing matched,
+        # so an empty result reads as "no match under these attributes" rather than
+        # as "this name is not in your data" (INV-115).
+        return {"results": results, "attributes_tried": tried}
 
     def how(self, engine, sz, entity_id):
         """Explain HOW an entity was constructed from its records
@@ -1056,7 +1093,12 @@ function showBucket(s,key,label){const box=d3.select("#bucket-list");if(box.empt
   if(total>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" of "+total+".");}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
   const r=await getJSON("/api/search?q="+encodeURIComponent(q));box.html("");
-  if(!r.results||!r.results.length){box.append("p").attr("class","muted").text("No matching entities found.");return;}
+  // Name what was searched, so an empty result reads as "no match under these
+  // attributes" and not as "this name is not in your data" (INV-115).
+  if(!r.results||!r.results.length){const tried=(r.attributes_tried||[]).join(" then ");
+    const how=tried?("a "+tried+" search for "):"";
+    box.append("p").attr("class","muted").text(r.error?("Search could not run: "+r.error)
+      :("No entity matched "+how+'"'+q+'".'));return;}
   r.results.forEach(function(e){const card=box.append("div").attr("class","card");
     card.append("h4").text(e.entity_name);
     card.append("div").attr("class","muted").text("Entity "+e.entity_id+" · "+(e.record_count||"?")+" record(s) · "+(e.data_sources||[]).join(", "));
@@ -1067,8 +1109,20 @@ async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.se
   // The example chips drive the live search box. The static snapshot has none, so they would be
   // dead controls there — offer only the browse, which needs no engine.
   const live=!!document.getElementById("search-in");
-  if(live)m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
-    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});
+  // Chips MUST be verified to return at least one match before being offered: a hint
+  // that finds nothing is worse than no hint, and that is exactly what a chip named
+  // after an organization did while search tried NAME_FULL only. Verify against the
+  // live engine — the same path the click will take — and drop any that come back
+  // empty rather than shipping a dead control.
+  if(live){const cands=(m.entities||[]).slice(0,10);const good=[];
+    for(const e of cands){if(good.length>=6)break;
+      if(!e.entity_name)continue;
+      try{const r=await getJSON("/api/search?q="+encodeURIComponent(e.entity_name));
+        if(r&&r.results&&r.results.length)good.push(e);
+        else console.warn("dropped example chip (no match): "+e.entity_name);}
+      catch(err){console.warn("dropped example chip (search failed): "+e.entity_name);}}
+    good.forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
+      .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
   // The one capability the removed Record Merges tab uniquely had: browse every merged
   // entity with no query. Search / Probe otherwise shows a strict superset per entity,
   // so this is what keeps the removal lossless rather than a trade.
@@ -1445,18 +1499,31 @@ def _snapshot_probe_html(model, engine, flags):
         if not name:
             continue
         res = None
+        searchable = True
         try:
             hits = model.search(engine, flags, name).get("results", [])
             res = next(
                 (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
                 hits[0] if hits else None,
             )
+            if res is None:
+                # The search ran and matched nothing, so this example is not
+                # "pre-verified" and must not be offered as one — a hint that
+                # returns nothing is worse than no hint. Distinct from the
+                # exception case below, where search is simply unavailable.
+                searchable = False
+                sys.stderr.write(
+                    f"dropped snapshot example {name!r}: search returned no match "
+                    "(the example is not verified, so it is not offered)\n"
+                )
         except Exception as exc:  # non-fatal (INV-077): fall back to merge data
             sys.stderr.write(
                 f"snapshot probe search failed for {name!r} (non-fatal): "
                 f"{type(exc).__name__}: {exc}\n"
             )
             res = None
+        if not searchable:
+            continue
         if res is None:  # search unavailable — render from the merge data itself
             res = {
                 "entity_id": ent.get("entity_id"),

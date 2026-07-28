@@ -290,11 +290,15 @@ Build to that contract; the summaries below are the tab inventory, not the full 
    sources shares; **cells are clickable** (backed by `cell_entities`) and drill down to the
    entities in that cell.
 6. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it, plus the three actions. Ships with pre-verified
-   example-query chips that fill **and** run the search on click, and a **"Show all merged
-   entities"** button that lists every multi-record entity with no query — the no-query browse that
-   the former Record Merges tab uniquely offered. This must work in the standalone snapshot too, so
-   it reads the embedded `merges` payload rather than the live search.
+   match key / resolution rule that linked it, plus the three actions. Search tries `NAME_FULL` then
+   `NAME_ORG` — organization names do **not** match under `NAME_FULL` and fail silently, so a
+   `NAME_FULL`-only search finds no organizations at all (see the contract's `/api/search` section).
+   Ships with pre-verified example-query chips that fill **and** run the search on click — *verified*
+   meaning each was actually run and returned a hit, since a chip derived from a real entity can
+   still find nothing — and a **"Show all merged entities"** button that lists every multi-record
+   entity with no query — the no-query browse that the former Record Merges tab uniquely offered.
+   This must work in the standalone snapshot too, so it reads the embedded `merges` payload rather
+   than the live search.
 
 Do **not** add a tab whose content is derivable from another tab's endpoint. In particular there is
 **no "Results Dashboard" tab** — its counts and histogram duplicated `/api/stats`, and its unique

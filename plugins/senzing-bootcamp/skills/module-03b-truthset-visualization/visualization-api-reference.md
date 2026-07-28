@@ -148,6 +148,24 @@ returned.
 
 **`GET /api/search`:** Search entities with enriched resolution reasoning
 
+⛔ **Search MUST try `NAME_ORG`, not `NAME_FULL` alone.** Per the Senzing Entity Specification
+(Name > Feature: NAME — confirm via `search_docs`), `NAME_ORG` is the organization name attribute
+and `NAME_FULL` is the "single-field name when type (person vs org) is unknown"; the specification's
+rule is *"use `NAME_ORG` for organizations; use `NAME_FULL` only when the type is unknown or only a
+single field exists"*. An organization name sent as `NAME_FULL` matches **nothing**, and returns no
+error — so a `NAME_FULL`-only search silently fails for every organization in the data. On a
+half-organization dataset that is half the population unsearchable: `"ABSOLUTE DENTAL"` returned 0
+results while a person name returned a hit immediately. Build the attribute document per attribute
+and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both and merge by
+`ENTITY_ID`). This binds a server in **any** language (INV-090/INV-124), not only the bundled Python
+reference — the defect propagated into a generated query program precisely because it lived in the
+reference implementation and in no written rule.
+
+The response MUST report which attributes were searched (`attributes_tried`), and an empty result
+MUST be rendered as "no entity matched a `NAME_FULL` then `NAME_ORG` search for X" — never as "not
+in the data" (INV-115). An empty result set is indistinguishable from absence otherwise, so a
+bootcamper concludes their load failed rather than that the query was wrong.
+
 ```json
 {
   "results": [
@@ -723,6 +741,15 @@ and **verified live to return at least one match** before being offered — a hi
 nothing is worse than no hint. Never present a bare search box: a bootcamper exploring a Truth Set
 they did not build has no idea what a good demo query looks like, and a failed first search is a
 poor first impression of the product.
+
+⛔ **"Verified" means the query was actually run and returned a hit — not that it was derived from
+real data.** Deriving a chip from a real merged entity's name is *not* verification: every chip
+named after an **organization** was a real entity and still returned nothing, because search tried
+`NAME_FULL` only (see `/api/search` above). So verify each candidate through **the same search path
+the click will take**, keep only those that return at least one result, and drop the rest with a
+reported reason (stderr for a build-time/snapshot example, `console.warn` for a live chip) — never
+ship a chip that finds nothing. This check is also the cheapest guard against the search defect
+returning: a chip that stops matching is a search regression announcing itself.
 
 **Distinguish "no data returned" from "rendered empty" (INV-115).** Where the UI renders a parsed
 field — a feature-score table, a match key, a resolution step — an absent or blank value MUST be

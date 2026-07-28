@@ -271,6 +271,11 @@ exit code was.
 - Detect encoding in the profiling step. Convert to UTF-8 in the transformation program.
 - Non-Latin scripts: `search_docs(query="globalization", category="globalization")`.
 - Strip the UTF-8 BOM from Windows CSV files. JSON libraries handle special character escaping.
+- That covers a BOM arriving in **input** data. The more damaging case is a BOM you *write*: on
+  PowerShell 5.1, `Out-File -Encoding utf8` prefixes the file it creates, so record 1 of a generated
+  JSONL fails to parse while the rest are fine — which reads as one bad source record, not an
+  encoding fault. See `../bootcamp-onboarding/ground-rules.md` → "Windows and PowerShell" before
+  writing any generated file through PowerShell.
 
 ## Hooks
 
