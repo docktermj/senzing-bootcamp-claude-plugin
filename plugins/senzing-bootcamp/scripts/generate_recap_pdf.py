@@ -66,6 +66,7 @@ missing.
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import struct
 import sys
@@ -569,7 +570,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 _FALLBACK_RGB = {
     "NAVY": (24, 22, 15), "BLUE": (245, 120, 38), "SLATE": (74, 70, 64),
     "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
-    "GREEN": (29, 158, 117), "LINE": (229, 223, 211),
+    "GREEN": (29, 158, 117), "LINE": (229, 223, 211), "AMBER": (240, 146, 10),
 }
 try:
     import brand_tokens as _bt
@@ -583,6 +584,7 @@ try:
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+    AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
 except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
     NAVY = _FALLBACK_RGB["NAVY"]
     BLUE = _FALLBACK_RGB["BLUE"]
@@ -592,11 +594,18 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     INK = _FALLBACK_RGB["INK"]
     GREEN = _FALLBACK_RGB["GREEN"]
     LINE = _FALLBACK_RGB["LINE"]
+    AMBER = _FALLBACK_RGB["AMBER"]
 
 # Header-row fill for rendered tables. Derived from the warm line color so the
 # header reads as a band rather than a second body row, and so it cannot drift
 # from the brand palette (INV-081/INV-107) — it is not a new token.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
+
+# Muted warm grey for the certificate's small-caps labels, where body ink reads too
+# loud and a cold grey fights the ember band. Derived by blending body ink toward the
+# warm off-white — the same "derive, never invent" rule TABLE_HEAD_FILL follows
+# (INV-081): it is not a new brand token.
+MUTED = tuple(round(s + (l - s) * 0.48) for s, l in zip(SLATE, LIGHT))
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -704,6 +713,66 @@ def _logo_info() -> Optional[Tuple[str, int, int]]:
         if w and h:
             return str(path), w, h
     return None
+
+
+# Memo for `_wordmark_on_light`: the fpdf2 path renders every page twice (a measure
+# pass and a real pass), so an un-memoized recolor would run the pixel work twice for
+# one PDF. A list, not a dict — there is exactly one wordmark.
+_WORDMARK_ON_LIGHT: List[object] = []
+
+
+def _wordmark_on_light():
+    """The Senzing wordmark recolored for a light background, or None.
+
+    Only the *light* wordmark ships (``senzing_logo_light.png`` — white letterforms
+    with the ember "z", drawn for the cover's dark band). The certificate is printed on
+    a white card, where that asset is invisible except for the "z", so its white
+    letterforms are repainted in the brand's dark ink here rather than shipping a second
+    PNG that would drift from the first one silently.
+
+    Pillow is an fpdf2 dependency, so it is present wherever fpdf2 can embed an image at
+    all; any failure returns None and the caller draws the wordmark as text instead, so a
+    valid PDF is still always produced (INV-048/INV-066).
+    """
+    if _WORDMARK_ON_LIGHT:
+        return _WORDMARK_ON_LIGHT[0] or None
+    image = None
+    info = _logo_info()
+    if info:
+        try:
+            from PIL import Image, ImageChops  # type: ignore
+
+            source = Image.open(info[0]).convert("RGBA")
+            red, green, blue, alpha = source.split()
+            # Repaint only the near-white letterforms; the ember "z" must survive, so
+            # the mask is min(r, g, b) > 200 rather than "any pixel".
+            darkest = ImageChops.darker(ImageChops.darker(red, green), blue)
+            mask = darkest.point(lambda v: 255 if v > 200 else 0)
+            color = Image.merge("RGB", (red, green, blue))
+            color.paste(Image.new("RGB", source.size, tuple(INK)), mask=mask)
+            # Recolor RGB only and re-attach the original alpha: pasting an opaque RGBA
+            # patch instead turns every transparent white pixel opaque, which prints the
+            # wordmark as a solid dark block — and the mask covers the whole canvas,
+            # because transparent pixels are white too.
+            image = Image.merge("RGBA", (*color.split(), alpha))
+            # The asset is padded canvas; the certificate positions the *ink*, so crop to
+            # it and let the caller take the aspect ratio from the crop.
+            box = alpha.getbbox()
+            if box:
+                image = image.crop(box)
+            # The asset is ~4200 px wide and the certificate prints it at 41 mm — 2500 dpi.
+            # fpdf2 re-encodes a PIL image (it cannot pass the original PNG bytes through),
+            # so the full-resolution wordmark adds ~80 KB to a keepsake PDF for resolution
+            # no printer resolves. 1000 px is still 600 dpi at that size.
+            if image.size[0] > 1000:
+                scale = 1000.0 / image.size[0]
+                image = image.resize(
+                    (1000, max(1, round(image.size[1] * scale))), Image.LANCZOS
+                )
+        except Exception:  # Pillow absent, unreadable asset, or an API change.
+            image = None
+    _WORDMARK_ON_LIGHT.append(image)
+    return image
 
 
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
@@ -1013,7 +1082,13 @@ def _cert_plugin_version(recap: Recap) -> str:
 
 
 def _cert_attribution(recap: Recap) -> List[str]:
-    """The certificate's footer attribution lines, top to bottom."""
+    """The certificate's attribution: the issuer first, then the colophon.
+
+    Line 0 is the issuer, set over the rule in the certificate's "ISSUED BY" block. Line
+    1, when a plugin version was recorded, is the colophon at the foot of the card — the
+    line INV-126 requires on the certificate face itself. Both renderers read this list,
+    so neither can drift from the other on what the certificate claims.
+    """
     lines = ["Senzing Bootcamp"]
     version = _cert_plugin_version(recap)
     if version:
@@ -1036,11 +1111,326 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
     return True
 
 
+# --------------------------------------------------------------------------- #
+# Certificate of Completion (INV-100) — layout
+# --------------------------------------------------------------------------- #
+# Scaled from the Senzing certificate template, `resources/certificate-of-completion.pdf`
+# (a maintainer asset, not shipped with the plugin — like the style reference behind
+# brand_tokens): a warm ember gradient band down the left edge, a white card bordered by
+# an ember rule, then the Senzing wordmark, an eyebrow, the headline, the recipient, the
+# citation, and a date / issuer signature row flanking an award seal.
+#
+# Every number below is millimetres on landscape A4 (297 × 210), measured off the
+# template at 150 dpi and shifted to A4's slightly shorter page.
+# `_stdlib_certificate_stream` converts the same constants to points, so both renderers
+# put the same content in the same place (INV-066/INV-126) — change a number here and the
+# fallback follows it.
+_MM = 72.0 / 25.4          # one millimetre in PDF points, for the fallback's point space
+_CERT_BAND_W = 65.0        # ember gradient band, full height down the left edge
+_CERT_CARD_X = 21.0
+_CERT_CARD_Y = 26.0
+_CERT_CARD_W = 255.0
+_CERT_CARD_H = 158.0
+_CERT_BORDER = 1.3         # ember card border stroke
+_CERT_CX = 148.5           # page centre; every line on the certificate is centred on it
+_CERT_TEXT_W = 175.0       # wrap width for the citation and the module list
+_CERT_LIST_W = 227.0       # widest a line may run: the card less both signature insets
+_CERT_RULE_W = 33.0        # short ember rule under the tagline
+_CERT_SIG_RULE_W = 41.2    # signature rule under each of the two bottom blocks
+_CERT_SIG_INSET = 14.0     # inset of each signature block from the card's edge
+_CERT_SEAL_W = 21.7        # award seal, ribbon tails included
+_CERT_SEAL_H = 28.0        # a shade under the template's 29.2, to clear the colophon
+_CERT_MODULE_LINES = 3     # module list is capped, so it cannot reach the seal
+
+# Baselines, in mm from the page top. Cap tops — not baselines — were measured from the
+# template, so each value is that cap top plus 0.717 em of its own font size, which is
+# where fpdf2's `text()` and the fallback's `Tm` both want the pen.
+_CERT_Y_WORDMARK = 33.0    # top edge of the wordmark image, not a baseline
+_CERT_Y_EYEBROW = 55.5
+_CERT_Y_HEADLINE = 72.0
+_CERT_Y_TAGLINE = 82.1
+_CERT_Y_RULE = 89.3
+_CERT_Y_PRESENTED = 101.9
+_CERT_Y_NAME = 115.0
+_CERT_Y_CITATION = 125.2
+_CERT_Y_MODULES = 136.0
+_CERT_Y_SEAL = 147.5       # top edge of the seal, not a baseline
+_CERT_Y_SIG = 153.1
+_CERT_Y_SIG_RULE = 158.4
+_CERT_Y_SIG_LABEL = 165.6
+# Under the seal's ribbon tails (which end at _CERT_Y_SEAL + _CERT_SEAL_H) and clear of
+# the card border's stroke — see the ⚠️ note in `_render_certificate`.
+_CERT_Y_COLOPHON = 181.0
+_CERT_LEAD_CITATION = 4.9  # line pitch within the citation
+_CERT_LEAD_MODULES = 4.2   # line pitch within the module list
+
+# (size in points, fpdf2 font style, letterspacing in points) per line. Shared by both
+# renderers; the letterspaced lines are the template's small caps and its recipient name.
+_CERT_FONT = {
+    "eyebrow": (16.0, "B", 1.5),
+    "headline": (38.0, "B", 0.0),
+    "tagline": (15.0, "", 0.0),
+    "presented": (16.0, "", 1.9),
+    "name": (34.0, "B", 2.0),
+    "citation": (10.5, "", 0.0),
+    "modules": (9.0, "", 0.0),
+    "sig": (14.0, "B", 0.0),
+    "label": (9.0, "", 1.0),
+    "colophon": (7.5, "I", 0.0),
+}
+
+_CERT_HEADLINE = "Certificate of Completion"
+_CERT_EYEBROW = "SENZING BOOTCAMP"
+_CERT_TAGLINE = "Entity Resolution, from first principles to a production pipeline"
+_CERT_PRESENTED = "THIS CERTIFICATE IS PROUDLY PRESENTED TO"
+_CERT_DATE_LABEL = "DATE COMPLETED"
+_CERT_ISSUER_LABEL = "ISSUED BY"
+# The template's citation names "all 10 modules" and then describes the whole arc of the
+# bootcamp. A bootcamper who completed four modules has not walked that arc, so the count
+# is taken from the recap and the description is attached to *the bootcamp* rather than to
+# what was completed — the modules actually completed are then named below it (INV-100).
+_CERT_CITATION = (
+    "for successfully completing {count} module{plural} of the Senzing Bootcamp — "
+    "Senzing's guided path from defining the business problem to a working "
+    "entity-resolution pipeline:"
+)
+_CERT_CITATION_NO_MODULES = (
+    "for successfully completing the Senzing Bootcamp — Senzing's guided path from "
+    "defining the business problem to a working entity-resolution pipeline."
+)
+
+
+def _cert_citation(labels: List[str]) -> str:
+    """The citation paragraph, carrying the number of modules actually completed."""
+    if not labels:
+        return _CERT_CITATION_NO_MODULES
+    return _CERT_CITATION.format(
+        count=len(labels), plural="" if len(labels) == 1 else "s"
+    )
+
+
+def _cert_band_color(fraction: float) -> Tuple[int, int, int]:
+    """Colour of the gradient band at `fraction` of the way down the page.
+
+    Ember at both ends, amber through the middle — the template's warm band, mirrored
+    with the brand's own gradient pair (`EMBER_HOT`/`EMBER_GRAD_END`) instead of hexes
+    sampled off the template, so the certificate cannot drift from the palette (INV-081).
+    The exponent widens the amber plateau so the hot ember reads as an edge rather than
+    as half the band, which is the template's balance.
+    """
+    mix = (1.0 - abs(2.0 * fraction - 1.0)) ** 0.45
+    return tuple(round(a + (b - a) * mix) for a, b in zip(ACCENT, AMBER))
+
+
+def _cert_seal_paths() -> Tuple[List[Tuple[float, float]], Tuple[float, float, float],
+                                List[List[Tuple[float, float]]]]:
+    """Geometry for the award seal: (scalloped ring, inner circle, ribbon tails).
+
+    Returned rather than drawn so the fpdf2 renderer and the stdlib fallback stroke the
+    same shape from one computation (INV-066) — one draws it with `polygon`/`ellipse`, the
+    other with `m`/`l` path operators.
+
+    The ring is a radius modulated by a cosine, `points` per turn: a wavy edge with
+    rounded tips, which is the template's medal. (A union of `points` circles — the other
+    obvious construction — gives deep round lobes and reads as a flower, not a medal.)
+    """
+    points = 14
+    outer = _CERT_SEAL_W / 2.0
+    wave = 1.15                 # tip-to-trough amplitude of the scalloped edge
+    mid = outer - wave
+    inner = 6.7                 # inner ring, 0.62 of the outer radius as in the template
+    cx = _CERT_CX
+    cy = _CERT_Y_SEAL + outer
+    scallop: List[Tuple[float, float]] = []
+    steps = points * 12         # 12 segments per scallop keeps the tips round in print
+    for i in range(steps):
+        turn = 2.0 * math.pi * i / steps        # 0 at the top, so a tip sits there
+        radius = mid + wave * math.cos(points * turn)
+        angle = turn - math.pi / 2.0
+        scallop.append((cx + radius * math.cos(angle), cy + radius * math.sin(angle)))
+    # Two ribbon tails, splayed below the ring and tucked behind it (the ring is filled
+    # white over their top edges), each ending in the V notch a cut ribbon has. Offsets
+    # are the template's, measured from the seal box.
+    top = _CERT_Y_SEAL + 19.5
+    bottom = _CERT_Y_SEAL + _CERT_SEAL_H
+    notch = bottom - 3.6
+    left = cx - outer
+    tails = [
+        [(left + 3.5, top), (left + 9.5, top), (left + 9.2, bottom),
+         (left + 4.8, notch), (left + 0.2, bottom)],
+        [(left + 18.2, top), (left + 12.2, top), (left + 12.5, bottom),
+         (left + 16.9, notch), (left + 21.5, bottom)],
+    ]
+    return scallop, (cx, cy, inner), tails
+
+
+def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) -> float:
+    """Width in mm of one certificate line, letterspacing included but not its trailing
+    advance — fpdf2 counts spacing after the last glyph too, which would shift a centred
+    line half a space to the left."""
+    pdf.set_font("Helvetica", style, size)
+    setter = getattr(pdf, "set_char_spacing", None)
+    if setter:
+        setter(spacing)
+    width = pdf.get_string_width(text)
+    if setter:
+        setter(0)
+        if spacing:
+            width -= spacing * 25.4 / 72.0
+    return width
+
+
+def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
+               size: Optional[float] = None, max_w: float = 0.0) -> None:
+    """Draw one centred certificate line with its baseline at `y` (mm).
+
+    Centred here rather than with ``cell(align="C")`` because the template's positions
+    were measured as cap tops, and `text()` takes a baseline — a cell would tie the line
+    to a box height instead. Letterspacing is real (``set_char_spacing``), never spaces
+    inserted between glyphs: a certificate gets searched and copied out of, and
+    "M i c h a e l" is not a name. When `max_w` is given the size steps down until the
+    line fits, so a long recipient name shrinks instead of running off the card.
+    """
+    base, style, spacing = _CERT_FONT[key]
+    size = base if size is None else size
+    text = _safe(text)
+    width = _cert_text_width(pdf, text, size, style, spacing)
+    while max_w and width > max_w and size > 12.0:
+        size -= 1.0
+        width = _cert_text_width(pdf, text, size, style, spacing)
+    pdf.set_font("Helvetica", style, size)
+    setter = getattr(pdf, "set_char_spacing", None)
+    if setter and spacing:
+        setter(spacing)
+    pdf.set_text_color(*color)
+    pdf.text(cx - width / 2.0, y, text)
+    if setter and spacing:
+        setter(0)
+
+
+def _cert_wrap(pdf, key: str, text: str, max_w: float,
+               size: Optional[float] = None) -> List[str]:
+    """Wrap `text` to `max_w` mm in the font `key` renders in."""
+    base, style, spacing = _CERT_FONT[key]
+    size = base if size is None else size
+    return _wrap_to_width(
+        _safe(text),
+        max_w,
+        lambda s: _cert_text_width(pdf, s, size, style, spacing),
+    )
+
+
+def _cert_module_layout(labels: List[str], measure) -> Tuple[List[str], float]:
+    """The module list as (lines, size), fitted to `_CERT_MODULE_LINES` lines.
+
+    The list is the one variable-length block on a fixed page design, and the page has no
+    room to grow: below it sit the seal and the signature row, and the auto page-break is
+    off, so an overlong list would print *over* them rather than reflow.
+
+    Fitting is ordered by what it costs the page. First the template's narrow measure at
+    full size, which is what a normal bootcamp needs. Then the card's full usable width —
+    less like the template, but it costs nothing that matters. Only then the type size.
+    Truncation is last and effectively unreachable, because the modules completed are
+    required content on this page (INV-100). `measure(text, size)` is the caller's, so
+    both renderers fit the list identically (INV-066).
+    """
+    joined = " · ".join(labels)
+    base = _CERT_FONT["modules"][0]
+    attempts = [(_CERT_TEXT_W, base)]
+    size = base
+    while size >= 7.0:
+        attempts.append((_CERT_LIST_W, size))
+        size -= 0.5
+    lines: List[str] = []
+    for width, size in attempts:
+        lines = _wrap_to_width(joined, width, lambda s: measure(s, size))
+        if len(lines) <= _CERT_MODULE_LINES:
+            return lines, size
+    lines = lines[:_CERT_MODULE_LINES]
+    lines[-1] = lines[-1].rstrip(" ·") + " ..."
+    return lines, size
+
+
+def _cert_backdrop(pdf, height: float) -> None:
+    """The gradient band and the white card the certificate is printed on."""
+    # Painted as strips because fpdf2's gradient helpers are a recent addition and this
+    # has to render on whatever version is installed (INV-048/INV-066). Each strip
+    # overlaps the next slightly so no hairline of white shows through at the seams.
+    strips = 96
+    for i in range(strips):
+        pdf.set_fill_color(*_cert_band_color(i / (strips - 1.0)))
+        pdf.rect(0, height * i / strips, _CERT_BAND_W, height / strips + 0.15, style="F")
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(_CERT_BORDER)
+    pdf.rect(_CERT_CARD_X, _CERT_CARD_Y, _CERT_CARD_W, _CERT_CARD_H, style="DF")
+    pdf.set_line_width(0.2)
+
+
+def _cert_wordmark(pdf) -> None:
+    """The Senzing wordmark at the top of the card, as an image when one is available."""
+    image = _wordmark_on_light()
+    if image is not None:
+        height = 11.5
+        width = height * (image.size[0] / float(image.size[1]))
+        try:
+            pdf.image(image, x=_CERT_CX - width / 2.0, y=_CERT_Y_WORDMARK,
+                      w=width, h=height)
+            return
+        except Exception:
+            pass  # fall through to the drawn wordmark
+    # Fallback: set the wordmark as text, keeping the ember "z" that carries the brand.
+    pdf.set_font("Helvetica", "B", 36)
+    parts = [("Sen", INK), ("z", ACCENT), ("ing", INK)]
+    widths = [pdf.get_string_width(text) for text, _ in parts]
+    x = _CERT_CX - sum(widths) / 2.0
+    for (text, color), width in zip(parts, widths):
+        pdf.set_text_color(*color)
+        pdf.text(x, _CERT_Y_WORDMARK + 9.2, text)
+        x += width
+
+
+def _cert_seal(pdf) -> None:
+    """The award seal between the two signature blocks."""
+    scallop, (cx, cy, inner), tails = _cert_seal_paths()
+    outline = getattr(pdf, "polygon", None)
+
+    def stroke(points, style: str) -> None:
+        if outline:
+            outline(points, style=style)
+            return
+        for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]):
+            pdf.line(x1, y1, x2, y2)  # no fill without polygon(); the outline still reads
+
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_line_width(0.45)
+    for tail in tails:
+        stroke(tail, "DF")
+    stroke(scallop, "DF")  # filled, so it hides where the ribbon tails pass behind it
+    pdf.ellipse(cx - inner, cy - inner, inner * 2.0, inner * 2.0, style="D")
+    pdf.set_line_width(0.2)
+
+
+def _cert_signature_block(pdf, cx: float, value: str, label: str) -> None:
+    """One bottom block: a value over a rule, with its small-caps label beneath."""
+    _cert_line(pdf, "sig", value, _CERT_Y_SIG, INK, cx=cx,
+               max_w=_CERT_SIG_RULE_W + 18.0)
+    pdf.set_draw_color(*INK)
+    pdf.set_line_width(0.4)
+    pdf.line(cx - _CERT_SIG_RULE_W / 2.0, _CERT_Y_SIG_RULE,
+             cx + _CERT_SIG_RULE_W / 2.0, _CERT_Y_SIG_RULE)
+    pdf.set_line_width(0.2)
+    _cert_line(pdf, "label", label, _CERT_Y_SIG_LABEL, MUTED, cx=cx)
+
+
 def _render_certificate(pdf, recap: Recap) -> None:
     """Final page: a landscape Certificate of Completion (INV-100).
 
-    Rendered in landscape while every other page stays portrait; the page-number
-    footer is suppressed for it. Palette/typography come from the brand tokens.
+    Rendered in landscape while every other page stays portrait; the page-number footer
+    is suppressed for it. The layout follows the Senzing certificate template — see the
+    geometry constants above — and its palette and typography come from the brand tokens
+    (INV-081).
     """
     name, date, labels = _cert_fields(recap)
     # add_page first (so the previous page's footer renders normally), then suppress
@@ -1050,68 +1440,55 @@ def _render_certificate(pdf, recap: Recap) -> None:
     # The certificate is a fixed single-page design: disable the auto page-break so
     # bottom-anchored content cannot spill onto a spurious second landscape page.
     pdf.set_auto_page_break(False)
-    w, h = pdf.w, pdf.h  # landscape A4 ≈ 297 × 210 mm
 
-    # Double border: navy outer, ember inner.
-    pdf.set_draw_color(*NAVY)
-    pdf.set_line_width(1.2)
-    pdf.rect(10, 10, w - 20, h - 20, style="D")
-    pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(0.5)
-    pdf.rect(14, 14, w - 28, h - 28, style="D")
-    pdf.set_line_width(0.2)
-
-    pdf.set_xy(0, 30)
-    pdf.set_text_color(*NAVY)
-    pdf.set_font("Helvetica", "B", 30)
-    pdf.cell(w, 14, "Certificate of Completion", align="C")
+    _cert_backdrop(pdf, pdf.h)  # landscape A4 ≈ 297 × 210 mm
+    _cert_wordmark(pdf)
+    _cert_line(pdf, "eyebrow", _CERT_EYEBROW, _CERT_Y_EYEBROW, ACCENT)
+    _cert_line(pdf, "headline", _CERT_HEADLINE, _CERT_Y_HEADLINE, ACCENT)
+    _cert_line(pdf, "tagline", _CERT_TAGLINE, _CERT_Y_TAGLINE, INK)
 
     pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(0.8)
-    pdf.line(w / 2 - 42, 50, w / 2 + 42, 50)
+    pdf.set_line_width(0.85)
+    pdf.line(_CERT_CX - _CERT_RULE_W / 2.0, _CERT_Y_RULE,
+             _CERT_CX + _CERT_RULE_W / 2.0, _CERT_Y_RULE)
     pdf.set_line_width(0.2)
 
-    pdf.set_xy(0, 62)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "", 13)
-    pdf.cell(w, 8, "This certifies that", align="C")
+    _cert_line(pdf, "presented", _CERT_PRESENTED, _CERT_Y_PRESENTED, MUTED)
+    _cert_line(pdf, "name", name, _CERT_Y_NAME, INK, max_w=_CERT_LIST_W)
 
-    pdf.set_xy(0, 74)
-    pdf.set_text_color(*INK)
-    pdf.set_font("Helvetica", "B", 26)
-    pdf.cell(w, 14, _safe(name), align="C")
-
-    pdf.set_xy(0, 94)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "", 13)
-    pdf.cell(w, 8, "has completed the Senzing Bootcamp", align="C")
-    if date:
-        pdf.set_xy(0, 104)
-        pdf.set_font("Helvetica", "I", 11)
-        pdf.cell(w, 7, _safe(f"on {date}"), align="C")
-
+    y = _CERT_Y_CITATION
+    for line in _cert_wrap(pdf, "citation", _cert_citation(labels), _CERT_TEXT_W):
+        _cert_line(pdf, "citation", line, y, SLATE)
+        y += _CERT_LEAD_CITATION
     if labels:
-        pdf.set_xy(0, 122)
-        pdf.set_text_color(*NAVY)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(w, 6, "Modules completed", align="C")
-        pdf.set_xy(24, 131)
-        pdf.set_text_color(*INK)
-        pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
+        # Anchored, not flowed from the citation: the module list has to start at a fixed
+        # place so its own capped growth is the only thing that can move on this page.
+        y = _CERT_Y_MODULES
+        style, spacing = _CERT_FONT["modules"][1:]
+        lines, size = _cert_module_layout(
+            labels, lambda s, pt: _cert_text_width(pdf, s, pt, style, spacing)
+        )
+        for line in lines:
+            _cert_line(pdf, "modules", line, y, SLATE, size=size)
+            y += _CERT_LEAD_MODULES
 
-    # ⚠️ The inner ember border's bottom edge sits at y = h - 14 (the rect above), so a
-    # line placed at h - 17 is clipped by it — text extraction reports the string present
-    # and correct while the glyphs are visually sliced in half. Both attribution lines
-    # must clear it: h - 28 and h - 22. Verify by rasterizing, never by pdftotext.
+    _cert_seal(pdf)
+    if date:
+        _cert_signature_block(
+            pdf, _CERT_CARD_X + _CERT_SIG_INSET + _CERT_SIG_RULE_W / 2.0,
+            date, _CERT_DATE_LABEL,
+        )
+    # ⚠️ Both attribution lines are bottom-anchored and must clear the card's ember
+    # border, whose bottom edge is at _CERT_CARD_Y + _CERT_CARD_H: a line under it is
+    # sliced in half by the stroke while text extraction still reports the string present
+    # and correct (INV-126). Verify by rasterizing the page, never by pdftotext.
     attribution = _cert_attribution(recap)
-    # One line keeps its long-standing h - 22; a second stacks above it at h - 28.
-    offsets = (22,) if len(attribution) == 1 else (28, 22)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "I", 8)
-    for offset, line in zip(offsets, attribution):
-        pdf.set_xy(0, h - offset)
-        pdf.cell(w, 6, _safe(line), align="C")
+    _cert_signature_block(
+        pdf, _CERT_CARD_X + _CERT_CARD_W - _CERT_SIG_INSET - _CERT_SIG_RULE_W / 2.0,
+        attribution[0], _CERT_ISSUER_LABEL,
+    )
+    for line in attribution[1:]:
+        _cert_line(pdf, "colophon", line, _CERT_Y_COLOPHON, MUTED)
     # Leave suppress_footer set: this is the last page.
 
 
@@ -1450,51 +1827,178 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
+# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centred line;
+# everything else is within a hair of 556. This writer has no font metrics of its own, and
+# the crude `len(text) * size * 0.52` it used before put the certificate's 38 pt headline
+# 8 mm off centre — visible on the page, invisible to text extraction.
+_HELV_W = {
+    " ": 278, "!": 278, '"': 355, "'": 191, "(": 333, ")": 333, "*": 389, ",": 278,
+    "-": 333, ".": 278, "/": 278, ":": 278, ";": 278, "[": 278, "]": 278, "|": 260,
+    "·": 278, "&": 667, "%": 889, "@": 1015,
+    "c": 500, "f": 278, "i": 222, "j": 222, "k": 500, "l": 222, "m": 833, "r": 333,
+    "s": 500, "t": 278, "v": 500, "w": 722, "x": 500, "y": 500, "z": 500,
+    "C": 722, "D": 722, "F": 611, "G": 778, "H": 722, "I": 278, "J": 500, "K": 667,
+    "L": 556, "M": 833, "N": 722, "O": 778, "Q": 778, "R": 722, "T": 611, "U": 722,
+    "W": 944, "Z": 611,
+}
+# Helvetica-Bold runs ~8% wider than Helvetica across mixed-case text; one factor is
+# accurate enough to centre a line, and far more accurate than ignoring the difference.
+_HELV_BOLD_FACTOR = 1.08
+
+
+def _stdlib_width(text: str, size: float, bold: bool, spacing: float = 0.0) -> float:
+    """Approximate width in points of `text` set in Helvetica at `size`."""
+    units = sum(_HELV_W.get(ch, 556) for ch in text)
+    width = units / 1000.0 * size * (_HELV_BOLD_FACTOR if bold else 1.0)
+    return width + spacing * max(0, len(text) - 1)
+
+
 def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
-    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100)."""
+    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100).
+
+    Follows the same template geometry as the fpdf2 renderer — same constants, same
+    millimetre positions, converted to this writer's point space — so the fallback is a
+    plainer *rendering* of one design rather than a second design (INV-066/INV-126). What
+    it gives up: the wordmark is set as text instead of embedded, and italic degrades to
+    regular, because this writer embeds neither images nor an oblique face.
+    """
     name, date, labels = _cert_fields(recap)
     ops: List[str] = []
 
-    # Border rectangle in brand navy (path: rectangle + stroke).
-    nr, ng, nb = (c / 255.0 for c in NAVY)
-    ops.append(f"{nr:.2f} {ng:.2f} {nb:.2f} RG 1.2 w 22 22 {w - 44:.1f} {h - 44:.1f} re S")
+    def rgb(color, op: str) -> str:
+        r, g, b = (c / 255.0 for c in color)
+        return f"{r:.3f} {g:.3f} {b:.3f} {op}"
 
-    def center(text: str, font: str, size: float, y: float) -> None:
-        tw = len(text) * size * 0.52  # approximate Helvetica advance
-        x = max(24.0, (w - tw) / 2.0)
+    def flip(mm: float) -> float:
+        """A millimetre offset from the page top as a PDF point from the page bottom."""
+        return h - mm * _MM
+
+    def path(points, style: str, width: float, stroke_color=ACCENT) -> None:
+        """Stroke (and optionally fill white) a closed polygon given in mm."""
+        moves = [f"{x * _MM:.2f} {flip(y):.2f} {'m' if i == 0 else 'l'}"
+                 for i, (x, y) in enumerate(points)]
+        fill = "1 1 1 rg " if "F" in style else ""
         ops.append(
-            f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({_pdf_escape(text)}) Tj ET"
+            f"{fill}{rgb(stroke_color, 'RG')} {width:.2f} w "
+            + " ".join(moves)
+            + (" h B" if "F" in style else " h S")
         )
 
-    y = h - 96
-    center("Certificate of Completion", "F2", 26, y)
-    y -= 54
-    center("This certifies that", "F1", 13, y)
-    y -= 34
-    center(name, "F2", 22, y)
-    y -= 38
-    center("has completed the Senzing Bootcamp", "F1", 13, y)
-    y -= 22
-    if date:
-        center(f"on {date}", "F1", 11, y)
-        y -= 30
-    else:
-        y -= 8
-    if labels:
-        center("Modules completed", "F2", 11, y)
-        y -= 18
-        for chunk in _wrap("  -  ".join(labels), 110):
-            center(chunk, "F1", 9, y)
-            y -= 14
+    def rule(x1: float, x2: float, y: float, width: float, color) -> None:
+        ops.append(
+            f"{rgb(color, 'RG')} {width:.2f} w {x1 * _MM:.2f} {flip(y):.2f} m "
+            f"{x2 * _MM:.2f} {flip(y):.2f} l S"
+        )
 
-    # Footer attribution, bottom-anchored so it matches the fpdf2 certificate rather
-    # than following the variable-length module list. 22 mm and 28 mm above the page
-    # bottom, expressed in points (1 mm ≈ 2.835 pt) — well clear of this renderer's
-    # border, whose bottom edge is at y = 22 pt.
+    def line(key: str, text: str, y: float, color, cx: float = _CERT_CX,
+             size: Optional[float] = None) -> None:
+        base, style, spacing = _CERT_FONT[key]
+        size = base if size is None else size
+        # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
+        # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
+        # and escaping twice prints the escape itself.
+        width = _stdlib_width(text, size, style == "B", spacing)
+        text = _pdf_escape(text)
+        x = cx * _MM - width / 2.0
+        # Italic degrades to regular: this writer embeds no oblique face (INV-066's
+        # "plainer but valid" rendering), and a fabricated slant is worse than none.
+        font = "F2" if style == "B" else "F1"
+        tc = f"{spacing:.2f} Tc " if spacing else ""
+        ops.append(
+            f"{rgb(color, 'rg')}\nBT /{font} {size:.1f} Tf {tc}"
+            f"1 0 0 1 {x:.2f} {flip(y):.2f} Tm ({text}) Tj"
+            + (" 0 Tc" if spacing else "")
+            + " ET"
+        )
+
+    def wrap(key: str, text: str, size: Optional[float] = None) -> List[str]:
+        base, style, spacing = _CERT_FONT[key]
+        size = base if size is None else size
+        return _wrap_to_width(
+            text,
+            _CERT_TEXT_W * _MM,
+            lambda s: _stdlib_width(s, size, style == "B", spacing),
+        )
+
+    # Gradient band, then the white card: the same two-layer backdrop the fpdf2
+    # renderer paints, in the same place (INV-066).
+    strips = 96
+    strip_h = h / strips
+    for i in range(strips):
+        color = _cert_band_color(i / (strips - 1.0))
+        ops.append(
+            f"{rgb(color, 'rg')} 0 {h - (i + 1) * strip_h:.2f} "
+            f"{_CERT_BAND_W * _MM:.2f} {strip_h + 0.4:.2f} re f"
+        )
+    ops.append(
+        f"1 1 1 rg {rgb(ACCENT, 'RG')} {_CERT_BORDER * _MM:.2f} w "
+        f"{_CERT_CARD_X * _MM:.2f} {flip(_CERT_CARD_Y + _CERT_CARD_H):.2f} "
+        f"{_CERT_CARD_W * _MM:.2f} {_CERT_CARD_H * _MM:.2f} re B"
+    )
+
+    # Wordmark. No image support in this writer, so it is set as text — with the ember
+    # "z" that carries the brand, exactly like the fpdf2 renderer's own fallback.
+    parts = [("Sen", INK), ("z", ACCENT), ("ing", INK)]
+    widths = [_stdlib_width(text, 36, True, 0.0) for text, _ in parts]
+    x = _CERT_CX * _MM - sum(widths) / 2.0
+    for (text, color), width in zip(parts, widths):
+        ops.append(
+            f"{rgb(color, 'rg')}\nBT /F2 36.0 Tf 1 0 0 1 {x:.2f} "
+            f"{flip(_CERT_Y_WORDMARK + 9.2):.2f} Tm ({_pdf_escape(text)}) Tj ET"
+        )
+        x += width
+
+    line("eyebrow", _CERT_EYEBROW, _CERT_Y_EYEBROW, ACCENT)
+    line("headline", _CERT_HEADLINE, _CERT_Y_HEADLINE, ACCENT)
+    line("tagline", _CERT_TAGLINE, _CERT_Y_TAGLINE, INK)
+    rule(_CERT_CX - _CERT_RULE_W / 2.0, _CERT_CX + _CERT_RULE_W / 2.0,
+         _CERT_Y_RULE, 0.85 * _MM, ACCENT)
+    line("presented", _CERT_PRESENTED, _CERT_Y_PRESENTED, MUTED)
+    line("name", name, _CERT_Y_NAME, INK)
+
+    y = _CERT_Y_CITATION
+    for chunk in wrap("citation", _cert_citation(labels)):
+        line("citation", chunk, y, SLATE)
+        y += _CERT_LEAD_CITATION
+    if labels:
+        y = _CERT_Y_MODULES
+        style, spacing = _CERT_FONT["modules"][1:]
+        chunks, size = _cert_module_layout(
+            labels,
+            lambda s, pt: _stdlib_width(s, pt, style == "B", spacing) / _MM,
+        )
+        for chunk in chunks:
+            line("modules", chunk, y, SLATE, size=size)
+            y += _CERT_LEAD_MODULES
+
+    # Award seal, from the shared geometry so both renderers stroke one shape.
+    scallop, (seal_cx, seal_cy, inner), tails = _cert_seal_paths()
+    for tail in tails:
+        path(tail, "DF", 0.45 * _MM)
+    path(scallop, "DF", 0.45 * _MM)
+    path(
+        [(seal_cx + inner * math.cos(math.tau * i / 48),
+          seal_cy + inner * math.sin(math.tau * i / 48)) for i in range(48)],
+        "D", 0.45 * _MM,
+    )
+
+    def signature(cx: float, value: str, label: str) -> None:
+        line("sig", value, _CERT_Y_SIG, INK, cx=cx)
+        rule(cx - _CERT_SIG_RULE_W / 2.0, cx + _CERT_SIG_RULE_W / 2.0,
+             _CERT_Y_SIG_RULE, 0.4 * _MM, INK)
+        line("label", label, _CERT_Y_SIG_LABEL, MUTED, cx=cx)
+
+    if date:
+        signature(_CERT_CARD_X + _CERT_SIG_INSET + _CERT_SIG_RULE_W / 2.0,
+                  date, _CERT_DATE_LABEL)
+    # Attribution: the issuer over the "ISSUED BY" rule, then the version colophon at
+    # the foot of the card — same content, same positions as the fpdf2 renderer, which is
+    # what INV-126 requires of the fallback.
     attribution = _cert_attribution(recap)
-    baselines = (62.4,) if len(attribution) == 1 else (79.4, 62.4)
-    for baseline, line in zip(baselines, attribution):
-        center(line, "F1", 8, baseline)
+    signature(_CERT_CARD_X + _CERT_CARD_W - _CERT_SIG_INSET - _CERT_SIG_RULE_W / 2.0,
+              attribution[0], _CERT_ISSUER_LABEL)
+    for text in attribution[1:]:
+        line("colophon", text, _CERT_Y_COLOPHON, MUTED)
     return "\n".join(ops)
 
 
@@ -1673,6 +2177,30 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if m and (spaced_section or active_label in _SPACED_LABELS):
             if _next_nonblank_is_bullet(content, index):
                 add("", "GAP", _ITEM_GAP_PT, 0)
+
+
+def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
+    """Greedy word wrap on measured width, where `measure(str)` returns a width.
+
+    Used by the certificate, whose lines are centred: a character-count wrap
+    (``_wrap``) cannot centre honestly, because "Illinois" and "MMMMMMMM" are the same
+    number of characters and nowhere near the same width. Both renderers pass their own
+    `measure`, so neither wraps the certificate differently from the other (INV-066).
+    """
+    words = text.split()
+    if not words:
+        return [""]
+    lines: List[str] = []
+    current = words[0]
+    for word in words[1:]:
+        candidate = current + " " + word
+        if measure(candidate) <= max_w:
+            current = candidate
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
 
 
 def _wrap(text: str, width: int) -> List[str]:
