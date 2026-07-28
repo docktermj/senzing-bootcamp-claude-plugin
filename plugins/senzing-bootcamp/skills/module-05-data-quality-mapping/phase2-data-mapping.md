@@ -304,6 +304,40 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
 
+⛔ **The verbatim check cannot express a non-string source value, so for those it is
+unsatisfiable — not strict.** Verified against the current resource (server 1.32.1, 2026-07-28):
+its `collect_strings()` builds the allowed set under `isinstance(obj, str)` only, recursing through
+lists and dicts but capturing no other primitive, and the test is whole-value membership
+(`if v.strip() not in allowed`). Its only waiver is key-based —
+`EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}` plus any attribute ending `_TYPE` — so a *value* cannot
+be exempted at all.
+
+The consequence: where a source stores a value as a JSON **number** (or boolean), that value never
+enters the allowed set, and **both** emissions are reported as violations — emit it as a number and
+the checker cannot see it; emit it as a string and it is not in `allowed`. One field reported on
+every relationship row in a real run (53,321 of them) for this reason.
+
+**What to do — in this order:**
+
+1. **Do not conclude the mapping is wrong.** This finding is a limitation of the checker's harvesting,
+   not evidence about your data. Confirm separately that the emitted value is faithful to the source:
+   same value, and a JSON type you chose deliberately.
+2. **Choose the emission on the Entity Specification's terms, not the checker's.** Confirm the
+   attribute's expected form via `search_docs(category='data_mapping')` at the time you map it — for
+   the relationship keys, the specification's JSON examples show string values (`"ORG1001"`,
+   `"ACME-1001"`) while its `REL_ANCHOR_KEY` guidance column shows a bare `1001`, so it does not
+   mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
+   checker can see.
+3. **Record the exemption and its reason** in the source's mapping notes — which attribute, that the
+   source value is non-string, and that the checker cannot represent it — then **proceed**. A checker
+   limitation MUST NOT become an iterate-forever loop or a blocked module (INV-048).
+4. ⛔ **Never change a source value to satisfy the tool.** It would not even work here — stringifying
+   a numeric identifier still fails, because the allowed set was built without it — and distorting
+   data to turn a gate green is the one outcome worse than the gate being wrong.
+
+Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
+arrives from upstream (reported 2026-07-28) and a fork would mask it (INV-080).
+
 ⛔ **Separate structural invalidity from conformance-to-recommendation before acting on the
 analyzer's output.** The analyzer's exit code alone is NOT the gate — its findings fall into two
 kinds, and only one of them blocks:

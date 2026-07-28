@@ -161,7 +161,14 @@ If a source fails during orchestration, present three options:
 Every mapping gate the bootcamp runs before this point is **static, single-source, and
 structural** — the analyzer, the verbatim check, the routing report, the quality score. None of
 them evaluates *meaning*. So a whole defect class survives them: two source fields that measure
-different things mapped to the same Senzing feature. Senzing is then told a conflict exists where
+different things mapped to the same Senzing feature.
+
+(Those gates also have blind spots of their own, so a finding from one is not automatically a defect
+in the mapping. The verbatim check in particular **cannot express a non-string source value** — its
+allowed set is harvested from strings only — so it reports every emission of a numeric source value
+as a violation, whichever form was emitted. If a violation list came into this module unresolved for
+that reason, it is a checker limitation and not a mapping error; see
+`../module-05-data-quality-mapping/phase2-data-mapping.md` → the verbatim-check block.) Senzing is then told a conflict exists where
 none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
 
 This is the reading that catches it. It also matches the Senzing reporting guidance directly —

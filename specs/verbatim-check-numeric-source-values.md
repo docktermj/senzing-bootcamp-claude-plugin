@@ -124,3 +124,48 @@ JSON type matches the source's.
   precedent: an MCP-delivered validator reporting false errors, documented plugin-side while upstream
   was notified), `specs/mcp-grounding-in-every-skill.md` (INV-080),
   `specs/detect-dynamic-key-document-shaped-sources.md`
+
+## Deviations from this spec, and why (2026-07-28)
+
+**Re-verification confirmed the defect and added two facts the spec did not have.**
+
+Re-fetched the current `sz_verbatim_check.py` (server 1.32.1, 2026-07-28) rather than trusting the
+report. `collect_strings()` still harvests under `isinstance(obj, str)` only and the test is still
+whole-value membership (`if v.strip() not in allowed`) — so the spec's root cause stands. Two
+additions:
+
+1. **There *is* an exemption hook, and it cannot help.** `is_exempt(attr)` waives an attribute when
+   it is in `EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}` or ends with `_TYPE`. It is **key**-based, so
+   no *value* can be exempted, and `REL_POINTER_KEY` matches neither rule. The shipped guidance states
+   this, because a reader who finds `is_exempt` would otherwise reasonably expect a way out.
+2. **The Entity Specification does not mandate a JSON type for the relationship keys.** Confirmed via
+   `search_docs(category='data_mapping')`: every `REL_POINTER_KEY` example is a string (`"ORG1001"`,
+   `"ACME-1001"`, `"PER1002"`) while the `REL_ANCHOR_KEY` guidance column shows a bare `1001`. So the
+   emission choice is a specification question, not a checker question — which is how the guidance now
+   frames it, rather than recommending a type of its own.
+
+**One of the spec's claims is deliberately NOT shipped.** The spec's `## Problem` records that
+resolving this "required an empirical engine test to confirm Senzing links disclosed relationships for
+both a string and a numeric pointer key". That is a live-engine observation which cannot be repeated
+here and is not in any MCP source, so writing it into the plugin would assert an unverified Senzing
+fact (INV-080). The guidance instead tells the reader to confirm the attribute's expected form via
+`search_docs` at mapping time. A test asserts that sentence is *not* present, so a future edit cannot
+quietly promote it.
+
+**One affected file needed no change.** The spec listed `phase3-test-load.md` as needing the same
+note "at the sandbox validation step". That file does not reference the verbatim check at all — its
+only "verbatim" occurrence is the unrelated "pinned verbatim" phrasing — so adding a caveat there
+would have invented a reference to a gate that step does not run. The gate is invoked from
+`phase2-data-mapping.md` (mapping_workflow step 4), where the mitigation went, and mentioned in
+`phaseD-validation.md`, which now carries the caveat so an unresolved violation list arriving in
+Module 6 is not misread as a mapping defect.
+
+**Acceptance criteria status.** All met. Nothing here required a live engine: the checker's behavior
+was verified from the current resource, and the specification question from `search_docs`.
+
+## Invariants introduced
+
+- `INV-173` — Where a validation gate cannot represent a legitimate input, its finding MUST NOT be
+  treated as evidence about the data, MUST NOT block the flow, and MUST NOT be resolved by altering
+  the data to satisfy the gate; the limitation is named with its provenance, the exemption path is
+  stated, and an MCP-delivered validator is never forked (recorded in `specs/INVARIANTS.md`).
