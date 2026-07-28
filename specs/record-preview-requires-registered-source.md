@@ -112,3 +112,31 @@ why it is Low priority rather than higher.
   registration/configuration prerequisite, and the `SENZ7221` contrast — an error code whose own
   guidance does *not* name its cause), `specs/verify-sdk-parameter-shapes-and-flag-families.md`
   (INV-132), `specs/mcp-grounding-in-every-skill.md` (INV-080)
+
+## Deviations from this spec, and why (2026-07-28)
+
+**Step 5a is CORD-only; the reported failure was not.** The spec named "Phase 1 step 5a" as the
+Senzing-readiness step, which is correct — but that step is explicitly scoped to sources whose
+`provenance` is `cord`, and it skips everything else ("Non-CORD sources: skip this step entirely"). The
+reporter hit `SENZ2207` on `ICIJ`, which is not a CORD source, so a note confined to step 5a would have
+missed the case that produced the report.
+
+Rather than restructure the module — which is beyond this spec and would touch the fast-path offer's
+flow — the prerequisite is stated in step 5a where preview is introduced, with an explicit line that it
+"applies wherever a preview-based check is used, not only to the CORD sources this step covers". A test
+asserts that scoping sentence exists. If preview is later promoted to a general readiness step for all
+provenances, that is its own spec.
+
+**The error code's guidance is deliberately not restated.** `explain_error_code('SENZ2207')` returns
+good resolution steps (register the code, confirm the registered list, mind case-sensitivity,
+reinitialize). Re-verified on server 1.32.1, 2026-07-28. The guidance routes to it and says plainly not
+to duplicate them, because a copy in the plugin would drift from the server's version — the opposite of
+the `SENZ7221` case in `sdk-guide-configure-unseeded-datastore`, where the code's own steps do *not*
+name the cause and the plugin had to supply it.
+
+**No signature ships in the plugin.** The spec's criteria required the per-binding signature to be
+obtained via `get_sdk_reference` rather than restated (INV-132). The guidance names the method and
+routes to the lookup; a test asserts no argument list appears in the step.
+
+**Acceptance criteria status.** All met. Nothing required a live engine: the prerequisite's absence was
+confirmed from `get_sdk_reference` and the error semantics from `explain_error_code`.

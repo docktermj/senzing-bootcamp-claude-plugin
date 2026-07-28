@@ -116,3 +116,44 @@ is measuring absence that the specification predicts.
   `specs/analyzer-legacy-sublist-format-false-errors.md` (the sibling
   false-alarm-from-a-quality-gate defect),
   `specs/organization-search-requires-name-org.md` (the other place organization data was mishandled)
+
+## Deviations from this spec, and why (2026-07-28)
+
+**Only the feature-type labels actually verified were written into the plugin.** The spec's `## Problem`
+cites DOB (32%), PASSPORT (14%) and GENDER (25%) as the person-oriented features that dragged the
+average down. Re-verification via `search_docs(category='data_mapping')` on server 1.32.1 confirmed the
+specification's own labels for `DOB` ("Person date of birth"), `NATIONALITY`, `CITIZENSHIP`,
+`PLACE_OF_BIRTH` ("Person …") and `REGISTRATION_DATE` / `REGISTRATION_COUNTRY` (section headings
+"(organizations)") — but **not** for passport or gender, which that search did not return. The shipped
+guidance therefore names DOB with its verified label and refers to "others like passport and gender"
+without asserting a specification label for them (INV-080). The worked case is intact; only the
+unverified attributions were withheld.
+
+**The illustrative table is deliberately partial, and says so.** The spec's item 2 required
+applicability to be derived from MCP rather than hardcoded. A table with no examples is not actionable,
+so the guidance ships one — but framed as *how the specification marks type* (read the description and
+section heading) rather than as the answer, with an explicit note that it is partial and must be
+re-read for the source being assessed. A test asserts the disclaimer is present, so the table cannot
+quietly become the authority.
+
+**One over-correction was guarded against.** Excluding person-only features from an organization's
+denominator could easily be over-applied to `ADDRESS`, `PHONE`, `EMAIL` and identifiers, which apply to
+both types — dropping them would inflate every score. The table names them as type-neutral and a test
+asserts that row exists.
+
+**The worked example sits in the new rule block, not beside the score-output example.** The spec's item
+4 said to add it "beside the existing empty-container example at `:229-235`". That location is a
+formatted score *output* sample; the case is about what belongs in the denominator, which only makes
+sense next to the rule. Putting it there keeps the reasoning with the instruction rather than in an
+output template.
+
+**Acceptance criteria status.** All met, and none required a live engine — the per-type applicability
+came from `search_docs` and the scoring change is arithmetic guidance.
+
+## Invariants introduced
+
+- `INV-174` — A completeness, coverage or quality metric MUST NOT count against a record a field that
+  cannot apply to it: measure per record against the fields applicable to that record's kind and
+  aggregate, derive applicability from the data's authority rather than a hardcoded list, never exclude
+  kind-independent fields, and report records whose kind is unknown (recorded in
+  `specs/INVARIANTS.md`; extends INV-128).

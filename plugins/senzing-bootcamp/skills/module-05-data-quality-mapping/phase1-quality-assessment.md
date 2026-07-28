@@ -104,6 +104,40 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    classify as not Senzing-ready. (The Kiro `check_cord_readiness.py` helper is a later porting
    phase; perform the check directly against the sampled records for now.)
 
+   **A stronger check, when the engine is available: ask Senzing how it reads the record.** The
+   structural test above confirms the *shape*; it cannot tell you whether an attribute name will
+   actually participate in matching. `getRecordPreview` returns Senzing's own interpretation of a
+   record **without loading it**, which answers that directly — and it beats reading field names
+   against the specification by eye. Obtain the call for the bootcamper's binding from MCP
+   (`get_sdk_reference(topic='parameters', filter='getRecordPreview')`; the method name and argument
+   types differ per binding — INV-132) rather than writing it from memory.
+
+   ⛔ **Preview requires the record's `DATA_SOURCE` code to be registered first, even though it
+   writes nothing.** This is counter-intuitive and it is why the check fails where it is most natural
+   to run: registration belongs to the loading phase, so a readiness check reaching for preview
+   before registration gets
+
+   ```text
+   SENZ2207|Data source code [<CODE>] does not exist
+   ```
+
+   The prerequisite is **not** documented on the method — verified 2026-07-28 on MCP server 1.32.1,
+   `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns both overloads for every
+   binding with no mention of it. So the order is: register the source code(s) — taking the
+   registration code from `sdk_guide(topic='configure')`, never hand-written (INV-080) — then preview.
+   Registration is idempotent and the loading phase needs it anyway, so doing it here costs nothing.
+
+   On `SENZ2207`, call `explain_error_code('SENZ2207')` first as always (INV-080): unlike some codes,
+   its own resolution steps *do* name the fix — register the code, confirm the registered list, mind
+   that codes are case-sensitive and conventionally UPPERCASE, and reinitialize afterwards — so do not
+   restate them here, just follow them.
+
+   **Optional and non-blocking.** If the engine is not available, or registration has not happened
+   and you would rather not do it at this point, skip the preview and keep the structural check
+   (INV-048). Say which check ran, so "Senzing-ready" never implies a stronger test than was
+   performed. The prerequisite applies wherever a preview-based check is used, not only to the CORD
+   sources this step covers.
+
 3. **Record the result:** Set the source's `senzing_ready` field in `config/data_sources.yaml`
    to `true` or `false` and update `updated_at`.
 
@@ -189,6 +223,51 @@ measuring the wrong thing. Print one sample value for that field and confirm the
 before reporting. Treat a suspiciously uniform result as a probable measurement failure first and a
 real finding second — the same discipline INV-115 applies to blank parsed SDK fields, applied here to
 profiling.
+
+⛔ **Measure completeness PER RECORD against the features that apply to that record's
+`RECORD_TYPE` — never as one average per feature across the whole source.** A feature that does not
+apply to a record is not missing data, and averaging it in penalizes the source for data that could
+not exist.
+
+This is not a corner case. Mixed person/organization sources are the norm in KYC, AML, sanctions
+screening, vendor MDM and beneficial-ownership work — several of this bootcamp's headline use cases.
+One sanctions list with **NAME and ADDRESS on 100% of records** scored **52% completeness / 69%
+overall** — squarely in "recommend fixing before mapping" below — because person-oriented features
+(DOB at 32%, and others like passport and gender) were averaged across a source where **71 of 110
+records are ORGANIZATIONS**. Rescoring each record against the features applicable to its own type
+gave **97%**. Trusting the first figure would have sent the bootcamper to remediate data with nothing
+wrong with it.
+
+**Derive applicability from the Entity Specification, not from a list in this file.** The
+specification states the type in its own wording, so `search_docs(query='what features to map',
+category='data_mapping')` answers it directly — read the feature's description and section heading:
+
+| What the specification says | Applies to |
+|---|---|
+| `DOB` — "**Person** date of birth" | PERSON |
+| `NATIONALITY` / `CITIZENSHIP` / `PLACE_OF_BIRTH` — "**Person** …" | PERSON |
+| `NAME` (person) — "Personal names… `NAME_FIRST`, `NAME_LAST`" | PERSON |
+| `REGISTRATION_DATE` / `REGISTRATION_COUNTRY` — section heading "**(organizations)**" | ORGANIZATION |
+| `NAME` (organization) — "Organization legal or trade name… `NAME_ORG`" | ORGANIZATION |
+| `ADDRESS`, `PHONE`, `EMAIL`, identifiers | either — do not exclude these |
+
+(Verified against MCP server 1.32.1, 2026-07-28. Re-read it for the source you are assessing rather
+than trusting this table — it is an illustration of *how the specification marks type*, not a
+substitute for asking, and it is deliberately partial: features not listed here still have to be
+checked the same way, INV-080.)
+
+**Records with no `RECORD_TYPE`.** The specification calls `RECORD_TYPE` *"Recommended"*, not
+required, and says to leave it blank when the type is unknown — so a record may legitimately have
+none. Score those against the features that apply to **any** type, and **report how many records were
+scored that way**. A source where most records carry no `RECORD_TYPE` is itself a finding worth
+raising (it also forgoes the cross-type resolution protection the specification says `RECORD_TYPE`
+provides), and it must not be hidden inside an aggregate.
+
+⛔ **Extend the uniformity sanity-check above with this case: a low completeness score on a source
+whose NAME and ADDRESS coverage is high is a probable applicability error, not a data problem.**
+Check the record-type mix before reporting the score or routing anyone to remediation. The presence
+rules above are unchanged — they decide whether a *value* is there; this decides whether the feature
+belonged in the denominator at all.
 
 Use these thresholds to guide the decision:
 
