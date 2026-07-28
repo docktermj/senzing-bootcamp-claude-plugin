@@ -97,19 +97,21 @@ current setting, say so in the question itself.
 When it **does** differ, end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
-On the **CLI**, pin the switch question verbatim:
+On the **Claude Code CLI**, pin the switch question verbatim:
 
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent (INV-098):
+In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface), pin
+the intent-based equivalent (INV-098), naming the one interface the bootcamper is on — "in your
+Claude interface" only when it cannot be determined (INV-158):
 
-> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
 
 The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
-telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI, or
-use the model and reasoning-effort controls in their Claude app), then end the turn on this pinned
-confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts) — do NOT
-start the graduation work yet:
+telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude Code
+CLI, or use the model and reasoning-effort controls in Claude Desktop / the Claude web app / their
+Claude IDE extension), then end the turn on this pinned confirmation gate (its question verbatim,
+INV-056/INV-069 — only the answer hint adapts) — do NOT start the graduation work yet:
 
 > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 

@@ -1,13 +1,16 @@
 # Senzing Bootcamp Claude Code Plugin
 
-## Using Claude Code
+## Using the Claude Code CLI
 
 In this section are instructions for
-installing Claude Code,
+installing the Claude Code CLI,
 installing the Senzing Bootcamp plugin,
 and starting the Bootcamp.
 
-1. To install Claude CLI via commandline on macOS or Linux:
+For the desktop application instead, see
+[Using Claude Desktop](../README.md#using-claude-desktop).
+
+1. To install the Claude Code CLI on macOS or Linux:
 
     ```console
     curl -fsSL https://claude.ai/install.sh | bash
@@ -40,7 +43,7 @@ and starting the Bootcamp.
    and **Graduation**. The bootcamp surfaces the recommendation at the start of
    each module, so you never have to remember which is which.
 
-   For the smoothest ride, run Claude with `--permission-mode auto`.
+   For the smoothest ride, run the Claude Code CLI with `--permission-mode auto`.
 
 1. Example command:
 
@@ -48,8 +51,8 @@ and starting the Bootcamp.
     claude --model claude-sonnet-5 --effort medium --permission-mode auto
     ```
 
-1. *Note:* In addition to Claude Code,
-   the Senzing Bootcamp Claude Plugin can also be run with:
+1. *Note:* besides the Claude Code CLI and Claude Desktop,
+   the Senzing Bootcamp Claude Plugin can also be run in a Claude IDE extension:
     - [Claude Code for VSCode]
 1. Start the bootcamp. Tell Claude:
 

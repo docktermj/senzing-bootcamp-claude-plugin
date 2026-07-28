@@ -143,10 +143,11 @@ follows a **yes** to the switch and nothing else.
 > user-facing doc, and that this file carries a dated verification note (INV-114). Editing one
 > table without the other fails the suite.
 
-The nudge adapts to the Claude application surface (INV-098): the **Recommended** column is
-surface-neutral; the **CLI commands** column is the Claude Code equivalent. On Desktop, web, or an
-IDE extension, the same model and reasoning effort are set via the app's model/effort controls
-rather than the slash commands.
+The nudge adapts to the Claude interface in use (INV-098): the **Recommended** column is
+interface-neutral; the **CLI commands** column is the Claude Code CLI equivalent. In Claude Desktop,
+the Claude web app, or a Claude IDE extension, the same model and reasoning effort are set via that
+interface's model/effort controls rather than the slash commands. Each is named explicitly, because
+the retired "the Claude app" did not say which controls were meant (INV-158).
 
 **One row per stage, in the order the bootcamp runs them** — so the next stage's recommendation can
 be read off directly, and so no stage is ever missing a value to compare against. Each row names

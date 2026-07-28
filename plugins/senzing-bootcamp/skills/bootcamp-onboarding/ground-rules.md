@@ -206,6 +206,28 @@ steering files.)
   `## {Module name}` heading and the four required subsections (see `module-completion.md`), and
   the placement rules above are unchanged.
 
+## Naming the Claude interface (INV-158)
+
+Whenever output, a question, or a doc tells the bootcamper to do something **in their Claude
+interface** — set a model, change reasoning effort, restart an MCP server, click a control — name
+which interface. The bootcamp runs in more than one, and the names are not interchangeable:
+
+| Say | For |
+| --- | --- |
+| **Claude Desktop** | The desktop application (it runs Claude Code inside itself). |
+| **Claude Code CLI** | Claude Code in a terminal, where `/model` and `/effort` exist. |
+| **the Claude web app** | Claude Code at claude.ai/code. |
+| **a Claude IDE extension** | Claude Code in VS Code or a JetBrains IDE. |
+
+- **"Claude Code" alone names the product, never an interface.** It is correct for things that are
+  true of the harness everywhere — "the senzing MCP server configured in Claude Code", "a Claude
+  Code plugin", "Claude Code hooks" — and wrong as a way of saying *the terminal*, because Claude
+  Desktop is Claude Code too.
+- **"The Claude app" is retired vocabulary.** It named none of the four interfaces, so a bootcamper
+  told to use those unnamed "model and effort controls" had to guess which. Name the interface.
+- **Vague is allowed only where the plugin genuinely cannot tell.** When the interface is
+  undeterminable, "in your Claude interface" is honest; it is never a shortcut for one you know.
+
 ## Visual deliverables (Senzing brand)
 
 - **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
@@ -333,11 +355,17 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort. Like the step overview and the time estimate, this is module-start apparatus, so
   the apparatus-exempt setup modules (Bootcamp preparation, Module 0) do not present it (INV-063
-  clarification). **Adapt the wording to the Claude application in use** (INV-098): on **Claude
-  Code (CLI)** present the exact `/model` and `/effort` commands; on **Desktop, web, or an IDE
-  extension** — or when the surface is unknown — phrase it by intent, naming the recommended model
-  and reasoning-effort level and directing the bootcamper to their Claude app's model/effort
-  controls, without hardcoding a UI label that may drift.
+  clarification). **Adapt the wording to the Claude interface in use** (INV-098): on the **Claude
+  Code CLI** present the exact `/model` and `/effort` commands; in **Claude Desktop, the Claude web
+  app, or a Claude IDE extension** — or when the interface is unknown — phrase it by intent, naming
+  the recommended model and reasoning-effort level and directing the bootcamper to that interface's
+  model/effort controls, without hardcoding a UI label that may drift.
+
+  ⛔ **Name the interface. "The Claude app" is retired vocabulary (INV-158).** This plugin is a
+  Claude Code plugin on every one of those interfaces — Claude Desktop runs Claude Code too — so
+  that phrase left the bootcamper guessing which controls were meant, and "Claude Code" on its own
+  does not distinguish the terminal from the desktop application. Say **Claude Code CLI** for the
+  terminal and **Claude Desktop** for the desktop application.
 
   ⛔ **This behavior is unconditional — there is no preference to read and no mode to choose
   (INV-137).** The bootcamp is never asked how it wants model guidance handled, and there is no
@@ -363,15 +391,20 @@ never count against the one-question-per-turn rule and must not be treated as ga
     Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
     the effort only, never told to re-set the model they are already on.
 
-    On the **CLI**, pin the switch question verbatim, substituting only the bracketed values — the
-    stage's commands, and just the one dial when only one differs:
+    On the **Claude Code CLI**, pin the switch question verbatim, substituting only the bracketed
+    values — the stage's commands, and just the one dial when only one differs:
 
     > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current model.)
 
-    On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
-    stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
+    In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface),
+    pin the intent-based equivalent — name the stage's recommended model and effort, and do NOT
+    present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
+
+    Substitute the one interface the bootcamper is actually on. When the interface cannot be
+    determined, say "in your Claude interface" — vague only where the plugin genuinely does not
+    know, never as a shorthand for an interface it does know (INV-158).
 
     ⛔ **When the recommendation sits *below* the current setting, say so in the question itself.**
     Add one clause naming it as a step down, stating that the recommendation is about cost rather
@@ -381,10 +414,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
     reason. It never reads as advice to downgrade.
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
-    telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
-    or use the model and reasoning-effort controls in their Claude app — naming only the dial that
-    is moving), then end the turn on this pinned confirmation gate (its question verbatim,
-    INV-056/INV-069 — only the answer hint adapts to the surface) — do NOT show Step 1 yet:
+    telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude
+    Code CLI, or use the model and reasoning-effort controls in Claude Desktop / the Claude web app /
+    their Claude IDE extension — naming only the dial that is moving), then end the turn on this
+    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts to
+    the interface) — do NOT show Step 1 yet:
 
     > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
@@ -431,9 +465,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
   | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
   | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
-  The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
-  model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
-  the Claude Code equivalent (INV-098).
+  The **Recommended** column is interface-neutral. In Claude Desktop, the Claude web app, or a Claude
+  IDE extension, set the same model and reasoning effort using that interface's model/effort controls;
+  the **CLI commands** column is the Claude Code CLI equivalent (INV-098).
 
   From Data Quality, Mapping, and Transformation onward the recommendation is **flat** — a
   bootcamper who switches there is asked nothing further for the rest of the bootcamp.

@@ -30,7 +30,7 @@ than being hand-run each time.
   hooks, scripts, `docs/`, `docs/examples/`, `.mcp.json`, `plugin.json`), minus
   `__pycache__/` and `*.pyc`.
 - `.claude-plugin/marketplace.json` — required for `claude plugin marketplace add`.
-- `README.md` — user-facing (Claude app install instructions).
+- `README.md` — user-facing (Claude Desktop install instructions).
 - `docs/` — user-facing (`docs/README.md`, Claude Code CLI install). Treated as
   a **user-facing** directory and mirrored wholesale; do **not** put
   maintainer-only notes here.

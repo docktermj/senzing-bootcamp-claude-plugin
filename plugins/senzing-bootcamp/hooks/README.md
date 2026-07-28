@@ -110,7 +110,7 @@ INV-012 (output that is not important to the bootcamper is suppressed).
 
 A `claude-code-guide` investigation (2026-07-16) confirmed that **no harness mechanism
 suppresses this today** — there is no `settings.json` setting, no output style, no
-environment variable, no CLI flag, and no keyboard shortcut that collapses or hides
+environment variable, no Claude Code CLI flag, and no keyboard shortcut that collapses or hides
 Write/Edit tool-result output. Rendering is controlled by the harness, not the plugin,
 so full suppression is **not achievable from the plugin**.
 
@@ -130,5 +130,5 @@ administrative writes rather than trying to hide them:
 - Config files are kept small, and minimal edits are preferred over full-file rewrites.
 
 If a harness-level way to collapse Write/Edit output would help, file a Claude Code
-feature request via `/feedback` in the CLI or at <https://claude.com/feedback>. This
+feature request via `/feedback` in the Claude Code CLI or at <https://claude.com/feedback>. This
 finding is recorded here so it is not re-investigated.
