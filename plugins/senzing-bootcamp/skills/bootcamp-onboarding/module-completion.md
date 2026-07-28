@@ -94,6 +94,7 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
+  - ⛔ **Write all three as labeled blocks — `**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**` — never as one prose paragraph.** The three labels are what the recap PDF renders and what `--check` validates (INV-103); a summary written as flowing prose satisfies the *heading* and loses all three blocks. The renderer now prints any absent block as "(not recorded)" in the keepsake rather than letting it disappear, so an unlabeled summary is visible on the page — but a bootcamper's PDF should never carry that marker. Blocks with no content still get their label: "(no files — conceptual primer)" under **Files produced** is a real answer; silence is not.
 - **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>-<tab-slug>.png)` — in the same turn the capture ran, in the app's tab order. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
 
 ⛔ **Whenever a module step produces a bootcamper-facing artifact — a PDF, a PNG, an HTML
@@ -118,8 +119,17 @@ that the `## {Name}` heading (name-based, no catalog number) and all four subsec
 
 Re-read `docs/bootcamp_recap.md` and confirm a `## {Name}` heading for the
 just-completed module is present. If it is missing (a lost write or session
-boundary), append it again before continuing. Only then display the one-line
-confirmation: `Recap updated: {Name}.`
+boundary), append it again before continuing.
+
+In the same read, confirm this module's **End-of-Module Summary** carries all three labeled blocks
+(`**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**`). If any is absent, add it
+now, from what this module actually did — the Step 3 epilog you just showed the bootcamper is the
+same content, so copy it rather than composing something new. This is the cheapest place to catch it:
+the module's own work is still in context, whereas graduation has to reconstruct it from artifacts
+weeks of session-time later. Never invent a file that was not produced; write
+"(no files — {reason})" when there genuinely were none.
+
+Only then display the one-line confirmation: `Recap updated: {Name}.`
 
 (The recap PDF is not rendered per-module: it is rendered once at graduation by
 `scripts/generate_recap_pdf.py`, which reads this file. See `../graduation/SKILL.md`.)

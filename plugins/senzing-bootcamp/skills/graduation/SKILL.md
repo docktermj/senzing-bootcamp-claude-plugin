@@ -246,6 +246,27 @@ module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
 all, reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
+**Backfill the End-of-Module Summary blocks (before rendering).** Every module section's
+**End-of-Module Summary** must carry three labeled blocks — `**What you accomplished:**`,
+`**Files produced:**`, `**Why it matters:**` (INV-103; the "Bootcamper's takeaway" line stays
+optional). Check each section and add any that is absent, drawn from that module's own recorded
+content: **Actions Taken** and the section's own prose say what was accomplished, the paths it names
+(plus the files the module actually produced) give **Files produced**, and the module's purpose in
+`../bootcamp-onboarding/onboarding-flow.md` gives **Why it matters**. Where the summary is already
+there as an unlabeled paragraph, keep the paragraph and add the labeled blocks — adding the labels a
+subsection was always required to carry is not a prose rewrite (INV-085), and the run this was
+found in had summaries whose three blocks were simply absent.
+
+⛔ **Never invent content to fill a label.** If a module's own record does not support a block, write
+what is true — "(no files — {reason})" for a module that produced none — or leave that one block out
+and let the generator mark it "(not recorded)". A keepsake that overstates what the bootcamper did is
+worse than one that shows a gap (INV-065's principle: never fabricate to fill a field). Like every
+graduation step this is non-blocking: warn and continue.
+
+`--check` (Step 1b) reports these gaps per module, so run it after this backfill and re-render if it
+still finds any — the PDF renders every absent block as "(not recorded)" rather than dropping it, so
+a gap is visible on the page but should not survive to the bootcamper's copy.
+
 **Stamp the completion date.** Ensure the recap header carries a `**Completed:** {today's date, ISO
 8601}` line (add it directly under the `**Started:**` line if absent; leave an existing one intact).
 This is the date the Certificate of Completion shows (INV-100), distinct from `**Started:**` — so a
@@ -425,7 +446,7 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 - **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over.
 - **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high

@@ -33,7 +33,11 @@ reads the bootcamp recap structure specifically —
     ### Information Shared          <- content lives under these H3 headings
     ### Questions & Responses
     ### Actions Taken
-    ### End-of-Module Summary
+    ### End-of-Module Summary       <- carries three labeled blocks (INV-103):
+    **What you accomplished:** …       What you accomplished, Files produced,
+    **Files produced:** …              Why it matters. A block the recap does not
+    **Why it matters:** …              record renders as "(not recorded)" rather
+                                       than vanishing, and `--check` reports it.
 
 Body text is kept only when it sits under an H3 sub-heading of a module section
 (see ``parse_recap``), so a document whose H2 sections have no recognized
@@ -87,6 +91,21 @@ REQUIRED_SECTIONS = [
     "Questions & Responses",
     "Actions Taken",
     "End-of-Module Summary",
+]
+
+# The labeled blocks the End-of-Module Summary must carry (INV-103, persisting the
+# bootcamper-facing epilog of INV-032 into the keepsake). "Bootcamper's takeaway" is
+# deliberately absent: it is optional and omitted when the bootcamper gave none.
+#
+# These are checked and rendered, not merely documented. INV-103 has required them since
+# 2026-07-23 and `--check` validated only the *heading*, so a summary written as a prose
+# paragraph — no labels at all — passed as "Recap complete" and reached the keepsake with
+# the three blocks simply absent. Nothing downstream could see it: the heading was there,
+# retention was ~100%, and the PDF looked fine.
+END_SUMMARY_BLOCKS = [
+    "What you accomplished",
+    "Files produced",
+    "Why it matters",
 ]
 
 # Shown on the Certificate of Completion (INV-100) when the recap carries no
@@ -145,6 +164,28 @@ class ModuleSection:
                 missing.append(req)
         return missing
 
+    def missing_summary_blocks(self) -> List[str]:
+        """Which of ``END_SUMMARY_BLOCKS`` the End-of-Module Summary does not carry.
+
+        All three when the subsection is absent or empty — that is literally what is
+        missing — and none for a legacy ``### Journal`` section, whose alias INV-103
+        tolerates precisely because Journal predates the three blocks. Callers decide what
+        to do about a gap: `verify_recap` reports it, the renderers show the block as
+        "(not recorded)" rather than letting it vanish.
+        """
+        for heading, lines in self.subsections:
+            if _normalize_heading(heading) != _normalize_heading(REQUIRED_SECTIONS[3]):
+                continue
+            if _is_legacy_journal(heading):
+                return []
+            present = {_summary_block_label(line) for line in lines}
+            return [
+                block
+                for block in END_SUMMARY_BLOCKS
+                if _normalize_heading(block) not in present
+            ]
+        return list(END_SUMMARY_BLOCKS)
+
 
 @dataclass
 class Recap:
@@ -200,6 +241,35 @@ def _block_label(line: str) -> str:
     """
     m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
     return _normalize_heading(m.group(1)) if m else ""
+
+
+def _summary_block_label(line: str) -> str:
+    """The normalized label a summary line carries, tolerant of how it was written.
+
+    ``**Files produced:**`` is the canonical form the template shows and the normalizer
+    enforces, but the recap is authored live during a bootcamp, and
+    ``**Files produced**:``, ``- **Files produced:**`` and a bare ``Files produced:`` all
+    carry the block just as well. A block that is present but *looks* different must never
+    be reported as missing — a false "missing" sends graduation off to backfill content
+    that is already there, or worse, to rewrite a finished section (INV-085).
+
+    Deliberately separate from `_block_label`, whose narrower job is to switch list spacing
+    on for a standalone label and which must therefore keep ignoring `- **Q:**` bullets.
+    """
+    text = re.sub(r"^\s*[-*+]\s+", "", line.strip())
+    text = text.replace("**", "").replace("__", "").replace("*", "")
+    m = re.match(r"^([A-Za-z][^:]{0,60}?)\s*:", text)
+    return _normalize_heading(m.group(1)) if m else ""
+
+
+def _is_legacy_journal(heading: str) -> bool:
+    """True for a ``### Journal`` heading — the pre-INV-103 name of the fourth subsection.
+
+    It parses as an End-of-Module Summary (`_normalize_heading` aliases it), but a Journal
+    was free narrative and was never required to carry the three labeled blocks, so a
+    legacy recap must not be reported as incomplete or annotated as such.
+    """
+    return heading.strip().lower().rstrip(":") == "journal"
 
 
 def _is_bullet(line: str) -> bool:
@@ -398,9 +468,19 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
         problems.append("recap contains no module ('## …') sections")
     for mod in recap.modules:
         missing = mod.missing_required()
+        label = f"Module {mod.number}" if mod.number else mod.title
         if missing:
-            label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+        # The blocks INV-103 requires *inside* the summary. Reported only when the
+        # subsection itself is present — otherwise the line above already names the whole
+        # gap, and saying it twice reads as two separate defects.
+        if REQUIRED_SECTIONS[3] not in missing:
+            gaps = mod.missing_summary_blocks()
+            if gaps:
+                problems.append(
+                    f"{label}'s {REQUIRED_SECTIONS[3]} is missing its labeled "
+                    f"block(s): {', '.join(gaps)}"
+                )
 
     # A module appearing twice renders twice in the keepsake PDF. The usual cause
     # is a missed module-completion step 2d: the finalized '## {Name}' section was
@@ -1540,8 +1620,12 @@ def _render_module_page(pdf, epw: float, mod) -> int:
         pdf.cell(epw, 5, _safe(f"Completed {_format_date(mod.date)}"))
     pdf.ln(24)
 
+    gaps = tuple(mod.missing_summary_blocks())
     for name in REQUIRED_SECTIONS:
-        _render_subsection(pdf, epw, name, mod.subsection(name))
+        _render_subsection(
+            pdf, epw, name, mod.subsection(name),
+            gaps if name == REQUIRED_SECTIONS[3] else (),
+        )
 
     # Any extra sub-sections (e.g. Duration) after the required set.
     for sub_h, content in mod.subsections:
@@ -1552,7 +1636,12 @@ def _render_module_page(pdf, epw: float, mod) -> int:
     return start
 
 
-def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> None:
+def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
+                       missing_blocks: Tuple[str, ...] = ()) -> None:
+    """Render one labeled subsection. ``missing_blocks`` names the End-of-Module Summary
+    blocks the recap did not record; each is rendered as "(not recorded)" so the three
+    blocks INV-103 requires are always *visible* on the page. A keepsake that silently
+    omits them looks complete, which is how they went missing without anyone noticing."""
     from_missing = content is None
     pdf.ln(1)
     # Colored accent tab + matching heading color per sub-section.
@@ -1567,7 +1656,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     pdf.ln(9)
     pdf.set_text_color(*INK)
     pdf.set_font("Helvetica", "", 10.5)
-    if from_missing or not any(l.strip() for l in content):
+    empty = from_missing or not any(l.strip() for l in content)
+    if empty and not missing_blocks:
         pdf.set_text_color(*SLATE)
         pdf.set_font("Helvetica", "I", 10)
         pdf.multi_cell(epw, 6, "(not recorded)")
@@ -1576,7 +1666,7 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
     index = 0
-    while index < len(content):
+    while index < len(content or []):
         line = content[index]
         # A run of pipe rows is ONE table and is drawn as a grid (INV-142). It is
         # handled here rather than in _render_line because a table spans lines and
@@ -1594,6 +1684,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
             if _next_nonblank_is_bullet(content, index):
                 pdf.ln(_ITEM_GAP_MM)
         index += 1
+    for block in missing_blocks:
+        _render_line(pdf, epw, f"**{block}:** (not recorded)")
     pdf.ln(2)
 
 
@@ -2053,8 +2145,12 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                 else mod.title
             )
             add_wrapped(heading, "F2", 15, 0)
+            gaps = tuple(mod.missing_summary_blocks())
             for name in REQUIRED_SECTIONS:
-                _stdlib_subsection(add, add_wrapped, name, mod.subsection(name))
+                _stdlib_subsection(
+                    add, add_wrapped, name, mod.subsection(name),
+                    gaps if name == REQUIRED_SECTIONS[3] else (),
+                )
             for h, content in mod.subsections:
                 if _normalize_heading(h) not in {
                     _normalize_heading(r) for r in REQUIRED_SECTIONS
@@ -2135,16 +2231,18 @@ def _stdlib_table(add, text: str) -> None:
     add("", "F1", 3, 0)
 
 
-def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]) -> None:
+def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]],
+                       missing_blocks: Tuple[str, ...] = ()) -> None:
     add("", "F1", 4, 0)
     add(name, "F2", 12, 0)
-    if content is None or not any(l.strip() for l in content):
+    empty = content is None or not any(l.strip() for l in content)
+    if empty and not missing_blocks:
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
     cursor = 0
-    while cursor < len(content):
+    while cursor < len(content or []):
         index, line = cursor, content[cursor]
         # A table becomes aligned monospace columns here — there are no grid
         # primitives in this writer — but never the raw pipe source (INV-142).
@@ -2177,6 +2275,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if m and (spaced_section or active_label in _SPACED_LABELS):
             if _next_nonblank_is_bullet(content, index):
                 add("", "GAP", _ITEM_GAP_PT, 0)
+    for block in missing_blocks:
+        add_wrapped(f"{block}: (not recorded)", "F1", 10.5, 6.0)
 
 
 def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
@@ -2381,7 +2481,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
             sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
-        print("Recap complete: all module sections carry the required subsections.")
+        print(
+            "Recap complete: all module sections carry the required subsections, "
+            "and every End-of-Module Summary carries its labeled blocks."
+        )
         return 0
 
     out = Path(args.output)

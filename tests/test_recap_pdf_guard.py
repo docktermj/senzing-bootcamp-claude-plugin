@@ -56,7 +56,13 @@ from records that merely look similar, which is the whole point of the exercise.
 
 ### End-of-Module Summary
 
-Built a working vocabulary for the hands-on modules that follow this one.
+**What you accomplished:** Built a working vocabulary for the hands-on modules that
+follow this one, and confirmed the two failure modes with the knowledge check.
+
+**Files produced:** (no files — conceptual primer)
+
+**Why it matters:** Every later module builds on this vocabulary, so the mapping and
+loading work has words for what it is doing.
 """
 
 # H2 headings but no recognised H3 sub-headings: the shape of the discoveries
