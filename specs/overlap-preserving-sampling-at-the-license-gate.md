@@ -99,3 +99,34 @@ on load-time concerns, which a within-licence-but-large dataset never triggers.
   that demonstrates resolution rather than sampling it),
   `specs/post-load-match-key-semantic-audit.md` (INV-117 — the audit that surfaces the consequence),
   `specs/single-license-gate-at-data-processing.md` (INV-093 — the licence gate that offers sampling)
+
+## Deviations from this spec, and why (2026-07-28)
+
+**A third harmful site the spec did not identify.** Alongside the strategy-free offers at `:82` and
+`:358-360`, the smaller-slice guidance instructed *"Ensure the sample is representative of the full
+dataset."* That is the harmful instinct stated as an instruction — a sample representative of each
+source individually is exactly what contains no cross-source matches. It has been replaced with a
+statement of what the *business problem* needs, and a test asserts the old sentence is gone. Fixing
+only the two sites the spec named would have left the module still telling readers to do the wrong
+thing.
+
+**The rule got an anchor, and the other paths link to it.** The spec offered "move it into step 6, or
+cross-reference it" and preferred stating it once. It is now a single anchored block
+(`<a id="overlap-preserving-sampling"></a>`) in step 6 that declares itself canonical; the
+smaller-slice path and Step 8b link to it, and Step 8b is told explicitly not to restate it. A test
+counts the references, because this defect *was* two copies of one rule disagreeing — the failure mode
+worth guarding structurally rather than by prose.
+
+**Added: the single-source exemption.** The spec's rule is unconditional, which would over-apply it —
+a one-source dataset has no cross-source overlap to preserve, and first-N or random is perfectly fine
+there. The guidance says so and tells the reader to state which case applies rather than assume, so
+the rule cannot become a ritual on datasets it does not concern.
+
+**Module 6's check went into step 23, not the generic validation.** The spec said only that Module 6
+should recognize a sampled load. It landed first in step 22 (single-source UAT) and was moved: a
+single-source load has no cross-source count to misread, so the check belongs in step 23
+("Validate cross-source results"), which is where a zero count is actually observed and which is
+already conditional on 2+ sources. A test pins it between the step 23 and step 24 headings.
+
+**Acceptance criteria status.** All met. Nothing required a live engine — the measured overlap figures
+are the reporter's observations of their own data, cited as such rather than re-derived.

@@ -80,7 +80,42 @@ forward.
   available) request one in-flow via the Senzing MCP server (INV-093). The tool-availability
   checks, branching, and setup mechanics all live in Step 8a; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
-  dataset.
+  dataset — but **not a random slice** when more than one source is involved. See the sampling
+  rule immediately below; it applies to every reduction in this module, whatever prompted it.
+
+<a id="overlap-preserving-sampling"></a>
+
+⛔ **Sampling rule — when 2+ sources are present, random selection destroys the signal entity
+resolution exists to find.** This is the canonical statement; every other place that reduces a
+dataset (the smaller-slice path later in this step, and the load-time branch in Step 8b) refers
+here rather than restating it.
+
+A random sample is the right instinct for **profiling** — it preserves each source's distributions —
+and the wrong one for **entity resolution**, which needs the *same real-world entities to appear in
+more than one source*. Cross-source overlap is usually a thin slice of two large sets, so random
+slices of each share almost nothing. One bootcamp drew a random 300 records from each of five
+sources: the load was flawless — 1,147 records, zero errors, redo drained, quality 94–100% — and
+produced **zero cross-source matches** outside one pair that happened to be fully included. The
+business problem returned no findings from a technically perfect pipeline. The overlap was real:
+507 shared names across 21,284 × 63,193 candidates for the largest pair. Random selection simply
+missed it.
+
+**Every operational signal a bootcamper checks stays green**, which is what makes this dangerous —
+records loaded, no errors, redo drained, quality scored well. It surfaces only in the cross-source
+matrix, and only if someone compares it against what the business problem needed.
+
+**So select for overlap, not for representativeness:**
+
+1. Identify candidate join keys the sources share — a name, an identifier, an address — from the
+   profiling already done in this module.
+2. Select records that **participate in values appearing in 2+ sources** first, keeping each
+   matched group whole: taking one side of a pair is as useless as taking neither.
+3. Fill the remaining budget with other records so the sample still exercises singletons and
+   non-matches.
+4. Record the strategy and **why** it was chosen (sub-step below), so later modules can read it.
+
+For a **single-source** dataset none of this applies — there is no cross-source overlap to
+preserve, and first-N or random is fine. Say which case applies rather than assuming.
 
 Sampling also stays available for **non-license** reasons: a very large or unwieldy file (for
 example, >1GB) or faster iteration: independent of the effective limit. Retrieve any specific
@@ -357,8 +392,16 @@ gate (INV-093) and the Senzing MCP server.
 
 - Create smaller sample files (sampling, a CORD subset, or a smaller substitute dataset).
 - Save samples to `data/samples/[datasource_name]_sample.[extension]`.
-- Document the sampling method (first N records, random sample, etc.).
-- Ensure the sample is representative of the full dataset.
+- **Select for cross-source overlap when 2+ sources are present** — see the
+  [sampling rule](#overlap-preserving-sampling) earlier in this step. Do not choose a random slice
+  by default.
+- **Document the sampling method AND why it was chosen** in the data-source registry, not just the
+  method name. "Random sample" alone is exactly what leaves Module 6 unable to tell a
+  no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact.
+- Ensure the sample exercises what the **business problem** needs: for a cross-source problem that
+  means shared entities, which is not the same as being statistically representative of each source.
+  ⛔ A sample that is representative of every source individually can contain no cross-source matches
+  at all — that is the defect the rule above exists to prevent.
 
 **If the bootcamper chooses to keep the full dataset:** continue the collection workflow with
 the complete files: there is no requirement to reduce the dataset.
@@ -544,10 +587,14 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
    - **Sample down to a smaller record count:** ask which sampling strategy to use **before**
      creating the sample: offer first-N records, random-N records, and an
      entity-resolution-demonstrating strategy that preserves cross-source overlaps and known
-     match clusters; also accept a bootcamper-described strategy. Validate the target record
+     match clusters; also accept a bootcamper-described strategy. **Where 2+ sources are present,
+     present the overlap-preserving strategy as the recommended one and say why the others lose
+     cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in Step 6, which
+     is the canonical statement; do not restate it here.** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
      Create the sample with the chosen strategy, write it under `data/samples/`, and document
-     the strategy and target in a sample manifest. Then record the decision (sub-step 4).
+     the strategy **and the reason for it** in a sample manifest. Then record the decision
+     (sub-step 4).
    - **Switch to an alternative database (e.g. PostgreSQL):** route the bootcamper to the
      database-migration guide (the Kiro `docs/guides/DATABASE_MIGRATION.md` guide is a later
      porting phase). Do not inline or restate the migration steps here. Then record the decision

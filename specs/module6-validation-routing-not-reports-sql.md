@@ -127,3 +127,25 @@ defect, and it is the one this spec fixes.
 Recorded because the entry says `Upstream: submitted 2026-07-28`: a report was sent on the refuted
 premise. Nothing here re-files it — Step 8 forbids re-filing the same finding — but the maintainer
 should know a submitted report contains a claim the server does not support.
+
+## Deviations from this spec, and why (2026-07-28)
+
+**Implemented as specified, with the scope checked exhaustively rather than at the three cited
+lines.** The spec named `SKILL.md:63`, `phaseD-validation.md:6` and `:34`. An audit of *every*
+`reporting_guide` reference in Module 6 confirmed those were the only untopiced ones — the other six
+(`topic='graph'`, `topic='evaluation'` ×3, `topic='quality'` ×2) were already specific — so all nine
+now carry a topic and the acceptance criterion is met for the module, not just for the three lines.
+
+**The disclosure is quoted from the tool, not asserted.** Because this spec's subject was redirected
+by re-verification, the guidance had to be careful about whose claim it is: it quotes
+`reporting_guide(topic='reports')`'s own `schema.description` verbatim — *"These tables are NOT part
+of the Senzing SDK and do NOT exist out of the box…"* — with the server version and date, rather than
+the plugin asserting that the data mart does not exist. Re-confirmed on server 1.32.1, 2026-07-28
+before quoting (INV-080).
+
+**No upstream action taken, deliberately.** The entry records `Upstream: submitted 2026-07-28`, and
+that submission rests on the premise this re-check refutes. Step 8 forbids re-filing the same finding,
+so nothing was sent; the situation is recorded in this spec's `## Source` block for the maintainer to
+decide on. Implementation did not revisit it.
+
+**Acceptance criteria status.** All met. Nothing required a live engine.

@@ -3,7 +3,18 @@
 Continues from Phase B (single source) or Phase C (multi-source). Follow the ground rules;
 `🛑`/`⛔` are internal control directives. Entity queries use SDK code generated via
 `generate_scaffold` / `get_sdk_reference`, never direct SQL against `database/G2C.db`. Counts
-and stats come from `reporting_guide`.
+and stats come from `reporting_guide` — **name the topic**: `topic='evaluation'` for the
+single-pass export statistics this phase needs, `topic='export'` for extraction patterns.
+
+⚠️ **`topic='reports'` is not this bootcamp's route.** Its SQL targets an analytical data mart
+(`sz_dm_entity`, `sz_dm_record`, `sz_dm_relation`, `sz_dm_report`) that the bootcamp never builds —
+the tool says so itself, in that response's own schema notes: *"These tables are NOT part of the
+Senzing SDK and do NOT exist out of the box. They must be created and maintained by a separate data
+mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.1, 2026-07-28).
+It is the production-reporting answer, not the evaluation one, so asking for it here returns
+well-formed SQL that cannot run against a single-database SQLite workspace. If you are already
+looking at that response, the usable subset is its `Validation:` patterns, which run against
+**exported entity JSON** rather than the data mart.
 
 ## Single-source validation (always)
 
@@ -31,7 +42,7 @@ done through generated SDK code.)
 Validate that the loaded data meets business expectations:
 
 - Verify record counts, does the number of loaded records match expectations? (Use
-  `reporting_guide` for counts.)
+  `reporting_guide(topic='evaluation')` for counts — not `topic='reports'`; see the header note.)
 - Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
@@ -48,6 +59,15 @@ single-source bootcampers, skip directly to step 28 (Document results).
 Validate: record counts match expectations, cross-source entities exist, no unexpected data
 loss, error logs clean. Use `reporting_guide(topic='graph', version='current')` for
 network-graph patterns.
+
+⛔ **Before treating a low or zero cross-source entity count as a finding about the data, read how
+the data was selected.** If Module 4 reduced any source, `config/data_sources.yaml` records the
+sampling method and the reason for it. A **random** slice of 2+ sources removes cross-source overlap
+by construction — one bootcamp got zero cross-source matches from a load reporting 1,147 records,
+no errors, redo drained and 94–100% quality — so a near-zero count there is an artifact of the
+sample, not a property of the sources, and the remedy is an overlap-preserving re-sample (Module 4
+→ "Sampling rule"), not a mapping change. Say which it is; never report "Senzing found no
+cross-source matches" without checking this first.
 
 Sample 15–25 entities that contain records from multiple data sources and verify they represent
 the same real-world person or organization. Check cross-source matches and spot-check
