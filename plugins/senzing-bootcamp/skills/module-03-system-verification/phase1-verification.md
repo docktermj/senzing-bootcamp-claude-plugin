@@ -106,6 +106,33 @@ Verify MCP server connectivity before code generation operations.
 }
 ```
 
+### Step 1a: Engine Initialization Check
+
+⛔ **Confirm an `SzEngine` (or `SzDiagnostic`) actually initializes before generating or loading
+anything.** Module 2 verifies this at its Step 9, but this module is the end-to-end verification and
+must not assume it: a configuration whose SUPPORTPATH points at the wrong place can pass a version
+query and fail only at the first real engine call — and if that call is the synthetic load below, the
+failure lands several steps from its cause, mid-load, where it reads as a data problem.
+
+Use the initialization code already generated in Module 2 (or re-obtain it via
+`generate_scaffold(language='<chosen_language>', workflow='initialize')` — never hand-write it,
+INV-080), create an engine, and release it.
+
+**If it fails, report the error and stop here rather than proceeding to generation or loading:**
+
+1. Call `explain_error_code(error_code="<code>", version="current")` and present what it returns.
+2. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
+   loaded but their support data did not — the runtime **data directory** is not where the
+   configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
+   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.1, 2026-07-28.
+3. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
+   and `search_docs` per this module's Error handling section.
+
+This is a check, not a 👉 question — run it silently and report only on failure (INV-012).
+
+**Checkpoint:** record `engine_initialization` alongside `mcp_connectivity` in the same
+`module_3_verification.checks` object.
+
 ### Step 2: Generate Synthetic Verification Records
 
 Generate a small set of **synthetic** records designed to resolve deterministically into a known

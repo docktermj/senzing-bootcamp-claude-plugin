@@ -40,8 +40,8 @@ is installed, configured, and verified, ready to load data and resolve entities.
 in onboarding. All code generation, scaffold calls, and examples in this module must use that
 language.
 
-**Success indicator:** ✅ SDK installed + DB configured + test passes + engine initializes and
-connects without errors.
+**Success indicator:** ✅ SDK installed + DB configured + test passes + an engine-class call
+(`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (Step 9).
 
 > **User reference:** A detailed background document for this module (`MODULE_2_SDK_SETUP.md`)
 > is a later porting phase. For now, teach the steps directly from this skill.
@@ -591,6 +591,24 @@ Do not guess paths for CONFIGPATH, RESOURCEPATH, or SUPPORTPATH based on directo
 correct paths vary by platform and installation method, and guessing causes engine
 initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong).
 
+**What `SENZ2027` is actually telling you: the support data is not where the configuration points.**
+Call `explain_error_code('SENZ2027')` first as always (INV-080) — it returns
+`EAS_ERR_PLUGIN_INIT: Plugin initialization error`. The actionable detail is in the Senzing FAQ
+(`search_docs`, verified 2026-07-28 on MCP server 1.32.1):
+
+> **I get SENZ2027 Plugin initialization error GNR data files failed to load** — You are missing the
+> senzingsdk-runtime data directory. The libraries are present but the GNR data files (in
+> `resources/data/`) are not deployed.
+
+So the code means *the libraries loaded and their data did not* — which is exactly what a wrong
+SUPPORTPATH produces, and on Windows/Scoop exactly the sibling-directory case the `Test-Path` check
+below fixes. Look for a misplaced data directory, not for a broken install.
+
+⚠️ **Because those two can be present independently, a version query does not validate the engine.**
+An `SzProduct` call can answer while the support data is absent, so "the SDK imports and reports its
+version" is not evidence that an engine can initialize — see Step 9, which requires an engine-class
+call for exactly this reason.
+
 Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
 the user's platform and database choice. Save the MCP-returned JSON directly to
 `config/engine_config.json`; do not modify the paths.
@@ -678,19 +696,30 @@ Use `generate_scaffold(language='<chosen_language>', workflow='initialize', vers
 to get the current V4 initialization and connection test pattern, then use that MCP-generated
 initialization code to verify the database connection works.
 
+⛔ **The check MUST create and use an `SzEngine` (or `SzDiagnostic`) — not only `SzProduct`.** A
+version query proves the library loaded; it does not prove the engine can initialize, because the
+libraries and their support data can be present independently (see the `SENZ2027` note in Step 8).
+So a configuration whose SUPPORTPATH is wrong can satisfy a version probe and fail at the first real
+engine call, several steps later, where the cause is no longer obvious. Exercising an engine class
+here is what moves that failure back to the step designed to catch it.
+
+This constrains **which class the generated check touches**, not where the code comes from: keep
+using `generate_scaffold(workflow='initialize')` and pick the snippet that creates an engine
+(INV-080). Do not hand-write it.
+
 Never generate direct SQL against `database/G2C.db`; all access goes through Senzing SDK
 methods (per ground-rules).
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`.
 
-**Success indicator:** ✅ SDK installed + DB configured + test passes + engine initializes and
-connects without errors.
+**Success indicator:** ✅ SDK installed + DB configured + test passes + **an `SzEngine`/`SzDiagnostic`
+call succeeds** (not merely a version query).
 
 ## Success Criteria
 
 - ✅ Senzing SDK installed natively.
 - ✅ SDK imports/references work in the chosen language.
-- ✅ Engine initializes without errors.
+- ✅ Engine initializes without errors, proven by an `SzEngine`/`SzDiagnostic` call rather than a version query (Step 9).
 - ✅ Database connection works.
 - ✅ Project directory structure created.
 
