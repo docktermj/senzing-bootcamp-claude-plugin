@@ -1,126 +1,164 @@
-# A wrong SUPPORTPATH surfaces as `SENZ7426` while `SzProduct` keeps succeeding — a version check cannot validate it
+# Verify SUPPORTPATH with an engine call, and name the GNR-data diagnostic `SENZ2027` carries
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
-## Credit first
-
-The plugin **already handles this well.** `module-02-sdk-setup/SKILL.md:598-630` instructs verifying
-SUPPORTPATH with `Test-Path` before saving the configuration, checking the parent-level path when the
-first attempt is missing, and reporting clearly if neither exists — Windows-only, exactly where it is
-needed, with the Scoop-layout rationale stated. Following it produced a correct configuration on the
-first try: `...\senzingsdk\current\er\data` does not exist, `...\senzingsdk\current\data` does. This
-spec refines a detail, not the approach.
+> **⚠️ This spec was rewritten on 2026-07-28.** Its first version asserted that a wrong SUPPORTPATH
+> surfaces as `SENZ7426` rather than the documented `SENZ2027`, and asked for the plugin's symptom
+> code to be broadened accordingly. **The Senzing MCP server contradicts that**, so implementing it
+> would have written a false Senzing fact into the plugin. See
+> [What changed in this spec, and why](#what-changed-in-this-spec-and-why) at the end for the
+> evidence. The surviving substance — verify with an engine call, and carry the real diagnostic — is
+> what this spec now asks for.
 
 ## Problem
 
-`module-02-sdk-setup/SKILL.md:592` states the consequence of a wrong SUPPORTPATH as
-"initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong)". On the reporting install the
-failure signature was different, and worse:
+Module 2 configures the Senzing engine and then verifies it. The verification is weaker than it
+looks, in a way that lets a broken installation pass.
 
-- The failing code is **`SENZ7426`**, not `SENZ2027`. `SENZ7426` appears nowhere in the plugin's
-  documentation, so searching the docs for what a bootcamper actually sees returns nothing.
-- **`SzProduct` calls keep succeeding** while every `SzEngine` and `SzDiagnostic` call fails.
+`module-02-sdk-setup/SKILL.md:675-686` (Step 9, "Test Database Connection") obtains initialization
+code via `generate_scaffold(workflow='initialize')` and states its success indicator as *"engine
+initializes and connects without errors"*. That is the right intent, but nothing pins **which SDK
+class the check must touch**. A check that only proves the SDK imports and reports its version — an
+`SzProduct` call — satisfies the wording while proving nothing about whether the engine can
+initialize.
 
-The second point is the expensive one. A verification step that calls `SzProduct.getVersion()` to
-confirm the SDK works will **pass against a broken configuration**. The install looks healthy, the
-version prints, and the first real engine call fails later with a code the docs do not mention — by
-which time the SUPPORTPATH step is several steps behind.
+That gap matters specifically because the libraries and the support data can be present or absent
+**independently**. The Senzing FAQ, verbatim (`search_docs`, verified 2026-07-28 against server
+1.32.1):
 
-"Wrong path causes an initialization failure" implies the failure is immediate and obvious. In reality
-it is deferred and partial, so a smoke test can certify a broken install.
+> **I get SENZ2027 Plugin initialization error GNR data files failed to load** — You are missing the
+> senzingsdk-runtime data directory. The libraries are present but the GNR data files (in
+> `resources/data/`) are not deployed.
+
+"The libraries are present but the data files are not" is exactly the state a wrong SUPPORTPATH
+produces. So an install can load its libraries, answer a version query, and still be unable to
+initialize an engine — and Module 2's verification does not require the step that would find out.
+
+The consequence is deferred, not immediate: the version prints, Step 9 passes, and the first real
+engine call fails later, several steps from the configuration that caused it.
 
 ## Root cause
 
-**One wrong symptom code, and one undocumented masking behavior.**
+**Module 2's verification does not specify the class it must exercise.** `:675-686` says "engine
+initializes and connects" and delegates the code to
+`generate_scaffold(language=…, workflow='initialize')`. That scaffold's snippets cover factory and
+environment lifecycle (verified 2026-07-28: `abstract_factory`, `abstract_factory_with_config_id`,
+`engine_priming`, `factory_destroy`, `purge_repository`, `signal_handler`,
+`sz_engine_config_ini_to_json`), so the generated check *can* create an engine — but the skill's
+wording does not require it, and `:43`/`:686`'s success indicators are satisfied by a weaker probe.
 
-- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md:592` names `SENZ2027` as the symptom
-  of a wrong SUPPORTPATH. `SENZ2027` is otherwise used across the skills only as the generic
-  *example* of a SENZ code in the error-handling routing blocks (`module-01`…`module-07` SKILL.md,
-  each at "**SENZ error code** … e.g. `SENZ2027`"), so `:592` is the one place it is asserted as a
-  specific diagnosis — and that assertion does not match the observed failure.
-- Nothing anywhere states that `SzProduct` succeeds while `SzEngine`/`SzDiagnostic` fail under a bad
-  SUPPORTPATH. Without it, an SDK-works check has no reason to exercise an engine call.
+**Module 3 System Verification does not close the gap either.** Its phase 1 begins at an MCP
+connectivity check (`phase1-verification.md:77`) and its next step generates synthetic records
+(`:109`); no step between them exercises SDK initialization, so a masked-through install survives
+into data loading (confirmed by grep: `SzProduct`, `SzEngine` and `SzAbstractFactory` appear nowhere
+in that module).
 
-**The verification steps that would catch it do not require an engine call.** Module 2's Step 9
-(`:635-644`) tests the database connection through
-`generate_scaffold(language=…, workflow='initialize')` and states its success indicator as "engine
-initializes and connects without errors" — the right intent, but nothing pins which class the check
-must exercise, so a scaffold or a shortcut that calls only `SzProduct` satisfies the wording while
-proving nothing about SUPPORTPATH. Module 3 System Verification's phase 1 begins at an MCP
-connectivity check (`phase1-verification.md:77`) and mentions no SDK-initialization probe at all
-(grep finds no `SzProduct`, `SzEngine` or `SzAbstractFactory` in that module), so the masked failure
-survives to the first real engine call.
-
-**Verification status.** The reporting session set SUPPORTPATH to the verified sibling directory per
-the skill's instruction, so the damaging path was never hit — the error-code and masking details were
-noted while writing the configuration rather than observed as a live failure. Confirm both against
-`explain_error_code('SENZ7426')` and the MCP server's SUPPORTPATH documentation at implementation
-time; state the code as observed-on (SDK 4.3.3, Win64) rather than as the universal symptom, and do
-not drop `SENZ2027` unless the server contradicts it (INV-080).
+**The diagnostic the plugin already names is correct but under-explained.** `:592` says
+"initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong)". `SENZ2027` is right — see the
+evidence section — but the text stops at the code. It does not carry the FAQ's actual finding (the
+runtime **data directory** is missing), which is the sentence that turns the error into an action,
+and which lines up exactly with the Windows/Scoop sibling-directory case the `Test-Path` check at
+`:598-630` already handles.
 
 ## Proposed change
 
-1. **Broaden the symptom at `:592`.** State that a wrong SUPPORTPATH can surface as `SENZ7426`
-   (observed on SDK 4.3.3, Win64) as well as `SENZ2027`, sourcing both from
-   `explain_error_code` rather than asserting them. Prefer "can surface as" to naming one code, since
-   the point of the sentence is "do not guess these paths", not error-code trivia.
-
-2. **Add the masking warning explicitly** next to the Windows SUPPORTPATH check (`:598-630`):
-   **`SzProduct` calls succeed while `SzEngine` and `SzDiagnostic` calls fail** under a bad
-   SUPPORTPATH, so a version check does not validate the configuration and a green version print is
-   not evidence of a working install.
-
-3. **Require the SDK-initialization check to exercise an engine call.** Pin Module 2's Step 9
-   (`:635-644`) and its success criteria (`:650-656`) to an `SzEngine` (or `SzDiagnostic`) call, not
-   only `SzProduct.getVersion()`, so a bad SUPPORTPATH fails at the verification step where it is
-   diagnosable and one step from its cause. Keep the call MCP-generated
-   (`generate_scaffold(workflow='initialize')`) — this constrains which class the generated check must
-   touch, not how the code is obtained (INV-080), and it stays language-agnostic because every binding
-   has both classes.
-
-4. **Cover it in System Verification too.** Module 3 verifies the full setup end-to-end; its first
-   SDK-touching step should fail loudly on an engine-initialization error and route via
-   `explain_error_code`, so a masked-through install cannot reach data loading.
+1. **Require the verification to exercise an engine-class call.** In Step 9, state that the check
+   MUST create and use an `SzEngine` (or `SzDiagnostic`) — not only `SzProduct.getVersion()` — so a
+   configuration that cannot initialize fails at the step designed to catch it. Keep the code
+   MCP-generated (`generate_scaffold(workflow='initialize')`); this constrains **which class the
+   generated check must touch**, not how the code is obtained (INV-080). Update the success
+   indicators at `:43` and `:686` so they cannot be satisfied by a version probe.
+2. **Say why a version check is insufficient**, in the terms the FAQ supports: the libraries and the
+   support data can be present independently, so proving the SDK imports does not prove the engine can
+   initialize. Do **not** assert the stronger per-class claim (that `SzProduct` succeeds while every
+   `SzEngine`/`SzDiagnostic` call fails) — no MCP source states it; see the evidence section.
+3. **Carry the real diagnostic next to the SUPPORTPATH check.** At `:592` and in the Windows block at
+   `:598-630`, add the FAQ's finding: `SENZ2027` with "GNR data files failed to load" means the
+   runtime **data directory** is not where the configuration points — which is the Scoop
+   sibling-directory case that block already fixes. Quote it as MCP-sourced with its date, and keep
+   `explain_error_code` as the first call for any SENZ code (INV-080).
+4. **Do not name `SENZ7426`.** It is a transliteration error, unrelated to SUPPORTPATH (see the
+   evidence section). A test should assert the plugin does not tie it to SUPPORTPATH, so the retracted
+   claim cannot be reintroduced.
 
 ## Acceptance criteria
 
-- [ ] `module-02-sdk-setup/SKILL.md` names `SENZ7426` alongside `SENZ2027` as a possible wrong-SUPPORTPATH
-      symptom, attributed to its observed SDK version and platform rather than stated universally.
-- [ ] The Windows SUPPORTPATH block states that `SzProduct` succeeds while `SzEngine`/`SzDiagnostic`
-      fail, and that a version check therefore does not validate SUPPORTPATH.
-- [ ] Module 2's SDK/database verification exercises an `SzEngine` (or `SzDiagnostic`) call; a
-      configuration with a wrong SUPPORTPATH fails at that step rather than at the first data
-      operation.
-- [ ] Module 3 System Verification reports an engine-initialization failure explicitly and routes it
-      through `explain_error_code`.
-- [ ] Both error codes and the masking behavior are confirmed against the MCP server at implementation
-      time; nothing about SENZ codes is asserted from training data (INV-080).
-- [ ] The existing `Test-Path` sibling-directory check and its Scoop rationale are unchanged — this
-      spec adds to it and removes nothing.
+- [ ] Module 2's Step 9 requires an `SzEngine` or `SzDiagnostic` call, and its success indicators
+      (`:43`, `:686`) cannot be satisfied by an `SzProduct`-only probe.
+- [ ] The verification code is still obtained from MCP rather than hand-written (INV-080).
+- [ ] Module 2 states that libraries and support data can be present independently, so a version
+      query does not validate the engine — without asserting the unverified per-class masking claim.
+- [ ] `SENZ2027`'s entry names the runtime data directory as the thing to check, quoted from
+      `search_docs` with its verification date, and `explain_error_code` remains the first call.
+- [ ] The existing Windows `Test-Path` SUPPORTPATH check and its Scoop rationale are unchanged — this
+      spec adds to them and removes nothing.
+- [ ] `SENZ7426` is not presented anywhere as a SUPPORTPATH symptom, and a test asserts it.
+- [ ] Module 3's phase 1 reports an SDK/engine initialization failure explicitly and routes it via
+      `explain_error_code`, so a masked-through install cannot reach data loading.
+- [ ] Every Senzing fact added carries its provenance (tool, parameters, server version, date) and
+      none is asserted from training data or from this spec's earlier version (INV-080, INV-169).
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md): the
-      SUPPORTPATH check stays Windows-gated as it is today, while the "exercise an engine call"
-      requirement applies on every platform and in every binding.
+      SUPPORTPATH `Test-Path` check stays Windows-gated as today, while "exercise an engine call"
+      applies on every platform and in every binding, since each has both classes.
 
 ## Affected files
 
-- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — `:592` (symptom code), `:598-630`
-  (the masking warning next to the SUPPORTPATH check), `:635-644` and `:650-656` (Step 9 and success
-  criteria: exercise an engine call).
-- `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md` — the first
-  SDK-touching step: fail loudly on engine-initialization failure and route via `explain_error_code`.
-- `tests/` — assert the skill names both codes and that the verification step requires an engine-class
-  call.
+- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — `:592` (the diagnostic), `:598-630`
+  (the Windows SUPPORTPATH block), `:675-686` (Step 9) and the success indicators at `:43` / `:686`.
+- `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md` — an
+  initialization failure is reported explicitly and routed via `explain_error_code`.
+- `tests/` — assert the engine-class requirement, the `SENZ2027` diagnostic wording, and that
+  `SENZ7426` is never tied to SUPPORTPATH.
 
 ## Source
 
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "SUPPORTPATH failure presents as SENZ7426 with
   SzProduct still succeeding — documented code is SENZ2027" (2026-07-28, Module SDK setup;
-  `Source: self-observed (assistant retrospective)`; `Routing: plugin`;
-  `Upstream: not applicable`)
+  `Source: self-observed (assistant retrospective)`; `Routing: plugin`; `Upstream: not applicable`).
+  The entry itself recorded that the failure "was not hit in its damaging form" and that the
+  error-code and masking details "come from the SDK's documented behavior for that path and were noted
+  while writing the configuration" — i.e. inference, not observation. That caveat is why the
+  re-verification below matters, and it was under-weighted when this spec was first written.
 - Priority: Medium
-- Related specs: `specs/auto-detect-platform.md`,
-  `specs/artifact-level-verification-for-deliverables.md` (INV-129 — verify the thing, not the exit
-  status; this is its SDK-install analogue),
+- MCP re-check: server **1.32.1**, 2026-07-28 — **the entry's central claim is refuted; the plugin was
+  already correct.** `explain_error_code('SENZ7426')` → `EAS_ERR_XLITERATOR_FAILED: Transliteration
+  failed`, causes listed as malformed input data, missing `DATA_SOURCE`/`RECORD_ID`, invalid JSON
+  encoding — nothing about SUPPORTPATH. `explain_error_code('SENZ2027')` →
+  `EAS_ERR_PLUGIN_INIT: Plugin initialization error`, and `search_docs` returns the FAQ quoted above
+  tying it to a missing runtime data directory. The masking claim is neither confirmed nor refuted by
+  any MCP source.
+- Upstream: not applicable (plugin-side)
+- Related specs: `specs/sdk-guide-configure-unseeded-datastore.md` (the sibling Module 2
+  configure-step defect, and the `SENZ7221` precedent for an error whose own guidance does not name
+  its cause), `specs/artifact-level-verification-for-deliverables.md` (INV-129 — verify the thing,
+  not the exit status; this is its SDK-install analogue),
   `specs/mcp-grounding-in-every-skill.md` (INV-080),
-  `specs/module02-postgres-credentials-hardening.md` (the sibling Module 2 hardening),
-  `specs/windows-powershell-encoding-and-syntax.md` (the other Windows findings from this session)
+  `specs/export-related-entities-is-flag-conditional.md` (INV-169 — the rule this spec's first
+  version violated)
+
+## What changed in this spec, and why
+
+Rewritten 2026-07-28 after `implement-spec`'s Step 3.3 re-verification refuted its central claim.
+The maintainer chose to route it back for rewrite rather than implement a partial version.
+
+**Dropped — `SENZ7426` as a SUPPORTPATH symptom.** The first version asked to broaden `:592` to name
+`SENZ7426` "as well as `SENZ2027`", on the strength of the feedback entry. Verified 2026-07-28 on
+server 1.32.1, `SENZ7426` is `EAS_ERR_XLITERATOR_FAILED: Transliteration failed`, documented with
+input-data causes; no MCP source connects it to SUPPORTPATH. Meanwhile `SENZ2027`
+(`EAS_ERR_PLUGIN_INIT`) **is** the documented missing-GNR-data symptom. The plugin's existing text
+was correct, and implementing the original spec would have introduced a false Senzing fact — the
+failure INV-169 exists to prevent. Criterion 6 above now guards against reintroducing it.
+
+**Weakened — the masking claim.** The first version asked the plugin to state that `SzProduct`
+succeeds while every `SzEngine`/`SzDiagnostic` call fails. No MCP source states that. What the FAQ
+does support is the weaker and sufficient point now in change 2: libraries and support data can be
+present independently, so a version query does not validate the engine.
+
+**Kept — the engine-call requirement.** This was the first version's item 3 and the part it called
+"the important one". It is sound independently of which error code appears: a version probe is a
+weaker check than an engine call, so the step meant to catch a bad configuration should make one.
+
+**Added — the FAQ diagnostic.** Found by the same re-verification and absent from the first version:
+`SENZ2027` + "GNR data files failed to load" means the runtime data directory is missing, which is
+more actionable than the bare code and matches the Scoop sibling-directory case the Windows block
+already handles.
