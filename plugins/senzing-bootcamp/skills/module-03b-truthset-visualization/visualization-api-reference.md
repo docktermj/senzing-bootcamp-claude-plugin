@@ -278,7 +278,31 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
-> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]` |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**dump-confirmed on SDK 4.3.3, 2026-07-28 — see the caution below; NOT in `response_schemas`**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
+> | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
+>
+> ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
+> `get_sdk_reference(topic='response_schemas', filter='getEntity')` lists per-record source-value
+> paths under the get_entity response — `RESOLVED_ENTITY.RECORDS[].JSON_DATA.ADDR_CITY`,
+> `.PRIMARY_NAME_FIRST`, `.DATE_OF_BIRTH` and siblings — but **no entity-family flag produces them**.
+> The flag that does, `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`, reports
+> `applies_to: ["get_record"]` and is a member of `SZ_RECORD_DEFAULT_FLAGS` (both re-verified
+> 2026-07-28). A viewer written against the documented get_entity paths therefore prints
+> "(no JSON_DATA returned for this record)" for **every** record — the silent-blank failure mode,
+> against a database with records loaded — because a wrong path yields null rather than an error.
+> This is the one place where the authoritative reference is the thing that misleads you, so it is
+> called out rather than left to be re-derived.
+>
+> **For per-record source values, prefer the entity family — it needs no second call.** The same
+> get_entity schema documents `RESOLVED_ENTITY.RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` (e.g.
+> `ATTRIBUTES.ADDR_CITY`, `ATTRIBUTES.PRIMARY_NAME_FIRST`, `ATTRIBUTES.DATE_OF_BIRTH`) plus
+> `RECORDS[].UNMAPPED_DATA.*`, and `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` — *"include full
+> feature details at the record level of an entity response"* — lists `get_entity_by_entity_id`,
+> `get_entity_by_record_id`, `search_by_attributes`, `why_*`, `find_path_*` and `find_network_*` in
+> its `applies_to` (verified 2026-07-28). These are the **mapped** attributes per feature, not the raw
+> record as loaded, so reach for `get_record` + `SZ_RECORD_DEFAULT_FLAGS` only when you genuinely need
+> the raw `JSON_DATA` document — and know that costs one extra SDK call **per record**, which is worth
+> knowing before designing a viewer over a large entity set.
 >
 > **Watch this asymmetry — it is a silent-blank trap.** With `SZ_INCLUDE_MATCH_KEY_DETAILS`, the
 > match-key breakdown sits under a **differently named key** depending on the call: `why_*` puts a
@@ -297,13 +321,20 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > still leaves you guessing at the very field names you are about to parse. Dump one raw link
 > element and read its keys before writing the parser (INV-115).
 >
-> ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** A bootcamp
-> session reported that parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
-> `RELATED_ENTITY_ID` pairing used elsewhere yielded `None` for **both** endpoints while `MATCH_KEY`
-> rendered correctly, and that the endpoints were instead carried under normalized low-to-high keys.
-> That observation is **not MCP-confirmable** — it is not in `response_schemas` and not in the
-> indexed documentation — so treat it as a **warning about where to look, never as the field names
-> to code against**. Dump the element and use what is actually there.
+> ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** Two bootcamp
+> sessions now agree: parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
+> `RELATED_ENTITY_ID` pairing used elsewhere yields `None` for **both** endpoints while `MATCH_KEY`
+> renders correctly, and the endpoints are instead carried under normalized low-to-high keys. A live
+> dump on SDK 4.3.3 (2026-07-28) gave the element's full key set, now recorded in the table above:
+> `MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`,
+> `IS_AMBIGUOUS`.
+>
+> That list is **still not MCP-confirmable** — it is not in `response_schemas` and not in the indexed
+> documentation — so it is recorded as *what a dump found on one version*, and remains a **warning
+> about where to look, never as the field names to code against** (INV-080). It changes what you
+> expect, not whether you check: **dump the element and use what is actually there**, then compare
+> against the table. A mismatch means the shape moved and the table is stale — report it rather than
+> coding around it.
 >
 > ⛔ **A partially populated row is a wrong field name, not partial data.** This is the shape the
 > above failure takes: `MATCH_KEY` renders, both endpoints are blank, and the row looks like a

@@ -15,13 +15,20 @@ relationship Senzing could not fully describe rather than as a parsing bug. An
 all-blank row invites suspicion; a half-populated one does not, because the
 fields that did populate signal the parse worked.
 
-⛔ These tests deliberately do NOT assert any specific endpoint field name. The
-normalized low-to-high keys reported in that session are not in
-`response_schemas` and not in the indexed docs, so the plugin must not code
-against them — INV-080 forbids shipping an unverified Senzing fact, and this repo
-has already had to correct a spec that asserted one (`SZ_EXPORT_ALL_FLAGS does
-not exist`). What is asserted here is the *discipline*: dump the element, and
-treat a blank field as a wrong name.
+The endpoint keys were later confirmed by a live dump on SDK 4.3.3 (2026-07-28):
+`MIN_ENTITY_ID` / `MAX_ENTITY_ID`, alongside `MATCH_LEVEL_CODE`, `MATCH_KEY`,
+`ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS`. They are now recorded in the
+contract — but **still marked dump-confirmed rather than MCP-sourced**, because
+they remain absent from `response_schemas` and from the indexed docs. INV-080
+forbids shipping an unverified Senzing fact as the name to code against, and this
+repo has twice had to retract an over-generalized claim (`SZ_EXPORT_ALL_FLAGS does
+not exist`, and phase D's export/`RELATED_ENTITIES` absolute — INV-169). So the
+keys tell a reader what to *expect*; the dump still decides.
+
+What these tests assert is therefore both halves: the *discipline* (dump the
+element, treat a blank field as a wrong name, never present an unconfirmed name as
+authoritative) and the *record* (the dump-marked key list, and the `JSON_DATA`
+trap where the authoritative reference is itself what misleads).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -132,6 +139,106 @@ class NoUnverifiedFieldNameIsShipped(unittest.TestCase):
 
     def test_the_reader_is_told_to_use_what_is_actually_there(self):
         self.assertRegex(flat(CONTRACT), r"use what is actually there")
+
+
+
+
+class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
+    """Closing the criterion `network-link-fields-...` deliberately left open.
+
+    That spec shipped the defence without the datum, because its implementation
+    environment had no loaded engine, and said so: "someone with a loaded engine
+    should dump one link element, confirm the keys, and promote the caution to a
+    documented field list marked verified-when." That dump has now happened.
+    """
+
+    def test_the_element_key_set_is_documented(self):
+        text = flat(CONTRACT)
+        for key in (
+            "MIN_ENTITY_ID",
+            "MAX_ENTITY_ID",
+            "MATCH_LEVEL_CODE",
+            "MATCH_KEY",
+            "ERRULE_CODE",
+            "IS_DISCLOSED",
+            "IS_AMBIGUOUS",
+        ):
+            with self.subTest(key=key):
+                self.assertIn(key, text)
+
+    def test_the_keys_carry_their_provenance_and_version(self):
+        self.assertRegex(
+            flat(CONTRACT),
+            r"dump-confirmed on SDK 4\.3\.3",
+            "a fact that is not MCP-sourced must say how and when it was established",
+        )
+
+    def test_the_keys_are_still_marked_not_mcp_sourced(self):
+        """INV-080 does not relax because a dump agreed with a report."""
+        self.assertRegex(flat(CONTRACT), r"NOT in `response_schemas`|not MCP-confirmable")
+
+    def test_the_dump_requirement_survives_the_documentation(self):
+        """Documented keys are an expectation to check, not a licence to skip the dump."""
+        self.assertRegex(
+            flat(CONTRACT), r"dump the element and use what is actually there"
+        )
+
+    def test_a_mismatch_is_reported_rather_than_coded_around(self):
+        self.assertRegex(flat(CONTRACT), r"the table is stale|report it rather than coding")
+
+    def test_the_discover_step_points_at_the_recorded_keys(self):
+        text = flat(DISCOVER)
+        self.assertIn("MIN_ENTITY_ID", text)
+        self.assertRegex(text, r"dump-confirmed rather than MCP-sourced")
+
+
+class TheJsonDataTrapIsRecorded(unittest.TestCase):
+    """A documented path the documented method cannot return.
+
+    `response_schemas` for get_entity lists `RECORDS[].JSON_DATA.*`, but the flag
+    that produces `JSON_DATA` reports `applies_to: ["get_record"]` — so a viewer
+    built on the documented paths renders blank for every record, against a loaded
+    database. Both halves re-verified against the live server 2026-07-28.
+    """
+
+    def test_the_contract_states_json_data_is_get_record_only(self):
+        self.assertRegex(
+            flat(CONTRACT),
+            r"`JSON_DATA` is `get_record`-only",
+            "the trap must be stated where a reader looks up response shapes",
+        )
+
+    def test_the_producing_flag_and_its_applies_to_are_named(self):
+        text = flat(CONTRACT)
+        self.assertIn("SZ_ENTITY_INCLUDE_RECORD_JSON_DATA", text)
+        self.assertRegex(text, r'applies_to: \["get_record"\]')
+
+    def test_the_contract_warns_the_reference_itself_misleads(self):
+        """The point of the entry: the authoritative source is the wrong one here."""
+        self.assertRegex(
+            flat(CONTRACT),
+            r"reference is the thing that misleads|lists per-record source-value paths",
+        )
+
+    def test_the_obtainable_alternative_is_named_with_its_flag(self):
+        text = flat(CONTRACT)
+        self.assertRegex(text, r"RECORDS\[\]\.FEATURES\.<TYPE>\[\]\.ATTRIBUTES")
+        self.assertIn("SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS", text)
+
+    def test_the_alternative_is_not_claimed_to_be_identical_to_json_data(self):
+        """ATTRIBUTES are mapped feature values; JSON_DATA is the raw loaded record."""
+        self.assertRegex(
+            flat(CONTRACT),
+            r"mapped\*\* attributes per feature, not the raw record as loaded",
+        )
+
+    def test_the_per_record_cost_is_stated(self):
+        self.assertRegex(flat(CONTRACT), r"one extra SDK call \*\*per record\*\*")
+
+    def test_the_discover_step_carries_the_trap(self):
+        text = flat(DISCOVER)
+        self.assertRegex(text, r"JSON_DATA")
+        self.assertIn("SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS", text)
 
 
 if __name__ == "__main__":
