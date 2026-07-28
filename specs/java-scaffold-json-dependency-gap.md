@@ -72,12 +72,29 @@ Plugin-side (what this spec delivers):
 5. **Do not silently strip the import.** The scaffold is authoritative for SDK usage; the deviation must be
    visible in the code the bootcamper takes home, not hidden.
 
-Upstream (out of scope here, worth filing):
+Upstream (out of scope here — **FILED 2026-07-28**):
 
-6. Have `generate_scaffold` / `sdk_guide` state each snippet's **external dependencies** alongside the code.
-   The response already includes a `dependencies` field for `com.senzing:sz-sdk-java`; JSON-P belongs there
-   when a snippet uses it. Ideally, offer a dependency-free variant of the Java snippets. Note that the
-   Senzing MCP server has a `submit_feedback` tool — the natural channel for this.
+6. Have `generate_scaffold` / `sdk_guide` state each snippet's **external dependencies** alongside the code,
+   so a caller knows a JSON-P implementation is required before compiling. Ideally, offer a dependency-free
+   variant of the Java snippets.
+
+   **Correction applied 2026-07-28.** This item previously asserted that the response "already includes a
+   `dependencies` field for `com.senzing:sz-sdk-java`" and that JSON-P belongs there. Verified against
+   server version 1.32.1: **neither tool returns a `dependencies` field.**
+   `sdk_guide(topic='load', language='java', record_count=1000)` returns `code`, `notes`, `anti_patterns`,
+   `next_steps`, and `compatibility_notes` (licensing, hardware sizing, mapping only); `generate_scaffold`
+   returns `access_steps`, `snippets`, and `anti_patterns`. The ask is therefore to **add** dependency
+   reporting, not to populate an existing field — any implementation of this spec must not assume the field
+   exists.
+
+   **Upstream request FILED 2026-07-28** via `submit_feedback` as category `feature`, at the maintainer's
+   direction, after the exact message text was reviewed and approved. The message named both tools, quoted
+   the `import javax.json.*;` / `Json.createReader(...)` usage in `LoadViaFutures.java` against its "real,
+   compilable code" label, stated the server version, scoped the install evidence to the single workstation
+   checked, and carried no hostname, username, email, or path (INV-065 discipline). It was reworded first so
+   it no longer rests on the corrected `dependencies`-field premise above. Submissions are anonymous — the
+   server records no sender identity, so there is no reply channel; the plugin-side guidance in items 1-5
+   stands as the mitigation until upstream lands, and should be trimmed then.
 
 ## Acceptance criteria
 
