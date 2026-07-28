@@ -632,6 +632,46 @@ paths without modification.
 
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 
+## Step 8a: Seed the default configuration (a freshly created datastore has none)
+
+⛔ **A datastore you just schema-created has NO registered Senzing configuration, and the
+data-source registration snippet assumes one exists.** Do this before Step 9 and before any
+data-source registration.
+
+`sdk_guide(topic='configure')`'s primary `RegisterDataSources` snippet opens by reading the default
+config id and building a config **from** it. On an unseeded datastore there is nothing to read, and
+the attempt fails with
+
+```text
+SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID
+```
+
+The error names no remedy — `explain_error_code('SENZ7221')` returns "No engine configuration
+registered with data ID" and resolution steps about paths, connection strings and initialization,
+none of which is the actual fix. So this is easy to chase in the wrong direction; seed first and it
+never arises.
+
+**How to seed — take the code from MCP, do not hand-write it (INV-080):**
+
+1. Call `sdk_guide(topic='configure', language='<chosen_language>')`.
+2. In the response's `alternatives`, take the **`init_default_config`** entry — that is the seeding
+   snippet. Verified on server 1.32.1 (2026-07-28), its sequence is: read the default config id →
+   if none, `create_config_from_template()` → `set_default_config(...)`, which registers the new
+   config and makes it default.
+3. Run it, then proceed to register data sources with the primary snippet, which now has a config
+   to build from.
+
+⚠️ **`generate_scaffold(workflow='initialize')` does not do this.** Its snippets cover factory and
+environment lifecycle — creation, priming, destroy, purge, signal handling — and none of them seeds a
+configuration, even though `get_capabilities` names that workflow for "schema and default config must
+exist". Use it for Step 9's connection test; use `init_default_config` for seeding.
+
+**Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
+here and report it — a missing config surfaces at this step as one clear failure, or later as
+`SENZ7221` several steps from its cause.
+
+**Checkpoint:** write step 8a to `config/bootcamp_progress.json`.
+
 ## Step 9: Test Database Connection
 
 Use `generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')`
@@ -671,6 +711,12 @@ connects without errors.
 ## Troubleshooting
 
 - Installation fails? Use `explain_error_code` for SENZ errors.
+- **`SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID`? The datastore has no default configuration —
+  seed one per Step 8a.** Call `explain_error_code('SENZ7221')` first as always (INV-080), but know
+  that its resolution steps (verify paths, check the connection string, ensure the engine is
+  initialized) do **not** name this cause, so do not be pulled toward re-checking paths that are
+  already correct. This is the expected symptom on a freshly schema-created datastore whose config
+  was never seeded, and it can appear several steps after the omission.
 - Platform not supported? Use `search_docs` for alternative installation methods.
 - Database errors? Confirm path requirements against the file placement rules in ground-rules
   (the Kiro `FILE_STORAGE_POLICY.md` reference is a later porting phase).

@@ -128,3 +128,37 @@ primary snippet on an unseeded datastore or state the precondition in the notes,
   `specs/reconcile-sdk-guide-license-note-with-detected-limit.md` (INV-150 — the precedent for a
   detected local condition governing over generic MCP guidance),
   `specs/supportpath-failure-code-and-szproduct-masking.md` (the sibling documented-symptom mismatch)
+
+## Deviations from this spec, and why (2026-07-28)
+
+**One of the two MCP routes this spec named for the seeding code does not supply it.**
+
+`## Proposed change` item 3 said to obtain the seeding code from "`sdk_guide(topic='configure')`'s
+`init_default_config` alternative, **or** `generate_scaffold(workflow='initialize')`". Re-verified at
+implementation time against server 1.32.1: `generate_scaffold(workflow='initialize', language='python')`
+returns ten snippets covering factory and environment **lifecycle** — `abstract_factory`,
+`abstract_factory_with_config_id`, `engine_priming`, `factory_destroy`, `purge_repository`,
+`signal_handler`, `sz_engine_config_ini_to_json` and variants — and **none of them seeds a
+configuration**. Routing a reader there for seeding would have sent them to the wrong place.
+
+The other route is correct and is what shipped. `sdk_guide(topic='configure')`'s `init_default_config`
+alternative (`python/configuration/init_default_config.py`) does seed: it reads the default config id,
+and where there is none, calls `create_config_from_template()` then `set_default_config(...)`.
+The shipped guidance names that route and explicitly rules the other one out.
+
+**A second server-side inconsistency, found while checking the above and not yet filed.**
+`get_capabilities`'s "Get Started with the SDK" workflow states: *"PREREQUISITE: Database schema and
+default config must exist before application code runs. Use `generate_scaffold` with
+`workflow='initialize'` for the admin bootstrap code."* But that workflow returns no config-seeding
+snippet, so the one place the server states this precondition points at the one tool call that does not
+satisfy it. Worth reporting upstream alongside the two findings already sent for this entry.
+
+**Retrieval note (INV-160 working as designed).** Confirming `init_default_config.py` hit the
+`find_examples` file-retrieval defect live: the call returned `content: ""` with
+`content_length: 1047` and `truncated: false`. Per INV-160 that is a failed retrieval, not an empty
+file, so the content came from the response's own `raw_url` fallback rather than being read as absent.
+
+**Acceptance criteria status.** All met except the end-to-end one — "a run against a freshly
+schema-created SQLite database completes configuration without hitting `SENZ7221`" — which needs a live
+Senzing install and datastore this environment does not have. It is **not runtime-verified**; the
+guidance it governs is in place and covered by `tests/test_config_seeding_guidance.py`.

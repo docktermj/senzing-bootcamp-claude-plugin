@@ -44,6 +44,15 @@ registration via `sdk_guide(topic='configure')` (in the `programming_language`),
 generated file under `src/` (e.g. `src/load/`) per INV-018 — it loads the current default config,
 registers the code, and sets it as the new default, idempotently — and run it first. Never rely on Module 2's default config, which predates data collection.
 
+⚠️ **If this phase's sandbox database was created fresh, seed its default configuration first.** The
+registration snippet reads the current default config and builds from it, so against a
+just-schema-created datastore it fails with `SENZ7221
+EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID` — a different failure from the `SENZ2207` above, and one
+whose own `explain_error_code` guidance does not name the cause. Seed via the **`init_default_config`**
+alternative in the same `sdk_guide(topic='configure')` response (see
+`../module-02-sdk-setup/SKILL.md` → Step 8a), then register. Where `mapping_workflow` step 6 creates
+and initializes the sandbox database itself, this is already handled — confirm rather than assume.
+
 **Checkpoint:** write step 21a.
 
 ### 22. Test data loading
