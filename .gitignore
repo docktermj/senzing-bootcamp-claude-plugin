@@ -7,4 +7,6 @@ __pycache__/
 # Maintainer feedback-to-specs input (local triage only; the specs it produces are committed).
 # The glob covers the numbered variants a multi-bootcamp triage round produces
 # (…_01.md, …_13.md), not just the bare filename.
+# Root-anchored on purpose: the transient working copy is ignored, while the processed
+# archive under feedback/ IS tracked, so a raw report survives an overwrite.
 /SENZING_BOOTCAMP_PLUGIN_FEEDBACK*.md

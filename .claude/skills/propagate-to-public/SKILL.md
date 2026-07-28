@@ -41,6 +41,9 @@ than being hand-run each time.
   `settings.local.json`. (The plugin's own `plugins/senzing-bootcamp/skills/`
   *is* the bootcamp payload and **is** propagated — do not confuse the two.)
 - `specs/**` — spec-driven development artifacts.
+- `feedback/**` — the processed-feedback archive and its ledger. Carries raw bootcamper
+  text (usernames, workstation details, dataset names), so it is **never** mirrored to a
+  public repo. Committed in this repo for durability; excluded here for privacy.
 - `MIGRATION.md`, `scripts/sync-check.sh` (all of top-level `scripts/`),
   `.sync-state.json` — Kiro-Power → Claude-plugin sync infrastructure.
 - `resources/` — maintainer-only brand assets

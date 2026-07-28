@@ -15,18 +15,19 @@ developer (or a follow-up session) can act on.
 **Feedback is a snapshot; the server is not.** Every entry records how Senzing and
 its MCP server behaved on the day it was written, and the server is released
 independently of this plugin. So triage always re-asks the server before writing
-(Step 4): a defect may already be fixed, a claim may have been wrong all along, or
+(Step 5): a defect may already be fixed, a claim may have been wrong all along, or
 the server may now contradict guidance the plugin still ships. Where the current
-server is itself the defect, the finding goes back to Senzing (Step 7).
+server is itself the defect, the finding goes back to Senzing (Step 8).
 
 It is unrelated to the bootcamper-facing `/bootcamp-feedback` flow, which only
 *captures* feedback. This skill *consumes* that captured feedback.
 
 ## Scope and guardrails
 
-- **Write only under `specs/`.** Never modify plugin code, hooks, scripts, skills, or the feedback file itself. Generating specs is the deliverable; implementing them is a separate, later step. The single permitted action outside `specs/` is the upstream notification in Step 6 — an MCP call, not a file write, and gated on the maintainer's explicit yes.
+- **Write only under `specs/` and `feedback/`.** Never modify plugin code, hooks, scripts or skills. Generating specs is the deliverable; implementing them is a separate, later step. Exactly three actions reach outside `specs/`: appending to `feedback/PROCESSED.jsonl` and moving the processed file into `feedback/` (Step 9), renaming a duplicate candidate in place (Step 3), and the upstream notification in Step 8 — an MCP call, not a file write, and gated on the maintainer's explicit yes. **Never edit the content of a feedback file**, archived or not; the archive is a record.
+- **Never process the same entry twice.** Identity is per entry and content-addressed (Step 3). A file whose entries are all in the ledger is a duplicate: rename it, report it, write nothing. A file with some new entries is triaged for those entries only.
 - **Never invent feedback.** Every spec must trace to a real entry in the feedback file. If an entry is too vague to spec, mark it *needs clarification* rather than guessing.
-- **Re-verify every Senzing fact against the live MCP server before writing a spec (Step 4).** Feedback is a snapshot of how the server behaved on the day it was filed, and the server ships independently of this plugin — so a spec written from the report alone can encode a defect that is already fixed, or miss that the server now contradicts the plugin. Never carry a Senzing fact from a feedback entry into a spec without re-asking the server (INV-080).
+- **Re-verify every Senzing fact against the live MCP server before writing a spec (Step 5).** Feedback is a snapshot of how the server behaved on the day it was filed, and the server ships independently of this plugin — so a spec written from the report alone can encode a defect that is already fixed, or miss that the server now contradicts the plugin. Never carry a Senzing fact from a feedback entry into a spec without re-asking the server (INV-080).
 - **Deduplicate.** If an existing spec already covers a feedback item, do not create a second one. Note it as already-tracked (and optionally enrich the existing spec).
 - **Respect the invariants.** Every generated spec references `@INVARIANTS.md` and must not propose anything that violates it (cross-platform Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/complete). If feedback conflicts with an invariant, say so in the spec instead of silently overriding it.
 
@@ -37,6 +38,11 @@ Resolve the feedback file in this order:
 1. An explicit path the maintainer gave (argument or message).
 2. `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` at the repo root.
 3. `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` (a bootcamper project's file, if copied into the repo).
+
+⛔ **`feedback/` is the archive, never a candidate.** Files under `feedback/` have already
+been processed (Step 9), and `*_DUPLICATE.md` files have already been rejected. Never resolve
+a candidate to either, even when the maintainer's argument points at one — say what it is and
+ask for the file they meant.
 
 If more than one candidate exists and none was named, ask which to use. If none is
 found, say so and stop — there is nothing to analyze.
@@ -73,13 +79,61 @@ bootcamper-reported items to the bootcamper's experience, and self-observed ones
 what the assistant hit, without implying a user complained. Record the value in the
 spec's `## Source` block so the provenance survives into implementation.
 
-## Step 3: Load triage context (do this before writing anything)
+## Step 3: Check whether these entries have already been processed
+
+Feedback files arrive from **multiple bootcampers at multiple times**, and the file is
+gitignored at the repo root, so the same content reaches this skill more than once. The
+realistic collision is **not** the identical file twice — it is a file that *overlaps* a
+previous one, because a bootcamper's project accumulates entries during a run and a later
+copy carries the earlier entries **plus** new ones.
+
+So identity is **per entry**, not per file, and it is content-addressed: an entry's id is
+`sha256` of its normalized text. Whole-file comparison gets the overlap case wrong in both
+directions — a byte-compare calls the file new and re-specs everything, and a whole-file
+duplicate verdict would discard the genuinely new entries.
+
+Run the bundled helper (it lives beside this skill; the hashing and normalization live in
+code so a later run cannot drift and silently re-process everything):
+
+```bash
+python3 .claude/skills/feedback-to-specs/feedback_ledger.py check <candidate.md>
+```
+
+It prints every entry with its id and status, and exits **0** when some entries are new,
+**3** when every entry has already been processed, **1** on bad input. Act on the verdict:
+
+- **NEW** (no entry seen before) → triage the whole file. Continue to Step 4.
+- **PARTIAL** (some entries seen) → **triage only the new entries.** Do not re-analyze or
+  re-spec the known ones; name them in the Step 10 report with the spec each previously
+  produced, so the maintainer can see what was skipped and why. Continue to Step 4.
+- **DUPLICATE** (every entry seen) → **stop. Write no specs.** Run
+  `feedback_ledger.py commit <candidate.md>`, which renames the file in place to
+  `SENZING_BOOTCAMP_PLUGIN_FEEDBACK_<unixtime>_DUPLICATE.md` — the unixtime of the archive
+  it duplicates — and leaves the ledger untouched. Then tell the maintainer plainly: this
+  file is a duplicate, nothing was processed, here is the archive it duplicates and the
+  specs those entries already produced. Skip to Step 10 and report only that.
+
+Why normalization is part of the identity, not a nicety: a file re-saved on Windows can
+gain a UTF-8 BOM or CRLF line endings, and PowerShell can double-encode it outright — all
+of which change the bytes while the content is the same (see `ground-rules.md` → "Windows
+and PowerShell"). The helper strips the BOM, normalizes newlines, right-strips lines and
+collapses blank runs before hashing, so "same feedback, different bytes" is still a
+duplicate. It does **not** touch case or interior wording: a reworded entry is a new entry,
+which is the correct call — the maintainer should see a revised report.
+
+The ledger is `feedback/PROCESSED.jsonl`, append-only, one JSON object per processed entry:
+`entry_id`, `title`, `archive`, `archive_unixtime`, `processed` date, and `disposition`.
+The disposition is what makes it worth keeping — it records **which spec each entry
+produced**, or `already-tracked`, or `needs-clarification`, so an entry that legitimately
+produced no spec is never re-triaged forever.
+
+## Step 4: Load triage context (do this before writing anything)
 
 - **Read `specs/INVARIANTS.md`.** This is the ruleset every spec must respect.
 - **List and skim every existing `specs/*.md`.** Record each spec's title and the problem it covers so you can deduplicate. (For example, a feedback item about the write-gate blocking `/tmp/` paths is already covered by `specs/PreToolUseWriteError.md`.)
 - **Skim `specs/todo.md`** — the lightweight idea backlog, so you can route minor items there instead of into a full spec.
 
-## Step 4: Re-verify every Senzing fact against the live MCP server
+## Step 5: Re-verify every Senzing fact against the live MCP server
 
 **Do this before analyzing, and before writing anything.** The Senzing MCP server is
 versioned and released independently of this plugin, so an entry filed weeks or months
@@ -127,25 +181,25 @@ Rules for this step:
   write the spec with the fact marked "unverified — MCP unreachable at triage time" and
   say so in the report, so it can be re-checked before implementation.
 
-## Step 5: Analyze each item (go beyond the feedback text)
+## Step 6: Analyze each item (go beyond the feedback text)
 
 For every parsed item:
 
 1. **Classify** it: bug / false-positive, UX or wording, missing feature, invariant gap, documentation, or unclear.
 2. **Confirm the root cause in the codebase**, don't just restate the report. Open the code the feedback implicates — `plugins/senzing-bootcamp/hooks/`, `scripts/`, `skills/`, `commands/` — and verify what actually causes the symptom. Cite `file:line`. If you cannot confirm it, label the root cause "Unverified — needs investigation" rather than asserting one.
-3. **Reconcile the code against what Step 4 returned.** Where the plugin's text or code states a Senzing fact the server now answers differently, the plugin is the defect — even when the entry blamed the server, and even when the plugin's claim was correct when written. Check both directions: text the server contradicts, *and* a workaround the plugin still carries for a defect the server has since fixed.
-4. **Decide the routing** — `plugin` or `mcp-server` — from what Step 4 established, not from what the entry guessed. An entry may be routed `mcp-server` and still need a plugin spec (our reference should record the confirmed shape), and one routed `plugin` may turn out to be a server defect worth reporting upstream (Step 6).
-5. **Deduplicate** against existing specs (Step 3). Mark the item `already-tracked → specs/<file>.md` when covered.
+3. **Reconcile the code against what Step 5 returned.** Where the plugin's text or code states a Senzing fact the server now answers differently, the plugin is the defect — even when the entry blamed the server, and even when the plugin's claim was correct when written. Check both directions: text the server contradicts, *and* a workaround the plugin still carries for a defect the server has since fixed.
+4. **Decide the routing** — `plugin` or `mcp-server` — from what Step 5 established, not from what the entry guessed. An entry may be routed `mcp-server` and still need a plugin spec (our reference should record the confirmed shape), and one routed `plugin` may turn out to be a server defect worth reporting upstream (Step 8).
+5. **Deduplicate** against existing specs (Step 4). Mark the item `already-tracked → specs/<file>.md` when covered.
 6. **Group**: merge items that share one root cause or one fix into a single spec; keep unrelated items in separate specs. The number of specs per run is whatever the analysis warrants — one, several, or (if everything is already tracked or too vague) none.
 
-## Step 6: Write the spec(s)
+## Step 7: Write the spec(s)
 
 For each new spec, write `specs/<kebab-case-title>.md` using the template in
 `spec-template.md` (in this skill's directory). Rules:
 
 - **Pick a filename that does not collide** with an existing spec. Match the terse, developer-facing tone of the current specs.
 - **Ground it in code.** Root cause cites real `file:line`; affected-files lists real paths.
-- **Ground every Senzing fact in Step 4's result, with its provenance.** Name the tool and parameters that established it, the server version, and the date — e.g. "`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA')` reports `applies_to: ["get_record"]` (server 1.32.1, verified 2026-07-28)". Where the entry and the server disagree, state both and which governs. Where the fact is observation-only, mark it so.
+- **Ground every Senzing fact in Step 5's result, with its provenance.** Name the tool and parameters that established it, the server version, and the date — e.g. "`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA')` reports `applies_to: ["get_record"]` (server 1.32.1, verified 2026-07-28)". Where the entry and the server disagree, state both and which governs. Where the fact is observation-only, mark it so.
 - **Say when the current server changed the spec.** If re-verification narrowed, widened, redirected or cancelled what the entry asked for, put that in the spec rather than silently writing the corrected version — the next reader needs to know the report and the spec differ, and why.
 - **Make acceptance criteria observable and testable**, and always include a criterion that the change holds on Linux, macOS, and Windows and stays language-agnostic (the invariants). For a fact that only a live engine can confirm, say so in the criterion rather than writing one that cannot be run.
 - **Link the source**: name the feedback file, the entry title, its date, module, and priority.
@@ -153,9 +207,9 @@ For each new spec, write `specs/<kebab-case-title>.md` using the template in
 For minor items that don't warrant a full spec, propose a one-line addition to
 `specs/todo.md` (append only) and ask before writing it.
 
-## Step 7: Notify Senzing when the defect is theirs
+## Step 8: Notify Senzing when the defect is theirs
 
-An item belongs upstream when Step 4 confirms the **current** server is what is wrong —
+An item belongs upstream when Step 5 confirms the **current** server is what is wrong —
 a wrong or unobtainable documented path, a flag whose `applies_to` contradicts the
 schema, a missing response shape, guidance that produces code the SDK rejects. A plugin
 spec and an upstream report are not alternatives: file both when the plugin also needs to
@@ -188,7 +242,46 @@ record the confirmed behavior.
 is for evaluation licenses only; a defect report there is both wrong and a PII leak
 (INV-135).
 
-## Step 8: Report the triage
+## Step 9: Archive the processed file and record its entries
+
+**Do this only after the specs are written** (Step 7) and any upstream submission is
+settled (Step 8). If a run aborts before that, the candidate must still be exactly where it
+was — an archived input with no specs to show for it is the one outcome worse than
+re-processing.
+
+```bash
+python3 .claude/skills/feedback-to-specs/feedback_ledger.py commit <candidate.md> \
+  --disposition "<entry title>=specs/<file>.md" \
+  --disposition "<entry title>=already-tracked" \
+  --disposition "<entry title>=needs-clarification"
+```
+
+This moves the file to `feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK_<unixtime>.md` and
+appends one ledger line per **newly processed** entry. Entries this file carried that were
+already in the ledger are not re-recorded, and are reported as skipped.
+
+- **Pass a `--disposition` for every entry you triaged.** Without it the ledger records
+  `unrecorded`, the helper warns, and the ledger loses the thing that makes it useful — the
+  link from an entry to the spec it produced. Use the entry's title exactly as the `check`
+  output printed it.
+- **The archive is committed to git** (the root-anchored `.gitignore` rule does not cover
+  `feedback/`). That is deliberate: the root feedback file is transient and has been lost to
+  an overwrite before, and the specs quote entries only in part. Bootcamper text therefore
+  enters history permanently — usernames, workstation details, dataset names — which is
+  acceptable for this private development repo and is why `feedback/**` is on
+  `propagate-to-public`'s excluded list. Do not relax either half of that.
+- **Never edit an archived file or a ledger line.** Both are the record of what was
+  processed. The ledger is append-only and read **last-wins**, so a disposition recorded as
+  `unrecorded` (or recorded wrongly) is corrected by *appending*:
+  `feedback_ledger.py annotate <entry_id> "<disposition>"`. A correction to the *analysis* is a
+  new spec, never a rewritten entry.
+- **Quote a title exactly, or address the entry by id.** A `--disposition` key is matched
+  against the title as `check` printed it; titles containing `=` (e.g.
+  `sdk_guide(topic='configure') …`) are why the key is split on the **last** `=`, and why the
+  `entry_id` is accepted as a key. If the helper warns `unrecorded`, fix it with `annotate`
+  rather than leaving the ledger without the entry-to-spec link.
+
+## Step 10: Report the triage
 
 Present a compact table so the maintainer sees every item's disposition, including
 what the live server said about it:
@@ -202,6 +295,13 @@ what the live server said about it:
 | <title> | unclear | not checked | Needs clarification |
 
 State the server version every re-check ran against, once, above the table.
+
+**Name what was skipped as already-processed, and where the file went.** A PARTIAL run must
+list the known entries with the spec each previously produced — otherwise the maintainer
+cannot tell "we triaged 2 of 6" from "the file only had 2". Then give the archive path and
+the ledger line count from Step 9. For a DUPLICATE run this is the entire report: nothing
+was processed, here is the `_DUPLICATE` filename, here is the archive it duplicates, and
+here are the specs those entries already produced.
 
 Then list the spec files created (as clickable `specs/<file>.md` paths), note
 anything routed to `todo.md` or left for clarification, report each upstream
