@@ -18,6 +18,34 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## find-examples-file-retrieval-returns-empty-content
+
+- **Implemented:** 2026-07-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `specs/INVARIANTS.md`, `specs/find-examples-file-retrieval-returns-empty-content.md`
+- **Summary:** Added one bullet to the MCP-first invariant list in `ground-rules.md`, directly after the
+  tool-routing line it qualifies (a bullet in the existing list, not a new subsection, per the spec's
+  item 4). It routes a request for one specific file's source to the `raw_url` the search results already
+  carry rather than to `repo` + `file_path` retrieval, and states the durable rule: an empty `content`
+  alongside a non-zero `content_length` means the retrieval **failed**, regardless of `truncated: false`,
+  so the fallback is the response's own access path and the bootcamper is never told an example file is
+  empty on that basis. All six acceptance criteria verified: the `raw_url` preference and the
+  failed-retrieval rule are present verbatim; `grep -rnE "inline\s*[=:]\s*(true|True)" plugins/` returns
+  no match, so no plugin file adopts the undeclared `inline` parameter the server's own prose advertises
+  (the ~50 bare `inline` hits are the English word — `inline attribution`, `_md_inline_to_text`); the six
+  pre-existing search-mode call sites are untouched (`git diff --stat` → 1 file, 10 insertions,
+  0 deletions — the mention count rose to 7 only because the new bullet cites `find_examples(query=...)`
+  itself); the wording is dated and conditional ("currently returns", "this caution goes away when the
+  retrieval does") rather than asserting the upstream defect is permanent; and the note names no platform
+  and no language, satisfying INV-001/INV-002. Full suite green afterwards: 584 passed, 337 subtests,
+  including the seven test files that assert on `ground-rules.md`. The upstream half was filed the same
+  day via `submit_feedback` as category `bug` — the plugin cannot fix the server behavior, so this is the
+  guardrail, and it is written to be trimmed when the retrieval is fixed.
+- **Invariant established:** **INV-160** — a payload contradicting its own size/completeness metadata is a
+  failed retrieval, not an empty result; bounded against INV-149 (an empty result with no contradicting
+  metadata is coverage, not failure) and extending INV-136 from required parameters to undeclared ones.
+- **Commit:** uncommitted
+
 ## deep-dive-audit-2026-07-28
 
 - **Implemented:** 2026-07-28

@@ -102,3 +102,12 @@ Two parts, one outside this repository:
 - Related specs: `specs/java-scaffold-json-dependency-gap.md` (the report filed in the same pass, and the
   reason the scaffold was being read), `specs/mcp-grounding-in-every-skill.md` (the grounding rules this
   guardrail protects)
+
+## Invariants introduced
+
+- `INV-160` — Where an MCP tool's response carries both a payload field and metadata describing that
+  payload's size or completeness, a payload that contradicts its own metadata MUST be treated as a
+  **failed retrieval**, never as a real empty result; the documented access path (`raw_url`, or clone per
+  `access_steps`) is the fallback, an undeclared parameter is not, and the Bootcamper MUST NOT be told an
+  example file is empty on that basis. Bounded against INV-149: an empty result with no contradicting
+  metadata is coverage, not failure. (Recorded in `specs/INVARIANTS.md`.)

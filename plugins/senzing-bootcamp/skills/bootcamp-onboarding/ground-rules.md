@@ -94,6 +94,16 @@ steering files.)
   error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
+- **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
+  path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
+  the search results already carry rather than relying on `content` from a `repo` + `file_path`
+  retrieval: verified 2026-07-28 against server 1.32.1, that retrieval currently returns an
+  **empty `content`** while reporting a correct non-zero `content_length` and `truncated: false`.
+  ⛔ **An empty `content` is never evidence that the file is empty.** If `content` is empty while
+  `content_length` is non-zero, the retrieval **failed** — regardless of what `truncated` says —
+  so fall back to the `raw_url` (or the clone step the response's `access_steps` lists), and never
+  tell the bootcamper an example file is empty on that basis. Re-check when the server updates;
+  this caution goes away when the retrieval does.
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
