@@ -146,12 +146,25 @@ alternative (`python/configuration/init_default_config.py`) does seed: it reads 
 and where there is none, calls `create_config_from_template()` then `set_default_config(...)`.
 The shipped guidance names that route and explicitly rules the other one out.
 
-**A second server-side inconsistency, found while checking the above and not yet filed.**
+**A second server-side inconsistency, found while checking the above — filed upstream 2026-07-28.**
 `get_capabilities`'s "Get Started with the SDK" workflow states: *"PREREQUISITE: Database schema and
 default config must exist before application code runs. Use `generate_scaffold` with
 `workflow='initialize'` for the admin bootstrap code."* But that workflow returns no config-seeding
 snippet, so the one place the server states this precondition points at the one tool call that does not
-satisfy it. Worth reporting upstream alongside the two findings already sent for this entry.
+satisfy it.
+
+Confirmed **not** language-specific before reporting: `workflow='initialize'` returns
+factory/environment lifecycle snippets only in both bindings checked — Python's ten
+(`abstract_factory*`, `engine_priming`, `factory_destroy`, `purge_repository`, `signal_handler`,
+`sz_engine_config_ini_to_json`) and Java's three (`PurgeRepository`, `EnvironmentAndHubs`,
+`EnginePriming`). None registers a configuration or sets a default config id.
+
+Sent to Senzing 2026-07-28 via `submit_feedback` (`category='bug'`) as a follow-up to the SENZ7221
+report filed earlier the same day, with the maintainer's approval of the exact text. The submission is
+**anonymous** — the server captures no sender identity, so no follow-up on it is possible;
+`support@senzing.com` is the channel if it needs a conversation. The plugin-side guidance in this spec
+stands regardless of whether upstream acts: Step 8a routes seeding to `init_default_config` and
+explicitly rules out `workflow='initialize'`.
 
 **Retrieval note (INV-160 working as designed).** Confirming `init_default_config.py` hit the
 `find_examples` file-retrieval defect live: the call returned `content: ""` with
