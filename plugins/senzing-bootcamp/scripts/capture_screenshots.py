@@ -289,8 +289,68 @@ def _capture_selenium(url: str, out: Path) -> bool:
             pass
 
 
-def _chrome_exe():
-    for cand in (
+# Where Windows installers put Chrome and Edge, relative to an environment variable.
+#
+# Windows puts neither browser on `PATH`, so `shutil.which()` finds nothing while both
+# executables sit on disk — which is how a Windows 11 machine carrying Edge *and* Chrome
+# reported "No headless screenshot capability available" and lost every recap screenshot.
+# The variables are expanded at call time rather than hard-coded: the drive letter varies,
+# and `Program Files` is localized on non-English installs.
+_WINDOWS_BROWSER_PATHS = (
+    ("PROGRAMFILES", r"Google\Chrome\Application\chrome.exe"),
+    ("PROGRAMFILES(X86)", r"Google\Chrome\Application\chrome.exe"),
+    ("LOCALAPPDATA", r"Google\Chrome\Application\chrome.exe"),
+    ("PROGRAMFILES", r"Microsoft\Edge\Application\msedge.exe"),
+    ("PROGRAMFILES(X86)", r"Microsoft\Edge\Application\msedge.exe"),
+    ("LOCALAPPDATA", r"Microsoft\Edge\Application\msedge.exe"),
+)
+
+# Registry fallback for a browser installed somewhere non-standard.
+_WINDOWS_APP_PATHS_KEY = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
+_WINDOWS_APP_PATHS_EXES = ("chrome.exe", "msedge.exe")
+
+
+def _windows_browser_candidates() -> list:
+    """Absolute Chrome/Edge paths to try on Windows, in preference order.
+
+    Returned whether or not they exist, so the failure message can name what was
+    searched — being told a capability is absent when it is present sends the reader to
+    install software they already have.
+    """
+    candidates = []
+    for variable, relative in _WINDOWS_BROWSER_PATHS:
+        base = os.environ.get(variable)
+        if base:
+            candidates.append(os.path.join(base, relative))
+    return candidates
+
+
+def _windows_registry_browsers() -> list:
+    """Chrome/Edge paths registered under `App Paths`, best-effort.
+
+    Any failure — no `winreg` (non-Windows), key absent, permission denied — yields
+    nothing and leaves the path probe as the answer, never an exception.
+    """
+    try:
+        import winreg  # type: ignore
+    except Exception:
+        return []
+    found = []
+    for exe in _WINDOWS_APP_PATHS_EXES:
+        for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            try:
+                with winreg.OpenKey(root, f"{_WINDOWS_APP_PATHS_KEY}\\{exe}") as key:
+                    value = winreg.QueryValue(key, None)
+            except Exception:
+                continue
+            if value:
+                found.append(value.strip('"'))
+    return found
+
+
+def _chrome_search_paths() -> list:
+    """Every location `_chrome_exe` inspects, in order — the lookup, made reportable."""
+    paths = [
         "google-chrome",
         "google-chrome-stable",
         "chromium",
@@ -302,8 +362,16 @@ def _chrome_exe():
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
         "/Applications/Chromium.app/Contents/MacOS/Chromium",
         "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-    ):
-        if "/" in cand:
+    ]
+    if os.name == "nt":
+        paths.extend(_windows_browser_candidates())
+        paths.extend(_windows_registry_browsers())
+    return paths
+
+
+def _chrome_exe():
+    for cand in _chrome_search_paths():
+        if os.sep in cand or "/" in cand:
             if os.path.exists(cand):
                 return cand
         elif shutil.which(cand):
@@ -534,12 +602,31 @@ def main(argv=None) -> int:
         return 1
 
     if not written:
-        print(
-            "No headless screenshot capability available (tried Playwright, "
-            "Selenium, headless Chrome/Chromium, wkhtmltoimage). Skipping "
-            "screenshots; keep the HTML link instead.",
-            file=sys.stderr,
-        )
+        # Two different failures used to share one message, and the shared wording named
+        # the wrong cause: a Windows machine with Edge and Chrome installed was told no
+        # capability was available, which sends the reader to install software they
+        # already have. Distinguish "nothing to run" from "it ran and produced nothing"
+        # (INV-122 requires the reported reason to be the actual one).
+        browser = _chrome_exe()
+        if browser is None:
+            searched = "; ".join(_chrome_search_paths())
+            print(
+                "No headless screenshot capability available. Tried Playwright, "
+                "Selenium, headless Chrome/Chromium, wkhtmltoimage. No Chrome, "
+                "Chromium or Edge executable was found — searched: "
+                f"{searched}. If a browser is installed elsewhere, put it on PATH. "
+                "Skipping screenshots; keep the HTML link instead.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"A browser was found ({browser}) but every capture attempt failed, so "
+                "no image was written. This is not a missing install — do not install "
+                "anything. Re-run and check the browser's own error output; if the "
+                "target is a live server, confirm it is still serving. Skipping "
+                "screenshots; keep the HTML link instead.",
+                file=sys.stderr,
+            )
         return 2
 
     captured = [p for p, _ in written]

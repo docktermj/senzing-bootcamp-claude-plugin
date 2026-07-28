@@ -142,3 +142,11 @@ app.
   `specs/recap-pdf-images-resolve-against-recap-directory.md` (the other half of the same session's
   screenshot loss),
   `specs/pdf-layout-verification-without-poppler.md` (the sibling Unix-toolchain assumption)
+
+## Invariants introduced
+
+- `INV-168` — A helper that discovers an external executable MUST search each supported platform's
+  conventional install locations (expanded from the environment, never hard-coded), MUST NOT report a
+  capability as absent when it is present, MUST name the locations searched when it does report one
+  absent, and MUST report "found but produced nothing" distinctly from "nothing found" (recorded in
+  `specs/INVARIANTS.md`).

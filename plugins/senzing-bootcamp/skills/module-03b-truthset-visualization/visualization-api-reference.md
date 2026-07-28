@@ -95,15 +95,29 @@ creating a new type the legend does not know about.
 > requirement in Step 2 of `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
-from an export. ⛔ **`export_json_entity_report` does not supply `RELATED_ENTITIES` — reading edges
-from an export yields an empty `edges` array, and no error.** Every relationship-detail flag
-(`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members, `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`,
-`SZ_INCLUDE_MATCH_KEY_DETAILS`) lists only the per-entity, `why_*` and `find_*` methods in its
-`applies_to`; the export methods are **not** among them. Confirm with
-`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`.
+from an export. ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set — dump one
+row and check before building edges from it, because reading edges from a row that lacks the key
+yields an empty `edges` array and no error.**
 
-`graph_builder.py` SHALL therefore discover relationships through a **per-entity or network**
-method:
+- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation')` documents each
+  exported row as carrying `RESOLVED_ENTITY` *and* `RELATED_ENTITIES[]` (with `ENTITY_ID`,
+  `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`), and its worked pattern derives
+  relationship statistics in a single export pass (verified 2026-07-28; a live SDK 4.3.3 run agreed).
+  If you build edges this way, **deduplicate `(min_id, max_id)` pairs** — that same guidance notes
+  each relationship appears in *both* entities' `RELATED_ENTITIES`, so an un-deduplicated edge list
+  draws every relationship twice.
+- With a flag set assembled from `SZ_ENTITY_INCLUDE_*` members instead, a bootcamp session on the
+  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. Those relationship-detail
+  flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
+  `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS`) do not list the export
+  methods in their `applies_to` — confirm with
+  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')` — which is why
+  composing an export's flags out of those alone is the case that loses relationships.
+
+So an export **is** a legitimate edge source when its rows carry the key, and the per-entity and
+network methods below remain correct and are the fallback when they do not.
+`graph_builder.py` MAY discover relationships from a detail-carrying export (dump one row first), or
+through a **per-entity or network** method:
 
 - **`find_network_by_entity_id`:** for multi-record/related entities, retrieve the relationship
   network and derive edges from the returned links. (Note the Python binding takes a plain

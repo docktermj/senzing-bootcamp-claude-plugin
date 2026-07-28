@@ -176,16 +176,40 @@ which is exactly the gap the UAT percentages below leave open.
    | What | Where | How to obtain it |
    |---|---|---|
    | Per-record match keys | `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` | a bulk export (`export_json_entity_report`) is fine |
-   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
+   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | the same export **when its rows carry `RELATED_ENTITIES`** — dump one row to check; otherwise **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
 
-   ⛔ **Do not expect `RELATED_ENTITIES` from `export_json_entity_report`.** Every
-   relationship-detail flag — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
-   `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS` — lists only the
-   per-entity, `why_*` and `find_*` methods in its `applies_to`; the export methods are **not**
-   among them (verify with `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`).
-   A live run on SDK 4.3.3 returned entity rows with **no `RELATED_ENTITIES` key at all** and no
-   error. Writing the audit as one pass over an export therefore measures only the first row of the
-   table above while appearing to measure both.
+   ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set, not on the method — so
+   dump one row and route on what you see.** Do not assume either answer:
+
+   - `reporting_guide(topic='evaluation')` documents the export-with-defaults case directly
+     (verified 2026-07-28): *"Use `export_json_entity_report` with `SZ_EXPORT_DEFAULT_FLAGS` … Each
+     exported row is a JSON object containing `RESOLVED_ENTITY` … **and `RELATED_ENTITIES[]`** (with
+     `ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`)"*, and its
+     worked `export_with_stats` pattern computes relationship categories in a **single pass over the
+     export**. A live run on SDK 4.3.3 with `SZ_EXPORT_DEFAULT_FLAGS` confirmed it: the first row's
+     top-level keys were `[RESOLVED_ENTITY, RELATED_ENTITIES]`.
+   - A different bootcamp session, on the same SDK version, assembled its flags from
+     `SZ_ENTITY_INCLUDE_*` members and got rows with **no `RELATED_ENTITIES` key at all** and no
+     error. Both observations are real; the flag set is the variable. Note that the
+     relationship-detail flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members) do **not** list
+     the export methods in their `applies_to`, which is why composing a flag set out of those alone
+     is the case that comes back without relationships — but that does not make the export incapable,
+     because `SZ_EXPORT_DEFAULT_FLAGS` is itself an export-family flag documented as matching *"the
+     normal entity defaults"*, and those defaults include the relationship-inclusion members.
+
+   **So: start from `SZ_EXPORT_DEFAULT_FLAGS`, dump one row, and read its top-level keys before you
+   choose a reader.** `RELATED_ENTITIES` present → do both reads in one export pass.
+   `RELATED_ENTITIES` absent → keep the per-record read on the export and use a per-entity reader
+   (or `find_network_by_entity_id`) for the relationship half. Never write the audit as if the answer
+   were settled in either direction (INV-115/INV-149: the dumped row is the authority).
+
+   ⚠️ **If you do read relationships from the export, deduplicate.** Per
+   `reporting_guide(topic='evaluation')`: *"Each relationship appears in BOTH entities'
+   `RELATED_ENTITIES` — deduplicate by sorting `(min_id, max_id)` pairs and using a set."* Skipping
+   this double-counts every relationship, which inflates a suppressor share rather than emptying it —
+   a wrong number that still looks plausible. The same guidance notes export iteration is
+   O(all entities): fine at bootcamp scale, and the reason the single-pass form is worth having
+   instead of one call per entity.
 
    The two export flag families also do different jobs. `SZ_EXPORT_INCLUDE_*` selects **which
    entities** appear as rows (`..._POSSIBLY_SAME`, `..._DISCLOSED`, `..._ALL_HAVING_RELATIONSHIPS`
@@ -226,7 +250,15 @@ which is exactly the gap the UAT percentages below leave open.
    Before parsing the whole reader output, **dump one raw row** and confirm the fields the parser
    expects are actually present (INV-115). This is the check that turns "4,587 rows exported
    successfully, all containing only `ENTITY_ID`" from a wasted validation pass into one line of
-   output.
+   output — and it is the same check that decides which reader the relationship half needs, above.
+   Print the row's **top-level keys**, not just the row, so the `RELATED_ENTITIES` question is
+   answered explicitly rather than by eyeballing a wall of JSON:
+
+   ```python
+   first = json.loads(row)
+   print("top-level keys:", sorted(first))
+   print("carries RELATED_ENTITIES:", "RELATED_ENTITIES" in first)
+   ```
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
@@ -241,7 +273,10 @@ which is exactly the gap the UAT percentages below leave open.
      `POSSIBLY_RELATED` link, or use the relationship count you already have from the load
      summary). If the loaded data genuinely has **zero** relationships, say that instead — the
      question does not arise.
-   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it.
+   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it. When the reader is the
+     export, the row dump in step 1 has already answered this for the whole pass — one check, not one
+     per entity — so this costs nothing; it is still required, because a reader that sees the key but
+     parses it under the wrong name fails exactly as silently.
 
    If that check fails, report **"the audit could not read relationship match keys"** and name the
    reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a

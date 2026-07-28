@@ -162,3 +162,11 @@ INV-149).
   `specs/network-link-fields-and-uncovered-response-schemas.md` (INV-149 — dump-is-the-authority),
   `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132 — the sibling export-flag
   findings, and the precedent for retracting an over-generalized flag claim)
+
+## Invariants introduced
+
+- `INV-169` — A single observation of SDK behavior MUST NOT be generalized into an absolute about a
+  method. Where behavior varies with flags, version or binding, the guidance MUST record what was
+  observed together with the flag set, SDK version and binding, and MUST route the reader through a
+  per-installation check rather than asserting the outcome; where an MCP tool documents the behavior
+  that citation governs (recorded in `specs/INVARIANTS.md`).

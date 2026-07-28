@@ -178,9 +178,15 @@ tab. Procedure (parameterized by the visualization's `{html}` file or live `{url
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
    fetches a remote URL (offline — INV-091). Pass only tabs the app actually shows for this data —
    the helper reports any tab that produced no image on stderr rather than dropping it silently.
-2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
-   keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
-   the `minimal` preset).
+2. **If it exits non-zero** (exit 2 = nothing was captured): skip screenshots, keep the
+   visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at the
+   `minimal` preset). **Read which of the three reasons it gave** — they are not interchangeable and
+   only one is about a missing install: no requested tab exists in this app; **no browser was found**
+   (the message names every location searched); or **a browser was found but every capture failed**
+   (the message names it). In the last two cases do **not** install a browser or suggest installing
+   one — capture is dependency-optional by contract (INV-122), and a Windows machine that carried
+   both Edge and Chrome was once told no capability was available, which sent the reader to install
+   software they already had.
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
    named `{name}-<tab-slug>.png`. **Keep every captured tab** — and, **as a required step, in the
    same turn** — embed them all in **this module's recap `Actions Taken`** as
