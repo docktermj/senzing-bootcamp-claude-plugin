@@ -275,6 +275,13 @@ _SPACED_SUBSECTIONS = ("information shared", "actions taken")
 # one-line paths — stays tight.
 _SPACED_LABELS = ("what you accomplished",)
 
+# Labels whose value always starts on its own line, left-aligned to the page margin,
+# rather than continuing inline after the bold label. "Why it matters" is a short label
+# but its value can run several sentences; rendered inline, the wrapped continuation
+# hangs indented under wherever the label happened to end (a few characters different
+# per module), which reads as ragged and off-margin rather than as a normal paragraph.
+_NEW_LINE_LABELS = ("why it matters",)
+
 # Deliberately NOT spaced:
 # * "Questions & Responses" — its responses are indented sub-bullets under their
 #   questions; spacing every bullet would separate each answer from its question and
@@ -2257,9 +2264,22 @@ def _render_line(pdf, epw, line: str) -> None:
         pdf.set_font("Helvetica", "", 10.5)
         pdf.cell(6, 5.5, bullet)
         x = pdf.get_x()
+    force_new_line = bool(bm) and _normalize_heading(bm.group(1)) in _NEW_LINE_LABELS
     if bold_prefix:
         pdf.set_font("Helvetica", "B", 10.5)
-        pdf.cell(_width(pdf, bold_prefix) + 1, 5.5, _safe(bold_prefix))
+        if force_new_line:
+            # Label on its own line; a blank-line gap, then the value starts fresh,
+            # indented, below it -- never hanging-indented under wherever the label
+            # happened to end.
+            pdf.multi_cell(epw - indent, 5.5, _safe(bm.group(1) + ":"))
+            pdf.ln(_ITEM_GAP_MM * 2)
+            # 12 mm matches where bullet TEXT starts (6 mm list indent + the 6 mm
+            # bullet-marker cell drawn above), so the paragraph lines up with the
+            # bullets in "What you accomplished"/"Files produced" above it.
+            indent += 12
+            pdf.set_x(pdf.l_margin + indent)
+        else:
+            pdf.cell(_width(pdf, bold_prefix) + 1, 5.5, _safe(bold_prefix))
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
     # A long bold label (e.g. a "**Q:**" carrying a full question) leaves a narrow
@@ -2267,7 +2287,7 @@ def _render_line(pdf, epw, line: str) -> None:
     # A bare 20 mm floor is an order of magnitude too low to catch that: ~60 mm of a
     # 190 mm line clears it and still reads as a ribbon. Break once the label has
     # eaten half the width; short labels still render inline, which reads well.
-    if remaining < max(20.0, epw * 0.5):
+    if not force_new_line and remaining < max(20.0, epw * 0.5):
         indent = min(indent + 6, epw - 20)
         remaining = epw - indent
         pdf.ln(5.5)

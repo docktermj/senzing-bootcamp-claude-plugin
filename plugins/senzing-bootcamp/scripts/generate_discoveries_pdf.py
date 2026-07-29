@@ -217,6 +217,15 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# Specific long-form "**Label:** paragraph" callouts that always break to their own
+# line (label, then a blank-line gap, then an indented body) rather than continuing
+# inline after the label. Deliberately an allowlist, not every `label` block: a short
+# label like "**Cross-source overlap:** ..." reads fine inline with its wrapped
+# continuation, and forcing every label onto its own line would put a blank line
+# mid-sentence for those (see TestParagraphsAreSeparated in tests/test_discoveries_pdf.py).
+_NEW_LINE_LABELS = ("near miss the one that teaches more", "measurement")
+
+
 def parse_discoveries(text: str) -> Discoveries:
     doc = Discoveries()
     in_code = False
@@ -623,10 +632,22 @@ def _render_block_fpdf2(pdf, epw: float, block: Block) -> None:
     if prefix:
         pdf.set_font("Helvetica", "", 10.5)
         pdf.cell(6, 5.5, prefix)
+    # A long-form "**Label:** paragraph" callout named in _NEW_LINE_LABELS always
+    # breaks to its own line: the label, a blank-line gap, then the body indented to
+    # match bullet text (6 mm list indent + the 6 mm bullet cell = 12 mm) -- never
+    # hanging-indented under wherever the label happened to end. Short labels (not in
+    # the allowlist) keep the existing inline-with-wrap behavior below.
+    force_new_line = block.kind == "label" and _normalize(block.label) in _NEW_LINE_LABELS
     if block.label:
         pdf.set_font("Helvetica", "B", 10.5)
-        label = _safe(block.label + ": ")
-        pdf.cell(pdf.get_string_width(label) + 1, 5.5, label)
+        if force_new_line:
+            pdf.multi_cell(epw - indent, 5.5, _safe(block.label + ":"))
+            pdf.ln(4.8)
+            indent += 12.0
+            pdf.set_x(pdf.l_margin + indent)
+        else:
+            label = _safe(block.label + ": ")
+            pdf.cell(pdf.get_string_width(label) + 1, 5.5, label)
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
     # A long bold label leaves a narrow column, and every wrapped line then stacks in
@@ -634,7 +655,7 @@ def _render_block_fpdf2(pdf, epw: float, block: Block) -> None:
     # low to catch that: ~60 mm of a 190 mm line clears it comfortably and still reads
     # as a ribbon. Break once the label has eaten half the width, continuing at a
     # modest hanging indent — short labels still render inline, which reads well.
-    if remaining < max(20.0, epw * 0.5):
+    if not force_new_line and remaining < max(20.0, epw * 0.5):
         indent = min(indent + 6.0, epw - 20.0)
         remaining = epw - indent
         pdf.ln(5.5)

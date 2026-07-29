@@ -365,5 +365,145 @@ class TheRequirementIsStatedWhereTheRecapIsWritten(unittest.TestCase):
         self.assertIn("three labeled blocks", check)
 
 
+# The bullet-authored shape `module-completion.md` prescribes: the two list-shaped blocks
+# get a label line and one bullet per item; "Why it matters" stays prose, inline.
+BULLETED_SUMMARY = PREAMBLE + """### End-of-Module Summary
+
+**What you accomplished:**
+- Built a production loader and loaded all four of the data sources.
+- Drained the redo queue and validated the resolved entities.
+
+**Files produced:**
+- `src/load/ProductionLoader.java` — the loader.
+- `docs/results_validation.md` — the validation write-up.
+
+**Why it matters:** The resolved entities are what the query and visualization module
+explores, so the loaded data is the whole basis of what comes next.
+"""
+
+# The bullet marker the renderer draws for a list item (Latin-1 safe middle dot).
+BULLET = "·"
+
+SUMMARY_LABELS = ("**What you accomplished:**", "**Files produced:**")
+
+
+class ListShapedBlocksAreAuthoredAsLists(unittest.TestCase):
+    """The two list-shaped blocks must be *written* as lists, not just labeled.
+
+    The renderer bullets a bullet-authored block correctly and always has. What reached a
+    bootcamper's keepsake unbulleted was an *inline*-authored summary — the shape the
+    bundled example recap itself used, contradicting the template in
+    `module-completion.md`. Nothing caught it: `--check` and the tolerance tests above
+    validate that a block is *present*, which is deliberately shape-independent, so both
+    shapes pass every existing gate.
+
+    So the shape is pinned in two places at once — in the shipped example (which is what a
+    guide patterns off) and in the rendered output (which is what the bootcamper sees).
+    """
+
+    def example(self):
+        with open(
+            os.path.join(
+                REPO_ROOT, "plugins", "senzing-bootcamp", "docs", "examples",
+                "bootcamp_recap.example.md",
+            ),
+            encoding="utf-8",
+        ) as handle:
+            return handle.read().splitlines()
+
+    def test_the_shipped_example_authors_both_blocks_as_bullets(self):
+        """Guards the example against drifting back to the inline shape."""
+        lines = self.example()
+        found = 0
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            for label in SUMMARY_LABELS:
+                if not stripped.startswith(label):
+                    continue
+                found += 1
+                trailing = stripped[len(label):].strip()
+                following = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                with self.subTest(line=i + 1, label=label):
+                    self.assertEqual(
+                        "",
+                        trailing,
+                        f"{label} carries its value inline at line {i + 1}; it is a list, "
+                        "so the label goes on its own line with one bullet per item "
+                        "(see module-completion.md). Rendered inline it becomes one "
+                        "wrapped paragraph in the keepsake PDF.",
+                    )
+                    self.assertTrue(
+                        following.startswith("- "),
+                        f"{label} at line {i + 1} is not followed by a bullet, but by "
+                        f"{following[:60]!r}.",
+                    )
+        self.assertGreaterEqual(
+            found, 2, "the example recap no longer carries the two list-shaped labels"
+        )
+
+    def test_the_shipped_example_keeps_why_it_matters_inline(self):
+        """The prose block is the deliberate exception — it must not become a list."""
+        bare = [
+            i + 1
+            for i, line in enumerate(self.example())
+            if line.strip() == "**Why it matters:**"
+        ]
+        self.assertEqual(
+            [],
+            bare,
+            f"'**Why it matters:**' is prose and stays inline after its label; "
+            f"line(s) {bare} put it on its own line.",
+        )
+
+    def test_a_bullet_authored_block_renders_as_distinct_bulleted_items(self):
+        code, out, err, pdf = run(BULLETED_SUMMARY)
+        self.assertEqual(0, code, err)
+        text = pdf_text(pdf)
+        # Four authored bullets in the summary, plus the two in Actions Taken and the
+        # question/response pair from PREAMBLE. The assertion that matters is that the
+        # summary's own items each got their own marker rather than being welded into
+        # one paragraph.
+        self.assertGreaterEqual(
+            text.count(BULLET),
+            4,
+            "the bullet-authored End-of-Module Summary did not render bulleted items:\n"
+            + text,
+        )
+        for item in (
+            "Built a production loader",
+            "Drained the redo queue and validated",
+            "ProductionLoader.java",
+            "results_validation.md",
+        ):
+            with self.subTest(item=item):
+                self.assertIn(item, text, out + err)
+
+    def test_the_inline_shape_still_parses(self):
+        """Older recaps carry the inline shape; INV-103's check is shape-independent.
+
+        This spec changes what the plugin *authors*, never what it *accepts* — an existing
+        recap must not start failing `--check` because of it.
+        """
+        code, out, err, _pdf = run(LABELED_SUMMARY, args=("--check",))
+        self.assertEqual(0, code, out + err)
+        for label in ("What you accomplished", "Files produced", "Why it matters"):
+            with self.subTest(label=label):
+                self.assertNotIn(f"missing: {label}", out + err)
+
+    def test_the_shape_is_stated_where_the_recap_is_written(self):
+        for parts in (
+            ("skills", "bootcamp-onboarding", "module-completion.md"),
+            ("skills", "graduation", "SKILL.md"),
+        ):
+            with open(
+                os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", *parts),
+                encoding="utf-8",
+            ) as handle:
+                text = handle.read()
+            with self.subTest(file=parts[-1]):
+                self.assertIn("one bullet per", text)
+                self.assertIn("stays inline", text)
+
+
 if __name__ == "__main__":
     unittest.main()

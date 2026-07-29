@@ -283,6 +283,15 @@ there as an unlabeled paragraph, keep the paragraph and add the labeled blocks �
 subsection was always required to carry is not a prose rewrite (INV-085), and the run this was
 found in had summaries whose three blocks were simply absent.
 
+**Write each block in its required shape.** `**What you accomplished:**` and `**Files produced:**`
+are **lists**: put the label on its own line and one bullet per accomplishment, and one bullet per
+file with a short "— what it is" gloss. `**Why it matters:**` is **prose**: it stays inline after its
+label. This is the shape `../bootcamp-onboarding/module-completion.md` prescribes and the shape
+`docs/examples/bootcamp_recap.example.md` shows. It is not cosmetic: the PDF renders bullets as
+bullets and inline text as one wrapped paragraph, so a list written inline — the comma-joined run of
+paths being the usual way it happens — reaches the keepsake as a paragraph and cannot be recovered
+later. The shape chosen here is the shape the bootcamper keeps.
+
 ⛔ **Never invent content to fill a label.** If a module's own record does not support a block, write
 what is true — "(no files — {reason})" for a module that produced none — or leave that one block out
 and let the generator mark it "(not recorded)". A keepsake that overstates what the bootcamper did is

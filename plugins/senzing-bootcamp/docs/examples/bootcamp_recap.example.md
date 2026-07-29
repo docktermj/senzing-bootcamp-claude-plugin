@@ -37,9 +37,12 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Introduced the core ideas of entity resolution — principle-based matching, disclosed vs. discovered relationships, and explainability — grounded in Senzing documentation via MCP.
+**What you accomplished:**
+- Introduced the core ideas of entity resolution: principle-based matching, disclosed vs. discovered relationships, and explainability.
+- Grounded every concept in Senzing documentation retrieved through the MCP server rather than from memory.
 
-**Files produced:** (no files — conceptual primer)
+**Files produced:**
+- (no files — conceptual primer)
 
 **Why it matters:** Establishes the mental model that every later module (mapping, loading, querying, and the Truth Set visualization) builds on.
 
@@ -74,9 +77,16 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Defined the bootcamp's business problem — a compliance/KYC due-diligence scenario for loan-applicant vetting — using real Senzing sample data, and documented it for the rest of the bootcamp.
+**What you accomplished:**
+- Defined the bootcamp's business problem: a compliance/KYC due-diligence scenario for loan-applicant vetting.
+- Backed it with real Senzing Las Vegas CORD data and documented it for every module that follows.
 
-**Files produced:** docs/business_problem.md, config/data_sources.yaml, docs/data_flow.md, README.md, docs/stakeholder_summary_module1.md
+**Files produced:**
+- `docs/business_problem.md` — the full problem statement.
+- `config/data_sources.yaml` — the source registry.
+- `docs/data_flow.md` — the data-flow diagram.
+- `README.md` — the project overview.
+- `docs/stakeholder_summary_module1.md` — a one-page executive summary.
 
 **Why it matters:** Every later module (SDK setup, mapping, loading, querying) builds directly on this problem statement and these four data sources.
 
@@ -116,9 +126,18 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Verified the already-installed Senzing SDK works end-to-end in Java — version check, license check, default-config registration, and database connection — and configured the project's database, engine config, and environment.
+**What you accomplished:**
+- Verified the already-installed Senzing SDK works end-to-end in Java: version check, license check, default-config registration, and database connection.
+- Configured the project's database, engine configuration, and environment scripts, keeping every path project-local.
+- Requested and installed an evaluation License Key through the bootcamp.
 
-**Files produced:** database/G2C.db, config/engine_config.json, src/scripts/senzing-env.sh, src/scripts/senzing-env.bat, src/SetupVerify.java, licenses/g2.lic
+**Files produced:**
+- `database/G2C.db` — the SQLite database and its schema (16 tables).
+- `config/engine_config.json` — the engine configuration, with the database path overridden to project-local.
+- `src/scripts/senzing-env.sh` — the project-local environment script for macOS and Linux shells.
+- `src/scripts/senzing-env.bat` — the same environment for Windows.
+- `src/SetupVerify.java` — the verification program that printed the SDK version and registered the default config.
+- `licenses/g2.lic` — the evaluation License Key.
 
 **Why it matters:** Every later module — loading data in Data processing, querying in Query, Visualize and Discover — depends on a working SDK, a configured database, and the registered default configuration set up here.
 
@@ -151,9 +170,19 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Verified the whole Senzing pipeline end-to-end with synthetic records that resolve deterministically by construction — SDK init, code generation, build, register-before-load, data loading, results validation, and database operations — then purged the synthetic data.
+**What you accomplished:**
+- Verified the whole Senzing pipeline end-to-end with synthetic records that resolve deterministically by construction.
+- Passed all eight checks: SDK init, code generation, build, register-before-load, data loading, results validation, and database operations.
+- Purged the synthetic data afterwards, confirming no VERIFY entities remained.
 
-**Files produced:** src/system_verification/verification_data.jsonl, verify_init.java, verify_pipeline.java, register_data_sources.java, verify_results.java, verify_database_ops.java, purge_verification_data.java
+**Files produced:**
+- `src/system_verification/verification_data.jsonl` — the 4 synthetic VERIFY records, designed to resolve into 2 entities.
+- `src/system_verification/verify_init.java` — the SDK initialization check.
+- `src/system_verification/verify_pipeline.java` — the generated and compiled load pipeline.
+- `src/system_verification/register_data_sources.java` — registers the VERIFY data source before the first load.
+- `src/system_verification/verify_results.java` — confirms the 4 records resolved into exactly 2 entities.
+- `src/system_verification/verify_database_ops.java` — the write-count, read-by-entity-ID, and search checks.
+- `src/system_verification/purge_verification_data.java` — removes the synthetic records at the end.
 
 **Why it matters:** All 8 checks passed — the SDK, database, and configuration from SDK setup are proven to work end-to-end before any real project or Truth Set data is loaded.
 
@@ -188,9 +217,15 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Acquired, loaded, and visualized the Senzing Truth Set — the first interactive "wow moment" — confirming entity resolution works on the workstation, then cleaned up.
+**What you accomplished:**
+- Acquired and loaded the 159-record Senzing Truth Set, which resolved into 84 entities with 71 relationships.
+- Visualized the result as an interactive six-tab web app — the first "wow moment" — confirming entity resolution works on this workstation.
+- Captured one screenshot per tab, embedded them all in this recap, then purged the Truth Set records.
 
-**Files produced:** docs/visualizations/truthset_verification.html, docs/visualizations/truthset_verification-1.png, src/system_verification/ExportEntityModel.java
+**Files produced:**
+- `docs/visualizations/truthset_verification.html` — the standalone visualization snapshot, which renders fully offline.
+- `docs/visualizations/truthset_verification-1.png` — the captured entity-graph screenshot embedded above.
+- `src/system_verification/ExportEntityModel.java` — exports the resolved-entity model the visualization reads.
 
 **Why it matters:** Seeing the resolved Truth Set — clusters, merges, and cross-source links — makes entity resolution concrete before the bootcamper works with their own data.
 
@@ -220,9 +255,22 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Collected the four real CORD data sources planned in the business problem into the project, validated them, and documented their locations and provenance.
+**What you accomplished:**
+- Collected the four real CORD data sources planned in the business problem, sampling 100 records from each.
+- Validated all four files as readable, non-empty, valid JSONL with the right DATA_SOURCE and RECORD_ID.
+- Documented their locations, provenance, and file hashes so a later module can detect drift.
 
-**Files produced:** data/raw/ppp_loans.jsonl, data/raw/gleif.jsonl, data/raw/us_labor_violations.jsonl, data/raw/open_ownership.jsonl, config/data_sources.yaml, config/cord_metadata.yaml, docs/data_collection_checklist.md, docs/data_source_locations.md, .gitignore, docs/security_compliance.md
+**Files produced:**
+- `data/raw/ppp_loans.jsonl` — 100 sampled PPP_LOANS records.
+- `data/raw/gleif.jsonl` — 100 sampled GLEIF records.
+- `data/raw/us_labor_violations.jsonl` — 100 sampled US-LABOR-VIOLATIONS records.
+- `data/raw/open_ownership.jsonl` — 100 sampled OPEN-OWNERSHIP records.
+- `config/data_sources.yaml` — the registry, updated to the full tracking schema.
+- `config/cord_metadata.yaml` — file hashes and sizes, for drift detection before loading.
+- `docs/data_collection_checklist.md` — the collection checklist.
+- `docs/data_source_locations.md` — where each source came from.
+- `.gitignore` — excludes raw data, databases, licenses, and build artifacts.
+- `docs/security_compliance.md` — the data-handling and compliance notes.
 
 **Why it matters:** These four files, each with a different schema, are exactly what Data Quality, Mapping, and Transformation will assess and map onto the Senzing Entity Specification.
 
@@ -253,9 +301,16 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Assessed all four data sources against the Senzing Entity Specification, confirmed they are already Entity-Specification-compliant CORD data, and fast-pathed all four directly to loading (no transformation needed).
+**What you accomplished:**
+- Assessed all four data sources field-by-field against the Senzing Entity Specification.
+- Confirmed all four are already Entity-Specification-compliant CORD data, so no transformation was needed.
+- Fast-pathed all four directly to loading and recorded the lineage for each.
 
-**Files produced:** docs/reference/senzing_entity_specification.md, docs/data_source_evaluation.md, docs/mapping/data_lineage.yaml, updated config/data_sources.yaml
+**Files produced:**
+- `docs/reference/senzing_entity_specification.md` — the authoritative Entity Specification (v0.1.0), retrieved via MCP.
+- `docs/data_source_evaluation.md` — the field-level evaluation and categorization of each source.
+- `docs/mapping/data_lineage.yaml` — fast-path lineage entries (source file == output file, 0 rejected).
+- `config/data_sources.yaml` — updated with `senzing_ready: true` and the corrected OPEN-OWNERSHIP record type.
 
 **Why it matters:** All four sources are validated and confirmed loadable, so Data processing can load them directly and run entity resolution across sources.
 
@@ -293,9 +348,22 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Built production-quality single-source and multi-source loading programs, loaded all four data sources into Senzing, processed redo queues, and validated entity-resolution results including real cross-source matches.
+**What you accomplished:**
+- Built production-quality single-source and multi-source loading programs, with per-source error isolation and retry.
+- Loaded all four data sources into Senzing — 400 of 400 records, 0 errors — and drained the redo queues.
+- Validated the results: 356 distinct entities and 37 real cross-source matches, spot-checked with why-matched review.
 
-**Files produced:** src/load/ProductionLoader.java, src/load/DrainRedoQueue.java, src/load/Orchestrator.java, src/load/RegisterProjectDataSources.java, src/query/ValidateResults.java, docs/uat_results.md, docs/results_validation.md, docs/stakeholder_summary_module6.md, updated docs/loading_strategy.md and config/data_sources.yaml
+**Files produced:**
+- `src/load/ProductionLoader.java` — the thread-pool single-source loader.
+- `src/load/DrainRedoQueue.java` — drains the redo queue, using getRedoRecord() as the loop sentinel.
+- `src/load/Orchestrator.java` — the sequential multi-source orchestrator.
+- `src/load/RegisterProjectDataSources.java` — registers all four data sources before loading.
+- `src/query/ValidateResults.java` — validates the resolution results and cross-source matches.
+- `docs/uat_results.md` — the user-acceptance results.
+- `docs/results_validation.md` — the results-validation write-up.
+- `docs/stakeholder_summary_module6.md` — a one-page executive summary.
+- `docs/loading_strategy.md` — updated with the final load order and per-source statistics.
+- `config/data_sources.yaml` — updated to `load_status: loaded` for all four sources.
 
 **Why it matters:** All 400 records are now resolved in the Senzing database with validated match quality — Query, Visualize and Discover can query, visualize, and explore these results against the original business problem.
 
@@ -332,8 +400,15 @@
 
 ### End-of-Module Summary
 
-**What you accomplished:** Built and ran query programs that directly answer Lakeside Community Bank's due-diligence question, evaluated entity-resolution quality, and produced an interactive entity-graph visualization of the results.
+**What you accomplished:**
+- Built and ran query programs that directly answer Lakeside Community Bank's due-diligence question.
+- Evaluated entity-resolution quality against the business problem's own success criteria, and reported the 0-of-100 applicant result honestly.
+- Produced an interactive entity-graph visualization of the resolved results.
 
-**Files produced:** src/query/DueDiligenceReport.java, src/query/SearchApplicant.java, data/mapping/project_entities.jsonl, docs/visualizations/due_diligence_results.html
+**Files produced:**
+- `src/query/DueDiligenceReport.java` — the per-applicant due-diligence report.
+- `src/query/SearchApplicant.java` — the search-by-attributes applicant lookup.
+- `data/mapping/project_entities.jsonl` — the exported entity model (356 entities) the quality indicators were computed from.
+- `docs/visualizations/due_diligence_results.html` — the entity-graph visualization snapshot.
 
 **Why it matters:** This is the payoff of the entire bootcamp — the original business problem (manual cross-checking of loan applicants against reference lists) now has working, tested query programs and a visualization built directly on top of validated entity-resolution results.
