@@ -46,8 +46,11 @@ connections between entities using `find_network` and `find_path`.
    blank under those names while `MATCH_KEY` rendered fine, and a live dump on SDK 4.3.3 found them
    under **`MIN_ENTITY_ID` / `MAX_ENTITY_ID`** (normalized low-to-high). Those keys are recorded in
    `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
-   paths", marked as dump-confirmed rather than MCP-sourced — so they tell you what to *expect*, and
-   you still dump and use what is actually there (INV-080).
+   paths". They were dump-only when first recorded; `response_schemas` now documents them itself
+   (re-verified on MCP server 1.32.1, 2026-07-29), so they are MCP-confirmed names rather than an
+   unverified caution. **Run the lookup and dump anyway** — its coverage grows, this entry is proof of
+   that, and the dumped element remains the authority for what your installation returns (INV-080,
+   INV-149).
 
    ⛔ **Per-record source values do not come from `JSON_DATA` on an entity call.** The get_entity
    schema lists `RECORDS[].JSON_DATA.*` paths, but the flag that produces them

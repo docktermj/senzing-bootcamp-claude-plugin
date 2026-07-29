@@ -81,9 +81,22 @@ source".)
 
 The Senzing MCP server is the primary and preferred source; it always takes precedence.
 
-1. Call `get_sample_data` and inspect the response for a named Truth Set reference. Classify:
-   `available` = a named Truth Set (name matches "TruthSet", or `type: truthset`) with retrievable
-   records; `unavailable` = only the CORD collections (Las Vegas, London, Moscow) are present.
+1. **Call `get_sample_data(dataset='list')`** — ⛔ `dataset` is a **required** parameter; the tool's
+   own schema says a schema-respecting client cannot omit it, so a bare `get_sample_data()` fails
+   and tells you nothing about availability (INV-136). Inspect `available_datasets` for a Truth Set
+   entry. Classify:
+   `available` = an entry whose name matches "truthset" (or `type: truthset`) with `available: true`;
+   `unavailable` = no such entry — only the non-deterministic CORD collections are listed.
+
+   Then **retrieve it with `dataset='truthset'`**: `source='list'` first for the data source codes and
+   per-source record counts you will need in 1.2 and in the report, then the records themselves. Take
+   the codes and counts from the response, never from this file (INV-080).
+
+   > Verified on MCP server 1.32.1, 2026-07-29: `dataset='list'` returns **four** datasets — the three
+   > CORD collections plus `truthset` (`available: true`) — and `dataset='truthset', source='list'`
+   > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
+   > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than
+   > trusting this note: the server ships independently of the plugin.
 2. **Available (primary path):** save the MCP records to
    `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
    provenance `mcp_primary` (30-second timeout).

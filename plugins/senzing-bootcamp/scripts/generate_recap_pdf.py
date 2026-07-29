@@ -219,18 +219,42 @@ class Recap:
     modules: List[ModuleSection]
 
 
+# The suffix the durability hooks leave on a folded-but-unfinalized section, in place of
+# the timestamp module-completion writes when it finalizes (INV-059). It is a status, not
+# part of the module's name, so it belongs in the date slot like a timestamp does.
+_STATUS_SUFFIX_RE = re.compile(r"^in\s+progress$", re.IGNORECASE)
+
+
 def _split_title_date(rest: str) -> Tuple[str, str]:
     """Split ``Name — 2026-07-15T10:05:00-05:00`` into (name, date).
 
-    Splits on an em dash or hyphen separator only when the right side looks like
-    a date/timestamp (begins with 4 digits). Otherwise the whole string is the
-    title.
+    Splits on an em dash or hyphen separator when the right side is either a
+    date/timestamp (begins with 4 digits) **or** the ``in progress`` status marker the
+    durability hooks leave on a section they folded but never finalized. Otherwise the
+    whole string is the title, so a module name that legitimately contains " — " is not
+    mangled.
+
+    ⚠️ **Why ``in progress`` has to split too.** Before this, that suffix stayed glued to
+    the title, and one stale title caused two distinct defects (2026-07-29 dry run):
+
+    * the Certificate of Completion joins module titles and *fits* the joined string
+      (INV-156), so the em dash rode into a width measurement and killed the entire fpdf2
+      render — the keepsake silently degraded to the stdlib renderer; and
+    * ``--check --expect-modules`` compares against the title, so the module read as
+      absent while the very same run validated its subsections by name — ``--check``
+      reported one section as both found and *"has no recap section at all"*, which sends
+      graduation to backfill a section that is already there (INV-157 warns against
+      exactly that).
+
+    Recognizing the marker the plugin itself produces is narrower, and safer, than
+    loosening the date test.
     """
     for sep in (" — ", " – ", " - "):
         if sep in rest:
             left, right = rest.rsplit(sep, 1)
-            if re.match(r"^\d{4}\b", right.strip()):
-                return left.strip(), right.strip()
+            tail = right.strip()
+            if re.match(r"^\d{4}\b", tail) or _STATUS_SUFFIX_RE.match(tail):
+                return left.strip(), tail
     return rest.strip(), ""
 
 
@@ -979,6 +1003,28 @@ def _safe(s: str) -> str:
         return _fold_to_latin1(s)
 
 
+def _width(pdf, text: str) -> float:
+    """Measure `text` the way it will actually be drawn — i.e. through `_safe` first.
+
+    ⚠️ **Measurement is as font-sensitive as rendering.** fpdf2's `get_string_width`
+    calls the same `normalize_text` as its text writers, so it raises
+    `FPDFUnicodeEncodingException` on exactly the characters `_safe` exists to fold. Every
+    *write* went through `_safe`; none of the five *measurements* did, so an em dash in a
+    module title killed the whole fpdf2 render and the recap silently fell back to the
+    stdlib renderer — losing real tables (INV-142) and the branded certificate (INV-156)
+    from the Bootcamper's keepsake, at exit 0, with only a `renderer: stdlib` line to say
+    so. Found by the 2026-07-29 dry run; `tests/test_recap_pdf_font_safety.py` passed
+    throughout because it covered the write path only.
+
+    Measuring the folded string is also the *correct* width: it is the string that gets
+    drawn, so any fitting decision made from it (certificate module list, cover chips,
+    env-block gutter) matches what lands on the page.
+
+    Use this instead of `pdf.get_string_width` everywhere.
+    """
+    return pdf.get_string_width(_safe(text))
+
+
 def _unrepresentable(text: str) -> List[str]:
     """The distinct characters `_safe` cannot represent, in order of appearance.
 
@@ -1199,7 +1245,7 @@ def _render_env_block(pdf, epw: float, env: List[Tuple[str, str]], top: float) -
         pdf.set_text_color(*SLATE)
         pdf.set_font("Helvetica", "B", 9)
         label = _safe(key.rstrip(":")) + ":  "
-        lw = pdf.get_string_width(label) + 1
+        lw = _width(pdf, label) + 1
         pdf.cell(lw, 6, label)
         pdf.set_text_color(*INK)
         pdf.set_font("Helvetica", "", 10)
@@ -1309,7 +1355,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
                 ),
                 46,
             )
-            w = pdf.get_string_width(label) + 8
+            w = _width(pdf, label) + 8
             if x + w > pdf.l_margin + epw:
                 x = pdf.l_margin
                 y += 11
@@ -1663,7 +1709,7 @@ def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) ->
     setter = getattr(pdf, "set_char_spacing", None)
     if setter:
         setter(spacing)
-    width = pdf.get_string_width(text)
+    width = _width(pdf, text)
     if setter:
         setter(0)
         if spacing:
@@ -1786,7 +1832,7 @@ def _cert_wordmark(pdf) -> None:
     # Fallback: set the wordmark as text, keeping the ember "z" that carries the brand.
     pdf.set_font("Helvetica", "B", 36)
     parts = [("Sen", INK), ("z", ACCENT), ("ing", INK)]
-    widths = [pdf.get_string_width(text) for text, _ in parts]
+    widths = [_width(pdf, text) for text, _ in parts]
     x = _CERT_CX - sum(widths) / 2.0
     for (text, color), width in zip(parts, widths):
         pdf.set_text_color(*color)
@@ -2213,7 +2259,7 @@ def _render_line(pdf, epw, line: str) -> None:
         x = pdf.get_x()
     if bold_prefix:
         pdf.set_font("Helvetica", "B", 10.5)
-        pdf.cell(pdf.get_string_width(bold_prefix) + 1, 5.5, bold_prefix)
+        pdf.cell(_width(pdf, bold_prefix) + 1, 5.5, _safe(bold_prefix))
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
     # A long bold label (e.g. a "**Q:**" carrying a full question) leaves a narrow

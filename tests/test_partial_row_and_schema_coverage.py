@@ -63,13 +63,18 @@ def flat(path):
 
 class AnEmptyOrShallowLookupIsExpectedNotAFailure(unittest.TestCase):
 
-    def test_the_contract_says_the_graph_entry_stops_at_the_top_level(self):
-        self.assertRegex(
-            flat(CONTRACT),
-            r"documents only the three arrays above|no element fields",
-            "the entry exists but does not reach the link element's fields — a reader "
-            "who does not know that thinks the lookup answered the question",
-        )
+    def test_the_contract_still_requires_the_lookup_and_the_dump(self):
+        """The rule survives the server's coverage improving.
+
+        This test used to require the contract say the `find_network` entry carries "no
+        element fields". That was true on 2026-07-26 and is false on 1.32.1 — the entry now
+        documents them (INV-149, corrected in place 2026-07-29) — so the old assertion
+        pinned a stale premise and made it load-bearing. What must hold is the discipline,
+        not the observation: run the lookup, then dump before parsing.
+        """
+        text = flat(CONTRACT)
+        self.assertRegex(text, r"(?i)Run the lookup anyway|Do the lookup anyway")
+        self.assertRegex(text, r"(?i)dump one element and use what is actually there")
 
     def test_both_call_sites_send_the_reader_to_a_raw_dump(self):
         for path in (CONTRACT, DISCOVER):
@@ -119,23 +124,35 @@ class ThePartialRowRuleIsStated(unittest.TestCase):
 class NoUnverifiedFieldNameIsShipped(unittest.TestCase):
     """INV-080: the endpoint keys are a session observation, not a Senzing fact."""
 
-    def test_the_endpoint_keys_are_not_presented_as_the_names_to_use(self):
-        text = flat(CONTRACT)
-        if "MIN_ENTITY_ID" in text:
-            self.assertRegex(
-                text,
-                r"not MCP-confirmable|never as the field names to code against",
-                "if the reported keys are named at all they must be marked unverified, "
-                "never given as the names to parse with",
-            )
+    def test_the_endpoint_keys_carry_their_current_provenance(self):
+        """They are MCP-confirmed now; the requirement is accurate provenance, not caution.
 
-    def test_the_caution_is_framed_as_where_to_look(self):
-        self.assertRegex(
-            flat(CONTRACT),
-            r"warning about where to look",
-            "the value of the report is that endpoints may not use the pairing you "
-            "expect — not the specific keys, which were never confirmed",
+        INV-080 forbids shipping a Senzing fact without saying where it came from — it does
+        not require understating what the server confirms. Once `response_schemas` returned
+        these fields, "not MCP-confirmable" became the false claim.
+        """
+        text = flat(CONTRACT)
+        self.assertIn("MIN_ENTITY_ID", text)
+        self.assertRegex(text, r"(?i)now (documented by|MCP-confirmed)")
+        self.assertRegex(text, r"1\.32\.1, 2026-07-29")
+        self.assertNotRegex(
+            text,
+            r"(?i)(still )?not MCP-confirmable",
+            "response_schemas documents these fields as of 1.32.1 — the negative claim is stale",
         )
+
+    def test_the_wrong_pairing_is_still_named_as_the_trap(self):
+        """The durable half: endpoints may not use the pairing you expect.
+
+        Reworded 2026-07-29. The contract no longer frames the keys as "a warning about
+        where to look" — `response_schemas` documents them, so they are names to use. What
+        must survive is the trap itself: `ENTITY_ID` / `RELATED_ENTITY_ID` is the pairing a
+        reader reaches for, and it yields two blank endpoints while `MATCH_KEY` renders
+        (INV-148).
+        """
+        text = flat(CONTRACT)
+        self.assertRegex(text, r"ENTITY_ID` / `RELATED_ENTITY_ID")
+        self.assertRegex(text, r"(?i)yields `None` for \*\*both\*\* endpoints|blank")
 
     def test_the_reader_is_told_to_use_what_is_actually_there(self):
         self.assertRegex(flat(CONTRACT), r"use what is actually there")
@@ -166,21 +183,35 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertIn(key, text)
 
-    def test_the_keys_carry_their_provenance_and_version(self):
-        self.assertRegex(
-            flat(CONTRACT),
-            r"dump-confirmed on SDK 4\.3\.3",
-            "a fact that is not MCP-sourced must say how and when it was established",
-        )
+    def test_the_keys_carry_both_sources_with_dates(self):
+        """Provenance must name what established the fact, and when — INV-080.
 
-    def test_the_keys_are_still_marked_not_mcp_sourced(self):
-        """INV-080 does not relax because a dump agreed with a report."""
-        self.assertRegex(flat(CONTRACT), r"NOT in `response_schemas`|not MCP-confirmable")
+        Both are kept deliberately: `response_schemas` is now the authority, and the
+        2026-07-28 dump on SDK 4.3.3 is corroboration. Dropping the dump would lose the
+        record of how the names were found before the server documented them.
+        """
+        text = flat(CONTRACT)
+        self.assertRegex(text, r"dump on SDK 4\.3\.3, 2026-07-28|dump-confirmed on SDK 4\.3\.3")
+        self.assertRegex(text, r"MCP server 1\.32\.1, 2026-07-29")
+
+    def test_the_keys_are_no_longer_marked_unconfirmable(self):
+        """The negative claim went stale when the server started documenting them.
+
+        Reversed on 2026-07-29 (dry run, phase 1). It previously asserted the contract keep
+        saying "NOT in `response_schemas`" — which the live server contradicts, so the test
+        was holding a false premise in place. INV-080 requires accurate provenance, not
+        permanent caution.
+        """
+        self.assertNotRegex(
+            flat(CONTRACT),
+            r"NOT in `response_schemas`|not MCP-confirmable",
+            "response_schemas documents these fields on 1.32.1",
+        )
 
     def test_the_dump_requirement_survives_the_documentation(self):
         """Documented keys are an expectation to check, not a licence to skip the dump."""
         self.assertRegex(
-            flat(CONTRACT), r"dump the element and use what is actually there"
+            flat(CONTRACT), r"(?i)dump one element and use what is actually there"
         )
 
     def test_a_mismatch_is_reported_rather_than_coded_around(self):
@@ -189,7 +220,8 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
     def test_the_discover_step_points_at_the_recorded_keys(self):
         text = flat(DISCOVER)
         self.assertIn("MIN_ENTITY_ID", text)
-        self.assertRegex(text, r"dump-confirmed rather than MCP-sourced")
+        self.assertRegex(text, r"(?i)MCP-confirmed names rather than an unverified caution")
+        self.assertRegex(text, r"(?i)Run the lookup and dump anyway")
 
 
 class TheJsonDataTrapIsRecorded(unittest.TestCase):

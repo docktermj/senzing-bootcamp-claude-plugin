@@ -278,7 +278,7 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
-> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**dump-confirmed on SDK 4.3.3, 2026-07-28 — see the caution below; NOT in `response_schemas`**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.1, 2026-07-29 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
 > | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
 >
 > ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
@@ -329,12 +329,19 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > `MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`,
 > `IS_AMBIGUOUS`.
 >
-> That list is **still not MCP-confirmable** — it is not in `response_schemas` and not in the indexed
-> documentation — so it is recorded as *what a dump found on one version*, and remains a **warning
-> about where to look, never as the field names to code against** (INV-080). It changes what you
-> expect, not whether you check: **dump the element and use what is actually there**, then compare
-> against the table. A mismatch means the shape moved and the table is stale — report it rather than
-> coding around it.
+> **That list is now MCP-confirmed.** When it was first recorded it was dump-only, so it was carried
+> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.1,
+> 2026-07-29**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
+> element fields itself — `ENTITY_NETWORK_LINKS[].MIN_ENTITY_ID`, `.MAX_ENTITY_ID`, `.MATCH_KEY`,
+> `.MATCH_LEVEL_CODE`, `.ERRULE_CODE`, `.IS_AMBIGUOUS`, `.IS_DISCLOSED`, plus
+> `ENTITIES[].RESOLVED_ENTITY.*` and `ENTITY_PATHS[].*`. So these are authoritative names, and the
+> 2026-07-28 dump is corroboration rather than the only evidence.
+>
+> **Do the lookup anyway, and still dump before rendering.** The names being MCP-backed changes their
+> standing, not the discipline: run `response_schemas` for the method you are about to parse (it is
+> the authority, and its coverage grows — this entry is proof), then dump one element and use what is
+> actually there. A mismatch means the shape moved and this table is stale — report it rather than
+> coding around it (INV-115/INV-149).
 >
 > ⛔ **A partially populated row is a wrong field name, not partial data.** This is the shape the
 > above failure takes: `MATCH_KEY` renders, both endpoints are blank, and the row looks like a
