@@ -18,6 +18,33 @@ Entries are newest first. Do not delete history; append or update in place.
 
 -->
 
+## verbatim-check-cannot-see-field-name-derived-values
+
+- **Implemented:** 2026-07-29
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`
+- **MCP re-check:** server **1.32.2**, 2026-07-29 — **confirmed, and it changed adjacent guidance.** Tools: `get_capabilities`; `mapping_workflow(action='start')` then `advance` from step 1 (to read step 2's inline mapping reference); `download_resource(filenames=['sz_verbatim_check.py','senzing_mapping_examples.md'])`; `search_docs(category='data_mapping')`. The crypto/`ACCOUNT_DOMAIN` quote is **confirmed verbatim** in `mapping_workflow` step 2's inline SENZING MAPPING REFERENCE — **not** in `senzing_mapping_examples.md`, which contains zero occurrences of ACCOUNT/crypto/XBT/currency. The failure was reproduced independently: `rec0 ACCOUNT_DOMAIN='XBT'; rec1 ACCOUNT_DOMAIN='LTC'`, exit 1. **Changed:** the *adjacent* section's numeric premise is now fixed upstream — `collect_strings()` flattens int/float via `str(obj)` on 1.32.2, so `RegKey: 1001` → `"1001"` and `98.6` → `"98.6"` both exit 0; booleans remain excluded deliberately (`true` → `"true"` still fails).
+- **Establishes no new invariant.** The addition extends existing guidance already governed by INV-048 (a checker limitation must not block or loop) and INV-080 (the server outranks the plugin); it adds no standing rule of its own.
+- **Summary:** Added a second ⛔ carve-out naming "a value derived from a source **field name**" as a distinct cause of verbatim-check failure, with the confirmed `ACCOUNT_DOMAIN` / `"Digital Currency Address - <CODE>"` case, the confirmation step (check the code is not a standalone value elsewhere in the record), the explicit statement that `mapping_workflow` step 4's generic "exit 1 = a code bug" does **not** apply to this class and that the run advances with `verdict='approve'`, and the record-the-exemption-and-proceed resolution. Added a forward heads-up at step 11 (Map) so a bootcamper mapping a dynamic-key field meets the caveat before the failure — placed plugin-side because the example itself is server-delivered, as the spec anticipated. All five acceptance criteria hold, including the live-reproduction criterion (reproduced this session on 1.32.2, not taken from the spec). **Deviation recorded:** rather than rewrite the now-stale numeric text — which would retire part of the implemented spec `verbatim-check-numeric-source-values` and three of its tests without authorization — the original sentences and their 1.32.1 date were left verbatim and a dated ⚠️ correction note was **added** beside them ("run the check before recording any non-string exemption; do not record a numeric-value exemption on 1.32.2 or later"). That stale guidance still warrants its own spec. Full suite: 953 passed, 1 skipped, 490 subtests.
+- **Commit:** uncommitted
+
+## module-05-shared-workspace-transient-filename-collision
+
+- **Implemented:** 2026-07-29
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`, `specs/INVARIANTS.md`
+- **MCP re-check:** server **1.32.2**, 2026-07-29 — **confirmed, and sharpened.** Tools: `get_capabilities`, `mapping_workflow(action='start')`. Step 1's instructions write exactly three fixed, non-source-qualified names into the shared `workspace_dir`: `profile_report.md`, `schema_hints.md`, `JOURNAL.md`. Additionally `JOURNAL.md` is specified **APPEND-ONLY** ("APPEND a short entry … NEVER rewrite the whole file"), so a second source's run appends its entries onto the first source's journal rather than only overwriting it — a worse failure than the spec described, and the implemented warning says so.
+- **Invariant established: `INV-177`** (shared-workspace artifacts must be relocated source-qualified before the next source's run).
+- **Summary:** Rewrote the "File placement during the workflow" relocation contract to name source-qualified destinations — `docs/mapping/{source_name}_profile_report.md`, `{source_name}_schema_hints.md`, `{source_name}_JOURNAL.md` — with a ⛔ sub-bullet explaining that the qualifier is required rather than tidiness, citing the shared `workspace_dir` from step 8 and the live-verified fixed filenames, and tying it to the `{source_name}_mapper.md` convention step 18 already requires. Added a ⛔ warning at step 19 to confirm relocation has happened before the next source's `mapping_workflow(action='start')`. Criteria 1-3 hold. **Criterion 4 is NOT runtime-verified** and is not ticked: "a live multi-source run (2+ sources through the same `workspace_dir`) shows both sources' relocated files present and distinct" needs two complete `mapping_workflow` runs plus the relocation step — the bootcamper flow, which this environment does not exercise; the spec itself flags it as unverifiable alone. What was verified live is the precondition that makes the collision real (one shared workspace, three fixed filenames). Full suite: 953 passed, 1 skipped, 490 subtests.
+- **Commit:** uncommitted
+
+## module-05-step16-high-quality-branch-missing-pinned-question
+
+- **Implemented:** 2026-07-29
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`
+- **MCP re-check:** n/a (no Senzing fact — bootcamper-facing interaction prose only). Server **1.32.2** confirmed current this session via `get_capabilities`, 2026-07-29.
+- **Establishes no new invariant.** The change restores what INV-005 (every question preceded by 👉), INV-051 (neutral lead question plus a numbered list, choices never joined with "or") and INV-056 (mandatory gate wording pinned verbatim, not improvised) already require; it is a fix to a violation of existing invariants, not a new rule.
+- **Summary:** Gave step 16's ≥80% branch its own pinned question — "👉 **Quality looks strong. Ready to proceed to loading (Data processing)? Reply with a number:**" with "1. Yes, proceed to loading. / 2. No, I'd like to iterate on something first." — in the same numbered, no-"or" shape as the 70-79% and <70% branches. The section's opening instruction ("close the turn on one 👉 question") is now true for all three branches without exception: verified by extracting the decision-gate section and confirming exactly one 👉 question per branch, three branches, each with numbered options and no "or" joining choices. All three acceptance criteria hold. No deviations. Full suite: 953 passed, 1 skipped, 490 subtests.
+- **Commit:** uncommitted
+
 ## recap-summary-blocks-authored-as-bullets
 
 - **Implemented:** 2026-07-29
