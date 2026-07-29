@@ -103,11 +103,15 @@ without saying which topic answers the bootcamp's question.
   entity JSON rather than the data mart. The entry's suggested MCP-side fix — "have `reporting_guide`
   state plainly that its SQL assumes a separately-built data mart" — is therefore **already
   satisfied**. The routing half of its suggested fix stands and is what this spec implements.
-- Upstream: already submitted 2026-07-28 per the entry. **Not re-filed, and worth flagging to the
-  maintainer:** the submitted report asserted the tool does not disclose the data-mart prerequisite,
-  which the current server refutes. If that submission is to be corrected, it needs a deliberate
-  follow-up rather than a new report — and since submissions are anonymous there is no thread to
-  correct, so the practical options are a fresh note or nothing.
+- Upstream: already submitted 2026-07-28 per the entry. **Not re-filed** — the submitted report
+  asserted the tool does not disclose the data-mart prerequisite, which the current server refutes.
+  **Withdrawn 2026-07-28** via `submit_feedback(category='general')`: a short note quoting
+  `topic='reports'`'s own `schema.description` back, stating the original claim is incorrect, and
+  asking that it not be investigated as a real defect. Category is `general` rather than `bug`
+  because the note withdraws a report rather than filing one. Submissions are anonymous, so the
+  withdrawal cannot be threaded to the original and no acknowledgement is possible; the server's
+  reply directs any follow-up to `support@senzing.com`. **This item is closed** — nothing further is
+  owed here, and the plugin-side fix is independent of it.
 - Related specs: `specs/export-related-entities-is-flag-conditional.md` (INV-169 — the same class of
   over-stated report, and the reason this one was re-checked rather than implemented as filed),
   `specs/post-load-match-key-semantic-audit.md` (INV-117 — the no-SQL rule this preserves),

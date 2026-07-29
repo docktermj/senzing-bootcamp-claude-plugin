@@ -30,3 +30,14 @@ This are ideas for future specs.
     or the spec says — `SENZ2027` + "GNR data files failed to load" means the runtime **data
     directory** is missing, which is exactly the Windows/Scoop sibling-directory case Step 8's
     `Test-Path` check already handles.
+
+- **The `auto-test` skill and its 11 tests are untracked, deliberately.**
+  `.claude/skills/auto-test/` (`autotest.py`, `mcp_probe.py`, `walk.py`, `transcript_lint.py`,
+  `baseline/mcp-snapshot.json`) and `tests/test_auto_test_harness.py` have no git history and are
+  the only one of the six maintainer skills under `.claude/skills/` not committed — the maintainer
+  chose to keep them that way on 2026-07-28. **The consequence worth knowing:** `pytest tests/`
+  collects that file, so **11 of the suite's tests exercise a module git does not have**. Any
+  test-count figure quoted from a clean checkout will be 11 lower than one quoted from the
+  maintainer's working tree, and those 11 will error rather than fail (import error, not assertion).
+  Nothing to do unless the counts need to reconcile; committing the skill would close it, and
+  `.claude/**` is already excluded from `propagate-to-public`, so it would not reach the public repo.
