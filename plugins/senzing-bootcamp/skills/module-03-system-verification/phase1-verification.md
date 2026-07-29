@@ -120,12 +120,22 @@ INV-080), create an engine, and release it.
 
 **If it fails, report the error and stop here rather than proceeding to generation or loading:**
 
-1. Call `explain_error_code(error_code="<code>", version="current")` and present what it returns.
-2. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
+1. **If the failure names no SENZ code at all, it is a launch-environment failure, not a Senzing
+   one — do not route it through `explain_error_code`.** The common shape here is
+   `Unable to get settings` with an `IllegalArgumentException` / `ArgumentException`: that string is
+   the null-check in Senzing's own official snippets, which fires when
+   `SENZING_ENGINE_CONFIGURATION_JSON` is **unset**. So the question is whether the env script was
+   sourced in this shell and whether it resolved its own path there — under zsh a
+   `${BASH_SOURCE[0]}`-based script computes the wrong project root and exports nothing. Send the
+   bootcamper to Module 2's
+   [env script path resolution](../module-02-sdk-setup/SKILL.md#env-script-path-resolution).
+   (Snippet guard verified via `search_docs` on MCP server 1.32.1, 2026-07-28.)
+2. Call `explain_error_code(error_code="<code>", version="current")` and present what it returns.
+3. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
    the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.1, 2026-07-28.
-3. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
+4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 
 This is a check, not a 👉 question — run it silently and report only on failure (INV-012).

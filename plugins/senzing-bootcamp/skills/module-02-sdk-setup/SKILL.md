@@ -320,6 +320,74 @@ environment script at `src/scripts/senzing-env.sh` (or `.bat` for Windows) that 
 before running bootcamp tasks. This keeps the bootcamp self-contained and avoids side effects on
 the user's system.
 
+<a id="env-script-path-resolution"></a>
+
+**The env script MUST resolve its own path in the platform's *default* shell, not only in bash.**
+This is the canonical statement of the rule; other modules link here rather than restating it.
+Because the documented pattern is to **source** the script into the bootcamper's interactive shell
+(see the same-shell requirement below), the shell it has to work in is whatever that bootcamper's
+shell actually is — and on macOS that is **zsh**, not bash. `${BASH_SOURCE[0]}` — the idiom anyone
+reaching for self-location writes first — is a bash array and expands to **empty** under zsh. The
+script then resolves the project root to the wrong directory and keeps going, so the failure lands
+later and somewhere else. Branch on the shell:
+
+```bash
+# --- resolve this script's own location (bash and zsh) ------------------------
+# ${BASH_SOURCE[0]} is bash-only and expands to EMPTY under zsh, macOS's default
+# shell, so branch rather than assume bash. bash parses the zsh-only expansion in
+# the untaken branch without complaint.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _sz_self=${(%):-%x}                # zsh: this file's own path
+else
+  _sz_self=${BASH_SOURCE[0]:-$0}     # bash: this file's own path
+fi
+_sz_root=$(cd -- "$(dirname -- "$_sz_self")/../.." && pwd)
+
+# --- fail loudly, naming the path that was computed --------------------------
+if [ ! -f "$_sz_root/config/engine_config.json" ]; then
+  printf 'senzing-env.sh: resolved project root has no config/engine_config.json\n' >&2
+  printf 'senzing-env.sh:   resolved root: %s\n' "$_sz_root" >&2
+  printf 'senzing-env.sh:   this is a path-resolution fault, not your Senzing install\n' >&2
+  unset _sz_self _sz_root
+  return 1 2>/dev/null || exit 1
+fi
+
+# --- never export an empty configuration ------------------------------------
+_sz_settings=$(cat -- "$_sz_root/config/engine_config.json")
+if [ -z "$_sz_settings" ]; then
+  printf 'senzing-env.sh: %s is empty — refusing to export an empty configuration\n' \
+    "$_sz_root/config/engine_config.json" >&2
+  unset _sz_self _sz_root _sz_settings
+  return 1 2>/dev/null || exit 1
+fi
+
+export SENZING_PROJECT_ROOT="$_sz_root"
+export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
+# Platform-specific exports (SENZING_ROOT, DYLD_LIBRARY_PATH / LD_LIBRARY_PATH, jar
+# paths) go here — take them from sdk_guide(topic='install', platform=…), never from
+# memory or from this file (INV-080).
+unset _sz_self _sz_root _sz_settings
+```
+
+Three things in that block are the point, not decoration:
+
+- **`return 1`, never `exit 1`.** A sourced script shares the bootcamper's shell, so `exit` closes
+  their terminal and `set -e` leaks into their session. `return 1 2>/dev/null || exit 1` returns when
+  sourced and still exits if someone runs the file directly.
+- **The guard names the path it computed.** A wrong root that exports nothing produces an error many
+  steps later that reads as a Senzing fault; a guard that prints the resolved root is diagnosable on
+  sight (the same fail-loudly rule INV-111 applies to generators).
+- **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
+  guard initialization with `if (settings == null)` — they test for **unset**, not empty — so an
+  `export SENZING_ENGINE_CONFIGURATION_JSON=""` sails straight past that check and fails later,
+  deeper, and less legibly than no export at all. (Verified this session: `search_docs` returns
+  `senzing/code-snippets-v4` `java/snippets/information/GetVersion.java` and the C# equivalents doing
+  exactly this; MCP server 1.32.1, 2026-07-28.)
+
+**Windows keeps its own script.** `senzing-env.bat` has no such problem — `%~dp0` is the batch file's
+own directory and is always available — and none of the zsh material applies there. Add the same
+fail-loudly root check to the `.bat`, and confirm the Windows variable set via `sdk_guide`.
+
 ### The launch environment (JVM languages, and macOS generally)
 
 Installing the SDK is not the same as being able to **launch** against it. These are
@@ -746,6 +814,16 @@ call succeeds** (not merely a version query).
   initialized) do **not** name this cause, so do not be pulled toward re-checking paths that are
   already correct. This is the expected symptom on a freshly schema-created datastore whose config
   was never seeded, and it can appear several steps after the omission.
+- **`Unable to get settings`, or an empty `SENZING_ENGINE_CONFIGURATION_JSON`? This is the env
+  script's path resolution, not Senzing.** That message carries **no SENZ code** because it is not an
+  engine error: it is the null-check in Senzing's own official snippets, which print
+  `Unable to get settings.` and throw `IllegalArgumentException` / `ArgumentException` when
+  `SENZING_ENGINE_CONFIGURATION_JSON` is unset. So do not send it through `explain_error_code` — there
+  is no code to explain, and hunting through the engine config wastes the time. Check instead that
+  `senzing-env.sh` was **sourced** (not executed) in this shell, and that it resolved its own path
+  under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
+  zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
+  (Snippet guard verified this session via `search_docs`; MCP server 1.32.1, 2026-07-28.)
 - Platform not supported? Use `search_docs` for alternative installation methods.
 - Database errors? Confirm path requirements against the file placement rules in ground-rules
   (the Kiro `FILE_STORAGE_POLICY.md` reference is a later porting phase).

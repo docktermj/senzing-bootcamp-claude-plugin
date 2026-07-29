@@ -102,3 +102,73 @@ documenting that shell's semantics.
   `specs/macos-jvm-launch-environment-guidance.md` (the macOS JVM launch path this breaks),
   `specs/cross-platform-hook-execution.md` (INV-052 — the no-shell-dependency precedent),
   `specs/auto-detect-platform.md`
+
+## Deviations from this spec, and why (2026-07-28)
+
+**This spec's own `MCP re-check: n/a (no Senzing fact)` was wrong, and re-verification changed the
+fix.** The spec does assert a Senzing fact — that a mis-resolved root surfaces as a JVM
+*"Unable to get settings"*, *"an error that points at the SDK, not at the shell"*. On server 1.32.1
+(2026-07-28) that is not what the string is:
+
+- `search_docs(query='"Unable to get settings"')` finds it **only** in Senzing's own official code
+  snippets (`senzing/code-snippets-v4` — `java/snippets/information/GetVersion.java`,
+  `GetLicense.java`, and the C# `Program.cs` equivalents), where the sample program's *own* guard
+  prints `Unable to get settings.` and throws `IllegalArgumentException` / `ArgumentException`.
+- `search_docs(category='troubleshooting')` and `explain_error_code('0058')` return no engine error of
+  that name. The nearest documented codes are `SENZ0058 EAS_ERR_SZ_INITIALIZATION_FAILURE` and
+  `SENZ0050 EAS_ERR_SZCORE_NOT_INITIALIZED`, and **neither is documented as the symptom of an unset
+  environment variable** — so neither is cited in the shipped guidance (INV-169).
+
+Two consequences, both of which make the fix better than the spec's version:
+
+1. **The guidance says the opposite of "points at the SDK".** The symptom carries *no SENZ code*
+   precisely because it is not an engine error, so both new troubleshooting entries tell the reader
+   **not** to route it through `explain_error_code` — there is nothing to explain — and to look at the
+   env script instead. The spec's framing would have sent readers to the tool that cannot help.
+2. **The guard tests `settings == null`, i.e. *unset*, not empty.** An
+   `export SENZING_ENGINE_CONFIGURATION_JSON=""` therefore sails straight past the SDK's own check and
+   fails deeper and less legibly than no export at all. That turned the spec's item 3 from "verify the
+   path" into a positive rule the snippet enforces: **refuse to export an empty configuration** rather
+   than export one. `SENZING_ENGINE_CONFIGURATION_JSON` itself was re-confirmed as the documented
+   variable via `search_docs(category='configuration')` on the same server and date.
+
+**Added, because item 3 is unsafe without it: `return 1`, never `exit 1`.** The spec requires the
+script to fail loudly, and the obvious way to fail in a shell script — `exit 1`, or `set -e` — closes
+the bootcamper's terminal or leaks the option into their interactive session, because a sourced script
+*is* their shell. Implementing item 3 literally would have traded a silent wrong root for a killed
+shell. The snippet uses `return 1 2>/dev/null || exit 1` (returns when sourced, still exits if the file
+is run directly), and the rule is stated in both Module 2 and ground-rules.
+
+**The documented snippet is executed by the tests, not merely asserted present.**
+`tests/test_env_script_shell_portability.py` extracts the fenced block that follows the
+`env-script-path-resolution` anchor, installs it as `senzing-env.sh` in a synthetic project tree, and
+sources it — asserting the resolved root, the export, cwd-independence, the failure message naming the
+computed path, the empty-config refusal, and that a failing source leaves the shell alive. A
+path-resolution idiom that is present but wrong is exactly the defect being fixed, so presence alone is
+not evidence.
+
+**Verified that bash needs no `eval` guard around the zsh-only expansion.** `${(%):-%x}` sits in a
+branch bash never takes, and the concern was whether bash *parses* it. It does, without a
+bad-substitution or syntax error (confirmed by running it, and asserted by
+`test_bash_tolerates_the_zsh_only_expansion_in_the_untaken_branch`), so the straightforward `if`
+branch is used rather than a harder-to-read `eval`.
+
+**Scoped to bash and zsh, not POSIX `sh`.** `${BASH_SOURCE[0]}` is a bad substitution under dash, and
+there is no reliable POSIX way for a sourced file to learn its own path. The guidance therefore covers
+the two shells that are a default login shell on the supported Unix platforms rather than claiming
+portability it cannot deliver, and Windows keeps `senzing-env.bat` with `%~dp0`.
+
+**Acceptance criteria status — one is NOT runtime-verified.** Criterion 2 ("sourced from **zsh**
+resolves the same project root as when sourced from bash") is verified for the **bash** half only:
+**zsh is not installed in this environment** (`command -v zsh` returns nothing), so the zsh half is
+disclosed rather than ticked. The test for it exists and skips with that reason, and will run on any
+machine that has zsh. Every other criterion is met, and criteria 3 and 5 are runtime-verified by
+executing the snippet.
+
+## Invariants introduced
+
+- `INV-175` — Any script the SBCP tells the Bootcamper to `source` MUST resolve its own location in
+  the platform's **default** shell rather than assuming bash, MUST verify the path it computed before
+  exporting anything derived from it, and on failure MUST `return` (never `exit` or `set -e`) naming
+  the resolved path; a value derived from an unverified root — and an **empty** value in place of no
+  value — MUST NOT be exported (recorded in `specs/INVARIANTS.md`).
