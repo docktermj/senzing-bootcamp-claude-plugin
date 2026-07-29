@@ -183,8 +183,8 @@
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
 
-<!-- Path is plugin-root-relative so generate_recap_pdf.py (run from the plugin root) embeds it in the rendered PDF; it will not display in GitHub's raw Markdown view. The PDF is the intended artifact — INV-065. -->
-![Truth Set entity graph — 159 records resolved into 84 entities across CUSTOMERS, REFERENCE, and WATCHLIST](docs/examples/bootcamp_recap.example.truthset.png)
+<!-- Path is relative to this document, so it resolves for a Markdown reader and for generate_recap_pdf.py alike, from any working directory (INV-161). A real recap sits at docs/bootcamp_recap.md with its images in docs/visualizations/, so there the same rule reads `visualizations/<file>.png`. -->
+![Truth Set entity graph — 159 records resolved into 84 entities across CUSTOMERS, REFERENCE, and WATCHLIST](bootcamp_recap.example.truthset.png)
 
 ### End-of-Module Summary
 

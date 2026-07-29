@@ -12,30 +12,36 @@ Two traps are pinned here:
 
 1. **Staleness.** Distinctive strings from the current ``.md`` must appear in the
    PDF's extracted text. Editing the Markdown without re-rendering fails.
-2. **Wrong regeneration directory.** The example references its screenshot as
-   ``docs/examples/bootcamp_recap.example.truthset.png`` — a path relative to a
-   bootcamp *project root*. The renderer resolves image paths against the current
-   working directory, and INV-048 has it silently skip missing images, so
-   regenerating from anywhere else produces a valid PDF that quietly loses the
-   screenshot (~106KB, 2 image objects) instead of the correct one (~123KB, 3).
+2. **An image path that only resolves from one directory.** The example used to
+   reference its screenshot as ``docs/examples/bootcamp_recap.example.truthset.png``
+   — a path relative to a bootcamp *project root* — back when the renderer resolved
+   against the current working directory. **INV-161 ended that**: paths now resolve
+   against the recap document's own directory, so the reference is plainly
+   ``bootcamp_recap.example.truthset.png`` (the PNG sits beside the ``.md``), which
+   is also what a Markdown reader of the source needs. The invariant is explicit
+   that *no step may require a ``cd`` to make assets resolve*, so there is no
+   correct working directory to regenerate from any more — every directory is.
 
-   The cover logo is resolved relative to the *script*, not the cwd, so it always
-   embeds — which is why "any image at all" does not detect this. Measured
-   2026-07-26: correct render 3 image objects; regenerating from either the repo
-   root or ``docs/examples/`` yields 2 (the logo plus its soft mask) with the
-   screenshot gone. An earlier ``> 0`` assertion here passed on both bad renders.
+   The 2026-07-28 deep-dive audit caught the pair mid-transition: the resolver had
+   been fixed, the example had not, and the committed PDF could no longer be
+   reproduced from its own source (``embedded 0 of 1 images``, 4 image objects
+   against 5). ``TestPdfRegeneratesFromItsSource`` below now renders freshly from an
+   unrelated cwd, so a repeat cannot hide behind a PDF whose image was baked in by
+   an earlier render.
 
-   Regenerate from ``plugins/senzing-bootcamp/``:
+   Regenerate from anywhere:
 
-       cd plugins/senzing-bootcamp
-       python3 scripts/generate_recap_pdf.py \\
-           --input docs/examples/bootcamp_recap.example.md \\
-           --output docs/examples/bootcamp_recap.example.pdf
+       python3 plugins/senzing-bootcamp/scripts/generate_recap_pdf.py \\
+           --input plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md \\
+           --output plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 
 Run:  python3 -m unittest discover -s tests
 """
 import os
 import re
+import subprocess
+import sys
+import tempfile
 import unittest
 import zlib
 
@@ -117,18 +123,18 @@ class TestExampleAssetsExist(unittest.TestCase):
 
 
 class TestPdfEmbedsTheScreenshot(unittest.TestCase):
-    """Guards against regenerating from the wrong working directory."""
+    """The committed PDF must actually carry the screenshot."""
 
-    # The cover logo (+ its soft mask) always embeds, because it resolves relative
-    # to the script rather than the cwd. Only the third object is the screenshot,
-    # so the screenshot's presence is what must be asserted — not "any image".
-    MIN_IMAGE_OBJECTS = 3
+    # The cover logo and the certificate art always embed, because they resolve
+    # relative to the *script*. So "any image at all" cannot detect a lost
+    # screenshot — only a count that exceeds what the chrome contributes can.
+    MIN_IMAGE_OBJECTS = 5
 
     WRONG_DIR_HINT = (
-        "It was probably regenerated from the wrong working directory: the "
-        "example's image path resolves only from plugins/senzing-bootcamp/, and "
-        "INV-048 silently skips missing images. See this module's docstring for "
-        "the correct command."
+        "The example's screenshot did not embed. Its path must be relative to the "
+        "recap document itself (INV-161) — bootcamp_recap.example.truthset.png, not "
+        "docs/examples/... — and the generator names every drop on stderr with an "
+        "'embedded N of M images' count (INV-162). See this module's docstring."
     )
 
     def test_screenshot_is_embedded(self):
@@ -160,6 +166,85 @@ class TestPdfEmbedsTheScreenshot(unittest.TestCase):
         with open(EXAMPLE_MD, encoding="utf-8") as handle:
             text = handle.read()
         self.assertIn("bootcamp_recap.example.truthset.png", text)
+
+    def test_the_reference_is_document_relative(self):
+        """INV-161: the path a Markdown reader needs is the path the renderer needs."""
+        with open(EXAMPLE_MD, encoding="utf-8") as handle:
+            text = handle.read()
+        self.assertIn("](bootcamp_recap.example.truthset.png)", text)
+        self.assertNotIn(
+            "](docs/examples/bootcamp_recap.example.truthset.png)",
+            text,
+            "a cwd-relative path resolves from exactly one directory, which INV-161 forbids",
+        )
+
+
+class TestPdfRegeneratesFromItsSource(unittest.TestCase):
+    """INV-065's 'regenerable' is a property of a *fresh* render, not the committed file.
+
+    The committed PDF keeps whatever was baked into it by whichever render produced
+    it, so inspecting it cannot tell you the pair still reproduces. The 2026-07-28
+    audit found exactly that gap: the resolver had moved to document-relative
+    (INV-161), the example had not, and every assertion against the committed bytes
+    still passed while a fresh render silently lost the screenshot.
+    """
+
+    def _render(self, out_dir):
+        script = os.path.join(
+            REPO_ROOT, "plugins", "senzing-bootcamp", "scripts", "generate_recap_pdf.py"
+        )
+        out = os.path.join(out_dir, "regen.pdf")
+        proc = subprocess.run(
+            [sys.executable, script, "--input", EXAMPLE_MD, "--output", out],
+            capture_output=True,
+            text=True,
+            cwd=tempfile.gettempdir(),  # deliberately unrelated to the repo
+        )
+        return proc, out
+
+    def test_a_fresh_render_embeds_every_referenced_image(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc, out = self._render(tmp)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            combined = proc.stdout + proc.stderr
+            self.assertIn(
+                "embedded 1 of 1 images",
+                combined,
+                "the example references one screenshot and it must embed (INV-161/INV-162):\n"
+                + combined,
+            )
+            self.assertNotIn("skipped image", combined)
+
+    def test_a_fresh_render_matches_the_committed_pdf_image_count(self):
+        """A committed PDF richer than a fresh render means the pair has drifted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            _, out = self._render(tmp)
+            with open(out, "rb") as handle:
+                fresh = handle.read()
+            committed = pdf_bytes()
+
+            def count(raw):
+                return raw.count(b"/Subtype /Image") + raw.count(b"/Subtype/Image")
+
+            self.assertEqual(
+                count(fresh),
+                count(committed),
+                "the committed example PDF is not reproducible from its Markdown "
+                "(INV-065). Regenerate it — see this module's docstring.",
+            )
+
+    def test_check_mode_reports_no_missing_image(self):
+        """--check is what graduation runs; it must be clean on the shipped example."""
+        script = os.path.join(
+            REPO_ROOT, "plugins", "senzing-bootcamp", "scripts", "generate_recap_pdf.py"
+        )
+        proc = subprocess.run(
+            [sys.executable, script, "--input", EXAMPLE_MD, "--check"],
+            capture_output=True,
+            text=True,
+            cwd=tempfile.gettempdir(),
+        )
+        self.assertNotIn("embedded image not found", proc.stdout + proc.stderr)
 
 
 class TestPdfMatchesItsSource(unittest.TestCase):

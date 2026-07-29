@@ -259,5 +259,79 @@ class CheckAuditsImageTargets(unittest.TestCase):
         self.assertFalse(os.path.exists(pdf))
 
 
+class TheSkillsInstructAResolvablePath(unittest.TestCase):
+    """Fixing the resolver is half the job; the instructions must produce the path.
+
+    INV-161 moved resolution to the recap document's own directory. The recap is
+    ``docs/bootcamp_recap.md`` and its screenshots are ``docs/visualizations/*.png``,
+    so the one path that resolves — and the one a Markdown reader of the recap needs
+    — is ``visualizations/<file>.png``. A ``docs/``-prefixed path resolves to
+    ``docs/docs/…`` and embeds nothing.
+
+    The 2026-07-28 deep-dive audit found the resolver fixed and three instruction
+    sites still teaching the broken form, while graduation taught the correct one and
+    explicitly warned against the broken one — so every module-time embed was lost
+    from every recap PDF, and graduation's backfill could not recover them (an embed
+    that exists but points nowhere is not a *missed* embed). This file's own fixture
+    at ``make_project`` writes the correct form, which is why the generator's tests
+    passed throughout: nothing compared the fixture against what the skills say.
+    """
+
+    SITES = (
+        os.path.join("skills", "bootcamp-onboarding", "module-completion.md"),
+        os.path.join("skills", "module-03b-truthset-visualization", "phase2-close.md"),
+        os.path.join("skills", "graduation", "SKILL.md"),
+    )
+
+    def _read(self, rel):
+        with open(os.path.join(PLUGIN, rel), encoding="utf-8") as handle:
+            return handle.read()
+
+    def test_no_skill_instructs_a_docs_prefixed_embed(self):
+        for rel in self.SITES:
+            with self.subTest(file=os.path.basename(rel)):
+                for match in re.finditer(r"!\[[^\]]*\]\((docs/visualizations/[^)]*)\)", self._read(rel)):
+                    self.fail(
+                        f"{rel} instructs `![...]({match.group(1)})`. Relative to "
+                        "docs/bootcamp_recap.md that resolves to docs/docs/... and "
+                        "embeds nothing (INV-161). Use visualizations/... instead."
+                    )
+
+    def test_the_embed_instruction_uses_the_document_relative_form(self):
+        for rel in self.SITES[:2]:  # the two that tell the guide what to write
+            with self.subTest(file=os.path.basename(rel)):
+                self.assertRegex(
+                    self._read(rel),
+                    r"!\[[^\]]*\]\(visualizations/",
+                    "the embed instruction must show the path that actually resolves",
+                )
+
+    def test_each_site_says_why_the_docs_prefix_is_wrong(self):
+        """A bare correct example gets 'helpfully' corrected back; the reason does not."""
+        for rel in self.SITES[:2]:
+            with self.subTest(file=os.path.basename(rel)):
+                text = re.sub(r"\s+", " ", self._read(rel))
+                self.assertRegex(text, r"never `docs/visualizations/")
+                self.assertRegex(text, r"docs/docs/")
+
+    def test_the_generator_agrees_with_the_instructed_path(self):
+        """Render a recap written exactly as the skills instruct, and require it embeds."""
+        root = make_project()
+        code, stdout, stderr, _ = render(root)
+        self.assertEqual(code, 0, stderr)
+        self.assertIn("embedded 6 of 6 images", stdout + stderr)
+
+    def test_no_site_claims_missing_images_are_skipped_silently(self):
+        """INV-162: every drop is named on stderr with an embedded-of-referenced count."""
+        for rel in self.SITES:
+            with self.subTest(file=os.path.basename(rel)):
+                text = re.sub(r"\s+", " ", self._read(rel))
+                self.assertNotRegex(
+                    text,
+                    r"(?i)silently skip",
+                    "INV-162 requires each dropped image to be reported, not skipped silently",
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
