@@ -362,6 +362,17 @@ Source every figure through generated SDK code and `reporting_guide` — never d
    low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
    suppressor findings belong here.
 
+⛔ **Write it in Latin-script characters, and build diagrams from ASCII.** The PDF's built-in fonts
+cover Latin-1 only, so any character outside it — Cyrillic, Greek, CJK, Arabic — is **dropped from
+the page**, and box-drawing connectors (`│`, `▼`, `└`) go with it. So when an entity's primary name
+is non-Latin, write the **verified** Latin-script name or alias the loaded data already carries for
+it (GLEIF/OFAC/OPEN-SANCTIONS records routinely hold both) and say which you used; and draw ASCII
+diagrams with `|` and `v`. ⛔ **Never transliterate or invent a name you have not confirmed in the
+data** — a wrong name in a shared report is worse than an awkward one (INV-065's principle: never
+fabricate to fill a field). The generator now reports every character it had to drop, naming them
+and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
+the loss, it cannot undo it: the characters are gone from that PDF.
+
 Then render the PDF:
 
 ```bash

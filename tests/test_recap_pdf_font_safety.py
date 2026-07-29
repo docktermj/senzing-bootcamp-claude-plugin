@@ -274,5 +274,235 @@ class TestRealisticRecapUsesThePreferredRenderer(unittest.TestCase):
         )
 
 
+# --------------------------------------------------------------------------------------
+# Dropping a character the core fonts cannot encode is correct (INV-143 forbids `?`).
+# Doing it SILENTLY is the defect. `_safe`'s own docstring already promised the generator
+# "drops, warns" — but the warn existed for the certificate name only, so a Cyrillic
+# organisation name in a discoveries document rendered as `"- "` at exit 0 with
+# `content retained: 96%`. Retention structurally cannot catch it: it is measured over
+# parsed SOURCE characters, before `_safe` runs at render time.
+# --------------------------------------------------------------------------------------
+
+DISCOVERIES_GENERATOR = (
+    REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts" / "generate_discoveries_pdf.py"
+)
+
+# A discoveries document needs all six findings sections to render (INV-110), so the
+# fixture carries them; only one section holds the non-Latin-1 content under test.
+DISCOVERIES_SECTIONS = (
+    "Headline numbers",
+    "Merges and match keys",
+    "Review queue",
+    "Why and how",
+    "Relationship networks",
+    "What was not found",
+)
+
+CYRILLIC_ORG = "Акционерное"
+BOX_DRAWING = "│"          # the vertical connector an ASCII diagram reaches for
+DOWN_TRIANGLE = "▼"        # and its arrowhead
+
+
+def discoveries_doc(network_body):
+    lines = ["# Data Discoveries", "", "**Prepared:** 2026-07-29", ""]
+    for section in DISCOVERIES_SECTIONS:
+        lines += [f"## {section}", ""]
+        if section == "Relationship networks":
+            lines += [network_body, ""]
+        else:
+            lines += [f"Plain ASCII finding text for {section}, long enough to count.", ""]
+    return "\n".join(lines)
+
+
+def run_generator(script, source_text, filename):
+    """Render `source_text` through `script`; return (returncode, stdout, stderr)."""
+    import subprocess
+    import sys
+    import tempfile
+
+    workdir = Path(tempfile.mkdtemp())
+    (workdir / "docs").mkdir(exist_ok=True)
+    src = workdir / "docs" / filename
+    src.write_text(source_text, encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(script), "--input", str(src), "--output", str(workdir / "o.pdf")],
+        capture_output=True,
+        text=True,
+        cwd=workdir,
+    )
+    return proc.returncode, proc.stdout, proc.stderr, workdir / "o.pdf"
+
+
+RECAP_WITH = """# Bootcamp Recap
+
+**Bootcamper:** Alex Rivera
+
+## Data processing — 2026-07-29T09:00:00-07:00
+
+### Information Shared
+
+- The counterparty {org} appears in the network summary for this module.
+
+### Questions & Responses
+
+- **Q:** Which source led?
+  - **A:** GLEIF.
+
+### Actions Taken
+
+- Built the loader and drained the redo queue.
+
+### End-of-Module Summary
+
+**What you accomplished:**
+- Loaded every source.
+
+**Files produced:**
+- `src/load.py` — the loader.
+
+**Why it matters:** The resolved entities are the basis of the next module's work.
+
+---
+"""
+
+WARNING_MARK = "cannot be rendered by this"
+
+
+class TheDropIsNeverSilent(unittest.TestCase):
+    """Both generators must report characters they dropped, and neither may cry wolf."""
+
+    def test_recap_warns_and_still_ships_the_pdf(self):
+        code, _out, err, pdf = run_generator(
+            GENERATOR, RECAP_WITH.format(org=CYRILLIC_ORG), "bootcamp_recap.md"
+        )
+        self.assertEqual(0, code, err)
+        self.assertTrue(pdf.is_file() and pdf.stat().st_size > 0, "no PDF was written")
+        self.assertIn(
+            WARNING_MARK,
+            err,
+            "the recap generator dropped Cyrillic body text without saying so:\n" + err,
+        )
+        self.assertIn("CYRILLIC", err, err)
+
+    def test_recap_is_silent_on_latin1_only_content(self):
+        """No false positives: an ordinary recap must not grow a scary warning."""
+        code, _out, err, _pdf = run_generator(
+            GENERATOR, RECAP_WITH.format(org="Gazprom Media Holding"), "bootcamp_recap.md"
+        )
+        self.assertEqual(0, code, err)
+        self.assertNotIn(WARNING_MARK, err, err)
+
+    def test_discoveries_warns_inside_a_fenced_block(self):
+        """A fenced ASCII diagram is exactly where the reported loss happened."""
+        fenced = "```\n[GLEIF] {bar}\n   {tri}\n{org}\n```".format(
+            bar=BOX_DRAWING, tri=DOWN_TRIANGLE, org=CYRILLIC_ORG
+        )
+        code, out, err, pdf = run_generator(
+            DISCOVERIES_GENERATOR,
+            discoveries_doc(fenced),
+            "bootcamp_data_discoveries.md",
+        )
+        self.assertEqual(0, code, err)
+        self.assertIn("PDF generated:", out, out + err)
+        self.assertTrue(pdf.is_file() and pdf.stat().st_size > 0)
+        self.assertIn(WARNING_MARK, err, "fenced-block loss went unreported:\n" + err)
+        for expected in ("CYRILLIC", "BOX DRAWINGS", "TRIANGLE"):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, err, err)
+
+    def test_discoveries_warns_inside_a_table_cell(self):
+        table = (
+            "| Entity | Name |\n|---|---|\n"
+            f"| 1042 | {CYRILLIC_ORG} |\n"
+        )
+        _code, _out, err, _pdf = run_generator(
+            DISCOVERIES_GENERATOR, discoveries_doc(table), "bootcamp_data_discoveries.md"
+        )
+        self.assertIn(WARNING_MARK, err, "table-cell loss went unreported:\n" + err)
+
+    def test_discoveries_is_silent_on_latin1_only_content(self):
+        code, _out, err, _pdf = run_generator(
+            DISCOVERIES_GENERATOR,
+            discoveries_doc("The network centres on Gazprom Media Holding and affiliates."),
+            "bootcamp_data_discoveries.md",
+        )
+        self.assertEqual(0, code, err)
+        self.assertNotIn(WARNING_MARK, err, err)
+
+    def test_the_shipped_example_recap_reports_no_loss(self):
+        """The reference artifact must render clean, or every run looks broken."""
+        example = (
+            REPO_ROOT / "plugins" / "senzing-bootcamp" / "docs" / "examples"
+            / "bootcamp_recap.example.md"
+        )
+        code, _out, err, _pdf = run_generator(
+            GENERATOR, example.read_text(encoding="utf-8"), "bootcamp_recap.md"
+        )
+        self.assertEqual(0, code, err)
+        self.assertNotIn(WARNING_MARK, err, err)
+
+
+class TheWarningSurvivesAnyConsole(unittest.TestCase):
+    """The warning must not become the mojibake it exists to report.
+
+    A Windows console in a legacy code page cannot display the very characters that were
+    dropped (`ground-rules.md` -> "Windows and PowerShell"), so the report names them by
+    Unicode NAME and backslash-escapes the locating excerpt rather than echoing either.
+    """
+
+    def setUp(self):
+        GEN.reset_dropped_characters()
+
+    def tearDown(self):
+        GEN.reset_dropped_characters()
+
+    def test_the_warning_is_pure_ascii(self):
+        GEN._safe(f"{CYRILLIC_ORG} {BOX_DRAWING}{DOWN_TRIANGLE} 李明")
+        warning = GEN.dropped_character_warning()
+        self.assertIsNotNone(warning)
+        self.assertTrue(
+            warning.isascii(),
+            "the drop warning carries non-ASCII text, so a legacy Windows code page can "
+            f"corrupt the warning itself: {warning!r}",
+        )
+
+    def test_no_dropped_character_is_echoed_raw(self):
+        GEN._safe(CYRILLIC_ORG)
+        warning = GEN.dropped_character_warning()
+        for ch in CYRILLIC_ORG:
+            with self.subTest(ch=ch):
+                self.assertNotIn(ch, warning)
+
+    def test_an_accented_latin_name_is_not_reported_as_a_loss(self):
+        """`ā`->`a` is the readable approximation INV-143 asks for, not a dropped value.
+
+        Reporting it would fire on ordinary European names and bury the real losses.
+        """
+        folded = GEN._safe("José Mařík āōş Zoë")
+        self.assertEqual("Jose Marik aos Zoe", folded)
+        self.assertIsNone(
+            GEN.dropped_character_warning(),
+            "an accented Latin name was reported as dropped content",
+        )
+
+    def test_the_record_is_idempotent_across_render_passes(self):
+        """fpdf2 renders in two passes and may then fall back to the stdlib writer.
+
+        Counting occurrences would report two or three times the real loss, so the count
+        must not move when the same content is sanitised again.
+        """
+        GEN._safe(CYRILLIC_ORG)
+        first = GEN.dropped_character_warning()
+        for _ in range(3):
+            GEN._safe(CYRILLIC_ORG)
+        self.assertEqual(first, GEN.dropped_character_warning())
+
+    def test_it_names_a_locating_passage(self):
+        GEN._safe(f"The network centres on {CYRILLIC_ORG} and its affiliates.")
+        warning = GEN.dropped_character_warning()
+        self.assertIn("First affected passage", warning)
+        self.assertIn("The network centres on", warning)
+
+
 if __name__ == "__main__":
     unittest.main()

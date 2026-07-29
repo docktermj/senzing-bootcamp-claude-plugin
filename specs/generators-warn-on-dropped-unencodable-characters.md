@@ -140,3 +140,50 @@ Close the warn half of the contract, in the shared sanitisation path so both gen
   `specs/certificate-name-fallback-at-graduation.md` and
   `specs/certificate-name-must-reach-the-generator.md` (INV-143's existing warn, on the identity
   field only), `specs/artifact-level-verification-for-deliverables.md`
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **Only the branch that truly loses content is instrumented.** The spec says to record "the
+  characters it discarded". `_fold_to_latin1` has three discard paths, and instrumenting all of them
+  would have broken this spec's own no-false-positives criterion: stripping a combining mark leaves
+  its base letter (`ā` -> `a`) and `_LATIN_FOLD` supplies a replacement, so both are the deliberate,
+  readable ASCII approximations INV-143 explicitly permits. Only the final
+  `except UnicodeEncodeError: continue` — where the character produces **nothing** — is recorded.
+  Verified: `José Mařík āōş Zoë` folds to `Jose Marik aos Zoe` and emits **no** warning, while
+  Cyrillic, CJK and box-drawing characters all report. Had the other two been instrumented, every
+  ordinary accented European name would have raised a scary warning and buried the real losses.
+- **"The count" is reported as distinct characters and distinct passages, not occurrences.** The
+  recap generator's own comment records that the fpdf2 renderer runs **two passes**, and it may then
+  fall back to the stdlib writer — so an occurrence counter would report two or three times the real
+  loss, which is its own silently-wrong number. The collector is keyed by character, making the
+  record idempotent however many times the same content is sanitised; a test pins that
+  (`test_the_record_is_idempotent_across_render_passes`).
+- **Both generators' assertions live in `tests/test_recap_pdf_font_safety.py`**, the first location
+  the spec names, rather than splitting the discoveries half into `tests/test_discoveries_pdf.py`.
+  The mechanism under test is a single shared collector and reporter in `generate_recap_pdf.py` that
+  `generate_discoveries_pdf.py` imports, so one module holds one contract; splitting it would let the
+  two halves drift. `tests/test_discoveries_pdf.py` was not modified.
+- **The certificate-name warning and the new body warning can both fire for a non-Latin bootcamper
+  name.** Not suppressed, deliberately: both statements are true (the name-specific one explains the
+  certificate consequence, the aggregated one reports the page-level drop), and any exclusion
+  mechanism would risk masking a genuine body drop that happened to share a character with the name.
+- **Every acceptance criterion is met and runtime-verified; none is deferred.** The reproduction from
+  the spec's Problem section was re-run against the implementation: the Cyrillic + box-drawing
+  discoveries document now emits `WARNING: 25 distinct character(s) in 3 passage(s) … CYRILLIC
+  CAPITAL LETTER A, … BOX DRAWINGS …` with a backslash-escaped locating excerpt, still prints
+  `PDF generated:` at `content retained: 96%`, and still exits 0 — the retention figure and exit
+  semantics are unchanged, as the spec requires.
+- **A wording bug in the warning was caught before it shipped.** The first implementation put an em
+  dash in the warning text, which contradicted the ASCII-by-construction guarantee the same warning
+  makes about Windows consoles. `test_the_warning_is_pure_ascii` now pins it.
+
+## Invariants introduced
+
+- `INV-178` — A bundled generator that drops a character it cannot encode MUST report the loss on
+  **stderr**, once per run, naming how many distinct characters and passages were affected,
+  identifying the characters by **Unicode name** (never by echoing the character itself), and
+  quoting one locating excerpt with non-ASCII backslash-escaped — while still writing the artifact
+  and exiting 0. The report MUST be pure ASCII. A retention percentage MUST NOT be treated as
+  covering this class. Reporting MUST be limited to characters that render as **nothing**, never a
+  deliberate readable approximation. Extends INV-143 from *how* a generator may drop to *that it
+  must say so*. (Recorded in `specs/INVARIANTS.md`, 2026-07-29.)

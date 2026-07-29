@@ -74,6 +74,7 @@ try:
         _safe,
         _wrap,
         _write_pdf,
+        dropped_character_warning,
     )
 except ImportError as exc:  # pragma: no cover - a broken install, not a data case
     sys.stderr.write(
@@ -828,6 +829,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     output = Path(args.output)
     for renderer, name in ((render_with_fpdf2, "fpdf2"), (render_with_stdlib, "stdlib")):
         if renderer(doc, output):
+            # Characters the built-in fonts could not render were dropped from the page.
+            # Reported once, after the renderer that succeeded has been through the whole
+            # document, and BEFORE the success line so it cannot be mistaken for noise
+            # following a clean result. `content retained` cannot catch this: it is
+            # measured over parsed source characters, before `_safe` runs at render time,
+            # which is why a Cyrillic organisation name vanished at "retained: 96%".
+            dropped = dropped_character_warning()
+            if dropped:
+                sys.stderr.write(dropped)
             sys.stdout.write(
                 f"PDF generated: {output} (renderer: {name}, "
                 f"content retained: {audit.retention:.0%})\n"

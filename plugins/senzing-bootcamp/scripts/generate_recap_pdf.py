@@ -956,6 +956,83 @@ _LATIN_FOLD = {
 }
 
 
+# Characters `_fold_to_latin1` could not represent at all, mapped to an excerpt of the
+# first passage each was found in. INV-143 permits dropping them; what it does not permit
+# is doing so silently, and until this collector existed the warn half of that contract
+# was implemented for the certificate name only. A Cyrillic organisation name in a
+# discoveries document rendered as `"- "` at exit 0 with `content retained: 96%` — the
+# retention figure cannot see it, because retention is measured over parsed *source*
+# characters before `_safe` runs at render time.
+#
+# Keyed by character, so the record is idempotent: the fpdf2 renderer runs two passes and
+# may then fall back to the stdlib writer, so counting occurrences would report two or
+# three times the real loss. Distinct characters and distinct passages are stable however
+# many times the same content is rendered.
+_DROPPED_CHARACTERS: Dict[str, str] = {}
+
+# Excerpt length kept short: it exists to locate the passage, not to reproduce it.
+_DROP_EXCERPT_CHARS = 60
+
+# Enough names to identify what was lost without turning one warning into a wall of text
+# for a document written entirely in another script.
+_DROP_NAMES_SHOWN = 8
+
+
+def _record_dropped_character(ch: str, context: str) -> None:
+    """Remember one character `_fold_to_latin1` had to drop, and where it was."""
+    if ch in _DROPPED_CHARACTERS:
+        return
+    excerpt = re.sub(r"\s+", " ", context).strip()
+    if len(excerpt) > _DROP_EXCERPT_CHARS:
+        excerpt = excerpt[:_DROP_EXCERPT_CHARS].rstrip() + "..."
+    _DROPPED_CHARACTERS[ch] = excerpt
+
+
+def reset_dropped_characters() -> None:
+    """Clear the collector. For tests and for callers that render more than one document."""
+    _DROPPED_CHARACTERS.clear()
+
+
+def _describe_dropped(ch: str) -> str:
+    """A character's Unicode name, or its code point when it has none."""
+    import unicodedata
+
+    return unicodedata.name(ch, None) or "U+%04X" % ord(ch)
+
+
+def dropped_character_warning() -> Optional[str]:
+    """One aggregated ``WARNING:`` line for everything dropped this run, else ``None``.
+
+    ⚠️ ASCII by construction. The dropped characters are reported by Unicode NAME, and the
+    locating excerpt is backslash-escaped — never echoed raw. A Windows console in a legacy
+    code page cannot display the very characters that were dropped (see `ground-rules.md`
+    -> "Windows and PowerShell"), so printing them would corrupt the warning itself and
+    reproduce the defect it exists to report.
+
+    Non-blocking by design: the caller writes this to stderr and still ships the PDF
+    (INV-048/INV-052/INV-066). Silent loss is the defect; refusing to render is not the fix.
+    """
+    if not _DROPPED_CHARACTERS:
+        return None
+    names = [_describe_dropped(ch) for ch in _DROPPED_CHARACTERS]
+    shown = ", ".join(names[:_DROP_NAMES_SHOWN])
+    if len(names) > _DROP_NAMES_SHOWN:
+        shown += f", and {len(names) - _DROP_NAMES_SHOWN} more"
+    first_char = next(iter(_DROPPED_CHARACTERS))
+    where = _DROPPED_CHARACTERS[first_char].encode("ascii", "backslashreplace").decode("ascii")
+    return (
+        f"WARNING: {len(_DROPPED_CHARACTERS)} distinct character(s) in "
+        f"{len(set(_DROPPED_CHARACTERS.values()))} passage(s) cannot be rendered by this "
+        f"PDF's built-in fonts and were dropped from the page: {shown}. "
+        f'First affected passage: "{where}". The PDF was still written and the content is '
+        f"otherwise intact, but those characters are GONE from it: check the page before "
+        f"sharing it. To fix: use each entity's verified Latin-script name or alias instead "
+        f"of its non-Latin primary name (especially inside fenced/monospace blocks), and use "
+        f"ASCII connectors (| and v) in ASCII diagrams. Never substitute a guess for a name "
+        f"you have not verified.\n"
+    )
+
+
 def _fold_to_latin1(s: str) -> str:
     """Best-effort ASCII fold of characters `_UNICODE_MAP` does not cover.
 
@@ -983,6 +1060,12 @@ def _fold_to_latin1(s: str) -> str:
         try:
             ch.encode("latin-1")
         except UnicodeEncodeError:
+            # The only branch that loses content outright, and therefore the only one
+            # recorded. The two above are deliberate, readable approximations INV-143
+            # asks for — a stripped combining mark leaves its base letter (`ā` -> `a`)
+            # and `_LATIN_FOLD` supplies a replacement — so reporting them would fire on
+            # every ordinary accented European name and bury the real losses.
+            _record_dropped_character(ch, s)
             continue
         out.append(ch)
     return "".join(out)
@@ -2969,6 +3052,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         ok = render_with_stdlib(recap, out)
 
     if ok:
+        # Characters the built-in fonts could not render were dropped from the page during
+        # the render above. Reported here, once, for the whole run — after both fpdf2
+        # passes (and any stdlib fallback) have been through the content, so nothing is
+        # missed and nothing is counted twice. The certificate-name warning above covers
+        # one field; this covers the body, which is where the loss was silent.
+        dropped = dropped_character_warning()
+        if dropped:
+            sys.stderr.write(dropped)
         # Recognizable but imperfect: warn and still ship the PDF (never blocks;
         # graduation is non-blocking). Distinct from the fatal class above.
         if audit.warnings:
