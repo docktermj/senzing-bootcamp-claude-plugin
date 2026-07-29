@@ -145,3 +145,46 @@ In `phase1-query-visualize.md`:
   `specs/verify-sdk-parameter-shapes-and-flag-families.md` (flag-family semantics),
   `specs/confirm-json-data-and-network-link-response-paths.md`,
   `specs/network-link-fields-and-uncovered-response-schemas.md`
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **One claim this spec made had never actually been verified — it has been now.** The spec's
+  proposed change item 3 asserted that `RECORD_SUMMARY[]` "carries `DATA_SOURCE` per source". That
+  was written from reasoning, not from the server: the triage run had checked `topic='flags'` but not
+  `topic='response_schemas'`. Confirmed at implementation:
+  `get_sdk_reference(topic='response_schemas', filter='search_by_attributes', language='python')`
+  documents `RECORD_SUMMARY[].DATA_SOURCE` (string) and `RECORD_SUMMARY[].RECORD_COUNT` (integer)
+  (server **1.32.2**, verified **2026-07-29**). Had it not held, the guidance would have shipped a
+  fact laundered through a spec file — exactly what INV-080 forbids.
+- **The per-method nesting differs, which the spec did not mention.** `search_by_attributes` returns
+  `RESOLVED_ENTITIES[].ENTITY.RESOLVED_ENTITY.RECORD_SUMMARY[]`, while `find_network_*` returns
+  `ENTITIES[].RESOLVED_ENTITY.RECORD_SUMMARY[]` (same call as above, plus
+  `filter='find_network_by_entity_id'`). A reader told only "use `RECORD_SUMMARY[]`" would guess one
+  shape and get an empty read on the other method — the very failure mode this spec exists to close
+  — so both paths are named in the implemented text.
+- **The `find_network` + `RECORDS[]` case is stated as a two-source coverage difference, not as the
+  spec's flat "same for `SZ_FIND_NETWORK_DEFAULT_FLAGS`".** `topic='flags'` lists
+  `find_network_by_entity_id` in `SZ_ENTITY_INCLUDE_RECORD_DATA`'s `applies_to` (so OR-ing the flag
+  in is documented as supported), while `find_network`'s own `response_schemas` entry enumerates only
+  `RECORD_SUMMARY[]` under `ENTITIES[].RESOLVED_ENTITY` and does **not** list `RECORDS[]` at all
+  (both verified 2026-07-29, server 1.32.2). Per INV-169 both are recorded with their conditions and
+  the reader is told to dump one raw response before relying on it, rather than flattening two
+  references' differing coverage into one absolute — the error this repo has already had to retract
+  twice.
+- ⚠️ **An observation outside this spec's scope: `find_network` now HAS a `response_schemas` entry.**
+  The implemented spec `network-link-fields-and-uncovered-response-schemas` records that
+  `find_network_by_entity_id` had **no** `response_schemas` entry at all, and that
+  `ENTITY_NETWORK_LINKS`' `MIN_ENTITY_ID` / `MAX_ENTITY_ID` endpoint keys had to be discovered by
+  dumping a raw response. On 1.32.2 the entry exists and documents both keys explicitly
+  (verified 2026-07-29). That gap is fixed upstream. Not rewritten here — reporting and proposing is
+  the rule for a defect the server has since fixed; retiring that spec's guidance is a separate,
+  maintainer-owned decision.
+
+## Invariants introduced
+
+- `INV-179` — Before writing code that reads a field from an SDK response, the guide MUST confirm
+  the flag that populates **that field** is present in the composite actually in force (reading its
+  `composite_members`), not merely that the field name is correct. A blank field has **three**
+  causes, not two: a wrong field name, a correct field name the flags in force do not populate, or
+  genuinely absent data. Extends INV-115, whose two-cause wording this corrects. (Recorded in
+  `specs/INVARIANTS.md`, 2026-07-29.)

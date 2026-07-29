@@ -118,3 +118,31 @@ Keep it language-agnostic: the rule is "fold on the key pair", not a Python idio
   Senzing or the MCP server.
 - Related specs: `specs/post-load-match-key-semantic-audit.md`,
   `specs/match-key-audit-cannot-read-related-entities-from-export.md`
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **No material deviation.** Both Senzing facts were re-confirmed at implementation before being
+  written into the plugin: the replace-on-repeated-key behaviour via `search_docs` ("Data Source
+  Records (DSRs) Explained" — *"the new record replaces the current one in Senzing and doesn't
+  contribute to the DSR count"*) and the `(data_source_code, record_id)` identity via
+  `get_sdk_reference(topic='parameters', filter='add_record', language='python')` (server
+  **1.32.2**, verified **2026-07-29**). The implemented text quotes the server rather than
+  paraphrasing it.
+- **One addition the spec did not name.** The cross-check now offers `RECORD_SUMMARY[]`'s
+  `RECORD_COUNT` alongside `get_entity_by_entity_id` as a way to confirm a surprising per-record
+  count, because that field is populated by the *default* flags on both `search_by_attributes` and
+  `find_network` and so needs no extra call or flag widening — confirmed in the same session via
+  `get_sdk_reference(topic='response_schemas', filter='search_by_attributes')`. This composes with
+  the sibling spec `method-default-flags-omit-record-data`, implemented in the same pass.
+- **Every acceptance criterion is met and none needed a live engine.** The spec's criteria are all
+  properties of the guidance text; the entity counts it cites (23 and 15 apparent records versus 2
+  real ones) are the reporting run's own observation, quoted as such rather than re-verified here,
+  since reproducing them would need a live engine with that source loaded.
+
+## Invariants introduced
+
+- `INV-180` — Code that walks a source's raw or mapped file rows to associate them with resolved
+  entities MUST deduplicate by `(data_source, record_id)` before counting or grouping, because that
+  pair is a Senzing record's identity and re-sending it replaces rather than adds. Senzing's
+  resolved view, never the file, is the authority on how many records an entity has. (Recorded in
+  `specs/INVARIANTS.md`, 2026-07-29.)
