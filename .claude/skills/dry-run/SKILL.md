@@ -77,29 +77,73 @@ already-correct code. `find . -name __pycache__ -type d -exec rm -rf {} +`.
 
 A dry-run finding is only half done when the plugin is fixed. Follow this for each:
 
-1. **Fix the class, not the instance,** where the class is cheap to remove. The
+1. ⛔ **Write it into `specs/` as you find it — before fixing anything.** A finding that
+   exists only in the conversation is not recorded, it is *remembered*, and it dies at
+   session end or the next compaction. This is not a filing preference; it is the
+   difference between a durable improvement and a good afternoon.
+
+   - **File:** `specs/<kebab-case-title>.md`, using the shape in
+     `../feedback-to-specs/spec-template.md` — Problem, Root cause, Proposed change,
+     Acceptance criteria, Affected files, Source. Cite `file:line`, and date every MCP
+     claim with the server version that produced it.
+   - **When:** immediately for phase 3, because a walk stops on whatever turn the
+     maintainer stops it; by the end of the phase at the latest for phases 1 and 2.
+     Do **not** defer to the final report — the report is the last thing that happens
+     and the first thing lost.
+   - **Even when you fix it the same session.** The spec is what the `IMPLEMENTED.md`
+     entry points at, what makes the finding legible to whoever reads it next, and what
+     survives if the fix has to be reverted. Writing the spec is not made redundant by
+     also fixing it.
+   - **Grouping:** one spec per root cause. Several small prose corrections from one walk
+     may share a spec when each is a few lines in the same file or two — give each its own
+     acceptance criteria so they stay independently implementable — but two unrelated
+     defects never share one.
+   - **Where not to put it.** Not the session scratchpad: the maintainer's global
+     `write-location-gate.py` blocks system-temp paths, so a `/tmp/...` note fails outright.
+     Not repo `tmp/` either — it is not gitignored, so it becomes untracked clutter that
+     "leave the repo with only intended changes" then tells you to delete. `specs/` is the
+     home, and it has the additional property that `/implement-spec` lists it as
+     outstanding work.
+
+   Phase 3's collapsed test-notes blocks are *working notes* — the running observation
+   channel for a walk in progress. They are never the record.
+
+2. **Fix the class, not the instance,** where the class is cheap to remove. The
    `_clip` ellipsis defect had three call sites; changing the suffix to ASCII inside
    `_clip` made the ordering hazard unreachable instead of fixing three callers.
-2. **Write a test in the repo-level `tests/`** — stdlib only, no `plugins/` (INV-108).
+3. **Write a test in the repo-level `tests/`** — stdlib only, no `plugins/` (INV-108).
    A dry run you cannot repeat cheaply is a one-off; a test is the durable half.
-3. ⛔ **Negative-control the test.** Reintroduce the defect, confirm the test fails,
+4. ⛔ **Negative-control the test.** Reintroduce the defect, confirm the test fails,
    revert. A guard whose docstring claims more than its assertion checks is worse
    than no guard, because it certifies what it never tested. This is not optional:
    in the originating session, one existing test had **pinned the wrong premise**,
    which is how the defect it covered survived three audits.
-4. **Record it** in `specs/IMPLEMENTED.md`, and either register the invariant it
-   establishes in `specs/INVARIANTS.md` or state that it establishes none —
-   `tests/test_spec_ledger_invariants.py` enforces this for entries dated on or
-   after its cutoff.
-5. **Correct an invariant in place when the invariant itself is wrong.** INV-132
+5. **Record the outcome** in `specs/IMPLEMENTED.md`, naming the spec from step 1, and
+   either register the invariant it establishes in `specs/INVARIANTS.md` or state that it
+   establishes none — `tests/test_spec_ledger_invariants.py` enforces this for entries
+   dated on or after its cutoff. Two homes, two purposes: the **spec** is the finding as
+   pending work, the **ledger** is what was done about it. A finding you did not fix has a
+   spec and no ledger entry, which is exactly right — it stays visible as outstanding
+   rather than looking handled.
+6. **Correct an invariant in place when the invariant itself is wrong.** INV-132
    asserted the MCP reference could not answer parameter shapes; the server answers
    them. Add a dated correction note explaining what was verified and when. An
    invariant that encodes a false premise is worse than a missing one.
+
+⛔ **Do not end a run with unwritten findings.** Before reporting, list what you found and
+confirm each one is either in a spec or in the ledger. "I described it in the report" is not
+recorded — the report is a message, and messages are not durable. This rule exists because a
+phase-3 walk reached eight turns with four findings held only in conversation, and it took
+the maintainer asking *"are you keeping notes that might lead to improvements / specs?"* to
+surface it.
 
 ## Reporting
 
 Report to the maintainer with the severity ordering the findings deserve, and:
 
+- ⛔ **Name the spec file each finding was written into**, and say plainly which findings are
+  fixed and which are recorded-but-open. A report that lists findings without naming where
+  they live reads as though the work is captured when it is only described.
 - **Lead with anything that breaks a documented path**, not with the longest list.
 - **Say what you verified as correct**, briefly. "The routing table is right, the
   opaque-state contract is handled, no `add_data_source` confabulation" is
@@ -115,7 +159,12 @@ Report to the maintainer with the severity ordering the findings deserve, and:
 
 Remove the scratch project when the run is done (`rm -rf $HOME/senzing-bootcamp-dryrun`)
 and clear `__pycache__`. Leave the repo with only intended changes: `git status`
-should show the fixes and new tests, nothing else.
+should show the fixes, the new tests, **and the specs the findings were written into** —
+nothing else.
+
+⛔ **The scratch project is disposable; the specs are the run's actual output.** Deleting the
+project is cleanup. Deleting or never writing the specs loses the run. If a run produced no
+spec and no ledger entry, it produced nothing durable, however good the conversation was.
 
 ## Scope note
 
