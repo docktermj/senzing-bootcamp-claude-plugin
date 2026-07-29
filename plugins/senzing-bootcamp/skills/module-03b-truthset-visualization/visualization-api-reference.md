@@ -531,10 +531,25 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
 ### Defaults at production scale (required)
 
 Every visual default here was chosen against the Truth Set's 84 entities, and Module 7 points this
-same app at the bootcamper's own data — routinely thousands. Two defaults do **not** survive that
+same app at the bootcamper's own data — routinely thousands. These defaults do **not** survive that
 and are therefore contract, not implementation detail:
 
-**1. Match-key labels must stay distinguishable.** Real match keys run to 70+ characters
+**1. Every truncated label must stay distinguishable — whatever it labels.** Wherever a label is
+shortened to fit, **no two rendered labels may be identical unless their underlying values are
+identical**, and the untruncated value must be reachable on hover (`<title>` or the surface's
+equivalent tooltip). This is the general requirement; item 2 is its match-key application, and it
+binds every truncated label equally — entity names on graph nodes, source codes in a legend, any
+future chart. Two entities named `ACME HOLDINGS INTERNATIONAL LLC` and
+`ACME HOLDINGS INTERNATIONAL INC` share their first 27 characters, so a head-only cut renders both
+identically; company names sharing a long prefix are routine rather than exotic, and roughly half a
+real dataset can be organizations (INV-164). Compare the **fitted** strings, not the source values,
+and disambiguate any pair that collides while its values differ — the Python reference appends a
+positional suffix. Truncation must never remove the leading characters. Implement this in whatever
+language the server is written in (INV-090/INV-124): it is stated here because a rule that lives only
+in the Python reference reaches no generated server, which is exactly how the `NAME_FULL` search
+defect shipped (INV-164).
+
+**2. Match-key labels must stay distinguishable.** Real match keys run to 70+ characters
 (`+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+REGISTRATION_COUNTRY+LEI_NUMBER`). A fixed
 label gutter with right-anchored text pushes the **head** of each key off the left edge, so the
 highest bars all render as the same trailing fragment and cannot be told apart — counts correct,
@@ -554,7 +569,7 @@ labels useless, chart looking fine. Required behavior:
   stays reachable on hover regardless.
 - Expose the full, untruncated key on hover (`<title>` or equivalent), on both the bar and its label.
 
-**2. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
+**3. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
 at that density the graph conveys shape only, with no practical way to locate an entity. Required:
 **above 400 entities, Entity Graph opens on the relationship subgraph** rather than the full
 population, provided a subgraph exists (`relationships_total` > 0). The toggle still switches both

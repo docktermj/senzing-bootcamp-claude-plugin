@@ -845,8 +845,29 @@ async function drawGraph(){
   node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
     .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
     .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
+  // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
+  // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
+  // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
+  // in organization data -- would otherwise render as the same string, and the graph would
+  // show two nodes nothing distinguishes. Compare the FITTED labels, not the names, and
+  // suffix only a genuine collision: two entities that really share a name may legitimately
+  // render alike. The full name stays on hover via the group tooltip above.
+  const NODE_LABEL_MAX=20;
+  const nodeLabel={};
+  (function(){const taken={};
+    nodes.forEach(function(n){
+      const full=n.entity_name||"";
+      let lab=full.length>NODE_LABEL_MAX?full.slice(0,NODE_LABEL_MAX-1)+"…":full;
+      if(taken[lab]!==undefined&&taken[lab]!==full){
+        let k=2;while(taken[lab+" ("+k+")"]!==undefined)k++;
+        lab=lab+" ("+k+")";
+      }
+      taken[lab]=full;
+      nodeLabel[n.entity_id]=lab;
+    });})();
   node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
-      .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
+      .text(function(d){return nodeLabel[d.entity_id];})
+      .append("title").text(function(d){return d.entity_name||"";});
   sim.on("tick",function(){
     edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
       .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
