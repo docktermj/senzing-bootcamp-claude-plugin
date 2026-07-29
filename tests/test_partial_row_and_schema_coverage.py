@@ -15,15 +15,26 @@ relationship Senzing could not fully describe rather than as a parsing bug. An
 all-blank row invites suspicion; a half-populated one does not, because the
 fields that did populate signal the parse worked.
 
-The endpoint keys were later confirmed by a live dump on SDK 4.3.3 (2026-07-28):
+The endpoint keys were first confirmed by a live dump on SDK 4.3.3 (2026-07-28):
 `MIN_ENTITY_ID` / `MAX_ENTITY_ID`, alongside `MATCH_LEVEL_CODE`, `MATCH_KEY`,
-`ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS`. They are now recorded in the
-contract — but **still marked dump-confirmed rather than MCP-sourced**, because
-they remain absent from `response_schemas` and from the indexed docs. INV-080
+`ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS`.
+
+**Those keys are now MCP-sourced, and this docstring said otherwise until
+2026-07-29.** When first recorded they were dump-only, so the contract carried
+them as an unverified caution rather than as names to code against — INV-080
 forbids shipping an unverified Senzing fact as the name to code against, and this
 repo has twice had to retract an over-generalized claim (`SZ_EXPORT_ALL_FLAGS does
-not exist`, and phase D's export/`RELATED_ENTITIES` absolute — INV-169). So the
-keys tell a reader what to *expect*; the dump still decides.
+not exist`, and phase D's export/`RELATED_ENTITIES` absolute — INV-169). The
+contract and the assertions below were corrected in place under INV-149 once
+`get_sdk_reference(topic='response_schemas', filter='find_network')` began
+returning the element fields itself; re-confirmed on server 1.32.2, 2026-07-29,
+which returns all seven. This prose lagged that correction and contradicted
+`test_the_keys_are_no_longer_marked_unconfirmable` in the same file — the small,
+ordinary way a stale premise survives its own fix.
+
+What has NOT changed is the discipline the tests actually pin: run the lookup,
+then dump the element before parsing. The keys tell a reader what to *expect*;
+the dump still decides.
 
 What these tests assert is therefore both halves: the *discipline* (dump the
 element, treat a blank field as a wrong name, never present an unconfirmed name as

@@ -169,3 +169,64 @@ was verified from the current resource, and the specification question from `sea
   treated as evidence about the data, MUST NOT block the flow, and MUST NOT be resolved by altering
   the data to satisfy the gate; the limitation is named with its provenance, the exemption path is
   stated, and an MCP-delivered validator is never forked (recorded in `specs/INVARIANTS.md`).
+
+## Superseded upstream — guidance retired 2026-07-29
+
+**This spec's premise no longer holds, and the guidance it produced has been retired from the
+plugin.** Recorded here rather than by editing the text above, which is the accurate record of what
+was true when it was written.
+
+`sz_verbatim_check.py` is delivered by the MCP server, and its `collect_strings()` now flattens every
+**int/float** (stringified via `str(obj)`) as well as every string, skipping only `bool`. Re-fetched
+and re-run against server **1.32.2** on **2026-07-29**:
+
+| Source value | Emitted as | Result |
+|---|---|---|
+| `RegKey: 1001` | `"1001"` | exit **0** — passes |
+| `Score: 98.6` | `"98.6"` | exit **0** — passes |
+| `Flag: true` | `"true"` | exit **1** — still fails |
+
+So the numeric case this spec was written for was **fixed upstream** between 1.32.1 (2026-07-28, the
+version it was verified against) and 1.32.2 — the same day it was reported. Booleans remain excluded
+**deliberately**, and `collect_strings()`'s own docstring gives the reason: there is no unambiguous
+verbatim string form for a JSON boolean (Python's `str(True)` is `"True"`, not JSON's `"true"`), so
+admitting them would let a case transform slip through rather than catch one.
+
+**Why the guidance was retired rather than version-conditioned.** The plugin pins no MCP *server*
+version — every `version` parameter it passes is the Senzing SDK version (`'current'`), and the server
+is a hosted service. A bootcamper therefore always reaches whatever is deployed, so text describing
+1.32.1's behaviour cannot help anyone and actively misleads: it told them to record an exemption for
+a gate that is now green.
+
+What changed, at the maintainer's explicit direction (2026-07-29):
+
+- `module-05-data-quality-mapping/phase2-data-mapping.md` — the ⛔ block now states the limitation as
+  "harvests source **values** only", enumerates the two causes that remain (a **boolean**, and a value
+  derived from a source **field name**), and marks the numeric case ✅ **fixed** with an explicit
+  "do not record a numeric-value exemption".
+- `module-06-data-processing/phaseD-validation.md` — carried its own copy of the string-only claim;
+  corrected the same way. Two files stating one Senzing fact is two places for it to go stale, and
+  both had.
+- `tests/test_verbatim_check_limitation.py` — five assertions pinned the superseded premise
+  (`isinstance(obj, str)`, "emit it as a number", the `1.32.1, 2026-07-28` provenance, "stringifying
+  a numeric identifier still fails", and phase D's copy). Each was repointed to what survives — the
+  *shape* of the limitation and the discipline — with a docstring recording why, plus a new
+  `test_the_numeric_case_is_recorded_as_FIXED_not_as_a_limitation` that fails if the old claim returns.
+
+**What survives from this spec, unchanged:** the 4-step resolution (do not conclude the mapping is
+wrong; choose the emission on the Entity Specification's terms; record the exemption and proceed;
+never alter a source value to satisfy the tool), the non-blocking rule (INV-048), and the prohibition
+on forking the server-delivered checker. Those were the durable part; only the numeric instance was
+the perishable part. The sibling case that *does* still fail is
+`specs/verbatim-check-cannot-see-field-name-derived-values.md`.
+
+## Invariants introduced
+
+- `INV-181` — When the MCP server changes behaviour the plugin documents, every place the plugin
+  states the superseded behaviour MUST be corrected to the current behaviour — including test
+  assertions and docstrings that pin it — and MUST NOT be left version-conditioned to an older
+  server, because the plugin pins no MCP **server** version. A superseded claim MUST be recorded by
+  appending to its originating spec (as the section above does), never by editing that spec's text,
+  and a test that pinned it MUST be repointed to what survives, with a docstring stating what changed
+  and when. (Recorded in `specs/INVARIANTS.md`, 2026-07-29 — established by this spec being
+  superseded, not by its original implementation.)

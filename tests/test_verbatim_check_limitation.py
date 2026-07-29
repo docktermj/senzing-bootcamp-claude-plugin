@@ -42,19 +42,57 @@ class TheLimitationIsStated(unittest.TestCase):
     def test_phase2_says_the_gate_is_unsatisfiable_not_strict(self):
         self.assertRegex(flat(PHASE2), r"(?i)unsatisfiable — not strict|unsatisfiable rather than strict")
 
-    def test_it_names_the_string_only_harvesting(self):
+    def test_it_names_the_value_only_harvesting(self):
+        """Repointed 2026-07-29: `collect_strings()` is no longer string-only.
+
+        It flattens every string AND every int/float (stringified via `str(obj)`), skipping only
+        `bool`. What survives is the *shape* of the limitation — the allowed set is built from
+        source VALUES — so that is what this pins, rather than the superseded implementation
+        detail `isinstance(obj, str)`.
+        """
         text = flat(PHASE2)
         self.assertIn("collect_strings()", text)
-        self.assertIn("isinstance(obj, str)", text)
+        self.assertRegex(text, r"(?i)harvests source \*values\* only")
+        self.assertRegex(
+            text,
+            r"(?i)int/float",
+            "the current branch set must be stated, or the text drifts back to string-only",
+        )
 
     def test_it_names_the_membership_test(self):
         self.assertIn("v.strip() not in allowed", flat(PHASE2))
 
-    def test_it_states_both_emissions_are_reported(self):
-        """The symmetry is the whole point: there is no emission that passes."""
+    def test_it_names_what_cannot_be_harvested(self):
+        """Replaces `test_it_states_both_emissions_are_reported` (2026-07-29).
+
+        That test pinned "emit it as a number / emit it as a string" — the symmetry argument for
+        the NUMERIC case, which server 1.32.2 fixed. Two causes remain, and naming them is what
+        keeps a bootcamper from recording an exemption for a gate that is now green.
+        """
         text = flat(PHASE2)
-        self.assertRegex(text, r"(?i)emit it as a number")
-        self.assertRegex(text, r"(?i)emit it as a string")
+        self.assertRegex(text, r"(?i)\*\*A boolean\.\*\*|a \*\*boolean\*\*")
+        self.assertRegex(text, r"(?i)derived from a source field NAME|source \*\*field NAME\*\*")
+
+    def test_the_numeric_case_is_recorded_as_FIXED_not_as_a_limitation(self):
+        """The defect this repointing exists to prevent: guidance for a superseded server.
+
+        The plugin pins no MCP server version, so every bootcamper is on the current server. Text
+        describing 1.32.1's behavior can only mislead — here into recording a spurious exemption.
+        """
+        text = flat(PHASE2)
+        self.assertRegex(
+            text,
+            r"(?i)Numbers are NOT in that list any more|numeric source value now enters the allowed set",
+        )
+        self.assertRegex(
+            text,
+            r"(?i)do \*\*not\*\* record a numeric-value exemption|do not record a numeric-value exemption",
+        )
+        self.assertNotRegex(
+            text,
+            r"(?i)where a source stores a value as a JSON \*\*number\*\* .{0,80}never enters the allowed set",
+            "the superseded claim is back in shipped guidance",
+        )
 
     def test_it_records_the_key_only_waiver(self):
         text = flat(PHASE2)
@@ -62,8 +100,12 @@ class TheLimitationIsStated(unittest.TestCase):
         self.assertRegex(text, r"(?i)a \*value\* cannot be exempted")
 
     def test_the_facts_carry_their_provenance(self):
-        """INV-080: a Senzing/resource fact in shipped text says how it was established."""
-        self.assertRegex(flat(PHASE2), r"(?i)server 1\.32\.1, 2026-07-28")
+        """INV-080: a Senzing/resource fact in shipped text says how it was established.
+
+        Repointed 2026-07-29 from `server 1.32.1, 2026-07-28`: the claim was re-established
+        against 1.32.2, and the provenance must move with the fact it attests.
+        """
+        self.assertRegex(flat(PHASE2), r"(?i)server \*\*1\.32\.2\*\*, \*\*2026-07-29\*\*")
 
 
 class TheMappingIsNotPresumedWrong(unittest.TestCase):
@@ -77,10 +119,21 @@ class TheMappingIsNotPresumedWrong(unittest.TestCase):
         )
 
     def test_phase_d_carries_the_same_caveat(self):
-        """A violation list arriving unresolved must not read as a mapping defect."""
+        """A violation list arriving unresolved must not read as a mapping defect.
+
+        Repointed 2026-07-29: phase D carried its own copy of the string-only claim
+        ("cannot express a non-string source value ... reports every emission of a numeric source
+        value as a violation"). Two files stating one Senzing fact is two places for it to go
+        stale, and both had.
+        """
         text = flat(PHASE_D)
-        self.assertRegex(text, r"(?i)cannot express a non-string source value")
+        self.assertRegex(text, r"(?i)harvests source \*values\* only")
         self.assertRegex(text, r"(?i)checker limitation and not a mapping error")
+        self.assertRegex(
+            text,
+            r"(?i)Numeric source values used to fail this way and \*\*no longer do\*\*",
+            "phase D must not send a bootcamper to record a numeric exemption either",
+        )
 
 
 class TheDataIsNeverAlteredToPassTheGate(unittest.TestCase):
@@ -88,10 +141,15 @@ class TheDataIsNeverAlteredToPassTheGate(unittest.TestCase):
         self.assertRegex(flat(PHASE2), r"(?i)[Nn]ever change a source value to satisfy the tool")
 
     def test_it_says_why_the_workaround_does_not_even_work(self):
-        """Stringifying still fails, because `allowed` was built without the value."""
+        """Repointed 2026-07-29 to the general reason, not the numeric example.
+
+        The old assertion pinned "stringifying a numeric identifier still fails" — true through
+        1.32.1, false now. The reason it was citing is unchanged for the causes that remain: the
+        allowed set was built without the value, so no re-emission of it can be found there.
+        """
         self.assertRegex(
             flat(PHASE2),
-            r"(?i)stringifying a numeric identifier still fails",
+            r"(?i)the allowed set was built without it, under either emission",
         )
 
 

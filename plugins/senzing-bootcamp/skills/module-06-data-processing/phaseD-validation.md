@@ -184,11 +184,15 @@ them evaluates *meaning*. So a whole defect class survives them: two source fiel
 different things mapped to the same Senzing feature.
 
 (Those gates also have blind spots of their own, so a finding from one is not automatically a defect
-in the mapping. The verbatim check in particular **cannot express a non-string source value** — its
-allowed set is harvested from strings only — so it reports every emission of a numeric source value
-as a violation, whichever form was emitted. If a violation list came into this module unresolved for
-that reason, it is a checker limitation and not a mapping error; see
-`../module-05-data-quality-mapping/phase2-data-mapping.md` → the verbatim-check block.) Senzing is then told a conflict exists where
+in the mapping. The verbatim check in particular **harvests source *values* only**, so it reports any
+emitted value it cannot harvest — a **boolean** source value, or a value derived from a source **field
+name** rather than a field value — however that value was emitted (server 1.32.2, verified
+2026-07-29). If a violation list came into this module unresolved for one of those reasons, it is a
+checker limitation and not a mapping error; see
+`../module-05-data-quality-mapping/phase2-data-mapping.md` → the verbatim-check block, which also
+covers what to record. Numeric source values used to fail this way and **no longer do** — that was
+fixed upstream in 1.32.2 — so do not carry forward a numeric exemption from an older run without
+re-running the check.) Senzing is then told a conflict exists where
 none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
 
 This is the reading that catches it. It also matches the Senzing reporting guidance directly —

@@ -322,28 +322,29 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
 
-⛔ **The verbatim check cannot express a non-string source value, so for those it is
-unsatisfiable — not strict.** Verified against the current resource (server 1.32.1, 2026-07-28):
-its `collect_strings()` builds the allowed set under `isinstance(obj, str)` only, recursing through
-lists and dicts but capturing no other primitive, and the test is whole-value membership
-(`if v.strip() not in allowed`). Its only waiver is key-based —
+⛔ **The verbatim check harvests source *values* only, so whatever it cannot harvest is
+unsatisfiable — not strict.** Verified against the current resource (server **1.32.2**,
+**2026-07-29**): `collect_strings()` flattens every **string** and every **int/float** (stringified
+via `str(obj)`) out of the nested source record, recursing through lists and dicts, and the test is
+whole-value membership (`if v.strip() not in allowed`). Its only waiver is key-based —
 `EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}` plus any attribute ending `_TYPE` — so a *value* cannot
 be exempted at all.
 
-The consequence: where a source stores a value as a JSON **number** (or boolean), that value never
-enters the allowed set, and **both** emissions are reported as violations — emit it as a number and
-the checker cannot see it; emit it as a string and it is not in `allowed`. One field reported on
-every relationship row in a real run (53,321 of them) for this reason.
+Two things it cannot harvest, and they are the whole of this limitation:
 
-⚠️ **Re-verified 2026-07-29 on server 1.32.2 — the NUMBER half of the paragraph above is now fixed
-upstream; check before you act on it.** `collect_strings()` now also flattens **int/float** values
-(stringified via `str(obj)`), so a numeric source value *does* enter the allowed set: a source
-`RegKey: 1001` emitted as `"1001"`, and `98.6` emitted as `"98.6"`, both exit **0**. **Booleans are
-still excluded**, deliberately — there is no unambiguous verbatim string form for a JSON boolean
-(Python `str(True)` is `"True"`, not JSON's `"true"`) — so a source `true` emitted as `"true"` still
-fails. So: run the check and read its actual output before recording any non-string exemption. Do
-not record a numeric-value exemption on 1.32.2 or later; the gate is green for that case, and the
-4-step resolution below now applies to booleans and to the field-name case that follows it.
+1. **A boolean.** `collect_strings()` skips `bool` deliberately, and says why in its own docstring:
+   there is no unambiguous verbatim string form for a JSON boolean (Python's `str(True)` is `"True"`,
+   not JSON's `"true"`), so admitting booleans would let a case transform slip through rather than
+   catch one. A source `true` emitted as `"true"` is therefore reported however you emit it.
+2. **A value derived from a source field NAME rather than a field value** — see the section below,
+   which is the common case in practice.
+
+✅ **Numbers are NOT in that list any more.** A numeric source value now enters the allowed set and
+passes: a source `RegKey: 1001` emitted as `"1001"`, and `98.6` emitted as `"98.6"`, both exit **0**
+(re-run 2026-07-29). Through server 1.32.1 they failed under either emission — reported on all 53,321
+relationship rows of one real run, reported upstream 2026-07-28, and **fixed in 1.32.2**. So do
+**not** record a numeric-value exemption: run the check and read its actual output. The plugin pins
+no MCP server version, so every bootcamper is on the current server and this is simply the behavior.
 
 **What to do — in this order:**
 
@@ -356,16 +357,17 @@ not record a numeric-value exemption on 1.32.2 or later; the gate is green for t
    `"ACME-1001"`) while its `REL_ANCHOR_KEY` guidance column shows a bare `1001`, so it does not
    mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
    checker can see.
-3. **Record the exemption and its reason** in the source's mapping notes — which attribute, that the
-   source value is non-string, and that the checker cannot represent it — then **proceed**. A checker
-   limitation MUST NOT become an iterate-forever loop or a blocked module (INV-048).
-4. ⛔ **Never change a source value to satisfy the tool.** It would not even work here — stringifying
-   a numeric identifier still fails, because the allowed set was built without it — and distorting
+3. **Record the exemption and its reason** in the source's mapping notes — which attribute, why the
+   checker cannot harvest it (a boolean source value, or a value derived from a field name), and that
+   the value is faithful — then **proceed**. A checker limitation MUST NOT become an iterate-forever
+   loop or a blocked module (INV-048).
+4. ⛔ **Never change a source value to satisfy the tool.** For a value the harvester cannot reach it
+   would not even work — the allowed set was built without it, under either emission — and distorting
    data to turn a gate green is the one outcome worse than the gate being wrong.
 
 Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
-arrives from upstream (reported 2026-07-28; the numeric case landed in 1.32.2) and a fork would mask
-it (INV-080).
+arrives from upstream and a fork would mask it (INV-080). The numeric case is the worked example —
+reported 2026-07-28, fixed in 1.32.2 — and a fork would still be carrying the workaround today.
 
 ⛔ **A value derived from a source *field name* is a second, distinct cause of the same failure —
 and unlike the cases above it has no correct alternative emission.** The allowed set is built from
