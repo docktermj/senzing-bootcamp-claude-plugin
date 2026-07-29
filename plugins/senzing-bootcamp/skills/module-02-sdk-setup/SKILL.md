@@ -461,10 +461,39 @@ Non-JVM languages need none of the JVM-specific items above.
 
 ## Step 4: Verify Installation
 
-Generate a verification script in the bootcamper's chosen language using
-`generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')`.
-The script should initialize the Senzing engine and print the version to confirm the SDK is
-working.
+The script should initialize the Senzing engine **and** print the version to confirm the SDK is
+working. Those are two different `generate_scaffold` workflows, so it takes **two** calls:
+
+- `generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')` —
+  the **engine** half. Its snippets are factory/engine **lifecycle** only.
+- `generate_scaffold(language='<chosen_language>', workflow='information', version='current')` —
+  the **version-print** half. This is where the version snippet lives (for Python,
+  `information/get_version.py`, which calls `SzProduct.get_version()`).
+
+⛔ **`workflow='initialize'` alone cannot satisfy this step.** Verified live (server 1.32.2,
+2026-07-29): it returns ten snippets, every one under `initialization/` — abstract-factory
+variants, `engine_priming`, `purge_repository`, `factory_destroy`, `signal_handler`,
+`sz_engine_config_ini_to_json` — and **none of them prints the version**. Citing it alone leaves
+the guide to invent the missing half from memory, which is exactly the training-data fallback
+INV-080 forbids. (Step 8a already carries this warning for a different need, and Step 9 cites
+`workflow='initialize'` correctly for its own — the lesson generalises: **check what a workflow's
+snippets actually contain before citing it for a specific need.**)
+
+⛔ **`generate_scaffold` returns a **listing**, not code — you must fetch each file.** Its response
+carries `file_path`, `source_url`, `raw_url`, `size_bytes` and `line_count` per snippet and **no
+source text**, so there is nothing to "save" until you fetch it: follow the response's own
+`access_steps` step 1 and fetch each `raw_url`
+(`raw.githubusercontent.com/senzing/code-snippets-v4/...`), or clone the repo per step 2 if the
+fetch is blocked. This differs from `sdk_guide`, which does inline a `code.code` string — do not
+carry that expectation across.
+
+⛔ **Never pass `inline=true` to `generate_scaffold`.** Its own `access_steps` step 3 advertises
+that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
+all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.2,
+2026-07-29). Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
+adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
+instead — that path is confirmed working.
 
 If verification fails, use `explain_error_code` for any SENZ error codes and `search_docs` for
 troubleshooting.
@@ -647,6 +676,22 @@ PostgreSQL typically requires SSL (`PGSSLMODE=require`) — confirm via MCP.
 
 SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
 is the production-style path. INV-037 is satisfied by any of these paths.
+
+⛔ **Record the choice where later modules read it.** Whichever option was taken, write the engine
+to `config/bootcamp_preferences.yaml` under the key **`database_type`**, with the value
+**`sqlite`** or **`postgresql`** (lowercase, exactly these two spellings):
+
+```yaml
+database_type: sqlite   # or: postgresql
+```
+
+This is the **only** step in the bootcamp that knows which engine was chosen, and two later steps
+depend on the answer: Module 4 Step 8b's SQLite load-time warning and Module 6's
+`phaseA-build-loading.md` heads-up both read `database_type` from that file by name. Without this
+write, both reads find nothing, both fall through their "indeterminate → say nothing" branches, and
+neither warning can **ever** fire — regardless of the database chosen or the dataset size. Do not
+record it only in `config/bootcamp_progress.json`: nothing reads it from there, and a different key
+name is the same failure as no key at all.
 
 **Checkpoint:** write step 7 to `config/bootcamp_progress.json`.
 

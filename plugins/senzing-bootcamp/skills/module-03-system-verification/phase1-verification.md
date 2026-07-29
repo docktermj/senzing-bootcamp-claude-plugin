@@ -186,8 +186,16 @@ Verify the Senzing SDK initializes correctly and connects to the database.
 
 1. Generate an SDK initialization script using `generate_scaffold(workflow='initialize')` in the
    bootcamper's chosen language.
-2. Save the generated code to `src/system_verification/verify_init.[ext]` where `[ext]` matches
-   the chosen-language file extension (`.py`, `.java`, `.cs`, `.rs`, `.ts`).
+2. **Fetch the snippet, then** save it to `src/system_verification/verify_init.[ext]` where `[ext]`
+   matches the chosen-language file extension (`.py`, `.java`, `.cs`, `.rs`, `.ts`).
+   ⛔ `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
+   `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
+   1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. **Never pass
+   `inline=true`** — the tool's `access_steps` advertises it but its declared schema has no such
+   parameter (only `language`, `version`, `workflow`), so the call cannot work (INV-160's rule,
+   confirmed live for `generate_scaffold` on server 1.32.2, 2026-07-29). And never reconstruct the
+   snippet from memory of "what a scaffold like this looks like" — that is the training-data
+   fallback INV-080 forbids.
 3. Execute the initialization script with a 30-second timeout.
 4. **If the script exits with code 0 and produces no SENZ error codes:** report pass; the SDK
    connected to the database at `database/G2C.db`.
@@ -215,14 +223,42 @@ Verify the Senzing SDK initializes correctly and connects to the database.
 Verify the MCP server can generate a full pipeline script in the chosen language.
 
 1. Call `generate_scaffold(workflow='full_pipeline')` in the bootcamper's chosen language.
-2. Save the generated code to `src/system_verification/verify_pipeline.[ext]` where `[ext]` is
-   the standard file extension for the chosen language.
-3. **Validate the generated file:**
+2. ⛔ **This returns MANY files, and which one you save decides whether Step 6 can run at all.**
+   The response is a **listing** of snippets across initialization, loading and searching — 18 of
+   them for Python on server 1.32.2 (verified 2026-07-29) — not "the" generated script. So:
+   - **Pick the loading snippet that READS AN INPUT FILE line by line**, not the self-contained
+     demo whose records are hardcoded in the source. For Python those are
+     `loading/add_records_loop.py` (reads `INPUT_FILE`) versus `loading/add_records.py`
+     (hardcoded records, no file input); every language's set has the same pair, so match on the
+     **shape** — does it open a data file? — never on position in the list.
+   - **The server states this as its own anti-pattern for this workflow**, at severity `error`:
+     *"Hardcoded John Doe / TEST / 1001 records"* → *"Records read line-by-line from JSONL"*, and
+     *"/opt/senzing/er/testdata/truth-sets/..."* → *"User's input_file"* (returned inline in the
+     `anti_patterns` field of the same call). Picking the hardcoded demo violates the server's own
+     guidance, not merely this module's.
+   - **Override any hardcoded input path** the snippet ships with (Python's ships
+     `INPUT_FILE = Path("../../resources/data/load-500.jsonl")`) to point at
+     `src/system_verification/verification_data.jsonl`. That path does not exist in a bootcamp
+     project, so leaving it crashes Step 6.
+   - **Fetch before saving.** As in Step 3: the listing carries no source text, so fetch each
+     `raw_url` (or `git clone` per `access_steps` step 2). **Never pass `inline=true`** — undeclared
+     in the schema (INV-160).
+
+   Why this is a ⛔ and not a preference: **Step 6 executes this file "pointing it at
+   `src/system_verification/verification_data.jsonl`"**, which presupposes a script that takes a
+   data path. Saving the hardcoded demo satisfies every check in this step and then makes Step 6
+   impossible without rewriting the file — a failure that surfaces two steps away from its cause.
+3. Save it to `src/system_verification/verify_pipeline.[ext]` where `[ext]` is the standard file
+   extension for the chosen language.
+4. **Validate the generated file:**
    - Confirm it contains at least 1 line of non-whitespace content.
    - Confirm it includes at least one language-appropriate structural element: an import
      statement, a function definition, or a class declaration.
-4. **If validation passes:** report pass for code generation.
-5. **If the generator returns an empty response, an error, or does not respond within 30
+   - ⛔ **Confirm it reads its records from an external file** — the check that actually
+     distinguishes the right snippet from the wrong one. The three checks above are satisfied by
+     *any* file in the returned set, which is why they never caught this.
+5. **If validation passes:** report pass for code generation.
+6. **If the generator returns an empty response, an error, or does not respond within 30
    seconds:** report fail with a Fix_Instruction advising a check of MCP connectivity to
    `mcp.senzing.com:443`, then retry.
 

@@ -275,9 +275,15 @@ Run this once at the end of Phase A, immediately before the Phase B load begins.
 stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proceed on SQLite.
 
 1. **Read inputs** from `config/bootcamp_preferences.yaml`: `production_volume.tier`,
-   `production_volume.raw_value`, and `database_type`. If any value is missing/unreadable, treat
-   it as indeterminate, do not fail; fall back to the existing advisory behavior and continue
-   to the load.
+   `production_volume.raw_value`, and `database_type` — the last is the key
+   `../module-02-sdk-setup/SKILL.md` Step 7 writes when the engine is chosen, valued `sqlite` or
+   `postgresql`. If any value is missing/unreadable, treat it as indeterminate, do not fail; fall
+   back to the existing advisory behavior and continue to the load.
+   - ⛔ **An absent `database_type` is a recording failure, not a non-SQLite answer.** Because
+     step 3 prompts only when the database *is* SQLite, a missing key silently disables this
+     heads-up entirely. Before treating it as indeterminate, fall back to the engine Module 2
+     recorded in `config/bootcamp_progress.json`, and note the gap internally so it reaches the
+     recap rather than vanishing.
 2. **Decide whether it was already decided.** If a `sqlite_volume_prompt` marker in preferences
    is `decided: true` and its `tier`/`raw_value` match the current selection (or an applicable
    Module 4 SQLite load-time decision covers this same load), skip the prompt and proceed.

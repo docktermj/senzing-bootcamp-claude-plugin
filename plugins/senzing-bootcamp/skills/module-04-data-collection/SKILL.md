@@ -138,8 +138,24 @@ complete list.
 
 ### 2. For each data source, collect the data
 
-First, ask how the bootcamper wants to provide the data for a given source — pin this question
-verbatim (INV-051), never joining the choices with "or":
+⛔ **First check whether Module 1 already answered this for this source — and if so, do NOT ask.**
+Read the source's entry in `config/data_sources.yaml`. If it already records a provenance the
+Bootcamper chose earlier — `provenance: cord` is the case the Business Case Offer produces
+(`../module-01-business-problem/phase1-discovery.md` Step 4, option 3: *"I don't have my own data —
+generate a scenario for me"*), and `docs/business_problem.md` carries a
+`🤖 Bootcamp-generated business case` marker for the same run — then the provision decision is
+**already made** for every source in that scenario. Skip the question below and go straight to
+downloading/collecting that source, saying which source you are fetching and where it came from.
+
+Asking anyway re-litigates a decision the Bootcamper already made, once per source: with a
+six-source generated scenario that is six questions whose honest answer is *"you already told me
+this in Module 1."* Option 5 restates that choice rather than asking anything new about *this*
+source, so it is not a textually identical question — it escapes a literal INV-006 violation while
+being exactly the repetition INV-006 exists to prevent.
+
+Only when the source has **no** recorded provenance — the Bootcamper is bringing their own data —
+ask how they want to provide it. Pin this question verbatim (INV-051), never joining the choices
+with "or":
 
 👉 **How would you like to provide the data for this source? Reply with a number:**
 
@@ -558,9 +574,17 @@ Run this once at the end of collection, immediately before the Step 9 transition
 non-blocking: any failure or indeterminate input continues the Module 4 flow.
 
 1. **Read the persisted inputs.** Read the registry from `config/data_sources.yaml` and
-   `database_type` from `config/bootcamp_preferences.yaml`. Compute the collected total record
-   count from the registry. If the registry cannot be read or parsed, treat the total as
+   `database_type` from `config/bootcamp_preferences.yaml` — the key Module 2 Step 7 writes when
+   the engine is chosen, with the value `sqlite` or `postgresql`. Compute the collected total
+   record count from the registry. If the registry cannot be read or parsed, treat the total as
    indeterminate: do not fail.
+   - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
+     missing key means Module 2 Step 7 did not record the choice, not that the engine is
+     non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
+     key makes this warning unable to fire **at all**, for any database or dataset size. That is a
+     plugin defect, not a bootcamper outcome: note it internally so it surfaces in the recap, and
+     fall back to the engine recorded by Module 2 in `config/bootcamp_progress.json` before giving
+     up on the check.
 
 2. **Decide whether to warn.** Warn only when the database is SQLite **and** the collected total
    is above the load-time threshold. Otherwise (total at or below the threshold, any non-SQLite
