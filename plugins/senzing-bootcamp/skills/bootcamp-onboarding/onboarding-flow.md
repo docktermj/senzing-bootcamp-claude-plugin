@@ -129,6 +129,12 @@ Then give the overview (cover naturally, do not ask a question yet):
   exist and SDK setup walks through them.
 - If you hit unfamiliar terms (Entity Specification, DATA_SOURCE, entity resolution), ask and
   I'll look up the current definition from the Senzing docs on demand.
+- **How long it takes:** the bootcamp is **module-sized, not clock-sized** — each module tells you
+  its own time estimate right before it starts, so you always know what the next stretch costs.
+  There is no fixed total: it depends on whether you pick Core or Customized (still to come, in
+  Bootcamp preparation) and on how fast the SDK downloads and installs on your machine. **You do
+  not have to finish in one sitting** — progress is saved as you go, and you can stop and pick up
+  where you left off.
 
 ## 4. Any questions (preface item 2)
 
@@ -141,6 +147,15 @@ Before continuing, invite final questions:
 - A readiness signal ("no", "let's go", "ready", "start"): proceed to step 5.
 
 This is NOT a hard gate: if they say they are ready, advance.
+
+⛔ **"How long will this take?" is the single most likely question here — answer it from step 3's
+overview, and NEVER invent a total.** Say what is true: the bootcamp is module-sized, each module
+states its own estimate at its start, the total depends on the Core-vs-Customized choice they have
+not made yet and on install/download speed, and progress is saved so it can be done across
+sittings. ⛔ **Do not offer a figure like "about 4-6 hours."** No per-module estimates exist in this
+plugin to sum — the modules state the *requirement* to give an estimate, not values — so any total
+would be fabricated, which is exactly what INV-096 exists to prevent. A number invented here is
+worse than no number: it sets an expectation the rest of the bootcamp did not agree to.
 
 (No preferences are written in the preface. All setup choices — path, module selection, verbosity,
 programming language, git — are captured and persisted in the Bootcamp preparation module in a

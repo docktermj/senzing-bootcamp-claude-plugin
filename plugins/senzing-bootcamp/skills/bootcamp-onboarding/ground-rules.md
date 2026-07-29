@@ -444,12 +444,21 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ⛔ **Compare the recommendation against what the bootcamper is running right now — not against
   the previous stage's recommendation.** You are told which model you are running, so read the
-  model side from that; for effort, use the value in force when you can determine it. **Only when
-  the current setting cannot be determined**, fall back to comparing against the stage just
-  completed. Comparing recommendation-to-recommendation asks a bootcamper already on Opus 5 at high
-  effort "would you like to switch to Opus 5 at high effort?" — a question whose answer changes
-  nothing, which is exactly what INV-006 and INV-012 forbid. Running one model for the whole
-  bootcamp is a supported choice, so this is the common case, not an edge case.
+  model side from that; for effort, use the value in force when you can determine it. **Resolve
+  "cannot be determined" PER DIAL, not for the setting as a whole** — model and effort are separate
+  dials (INV-137), and in a live session they routinely sit in different epistemic states at the
+  same moment: the model is knowable to the assistant, while the reasoning effort is exposed nowhere
+  and typically cannot be read at all. So compare each dial on its own evidence: a determinable
+  model is compared **directly** even when effort is not, and vice versa. **Only for a dial whose
+  current value cannot be determined**, fall back to that dial's value in the stage just completed.
+  ⛔ Applying the previous-stage row to a dial that *was* determinable is the failure this clause
+  exists to prevent: a bootcamper demonstrably on Opus 5 would be compared against the previous
+  stage's recommended Sonnet 5, found "unchanged", and never offered the switch — silently defeating
+  the purpose of the invariant this superseded. Comparing recommendation-to-recommendation asks a
+  bootcamper already on Opus 5 at high effort "would you like to switch to Opus 5 at high effort?" —
+  a question whose answer changes nothing, which is exactly what INV-006 and INV-012 forbid. Running
+  one model for the whole bootcamp is a supported choice, so this is the common case, not an edge
+  case.
 
   Two cases, decided only by that comparison:
 

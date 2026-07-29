@@ -26,6 +26,22 @@ Suggested queries:
 - "Senzing differentiators real-time explainability attribution"
 - "entity resolution pipeline standardization blocking scoring clustering"
 
+⛔ **Prefer these queries, and when a query returns nothing relevant, RE-QUERY with the
+documentation's own phrasing before concluding the material is not covered.** The list above is not
+decoration: `search_docs` is BM25, so phrasing decides what comes back, and these are phrased the
+way the indexed documentation is. A query you compose yourself can miss completely — one invented as
+*"principles versus rules brittle maintenance ingest new data sources without experts"* latched onto
+"data sources" and "ingest" and returned record-loading snippets and `add_record` flags, while the
+suggested *"Senzing principle-based entity resolution approach"* returned the material immediately,
+from two independent sources.
+
+The hazard is the failure's **shape**, not the wasted call: **a query that misses looks exactly like
+documentation that does not cover the topic.** The honest-seeming conclusion — "the docs are silent"
+— leaves nothing to say under the MCP-only rule, or worse, makes a training-data fallback feel
+justified on the grounds that MCP "had no answer". So treat an empty or off-topic result as a
+**query** problem first: re-query using the documentation's own vocabulary, and only after that
+report the material as uncovered.
+
 Do NOT present hardcoded Senzing facts from training data. Every Senzing-specific claim must
 come from `search_docs`. If asked for a source, cite "Senzing documentation via MCP".
 
@@ -74,8 +90,19 @@ INV-009): "yes" means "I have something to ask or discuss", "no" means "nothing 
 bootcamper's *answer* never holds up progress — not that the question may be skipped.
 
 - On **yes**, or an actual question: answer it via `search_docs`, **verified with a second confirming
-  MCP call** (see "Verify substantive answers" above), present it, then re-present this pinned
-  question so the bootcamper can ask more. Stay MCP-only — never fall back to training data.
+  MCP call** (see "Verify substantive answers" above), present it, then invite more using the
+  **follow-up** variant below — not the first-ask wording. Stay MCP-only — never fall back to
+  training data.
+
+  > 👉 **Do you have any other questions about entity resolution before we continue?**
+
+  ⛔ **Use the follow-up wording every time after the first answer, and keep using it for each
+  further question.** It is pinned verbatim for the same reason the first-ask is (INV-056), and the
+  only difference is the word **other**. Re-issuing the *first-ask* string immediately after
+  answering someone reads as though their question did not register — and paraphrasing on the fly is
+  not the alternative, because INV-056 fixes both wordings. This mirrors how the preface handles the
+  same moment (`../bootcamp-onboarding/onboarding-flow.md` step 4: *"ask once more whether they have
+  other questions"*); Module 0 now says it with a pinned string instead of leaving it to improvisation.
 - On **no** ("no", "not now", "let's continue"): acknowledge briefly and proceed to the optional
   quiz offer below.
 
@@ -117,8 +144,31 @@ On **accept** ("yes", "sure", "let's try"), run the quiz under these rules:
   from training data.
 - **The bootcamper can exit at any time** — "stop", "exit", "done", "skip the rest", or a
   readiness signal ends the quiz immediately, no penalty; acknowledge and proceed to the gate.
+- **Ask every item as a numbered multiple-choice question.** A quiz item is a 👉 question offering
+  two or more choices, so INV-051 applies: a neutral lead question followed by a **numbered list**,
+  choices never joined with "or". Do **not** pose open-ended items ("explain why principle-based
+  matching beats hand-written rules") — however good the question, it fits neither INV-051's
+  numbered shape nor INV-008's single-meaning-answer requirement, and it makes "was that correct?"
+  a judgement call instead of a fact. Keep the *thinking* conceptual and the *answer format*
+  closed.
+- ⛔ **When the answer is wrong, say so — and re-teach.** This is the highest-value moment in the
+  quiz, and it is the one a guide optimising for encouragement gets wrong. Do all three:
+  1. **Name it as incorrect, plainly and kindly.** Never "good thinking!" over a wrong answer, and
+     never let the correction be so soft the bootcamper cannot tell they missed it. False praise
+     here teaches the wrong concept.
+  2. **Explain why the chosen option is wrong, then re-teach the concept** — not just "the answer
+     was 2." Say what the option they picked actually describes, since a plausible distractor is
+     usually a *neighbouring* real concept, and that confusion is the thing worth fixing.
+  3. **Move on to the next item; do not re-ask the same one.** The point is understanding, not a
+     score, and re-asking after supplying the answer tests nothing. Keep the remaining items at
+     the same difficulty — a miss is not a reason to get easier, and this is a learning module,
+     not an assessment.
+
+  Ground the re-teaching in the same MCP source the question came from; never patch a wrong answer
+  from training data (INV-080).
 - When the series finishes (or the bootcamper exits), give a one-line encouraging wrap-up and
-  proceed to the mandatory exploration gate below.
+  proceed to the mandatory exploration gate below. The wrap-up never reports a score or a pass/fail
+  — nothing in this module is graded.
 
 The quiz never replaces the mandatory exploration/readiness gate; that gate is always presented
 after the quiz (or after a decline).

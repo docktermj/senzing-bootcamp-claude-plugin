@@ -68,16 +68,26 @@ pattern was selected, it's already identified. **Checkpoint:** write step 10.
 Now that the scenario is identified — and **before** the problem-statement artifacts are written
 in Step 11 — capture two forward-looking attributes of the business problem so they flow straight
 into the problem statement and the graduation production project (INV-097). Ask each as its own
-pinned 👉 question (INV-056), one per turn (INV-005), and persist the answers to
-`config/bootcamp_preferences.yaml`.
+pinned 👉 question (INV-056), one per turn (INV-005).
+
+⛔ **Hold every answer and write `config/bootcamp_preferences.yaml` ONCE, at this step's
+checkpoint.** Do not persist after each question. This step asks two questions — three turns when
+the integration answer is "yes" and the follow-up fires — so writing per answer means two or three
+diffs to the same file inside one step, which is precisely the one-write-per-gate pattern INV-058
+exists to prevent. That invariant names Bootcamp preparation's setup writes specifically, so this is
+a scope gap rather than a violation of it; the reasoning transfers unchanged, because it is the same
+file, the same bootcamper-visible write noise, and the questions are consecutive turns in a single
+numbered step. Hold `integration_targets` and `deployment_target` (plus `cloud_provider` when it
+applies), then write them together below.
 
 First, software integration:
 
 👉 **Will your entity-resolution results need to interface with other software (CRM, search engine, data warehouse, API gateway, downstream app)?**
 
 *(Internal: end the turn and wait.)* On **yes**, ask one follow-up on the next turn — "👉 **Which
-systems do you expect to integrate with?**" — and persist the named systems (e.g. Elasticsearch,
-Salesforce) as `integration_targets`. On **no**, persist `integration_targets: []`.
+systems do you expect to integrate with?**" — and **hold** the named systems (e.g. Elasticsearch,
+Salesforce) as `integration_targets`. On **no**, hold `integration_targets: []`. Either way, do not
+write yet.
 
 Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051):
 
@@ -89,10 +99,12 @@ Then, deployment target — a separate, pinned 👉 question (neutral lead + num
 4. Not sure yet.
 
 *(Internal: end the turn and wait.)* Reassure: "We'll develop everything locally first; deployment
-is addressed in the graduation production project and migration checklist." Persist
-`deployment_target` (`aws`/`azure`/`gcp` — also persist `cloud_provider`; `kubernetes`/
-`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4) to
-`config/bootcamp_preferences.yaml`. **Checkpoint:** write step 10a.
+is addressed in the graduation production project and migration checklist."
+
+**Now write both answers together**, in one update to `config/bootcamp_preferences.yaml`:
+`integration_targets` (held above) and `deployment_target` (`aws`/`azure`/`gcp` — also
+`cloud_provider`; `kubernetes`/`docker_swarm`; `local`/`on_premises`; or `undecided` for option 4).
+One write for the whole step, per the batching rule above. **Checkpoint:** write step 10a.
 
 ## 11. Create the problem statement document
 

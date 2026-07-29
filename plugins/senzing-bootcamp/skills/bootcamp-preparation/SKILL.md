@@ -169,6 +169,11 @@ write in Step 6. Keep the list in module order so the journey map and transition
 
 ⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
 
+**Before asking, tell them the choice is not permanent** — that they can change it any time
+("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-005 requires the
+👉 question to end the turn, so nothing can follow it, and a reassurance delivered after the answer
+cannot inform the choice it was meant to inform.
+
 > 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 >
 > 1. **minimal** — near-zero output: only questions, results, and required banners/summaries; no explanations, code walkthroughs, or step recaps. Best for experts who want to move fast.
@@ -196,10 +201,10 @@ For `minimal`, every category is `0`. `minimal` reduces only *explanatory* outpu
 suppresses required output — every 👉 question (INV-005), gate, module banner (INV-079),
 end-of-module summary (INV-032), and the recap (INV-048) still appear.
 
-Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
-not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007): wait for their reply.
-If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
-as choosing the recommended `standard` and say so — never assume a level before they have replied.
+This is not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007): wait for their
+reply. If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that
+decline as choosing the recommended `standard` and say so — never assume a level before they have
+replied. (The can-change-it-any-time reassurance belongs **before** the question, above — not here.)
 
 ## 3a. Model guidance — no question (retired)
 
