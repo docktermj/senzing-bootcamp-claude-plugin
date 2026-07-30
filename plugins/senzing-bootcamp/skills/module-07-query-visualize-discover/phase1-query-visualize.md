@@ -335,8 +335,13 @@ of the Truth Set. It MUST:
   SQL.
 - Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
   from `scripts/brand_tokens.py` (INV-081).
-- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070); after
-  generating it, capture screenshots for the recap per
+- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
+  the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
+  REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
+  here, and never pass "the Senzing Truth Set": this app points at the Bootcamper's data, the
+  snapshot is permanent, and a Truth Set label on their own data is a false claim in a keepsake
+  (INV-172). The contract's "Snapshot" section is the statement of record.
+  After generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
   silently with no headless capability, otherwise embed **every** captured tab in this module's
   recap, in the app's tab order — no count cap, INV-146).

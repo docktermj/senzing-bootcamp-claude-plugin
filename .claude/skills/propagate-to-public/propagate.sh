@@ -45,9 +45,13 @@ echo
 # so files removed in dev are removed in public. Deletion is scoped to these
 # paths ONLY — the public repo's .github/, .claude/, .vscode/, LICENSE, and
 # .gitignore are never in scope and are left exactly as they are.
-excludes=(--exclude='__pycache__/' --exclude='*.pyc')
+# `.pytest_cache/` matters as much as `__pycache__/`: pytest writes a self-ignoring
+# `.pytest_cache/.gitignore` containing `*`, so a copied cache never shows up in the
+# public repo's `git status` — which is the review step below. Excluding it here is the
+# only place it can be caught.
+excludes=(--exclude='__pycache__/' --exclude='*.pyc' --exclude='.pytest_cache/')
 
-echo "=== Mirroring plugins/ (minus __pycache__ / *.pyc) ==="
+echo "=== Mirroring plugins/ (minus __pycache__ / *.pyc / .pytest_cache) ==="
 rsync -a --delete "${excludes[@]}" "$here/plugins/" "$dest/plugins/"
 
 echo "=== Mirroring .claude-plugin/ (marketplace.json) ==="

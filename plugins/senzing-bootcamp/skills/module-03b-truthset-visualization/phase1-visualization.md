@@ -197,18 +197,37 @@ entity model and (b) write a **self-contained standalone HTML snapshot** the Boo
 if they never open the live server. This is the artifact the completion gate checks, so the
 visualization is guaranteed to exist (INV-077). Write it to
 `docs/visualizations/truthset_verification.html` from `src/system_verification/truthset_data.jsonl`,
-titled "Senzing Truth Set - System Verification". For Python, that is:
+titled "Senzing Truth Set", and tell it what the data **is** so the retained snapshot says so
+(INV-172). For Python, that is:
 
 ```bash
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
-  --title "Senzing Truth Set - System Verification" \
+  --title "Senzing Truth Set" \
+  --dataset "the Senzing Truth Set" \
   --snapshot docs/visualizations/truthset_verification.html \
   --no-serve
 ```
 
-For any other language, invoke your server's equivalent build-only/snapshot mode (write the same
-file, no server started). Confirm the file exists before continuing. If the build fails, do not
+⛔ **Title it after this module, never after System Verification.** The Truth Set belongs to this
+module alone — System Verification uses synthetic records and does not visualize it (INV-082/INV-087)
+— and the title ships permanently into the snapshot the Bootcamper keeps and the recap embeds. A
+title naming the module that never touches the Truth Set misattributes their artifact.
+
+⛔ **Pass the dataset wording; do not leave it to the default.** `--dataset` is what the snapshot's
+Search / Probe note calls the data. Left empty it says the neutral "the loaded data" — correct but
+vague, and this is the one module where the answer is certain: it is the Senzing Truth Set — the
+dataset `get_capabilities` describes as "the Senzing demo truth set: CUSTOMERS, REFERENCE,
+WATCHLIST", acquired here via `get_sample_data(dataset='truthset')` (server 1.32.2, verified
+2026-07-29). Query, Visualize and Discover passes its own wording for the Bootcamper's data; neither
+module may let the other's label reach its snapshot.
+
+(The **filename** stays `truthset_verification.html`. Graduation maps each screenshot to its module
+by that base name (`../graduation/SKILL.md` → "Backfill orphaned screenshots") and recaps already
+reference it, so renaming it would break that mapping for no Bootcamper-visible gain.)
+
+For any other language, invoke your server's equivalent build-only/snapshot mode — writing the same
+file, passing the same title and dataset wording, no server started. Confirm the file exists before continuing. If the build fails, do not
 proceed to the live server: fix the underlying cause (regenerate faulty code from the MCP tools;
 re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
 and retry until the snapshot is written — the module does not complete without it.
@@ -238,7 +257,8 @@ records on port 8080. For Python:
 ```bash
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
-  --title "Senzing Truth Set - System Verification" \
+  --title "Senzing Truth Set" \
+  --dataset "the Senzing Truth Set" \
   --port 8080
 ```
 

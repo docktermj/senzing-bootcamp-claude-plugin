@@ -179,6 +179,40 @@ rather than guessing.
 
 ## Step 4: Record the implementation
 
+⛔ **Walk the criteria one at a time before you write the entry — the ledger heading is a
+claim, and nothing downstream re-checks it.** For each `- [ ]` in `## Acceptance criteria`,
+name what proves it: a `file:line` you changed, a test that asserts it, or a command you
+ran. A criterion you cannot prove is **not** ticked — it is either implemented-but-not-
+runtime-verified (say what it needs, in both the report and the entry) or a deviation
+(Step 3.6). Do not summarise the *narrative* of the work in place of this walk: the
+narrative is what a spec's `## Proposed change` already says, and the criteria are what
+was actually promised.
+
+This step exists because it was skipped twice, with the same shape both times — a spec's
+criterion named a second consumer, only the first was built, and the ledger recorded the
+spec as done anyway:
+
+- `relocate-integration-deployment-questions-to-module1` (2026-07-22) — criterion 4 said
+  the answers are read "by the Module 1 problem statement **and by graduation**".
+  Graduation was never touched; `graduation/SKILL.md` is not even in that entry's
+  Files-changed list. INV-097 stood unimplemented for seven weeks.
+- `defer-commonmark-to-graduation` (2026-07-16) — criterion 1 said the pass runs over
+  `docs/*.md` **and the generated `production/*.md`**. Only `docs/` shipped. INV-060 stood
+  unimplemented for six weeks.
+
+Both were invisible to the whole suite, because neither INV-060 nor INV-097 is cited by any
+test. So: **a criterion that names a file, a module, or a second consumer is checked
+against that file** — open it and look — not against the change you remember making.
+
+Two supporting reports exist for the gaps this cannot catch by hand; run them when the
+audit workflows ask, or when a spec touches the ledger
+(`.claude/skills/dry-run/coverage_reports.py`, both stdlib-only):
+
+```bash
+python3 .claude/skills/dry-run/coverage_reports.py invariants   # invariants no test cites
+python3 .claude/skills/dry-run/coverage_reports.py affected     # predicted-but-unrecorded files
+```
+
 Only after the change is made **and** its acceptance criteria are met, prepend an
 entry to `specs/IMPLEMENTED.md` under the header (newest first). Get the date
 with `date +%F` (do not hardcode it). Use the spec's filename-without-`.md` as
@@ -191,10 +225,18 @@ the `## ` heading so detection in Step 1 stays reliable:
 - **Files changed:** `path/one`, `path/two`
 - **MCP re-check:** <server version + date, and the outcome — confirmed | changed (what) | already fixed upstream | n/a (no Senzing fact) | unverified (MCP unreachable). Name the tools called.>
 - **Summary:** <what was done and how the acceptance criteria were satisfied. Name any criterion that is not runtime-verified and what it needs, and any deviation from the spec with its evidence.>
-- **Commit:** <hash, or "uncommitted">
+- **Commit:** <hash, "uncommitted", or "committed (hash not recorded)">
 ```
 
 Leave a blank line after the `##` heading and around the list (MD022/MD032).
+
+**The `Commit:` field takes one of three values and nothing else** — a hash,
+`uncommitted`, or `committed (hash not recorded)` (`tests/test_spec_ledger_invariants.py`
+enforces this). Write `uncommitted` when the entry precedes its commit, then **fill the
+hash in on the next `implement-spec` run**: before writing a new entry, scan the ledger for
+`uncommitted` fields whose work has since been committed and update them. Skipping that is
+how 66 entries went stale at once, leaving the field unable to answer the one question it
+exists for.
 
 If the maintainer chose to re-implement an already-recorded spec, update that
 spec's existing entry rather than adding a duplicate.

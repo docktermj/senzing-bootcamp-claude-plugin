@@ -4,6 +4,11 @@
 __pycache__/
 *.pyc
 
+# pytest cache. Pytest writes a self-ignoring `.pytest_cache/.gitignore` containing `*`,
+# so git already hides it — listed here so the dev tree does not depend on a generated
+# file for that, and so `propagate.sh`/`retrofit.sh` have a matching named exclude.
+.pytest_cache/
+
 # Maintainer feedback-to-specs input (local triage only; the specs it produces are committed).
 # The glob covers the numbered variants a multi-bootcamp triage round produces
 # (…_01.md, …_13.md), not just the bare filename.

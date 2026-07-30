@@ -649,6 +649,13 @@ data in Query, Visualize and Discover: a snapshot that says "this Truth Set" on 
 tells the reader to open a port nothing is listening on **and** mislabels their data, silently, in
 the artifact they keep.
 
+**So the server MUST accept the dataset wording as an argument** — in whatever form your language's
+CLI takes (the Python reference spells it `--dataset`; INV-090 leaves the spelling to you) — and the
+**caller MUST pass it**: Truth Set visualization passes "the Senzing Truth Set", Query, Visualize and
+Discover passes wording describing the Bootcamper's own sources. Accepting it and defaulting to
+neutral wording is only half the requirement; a snapshot that could have been labelled and was not
+is a vaguer keepsake than the data warranted.
+
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
 them in its own summary sentence.
 

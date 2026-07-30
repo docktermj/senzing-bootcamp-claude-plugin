@@ -50,6 +50,20 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    package importable? is `libSz.so` present? is `fpdf2` installed? is `docker`
    available? is there a headless browser? Missing pieces are fine — silently
    skipping the paths that need them is not.
+4. **Run the coverage reports to choose where to look.** Two blind spots have hidden
+   real defects — an invariant no test cites, and a spec file a ledger entry never
+   recorded changing. Both are reports rather than tests, because a hit in either is
+   usually legitimate; they tell you where a conformance sweep is unguarded:
+
+   ```bash
+   python3 .claude/skills/dry-run/coverage_reports.py both
+   ```
+
+   `invariants` lists invariants no test mentions by ID — INV-060 and INV-097 both sat
+   there while standing unimplemented for weeks. `affected` lists ledgered specs whose
+   `## Affected files` predicted a path the entry's `Files changed:` never recorded —
+   which is how the graduation half of INV-097 went missing. Read-only, stdlib-only, exit 0
+   whatever it finds. The `auto-test` skill can call it the same way.
 
 ## Absolute rules
 
