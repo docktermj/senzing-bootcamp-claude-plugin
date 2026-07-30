@@ -94,15 +94,19 @@ steering files.)
   error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
-- ⛔ **`reporting_guide` withholds content until `language` is supplied — always pass it.** Several
-  topics answer a call without `language` with a `needs_input` decision tree and **empty**
-  `sdk_patterns` / `sql_patterns` / `design_concepts`: verified on MCP server 1.32.2, 2026-07-30,
-  `topic='evaluation'` and `topic='graph'` both gate, and `topic='data_mart'` gates again on
-  `scale`. `topic='quality'` does **not**, which is exactly why the trap is easy to miss — the
-  parameter is *optional in the schema*, so the call looks correct and returns 200. A `needs_input`
-  response is a **gate, not an answer**: re-call with the Bootcamper's language rather than
-  proceeding on what came back, and never report a topic as having no guidance on the strength of
-  a gated response.
+- ⛔ **Always pass `language` to `reporting_guide` — every call, whatever the topic** (INV-192).
+  Most topics withhold their content until it is supplied, answering instead with a `needs_input`
+  decision tree and **empty** `sdk_patterns` / `sql_patterns` / `design_concepts` (verified on MCP
+  server 1.32.2, 2026-07-30). The parameter is *optional in the schema*, so a call without it looks
+  correct and returns 200 — which is the whole trap. Passing it where a topic does not gate costs
+  nothing and only adds content, so pass it unconditionally rather than tracking which topics
+  gate: that list is a per-topic fact about the server, and the last attempt to keep one went
+  stale within a day.
+- ⛔ **A `needs_input` response is a gate, not an answer.** Satisfy every gate the response asks
+  for — some topics gate twice (`topic='data_mart'` asks for `language`, then `scale`) — and
+  re-call rather than proceeding on what came back. Never report a topic as having no guidance on
+  the strength of a gated response: the payload of a gate is empty by design, not because the
+  topic is undocumented.
 - **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
   path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
   the search results already carry rather than relying on `content` from a `repo` + `file_path`

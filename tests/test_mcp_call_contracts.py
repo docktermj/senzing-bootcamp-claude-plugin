@@ -143,26 +143,27 @@ class TestRequiredParamsArePresent(unittest.TestCase):
         self.assertEqual([], offenders, "\n  ".join(offenders))
 
 
-class TestGatingTopicsAlwaysPassLanguage(unittest.TestCase):
+class TestEveryReportingGuideCallPassesLanguage(unittest.TestCase):
     """`reporting_guide` withholds its content until `language` is supplied.
 
-    Verified on server 1.32.2, 2026-07-30: `topic='evaluation'` and `topic='graph'` called
-    without `language` return a `needs_input` decision tree with empty `sdk_patterns`,
-    `sql_patterns` and `design_concepts` — the 4-Point ER Evaluation Framework appears only
-    once a language is passed. `topic='quality'` does not gate, which is why this went
+    Verified on server 1.32.2, 2026-07-30: `topic='evaluation'`, `topic='graph'` and
+    `topic='entity_views'` called without `language` return a `needs_input` decision tree
+    with empty payload sections — the 4-Point ER Evaluation Framework appears only once a
+    language is passed, and `entity_views` returns nothing at all. `topic='data_mart'`
+    gates again on `scale`. `topic='quality'` does not gate, which is why this went
     unnoticed: the parameter is **optional in the schema**, so a bare call looks correct.
 
-    Six shipped sites omitted it, including one that cited the framework by name as the
-    reason for the call. This guard makes the seventh fail the suite rather than the
-    bootcamp.
+    This guard deliberately carries **no topic allowlist**. An earlier version listed the
+    three topics then known to gate; `entity_views` was found one sweep later and the list
+    was already wrong, so a bare `entity_views` call would have passed. "Which topics gate"
+    is a per-topic fact about a server that ships independently — the kind of thing this
+    repo cannot keep current — so the rule is unconditional instead (INV-192). Passing
+    `language` where a topic does not gate only adds content, so the blanket rule costs
+    nothing and cannot go stale.
     """
 
-    GATING_TOPICS = ("evaluation", "graph", "data_mart")
-
-    def test_no_gating_reporting_guide_call_omits_language(self):
-        pattern = re.compile(
-            r"reporting_guide\(\s*topic\s*=\s*['\"](%s)['\"][^)]*\)" % "|".join(self.GATING_TOPICS)
-        )
+    def test_no_reporting_guide_call_omits_language(self):
+        pattern = re.compile(r"reporting_guide\(\s*topic\s*=[^)]*\)")
         offenders = []
         for path in sorted(SKILLS.rglob("*.md")):
             for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -174,14 +175,32 @@ class TestGatingTopicsAlwaysPassLanguage(unittest.TestCase):
         self.assertEqual(
             [],
             offenders,
-            "reporting_guide topics that gate on `language` were called without it — the "
-            "response is a needs_input decision tree, not content:\n  " + "\n  ".join(offenders),
+            "reporting_guide called without `language` — most topics answer that with a "
+            "needs_input decision tree and an empty payload, not content. Pass it "
+            "unconditionally; do not add a per-topic exception here (INV-192):\n  "
+            + "\n  ".join(offenders),
         )
 
     def test_the_gate_is_documented_where_the_tool_is_routed(self):
         text = (SKILLS / "bootcamp-onboarding" / "ground-rules.md").read_text(encoding="utf-8")
         self.assertIn("needs_input", text)
         self.assertRegex(text, r"(?i)gate, not an answer")
+
+    def test_the_routing_rule_is_unconditional_not_a_topic_list(self):
+        """INV-192: naming a subset of gating topics reads as the whole set.
+
+        The enumeration this replaced named three topics and omitted `entity_views`,
+        which gates and returns an entirely empty payload. A reader consulting that list
+        would have concluded `entity_views` was safe to call bare.
+        """
+        text = (SKILLS / "bootcamp-onboarding" / "ground-rules.md").read_text(encoding="utf-8")
+        self.assertRegex(text, r"(?i)every call, whatever the topic")
+        self.assertNotRegex(
+            text,
+            r"(?i)`topic='quality'` does \*\*not\*\*",
+            "ground-rules again singles out topics as non-gating; that list went stale in "
+            "a day and the rule is unconditional now",
+        )
 
     def test_the_scan_is_not_vacuous(self):
         """A regex that stops matching would make the guard pass silently."""

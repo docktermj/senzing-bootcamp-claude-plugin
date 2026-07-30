@@ -84,7 +84,7 @@ cross-source visualization, to avoid a duplicate/misplaced offer.
 ## 24. Validate cross-source results quality
 
 Use `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` for the 4-point ER evaluation
-framework and `reporting_guide(topic='quality', version='current')` for precision/recall
+framework and `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for precision/recall
 metrics.
 
 Validate: match accuracy (query known records via the generated SDK code / SDK method
@@ -196,7 +196,7 @@ re-running the check.) Senzing is then told a conflict exists where
 none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
 
 This is the reading that catches it. It also matches the Senzing reporting guidance directly —
-`reporting_guide(topic='quality')`'s anti-patterns say *"Only checking aggregate statistics for
+`reporting_guide(topic='quality', language='<chosen_language>')`'s anti-patterns say *"Only checking aggregate statistics for
 quality … Aggregate stats hide errors. Always sample and manually review specific entities"* —
 which is exactly the gap the UAT percentages below leave open.
 
