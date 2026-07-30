@@ -301,18 +301,32 @@ which interface. The bootcamp runs in more than one, and the names are not inter
 
 ## Visual deliverables (Senzing brand)
 
-- **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
+- **Every bootcamper-facing visual deliverable MUST carry the Senzing brand.** Any visual
   deliverable the bootcamp produces — the Truth-Set visualization web app and its standalone
-  snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
-  Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
-  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
-  palette. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
+  snapshot, the recap PDF, the data-discoveries PDF, Data Quality, Mapping, and Transformation's
+  quality/mapping web pages, and any future charts/dashboards/HTML — **MUST** take its palette and
+  typography from the **shared brand tokens** shipped at
+  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), never an ad hoc
+  palette, and **MUST** render offline (INV-081). This is a MUST, not a preference: the carve-out
+  below is about *which artifacts* are bootcamper-facing, never about whether a bootcamper-facing
+  one may skip the tokens. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
   already consume those tokens; any generator you build — including the chosen-language Truth Set
-  visualization server (INV-090) — should too. Key rules: dark backgrounds are
+  visualization server (INV-090) and any one-off HTML page a module offers — MUST too. Key rules: dark backgrounds are
   Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
   live/resolved states (never decorative), light sections are warm off-white (never cold grey),
   and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
-  INV-081). "Where appropriate" leaves plain functional/dev output unbranded.
+  INV-081).
+- **The one carve-out: plain functional/dev output stays unbranded.** A progress line, a log file, a
+  scratch table printed to the terminal — nothing the bootcamper keeps — needs no palette. The test
+  is whether the artifact is **saved and handed to them**; if it is, it is in scope, and "it's just a
+  quick chart" is not an exemption. Every generated HTML page under `docs/visualizations/` is in
+  scope by that test.
+- **Data-sourced strings in generated HTML MUST be escaped for the context they land in** (INV-106),
+  including `<`, `>` and `&` as `\uXXXX` escapes inside an inline `<script>` payload — a value
+  containing `</script>` otherwise breaks out, in an artifact that is saved and shared. The
+  statement of record is the visualization contract's "Rendering contract"
+  (`../module-03b-truthset-visualization/visualization-api-reference.md`); it binds **any** generated
+  page, not only that module's app.
 
 ## Progress and state
 

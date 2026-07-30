@@ -21,6 +21,7 @@ What this pins:
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import importlib.util
 import os
 import re
@@ -267,3 +268,101 @@ class YesNoHintConventionIsDocumented(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------------------
+# The shipped PYTHON is scanned too (viz-reference-help-text-names-removed-tabs).
+#
+# `shipped_markdown()` above globs `*.md` under skills/, commands/ and docs/ — so the
+# bundled reference server's own module docstring was never examined, and it still said
+# "(Entity Graph + Relationship Network tabs)" and "The Relationship Network tab reuses
+# /api/graph" long after INV-155 fixed the set at six with the network view as a *mode*.
+#
+# That docstring is not a comment: `argparse.ArgumentParser(description=__doc__)` prints it
+# as `--help`, and INV-090 makes this file the model a Java or C# server is built from. A
+# reader following it would build a seventh tab — the route INV-164 records for a defect
+# that lives in the reference and in no written rule.
+#
+# Matching is done on FLATTENED text with a window, not per line: every legitimate mention
+# here is framed ("the *removed* Relationship Network tab"), and once the prose or a comment
+# wraps, the framing word and the mention land on different lines. A per-line rule reports
+# the correct sentences as violations — it did, twice, while this was being written.
+# ---------------------------------------------------------------------------------------
+
+# Framing vocabulary for the Python sources, in addition to REMOVAL_CONTEXT above.
+PY_REMOVAL_CONTEXT = REMOVAL_CONTEXT + (
+    "removed Relationship Network",
+    "standalone Relationship Network",
+    "former Relationship Network",
+    "were removed",
+    "was removed",
+    "RESERVED",
+    "reserved rather than reused",
+    "no Results Dashboard",
+    "Two former tabs",
+)
+
+SHIPPED_PY = ("senzing_viz_server.py", "capture_screenshots.py")
+
+
+def shipped_python():
+    return [PLUGIN / "scripts" / name for name in SHIPPED_PY]
+
+
+def unframed_mentions(text, window=200):
+    """Removed-tab labels whose surrounding text never says they were removed.
+
+    Comment markers are stripped before flattening. A wrapped JS or Python comment puts
+    `//` (or `#`) between the framing word and the mention — "from the removed // Relationship
+    Network tab" — and leaving them in makes "removed Relationship Network" fail to match text
+    that plainly says it. Two correct comments were reported as violations before this.
+    """
+    text = re.sub(r"(?m)^\s*(//|#)\s?", " ", text)
+    flat = re.sub(r"\s+", " ", text)
+    out = []
+    for label in REMOVED_TAB_LABELS + ["Results Dashboard"]:
+        for m in re.finditer(re.escape(label), flat):
+            near = flat[max(0, m.start() - window):m.end() + window]
+            if not any(phrase in near for phrase in PY_REMOVAL_CONTEXT):
+                out.append((label, flat[max(0, m.start() - 70):m.end() + 70]))
+    return out
+
+
+class ShippedPythonDoesNotPresentARemovedTabAsLive(unittest.TestCase):
+    def test_no_shipped_script_presents_a_removed_tab_as_live(self):
+        problems = []
+        for path in shipped_python():
+            for label, excerpt in unframed_mentions(path.read_text(encoding="utf-8")):
+                problems.append(f"{path.name}: {label} — …{excerpt}…")
+        self.assertEqual(
+            [],
+            problems,
+            "a shipped script refers to a removed tab as if it were live (INV-155):\n  "
+            + "\n  ".join(problems),
+        )
+
+    def test_the_reference_help_text_names_the_live_six(self):
+        """The docstring IS the --help text, and the model INV-090 points implementers at."""
+        doc = ast.get_docstring(ast.parse(SERVER.read_text(encoding="utf-8")))
+        self.assertIsNotNone(doc, "the reference server lost its module docstring")
+        flat = re.sub(r"\s+", " ", doc)
+        for label in LIVE_TAB_LABELS:
+            self.assertIn(
+                label,
+                flat,
+                f"`--help` must name the live tab {label!r} (INV-155's six)",
+            )
+        self.assertIn(
+            "INV-155",
+            flat,
+            "the docstring should cite the invariant that fixes the tab set, so a reader "
+            "building in another language knows the six are binding",
+        )
+
+    def test_the_docstring_really_is_the_help_text(self):
+        """If this wiring changes, the test above stops testing `--help`."""
+        self.assertIn(
+            "description=__doc__",
+            SERVER.read_text(encoding="utf-8"),
+            "the docstring is no longer argparse's description — re-point this test",
+        )

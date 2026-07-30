@@ -15,8 +15,8 @@ then serves:
 - ``GET /``            single-page D3 v7 visualization (all tabs + summary banner)
 - ``GET /api/stats``   aggregate resolution statistics (incl. per-bucket entity lists
   under ``bucket_entities`` for the clickable histogram, and ``data_sources_total``)
-- ``GET /api/graph``   entity nodes + relationship edges (Entity Graph + Relationship
-  Network tabs)
+- ``GET /api/graph``   entity nodes + relationship edges (the Entity Graph tab, in both
+  its full-population and relationship-subgraph modes)
 - ``GET /api/merges``  multi-record entities with constituent records
 - ``GET /api/search``  search-by-attributes with resolution reasoning
 - ``GET /api/why``     explain WHY the records in an entity resolved together
@@ -31,9 +31,18 @@ then serves:
 
 These endpoints back a single consolidated, tabbed visualization app — the one artifact
 Module 7 offers for results visualization (it no longer produces separate static pages).
-The Relationship Network tab reuses ``/api/graph`` (the related-entity subgraph); the
-entity-size distribution is the Merge Statistics histogram (``/api/stats``), not a
-separate view.
+Its tab set is exactly **six** (INV-155), in this order: Entity Graph, Merge Statistics,
+Match Keys, Feature Scores, Cross-Source, Search / Probe. The row order of the tab table
+in ``module-03b-truthset-visualization/visualization-api-reference.md`` is the ordering
+authority (INV-147); a tab is shown only when its data exists.
+
+Two former tabs were **removed** and their unique capabilities live on inside that six:
+the standalone *Relationship Network* tab is now the Entity Graph's "Show only entities
+with relationships" **mode** (same ``/api/graph`` payload), and *Record Merges* is now the
+"Show all merged entities" button on Search / Probe (``/api/merges``). There is no Results
+Dashboard tab either — the entity-size distribution is the Merge Statistics histogram
+(``/api/stats``), not a separate view. Their ids stay reserved rather than reused; see the
+``TABS`` note in ``capture_screenshots.py``.
 
 Data source: ``get_entity_by_record_id`` with ``SZ_ENTITY_DEFAULT_FLAGS`` (which
 includes ``SZ_ENTITY_INCLUDE_ALL_RELATIONS``), so nodes and edges come from one
@@ -986,7 +995,8 @@ function modalShell(title,subtitle,bodyHtml){
     "<div class='mbody'>"+bodyHtml+"</div>";}
 // The canonical per-entity action set (contract: "Per-entity actions"). ONE
 // renderer, invoked from every surface that shows an entity — graph node modal,
-// Record Merges cards, every aggregate drill-down, and search results. Adding a
+// the merged-entity cards on Search / Probe, every aggregate drill-down, and
+// search results. Adding a
 // button here reaches all of them; that is the point. Wiring actions per
 // code-path is how surfaces previously shipped with different subsets.
 function addEntityActions(sel,eid,name){if(eid===undefined||eid===null)return;

@@ -335,8 +335,30 @@ source, per-field completeness). Pin the offer verbatim:
 > 👉 **Would you like a visual of the quality assessment (coverage bars and per-field completeness)?**
 
 If the bootcamper accepts, generate a self-contained HTML page and save it to
-`docs/visualizations/`. (The full Visualization Protocol / `visualization-guide` is a later
+`docs/visualizations/` (INV-070). (The full Visualization Protocol / `visualization-guide` is a later
 porting phase; offer directly for now.)
+
+⛔ **This page is a bootcamper-facing visual deliverable, so the four rules below bind it** — it is
+saved, kept, and shareable, exactly like the Truth Set app's snapshot. See
+`../bootcamp-onboarding/ground-rules.md` → "Visual deliverables (Senzing brand)" for the first two
+and `../module-03b-truthset-visualization/visualization-api-reference.md` → "Rendering contract" for
+the third; both are the statements of record, so read them rather than reconstructing the rules here.
+
+1. **Brand tokens, not an ad hoc palette** (INV-081): take colours and typography from
+   `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, degrading gracefully if the module cannot be
+   imported.
+2. **Renders offline** (INV-081/INV-091): **no CDN, no web font, no remote script.** If you need a
+   charting library, inline the vendored `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js`; plain
+   HTML/CSS bars need no library at all and are the better default here. A `<script src="https://…">`
+   makes the page render blank on an air-gapped workstation — which Senzing evaluations frequently
+   are — with no error anywhere.
+3. **Escape every value that came from the data** (INV-106): field names, sample values and source
+   names are the bootcamper's own strings. Escape them for the context they land in — HTML text,
+   attribute, and, if you embed a JSON payload in an inline `<script>`, `<`, `>` and `&` as their
+   `\uXXXX` escapes, since a value containing `</script>` otherwise breaks out of the script block in
+   an artifact that gets kept and shared.
+4. **Verify the rendered page, not the exit status** (INV-129): open it and confirm the bars and the
+   per-field numbers actually drew. Best-effort and non-blocking, like every check in this module.
 
 ## 7. Summarize findings and save the evaluation report
 

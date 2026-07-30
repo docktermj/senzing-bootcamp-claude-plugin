@@ -115,3 +115,30 @@ That is the model for how the reference should describe them.
   (which established INV-155; recorded there directly, with no spec file),
   `specs/organization-search-requires-name-org.md` (INV-164 — a defect in the reference reaching
   generated code), `specs/per-tab-screenshot-capture-and-grounded-captions.md` (INV-124's tab hooks).
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **A second stale reference was found and fixed, beyond the two the spec named.** The spec cited the
+  docstring only (`:18-19`, `:34`). The new guard also caught a comment on the per-entity action
+  renderer describing the surfaces it serves as *"graph node modal, **Record Merges cards**, every
+  aggregate drill-down, and search results"* — a tab that no longer exists, named as a live surface in
+  the file INV-090 points implementers at. Rewritten to "the merged-entity cards on Search / Probe",
+  which is where that capability actually lives now.
+- **Why the existing guard missed all of it, recorded because it is the reusable lesson.**
+  `tests/test_tab_set_is_singular.py` already had `NoShippedFilePresentsARemovedTabAsLive`, but its
+  `shipped_markdown()` helper globs `*.md` under `skills/`, `commands/` and `docs/` — the shipped
+  **Python** was never scanned. The new class scans `senzing_viz_server.py` and
+  `capture_screenshots.py` too.
+- **The new guard matches flattened text with a window, and strips comment markers first.** Two
+  correct comments were reported as violations before that: a wrapped JS comment puts `//` between the
+  framing word and the mention ("from the removed `//` Relationship Network tab"), and a per-line rule
+  cannot see framing that landed on the previous line. Same trap as `flatten()` in
+  `test_spec_ledger_invariants.py`.
+- **The docstring gained a positive enumeration, not just a correction.** It now names the six tabs in
+  the contract's row order, cites INV-155 and INV-147, and states where the two removed tabs'
+  capabilities went — because a reader building in another language needs the live set, not merely the
+  absence of a wrong claim.
+- **Not runtime-verified:** nothing. `--help` was executed and read, the six-tab enumeration and the
+  absence of unframed stale claims are asserted, `ALL_TABS` and the endpoint set are unchanged
+  (verified by diff), and all four guards were mutation-tested (old docstring restored, enumeration
+  deleted, the `Record Merges cards` comment reinstated, `description=__doc__` unwired) and reverted.

@@ -604,7 +604,18 @@ it means for matching, any issues found.
 > 👉 **Would you like a web page showing the quality analysis (coverage charts and the field mapping summary)?**
 
 If yes, generate a self-contained HTML page and save it to
-`docs/visualizations/mapping_[name]_quality.html`.
+`docs/visualizations/mapping_[name]_quality.html` (INV-070).
+
+⛔ **Same four rules as the quality-assessment visual in `phase1-quality-assessment.md`** — this is a
+bootcamper-facing visual deliverable too, and the reasons are identical: brand tokens from
+`${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081); **renders offline**, so no CDN or web font
+— inline the vendored `scripts/vendor/d3.v7.min.js` if a chart library is needed (INV-081/INV-091);
+every data-sourced string escaped for the context it lands in, including `<`/`>`/`&` as `\uXXXX`
+inside any inline `<script>` payload (INV-106); and verify the rendered page rather than the exit
+status (INV-129). The mapping summary carries **more** bootcamper-authored text than the phase 1
+page — source field names, target attributes, sample values — so the escaping rule matters most here.
+`ground-rules.md` → "Visual deliverables (Senzing brand)" and the visualization contract's
+"Rendering contract" are the statements of record.
 
 **Checkpoint:** write step 15.
 

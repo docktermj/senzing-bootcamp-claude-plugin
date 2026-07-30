@@ -138,3 +138,39 @@ exists but lives in a file the generating step never opens.
   `specs/vendor-d3-offline-visualization.md` / `specs/visualization-server-in-chosen-language.md`
   (INV-071/INV-091's offline guarantee), `specs/layout-tree-reconciliation.md` (INV-070),
   `specs/organization-search-requires-name-org.md` (INV-164 — the rule-lives-in-the-wrong-file class).
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **A pre-existing test had to be made rewrap-proof.** `tests/test_capture_tabs.py`'s
+  `test_capture_is_per_tab_not_several_of_one` matched the literal `one image per tab.{0,80}never
+  several shots of one` against raw file text. Scoping `module-completion.md`'s capture section to the
+  tabbed app re-wrapped that paragraph, moving a line break inside the phrase, and the assertion
+  failed on prose that still said exactly the right thing. The test now flattens whitespace first —
+  it asserts the requirement rather than the current line wrapping. Recorded because
+  `tests/test_capture_tabs.py` is in neither spec's `## Affected files`.
+- **The escaping probe requires the INV-106 citation, not the word "escape".** Mutation-testing showed
+  a bare-word probe passing after the rule itself was deleted, because the surviving phrase
+  "`\uXXXX` escapes" still contained it. Requiring the citation is also what makes the rule
+  *reachable*: it is how a reader gets from the offer to the statement of record.
+- **`ground-rules.md` gained two bullets, not just a MUST.** Beyond hardening the brand rule, the
+  carve-out now carries an explicit test for what counts as bootcamper-facing ("saved and handed to
+  them"), because "where appropriate" without a test is an exemption in practice; and the escaping
+  rule is stated there for **any** generated page, since it was previously reachable only from the
+  Truth Set app's contract.
+- **Criterion 6 holds for this spec, but the same commit does change the Python reference** — under
+  the sibling spec `viz-reference-help-text-names-removed-tabs`, implemented in the same pass. This
+  spec restated no rule and forked no validator; it made existing rules reachable from where the
+  pages are authored.
+- **Not runtime-verified:** no HTML page was generated, because generating one needs a bootcamp run
+  with profiled source data. What is verified: both offers name every binding rule, the sweep finds
+  the offers rather than being hardcoded to them, and all six guards were mutation-tested (brand
+  tokens stripped, offline rule stripped, INV-106 stripped from each offer, INV-129 stripped, the
+  softened "should" wording restored, the single-page capture note deleted) and reverted.
+
+## Invariants introduced
+
+- `INV-183` — A step that instructs the guide to generate a bootcamper-facing artifact MUST, at that
+  step, name every rule governing how the artifact is produced — or cite the file that states it —
+  and MUST NOT rely on a rule stated only elsewhere; the rule is named and linked, never restated or
+  forked. Generalizes INV-164 from a reference implementation to any authoring instruction. Recorded
+  in `specs/INVARIANTS.md`, maintainer-approved 2026-07-30.
