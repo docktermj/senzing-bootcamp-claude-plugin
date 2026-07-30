@@ -145,3 +145,31 @@ purpose is to show the shape of a finished recap. Five more PNGs in the shipped 
 at a real size cost, and a sentence naming the omission removes the false claim just as completely.
 Record whichever the maintainer picks in the implementation notes, since a future audit will
 otherwise re-raise the one-image example.
+
+## Deviations from this spec, and why (2026-07-30)
+
+- **Route B was chosen by the maintainer** (2026-07-30), and the reason is worth recording beyond
+  cost: Route A would have meant **inventing** five screenshots of tabs nobody captured. INV-123
+  requires a caption derived from the opened image, so five plausible-looking fabrications would have
+  replaced one false claim with six. Route B removes the false claim and keeps every shipped image a
+  real capture.
+- **The stale endpoint count appeared in THREE places, not one.** The spec cited only the Truth Set
+  section's *"all four API endpoints verified"*. Also found and fixed: `:198` *"serving the same
+  four-endpoint contract"* (Information Shared, same section) and `:397` *"(verified all four API
+  endpoints)"* — in the **Query, Visualize and Discover** section, about the Module 7 app rather than
+  the Truth Set one. All three are now count-free ("every API endpoint in the contract"), which the
+  spec preferred precisely so the claim cannot go stale a third time.
+- **A pre-existing test had to be fixed to accept a multi-line HTML comment.**
+  `tests/test_example_recap_sync.py`'s line sampler skipped lines *starting with* `<!--` but not the
+  continuation lines of a comment block, so the header note added here was reported as PDF staleness
+  on a freshly rendered file. The sampler now skips whole comment blocks. The bug was latent: the
+  example's only previous comment was a single line. That file is in this spec's Affected files, but
+  the *sampler* change is beyond what the spec asked for.
+- **The version is documented as tracking the manifest, not as a historical record.** The spec asked
+  for a note that the version "is refreshed with the example rather than frozen"; that note now also
+  says a test asserts the match, and explains why the endpoint and tab claims are deliberately
+  count-free. Written as an HTML comment, which is what forced the sampler fix above.
+- **Not runtime-verified:** nothing. The PDF was re-rendered from an unrelated working directory per
+  INV-161 (`rendered 29269 of 29981 source characters (98%), embedded 1 of 1 images`), `--check`
+  passes, and all five guards were mutation-tested (disclosure removed; disclosure stripped of the
+  real rule; each of the two endpoint phrasings restored; version reverted to 0.4.0) and reverted.

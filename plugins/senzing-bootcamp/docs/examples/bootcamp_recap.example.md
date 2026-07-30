@@ -1,11 +1,17 @@
 # Senzing Bootcamp Recap
 
+<!-- Sanitized reference recap (INV-065). No real personal data: the bootcamper, sources and
+findings are invented. **Plugin version** below is refreshed whenever this example is refreshed —
+it tracks `.claude-plugin/plugin.json`, and a test asserts they match, so it is not a frozen record
+of one historical run. Endpoint and tab claims are deliberately count-free for the same reason: a
+hardcoded count here went stale twice while the app grew. -->
+
 **Bootcamper:** Alex Rivera
 **Started:** 2026-07-16T09:05:00-07:00
 **Completed:** 2026-07-16T18:00:00-07:00
 **Programming language:** Java
 **Path:** Core
-**Plugin version:** 0.4.0
+**Plugin version:** 0.5.0
 **Operating system:** macOS 14.5 (Apple Silicon)
 **Python version:** 3.12.3
 **Language runtime:** OpenJDK 21.0.2
@@ -195,7 +201,7 @@
 - The Senzing Truth Set (CUSTOMERS 120, REFERENCE 22, WATCHLIST 17 = 159 records) is the deterministic demo dataset with a published ground-truth key (85 expected entities), sourced via the MCP server's get_sample_data.
 - The interactive visualization is a self-contained web app (six tabs: Entity Graph — with a toggle for just the entities that have relationships — Merge Statistics, Match Keys, Feature Scores, Cross-Source, and Search/Probe) that shows the resolved Truth Set — the "wow moment" of seeing entity resolution work on your own machine.
 - Match keys (e.g. +NAME+DOB+PHONE), resolution rules, and relationship types (POSSIBLY_SAME, DISCLOSED, AMBIGUOUS) as surfaced in the resolved-entity JSON via getEntity(SzRecordKey, SZ_ENTITY_DEFAULT_FLAGS).
-- On macOS the Python-based bundled app's native SDK is unavailable, so a Java entity export plus an equivalent Python-stdlib/D3 server was used, serving the same four-endpoint contract; it renders fully offline (D3 is vendored in the plugin).
+- On macOS the Python-based bundled app's native SDK is unavailable, so a Java entity export plus an equivalent Python-stdlib/D3 server was used, serving the same endpoint contract; it renders fully offline (D3 is vendored in the plugin).
 
 ### Questions & Responses
 
@@ -207,8 +213,8 @@
 - Acquired the 159-record Truth Set (customers.jsonl, reference.jsonl, watchlist.jsonl) via the MCP server.
 - Registered the CUSTOMERS/REFERENCE/WATCHLIST data source codes as the default config before loading.
 - Loaded all 159 records (0 failures); they resolved into 84 entities with 71 relationships.
-- Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization with the bundled Senzing viz server: standalone snapshot docs/visualizations/truthset_verification.html plus a live server, all four API endpoints verified.
-- Captured one screenshot per visualization tab and embedded them all in this recap, in the app's tab order.
+- Exported the resolved-entity model (src/system_verification/ExportEntityModel.java) and stood up the visualization with the bundled Senzing viz server: standalone snapshot docs/visualizations/truthset_verification.html plus a live server, every API endpoint in the contract verified.
+- Captured one screenshot per visualization tab and embedded them all in the recap, in the app's tab order. (This sanitized example ships only the Entity Graph capture, below, to keep the plugin small — a real recap carries one image per captured tab, all of them, in tab order.)
 - Explored the visualization live, then terminated the server (port released).
 - Purged the 159 Truth Set records via SzEngine.deleteRecord(SzRecordKey); confirmed zero Truth Set entities remain.
 
@@ -394,7 +400,7 @@
 - Built src/query/SearchApplicant.java: a search-by-attributes lookup; verified against "Bally Technologies" (found the correct GLEIF entity).
 - Ran both programs successfully: 0/100 applicants flagged (explained honestly, not fabricated).
 - Computed quality indicators (entity-to-record ratio 0.89, possible-match rate 1.4%, cross-source match rate 10.4%) directly from an exported entity model (data/mapping/project_entities.jsonl, 356 entities) since no data mart exists at this scale; assessed as Acceptable.
-- Generated the entity-graph visualization: standalone snapshot docs/visualizations/due_diligence_results.html plus a live server (verified all four API endpoints), captured a screenshot for the recap, then cleanly stopped it.
+- Generated the entity-graph visualization: standalone snapshot docs/visualizations/due_diligence_results.html plus a live server (verified every API endpoint in the contract), captured a screenshot for the recap, then cleanly stopped it.
 - Identified a genuine cross-reference: Wynn Las Vegas LLC matched GLEIF ↔ US-LABOR-VIOLATIONS on +NAME+ADDRESS.
 - Discover phase (advanced why/how/network tour) explicitly skipped by the bootcamper.
 

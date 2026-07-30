@@ -37,6 +37,7 @@ Two traps are pinned here:
 
 Run:  python3 -m unittest discover -s tests
 """
+import json
 import os
 import re
 import subprocess
@@ -262,12 +263,25 @@ class TestPdfMatchesItsSource(unittest.TestCase):
         image tags are not. Long lines are sampled because short ones repeat.
         """
         keep = []
+        in_comment = False
         for raw in self.md.splitlines():
             line = raw.strip()
-            if not line or line.startswith(("#", "---", "!", "|", ">", "```")):
+            # Skip whole HTML comment BLOCKS, not just their opening line. The renderer drops
+            # comments by design, so a multi-line maintainer note would otherwise contribute
+            # continuation lines that can never appear in the PDF — reported as staleness on a
+            # freshly rendered file. (Hit on 2026-07-30 by
+            # `refresh-example-recap-to-the-consolidated-app`, which added a multi-line header
+            # note; the only pre-existing comment was a single line, so this was latent.)
+            if in_comment:
+                if "-->" in line:
+                    in_comment = False
                 continue
             if line.startswith("<!--"):
+                if "-->" not in line:
+                    in_comment = True
                 continue  # maintainer notes: the renderer drops these by design
+            if not line or line.startswith(("#", "---", "!", "|", ">", "```")):
+                continue
             line = re.sub(r"^[-*]\s+", "", line)
             line = line.replace("**", "").replace("`", "").strip()
             if len(line) >= 60 and " " in line:
@@ -296,3 +310,86 @@ class TestPdfMatchesItsSource(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+PLUGIN_JSON = os.path.join(
+    REPO_ROOT, "plugins", "senzing-bootcamp", ".claude-plugin", "plugin.json"
+)
+
+
+class TestExampleClaimsAreTrueOfTheExample(unittest.TestCase):
+    """The example's prose describes the example, not an app it does not ship.
+
+    `refresh-example-recap-to-the-consolidated-app`. The shipped reference recap said, in
+    Actions Taken, "Captured one screenshot per visualization tab and embedded them all in
+    this recap, in the app's tab order" — while embedding **one** image of an app its own
+    Information Shared calls six-tab. That is the shape INV-146 exists to forbid, demonstrated
+    in the plugin's only model of a finished recap, and the pattern a guide authoring a real
+    one copies. It also claimed "all four API endpoints" in three places, against the **ten**
+    the Truth Set module now verifies.
+
+    The tests above pin the `.md` <-> `.pdf` relationship thoroughly. They cannot see whether
+    the prose is true *of the example*, which is a different property and the one that broke.
+
+    Route B was taken (maintainer decision, 2026-07-30): keep the single real capture and make
+    the text say so, rather than shipping five more PNGs — five invented screenshots would
+    breach INV-123's "caption derived from the opened image" as surely as the false claim did.
+    So what is pinned is the *disclosure*, plus the absence of hardcoded counts that already
+    went stale in three places.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        with open(EXAMPLE_MD, encoding="utf-8") as handle:
+            cls.md = handle.read()
+        cls.flat = re.sub(r"\s+", " ", cls.md)
+
+    def test_a_per_tab_capture_claim_discloses_what_the_example_ships(self):
+        if "screenshot per visualization tab" not in self.flat:
+            self.skipTest("the per-tab capture claim is no longer made")
+        images = len(re.findall(r"^!\[", self.md, re.M))
+        if images >= 6:
+            return  # Route A taken later: the claim is simply true
+        self.assertRegex(
+            self.flat,
+            r"(?i)this sanitized example ships only",
+            "the example claims a screenshot per tab but embeds %d image(s); it must disclose "
+            "what the sanitized example actually ships (INV-146's shape, in the plugin's own "
+            "reference recap)" % images,
+        )
+
+    def test_the_disclosure_still_states_the_real_rule(self):
+        """Disclosing the omission must not teach the omission as correct."""
+        if "this sanitized example ships only" not in self.flat.lower():
+            self.skipTest("no disclosure present (Route A, or the claim was dropped)")
+        self.assertRegex(
+            self.flat,
+            r"(?i)a real recap carries one image per captured tab, all of them, in tab order",
+            "the disclosure must restate what a real recap does (INV-146/INV-147), or a reader "
+            "learns that one image is the norm",
+        )
+
+    def test_no_hardcoded_endpoint_count(self):
+        """The count went stale in three places while the app grew from four endpoints to ten."""
+        stale = re.findall(
+            r"(?i)(all (?:four|4) API endpoints|(?:four|4)-endpoint contract)", self.flat
+        )
+        self.assertEqual(
+            [],
+            stale,
+            "the example hardcodes an endpoint count: %s. Use count-free phrasing — the "
+            "contract's endpoint set grows, and this claim has already gone stale." % stale,
+        )
+
+    def test_the_plugin_version_matches_the_manifest(self):
+        """A frozen version reads as a stale fixture; the header tracks plugin.json."""
+        with open(PLUGIN_JSON, encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        m = re.search(r"^\*\*Plugin version:\*\*\s*(\S+)", self.md, re.M)
+        self.assertIsNotNone(m, "the example lost its Plugin version meta row (INV-105/INV-126)")
+        self.assertEqual(
+            manifest["version"],
+            m.group(1),
+            "the example's Plugin version does not match .claude-plugin/plugin.json — refresh "
+            "the example (and re-render its PDF) rather than leaving a stale figure",
+        )
