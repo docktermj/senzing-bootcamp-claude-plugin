@@ -104,8 +104,10 @@ parser (INV-115).
 *parses* a response, also call `get_sdk_reference(topic='response_schemas', filter='<method>')`
 — **never infer field names from an example snippet.** Wrong field names do not raise: they
 render as blank text, so the output looks like "Senzing found nothing" rather than a bug.
-`response_schemas` documents the top-level shape per method; for deeper nesting (anything under
-`MATCH_INFO`), dump one raw response and read it before writing the parser.
+`response_schemas` documents **nested** paths, not merely the top-level shape — `MATCH_INFO` is
+covered in full, down to `WHY_RESULTS[].MATCH_INFO.FEATURE_SCORES.NAME[].SCORE_BUCKET` (verified
+on MCP server 1.32.2, 2026-07-30) — so look a suspect name up there first, then dump one raw
+response to confirm what *this* installation returns before writing the parser.
 
 **Defensive parsing.** A blank field has **three** possible causes, not two, and they need
 different fixes:

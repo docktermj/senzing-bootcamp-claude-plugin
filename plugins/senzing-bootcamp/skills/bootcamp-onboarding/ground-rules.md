@@ -122,9 +122,13 @@ steering files.)
 - **Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
   **probable wrong field name first and absent data second** — verify against
   `response_schemas`, or dump one raw response and read it, before rendering. Never present a
-  blank value as a real result: say "no value returned for X" so the failure is visible. Note
-  `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
-  under `MATCH_INFO`), the raw-response dump is the authority.
+  blank value as a real result: say "no value returned for X" so the failure is visible.
+  `response_schemas` documents **nested** paths, not merely the top-level shape — including
+  everything under `MATCH_INFO`, down to
+  `WHY_RESULTS[].MATCH_INFO.FEATURE_SCORES.NAME[].ADDITIONAL_SCORES.GNR_FN` (verified on MCP
+  server 1.32.2, 2026-07-30) — so check a suspect field name there **first**. The raw dump stays
+  the authority for what *this* installation actually returns and for anything the schema does
+  not list; an empty or shallow result is coverage, not a failed call (INV-149).
 - **Parameter shapes, for the bootcamper's binding.** **`get_sdk_reference` answers parameter
   shapes whenever `filter` names a method — under *any* topic**, not only `topic='methods'`. A
   `flags` or `response_schemas` response you already hold therefore carries the signature too,

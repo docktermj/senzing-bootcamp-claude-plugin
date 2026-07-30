@@ -37,20 +37,20 @@ connections between entities using `find_network` and `find_path`.
    ⛔ **Look up the response structure before writing any code that parses the response — never
    infer field names from an example snippet** (INV-115).
 
-   ⚠️ **Expect that lookup to stop at the top level here.** For the graph methods
-   `response_schemas` returns the outer arrays (`ENTITY_PATHS[]`, `ENTITIES[]`,
-   `ENTITY_NETWORK_LINKS[]`) and **not** the fields inside a link element. That is coverage, not a
-   failed call — do not retry it. Dump one raw link element and read its keys before writing the
-   parser. In particular, do **not** assume a link's two endpoints use the `ENTITY_ID` /
-   `RELATED_ENTITY_ID` pairing that related-entity records use: two sessions found both endpoints
-   blank under those names while `MATCH_KEY` rendered fine, and a live dump on SDK 4.3.3 found them
-   under **`MIN_ENTITY_ID` / `MAX_ENTITY_ID`** (normalized low-to-high). Those keys are recorded in
+   ⚠️ **That lookup reaches inside a link element — and the endpoint names are not the ones
+   you would guess.** For the graph methods `response_schemas` returns the outer arrays
+   (`ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`) **and** each link element's own
+   fields (re-verified on MCP server 1.32.2, 2026-07-30). Dump one raw link element and read
+   its keys anyway before writing the parser. Do **not** assume a link's two
+   endpoints use the `ENTITY_ID` / `RELATED_ENTITY_ID` pairing that related-entity records use:
+   two sessions found both endpoints blank under those names while `MATCH_KEY` rendered fine, and
+   a live dump on SDK 4.3.3 found them under **`MIN_ENTITY_ID` / `MAX_ENTITY_ID`** (normalized
+   low-to-high) — which is what the schema now documents too. Those keys are recorded in
    `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
-   paths". They were dump-only when first recorded; `response_schemas` now documents them itself
-   (re-verified on MCP server 1.32.2, 2026-07-30), so they are MCP-confirmed names rather than an
+   paths"; they were dump-only when first recorded, so they are MCP-confirmed names rather than an
    unverified caution. **Run the lookup and dump anyway** — its coverage grows, this entry is proof of
-   that, and the dumped element remains the authority for what your installation returns (INV-080,
-   INV-149).
+   that, and the dumped element remains the authority for what your installation returns (INV-080).
+   An empty or shallow result is still coverage, not a failed call — do not retry it (INV-149).
 
    ⛔ **Per-record source values do not come from `JSON_DATA` on an entity call.** The get_entity
    schema lists `RECORDS[].JSON_DATA.*` paths, but the flag that produces them

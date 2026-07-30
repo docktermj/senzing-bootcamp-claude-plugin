@@ -322,12 +322,15 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > **not** documented by `response_schemas` — dump a raw response to confirm them. Do not copy
 > field names from any prior implementation, this file included.
 >
-> **The graph methods stop at the top level, and their link elements are the next trap.** Verified
-> 2026-07-26: `get_sdk_reference(topic='response_schemas', filter='find_network')` **does** return an
-> entry, but it documents only the three arrays above — `ENTITY_NETWORK_LINKS[]` is described as
-> "Network link details between entities" with **no element fields**. So the lookup succeeds and
-> still leaves you guessing at the very field names you are about to parse. Dump one raw link
-> element and read its keys before writing the parser (INV-115).
+> **The link elements are documented now — and their endpoint names are still the trap.**
+> Re-verified on MCP server 1.32.2, 2026-07-30: `get_sdk_reference(topic='response_schemas',
+> filter='find_network')` returns the three arrays above **and** each `ENTITY_NETWORK_LINKS[]`
+> element's own fields (`MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_KEY`, `MATCH_LEVEL_CODE`,
+> `ERRULE_CODE`, `IS_AMBIGUOUS`, `IS_DISCLOSED`). (Through 2026-07-26 it documented only the
+> arrays, describing `ENTITY_NETWORK_LINKS[]` as "Network link details between entities" with no
+> element fields; that gap is closed, so the lookup no longer leaves you guessing.) Dump one raw
+> link element and read its keys before writing the parser anyway (INV-115) — the schema tells you
+> what the method documents, the dump tells you what *your* installation returned.
 >
 > ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** Two bootcamp
 > sessions now agree: parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
