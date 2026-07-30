@@ -28,7 +28,29 @@ stale:
    `get_record_preview(record_definition: str, flags: int = <SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS>)`
    with no mention of the prerequisite anywhere in the response.
 
-**One of the three also misdescribes its own call.** Site 3 says the lookup "returns both
+A second pass the same day re-asked two more claims, spanning four further stamps.
+These also **re-verified unchanged**:
+
+4. `module-02-sdk-setup/SKILL.md:710` and
+   `module-03-system-verification/phase1-verification.md:137` — `SENZ2027`'s own
+   resolution steps do not name the missing-runtime-data-directory cause, which is why
+   the plugin adds it from the Senzing FAQ. Confirmed, and it is starker than the plugin
+   states: `explain_error_code('SENZ2027')` returns the placeholder
+   `common_causes: ["Error class: SzError — consult Senzing documentation for details"]`
+   and three generic `resolution_steps` ("Check Senzing documentation", "Enable verbose
+   logging", "Search Senzing support forums"). Compare `SENZ2207`, which returns four
+   specific causes and four actionable steps — so this is a per-code stub, not a
+   uniformly thin tool.
+5. `module-03b-truthset-visualization/visualization-api-reference.md:341` and
+   `module-07-query-visualize-discover/phase2b-discover.md:50` — `response_schemas` now
+   documents the `ENTITY_NETWORK_LINKS` element fields itself. Confirmed:
+   `get_sdk_reference(topic='response_schemas', filter='find_network')` returned all
+   seven — `MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_KEY`, `MATCH_LEVEL_CODE`,
+   `ERRULE_CODE`, `IS_AMBIGUOUS`, `IS_DISCLOSED` — plus
+   `ENTITIES[].RESOLVED_ENTITY.{ENTITY_ID,ENTITY_NAME,RECORD_SUMMARY[]}` and
+   `ENTITY_PATHS[].{START_ENTITY_ID,END_ENTITY_ID,ENTITIES[]}`.
+
+**One of the first three also misdescribes its own call.** Site 3 says the lookup "returns both
 overloads for every binding". It does not. The response carried two entries because the
 filter matched two *different methods* — `get_record` (`variant: "record_id"`) and
 `get_record_preview` (`variant: null`) — and `get_record_preview` has exactly **one**
@@ -46,7 +68,7 @@ fact it was fetched for, and the incidental second match was described from a gl
 
 ## Proposed change
 
-1. **Update the three verified stamps to `MCP server 1.32.2, 2026-07-30`.** Change the
+1. **Update the seven verified stamps to `MCP server 1.32.2, 2026-07-30`.** Change the
    version and date only — the surrounding claims re-verified unchanged and their wording
    stays exactly as it is, including the "re-verify rather than trusting this note"
    instructions, which are what make these sites correct in the first place.
@@ -55,31 +77,35 @@ fact it was fetched for, and the incidental second match was described from a gl
    signature per binding, `record_definition` plus `flags`, and no prerequisite. Keep the
    order it prescribes (register the source codes from `sdk_guide(topic='configure')`,
    then preview) — that is correct and is the point of the passage.
-3. **Leave the other thirteen 1.32.1 stamps alone.** They were not re-asked in this
+3. **Leave the remaining nine 1.32.1 stamps alone.** They were not re-asked in this
    sweep, and changing a stamp without re-verifying its claim is worse than leaving it
    expired: it would assert a check that never happened. They are listed below so the
    next sweep can pick them up.
 
 **Not in scope:** the recurring half of this problem. Stamps will expire again on the
 next server bump, and refreshing them is exactly what `delegate-to-mcp-server` does. This
-spec clears the three that are already verified; it does not try to automate the rest.
+spec clears the seven that are already verified; it does not try to automate the rest.
 
 ## Acceptance criteria
 
-- [ ] The three sites named above carry `MCP server 1.32.2, 2026-07-30`, and their claims
+- [ ] The seven sites named above carry `MCP server 1.32.2, 2026-07-30`, and their claims
       are otherwise byte-identical to what ships today.
 - [ ] `phase1-quality-assessment.md:124` no longer says the lookup returns "both
       overloads"; it describes the single `get_record_preview` signature and its two
       parameters.
 - [ ] The register-then-preview ordering and the `sdk_guide(topic='configure')` sourcing
       instruction survive the edit unchanged.
-- [ ] No stamp is advanced for a claim this spec did not re-verify — the other thirteen
+- [ ] No stamp is advanced for a claim this spec did not re-verify — the remaining nine
       1.32.1 stamps still read 1.32.1.
-- [ ] **Re-verification clause:** implementing this requires `get_sample_data(dataset='list')`
-      to still return exactly those four datasets with `truthset` available, and
-      `get_sdk_reference(topic='parameters', filter='getRecordPreview')` to still document
-      no registration prerequisite. If either has changed, the fact — not the stamp — is
-      what needs updating, and this spec should be re-triaged.
+- [ ] **Re-verification clause:** implementing this requires, all on the current server:
+      `get_sample_data(dataset='list')` to return exactly those four datasets with
+      `truthset` available; `get_sdk_reference(topic='parameters', filter='getRecordPreview')`
+      to document no registration prerequisite; `explain_error_code('SENZ2027')` to still
+      return a placeholder cause and generic steps; and
+      `get_sdk_reference(topic='response_schemas', filter='find_network')` to still return
+      all seven `ENTITY_NETWORK_LINKS` element fields. Where one has changed, the fact —
+      not the stamp — is what needs updating, and that site should be re-triaged instead
+      of restamped.
 - [ ] `tests/test_truthset_acquisition_call.py` and
       `tests/test_record_preview_requires_registered_source.py`-equivalent assertions pass;
       any that quote the edited wording are updated.
@@ -90,30 +116,37 @@ spec clears the three that are already verified; it does not try to automate the
 - `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md` — stamp at line 95.
 - `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/SKILL.md` — stamp at line 81.
 - `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md` — stamp and wording at line 124.
+- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — stamp at line 710.
+- `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md` — stamp at line 137.
+- `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md` — stamp at line 341.
+- `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md` — stamp at line 50.
 - `tests/` — any assertion quoting the edited sentence.
 
-### Still expired, not re-asked in this sweep
+### Still expired, not re-asked in either pass
 
-`module-02-sdk-setup/SKILL.md` (lines 385, 710, 789, 871) ·
-`module-03-system-verification/phase1-verification.md` (132, 137) ·
-`module-03b-truthset-visualization/visualization-api-reference.md` (289, 341) ·
+`module-02-sdk-setup/SKILL.md` (lines 385, 789, 871) ·
+`module-03-system-verification/phase1-verification.md` (132) ·
+`module-03b-truthset-visualization/visualization-api-reference.md` (289) ·
 `module-05-data-quality-mapping/phase1-quality-assessment.md` (254) ·
 `module-05-data-quality-mapping/phase2-data-mapping.md` (344) ·
-`module-06-data-processing/phaseD-validation.md` (13) ·
-`module-07-query-visualize-discover/phase2b-discover.md` (50) ·
+`module-06-data-processing/phaseD-validation.md` (13 — a **verbatim quote** of
+`reporting_guide`'s schema notes, so worth checking early: a quotation is wrong the
+moment the source is reworded) ·
 `bootcamp-onboarding/ground-rules.md` (100 — covered by the INV-160 ledger rows; the
 defect it describes still reproduces, so its claim stands and only the stamp is stale).
 
 ## Source
 
-- Sweep: `delegate-to-mcp-server`, 2026-07-30 (first run), ledger keys
+- Sweep: `delegate-to-mcp-server`, 2026-07-30 (first run, two passes), ledger keys
   `sample-data-list-returns-four-datasets`, `truthset-listed-available-in-sample-data`,
-  `record-preview-registration-prerequisite-undocumented`
-- Verdict: `keep-by-design` (sites 1-2), `keep-server-lacks-it` (site 3) — every claim
-  survives; this spec updates provenance, not content
+  `record-preview-registration-prerequisite-undocumented`,
+  `senz2027-explain-error-code-is-a-stub`, `find-network-link-element-fields-documented`
+- Verdict: `keep-by-design` (sites 1-2, 5), `keep-server-lacks-it` (sites 3-4) — every
+  claim survives; this spec updates provenance, not content
 - MCP evidence: server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-30 —
   `get_sample_data(dataset='list')`; `get_sdk_reference(topic='parameters',
-  filter='getRecordPreview', language='python')`. Quoted above.
+  filter='getRecordPreview', language='python')`; `explain_error_code('SENZ2027')`;
+  `get_sdk_reference(topic='response_schemas', filter='find_network')`. Quoted above.
 - Priority: Low — no claim is wrong; the audit trail is stale and one sentence
   misdescribes its own call.
 - Upstream: not applicable for sites 1-2. Site 3 is a genuine documentation gap on
