@@ -121,3 +121,26 @@ so richness varies per code and cannot be inferred from one sample.
 - Related specs: `specs/sdk-reference-carries-signatures-under-every-topic.md`,
   `specs/response-schemas-now-documents-match-info-depth.md`,
   `specs/reporting-guide-topics-gate-on-language.md` — the same defect class, same week.
+
+## Deviations from this spec, and why (2026-07-30)
+
+- **A test pinned the false premise, and the pre-implementation survey missed it.** Before
+  editing, a `grep` for the plugin's phrases across `tests/` reported that no test covered
+  this wording, so the change was expected to be plugin-only.
+  `tests/test_config_seeding_guidance.py::TheErrorCodeIsRouted::test_the_guidance_warns_the_error_codes_own_steps_mislead`
+  then failed: it asserted, by its own regex, that the guidance **warns the error code's
+  own steps mislead**. The survey searched for what the *file* says; the test asserted
+  something *about* the file in different words. It was **inverted rather than deleted**,
+  so the corrected claim is now the guarded one, and mutation-tested by restoring the
+  stale wording.
+- **A second guard was added beyond the spec.** `test_the_correction_is_scoped_to_senz7221_only`
+  pins `SENZ2027`'s compensating FAQ text. The spec's step 4 says not to generalise across
+  codes; nothing enforced that, and the obvious future error is a pass that reads this
+  change and concludes `explain_error_code` can now be trusted everywhere. `SENZ2027` was
+  re-verified the same day and is still a stub, so richness genuinely varies per code.
+- **The scoping test's first draft asserted against the wrong file.** It looked for
+  "resolution steps do not name" in `module-02-sdk-setup/SKILL.md`; that phrasing lives in
+  `module-03-system-verification/phase1-verification.md`. Module 2's `SENZ2027` passage
+  compensates differently — it quotes the Senzing FAQ — so the assertion was retargeted to
+  that text. Recorded because it is the same mistake in miniature as the one above:
+  asserting from memory of the subject rather than from the file.

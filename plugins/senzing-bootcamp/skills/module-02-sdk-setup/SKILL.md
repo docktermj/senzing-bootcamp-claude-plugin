@@ -777,10 +777,15 @@ the attempt fails with
 SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID
 ```
 
-The error names no remedy — `explain_error_code('SENZ7221')` returns "No engine configuration
-registered with data ID" and resolution steps about paths, connection strings and initialization,
-none of which is the actual fix. So this is easy to chase in the wrong direction; seed first and it
-never arises.
+**The error now names its own remedy — call it and follow it.** `explain_error_code('SENZ7221')`
+returns as its first cause *"No default config has EVER been registered on this datastore — it was
+schema-created (e.g. via `szcore-schema-*-create.sql`) but never seeded"*, and as its first
+resolution step *"Seed a default config first: `create_config_from_template()` (or
+`create_config()`), then `set_default_config(config_json, comment)` — see `sdk_guide`
+topic='configure'"* — which is exactly Step 8a below (verified on MCP server 1.32.2, 2026-07-30;
+through 1.32.1 the entry was generic and this note warned you to disregard it). It also names two
+further causes worth knowing: calling `create_config_from_config_id(0)` on the unseeded value, and
+an engine pointed at a different datastore than the one you seeded. Seed first and it never arises.
 
 **How to seed — take the code from MCP, do not hand-write it (INV-080):**
 
@@ -854,11 +859,14 @@ call succeeds** (not merely a version query).
 
 - Installation fails? Use `explain_error_code` for SENZ errors.
 - **`SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID`? The datastore has no default configuration —
-  seed one per Step 8a.** Call `explain_error_code('SENZ7221')` first as always (INV-080), but know
-  that its resolution steps (verify paths, check the connection string, ensure the engine is
-  initialized) do **not** name this cause, so do not be pulled toward re-checking paths that are
-  already correct. This is the expected symptom on a freshly schema-created datastore whose config
-  was never seeded, and it can appear several steps after the omission.
+  seed one per Step 8a.** Call `explain_error_code('SENZ7221')` first as always (INV-080) and
+  **follow what it returns**: its first cause is the never-seeded datastore and its first resolution
+  step is the seeding sequence, the same one Step 8a takes from `sdk_guide(topic='configure')`
+  (verified on MCP server 1.32.2, 2026-07-30). Its third step — check that
+  `SENZING_ENGINE_CONFIGURATION_JSON`'s `SQL.CONNECTION` points at the datastore you actually seeded
+  — is a real second possibility, not a distraction. This is the expected symptom on a freshly
+  schema-created datastore whose config was never seeded, and it can appear several steps after the
+  omission.
 - **`Unable to get settings`, or an empty `SENZING_ENGINE_CONFIGURATION_JSON`? This is the env
   script's path resolution, not Senzing.** That message carries **no SENZ code** because it is not an
   engine error: it is the null-check in Senzing's own official snippets, which print

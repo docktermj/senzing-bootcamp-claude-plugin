@@ -80,12 +80,33 @@ class TheErrorCodeIsRouted(unittest.TestCase):
         """INV-080: the MCP tool stays the first stop even when we know the cause."""
         self.assertRegex(flat(MODULE_02), r"explain_error_code\('SENZ7221'\)")
 
-    def test_the_guidance_warns_the_error_codes_own_steps_mislead(self):
-        """Its resolution steps name paths/connection/initialization, not seeding."""
+    def test_the_guidance_sends_the_reader_to_follow_the_error_codes_own_steps(self):
+        """The 2026-07-30 correction, and the sharpest instance of its class.
+
+        This test previously asserted the opposite — that the guidance *warns* the error
+        code's own resolution steps mislead ("do **not** name this cause", "none of which
+        is the actual fix"). True on server 1.32.1. On 1.32.2 `explain_error_code('SENZ7221')`
+        returns the never-seeded datastore as its **first** cause and the seeding sequence
+        as its **first** resolution step — the plugin's own diagnosis and remedy. So the
+        old text told the guide to discount three accurate, ordered steps, inverting the
+        INV-080 routing it was written to serve, and this test made that load-bearing.
+        """
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)names its own remedy|follow what it returns")
+        for stale in ("none of which is the actual fix", "pulled toward re-checking"):
+            with self.subTest(phrase=stale):
+                self.assertNotIn(stale, text)
+
+    def test_the_correction_is_scoped_to_senz7221_only(self):
+        """SENZ2027 was re-checked the same day and is still a stub returning a
+        placeholder cause, so its compensating guidance is correct and must survive.
+        Richness varies per code; a blanket 'trust explain_error_code' would be wrong."""
+        text = flat(MODULE_02)
         self.assertRegex(
-            flat(MODULE_02),
-            r"(?i)do \*\*not\*\* name this cause|does not name the (?:actual )?(?:cause|fix)"
-            r"|none of which is the actual fix",
+            text, r"(?i)SENZ2027.{0,300}?The actionable detail is in the Senzing FAQ",
+            "the SENZ2027 compensating text was lost — that code is still a stub "
+            "(verified 2026-07-30: placeholder cause, three generic resolution steps), "
+            "so the plugin must keep supplying the FAQ detail the tool omits",
         )
 
 
