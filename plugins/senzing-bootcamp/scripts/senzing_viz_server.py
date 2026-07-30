@@ -468,20 +468,22 @@ class Model:
             return {"results": []}
         items = []
         tried = []
+        failures = []
         for attr in self.SEARCH_NAME_ATTRS:
             tried.append(attr)
             try:
                 resp = self._search_one(engine, flags, attr, query)
             except Exception as exc:
-                # A later attribute failing must not discard a hit an earlier one
-                # already produced; only report the error if nothing matched at all.
-                if not items:
-                    return {
-                        "results": [],
-                        "error": str(exc),
-                        "attributes_tried": tried,
-                    }
-                break
+                # A failed attempt is an attempt, not the end of the list. This guard
+                # was `if not items: return ...`, which is unconditionally true on the
+                # *first* attribute — so any error searching NAME_FULL returned before
+                # NAME_ORG was ever called and silently reinstated the exact defect
+                # INV-164 exists to prevent, this time with an engine message attached
+                # pointing at the attribute that could not have matched anyway. Record
+                # the failure and carry on: a hit further down the list still wins, and
+                # the error is reported only if every candidate is exhausted (INV-190).
+                failures.append("%s: %s" % (attr, exc))
+                continue
             items.extend(resp.get("RESOLVED_ENTITIES", []))
             if items:
                 break  # first attribute that matches wins; no need to pay for the rest
@@ -503,8 +505,17 @@ class Model:
             )
         # `attributes_tried` lets the UI say what was searched when nothing matched,
         # so an empty result reads as "no match under these attributes" rather than
-        # as "this name is not in your data" (INV-115).
-        return {"results": results, "attributes_tried": tried}
+        # as "this name is not in your data" (INV-115). Failed attempts are listed
+        # there too — a candidate that errored was still tried, and the Bootcamper is
+        # shown that list.
+        out = {"results": results, "attributes_tried": tried}
+        # A hit is a hit: a failure behind it is not the Bootcamper's problem. Only when
+        # nothing matched anywhere does a failure become the answer — and then it must
+        # be reported, or "the engine could not run this" is rendered as the clean
+        # no-match "nothing in your data has that name" (INV-115).
+        if items == [] and failures:
+            out["error"] = "; ".join(failures)
+        return out
 
     def how(self, engine, sz, entity_id):
         """Explain HOW an entity was constructed from its records
@@ -1154,13 +1165,23 @@ async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.se
   // after an organization did while search tried NAME_FULL only. Verify against the
   // live engine — the same path the click will take — and drop any that come back
   // empty rather than shipping a dead control.
-  if(live){const cands=(m.entities||[]).slice(0,10);const good=[];
-    for(const e of cands){if(good.length>=6)break;
-      if(!e.entity_name)continue;
-      try{const r=await getJSON("/api/search?q="+encodeURIComponent(e.entity_name));
-        if(r&&r.results&&r.results.length)good.push(e);
-        else console.warn("dropped example chip (no match): "+e.entity_name);}
-      catch(err){console.warn("dropped example chip (search failed): "+e.entity_name);}}
+  // Verified concurrently rather than one at a time: nothing about the check is
+  // order-dependent, and a serial loop puts up to ten live engine round-trips in front
+  // of the first paint of the app. Order and the six-chip cap are reapplied to the
+  // results, so the chips offered are identical to the serial version's — only the
+  // waiting is gone. The trade is that all candidates are now searched instead of
+  // stopping at the sixth hit: the worst case (ten) is what it always was, the typical
+  // case costs a few more searches, and both happen in one round-trip.
+  if(live){const cands=(m.entities||[]).slice(0,10).filter(function(e){return e.entity_name;});
+    // Each candidate catches its own failure, so one rejected search drops one chip
+    // rather than rejecting the batch and taking every chip down with it.
+    const verdicts=await Promise.all(cands.map(function(e){
+      return getJSON("/api/search?q="+encodeURIComponent(e.entity_name))
+        .then(function(r){const hit=!!(r&&r.results&&r.results.length);
+          if(!hit)console.warn("dropped example chip (no match): "+e.entity_name);
+          return hit;})
+        .catch(function(err){console.warn("dropped example chip (search failed): "+e.entity_name);return false;});}));
+    const good=cands.filter(function(e,i){return verdicts[i];}).slice(0,6);
     good.forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
       .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
   // The one capability the removed Record Merges tab uniquely had: browse every merged

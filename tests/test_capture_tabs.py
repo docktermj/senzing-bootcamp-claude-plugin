@@ -22,7 +22,9 @@ when none is installed.
 
 Run:  python3 -m unittest discover -s tests
 """
+import contextlib
 import importlib.util
+import io
 import os
 import re
 import subprocess
@@ -426,6 +428,67 @@ class TestGraduationVerifiesScreenshots(unittest.TestCase):
 
     def test_backfill_derives_captions_from_the_tab_slug(self):
         self.assertRegex(self.text, r"(?s)tab slug gives the caption")
+
+
+class TestCaptureIsSequentialOnly(unittest.TestCase):
+    """`_CURRENT_TAB` is a module global read by `_capture_chrome_cli` to size the
+    virtual-time budget. That is correct only while captures run one at a time.
+    Parallelising `capture()`'s loop would apply one tab's budget to another tab's
+    capture — an under-settled PNG, not an error, which is the quiet way to break
+    INV-122. The precondition is unenforceable by types, so it is pinned here.
+    """
+
+    def setUp(self):
+        self.mod = load_module()
+
+    def test_the_precondition_is_written_down(self):
+        source = read(SCRIPT)
+        at = source.index('_CURRENT_TAB = ""')
+        window = source[max(0, at - 1200) : at]
+        self.assertIn("one at a time", window)
+        self.assertIn("INV-122", window)
+
+    def test_the_tab_is_restored_even_when_a_backend_raises(self):
+        def explodes(url, out):
+            raise RuntimeError("backend died")
+
+        with self.assertRaises(RuntimeError):
+            self.mod._capture_one("file:///x", "/tmp/x.png", backend=explodes, tab="graph")
+        self.assertFalse(
+            self.mod._CAPTURE_IN_FLIGHT,
+            "an in-flight flag left set would warn on every later capture",
+        )
+
+    def test_a_concurrent_capture_is_reported_not_silently_mis_sized(self):
+        """The guard fires on reentrancy — a future parallelisation announces itself."""
+        seen = []
+
+        def reenters(url, out):
+            # Stands in for a second capture running while this one is in flight.
+            self.mod._capture_one(
+                "file:///second", out, backend=lambda u, o: True, tab="merges"
+            )
+            seen.append(self.mod._CURRENT_TAB)
+            return True
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.mod._capture_one("file:///first", "/tmp/x.png", backend=reenters, tab="graph")
+        message = err.getvalue()
+        self.assertIn("still in flight", message)
+        self.assertIn("INV-122", message)
+        # And the hazard the warning describes is real, not hypothetical: the inner
+        # capture overwrote the outer one's tab, which is the wrong settle budget.
+        self.assertEqual(["merges"], seen)
+
+    def test_a_normal_sequential_run_warns_about_nothing(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            for tab in ("graph", "merges"):
+                self.mod._capture_one(
+                    "file:///x", "/tmp/x.png", backend=lambda u, o: True, tab=tab
+                )
+        self.assertEqual("", err.getvalue())
 
 
 if __name__ == "__main__":

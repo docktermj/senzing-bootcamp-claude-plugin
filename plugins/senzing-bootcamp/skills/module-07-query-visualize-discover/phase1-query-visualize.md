@@ -320,7 +320,10 @@ of the Truth Set. It MUST:
   `search_docs`, do not take it from here), `NAME_ORG` is the organization name attribute while
   `NAME_FULL` is for a single-field name whose type is unknown; an organization name sent as
   `NAME_FULL` matches nothing **and raises no error**. Try `NAME_FULL`, then `NAME_ORG` when the
-  first returns nothing (or send both and merge by `ENTITY_ID`). This module points at the
+  first returns nothing (or send both and merge by `ENTITY_ID`) — and when the first *errors*, try
+  `NAME_ORG` anyway rather than returning the error: a failed attribute is retried past, never
+  treated as the end of the list, and an error is reported only once every attribute has been
+  tried and none matched (INV-190). This module points at the
   bootcamper's own data, which is frequently half organizations: a search that quietly finds none of
   them reads as a failed load, not as a wrong query. Report an empty result as "nothing matched the
   attributes tried", naming them — never as "not in your data" (INV-115).

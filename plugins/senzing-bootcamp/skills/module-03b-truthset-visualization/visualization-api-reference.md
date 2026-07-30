@@ -175,6 +175,14 @@ and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both
 reference — the defect propagated into a generated query program precisely because it lived in the
 reference implementation and in no written rule.
 
+An attribute that **errors** is retried past, not returned on (INV-190). "Yields nothing" covers a
+failed attempt as well as an empty one: a search call that raises on `NAME_FULL` MUST still try
+`NAME_ORG`, because the attribute that failed is the one that could not have matched an
+organization anyway. Report an error only once every attribute has been attempted and none
+produced a result, and name which ones failed. Do not write the guard as "has anything matched so
+far" — that is true on the *first* attribute by construction, so the fallback is foreclosed on
+exactly the attempt it exists to follow (the bundled reference shipped that bug).
+
 The response MUST report which attributes were searched (`attributes_tried`), and an empty result
 MUST be rendered as "no entity matched a `NAME_FULL` then `NAME_ORG` search for X" — never as "not
 in the data" (INV-115). An empty result set is indistinguishable from absence otherwise, so a

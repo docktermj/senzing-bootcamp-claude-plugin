@@ -466,7 +466,18 @@ _BACKENDS = (
 # The tab currently being captured, so a backend can size its settle time without every
 # backend signature growing a parameter — `_BACKENDS` is called uniformly, and tests
 # substitute two-argument callables for it.
+#
+# This is correct ONLY because captures run strictly one at a time: `capture()` walks the
+# tabs in a loop, and `_capture_one` owns the global for the duration of exactly one
+# capture. Parallelising that loop — the obvious optimisation on a step that shells out to
+# a browser per tab — would apply one tab's virtual-time budget to another tab's capture,
+# and the symptom is a subtly under-settled PNG rather than an error: the quiet way to
+# break INV-122's guarantee that each file shows the tab it is named after. If capture is
+# ever parallelised, thread the tab through the backend signature instead of this global.
+# `_capture_one` says so on stderr if a second capture begins while one is in flight, so
+# the change announces itself instead of silently mis-sizing a settle budget.
 _CURRENT_TAB = ""
+_CAPTURE_IN_FLIGHT = False
 
 
 def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
@@ -476,12 +487,25 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     re-walking the list — which would multiply the cost of every missing backend by
     the number of tabs.
     """
-    global _CURRENT_TAB
+    global _CURRENT_TAB, _CAPTURE_IN_FLIGHT
+    if _CAPTURE_IN_FLIGHT:
+        # Warn, never raise: a capture step must not block the module (INV-052/INV-048).
+        sys.stderr.write(
+            "capture_screenshots: a capture started while another was still in flight. "
+            "`_CURRENT_TAB` is a single module global, so the virtual-time budget may be "
+            "sized for the wrong tab and a PNG may be captured under-settled (INV-122). "
+            "Thread the tab through the backend signature rather than capturing in "
+            "parallel.\n"
+        )
+    _CAPTURE_IN_FLIGHT = True
     _CURRENT_TAB = tab
-    for candidate in (backend,) if backend else _BACKENDS:
-        if candidate(url, out):
-            return candidate
-    return None
+    try:
+        for candidate in (backend,) if backend else _BACKENDS:
+            if candidate(url, out):
+                return candidate
+        return None
+    finally:
+        _CAPTURE_IN_FLIGHT = False
 
 
 def resolve_tabs(spec: str) -> list:

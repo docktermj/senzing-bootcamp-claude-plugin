@@ -18,11 +18,24 @@ codebase — the audit sweep found zero legitimate instances of either.
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
+import re
 import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
+NORMALIZER = PLUGIN / "scripts" / "normalize_docs_markdown.py"
+
+
+def load_normalizer():
+    spec = importlib.util.spec_from_file_location("normalizer_for_hygiene", NORMALIZER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+NORM = load_normalizer()
 
 
 def shipped_markdown():
@@ -67,6 +80,90 @@ class TestPunctuationHygiene(unittest.TestCase):
             "not used anywhere in this codebase, so these are edit residue):\n  "
             + "\n  ".join(offenders),
         )
+
+
+class TestNoShippedMarkdownIsMojibake(unittest.TestCase):
+    """The detector existed and the corpus was enumerated; nothing pointed them at
+    each other.
+
+    `mojibake_lines` catches the Windows-1252 round-trip corruption `ground-rules.md`
+    documents — UTF-8 read as Windows-1252 and written back as UTF-8, which turned 25
+    em dashes into `a<TM>"` in a real run. It was run over the shipped example recap and
+    over a project's own `docs/` at bootcamp time, but never over the plugin's own ~200
+    Markdown files, any one of which is edited on Windows through exactly that trap.
+    """
+
+    # The one legitimate instance: `ground-rules.md` teaches the Windows-1252 trap by
+    # quoting the corruption it produces (`25 em dashes became ...`), inside a backtick
+    # span. The gate structurally cannot represent that input, so it is exempted rather
+    # than satisfied by altering the documentation to suit the check (INV-173). The
+    # exemption is as narrow as the case: this file only, and only where every mojibake
+    # character sits inside inline code — corrupted *prose* here still fails — and
+    # `test_the_exemption_is_not_stale` fails if the example ever goes away, so a dead
+    # exemption cannot quietly cover a real defect later.
+    TEACHES_THE_CORRUPTION = "skills/bootcamp-onboarding/ground-rules.md"
+    INLINE_CODE = re.compile(r"`[^`]*`")
+
+    def _exempt(self, path, line):
+        if not path.as_posix().endswith(self.TEACHES_THE_CORRUPTION):
+            return False
+        return not NORM.mojibake_lines(self.INLINE_CODE.sub("", line))
+
+    def _offenders(self):
+        found = []
+        for path in shipped_markdown():
+            text = path.read_text(encoding="utf-8", errors="replace")
+            lines = text.splitlines()
+            for n in NORM.mojibake_lines(text):
+                line = lines[n - 1]
+                if self._exempt(path, line):
+                    continue
+                found.append(f"{path.relative_to(REPO_ROOT)}:{n}: {line.strip()[:100]}")
+        return found
+
+    def test_no_shipped_markdown_is_mojibake(self):
+        offenders = self._offenders()
+        self.assertEqual(
+            [],
+            offenders,
+            "Windows-1252 mojibake in shipped Markdown — UTF-8 read as Windows-1252 and "
+            "written back as UTF-8 (see ground-rules.md's PowerShell section):\n  "
+            + "\n  ".join(offenders),
+        )
+
+    def test_the_detector_would_catch_the_known_corruption(self):
+        """Guard the guard: a detector that returns [] for everything passes silently."""
+        corrupted = "Senzing Bootcamp — a recap".encode("utf-8").decode("cp1252")
+        self.assertEqual([1], NORM.mojibake_lines(corrupted))
+        self.assertEqual([], NORM.mojibake_lines("Senzing Bootcamp — a recap"))
+
+    def test_the_exemption_is_not_stale(self):
+        """The exempted file must still carry the example it is exempted for."""
+        ground_rules = PLUGIN / self.TEACHES_THE_CORRUPTION
+        text = ground_rules.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        exempted = [
+            n for n in NORM.mojibake_lines(text) if self._exempt(ground_rules, lines[n - 1])
+        ]
+        self.assertTrue(
+            exempted,
+            f"{self.TEACHES_THE_CORRUPTION} no longer quotes the corruption it teaches — "
+            "drop TEACHES_THE_CORRUPTION rather than leaving an exemption that now "
+            "covers nothing and would hide the next real one",
+        )
+
+    def test_corrupted_prose_in_the_exempted_file_still_fails(self):
+        """The exemption covers inline code, not the whole file."""
+        ground_rules = PLUGIN / self.TEACHES_THE_CORRUPTION
+        in_code = "25 em dashes became `%s`." % "—".encode("utf-8").decode("cp1252")
+        as_prose = "25 em dashes became %s." % "—".encode("utf-8").decode("cp1252")
+        self.assertTrue(self._exempt(ground_rules, in_code))
+        self.assertFalse(self._exempt(ground_rules, as_prose))
+
+    def test_the_exemption_does_not_apply_to_other_files(self):
+        other = PLUGIN / "skills" / "bootcamp-onboarding" / "SKILL.md"
+        in_code = "became `%s`." % "—".encode("utf-8").decode("cp1252")
+        self.assertFalse(self._exempt(other, in_code))
 
 
 class TestTheScanIsNotVacuous(unittest.TestCase):

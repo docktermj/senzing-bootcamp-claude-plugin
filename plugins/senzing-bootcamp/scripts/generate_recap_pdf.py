@@ -828,6 +828,29 @@ _FALLBACK_RGB = {
     "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
     "GREEN": (29, 158, 117), "LINE": (229, 223, 211), "AMBER": (240, 146, 10),
 }
+
+
+def _use_fallback_palette():
+    """The nine fallback colours in assignment order, in ONE place (INV-184).
+
+    Both `except` branches below need them, and nine assignment lines written out per
+    branch is the drift surface — a tenth token added to one branch and not the other
+    is exactly the silent divergence `_FALLBACK_RGB` was named at module scope to
+    prevent. Mirrors `generate_discoveries_pdf.py`'s helper of the same name.
+    """
+    return (
+        _FALLBACK_RGB["NAVY"],
+        _FALLBACK_RGB["BLUE"],
+        _FALLBACK_RGB["SLATE"],
+        _FALLBACK_RGB["LIGHT"],
+        _FALLBACK_RGB["ACCENT"],
+        _FALLBACK_RGB["INK"],
+        _FALLBACK_RGB["GREEN"],
+        _FALLBACK_RGB["LINE"],
+        _FALLBACK_RGB["AMBER"],
+    )
+
+
 try:
     import brand_tokens as _bt
 
@@ -841,16 +864,24 @@ try:
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
     AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
-except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
-    NAVY = _FALLBACK_RGB["NAVY"]
-    BLUE = _FALLBACK_RGB["BLUE"]
-    SLATE = _FALLBACK_RGB["SLATE"]
-    LIGHT = _FALLBACK_RGB["LIGHT"]
-    ACCENT = _FALLBACK_RGB["ACCENT"]
-    INK = _FALLBACK_RGB["INK"]
-    GREEN = _FALLBACK_RGB["GREEN"]
-    LINE = _FALLBACK_RGB["LINE"]
-    AMBER = _FALLBACK_RGB["AMBER"]
+except ModuleNotFoundError:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    # INV-111: a degraded path is never inferred from silence. The two branches stay
+    # distinct because they are different failures — say which occurred, since a
+    # project-local copy of this script without brand_tokens.py beside it is easy to
+    # create by accident, and "present but unusable" points somewhere else entirely.
+    # The recap PDF is the Bootcamper's keepsake; it renders either way (INV-048), but
+    # a keepsake printed in the fallback palette must not be indistinguishable from one
+    # printed in the brand's.
+    sys.stderr.write(
+        f"brand_tokens.py not importable from {Path(__file__).resolve().parent} "
+        "(copy it next to this script); using the inlined brand palette.\n"
+    )
+    NAVY, BLUE, SLATE, LIGHT, ACCENT, INK, GREEN, LINE, AMBER = _use_fallback_palette()
+except Exception as exc:  # present but unusable
+    sys.stderr.write(
+        f"brand_tokens.py present but unusable ({exc}); using the inlined brand palette.\n"
+    )
+    NAVY, BLUE, SLATE, LIGHT, ACCENT, INK, GREEN, LINE, AMBER = _use_fallback_palette()
 
 # Header-row fill for rendered tables. Derived from the warm line color so the
 # header reads as a band rather than a second body row, and so it cannot drift
