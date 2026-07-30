@@ -399,6 +399,10 @@ class ListShapedBlocksAreAuthoredAsLists(unittest.TestCase):
 
     So the shape is pinned in two places at once — in the shipped example (which is what a
     guide patterns off) and in the rendered output (which is what the bootcamper sees).
+
+    What is pinned is *list vs. inline*, not blank-line placement: a blank line between the
+    label and its first bullet is accepted, because it renders exactly the same and
+    `module-completion.md` defers blank-line rules to graduation's normalization pass.
     """
 
     def example(self):
@@ -422,7 +426,19 @@ class ListShapedBlocksAreAuthoredAsLists(unittest.TestCase):
                     continue
                 found += 1
                 trailing = stripped[len(label):].strip()
-                following = lines[i + 1].strip() if i + 1 < len(lines) else ""
+                # The next *non-blank* line, because a blank line between the label and
+                # its first bullet is a valid authoring of the same list. The defect this
+                # test exists for is an *inline* value, which shows up in `trailing`;
+                # adjacency is a CommonMark blank-line question, and `module-completion.md`
+                # explicitly defers those to graduation's normalization pass rather than
+                # asking a module step to get them right. Both shapes render identically —
+                # label on its own line, one bullet per item — so requiring adjacency here
+                # failed the shipped example over a difference the keepsake cannot show.
+                following = ""
+                for candidate in lines[i + 1:]:
+                    if candidate.strip():
+                        following = candidate.strip()
+                        break
                 with self.subTest(line=i + 1, label=label):
                     self.assertEqual(
                         "",

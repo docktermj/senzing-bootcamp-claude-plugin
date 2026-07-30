@@ -1,6 +1,6 @@
 # Senzing Bootcamp Recap
 
-**Bootcamper:** Michael Dockter
+**Bootcamper:** Bootcamper
 **Started:** 2026-07-30
 **Completed:** 2026-07-30
 **Programming language:** Python
@@ -27,13 +27,16 @@
 
 ### Questions & Responses
 
-- "Do you have any questions about entity resolution before we continue?" -> No.
-- "Would you like to test your knowledge of entity resolution with a short quiz?" -> Yes.
+- **Q:** Do you have any questions about entity resolution before we continue?
+    - **R:** No.
+- **Q:** Would you like to test your knowledge of entity resolution with a short quiz?
+    - **R:** Yes.
     - Q1 (principles vs. rules): answered correctly.
     - Q2 (disclosed relationship example): answered correctly.
     - Q3 (false negative definition): answered incorrectly (chose "possible match"); corrected and re-taught.
     - Q4 (explainability capability): answered correctly.
-- "Are you ready to move on to the next module: Discover the Business Problem?" -> Yes.
+- **Q:** Are you ready to move on to the next module: Discover the Business Problem?
+    - **R:** Yes.
 
 ### Actions Taken
 
@@ -299,11 +302,11 @@
 - **Q:** Which best describes your Senzing License Key situation?
     - **R:** No — request a free evaluation license now through the bootcamp.
 - **Q:** What's your first name (for the license request)?
-    - **R:** Michael.
+    - **R:** Bootcamper.
 - **Q:** What's your last name?
-    - **R:** Dockter.
+    - **R:** Example.
 - **Q:** What's your work email address?
-    - **R:** michael@senzing.com.
+    - **R:** bootcamper@example.com.
 - **Q:** How did you hear about Senzing?
     - **R:** Senzing bootcamp.
 - **Q:** Send this evaluation-license request, including your name and work email, to Senzing?
@@ -486,7 +489,7 @@
 - **Q:** What would you like to do next? (after Why Analysis)
     - **R:** Continue to How Analysis.
 - **Q:** What would you like to do next? (after How Analysis)
-    - **R:** Continue to Relationship Networks.
+    - **R:** Continue to Relationship Networks (exploring how entities connect to each other).
 - **Q:** Would you like to continue to module completion now?
     - **R:** Yes.
 

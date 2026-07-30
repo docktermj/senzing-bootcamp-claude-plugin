@@ -16,11 +16,19 @@ Two traps are pinned here:
    reference its screenshot as ``docs/examples/bootcamp_recap.example.truthset.png``
    — a path relative to a bootcamp *project root* — back when the renderer resolved
    against the current working directory. **INV-161 ended that**: paths now resolve
-   against the recap document's own directory, so the reference is plainly
-   ``bootcamp_recap.example.truthset.png`` (the PNG sits beside the ``.md``), which
-   is also what a Markdown reader of the source needs. The invariant is explicit
-   that *no step may require a ``cd`` to make assets resolve*, so there is no
-   correct working directory to regenerate from any more — every directory is.
+   against the recap document's own directory, so the references are plainly
+   ``visualizations/<tab>.png`` (the PNGs sit in ``docs/examples/visualizations/``,
+   beside the ``.md``), which is also what a Markdown reader of the source needs.
+   The invariant is explicit that *no step may require a ``cd`` to make assets
+   resolve*, so there is no correct working directory to regenerate from any more —
+   every directory is.
+
+   The example now carries a full screenshot gallery — the six Truth Set
+   visualization tabs, the data-quality assessment, and the six tabs of the
+   bootcamper's own results visualization — rather than the single Truth Set PNG it
+   shipped with originally. Nothing here hardcodes how many: the expected count is
+   read from the ``.md``'s own ``![](...)`` references, so adding or removing a
+   screenshot needs no test edit, while *losing* one still fails.
 
    The 2026-07-28 deep-dive audit caught the pair mid-transition: the resolver had
    been fixed, the example had not, and the committed PDF could no longer be
@@ -109,6 +117,23 @@ def normalize(text):
     return text
 
 
+def example_md_text():
+    with open(EXAMPLE_MD, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def referenced_image_targets():
+    """Every ``![alt](target)`` path in the example's Markdown, in document order.
+
+    The expected image count is derived here rather than hardcoded, so the gallery can
+    grow or shrink without a test edit — but a screenshot that stops resolving still
+    fails, because the renderer's own "embedded N of M" count is compared against this.
+    Mirrors ``generate_recap_pdf.recap_image_targets``: an image reference is a line
+    that *starts* with ``![``.
+    """
+    return re.findall(r"^!\[[^\]]*\]\(([^)]+)\)", example_md_text(), re.M)
+
+
 class TestExampleAssetsExist(unittest.TestCase):
     """INV-065: the sanitized reference pair ships inside the plugin."""
 
@@ -124,60 +149,86 @@ class TestExampleAssetsExist(unittest.TestCase):
 
 
 class TestPdfEmbedsTheScreenshot(unittest.TestCase):
-    """The committed PDF must actually carry the screenshot."""
-
-    # The cover logo and the certificate art always embed, because they resolve
-    # relative to the *script*. So "any image at all" cannot detect a lost
-    # screenshot — only a count that exceeds what the chrome contributes can.
-    MIN_IMAGE_OBJECTS = 5
+    """The committed PDF must actually carry the screenshots."""
 
     WRONG_DIR_HINT = (
-        "The example's screenshot did not embed. Its path must be relative to the "
-        "recap document itself (INV-161) — bootcamp_recap.example.truthset.png, not "
-        "docs/examples/... — and the generator names every drop on stderr with an "
-        "'embedded N of M images' count (INV-162). See this module's docstring."
+        "The example's screenshots did not all embed. Their paths must be relative to "
+        "the recap document itself (INV-161) — visualizations/<tab>.png resolving to "
+        "docs/examples/visualizations/, not docs/... from a project root — and the "
+        "generator names every drop on stderr with an 'embedded N of M images' count "
+        "(INV-162). See this module's docstring."
     )
 
     def test_screenshot_is_embedded(self):
+        """The chrome always embeds, so only a count above it can detect a loss.
+
+        The cover logo, its soft mask, and the certificate art resolve relative to the
+        *script*, so they embed no matter what happens to the gallery — "any image at
+        all" would pass on a PDF that lost every screenshot. Requiring at least one
+        object per referenced screenshot puts the floor above the chrome's contribution.
+        """
+        expected = len(referenced_image_targets())
+        self.assertGreater(expected, 0, "the example should reference screenshots")
         raw = pdf_bytes()
         images = raw.count(b"/Subtype /Image") + raw.count(b"/Subtype/Image")
         self.assertGreaterEqual(
             images,
-            self.MIN_IMAGE_OBJECTS,
+            expected,
             f"The example PDF carries {images} image object(s), expected at least "
-            f"{self.MIN_IMAGE_OBJECTS} (cover logo, its soft mask, and the Truth "
-            f"Set screenshot). {self.WRONG_DIR_HINT}",
+            f"{expected} — one per screenshot the Markdown references, before the "
+            f"cover logo, its soft mask, and the certificate art. {self.WRONG_DIR_HINT}",
         )
 
     def test_screenshot_caption_is_rendered(self):
-        """The caption travels with the image, so its absence dates the loss.
+        """A caption travels with its image, so its absence dates the loss.
 
         Asserted separately from the object count: a future cover change could
-        alter how many image objects the logo contributes, but the caption is
-        rendered only when the screenshot itself resolved and embedded.
+        alter how many image objects the chrome contributes, but a caption is
+        rendered only when its screenshot itself resolved and embedded. One caption
+        is checked from each of the three galleries, so losing a whole gallery
+        cannot hide behind the other two.
         """
-        self.assertIn(
-            "159 records resolved into 84 entities",
-            normalize(pdf_text(EXAMPLE_PDF)),
-            "The Truth Set screenshot's caption is missing from the example PDF. "
-            + self.WRONG_DIR_HINT,
-        )
+        text = normalize(pdf_text(EXAMPLE_PDF))
+        for caption in (
+            "84 resolved entities spread across the force layout",   # Truth Set tabs
+            "per-RECORD_TYPE coverage bars",                         # data quality
+            "5,000 records collapsed into 4,971 entities",           # own results tabs
+        ):
+            with self.subTest(caption=caption):
+                self.assertIn(
+                    caption,
+                    text,
+                    f"a screenshot caption is missing from the example PDF: {caption!r}. "
+                    + self.WRONG_DIR_HINT,
+                )
 
-    def test_markdown_references_the_screenshot(self):
-        with open(EXAMPLE_MD, encoding="utf-8") as handle:
-            text = handle.read()
-        self.assertIn("bootcamp_recap.example.truthset.png", text)
+    def test_markdown_references_the_screenshots(self):
+        targets = referenced_image_targets()
+        self.assertTrue(targets, "the example should reference screenshots")
+        for target in targets:
+            with self.subTest(target=target):
+                resolved = os.path.join(EXAMPLES, target)
+                self.assertTrue(
+                    os.path.isfile(resolved),
+                    f"the example references {target} but no file sits at {resolved}. "
+                    "A reference whose PNG was never committed renders as a silent "
+                    "drop (INV-065: the PDF must stay regenerable from the .md).",
+                )
 
     def test_the_reference_is_document_relative(self):
         """INV-161: the path a Markdown reader needs is the path the renderer needs."""
-        with open(EXAMPLE_MD, encoding="utf-8") as handle:
-            text = handle.read()
-        self.assertIn("](bootcamp_recap.example.truthset.png)", text)
-        self.assertNotIn(
-            "](docs/examples/bootcamp_recap.example.truthset.png)",
-            text,
-            "a cwd-relative path resolves from exactly one directory, which INV-161 forbids",
-        )
+        for target in referenced_image_targets():
+            with self.subTest(target=target):
+                self.assertFalse(
+                    os.path.isabs(target),
+                    f"{target} is absolute, so it resolves on exactly one machine",
+                )
+                self.assertFalse(
+                    target.startswith("docs/"),
+                    f"{target} is written relative to a bootcamp project root; a "
+                    "cwd-relative path resolves from exactly one directory, which "
+                    "INV-161 forbids",
+                )
 
 
 class TestPdfRegeneratesFromItsSource(unittest.TestCase):
@@ -208,11 +259,12 @@ class TestPdfRegeneratesFromItsSource(unittest.TestCase):
             proc, out = self._render(tmp)
             self.assertEqual(proc.returncode, 0, proc.stderr)
             combined = proc.stdout + proc.stderr
+            expected = len(referenced_image_targets())
             self.assertIn(
-                "embedded 1 of 1 images",
+                f"embedded {expected} of {expected} images",
                 combined,
-                "the example references one screenshot and it must embed (INV-161/INV-162):\n"
-                + combined,
+                f"the example references {expected} screenshot(s) and every one must "
+                "embed (INV-161/INV-162):\n" + combined,
             )
             self.assertNotIn("skipped image", combined)
 
@@ -284,6 +336,15 @@ class TestPdfMatchesItsSource(unittest.TestCase):
                 continue
             line = re.sub(r"^[-*]\s+", "", line)
             line = line.replace("**", "").replace("`", "").strip()
+            # `Why it matters:` is a `_NEW_LINE_LABELS` label: the renderer draws the
+            # label, then starts its value on a fresh line at the margin. So the source
+            # line is never one contiguous run in the PDF, and when the break between
+            # them is also a *page* break, the page-number footer lands between the two
+            # — "Why it matters: 4 These concepts are..." — which `squash` welds into the
+            # middle of the compared window. Sampling the value alone models what the
+            # renderer actually draws; the value is also the part that detects staleness,
+            # since the label itself repeats once per module.
+            line = re.sub(r"(?i)^why it matters:\s*", "", line)
             if len(line) >= 60 and " " in line:
                 keep.append(line)
         return keep
