@@ -68,6 +68,13 @@ Keep the two channels separate:
   observations. Do not narrate findings inside the bootcamp text; it changes what is
   being tested.
 
+⛔ **The test-notes blocks are working notes, not the record.** They live in the conversation
+and die with it. The moment an observation firms up into a finding, write it into a
+`specs/` file — see the SKILL's "What to do with a finding", rule 1. Do this *during* the
+walk, not at the end: this phase stops on whatever turn the maintainer stops it, so "I'll
+write it up when we finish" is a bet that there is a finish. A walk that reached eight turns
+holding four findings in conversation alone is why this paragraph exists.
+
 ## What to watch for
 
 Interaction invariants, in rough order of how often they break:
@@ -134,3 +141,8 @@ reads as broader coverage than it had.
 Stop wherever the maintainer stops — a partial walk is still evidence, and the
 findings do not depend on reaching graduation. Then clean up the project and report,
 naming exactly how far you got so the untested remainder is visible.
+
+⛔ **Before stopping, confirm every finding is in a spec.** The stop is not yours to schedule,
+so treat each turn as potentially the last: an observation that has firmed up and is still only
+in a test-notes block is one message away from being lost. A partial walk whose findings are
+written down is a contribution; a partial walk whose findings are not is a conversation.

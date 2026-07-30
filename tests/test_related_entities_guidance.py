@@ -1,19 +1,31 @@
-"""Tests that the plugin never tells a reader to get `RELATED_ENTITIES` from an export.
+"""Tests that the plugin routes `RELATED_ENTITIES` reads on evidence, not on an absolute.
 
-Phase D's match-key audit sends the reader to both
+Phase D's match-key audit originally sent the reader to both
 `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` and `RELATED_ENTITIES[].MATCH_KEY` as if both were
-readable "from the loaded results". They are not: every relationship-detail flag lists
-only the per-entity, `why_*` and `find_*` methods in its `applies_to` — the export
-methods are absent — confirmed via
-`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`.
+readable "from the loaded results", with no note that they might need different methods —
+and an audit that silently measured only the first reported an empty cross-source
+suppressor list, which reads exactly like a clean result.
 
-An export-based reader therefore returns no `RELATED_ENTITIES` at all, and the audit
-reports an empty cross-source suppressor list, which reads exactly like a clean result.
-`visualization-api-reference.md` documented the limitation for graph edges but then
-offered a relationship-inclusion export flag as the remedy — a workaround that does not
-work, in the file that is otherwise the authority.
+**The fix over-corrected, and this file used to pin the over-correction.** Phase D was
+given a ⛔ absolute — "Do not expect `RELATED_ENTITIES` from `export_json_entity_report`"
+— generalized from one session's flag set. That absolute is false:
+`reporting_guide(topic='evaluation')` documents each row of an export taken with
+`SZ_EXPORT_DEFAULT_FLAGS` as carrying `RESOLVED_ENTITY` **and** `RELATED_ENTITIES[]`, and
+its worked pattern computes relationship statistics in a single export pass (verified
+2026-07-28); a live SDK 4.3.3 run agreed. The earlier session's rows genuinely lacked the
+key because its flags were assembled from `SZ_ENTITY_INCLUDE_*` members, which do not list
+the export methods in their `applies_to`. Both observations are real: **the flag set is the
+variable, not the method.**
 
-These tests pin both halves so the two files cannot drift apart again.
+So these tests now pin the evidence-based routing instead of either absolute:
+
+* neither file asserts that an export cannot return `RELATED_ENTITIES`
+* both instruct dumping one row and routing on its top-level keys (INV-115/INV-149)
+* the export-with-defaults case is attributed to the MCP reporting guide, not asserted
+* the deduplication requirement is stated, since each relationship appears in both
+  entities and an un-deduplicated single-pass read double-counts every one of them
+* the defensive guarantees the earlier spec established — the reader-capability check, the
+  three-outcome gate, no direct SQL — all survive unchanged
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -34,48 +46,66 @@ def read(path):
         return handle.read()
 
 
-class TestExportCannotSupplyRelatedEntities(unittest.TestCase):
-    """Both files must state the constraint, not just one of them."""
+class TestExportCapabilityIsFlagConditional(unittest.TestCase):
+    """Neither absolute may be asserted: the dumped row decides."""
 
-    def test_phase_d_states_the_export_constraint(self):
+    def test_no_file_claims_the_export_cannot_supply_related_entities(self):
+        """The reversed absolute must be gone from both files."""
+        for path in (PHASE_D, VIZ_REF):
+            with self.subTest(path=os.path.basename(path)):
+                text = read(path)
+                self.assertNotRegex(
+                    text, r"Do not expect `RELATED_ENTITIES` from `export_json_entity_report`"
+                )
+                self.assertNotRegex(
+                    text, r"export_json_entity_report` does not supply `RELATED_ENTITIES`"
+                )
+
+    def test_both_files_condition_the_answer_on_the_flag_set(self):
+        for path in (PHASE_D, VIZ_REF):
+            with self.subTest(path=os.path.basename(path)):
+                self.assertRegex(
+                    read(path),
+                    r"(?is)depends on the flag set",
+                    "state that the flag set, not the method, decides",
+                )
+
+    def test_both_files_require_dumping_one_row_before_choosing_a_reader(self):
+        for path in (PHASE_D, VIZ_REF):
+            with self.subTest(path=os.path.basename(path)):
+                self.assertRegex(read(path), r"(?is)dump one row|dump one raw row")
+
+    def test_phase_d_routes_on_the_dumped_keys(self):
         text = read(PHASE_D)
-        self.assertRegex(
-            text,
-            r"(?s)Do not expect `RELATED_ENTITIES` from `export_json_entity_report`",
-            "phase D must warn that an export cannot supply RELATED_ENTITIES",
-        )
+        self.assertRegex(text, r"(?is)RELATED_ENTITIES` present")
+        self.assertRegex(text, r"(?is)RELATED_ENTITIES` absent")
 
-    def test_phase_d_names_the_methods_that_do_supply_it(self):
+    def test_the_export_case_is_attributed_to_the_mcp_reporting_guide(self):
+        """INV-080: an SDK behavior claim must carry its MCP source, not our word."""
+        for path in (PHASE_D, VIZ_REF):
+            with self.subTest(path=os.path.basename(path)):
+                self.assertRegex(
+                    read(path), r"reporting_guide\(topic='evaluation'\)"
+                )
+
+    def test_both_files_require_pair_deduplication(self):
+        """Each relationship appears in both entities; a single pass double-counts."""
+        for path in (PHASE_D, VIZ_REF):
+            with self.subTest(path=os.path.basename(path)):
+                self.assertRegex(read(path), r"(?is)dedupl")
+                self.assertRegex(read(path), r"min_id, max_id|both entities")
+
+    def test_phase_d_still_names_the_per_entity_fallback_methods(self):
         text = read(PHASE_D)
         for method in ("get_entity_by_entity_id", "find_network_by_entity_id"):
             with self.subTest(method=method):
                 self.assertIn(method, text)
 
-    def test_viz_reference_no_longer_offers_an_export_flag_as_the_remedy(self):
-        """The bullet that contradicted the observation must be gone."""
+    def test_viz_reference_keeps_the_per_entity_and_network_routes(self):
+        """They stay correct — they are the fallback, not the only way."""
         text = read(VIZ_REF)
-        self.assertNotRegex(
-            text,
-            r"(?s)SZ_ENTITY_INCLUDE_ALL_RELATIONS.{0,80}so `RELATED_ENTITIES` is populated",
-            "the relationship-inclusion export-flag remedy does not work; it must not be offered",
-        )
-
-    def test_viz_reference_states_the_constraint(self):
-        self.assertRegex(
-            read(VIZ_REF),
-            r"(?s)export_json_entity_report` does not supply `RELATED_ENTITIES`",
-            "the visualization contract must state the export constraint outright",
-        )
-
-    def test_neither_file_claims_an_export_flag_populates_related_entities(self):
-        pattern = re.compile(
-            r"export.{0,200}?(SZ_ENTITY_INCLUDE_ALL_RELATIONS|relationship-inclusion export flag)"
-            r".{0,120}?(populate|so `RELATED_ENTITIES`)",
-            re.S | re.I,
-        )
-        for path in (PHASE_D, VIZ_REF):
-            with self.subTest(path=os.path.basename(path)):
-                self.assertIsNone(pattern.search(read(path)))
+        self.assertIn("find_network_by_entity_id", text)
+        self.assertIn("get_entity_by_entity_id", text)
 
 
 class TestEmptyResultIsTreatedAsPlumbingFailure(unittest.TestCase):

@@ -42,10 +42,23 @@ connections between entities using `find_network` and `find_path`.
    `ENTITY_NETWORK_LINKS[]`) and **not** the fields inside a link element. That is coverage, not a
    failed call — do not retry it. Dump one raw link element and read its keys before writing the
    parser. In particular, do **not** assume a link's two endpoints use the `ENTITY_ID` /
-   `RELATED_ENTITY_ID` pairing that related-entity records use; a reported session found both
-   endpoints blank under those names while `MATCH_KEY` rendered fine. See
+   `RELATED_ENTITY_ID` pairing that related-entity records use: two sessions found both endpoints
+   blank under those names while `MATCH_KEY` rendered fine, and a live dump on SDK 4.3.3 found them
+   under **`MIN_ENTITY_ID` / `MAX_ENTITY_ID`** (normalized low-to-high). Those keys are recorded in
    `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
-   paths" for the full caution.
+   paths". They were dump-only when first recorded; `response_schemas` now documents them itself
+   (re-verified on MCP server 1.32.1, 2026-07-29), so they are MCP-confirmed names rather than an
+   unverified caution. **Run the lookup and dump anyway** — its coverage grows, this entry is proof of
+   that, and the dumped element remains the authority for what your installation returns (INV-080,
+   INV-149).
+
+   ⛔ **Per-record source values do not come from `JSON_DATA` on an entity call.** The get_entity
+   schema lists `RECORDS[].JSON_DATA.*` paths, but the flag that produces them
+   (`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`) is `get_record`-only, so those paths render blank for every
+   record. Use `RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` with
+   `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` on the entity call, or a per-record `get_record` when
+   you need the raw loaded document (one extra call per record). Full detail in the same reference
+   section.
 
    ⛔ **If some fields of a row populate and others come back blank, suspect the blank ones' names
    — not the data.** A half-populated row reads as a real result precisely because part of it

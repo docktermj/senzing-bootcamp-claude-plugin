@@ -122,7 +122,10 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    `## Truth Set visualization — {timestamp}` with the four subsections (Information Shared,
    Questions & Responses, Actions Taken, End-of-Module Summary): capture the Truth Set acquisition/load, the
    interactive visualization and standalone snapshot, and — if screenshots were captured — the
-   embedded `![…](docs/visualizations/…png)` image(s) in Actions Taken.
+   embedded `![…](visualizations/…png)` image(s) in Actions Taken — the path is relative to
+   `docs/bootcamp_recap.md`, so `visualizations/…` and never `docs/visualizations/…` (INV-161;
+   the recap already lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and
+   embeds nothing).
 3. **Present the completion line + end-of-module summary** (INV-032):
    `✅ Module complete: Truth Set visualization` and its four-part summary, per `module-completion.md`
    Step 3. (This module's module-start banner/journey/before-after/step-overview were already shown at

@@ -81,9 +81,22 @@ source".)
 
 The Senzing MCP server is the primary and preferred source; it always takes precedence.
 
-1. Call `get_sample_data` and inspect the response for a named Truth Set reference. Classify:
-   `available` = a named Truth Set (name matches "TruthSet", or `type: truthset`) with retrievable
-   records; `unavailable` = only the CORD collections (Las Vegas, London, Moscow) are present.
+1. **Call `get_sample_data(dataset='list')`** — ⛔ `dataset` is a **required** parameter; the tool's
+   own schema says a schema-respecting client cannot omit it, so a bare `get_sample_data()` fails
+   and tells you nothing about availability (INV-136). Inspect `available_datasets` for a Truth Set
+   entry. Classify:
+   `available` = an entry whose name matches "truthset" (or `type: truthset`) with `available: true`;
+   `unavailable` = no such entry — only the non-deterministic CORD collections are listed.
+
+   Then **retrieve it with `dataset='truthset'`**: `source='list'` first for the data source codes and
+   per-source record counts you will need in 1.2 and in the report, then the records themselves. Take
+   the codes and counts from the response, never from this file (INV-080).
+
+   > Verified on MCP server 1.32.1, 2026-07-29: `dataset='list'` returns **four** datasets — the three
+   > CORD collections plus `truthset` (`available: true`) — and `dataset='truthset', source='list'`
+   > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
+   > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than
+   > trusting this note: the server ships independently of the plugin.
 2. **Available (primary path):** save the MCP records to
    `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
    provenance `mcp_primary` (30-second timeout).
@@ -184,18 +197,37 @@ entity model and (b) write a **self-contained standalone HTML snapshot** the Boo
 if they never open the live server. This is the artifact the completion gate checks, so the
 visualization is guaranteed to exist (INV-077). Write it to
 `docs/visualizations/truthset_verification.html` from `src/system_verification/truthset_data.jsonl`,
-titled "Senzing Truth Set - System Verification". For Python, that is:
+titled "Senzing Truth Set", and tell it what the data **is** so the retained snapshot says so
+(INV-172). For Python, that is:
 
 ```bash
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
-  --title "Senzing Truth Set - System Verification" \
+  --title "Senzing Truth Set" \
+  --dataset "the Senzing Truth Set" \
   --snapshot docs/visualizations/truthset_verification.html \
   --no-serve
 ```
 
-For any other language, invoke your server's equivalent build-only/snapshot mode (write the same
-file, no server started). Confirm the file exists before continuing. If the build fails, do not
+⛔ **Title it after this module, never after System Verification.** The Truth Set belongs to this
+module alone — System Verification uses synthetic records and does not visualize it (INV-082/INV-087)
+— and the title ships permanently into the snapshot the Bootcamper keeps and the recap embeds. A
+title naming the module that never touches the Truth Set misattributes their artifact.
+
+⛔ **Pass the dataset wording; do not leave it to the default.** `--dataset` is what the snapshot's
+Search / Probe note calls the data. Left empty it says the neutral "the loaded data" — correct but
+vague, and this is the one module where the answer is certain: it is the Senzing Truth Set — the
+dataset `get_capabilities` describes as "the Senzing demo truth set: CUSTOMERS, REFERENCE,
+WATCHLIST", acquired here via `get_sample_data(dataset='truthset')` (server 1.32.2, verified
+2026-07-29). Query, Visualize and Discover passes its own wording for the Bootcamper's data; neither
+module may let the other's label reach its snapshot.
+
+(The **filename** stays `truthset_verification.html`. Graduation maps each screenshot to its module
+by that base name (`../graduation/SKILL.md` → "Backfill orphaned screenshots") and recaps already
+reference it, so renaming it would break that mapping for no Bootcamper-visible gain.)
+
+For any other language, invoke your server's equivalent build-only/snapshot mode — writing the same
+file, passing the same title and dataset wording, no server started. Confirm the file exists before continuing. If the build fails, do not
 proceed to the live server: fix the underlying cause (regenerate faulty code from the MCP tools;
 re-run SDK initialization from Module 2 / System Verification; check `config/engine_config.json`)
 and retry until the snapshot is written — the module does not complete without it.
@@ -225,7 +257,8 @@ records on port 8080. For Python:
 ```bash
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
-  --title "Senzing Truth Set - System Verification" \
+  --title "Senzing Truth Set" \
+  --dataset "the Senzing Truth Set" \
   --port 8080
 ```
 
@@ -271,7 +304,7 @@ Build to that contract; the summaries below are the tab inventory, not the full 
 
    It also carries a **"Show only entities with relationships"** toggle, shown only when
    `relationships_total > 0`. Switched on, the graph filters to the subgraph of entities that a
-   relationship connects and styles edges by `relationship_type` (colour **plus** line style), with
+   relationship connects and styles edges by `relationship_type` (color **plus** line style), with
    a click-to-filter type legend built from the types actually present. Same label toggles and
    scale-aware defaults in both modes. This is a **mode of this tab, not a second tab** — both modes
    are served by the same `/api/graph` payload, so a standalone "Relationship Network" tab would be
@@ -290,11 +323,15 @@ Build to that contract; the summaries below are the tab inventory, not the full 
    sources shares; **cells are clickable** (backed by `cell_entities`) and drill down to the
    entities in that cell.
 6. **Search / Probe:** search by name; results show the resolved entity, its sources, and the
-   match key / resolution rule that linked it, plus the three actions. Ships with pre-verified
-   example-query chips that fill **and** run the search on click, and a **"Show all merged
-   entities"** button that lists every multi-record entity with no query — the no-query browse that
-   the former Record Merges tab uniquely offered. This must work in the standalone snapshot too, so
-   it reads the embedded `merges` payload rather than the live search.
+   match key / resolution rule that linked it, plus the three actions. Search tries `NAME_FULL` then
+   `NAME_ORG` — organization names do **not** match under `NAME_FULL` and fail silently, so a
+   `NAME_FULL`-only search finds no organizations at all (see the contract's `/api/search` section).
+   Ships with pre-verified example-query chips that fill **and** run the search on click — *verified*
+   meaning each was actually run and returned a hit, since a chip derived from a real entity can
+   still find nothing — and a **"Show all merged entities"** button that lists every multi-record
+   entity with no query — the no-query browse that the former Record Merges tab uniquely offered.
+   This must work in the standalone snapshot too, so it reads the embedded `merges` payload rather
+   than the live search.
 
 Do **not** add a tab whose content is derivable from another tab's endpoint. In particular there is
 **no "Results Dashboard" tab** — its counts and histogram duplicated `/api/stats`, and its unique

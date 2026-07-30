@@ -36,29 +36,31 @@ recap PDF you can keep and share, and a production starter. See
 
 ## Install and start
 
-Two ways to run the bootcamp — pick either:
+This is a Claude Code plugin, and Claude Code has two interfaces you can run it in.
+Pick either:
 
-- **Claude app** (desktop) — the step-by-step walkthrough below.
-- **Claude Code** (command line) — see [Using Claude Code].
+- **Claude Desktop** — Claude Code inside the desktop application; the step-by-step
+  walkthrough below.
+- **Claude Code CLI** — Claude Code in a terminal; see [Using the Claude Code CLI].
 
-### Using Claude app
+### Using Claude Desktop
 
 In this section are instructions for
-installing the Claude app,
+installing Claude Desktop,
 installing the Senzing Bootcamp plugin,
 and starting the Bootcamp.
 
-1. Download and install the [Claude app].
-1. Start Claude app.
+1. Download and install [Claude Desktop].
+1. Start Claude Desktop.
     1. If asked, install `git`.
-1. In the Claude app,
+1. In Claude Desktop,
     1. In the left-hand pane, choose "**</> Code**".
     1. In the *Code* pane, click "**New**".
-1. In the Claude app, near the bottom, choose the "Working directory" (it might say "Select folder...")
+1. In Claude Desktop, near the bottom, choose the "Working directory" (it might say "Select folder...")
     1. Create and use a new folder for the Senzing Bootcamp.
-1. In the Claude app, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
+1. In Claude Desktop, on the bottom, click the "Add" icon (**+**) > **Add Plugins...** (Or it may be just "Plugins").
     1. In the *Directory* pane, near "Filter by" and "Sort by", click the "Add Marketplace" icon (**+**).
-        1. If the plus sign is missing, see [Troubleshooting: Claude Code inoperative](#claude-code-inoperative)
+        1. If the plus sign is missing, see [Troubleshooting: Claude Desktop inoperative](#claude-desktop-inoperative)
     1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
@@ -71,15 +73,17 @@ and starting the Bootcamp.
         1. Select "**Senzing bootcamp**".
         1. Click on "**Install**".
         1. Close *Directory* pane.
-1. In the Claude app, on the bottom,
+1. In Claude Desktop, on the bottom,
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5**".
     1. Choose the Effort: "**medium**".
-1. In the Claude app near the bottom in the agentic chat, enter:
+1. In Claude Desktop near the bottom in the agentic chat, enter:
 
     ```console
     Start the bootcamp
     ```
+
+    (Or use the `/start-bootcamp` command. See [Bootcamp commands] for the other two.)
 
 ## What you finish with
 
@@ -90,7 +94,7 @@ and a `production/` starter project.
 
 ## Troubleshooting
 
-### Claude code inoperative
+### Claude Desktop inoperative
 
 If you are unable to enter and process prompts in Claude Desktop
 or if you are unable to add a Claude Marketplace or Claude plugin,
@@ -99,7 +103,8 @@ the issue may be with an incomplete installation of Claude Desktop.
 - Claude Desktop requires `git` to be installed.
 
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
-[Claude app]: https://claude.ai/download
-[Using Claude Code]: docs/README.md#using-claude-code
+[Claude Desktop]: https://claude.ai/download
+[Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli
+[Bootcamp commands]: docs/README.md#bootcamp-commands
 [Senzing MCP server]: https://mcp.senzing.com/mcp
 [Senzing]: https://senzing.com

@@ -1,17 +1,30 @@
 # Senzing Bootcamp Claude Code Plugin
 
-## Using Claude Code
+## Using the Claude Code CLI
 
 In this section are instructions for
-installing Claude Code,
+installing the Claude Code CLI,
 installing the Senzing Bootcamp plugin,
 and starting the Bootcamp.
 
-1. To install Claude CLI via commandline on macOS or Linux:
+For the desktop application instead, see
+[Using Claude Desktop](../README.md#using-claude-desktop).
+
+1. To install the Claude Code CLI on macOS, Linux, or WSL:
 
     ```console
     curl -fsSL https://claude.ai/install.sh | bash
     ```
+
+1. To install the Claude Code CLI on Windows, in PowerShell:
+
+    ```console
+    irm https://claude.ai/install.ps1 | iex
+    ```
+
+    (Windows is fully supported. If you would rather not use a terminal at all,
+    [Using Claude Desktop](../README.md#using-claude-desktop) is the graphical route and
+    works on Windows too.)
 
 1. Install Senzing Bootcamp Claude Plugin.
 
@@ -40,7 +53,7 @@ and starting the Bootcamp.
    and **Graduation**. The bootcamp surfaces the recommendation at the start of
    each module, so you never have to remember which is which.
 
-   For the smoothest ride, run Claude with `--permission-mode auto`.
+   For the smoothest ride, run the Claude Code CLI with `--permission-mode auto`.
 
 1. Example command:
 
@@ -48,8 +61,8 @@ and starting the Bootcamp.
     claude --model claude-sonnet-5 --effort medium --permission-mode auto
     ```
 
-1. *Note:* In addition to Claude Code,
-   the Senzing Bootcamp Claude Plugin can also be run with:
+1. *Note:* besides the Claude Code CLI and Claude Desktop,
+   the Senzing Bootcamp Claude Plugin can also be run in a Claude IDE extension:
     - [Claude Code for VSCode]
 1. Start the bootcamp. Tell Claude:
 
@@ -57,13 +70,16 @@ and starting the Bootcamp.
     Start the bootcamp
     ```
 
-## Additional bootcamp commands
+## Bootcamp commands
 
-1. Other commands (available any time during a bootcamp):
+The plugin ships three slash commands. Each also works as plain English, so you never
+have to remember them:
 
-    - `/bootcamp-feedback` - share feedback about the bootcamp
-      (or just say "bootcamp feedback"). Saved to
-      `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`.
+| Command | What it does |
+| --- | --- |
+| `/start-bootcamp` | Start the bootcamp, or resume one already in progress (same as saying "Start the bootcamp"). |
+| `/bootcamp-feedback` | Share feedback about the bootcamp at any time (same as saying "bootcamp feedback"). Saved locally to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. |
+| `/graduate` | Graduate: render the recap PDF and generate the `production/` starter project. Graduation normally follows the last module on its own, so use this only to graduate early or to re-run it. |
 
 ## Uninstall plugin
 

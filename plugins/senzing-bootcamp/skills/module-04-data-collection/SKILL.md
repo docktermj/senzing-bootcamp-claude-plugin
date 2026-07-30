@@ -80,7 +80,42 @@ forward.
   available) request one in-flow via the Senzing MCP server (INV-093). The tool-availability
   checks, branching, and setup mechanics all live in Step 8a; do not duplicate that logic here.
 - **Work with a smaller slice (optional):** sampling, a CORD subset, or a smaller substitute
-  dataset.
+  dataset — but **not a random slice** when more than one source is involved. See the sampling
+  rule immediately below; it applies to every reduction in this module, whatever prompted it.
+
+<a id="overlap-preserving-sampling"></a>
+
+⛔ **Sampling rule — when 2+ sources are present, random selection destroys the signal entity
+resolution exists to find.** This is the canonical statement; every other place that reduces a
+dataset (the smaller-slice path later in this step, and the load-time branch in Step 8b) refers
+here rather than restating it.
+
+A random sample is the right instinct for **profiling** — it preserves each source's distributions —
+and the wrong one for **entity resolution**, which needs the *same real-world entities to appear in
+more than one source*. Cross-source overlap is usually a thin slice of two large sets, so random
+slices of each share almost nothing. One bootcamp drew a random 300 records from each of five
+sources: the load was flawless — 1,147 records, zero errors, redo drained, quality 94–100% — and
+produced **zero cross-source matches** outside one pair that happened to be fully included. The
+business problem returned no findings from a technically perfect pipeline. The overlap was real:
+507 shared names across 21,284 × 63,193 candidates for the largest pair. Random selection simply
+missed it.
+
+**Every operational signal a bootcamper checks stays green**, which is what makes this dangerous —
+records loaded, no errors, redo drained, quality scored well. It surfaces only in the cross-source
+matrix, and only if someone compares it against what the business problem needed.
+
+**So select for overlap, not for representativeness:**
+
+1. Identify candidate join keys the sources share — a name, an identifier, an address — from the
+   profiling already done in this module.
+2. Select records that **participate in values appearing in 2+ sources** first, keeping each
+   matched group whole: taking one side of a pair is as useless as taking neither.
+3. Fill the remaining budget with other records so the sample still exercises singletons and
+   non-matches.
+4. Record the strategy and **why** it was chosen (sub-step below), so later modules can read it.
+
+For a **single-source** dataset none of this applies — there is no cross-source overlap to
+preserve, and first-N or random is fine. Say which case applies rather than assuming.
 
 Sampling also stays available for **non-license** reasons: a very large or unwieldy file (for
 example, >1GB) or faster iteration: independent of the effective limit. Retrieve any specific
@@ -103,8 +138,24 @@ complete list.
 
 ### 2. For each data source, collect the data
 
-First, ask how the bootcamper wants to provide the data for a given source — pin this question
-verbatim (INV-051), never joining the choices with "or":
+⛔ **First check whether Module 1 already answered this for this source — and if so, do NOT ask.**
+Read the source's entry in `config/data_sources.yaml`. If it already records a provenance the
+Bootcamper chose earlier — `provenance: cord` is the case the Business Case Offer produces
+(`../module-01-business-problem/phase1-discovery.md` Step 4, option 3: *"I don't have my own data —
+generate a scenario for me"*), and `docs/business_problem.md` carries a
+`🤖 Bootcamp-generated business case` marker for the same run — then the provision decision is
+**already made** for every source in that scenario. Skip the question below and go straight to
+downloading/collecting that source, saying which source you are fetching and where it came from.
+
+Asking anyway re-litigates a decision the Bootcamper already made, once per source: with a
+six-source generated scenario that is six questions whose honest answer is *"you already told me
+this in Module 1."* Option 5 restates that choice rather than asking anything new about *this*
+source, so it is not a textually identical question — it escapes a literal INV-006 violation while
+being exactly the repetition INV-006 exists to prevent.
+
+Only when the source has **no** recorded provenance — the Bootcamper is bringing their own data —
+ask how they want to provide it. Pin this question verbatim (INV-051), never joining the choices
+with "or":
 
 👉 **How would you like to provide the data for this source? Reply with a number:**
 
@@ -357,8 +408,16 @@ gate (INV-093) and the Senzing MCP server.
 
 - Create smaller sample files (sampling, a CORD subset, or a smaller substitute dataset).
 - Save samples to `data/samples/[datasource_name]_sample.[extension]`.
-- Document the sampling method (first N records, random sample, etc.).
-- Ensure the sample is representative of the full dataset.
+- **Select for cross-source overlap when 2+ sources are present** — see the
+  [sampling rule](#overlap-preserving-sampling) earlier in this step. Do not choose a random slice
+  by default.
+- **Document the sampling method AND why it was chosen** in the data-source registry, not just the
+  method name. "Random sample" alone is exactly what leaves Module 6 unable to tell a
+  no-overlap-in-the-data finding from a no-overlap-in-the-sample artifact.
+- Ensure the sample exercises what the **business problem** needs: for a cross-source problem that
+  means shared entities, which is not the same as being statistically representative of each source.
+  ⛔ A sample that is representative of every source individually can contain no cross-source matches
+  at all — that is the defect the rule above exists to prevent.
 
 **If the bootcamper chooses to keep the full dataset:** continue the collection workflow with
 the complete files: there is no requirement to reduce the dataset.
@@ -515,9 +574,17 @@ Run this once at the end of collection, immediately before the Step 9 transition
 non-blocking: any failure or indeterminate input continues the Module 4 flow.
 
 1. **Read the persisted inputs.** Read the registry from `config/data_sources.yaml` and
-   `database_type` from `config/bootcamp_preferences.yaml`. Compute the collected total record
-   count from the registry. If the registry cannot be read or parsed, treat the total as
+   `database_type` from `config/bootcamp_preferences.yaml` — the key Module 2 Step 7 writes when
+   the engine is chosen, with the value `sqlite` or `postgresql`. Compute the collected total
+   record count from the registry. If the registry cannot be read or parsed, treat the total as
    indeterminate: do not fail.
+   - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
+     missing key means Module 2 Step 7 did not record the choice, not that the engine is
+     non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
+     key makes this warning unable to fire **at all**, for any database or dataset size. That is a
+     plugin defect, not a bootcamper outcome: note it internally so it surfaces in the recap, and
+     fall back to the engine recorded by Module 2 in `config/bootcamp_progress.json` before giving
+     up on the check.
 
 2. **Decide whether to warn.** Warn only when the database is SQLite **and** the collected total
    is above the load-time threshold. Otherwise (total at or below the threshold, any non-SQLite
@@ -544,10 +611,14 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
    - **Sample down to a smaller record count:** ask which sampling strategy to use **before**
      creating the sample: offer first-N records, random-N records, and an
      entity-resolution-demonstrating strategy that preserves cross-source overlaps and known
-     match clusters; also accept a bootcamper-described strategy. Validate the target record
+     match clusters; also accept a bootcamper-described strategy. **Where 2+ sources are present,
+     present the overlap-preserving strategy as the recommended one and say why the others lose
+     cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in Step 6, which
+     is the canonical statement; do not restate it here.** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
      Create the sample with the chosen strategy, write it under `data/samples/`, and document
-     the strategy and target in a sample manifest. Then record the decision (sub-step 4).
+     the strategy **and the reason for it** in a sample manifest. Then record the decision
+     (sub-step 4).
    - **Switch to an alternative database (e.g. PostgreSQL):** route the bootcamper to the
      database-migration guide (the Kiro `docs/guides/DATABASE_MIGRATION.md` guide is a later
      porting phase). Do not inline or restate the migration steps here. Then record the decision

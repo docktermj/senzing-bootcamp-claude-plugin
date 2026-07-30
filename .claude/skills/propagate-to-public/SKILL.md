@@ -28,9 +28,9 @@ than being hand-run each time.
 
 - `plugins/senzing-bootcamp/**` — the whole plugin payload (skills, commands,
   hooks, scripts, `docs/`, `docs/examples/`, `.mcp.json`, `plugin.json`), minus
-  `__pycache__/` and `*.pyc`.
+  `__pycache__/`, `*.pyc` and `.pytest_cache/`.
 - `.claude-plugin/marketplace.json` — required for `claude plugin marketplace add`.
-- `README.md` — user-facing (Claude app install instructions).
+- `README.md` — user-facing (Claude Desktop install instructions).
 - `docs/` — user-facing (`docs/README.md`, Claude Code CLI install). Treated as
   a **user-facing** directory and mirrored wholesale; do **not** put
   maintainer-only notes here.
@@ -41,12 +41,18 @@ than being hand-run each time.
   `settings.local.json`. (The plugin's own `plugins/senzing-bootcamp/skills/`
   *is* the bootcamp payload and **is** propagated — do not confuse the two.)
 - `specs/**` — spec-driven development artifacts.
+- `feedback/**` — the processed-feedback archive and its ledger. Carries raw bootcamper
+  text (usernames, workstation details, dataset names), so it is **never** mirrored to a
+  public repo. Committed in this repo for durability; excluded here for privacy.
 - `MIGRATION.md`, `scripts/sync-check.sh` (all of top-level `scripts/`),
   `.sync-state.json` — Kiro-Power → Claude-plugin sync infrastructure.
 - `resources/` — maintainer-only brand assets
   (`senzing-style-reference.pdf` is explicitly *not shipped*; the plugin's
   `brand_tokens.py` inlines everything it needs, so this is safe to exclude).
-- `.history/`, `__pycache__/`, `*.pyc` — editor/build cruft.
+- `.history/`, `__pycache__/`, `*.pyc`, `.pytest_cache/` — editor/build/test cruft.
+  `.pytest_cache/` needs the explicit exclude even though it looks self-managing: pytest
+  writes a `.pytest_cache/.gitignore` containing `*`, so a copied cache is invisible to the
+  public repo's `git status` and therefore to this skill's review step.
 - The dev `.gitignore` — the public repo keeps its own tailored version.
 
 **Preserved** (owned by the public repo — the tool never reads, writes, or

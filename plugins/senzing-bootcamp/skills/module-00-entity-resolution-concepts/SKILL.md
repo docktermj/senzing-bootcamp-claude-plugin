@@ -43,9 +43,12 @@ Follow `concepts.md` in this skill directory:
 3. **Invite questions/discussion before the quiz** (`concepts.md`): after the description and before
    the quiz offer, give the bootcamper space to clarify, ending on the pinned 👉 question — verbatim:
    **"Do you have any questions about entity resolution before we continue?"** (INV-056). Answer any
-   question via `search_docs` verified with a second MCP call, then re-present; on "no", proceed to
-   the quiz. It is issued once (INV-006), single-meaning yes/no with no "or"-joined choices
-   (INV-008 / INV-051), and never blocks (not a ⛔ gate).
+   question via `search_docs` verified with a second MCP call, then invite more with the **pinned
+   follow-up variant** in `concepts.md` — *"Do you have any **other** questions about entity
+   resolution before we continue?"* — never by repeating the first-ask string, which reads as though
+   their question did not register. On "no", proceed to the quiz. It is issued once (INV-006),
+   single-meaning yes/no with no "or"-joined choices (INV-008 / INV-051), and never blocks (not a ⛔
+   gate).
 4. Offer the **optional knowledge-check quiz** (`concepts.md`) as its own pinned 👉 question before
    the readiness gate. On accept, pose a short series of MCP-sourced/verified questions at moderate
    difficulty, one 👉 per turn, letting the bootcamper exit at any time; on decline, go straight to

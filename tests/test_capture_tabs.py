@@ -395,9 +395,14 @@ class TestCaptionRules(unittest.TestCase):
         )
 
     def test_capture_is_per_tab_not_several_of_one(self):
+        # Flattened before matching: the phrase spans a line break in the source, and where
+        # that break falls moves whenever the paragraph is re-wrapped. It moved on 2026-07-29
+        # (module5-quality-pages-are-branded-visual-deliverables scoped this section to the
+        # tabbed app) and failed this assertion on prose that still said exactly the right
+        # thing. Assert the requirement, not the current line wrapping.
         self.assertRegex(
-            read(MODULE_COMPLETION),
-            r"(?s)one image per tab.{0,80}never several shots of one",
+            re.sub(r"\s+", " ", read(MODULE_COMPLETION)),
+            r"one image per tab.{0,80}never several shots of one",
         )
 
 

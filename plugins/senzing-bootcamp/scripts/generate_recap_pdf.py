@@ -33,19 +33,23 @@ reads the bootcamp recap structure specifically —
     ### Information Shared          <- content lives under these H3 headings
     ### Questions & Responses
     ### Actions Taken
-    ### End-of-Module Summary
+    ### End-of-Module Summary       <- carries three labeled blocks (INV-103):
+    **What you accomplished:** …       What you accomplished, Files produced,
+    **Files produced:** …              Why it matters. A block the recap does not
+    **Why it matters:** …              record renders as "(not recorded)" rather
+                                       than vanishing, and `--check` reports it.
 
 Body text is kept only when it sits under an H3 sub-heading of a module section
-(see ``parse_recap``), so a document whose H2 sections have no recognised
+(see ``parse_recap``), so a document whose H2 sections have no recognized
 sub-headings renders as headings with empty bodies. To keep that from shipping
 as a plausible-looking but empty deliverable, the input is audited **before**
 rendering and two outcomes are distinguished:
 
-* **Incomplete but recognisable** (e.g. one module missing a sub-section) —
+* **Incomplete but recognizable** (e.g. one module missing a sub-section) —
   warn on stderr, render, exit 0. Graduation is non-blocking, so an imperfect
   recap still produces its PDF.
 * **Not a recap, or catastrophic content loss** (no module sections, no section
-  carrying any recognised sub-section, or content retention below
+  carrying any recognized sub-section, or content retention below
   ``MIN_CONTENT_RETENTION``) — write the reason to stderr, print no
   ``PDF generated:`` line, write no PDF, and exit non-zero. Here an empty
   deliverable would be worse than none.
@@ -66,12 +70,13 @@ missing.
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import struct
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 DEFAULT_INPUT = "docs/bootcamp_recap.md"
 DEFAULT_OUTPUT = "docs/bootcamp_recap.pdf"
@@ -88,6 +93,21 @@ REQUIRED_SECTIONS = [
     "End-of-Module Summary",
 ]
 
+# The labeled blocks the End-of-Module Summary must carry (INV-103, persisting the
+# bootcamper-facing epilog of INV-032 into the keepsake). "Bootcamper's takeaway" is
+# deliberately absent: it is optional and omitted when the bootcamper gave none.
+#
+# These are checked and rendered, not merely documented. INV-103 has required them since
+# 2026-07-23 and `--check` validated only the *heading*, so a summary written as a prose
+# paragraph — no labels at all — passed as "Recap complete" and reached the keepsake with
+# the three blocks simply absent. Nothing downstream could see it: the heading was there,
+# retention was ~100%, and the PDF looked fine.
+END_SUMMARY_BLOCKS = [
+    "What you accomplished",
+    "Files produced",
+    "Why it matters",
+]
+
 # Shown on the Certificate of Completion (INV-100) when the recap carries no
 # bootcamper name. Both renderers reach it through `_cert_fields`; `main()` warns
 # on stderr whenever it is used (INV-113) — a certificate is the one artifact
@@ -101,6 +121,31 @@ CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
 RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 
+# Recap image references: `![alt](path)` on a line of its own.
+IMAGE_LINE_RE = re.compile(r"^!\[(.*?)\]\((.+?)\)$")
+
+# A URL rather than a local file. Remote images are NEVER fetched (offline, INV-081).
+IMAGE_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*://")
+
+# Where a relative recap image path is resolved from, and what happened to each
+# image. Set by `main()` (via `set_image_context`) before rendering.
+#
+# The recap's image paths are written **relative to the recap document** — that is
+# what every Markdown renderer expects, and what graduation Step 1a instructs — so
+# the recap's own directory is the base, NOT the process working directory. The
+# generator is normally invoked from the project root, where `Path.cwd()` made
+# `visualizations/x.png` resolve to `<project>/visualizations/x.png` while the file
+# sits at `<project>/docs/visualizations/x.png`; every image was silently dropped and
+# the success line still reported ~99% of characters rendered, because the characters
+# did render. `Path.cwd()` is kept as a second candidate so an invocation that already
+# worked keeps working.
+#
+# Outcomes are keyed by the path as written, because the fpdf2 renderer builds the
+# document twice (a measure pass for TOC page numbers, then the real one) and so
+# reaches every image twice: two visits to one image must count once and report once.
+_IMAGE_BASE_DIRS: List[Path] = []
+_IMAGE_OUTCOMES: Dict[str, str] = {}
+
 # Minimum share of the input's content-bearing characters that must survive into
 # the parsed recap. Below this the input is treated as "not a recap" rather than
 # "an imperfect recap" and no PDF is written (see the module docstring).
@@ -108,7 +153,7 @@ RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 # Calibration: the shipped reference recap
 # (docs/examples/bootcamp_recap.example.md) retains ~99%, because a well-formed
 # recap keeps essentially everything except blank lines and `---` separators. A
-# document with H2 headings but no recognised H3 sub-headings retains ~19%, since
+# document with H2 headings but no recognized H3 sub-headings retains ~19%, since
 # only the headings survive. 0.60 sits far from both, so ordinary slack (a stray
 # lead line under an H2) never trips it, while real content loss always does.
 MIN_CONTENT_RETENTION = 0.60
@@ -144,6 +189,28 @@ class ModuleSection:
                 missing.append(req)
         return missing
 
+    def missing_summary_blocks(self) -> List[str]:
+        """Which of ``END_SUMMARY_BLOCKS`` the End-of-Module Summary does not carry.
+
+        All three when the subsection is absent or empty — that is literally what is
+        missing — and none for a legacy ``### Journal`` section, whose alias INV-103
+        tolerates precisely because Journal predates the three blocks. Callers decide what
+        to do about a gap: `verify_recap` reports it, the renderers show the block as
+        "(not recorded)" rather than letting it vanish.
+        """
+        for heading, lines in self.subsections:
+            if _normalize_heading(heading) != _normalize_heading(REQUIRED_SECTIONS[3]):
+                continue
+            if _is_legacy_journal(heading):
+                return []
+            present = {_summary_block_label(line) for line in lines}
+            return [
+                block
+                for block in END_SUMMARY_BLOCKS
+                if _normalize_heading(block) not in present
+            ]
+        return list(END_SUMMARY_BLOCKS)
+
 
 @dataclass
 class Recap:
@@ -152,18 +219,42 @@ class Recap:
     modules: List[ModuleSection]
 
 
+# The suffix the durability hooks leave on a folded-but-unfinalized section, in place of
+# the timestamp module-completion writes when it finalizes (INV-059). It is a status, not
+# part of the module's name, so it belongs in the date slot like a timestamp does.
+_STATUS_SUFFIX_RE = re.compile(r"^in\s+progress$", re.IGNORECASE)
+
+
 def _split_title_date(rest: str) -> Tuple[str, str]:
     """Split ``Name — 2026-07-15T10:05:00-05:00`` into (name, date).
 
-    Splits on an em dash or hyphen separator only when the right side looks like
-    a date/timestamp (begins with 4 digits). Otherwise the whole string is the
-    title.
+    Splits on an em dash or hyphen separator when the right side is either a
+    date/timestamp (begins with 4 digits) **or** the ``in progress`` status marker the
+    durability hooks leave on a section they folded but never finalized. Otherwise the
+    whole string is the title, so a module name that legitimately contains " — " is not
+    mangled.
+
+    ⚠️ **Why ``in progress`` has to split too.** Before this, that suffix stayed glued to
+    the title, and one stale title caused two distinct defects (2026-07-29 dry run):
+
+    * the Certificate of Completion joins module titles and *fits* the joined string
+      (INV-156), so the em dash rode into a width measurement and killed the entire fpdf2
+      render — the keepsake silently degraded to the stdlib renderer; and
+    * ``--check --expect-modules`` compares against the title, so the module read as
+      absent while the very same run validated its subsections by name — ``--check``
+      reported one section as both found and *"has no recap section at all"*, which sends
+      graduation to backfill a section that is already there (INV-157 warns against
+      exactly that).
+
+    Recognizing the marker the plugin itself produces is narrower, and safer, than
+    loosening the date test.
     """
     for sep in (" — ", " – ", " - "):
         if sep in rest:
             left, right = rest.rsplit(sep, 1)
-            if re.match(r"^\d{4}\b", right.strip()):
-                return left.strip(), right.strip()
+            tail = right.strip()
+            if re.match(r"^\d{4}\b", tail) or _STATUS_SUFFIX_RE.match(tail):
+                return left.strip(), tail
     return rest.strip(), ""
 
 
@@ -184,6 +275,13 @@ _SPACED_SUBSECTIONS = ("information shared", "actions taken")
 # one-line paths — stays tight.
 _SPACED_LABELS = ("what you accomplished",)
 
+# Labels whose value always starts on its own line, left-aligned to the page margin,
+# rather than continuing inline after the bold label. "Why it matters" is a short label
+# but its value can run several sentences; rendered inline, the wrapped continuation
+# hangs indented under wherever the label happened to end (a few characters different
+# per module), which reads as ragged and off-margin rather than as a normal paragraph.
+_NEW_LINE_LABELS = ("why it matters",)
+
 # Deliberately NOT spaced:
 # * "Questions & Responses" — its responses are indented sub-bullets under their
 #   questions; spacing every bullet would separate each answer from its question and
@@ -199,6 +297,49 @@ def _block_label(line: str) -> str:
     """
     m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
     return _normalize_heading(m.group(1)) if m else ""
+
+
+def _summary_block_label(line: str) -> str:
+    """The normalized label a summary line carries, tolerant of how it was written.
+
+    ``**Files produced:**`` is the canonical form the template shows and the normalizer
+    enforces, but the recap is authored live during a bootcamp, and
+    ``**Files produced**:``, ``- **Files produced:**`` and a bare ``Files produced:`` all
+    carry the block just as well. A block that is present but *looks* different must never
+    be reported as missing — a false "missing" sends graduation off to backfill content
+    that is already there, or worse, to rewrite a finished section (INV-085).
+
+    A label needs no colon when the line is *only* the label — `**Files produced**` above a
+    bullet list, or `### Files produced` as a sub-heading. Both are ordinary Markdown and
+    both carry the block. Requiring the colon reported them missing, and the renderer then
+    printed "Files produced: (not recorded)" directly beneath the files that were there,
+    while `--check` failed a complete recap and graduation was sent to backfill content it
+    already had (INV-085). The colon-less form is matched only against the canonical labels
+    exactly, so an arbitrary bold phrase still cannot pass for one.
+
+    Deliberately separate from `_block_label`, whose narrower job is to switch list spacing
+    on for a standalone label and which must therefore keep ignoring `- **Q:**` bullets.
+    """
+    text = re.sub(r"^\s*[-*+]\s+", "", line.strip())
+    text = re.sub(r"^#{1,6}\s+", "", text)
+    text = text.replace("**", "").replace("__", "").replace("*", "")
+    m = re.match(r"^([A-Za-z][^:]{0,60}?)\s*:", text)
+    if m:
+        return _normalize_heading(m.group(1))
+    bare = _normalize_heading(text)
+    if bare in {_normalize_heading(block) for block in END_SUMMARY_BLOCKS}:
+        return bare
+    return ""
+
+
+def _is_legacy_journal(heading: str) -> bool:
+    """True for a ``### Journal`` heading — the pre-INV-103 name of the fourth subsection.
+
+    It parses as an End-of-Module Summary (`_normalize_heading` aliases it), but a Journal
+    was free narrative and was never required to carry the three labeled blocks, so a
+    legacy recap must not be reported as incomplete or annotated as such.
+    """
+    return heading.strip().lower().rstrip(":") == "journal"
 
 
 def _is_bullet(line: str) -> bool:
@@ -246,7 +387,7 @@ def parse_table(text: str) -> Tuple[List[str], List[List[str]]]:
 
     The ``|---|---|`` alignment row is dropped; it is presentation, not content.
     Ragged rows are padded or truncated to the header's column count so a
-    malformed row cannot desynchronise the grid. An empty leading column is
+    malformed row cannot desynchronize the grid. An empty leading column is
     kept deliberately — a blank header over a real row-label column is common,
     and dropping the column would delete the values beneath it.
 
@@ -397,9 +538,19 @@ def verify_recap(recap: Recap, expected_titles: Optional[List[str]] = None) -> L
         problems.append("recap contains no module ('## …') sections")
     for mod in recap.modules:
         missing = mod.missing_required()
+        label = f"Module {mod.number}" if mod.number else mod.title
         if missing:
-            label = f"Module {mod.number}" if mod.number else mod.title
             problems.append(f"{label} is missing: {', '.join(missing)}")
+        # The blocks INV-103 requires *inside* the summary. Reported only when the
+        # subsection itself is present — otherwise the line above already names the whole
+        # gap, and saying it twice reads as two separate defects.
+        if REQUIRED_SECTIONS[3] not in missing:
+            gaps = mod.missing_summary_blocks()
+            if gaps:
+                problems.append(
+                    f"{label}'s {REQUIRED_SECTIONS[3]} is missing its labeled "
+                    f"block(s): {', '.join(gaps)}"
+                )
 
     # A module appearing twice renders twice in the keepsake PDF. The usual cause
     # is a missed module-completion step 2d: the finalized '## {Name}' section was
@@ -463,13 +614,119 @@ def _rendered_content_chars(recap: Recap) -> int:
     return total
 
 
+def set_image_context(recap_path: Path) -> None:
+    """Set where relative recap image paths resolve from, and reset the tally.
+
+    The recap document's own directory comes first: its `![alt](path)` targets are
+    written relative to it (graduation Step 1a), so that is the only base under which
+    the Markdown and the PDF agree. `Path.cwd()` follows as a fallback so an
+    invocation that already resolved its images keeps working.
+    """
+    global _IMAGE_BASE_DIRS
+    base_dirs = [recap_path.resolve().parent]
+    cwd = Path.cwd().resolve()
+    if cwd not in base_dirs:
+        base_dirs.append(cwd)
+    _IMAGE_BASE_DIRS = base_dirs
+    _IMAGE_OUTCOMES.clear()
+
+
+def resolve_recap_image(
+    path: str, base_dirs: Optional[Sequence[Path]] = None
+) -> Optional[Path]:
+    """The first existing file a recap image reference resolves to, or ``None``.
+
+    An absolute path is used as given. A relative one is tried under each base dir
+    in order — the recap's directory, then the working directory.
+    """
+    if IMAGE_URL_RE.match(path):
+        return None
+    p = Path(path)
+    if p.is_absolute():
+        return p if p.is_file() else None
+    for base in (base_dirs if base_dirs is not None else _IMAGE_BASE_DIRS) or [Path.cwd()]:
+        candidate = base / p
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def recap_image_targets(source_text: str) -> List[str]:
+    """Every ``![alt](path)`` target in the recap source, in document order.
+
+    Read from the source rather than from render callbacks so the count of images
+    the recap *references* is known even when the renderer embeds none — the stdlib
+    fallback renders no images at all, and "embedded 0 of 0" would misreport a recap
+    that references six.
+    """
+    targets: List[str] = []
+    for line in source_text.splitlines():
+        match = IMAGE_LINE_RE.match(line.strip())
+        if match:
+            targets.append(match.group(2).strip())
+    return targets
+
+
+def unresolvable_image_targets(
+    source_text: str, base_dirs: Optional[Sequence[Path]] = None
+) -> List[str]:
+    """Recap image references that resolve to no file (remote URLs excluded).
+
+    Used by ``--check`` so a lost screenshot is reported at the step that can still
+    fix it, rather than discovered by counting image objects in the finished PDF.
+    """
+    missing: List[str] = []
+    for target in recap_image_targets(source_text):
+        if IMAGE_URL_RE.match(target):
+            continue
+        if resolve_recap_image(target, base_dirs) is None and target not in missing:
+            missing.append(target)
+    return missing
+
+
+def _record_image_outcome(path: str, outcome: str) -> None:
+    """Record what happened to one image, once, and report anything but success.
+
+    Keyed by the path as written: the fpdf2 renderer builds the document twice, so
+    each image is reached twice and must be counted and reported once.
+    """
+    if path in _IMAGE_OUTCOMES:
+        return
+    _IMAGE_OUTCOMES[path] = outcome
+    if outcome == "embedded":
+        return
+    if outcome == "remote":
+        sys.stderr.write(
+            f"skipped image (remote URL, never fetched): {path}\n"
+        )
+        return
+    if outcome == "missing":
+        tried = ", ".join(str(base) for base in _IMAGE_BASE_DIRS) or str(Path.cwd())
+        sys.stderr.write(
+            f"skipped image (not found): {path} — looked in: {tried}\n"
+        )
+        return
+    sys.stderr.write(f"skipped image ({outcome}): {path}\n")
+
+
+def image_embed_note(referenced: int) -> str:
+    """``embedded N of M images`` for the success line.
+
+    The character-retention figure cannot see a dropped image — the characters do
+    render — so a recap that lost every screenshot still reported ~99%. This is the
+    figure that makes the loss visible (INV-110).
+    """
+    embedded = sum(1 for outcome in _IMAGE_OUTCOMES.values() if outcome == "embedded")
+    return f"embedded {embedded} of {referenced} images"
+
+
 @dataclass
 class RecapAudit:
     """A parsed recap's problems, split by severity.
 
     ``fatal`` means the input is not a recap, or rendering it would silently drop
     most of its content — an empty deliverable would be worse than none, so no
-    PDF is written. ``warnings`` means an imperfect but recognisable recap:
+    PDF is written. ``warnings`` means an imperfect but recognizable recap:
     render it and continue, because graduation is non-blocking.
     """
 
@@ -501,7 +758,7 @@ def audit_recap(
     Builds on :func:`verify_recap` — which stays the ``--check`` contract and
     reports per-section completeness — and adds the two content-loss checks a
     per-section list cannot express: an input with no recap sections at all, and
-    one whose sections carry no recognised sub-sections (so the parser keeps
+    one whose sections carry no recognized sub-sections (so the parser keeps
     their headings and discards their bodies).
     """
     warnings = verify_recap(recap, expected_titles)
@@ -534,7 +791,7 @@ def audit_recap(
         if bodyless == len(recap.modules):
             fatal.append(
                 f"input does not look like a bootcamp recap: 0 of "
-                f"{len(recap.modules)} '##' sections carry any recognised "
+                f"{len(recap.modules)} '##' sections carry any recognized "
                 f"sub-section (expected one or more of: "
                 f"{', '.join(REQUIRED_SECTIONS)})"
             )
@@ -569,7 +826,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 _FALLBACK_RGB = {
     "NAVY": (24, 22, 15), "BLUE": (245, 120, 38), "SLATE": (74, 70, 64),
     "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
-    "GREEN": (29, 158, 117), "LINE": (229, 223, 211),
+    "GREEN": (29, 158, 117), "LINE": (229, 223, 211), "AMBER": (240, 146, 10),
 }
 try:
     import brand_tokens as _bt
@@ -583,6 +840,7 @@ try:
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+    AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
 except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
     NAVY = _FALLBACK_RGB["NAVY"]
     BLUE = _FALLBACK_RGB["BLUE"]
@@ -592,11 +850,18 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     INK = _FALLBACK_RGB["INK"]
     GREEN = _FALLBACK_RGB["GREEN"]
     LINE = _FALLBACK_RGB["LINE"]
+    AMBER = _FALLBACK_RGB["AMBER"]
 
-# Header-row fill for rendered tables. Derived from the warm line colour so the
+# Header-row fill for rendered tables. Derived from the warm line color so the
 # header reads as a band rather than a second body row, and so it cannot drift
 # from the brand palette (INV-081/INV-107) — it is not a new token.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
+
+# Muted warm grey for the certificate's small-caps labels, where body ink reads too
+# loud and a cold grey fights the ember band. Derived by blending body ink toward the
+# warm off-white — the same "derive, never invent" rule TABLE_HEAD_FILL follows
+# (INV-081): it is not a new brand token.
+MUTED = tuple(round(s + (l - s) * 0.48) for s, l in zip(SLATE, LIGHT))
 
 # Per-section accent colors for the module page tabs/headings.
 _SECTION_ACCENT = {
@@ -681,11 +946,188 @@ _UNICODE_MAP = {
 }
 
 
+# Latin letters with no NFKD decomposition — a stroke or bar is part of the glyph, not a
+# combining mark — so folding by decomposition alone deletes them. Dropping the first
+# letter of "Łukasz" is not a lesser rendering, it is a different name.
+_LATIN_FOLD = {
+    "Ł": "L", "ł": "l", "Đ": "D", "đ": "d", "Ħ": "H", "ħ": "h", "Ŧ": "T", "ŧ": "t",
+    "Ŋ": "N", "ŋ": "n", "Œ": "OE", "œ": "oe", "Ə": "E", "ə": "e", "ı": "i", "ſ": "s",
+    "Ɨ": "I", "ɨ": "i", "Ƶ": "Z", "ƶ": "z", "Ǥ": "G", "ǥ": "g", "Ɖ": "D", "ɗ": "d",
+}
+
+
+# Characters `_fold_to_latin1` could not represent at all, mapped to an excerpt of the
+# first passage each was found in. INV-143 permits dropping them; what it does not permit
+# is doing so silently, and until this collector existed the warn half of that contract
+# was implemented for the certificate name only. A Cyrillic organisation name in a
+# discoveries document rendered as `"- "` at exit 0 with `content retained: 96%` — the
+# retention figure cannot see it, because retention is measured over parsed *source*
+# characters before `_safe` runs at render time.
+#
+# Keyed by character, so the record is idempotent: the fpdf2 renderer runs two passes and
+# may then fall back to the stdlib writer, so counting occurrences would report two or
+# three times the real loss. Distinct characters and distinct passages are stable however
+# many times the same content is rendered.
+_DROPPED_CHARACTERS: Dict[str, str] = {}
+
+# Excerpt length kept short: it exists to locate the passage, not to reproduce it.
+_DROP_EXCERPT_CHARS = 60
+
+# Enough names to identify what was lost without turning one warning into a wall of text
+# for a document written entirely in another script.
+_DROP_NAMES_SHOWN = 8
+
+
+def _record_dropped_character(ch: str, context: str) -> None:
+    """Remember one character `_fold_to_latin1` had to drop, and where it was."""
+    if ch in _DROPPED_CHARACTERS:
+        return
+    excerpt = re.sub(r"\s+", " ", context).strip()
+    if len(excerpt) > _DROP_EXCERPT_CHARS:
+        excerpt = excerpt[:_DROP_EXCERPT_CHARS].rstrip() + "..."
+    _DROPPED_CHARACTERS[ch] = excerpt
+
+
+def reset_dropped_characters() -> None:
+    """Clear the collector. For tests and for callers that render more than one document."""
+    _DROPPED_CHARACTERS.clear()
+
+
+def _describe_dropped(ch: str) -> str:
+    """A character's Unicode name, or its code point when it has none."""
+    import unicodedata
+
+    return unicodedata.name(ch, None) or "U+%04X" % ord(ch)
+
+
+def dropped_character_warning() -> Optional[str]:
+    """One aggregated ``WARNING:`` line for everything dropped this run, else ``None``.
+
+    ⚠️ ASCII by construction. The dropped characters are reported by Unicode NAME, and the
+    locating excerpt is backslash-escaped — never echoed raw. A Windows console in a legacy
+    code page cannot display the very characters that were dropped (see `ground-rules.md`
+    -> "Windows and PowerShell"), so printing them would corrupt the warning itself and
+    reproduce the defect it exists to report.
+
+    Non-blocking by design: the caller writes this to stderr and still ships the PDF
+    (INV-048/INV-052/INV-066). Silent loss is the defect; refusing to render is not the fix.
+    """
+    if not _DROPPED_CHARACTERS:
+        return None
+    names = [_describe_dropped(ch) for ch in _DROPPED_CHARACTERS]
+    shown = ", ".join(names[:_DROP_NAMES_SHOWN])
+    if len(names) > _DROP_NAMES_SHOWN:
+        shown += f", and {len(names) - _DROP_NAMES_SHOWN} more"
+    first_char = next(iter(_DROPPED_CHARACTERS))
+    where = _DROPPED_CHARACTERS[first_char].encode("ascii", "backslashreplace").decode("ascii")
+    return (
+        f"WARNING: {len(_DROPPED_CHARACTERS)} distinct character(s) in "
+        f"{len(set(_DROPPED_CHARACTERS.values()))} passage(s) cannot be rendered by this "
+        f"PDF's built-in fonts and were dropped from the page: {shown}. "
+        f'First affected passage: "{where}". The PDF was still written and the content is '
+        f"otherwise intact, but those characters are GONE from it: check the page before "
+        f"sharing it. To fix: use each entity's verified Latin-script name or alias instead "
+        f"of its non-Latin primary name (especially inside fenced/monospace blocks), and use "
+        f"ASCII connectors (| and v) in ASCII diagrams. Never substitute a guess for a name "
+        f"you have not verified.\n"
+    )
+
+
+def _fold_to_latin1(s: str) -> str:
+    """Best-effort ASCII fold of characters `_UNICODE_MAP` does not cover.
+
+    Latin-script letters carrying marks the core fonts lack — `ā ő ș ğ ẹ` — decompose under
+    NFKD into a base letter plus combining marks; dropping the marks leaves a readable
+    letter. `_LATIN_FOLD` covers the ones that do not decompose.
+
+    Characters from a non-Latin script (CJK, Cyrillic, Arabic, Hebrew, Greek, Devanagari,
+    Thai) are **dropped**, which INV-143 permits, never encoded as `?`, which it forbids.
+    They are deliberately not transliterated: a transliteration table would serve one
+    script and still drop the rest, and how a name should be spelled in Latin script is
+    the Bootcamper's call, not a lookup table's — Владимир is Vladimir, Wladimir or
+    Volodymyr depending on whose name it is. So the generator drops, warns, and INV-113's
+    pinned question asks the one person who knows.
+    """
+    import unicodedata
+
+    out = []
+    for ch in unicodedata.normalize("NFKD", s):
+        if unicodedata.combining(ch):
+            continue
+        if ch in _LATIN_FOLD:
+            out.append(_LATIN_FOLD[ch])
+            continue
+        try:
+            ch.encode("latin-1")
+        except UnicodeEncodeError:
+            # The only branch that loses content outright, and therefore the only one
+            # recorded. The two above are deliberate, readable approximations INV-143
+            # asks for — a stripped combining mark leaves its base letter (`ā` -> `a`)
+            # and `_LATIN_FOLD` supplies a replacement — so reporting them would fire on
+            # every ordinary accented European name and bury the real losses.
+            _record_dropped_character(ch, s)
+            continue
+        out.append(ch)
+    return "".join(out)
+
+
 def _safe(s: str) -> str:
-    """Return a string safe for fpdf2's Latin-1 core fonts."""
+    """Return a string safe for fpdf2's Latin-1 core fonts.
+
+    ⚠️ Never lets a character become `?`. `.encode("latin-1", "replace")` did, and `?` is
+    itself encodable, so every encoding check passed while the page was wrong (INV-143) —
+    a Bootcamper named 李明 had `??` printed on their Certificate of Completion, silently,
+    at exit 0. Names come from `git config user.name` (INV-134), so non-Latin-1 text
+    reaches the deliverable by the most ordinary route there is.
+
+    Characters that cannot be folded are dropped. That can empty a string, so callers who
+    print an identity — the certificate — MUST check printability rather than assume
+    (`recap_certificate_name_unprintable`) and warn instead of shipping a blank.
+    """
     for uni, rep in _UNICODE_MAP.items():
         s = s.replace(uni, rep)
-    return s.encode("latin-1", "replace").decode("latin-1")
+    try:
+        s.encode("latin-1")
+        return s
+    except UnicodeEncodeError:
+        return _fold_to_latin1(s)
+
+
+def _width(pdf, text: str) -> float:
+    """Measure `text` the way it will actually be drawn — i.e. through `_safe` first.
+
+    ⚠️ **Measurement is as font-sensitive as rendering.** fpdf2's `get_string_width`
+    calls the same `normalize_text` as its text writers, so it raises
+    `FPDFUnicodeEncodingException` on exactly the characters `_safe` exists to fold. Every
+    *write* went through `_safe`; none of the five *measurements* did, so an em dash in a
+    module title killed the whole fpdf2 render and the recap silently fell back to the
+    stdlib renderer — losing real tables (INV-142) and the branded certificate (INV-156)
+    from the Bootcamper's keepsake, at exit 0, with only a `renderer: stdlib` line to say
+    so. Found by the 2026-07-29 dry run; `tests/test_recap_pdf_font_safety.py` passed
+    throughout because it covered the write path only.
+
+    Measuring the folded string is also the *correct* width: it is the string that gets
+    drawn, so any fitting decision made from it (certificate module list, cover chips,
+    env-block gutter) matches what lands on the page.
+
+    Use this instead of `pdf.get_string_width` everywhere.
+    """
+    return pdf.get_string_width(_safe(text))
+
+
+def _unrepresentable(text: str) -> List[str]:
+    """The distinct characters `_safe` cannot represent, in order of appearance.
+
+    Reported rather than silently dropped: a deliverable that quietly loses characters is
+    the failure `?` used to make visible in the worst possible way (INV-143/INV-111).
+    """
+    lost: List[str] = []
+    for ch in text:
+        if ch in lost or ch.isspace():
+            continue
+        if _safe(ch) == "" and ch.strip():
+            lost.append(ch)
+    return lost
 
 
 def _logo_info() -> Optional[Tuple[str, int, int]]:
@@ -704,6 +1146,66 @@ def _logo_info() -> Optional[Tuple[str, int, int]]:
         if w and h:
             return str(path), w, h
     return None
+
+
+# Memo for `_wordmark_on_light`: the fpdf2 path renders every page twice (a measure
+# pass and a real pass), so an un-memoized recolor would run the pixel work twice for
+# one PDF. A list, not a dict — there is exactly one wordmark.
+_WORDMARK_ON_LIGHT: List[object] = []
+
+
+def _wordmark_on_light():
+    """The Senzing wordmark recolored for a light background, or None.
+
+    Only the *light* wordmark ships (``senzing_logo_light.png`` — white letterforms
+    with the ember "z", drawn for the cover's dark band). The certificate is printed on
+    a white card, where that asset is invisible except for the "z", so its white
+    letterforms are repainted in the brand's dark ink here rather than shipping a second
+    PNG that would drift from the first one silently.
+
+    Pillow is an fpdf2 dependency, so it is present wherever fpdf2 can embed an image at
+    all; any failure returns None and the caller draws the wordmark as text instead, so a
+    valid PDF is still always produced (INV-048/INV-066).
+    """
+    if _WORDMARK_ON_LIGHT:
+        return _WORDMARK_ON_LIGHT[0] or None
+    image = None
+    info = _logo_info()
+    if info:
+        try:
+            from PIL import Image, ImageChops  # type: ignore
+
+            source = Image.open(info[0]).convert("RGBA")
+            red, green, blue, alpha = source.split()
+            # Repaint only the near-white letterforms; the ember "z" must survive, so
+            # the mask is min(r, g, b) > 200 rather than "any pixel".
+            darkest = ImageChops.darker(ImageChops.darker(red, green), blue)
+            mask = darkest.point(lambda v: 255 if v > 200 else 0)
+            color = Image.merge("RGB", (red, green, blue))
+            color.paste(Image.new("RGB", source.size, tuple(INK)), mask=mask)
+            # Recolor RGB only and re-attach the original alpha: pasting an opaque RGBA
+            # patch instead turns every transparent white pixel opaque, which prints the
+            # wordmark as a solid dark block — and the mask covers the whole canvas,
+            # because transparent pixels are white too.
+            image = Image.merge("RGBA", (*color.split(), alpha))
+            # The asset is padded canvas; the certificate positions the *ink*, so crop to
+            # it and let the caller take the aspect ratio from the crop.
+            box = alpha.getbbox()
+            if box:
+                image = image.crop(box)
+            # The asset is ~4200 px wide and the certificate prints it at 41 mm — 2500 dpi.
+            # fpdf2 re-encodes a PIL image (it cannot pass the original PNG bytes through),
+            # so the full-resolution wordmark adds ~80 KB to a keepsake PDF for resolution
+            # no printer resolves. 1000 px is still 600 dpi at that size.
+            if image.size[0] > 1000:
+                scale = 1000.0 / image.size[0]
+                image = image.resize(
+                    (1000, max(1, round(image.size[1] * scale))), Image.LANCZOS
+                )
+        except Exception:  # Pillow absent, unreadable asset, or an API change.
+            image = None
+    _WORDMARK_ON_LIGHT.append(image)
+    return image
 
 
 def render_with_fpdf2(recap: Recap, output: Path) -> bool:
@@ -833,7 +1335,7 @@ def _render_env_block(pdf, epw: float, env: List[Tuple[str, str]], top: float) -
         pdf.set_text_color(*SLATE)
         pdf.set_font("Helvetica", "B", 9)
         label = _safe(key.rstrip(":")) + ":  "
-        lw = pdf.get_string_width(label) + 1
+        lw = _width(pdf, label) + 1
         pdf.cell(lw, 6, label)
         pdf.set_text_color(*INK)
         pdf.set_font("Helvetica", "", 10)
@@ -943,7 +1445,7 @@ def _render_cover(pdf, epw: float, recap: Recap) -> None:
                 ),
                 46,
             )
-            w = pdf.get_string_width(label) + 8
+            w = _width(pdf, label) + 8
             if x + w > pdf.l_margin + epw:
                 x = pdf.l_margin
                 y += 11
@@ -980,10 +1482,21 @@ def _cert_fields(recap: Recap) -> Tuple[str, str, List[str]]:
             completed = v
         elif k in ("started", "date") and not started:
             started = v
+    # Preferences outrank the recap header: they hold the Bootcamper's answer to the
+    # INV-113 certificate-name question, while the header carries whatever was
+    # auto-detected before that question was asked.
+    name = _CERTIFICATE_NAME_OVERRIDE or name
     # Substitution is silent here on purpose: the fpdf2 renderer runs a measure
     # pass plus a real pass, so this helper is called twice per render. The
     # user-facing warning is emitted once from main() via
-    # `recap_missing_certificate_name` instead.
+    # `recap_missing_certificate_name` / `recap_certificate_name_unprintable` instead.
+    #
+    # A name the core fonts cannot render — 李明, Владимир — folds to nothing (`_safe`), so
+    # printing it would leave the recipient line blank. The placeholder is the same answer
+    # as for an absent name, and main() warns so graduation can ask for a printable one
+    # (INV-113).
+    if name and not _safe(name).strip():
+        name = ""
     name = name or CERTIFICATE_NAME_PLACEHOLDER
     raw_date = completed or started
     date = _format_date(raw_date) if raw_date else ""
@@ -1013,12 +1526,75 @@ def _cert_plugin_version(recap: Recap) -> str:
 
 
 def _cert_attribution(recap: Recap) -> List[str]:
-    """The certificate's footer attribution lines, top to bottom."""
+    """The certificate's attribution: the issuer first, then the colophon.
+
+    Line 0 is the issuer, set over the rule in the certificate's "ISSUED BY" block. Line
+    1, when a plugin version was recorded, is the colophon at the foot of the card — the
+    line INV-126 requires on the certificate face itself. Both renderers read this list,
+    so neither can drift from the other on what the certificate claims.
+    """
     lines = ["Senzing Bootcamp"]
     version = _cert_plugin_version(recap)
     if version:
         lines.append(f"Senzing Bootcamp Claude plugin v{version.lstrip('v')}")
     return lines
+
+
+# The certificate name the Bootcamper was actually asked for, when preferences carry
+# one. Set by `main()` from `config/bootcamp_preferences.yaml`; "" means "not supplied".
+#
+# Graduation's pre-check judges the auto-detected name and, when it is not
+# certificate-quality, asks the Bootcamper what to print and persists the answer as
+# `name` in preferences (INV-113). The recap's `**Bootcamper:**` line was written by
+# Bootcamp preparation at the *start* of the run, from the pre-detection value — so the
+# recap and preferences disagree by design after the question is asked, and the answer is
+# the newer of the two. Reading only the recap printed the rejected handle on a signed
+# certificate at exit 0, with 99% content retention and no warning (INV-065).
+_CERTIFICATE_NAME_OVERRIDE = ""
+
+DEFAULT_PREFERENCES = Path("config") / "bootcamp_preferences.yaml"
+
+
+def read_preferences_name(path=DEFAULT_PREFERENCES) -> str:
+    """The top-level ``name:`` value from the preferences YAML, or "" if absent.
+
+    Scanned line-by-line so no third-party parser is required (INV-052: python3 only) —
+    the same approach `scripts/stop-nudge.py` uses on this file. Any read problem yields
+    "" rather than raising: a missing or malformed preferences file must degrade to the
+    recap's name, never break the render (INV-048).
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            for line in handle:
+                if line[:1] in (" ", "\t"):
+                    continue  # nested key, not the top-level `name:`
+                stripped = line.strip()
+                if stripped.startswith("#") or ":" not in stripped:
+                    continue
+                key, _, value = stripped.partition(":")
+                if key.strip() != "name":
+                    continue
+                value = value.split(" #", 1)[0].strip().strip("\"'")
+                if value:
+                    return value
+    except (OSError, UnicodeDecodeError):
+        pass
+    return ""
+
+
+def set_certificate_name_override(name: str) -> None:
+    """Record the preferences-supplied certificate name (or "" to clear it)."""
+    global _CERTIFICATE_NAME_OVERRIDE
+    _CERTIFICATE_NAME_OVERRIDE = (name or "").strip()
+
+
+def certificate_name(recap: Recap) -> str:
+    """The name to print on the certificate: preferences first, then the recap.
+
+    Preferences hold the Bootcamper's *answer* to the INV-113 question, so they outrank a
+    value written before that question was asked.
+    """
+    return _CERTIFICATE_NAME_OVERRIDE or recap_certificate_name(recap)
 
 
 def recap_missing_certificate_name(recap: Recap) -> bool:
@@ -1029,6 +1605,8 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
     placeholder name ship silently — it is the one artifact where a wrong name is
     immediately visible and permanently wrong.
     """
+    if _CERTIFICATE_NAME_OVERRIDE:
+        return False  # preferences supplied the answer to the INV-113 question
     for key, val in recap.meta:
         k = key.strip().lower().rstrip(":")
         if k in ("bootcamper", "name") and _md_inline_to_text(val).strip():
@@ -1036,11 +1614,363 @@ def recap_missing_certificate_name(recap: Recap) -> bool:
     return True
 
 
+def recap_certificate_name(recap: Recap) -> str:
+    """The raw bootcamper name recorded in the recap header, or "" when absent."""
+    for key, val in recap.meta:
+        if key.strip().lower().rstrip(":") in ("bootcamper", "name"):
+            value = _md_inline_to_text(val).strip()
+            if value:
+                return value
+    return ""
+
+
+def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
+    """(name, lost characters) when the recorded name cannot be printed as written.
+
+    The core fonts are Latin-1, and `_safe` drops what it cannot fold, so a name in a
+    non-Latin script survives as nothing. Callers warn: this is INV-113's condition — a
+    name that is present but not certificate-quality — reached by a route INV-113's own
+    wording ("missing, empty, or clearly not a display name") did not anticipate, and one
+    that used to print as `??` (INV-143). Returns ("", []) when the name prints fine.
+    """
+    name = certificate_name(recap)  # the name that will actually print
+    lost = _unrepresentable(name) if name else []
+    return (name, lost) if lost else ("", [])
+
+
+# --------------------------------------------------------------------------- #
+# Certificate of Completion (INV-100) — layout
+# --------------------------------------------------------------------------- #
+# Scaled from the Senzing certificate template, `resources/certificate-of-completion.pdf`
+# (a maintainer asset, not shipped with the plugin — like the style reference behind
+# brand_tokens): a warm ember gradient band down the left edge, a white card bordered by
+# an ember rule, then the Senzing wordmark, an eyebrow, the headline, the recipient, the
+# citation, and a date / issuer signature row flanking an award seal.
+#
+# Every number below is millimetres on landscape A4 (297 × 210), measured off the
+# template at 150 dpi and shifted to A4's slightly shorter page.
+# `_stdlib_certificate_stream` converts the same constants to points, so both renderers
+# put the same content in the same place (INV-066/INV-126) — change a number here and the
+# fallback follows it.
+_MM = 72.0 / 25.4          # one millimetre in PDF points, for the fallback's point space
+_CERT_BAND_W = 65.0        # ember gradient band, full height down the left edge
+_CERT_CARD_X = 21.0
+_CERT_CARD_Y = 26.0
+_CERT_CARD_W = 255.0
+_CERT_CARD_H = 158.0
+_CERT_BORDER = 1.3         # ember card border stroke
+_CERT_CX = 148.5           # page centre; every line on the certificate is centred on it
+_CERT_TEXT_W = 175.0       # wrap width for the citation and the module list
+_CERT_LIST_W = 227.0       # widest a line may run: the card less both signature insets
+_CERT_RULE_W = 33.0        # short ember rule under the tagline
+_CERT_SIG_RULE_W = 41.2    # signature rule under each of the two bottom blocks
+_CERT_SIG_INSET = 14.0     # inset of each signature block from the card's edge
+_CERT_SEAL_W = 21.7        # award seal, ribbon tails included
+_CERT_SEAL_H = 28.0        # a shade under the template's 29.2, to clear the colophon
+_CERT_MODULE_LINES = 3     # module list is capped, so it cannot reach the seal
+
+# Baselines, in mm from the page top. Cap tops — not baselines — were measured from the
+# template, so each value is that cap top plus 0.717 em of its own font size, which is
+# where fpdf2's `text()` and the fallback's `Tm` both want the pen.
+_CERT_Y_WORDMARK = 33.0    # top edge of the wordmark image, not a baseline
+_CERT_Y_EYEBROW = 55.5
+_CERT_Y_HEADLINE = 72.0
+_CERT_Y_TAGLINE = 82.1
+_CERT_Y_RULE = 89.3
+_CERT_Y_PRESENTED = 101.9
+_CERT_Y_NAME = 115.0
+_CERT_Y_CITATION = 125.2
+_CERT_Y_MODULES = 136.0
+_CERT_Y_SEAL = 147.5       # top edge of the seal, not a baseline
+_CERT_Y_SIG = 153.1
+_CERT_Y_SIG_RULE = 158.4
+_CERT_Y_SIG_LABEL = 165.6
+# Under the seal's ribbon tails (which end at _CERT_Y_SEAL + _CERT_SEAL_H) and clear of
+# the card border's stroke — see the ⚠️ note in `_render_certificate`.
+_CERT_Y_COLOPHON = 181.0
+_CERT_LEAD_CITATION = 4.9  # line pitch within the citation
+_CERT_LEAD_MODULES = 4.2   # line pitch within the module list
+
+# (size in points, fpdf2 font style, letterspacing in points) per line. Shared by both
+# renderers; the letterspaced lines are the template's small caps and its recipient name.
+_CERT_FONT = {
+    "eyebrow": (16.0, "B", 1.5),
+    "headline": (38.0, "B", 0.0),
+    "tagline": (15.0, "", 0.0),
+    "presented": (16.0, "", 1.9),
+    "name": (34.0, "B", 2.0),
+    "citation": (10.5, "", 0.0),
+    "modules": (9.0, "", 0.0),
+    "sig": (14.0, "B", 0.0),
+    "label": (9.0, "", 1.0),
+    "colophon": (7.5, "I", 0.0),
+}
+
+_CERT_HEADLINE = "Certificate of Completion"
+_CERT_EYEBROW = "SENZING BOOTCAMP"
+_CERT_TAGLINE = "Entity Resolution, from first principles to a production pipeline"
+_CERT_PRESENTED = "THIS CERTIFICATE IS PROUDLY PRESENTED TO"
+_CERT_DATE_LABEL = "DATE COMPLETED"
+_CERT_ISSUER_LABEL = "ISSUED BY"
+# The template's citation names "all 10 modules" and then describes the whole arc of the
+# bootcamp. A bootcamper who completed four modules has not walked that arc, so the count
+# is taken from the recap and the description is attached to *the bootcamp* rather than to
+# what was completed — the modules actually completed are then named below it (INV-100).
+_CERT_CITATION = (
+    "for successfully completing {count} module{plural} of the Senzing Bootcamp — "
+    "Senzing's guided path from defining the business problem to a working "
+    "entity-resolution pipeline:"
+)
+_CERT_CITATION_NO_MODULES = (
+    "for successfully completing the Senzing Bootcamp — Senzing's guided path from "
+    "defining the business problem to a working entity-resolution pipeline."
+)
+
+
+def _cert_citation(labels: List[str]) -> str:
+    """The citation paragraph, carrying the number of modules actually completed."""
+    if not labels:
+        return _CERT_CITATION_NO_MODULES
+    return _CERT_CITATION.format(
+        count=len(labels), plural="" if len(labels) == 1 else "s"
+    )
+
+
+def _cert_band_color(fraction: float) -> Tuple[int, int, int]:
+    """Colour of the gradient band at `fraction` of the way down the page.
+
+    Ember at both ends, amber through the middle — the template's warm band, mirrored
+    with the brand's own gradient pair (`EMBER_HOT`/`EMBER_GRAD_END`) instead of hexes
+    sampled off the template, so the certificate cannot drift from the palette (INV-081).
+    The exponent widens the amber plateau so the hot ember reads as an edge rather than
+    as half the band, which is the template's balance.
+    """
+    mix = (1.0 - abs(2.0 * fraction - 1.0)) ** 0.45
+    return tuple(round(a + (b - a) * mix) for a, b in zip(ACCENT, AMBER))
+
+
+def _cert_seal_paths() -> Tuple[List[Tuple[float, float]], Tuple[float, float, float],
+                                List[List[Tuple[float, float]]]]:
+    """Geometry for the award seal: (scalloped ring, inner circle, ribbon tails).
+
+    Returned rather than drawn so the fpdf2 renderer and the stdlib fallback stroke the
+    same shape from one computation (INV-066) — one draws it with `polygon`/`ellipse`, the
+    other with `m`/`l` path operators.
+
+    The ring is a radius modulated by a cosine, `points` per turn: a wavy edge with
+    rounded tips, which is the template's medal. (A union of `points` circles — the other
+    obvious construction — gives deep round lobes and reads as a flower, not a medal.)
+    """
+    points = 14
+    outer = _CERT_SEAL_W / 2.0
+    wave = 1.15                 # tip-to-trough amplitude of the scalloped edge
+    mid = outer - wave
+    inner = 6.7                 # inner ring, 0.62 of the outer radius as in the template
+    cx = _CERT_CX
+    cy = _CERT_Y_SEAL + outer
+    scallop: List[Tuple[float, float]] = []
+    steps = points * 12         # 12 segments per scallop keeps the tips round in print
+    for i in range(steps):
+        turn = 2.0 * math.pi * i / steps        # 0 at the top, so a tip sits there
+        radius = mid + wave * math.cos(points * turn)
+        angle = turn - math.pi / 2.0
+        scallop.append((cx + radius * math.cos(angle), cy + radius * math.sin(angle)))
+    # Two ribbon tails, splayed below the ring and tucked behind it (the ring is filled
+    # white over their top edges), each ending in the V notch a cut ribbon has. Offsets
+    # are the template's, measured from the seal box.
+    top = _CERT_Y_SEAL + 19.5
+    bottom = _CERT_Y_SEAL + _CERT_SEAL_H
+    notch = bottom - 3.6
+    left = cx - outer
+    tails = [
+        [(left + 3.5, top), (left + 9.5, top), (left + 9.2, bottom),
+         (left + 4.8, notch), (left + 0.2, bottom)],
+        [(left + 18.2, top), (left + 12.2, top), (left + 12.5, bottom),
+         (left + 16.9, notch), (left + 21.5, bottom)],
+    ]
+    return scallop, (cx, cy, inner), tails
+
+
+def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) -> float:
+    """Width in mm of one certificate line, letterspacing included but not its trailing
+    advance — fpdf2 counts spacing after the last glyph too, which would shift a centred
+    line half a space to the left."""
+    pdf.set_font("Helvetica", style, size)
+    setter = getattr(pdf, "set_char_spacing", None)
+    if setter:
+        setter(spacing)
+    width = _width(pdf, text)
+    if setter:
+        setter(0)
+        if spacing:
+            width -= spacing * 25.4 / 72.0
+    return width
+
+
+def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
+               size: Optional[float] = None, max_w: float = 0.0) -> None:
+    """Draw one centred certificate line with its baseline at `y` (mm).
+
+    Centred here rather than with ``cell(align="C")`` because the template's positions
+    were measured as cap tops, and `text()` takes a baseline — a cell would tie the line
+    to a box height instead. Letterspacing is real (``set_char_spacing``), never spaces
+    inserted between glyphs: a certificate gets searched and copied out of, and
+    "M i c h a e l" is not a name. When `max_w` is given the size steps down until the
+    line fits, so a long recipient name shrinks instead of running off the card.
+    """
+    base, style, spacing = _CERT_FONT[key]
+    size = base if size is None else size
+    text = _safe(text)
+    width = _cert_text_width(pdf, text, size, style, spacing)
+    while max_w and width > max_w and size > 12.0:
+        size -= 1.0
+        width = _cert_text_width(pdf, text, size, style, spacing)
+    # Shrinking has a floor, so it alone does not bound the line: at 12 pt a ~78-character
+    # name still ran off the card and off the page — content drawn outside the page box,
+    # which no retention figure can see (INV-121). Clip once the floor is reached, against a
+    # strictly decreasing budget: `_clip(s, n)` returns n + 2 characters, so looping on
+    # `_clip(text, len(text) - 2)` never shortens anything and spins forever.
+    if max_w and width > max_w:
+        full, keep = text, len(text)
+        while keep > 4:
+            keep -= 2
+            text = full[:keep].rstrip() + "..."
+            width = _cert_text_width(pdf, text, size, style, spacing)
+            if width <= max_w:
+                break
+    pdf.set_font("Helvetica", style, size)
+    setter = getattr(pdf, "set_char_spacing", None)
+    if setter and spacing:
+        setter(spacing)
+    pdf.set_text_color(*color)
+    pdf.text(cx - width / 2.0, y, text)
+    if setter and spacing:
+        setter(0)
+
+
+def _cert_wrap(pdf, key: str, text: str, max_w: float,
+               size: Optional[float] = None) -> List[str]:
+    """Wrap `text` to `max_w` mm in the font `key` renders in."""
+    base, style, spacing = _CERT_FONT[key]
+    size = base if size is None else size
+    return _wrap_to_width(
+        _safe(text),
+        max_w,
+        lambda s: _cert_text_width(pdf, s, size, style, spacing),
+    )
+
+
+def _cert_module_layout(labels: List[str], measure) -> Tuple[List[str], float]:
+    """The module list as (lines, size), fitted to `_CERT_MODULE_LINES` lines.
+
+    The list is the one variable-length block on a fixed page design, and the page has no
+    room to grow: below it sit the seal and the signature row, and the auto page-break is
+    off, so an overlong list would print *over* them rather than reflow.
+
+    Fitting is ordered by what it costs the page. First the template's narrow measure at
+    full size, which is what a normal bootcamp needs. Then the card's full usable width —
+    less like the template, but it costs nothing that matters. Only then the type size.
+    Truncation is last and effectively unreachable, because the modules completed are
+    required content on this page (INV-100). `measure(text, size)` is the caller's, so
+    both renderers fit the list identically (INV-066).
+    """
+    joined = " · ".join(labels)
+    base = _CERT_FONT["modules"][0]
+    attempts = [(_CERT_TEXT_W, base)]
+    size = base
+    while size >= 7.0:
+        attempts.append((_CERT_LIST_W, size))
+        size -= 0.5
+    lines: List[str] = []
+    for width, size in attempts:
+        lines = _wrap_to_width(joined, width, lambda s: measure(s, size))
+        if len(lines) <= _CERT_MODULE_LINES:
+            return lines, size
+    lines = lines[:_CERT_MODULE_LINES]
+    lines[-1] = lines[-1].rstrip(" ·") + " ..."
+    return lines, size
+
+
+def _cert_backdrop(pdf, height: float) -> None:
+    """The gradient band and the white card the certificate is printed on."""
+    # Painted as strips because fpdf2's gradient helpers are a recent addition and this
+    # has to render on whatever version is installed (INV-048/INV-066). Each strip
+    # overlaps the next slightly so no hairline of white shows through at the seams.
+    strips = 96
+    for i in range(strips):
+        pdf.set_fill_color(*_cert_band_color(i / (strips - 1.0)))
+        pdf.rect(0, height * i / strips, _CERT_BAND_W, height / strips + 0.15, style="F")
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_line_width(_CERT_BORDER)
+    pdf.rect(_CERT_CARD_X, _CERT_CARD_Y, _CERT_CARD_W, _CERT_CARD_H, style="DF")
+    pdf.set_line_width(0.2)
+
+
+def _cert_wordmark(pdf) -> None:
+    """The Senzing wordmark at the top of the card, as an image when one is available."""
+    image = _wordmark_on_light()
+    if image is not None:
+        height = 11.5
+        width = height * (image.size[0] / float(image.size[1]))
+        try:
+            pdf.image(image, x=_CERT_CX - width / 2.0, y=_CERT_Y_WORDMARK,
+                      w=width, h=height)
+            return
+        except Exception:
+            pass  # fall through to the drawn wordmark
+    # Fallback: set the wordmark as text, keeping the ember "z" that carries the brand.
+    pdf.set_font("Helvetica", "B", 36)
+    parts = [("Sen", INK), ("z", ACCENT), ("ing", INK)]
+    widths = [_width(pdf, text) for text, _ in parts]
+    x = _CERT_CX - sum(widths) / 2.0
+    for (text, color), width in zip(parts, widths):
+        pdf.set_text_color(*color)
+        pdf.text(x, _CERT_Y_WORDMARK + 9.2, text)
+        x += width
+
+
+def _cert_seal(pdf) -> None:
+    """The award seal between the two signature blocks."""
+    scallop, (cx, cy, inner), tails = _cert_seal_paths()
+    outline = getattr(pdf, "polygon", None)
+
+    def stroke(points, style: str) -> None:
+        if outline:
+            outline(points, style=style)
+            return
+        for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]):
+            pdf.line(x1, y1, x2, y2)  # no fill without polygon(); the outline still reads
+
+    pdf.set_draw_color(*ACCENT)
+    pdf.set_fill_color(255, 255, 255)
+    pdf.set_line_width(0.45)
+    for tail in tails:
+        stroke(tail, "DF")
+    stroke(scallop, "DF")  # filled, so it hides where the ribbon tails pass behind it
+    pdf.ellipse(cx - inner, cy - inner, inner * 2.0, inner * 2.0, style="D")
+    pdf.set_line_width(0.2)
+
+
+def _cert_signature_block(pdf, cx: float, value: str, label: str) -> None:
+    """One bottom block: a value over a rule, with its small-caps label beneath."""
+    _cert_line(pdf, "sig", value, _CERT_Y_SIG, INK, cx=cx,
+               max_w=_CERT_SIG_RULE_W + 18.0)
+    pdf.set_draw_color(*INK)
+    pdf.set_line_width(0.4)
+    pdf.line(cx - _CERT_SIG_RULE_W / 2.0, _CERT_Y_SIG_RULE,
+             cx + _CERT_SIG_RULE_W / 2.0, _CERT_Y_SIG_RULE)
+    pdf.set_line_width(0.2)
+    _cert_line(pdf, "label", label, _CERT_Y_SIG_LABEL, MUTED, cx=cx)
+
+
 def _render_certificate(pdf, recap: Recap) -> None:
     """Final page: a landscape Certificate of Completion (INV-100).
 
-    Rendered in landscape while every other page stays portrait; the page-number
-    footer is suppressed for it. Palette/typography come from the brand tokens.
+    Rendered in landscape while every other page stays portrait; the page-number footer
+    is suppressed for it. The layout follows the Senzing certificate template — see the
+    geometry constants above — and its palette and typography come from the brand tokens
+    (INV-081).
     """
     name, date, labels = _cert_fields(recap)
     # add_page first (so the previous page's footer renders normally), then suppress
@@ -1050,68 +1980,55 @@ def _render_certificate(pdf, recap: Recap) -> None:
     # The certificate is a fixed single-page design: disable the auto page-break so
     # bottom-anchored content cannot spill onto a spurious second landscape page.
     pdf.set_auto_page_break(False)
-    w, h = pdf.w, pdf.h  # landscape A4 ≈ 297 × 210 mm
 
-    # Double border: navy outer, ember inner.
-    pdf.set_draw_color(*NAVY)
-    pdf.set_line_width(1.2)
-    pdf.rect(10, 10, w - 20, h - 20, style="D")
-    pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(0.5)
-    pdf.rect(14, 14, w - 28, h - 28, style="D")
-    pdf.set_line_width(0.2)
-
-    pdf.set_xy(0, 30)
-    pdf.set_text_color(*NAVY)
-    pdf.set_font("Helvetica", "B", 30)
-    pdf.cell(w, 14, "Certificate of Completion", align="C")
+    _cert_backdrop(pdf, pdf.h)  # landscape A4 ≈ 297 × 210 mm
+    _cert_wordmark(pdf)
+    _cert_line(pdf, "eyebrow", _CERT_EYEBROW, _CERT_Y_EYEBROW, ACCENT)
+    _cert_line(pdf, "headline", _CERT_HEADLINE, _CERT_Y_HEADLINE, ACCENT)
+    _cert_line(pdf, "tagline", _CERT_TAGLINE, _CERT_Y_TAGLINE, INK)
 
     pdf.set_draw_color(*ACCENT)
-    pdf.set_line_width(0.8)
-    pdf.line(w / 2 - 42, 50, w / 2 + 42, 50)
+    pdf.set_line_width(0.85)
+    pdf.line(_CERT_CX - _CERT_RULE_W / 2.0, _CERT_Y_RULE,
+             _CERT_CX + _CERT_RULE_W / 2.0, _CERT_Y_RULE)
     pdf.set_line_width(0.2)
 
-    pdf.set_xy(0, 62)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "", 13)
-    pdf.cell(w, 8, "This certifies that", align="C")
+    _cert_line(pdf, "presented", _CERT_PRESENTED, _CERT_Y_PRESENTED, MUTED)
+    _cert_line(pdf, "name", name, _CERT_Y_NAME, INK, max_w=_CERT_LIST_W)
 
-    pdf.set_xy(0, 74)
-    pdf.set_text_color(*INK)
-    pdf.set_font("Helvetica", "B", 26)
-    pdf.cell(w, 14, _safe(name), align="C")
-
-    pdf.set_xy(0, 94)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "", 13)
-    pdf.cell(w, 8, "has completed the Senzing Bootcamp", align="C")
-    if date:
-        pdf.set_xy(0, 104)
-        pdf.set_font("Helvetica", "I", 11)
-        pdf.cell(w, 7, _safe(f"on {date}"), align="C")
-
+    y = _CERT_Y_CITATION
+    for line in _cert_wrap(pdf, "citation", _cert_citation(labels), _CERT_TEXT_W):
+        _cert_line(pdf, "citation", line, y, SLATE)
+        y += _CERT_LEAD_CITATION
     if labels:
-        pdf.set_xy(0, 122)
-        pdf.set_text_color(*NAVY)
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(w, 6, "Modules completed", align="C")
-        pdf.set_xy(24, 131)
-        pdf.set_text_color(*INK)
-        pdf.set_font("Helvetica", "", 10)
-        pdf.multi_cell(w - 48, 6, _safe("  ·  ".join(labels)), align="C")
+        # Anchored, not flowed from the citation: the module list has to start at a fixed
+        # place so its own capped growth is the only thing that can move on this page.
+        y = _CERT_Y_MODULES
+        style, spacing = _CERT_FONT["modules"][1:]
+        lines, size = _cert_module_layout(
+            labels, lambda s, pt: _cert_text_width(pdf, s, pt, style, spacing)
+        )
+        for line in lines:
+            _cert_line(pdf, "modules", line, y, SLATE, size=size)
+            y += _CERT_LEAD_MODULES
 
-    # ⚠️ The inner ember border's bottom edge sits at y = h - 14 (the rect above), so a
-    # line placed at h - 17 is clipped by it — text extraction reports the string present
-    # and correct while the glyphs are visually sliced in half. Both attribution lines
-    # must clear it: h - 28 and h - 22. Verify by rasterizing, never by pdftotext.
+    _cert_seal(pdf)
+    if date:
+        _cert_signature_block(
+            pdf, _CERT_CARD_X + _CERT_SIG_INSET + _CERT_SIG_RULE_W / 2.0,
+            date, _CERT_DATE_LABEL,
+        )
+    # ⚠️ Both attribution lines are bottom-anchored and must clear the card's ember
+    # border, whose bottom edge is at _CERT_CARD_Y + _CERT_CARD_H: a line under it is
+    # sliced in half by the stroke while text extraction still reports the string present
+    # and correct (INV-126). Verify by rasterizing the page, never by pdftotext.
     attribution = _cert_attribution(recap)
-    # One line keeps its long-standing h - 22; a second stacks above it at h - 28.
-    offsets = (22,) if len(attribution) == 1 else (28, 22)
-    pdf.set_text_color(*SLATE)
-    pdf.set_font("Helvetica", "I", 8)
-    for offset, line in zip(offsets, attribution):
-        pdf.set_xy(0, h - offset)
-        pdf.cell(w, 6, _safe(line), align="C")
+    _cert_signature_block(
+        pdf, _CERT_CARD_X + _CERT_CARD_W - _CERT_SIG_INSET - _CERT_SIG_RULE_W / 2.0,
+        attribution[0], _CERT_ISSUER_LABEL,
+    )
+    for line in attribution[1:]:
+        _cert_line(pdf, "colophon", line, _CERT_Y_COLOPHON, MUTED)
     # Leave suppress_footer set: this is the last page.
 
 
@@ -1163,8 +2080,12 @@ def _render_module_page(pdf, epw: float, mod) -> int:
         pdf.cell(epw, 5, _safe(f"Completed {_format_date(mod.date)}"))
     pdf.ln(24)
 
+    gaps = tuple(mod.missing_summary_blocks())
     for name in REQUIRED_SECTIONS:
-        _render_subsection(pdf, epw, name, mod.subsection(name))
+        _render_subsection(
+            pdf, epw, name, mod.subsection(name),
+            gaps if name == REQUIRED_SECTIONS[3] else (),
+        )
 
     # Any extra sub-sections (e.g. Duration) after the required set.
     for sub_h, content in mod.subsections:
@@ -1175,7 +2096,12 @@ def _render_module_page(pdf, epw: float, mod) -> int:
     return start
 
 
-def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> None:
+def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
+                       missing_blocks: Tuple[str, ...] = ()) -> None:
+    """Render one labeled subsection. ``missing_blocks`` names the End-of-Module Summary
+    blocks the recap did not record; each is rendered as "(not recorded)" so the three
+    blocks INV-103 requires are always *visible* on the page. A keepsake that silently
+    omits them looks complete, which is how they went missing without anyone noticing."""
     from_missing = content is None
     pdf.ln(1)
     # Colored accent tab + matching heading color per sub-section.
@@ -1190,7 +2116,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     pdf.ln(9)
     pdf.set_text_color(*INK)
     pdf.set_font("Helvetica", "", 10.5)
-    if from_missing or not any(l.strip() for l in content):
+    empty = from_missing or not any(l.strip() for l in content)
+    if empty and not missing_blocks:
         pdf.set_text_color(*SLATE)
         pdf.set_font("Helvetica", "I", 10)
         pdf.multi_cell(epw, 6, "(not recorded)")
@@ -1199,7 +2126,7 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
     index = 0
-    while index < len(content):
+    while index < len(content or []):
         line = content[index]
         # A run of pipe rows is ONE table and is drawn as a grid (INV-142). It is
         # handled here rather than in _render_line because a table spans lines and
@@ -1217,6 +2144,8 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]]) -> Non
             if _next_nonblank_is_bullet(content, index):
                 pdf.ln(_ITEM_GAP_MM)
         index += 1
+    for block in missing_blocks:
+        _render_line(pdf, epw, f"**{block}:** (not recorded)")
     pdf.ln(2)
 
 
@@ -1238,15 +2167,19 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
     """Embed a local visualization screenshot into the recap, best-effort and non-fatal.
 
     A missing/unreadable image, an fpdf2 build without image support, or a bad
-    file is skipped silently — an optional decoration must never break the
-    recap PDF (INV-048). Remote URLs are never fetched (offline — INV-081).
+    file is skipped — an optional decoration must never break the recap PDF
+    (INV-048) — but the skip is recorded and reported, never silent (INV-111):
+    the bootcamper's own screenshots are the most visual content in the keepsake,
+    and losing them used to produce no error, no warning, and a success line
+    reporting ~99% of characters rendered. Remote URLs are never fetched
+    (offline — INV-081).
     """
-    if re.match(r"^[A-Za-z][A-Za-z0-9+.\-]*://", path):
+    if IMAGE_URL_RE.match(path):
+        _record_image_outcome(path, "remote")
         return  # never fetch a remote URL (offline guarantee)
-    p = Path(path)
-    if not p.is_absolute():
-        p = Path.cwd() / p
-    if not p.is_file():
+    p = resolve_recap_image(path)
+    if p is None:
+        _record_image_outcome(path, "missing")
         return
     try:
         pdf.ln(1)
@@ -1260,8 +2193,13 @@ def _render_image(pdf, epw, path: str, alt: str = "") -> None:
             pdf.multi_cell(epw, 4.5, _safe(alt))
             pdf.set_text_color(*INK)
         pdf.ln(2)
-    except Exception:
-        return  # any embedding failure → skip the image, keep the PDF valid
+    except Exception as exc:
+        # Any embedding failure → skip the image, keep the PDF valid. Reported
+        # rather than swallowed: "found but unusable" needs a different remedy
+        # from "not found" (INV-111).
+        _record_image_outcome(path, f"unreadable ({exc.__class__.__name__})")
+        return
+    _record_image_outcome(path, "embedded")
 
 
 def _table_widths(header: List[str], rows: List[List[str]], epw: float) -> List[float]:
@@ -1409,9 +2347,22 @@ def _render_line(pdf, epw, line: str) -> None:
         pdf.set_font("Helvetica", "", 10.5)
         pdf.cell(6, 5.5, bullet)
         x = pdf.get_x()
+    force_new_line = bool(bm) and _normalize_heading(bm.group(1)) in _NEW_LINE_LABELS
     if bold_prefix:
         pdf.set_font("Helvetica", "B", 10.5)
-        pdf.cell(pdf.get_string_width(bold_prefix) + 1, 5.5, bold_prefix)
+        if force_new_line:
+            # Label on its own line; a blank-line gap, then the value starts fresh,
+            # indented, below it -- never hanging-indented under wherever the label
+            # happened to end.
+            pdf.multi_cell(epw - indent, 5.5, _safe(bm.group(1) + ":"))
+            pdf.ln(_ITEM_GAP_MM * 2)
+            # 12 mm matches where bullet TEXT starts (6 mm list indent + the 6 mm
+            # bullet-marker cell drawn above), so the paragraph lines up with the
+            # bullets in "What you accomplished"/"Files produced" above it.
+            indent += 12
+            pdf.set_x(pdf.l_margin + indent)
+        else:
+            pdf.cell(_width(pdf, bold_prefix) + 1, 5.5, _safe(bold_prefix))
     pdf.set_font("Helvetica", "", 10.5)
     remaining = epw - (pdf.get_x() - pdf.l_margin)
     # A long bold label (e.g. a "**Q:**" carrying a full question) leaves a narrow
@@ -1419,7 +2370,7 @@ def _render_line(pdf, epw, line: str) -> None:
     # A bare 20 mm floor is an order of magnitude too low to catch that: ~60 mm of a
     # 190 mm line clears it and still reads as a ribbon. Break once the label has
     # eaten half the width; short labels still render inline, which reads well.
-    if remaining < max(20.0, epw * 0.5):
+    if not force_new_line and remaining < max(20.0, epw * 0.5):
         indent = min(indent + 6, epw - 20)
         remaining = epw - indent
         pdf.ln(5.5)
@@ -1450,51 +2401,178 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
+# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centred line;
+# everything else is within a hair of 556. This writer has no font metrics of its own, and
+# the crude `len(text) * size * 0.52` it used before put the certificate's 38 pt headline
+# 8 mm off centre — visible on the page, invisible to text extraction.
+_HELV_W = {
+    " ": 278, "!": 278, '"': 355, "'": 191, "(": 333, ")": 333, "*": 389, ",": 278,
+    "-": 333, ".": 278, "/": 278, ":": 278, ";": 278, "[": 278, "]": 278, "|": 260,
+    "·": 278, "&": 667, "%": 889, "@": 1015,
+    "c": 500, "f": 278, "i": 222, "j": 222, "k": 500, "l": 222, "m": 833, "r": 333,
+    "s": 500, "t": 278, "v": 500, "w": 722, "x": 500, "y": 500, "z": 500,
+    "C": 722, "D": 722, "F": 611, "G": 778, "H": 722, "I": 278, "J": 500, "K": 667,
+    "L": 556, "M": 833, "N": 722, "O": 778, "Q": 778, "R": 722, "T": 611, "U": 722,
+    "W": 944, "Z": 611,
+}
+# Helvetica-Bold runs ~8% wider than Helvetica across mixed-case text; one factor is
+# accurate enough to centre a line, and far more accurate than ignoring the difference.
+_HELV_BOLD_FACTOR = 1.08
+
+
+def _stdlib_width(text: str, size: float, bold: bool, spacing: float = 0.0) -> float:
+    """Approximate width in points of `text` set in Helvetica at `size`."""
+    units = sum(_HELV_W.get(ch, 556) for ch in text)
+    width = units / 1000.0 * size * (_HELV_BOLD_FACTOR if bold else 1.0)
+    return width + spacing * max(0, len(text) - 1)
+
+
 def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
-    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100)."""
+    """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100).
+
+    Follows the same template geometry as the fpdf2 renderer — same constants, same
+    millimetre positions, converted to this writer's point space — so the fallback is a
+    plainer *rendering* of one design rather than a second design (INV-066/INV-126). What
+    it gives up: the wordmark is set as text instead of embedded, and italic degrades to
+    regular, because this writer embeds neither images nor an oblique face.
+    """
     name, date, labels = _cert_fields(recap)
     ops: List[str] = []
 
-    # Border rectangle in brand navy (path: rectangle + stroke).
-    nr, ng, nb = (c / 255.0 for c in NAVY)
-    ops.append(f"{nr:.2f} {ng:.2f} {nb:.2f} RG 1.2 w 22 22 {w - 44:.1f} {h - 44:.1f} re S")
+    def rgb(color, op: str) -> str:
+        r, g, b = (c / 255.0 for c in color)
+        return f"{r:.3f} {g:.3f} {b:.3f} {op}"
 
-    def center(text: str, font: str, size: float, y: float) -> None:
-        tw = len(text) * size * 0.52  # approximate Helvetica advance
-        x = max(24.0, (w - tw) / 2.0)
+    def flip(mm: float) -> float:
+        """A millimetre offset from the page top as a PDF point from the page bottom."""
+        return h - mm * _MM
+
+    def path(points, style: str, width: float, stroke_color=ACCENT) -> None:
+        """Stroke (and optionally fill white) a closed polygon given in mm."""
+        moves = [f"{x * _MM:.2f} {flip(y):.2f} {'m' if i == 0 else 'l'}"
+                 for i, (x, y) in enumerate(points)]
+        fill = "1 1 1 rg " if "F" in style else ""
         ops.append(
-            f"BT /{font} {size:.1f} Tf 1 0 0 1 {x:.1f} {y:.1f} Tm ({_pdf_escape(text)}) Tj ET"
+            f"{fill}{rgb(stroke_color, 'RG')} {width:.2f} w "
+            + " ".join(moves)
+            + (" h B" if "F" in style else " h S")
         )
 
-    y = h - 96
-    center("Certificate of Completion", "F2", 26, y)
-    y -= 54
-    center("This certifies that", "F1", 13, y)
-    y -= 34
-    center(name, "F2", 22, y)
-    y -= 38
-    center("has completed the Senzing Bootcamp", "F1", 13, y)
-    y -= 22
-    if date:
-        center(f"on {date}", "F1", 11, y)
-        y -= 30
-    else:
-        y -= 8
-    if labels:
-        center("Modules completed", "F2", 11, y)
-        y -= 18
-        for chunk in _wrap("  -  ".join(labels), 110):
-            center(chunk, "F1", 9, y)
-            y -= 14
+    def rule(x1: float, x2: float, y: float, width: float, color) -> None:
+        ops.append(
+            f"{rgb(color, 'RG')} {width:.2f} w {x1 * _MM:.2f} {flip(y):.2f} m "
+            f"{x2 * _MM:.2f} {flip(y):.2f} l S"
+        )
 
-    # Footer attribution, bottom-anchored so it matches the fpdf2 certificate rather
-    # than following the variable-length module list. 22 mm and 28 mm above the page
-    # bottom, expressed in points (1 mm ≈ 2.835 pt) — well clear of this renderer's
-    # border, whose bottom edge is at y = 22 pt.
+    def line(key: str, text: str, y: float, color, cx: float = _CERT_CX,
+             size: Optional[float] = None) -> None:
+        base, style, spacing = _CERT_FONT[key]
+        size = base if size is None else size
+        # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
+        # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
+        # and escaping twice prints the escape itself.
+        width = _stdlib_width(text, size, style == "B", spacing)
+        text = _pdf_escape(text)
+        x = cx * _MM - width / 2.0
+        # Italic degrades to regular: this writer embeds no oblique face (INV-066's
+        # "plainer but valid" rendering), and a fabricated slant is worse than none.
+        font = "F2" if style == "B" else "F1"
+        tc = f"{spacing:.2f} Tc " if spacing else ""
+        ops.append(
+            f"{rgb(color, 'rg')}\nBT /{font} {size:.1f} Tf {tc}"
+            f"1 0 0 1 {x:.2f} {flip(y):.2f} Tm ({text}) Tj"
+            + (" 0 Tc" if spacing else "")
+            + " ET"
+        )
+
+    def wrap(key: str, text: str, size: Optional[float] = None) -> List[str]:
+        base, style, spacing = _CERT_FONT[key]
+        size = base if size is None else size
+        return _wrap_to_width(
+            text,
+            _CERT_TEXT_W * _MM,
+            lambda s: _stdlib_width(s, size, style == "B", spacing),
+        )
+
+    # Gradient band, then the white card: the same two-layer backdrop the fpdf2
+    # renderer paints, in the same place (INV-066).
+    strips = 96
+    strip_h = h / strips
+    for i in range(strips):
+        color = _cert_band_color(i / (strips - 1.0))
+        ops.append(
+            f"{rgb(color, 'rg')} 0 {h - (i + 1) * strip_h:.2f} "
+            f"{_CERT_BAND_W * _MM:.2f} {strip_h + 0.4:.2f} re f"
+        )
+    ops.append(
+        f"1 1 1 rg {rgb(ACCENT, 'RG')} {_CERT_BORDER * _MM:.2f} w "
+        f"{_CERT_CARD_X * _MM:.2f} {flip(_CERT_CARD_Y + _CERT_CARD_H):.2f} "
+        f"{_CERT_CARD_W * _MM:.2f} {_CERT_CARD_H * _MM:.2f} re B"
+    )
+
+    # Wordmark. No image support in this writer, so it is set as text — with the ember
+    # "z" that carries the brand, exactly like the fpdf2 renderer's own fallback.
+    parts = [("Sen", INK), ("z", ACCENT), ("ing", INK)]
+    widths = [_stdlib_width(text, 36, True, 0.0) for text, _ in parts]
+    x = _CERT_CX * _MM - sum(widths) / 2.0
+    for (text, color), width in zip(parts, widths):
+        ops.append(
+            f"{rgb(color, 'rg')}\nBT /F2 36.0 Tf 1 0 0 1 {x:.2f} "
+            f"{flip(_CERT_Y_WORDMARK + 9.2):.2f} Tm ({_pdf_escape(text)}) Tj ET"
+        )
+        x += width
+
+    line("eyebrow", _CERT_EYEBROW, _CERT_Y_EYEBROW, ACCENT)
+    line("headline", _CERT_HEADLINE, _CERT_Y_HEADLINE, ACCENT)
+    line("tagline", _CERT_TAGLINE, _CERT_Y_TAGLINE, INK)
+    rule(_CERT_CX - _CERT_RULE_W / 2.0, _CERT_CX + _CERT_RULE_W / 2.0,
+         _CERT_Y_RULE, 0.85 * _MM, ACCENT)
+    line("presented", _CERT_PRESENTED, _CERT_Y_PRESENTED, MUTED)
+    line("name", name, _CERT_Y_NAME, INK)
+
+    y = _CERT_Y_CITATION
+    for chunk in wrap("citation", _cert_citation(labels)):
+        line("citation", chunk, y, SLATE)
+        y += _CERT_LEAD_CITATION
+    if labels:
+        y = _CERT_Y_MODULES
+        style, spacing = _CERT_FONT["modules"][1:]
+        chunks, size = _cert_module_layout(
+            labels,
+            lambda s, pt: _stdlib_width(s, pt, style == "B", spacing) / _MM,
+        )
+        for chunk in chunks:
+            line("modules", chunk, y, SLATE, size=size)
+            y += _CERT_LEAD_MODULES
+
+    # Award seal, from the shared geometry so both renderers stroke one shape.
+    scallop, (seal_cx, seal_cy, inner), tails = _cert_seal_paths()
+    for tail in tails:
+        path(tail, "DF", 0.45 * _MM)
+    path(scallop, "DF", 0.45 * _MM)
+    path(
+        [(seal_cx + inner * math.cos(math.tau * i / 48),
+          seal_cy + inner * math.sin(math.tau * i / 48)) for i in range(48)],
+        "D", 0.45 * _MM,
+    )
+
+    def signature(cx: float, value: str, label: str) -> None:
+        line("sig", value, _CERT_Y_SIG, INK, cx=cx)
+        rule(cx - _CERT_SIG_RULE_W / 2.0, cx + _CERT_SIG_RULE_W / 2.0,
+             _CERT_Y_SIG_RULE, 0.4 * _MM, INK)
+        line("label", label, _CERT_Y_SIG_LABEL, MUTED, cx=cx)
+
+    if date:
+        signature(_CERT_CARD_X + _CERT_SIG_INSET + _CERT_SIG_RULE_W / 2.0,
+                  date, _CERT_DATE_LABEL)
+    # Attribution: the issuer over the "ISSUED BY" rule, then the version colophon at
+    # the foot of the card — same content, same positions as the fpdf2 renderer, which is
+    # what INV-126 requires of the fallback.
     attribution = _cert_attribution(recap)
-    baselines = (62.4,) if len(attribution) == 1 else (79.4, 62.4)
-    for baseline, line in zip(baselines, attribution):
-        center(line, "F1", 8, baseline)
+    signature(_CERT_CARD_X + _CERT_CARD_W - _CERT_SIG_INSET - _CERT_SIG_RULE_W / 2.0,
+              attribution[0], _CERT_ISSUER_LABEL)
+    for text in attribution[1:]:
+        line("colophon", text, _CERT_Y_COLOPHON, MUTED)
     return "\n".join(ops)
 
 
@@ -1549,8 +2627,12 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                 else mod.title
             )
             add_wrapped(heading, "F2", 15, 0)
+            gaps = tuple(mod.missing_summary_blocks())
             for name in REQUIRED_SECTIONS:
-                _stdlib_subsection(add, add_wrapped, name, mod.subsection(name))
+                _stdlib_subsection(
+                    add, add_wrapped, name, mod.subsection(name),
+                    gaps if name == REQUIRED_SECTIONS[3] else (),
+                )
             for h, content in mod.subsections:
                 if _normalize_heading(h) not in {
                     _normalize_heading(r) for r in REQUIRED_SECTIONS
@@ -1631,16 +2713,18 @@ def _stdlib_table(add, text: str) -> None:
     add("", "F1", 3, 0)
 
 
-def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]) -> None:
+def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]],
+                       missing_blocks: Tuple[str, ...] = ()) -> None:
     add("", "F1", 4, 0)
     add(name, "F2", 12, 0)
-    if content is None or not any(l.strip() for l in content):
+    empty = content is None or not any(l.strip() for l in content)
+    if empty and not missing_blocks:
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
     spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
     active_label = ""
     cursor = 0
-    while cursor < len(content):
+    while cursor < len(content or []):
         index, line = cursor, content[cursor]
         # A table becomes aligned monospace columns here — there are no grid
         # primitives in this writer — but never the raw pipe source (INV-142).
@@ -1673,6 +2757,32 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if m and (spaced_section or active_label in _SPACED_LABELS):
             if _next_nonblank_is_bullet(content, index):
                 add("", "GAP", _ITEM_GAP_PT, 0)
+    for block in missing_blocks:
+        add_wrapped(f"{block}: (not recorded)", "F1", 10.5, 6.0)
+
+
+def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
+    """Greedy word wrap on measured width, where `measure(str)` returns a width.
+
+    Used by the certificate, whose lines are centred: a character-count wrap
+    (``_wrap``) cannot centre honestly, because "Illinois" and "MMMMMMMM" are the same
+    number of characters and nowhere near the same width. Both renderers pass their own
+    `measure`, so neither wraps the certificate differently from the other (INV-066).
+    """
+    words = text.split()
+    if not words:
+        return [""]
+    lines: List[str] = []
+    current = words[0]
+    for word in words[1:]:
+        candidate = current + " " + word
+        if measure(candidate) <= max_w:
+            current = candidate
+        else:
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
 
 
 def _wrap(text: str, width: int) -> List[str]:
@@ -1821,6 +2931,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--input", default=DEFAULT_INPUT)
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument(
+        "--preferences",
+        default=str(DEFAULT_PREFERENCES),
+        help=(
+            "Bootcamp preferences YAML. Its top-level `name:` is the certificate name "
+            "the Bootcamper was asked for (INV-113) and outranks the recap header."
+        ),
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="Verify required sections exist; do not render.",
@@ -1846,14 +2964,28 @@ def main(argv: Optional[List[str]] = None) -> int:
     expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
     audit = audit_recap(recap, source_text, expected or None)
 
+    # Resolve the recap's images against the recap's own directory, not the process
+    # working directory — the paths are document-relative (graduation Step 1a).
+    set_image_context(inp)
+    referenced_images = recap_image_targets(source_text)
+
     if args.check:
         problems = audit.fatal + audit.warnings
+        # An `![](...)` target that resolves to no file would be dropped from the
+        # PDF; report it here, where it can still be fixed.
+        problems = problems + [
+            f"embedded image not found: {target} (relative to {inp.parent})"
+            for target in unresolvable_image_targets(source_text)
+        ]
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
             sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
-        print("Recap complete: all module sections carry the required subsections.")
+        print(
+            "Recap complete: all module sections carry the required subsections, "
+            "and every End-of-Module Summary carries its labeled blocks."
+        )
         return 0
 
     out = Path(args.output)
@@ -1874,15 +3006,44 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         return 1
 
+    # The certificate name the Bootcamper was asked for lives in preferences (INV-113);
+    # the recap header carries whatever was auto-detected at the start of the run. Prefer
+    # the answer, and say so when the two disagree — a silent divergence is what printed a
+    # rejected handle on a signed certificate (INV-111).
+    preferred_name = read_preferences_name(Path(args.preferences))
+    set_certificate_name_override(preferred_name)
+    header_name = recap_certificate_name(recap)
+    if preferred_name and header_name and preferred_name != header_name:
+        sys.stderr.write(
+            f'NOTE: certificate name "{preferred_name}" from {args.preferences} '
+            f'differs from "{header_name}" in {inp}; printing the preferences value '
+            f'(it is the answer to the certificate-name question). Update the recap\'s '
+            f'"**Bootcamper:**" line so both agree.\n'
+        )
+
     # Input-quality warning, emitted once (the fpdf2 renderer itself runs two
     # passes). Never fatal: graduation is non-blocking and a certificate with a
     # placeholder name still beats no PDF — but it must not be silent.
     if recap_missing_certificate_name(recap):
         sys.stderr.write(
-            f'WARNING: no bootcamper name found in {inp}; the Certificate of '
-            f'Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
+            f'WARNING: no bootcamper name found in {inp} or {args.preferences}; the '
+            f'Certificate of Completion will read "{CERTIFICATE_NAME_PLACEHOLDER}". Add a '
             f'"**Bootcamper:** <name>" line to the recap preamble to fix it.\n'
         )
+    else:
+        # A recorded-but-unprintable name is the same defect with a worse failure mode: it
+        # looks recorded, so nothing upstream asks about it (INV-113/INV-143).
+        unprintable, lost = recap_certificate_name_unprintable(recap)
+        if unprintable:
+            printable = _safe(unprintable).strip()
+            shown = printable or CERTIFICATE_NAME_PLACEHOLDER
+            sys.stderr.write(
+                f'WARNING: the bootcamper name "{unprintable}" in {inp} contains '
+                f'{len(lost)} character(s) the recap PDF\'s built-in fonts cannot render '
+                f'({" ".join(lost)}); the Certificate of Completion will read "{shown}". '
+                f'Ask the bootcamper for the name to print (INV-113) and record it as '
+                f'"**Bootcamper:** <name>".\n'
+            )
 
     used = "fpdf2"
     ok = render_with_fpdf2(recap, out)
@@ -1891,7 +3052,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         ok = render_with_stdlib(recap, out)
 
     if ok:
-        # Recognisable but imperfect: warn and still ship the PDF (never blocks;
+        # Characters the built-in fonts could not render were dropped from the page during
+        # the render above. Reported here, once, for the whole run — after both fpdf2
+        # passes (and any stdlib fallback) have been through the content, so nothing is
+        # missed and nothing is counted twice. The certificate-name warning above covers
+        # one field; this covers the body, which is where the loss was silent.
+        dropped = dropped_character_warning()
+        if dropped:
+            sys.stderr.write(dropped)
+        # Recognizable but imperfect: warn and still ship the PDF (never blocks;
         # graduation is non-blocking). Distinct from the fatal class above.
         if audit.warnings:
             sys.stderr.write(
@@ -1900,8 +3069,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             for problem in audit.warnings:
                 sys.stderr.write(f"  - {problem}\n")
         # Report retention on success too, so partial truncation is visible
-        # without extracting the PDF's text.
-        print(f"PDF generated: {out} (renderer: {used}, {audit.retention_note()})")
+        # without extracting the PDF's text — and the embedded-image count
+        # alongside it, which retention structurally cannot see (INV-110).
+        note = audit.retention_note()
+        if referenced_images:
+            note = f"{note}, {image_embed_note(len(referenced_images))}"
+            if used == "stdlib":
+                # The stdlib renderer embeds no images at all; say so rather than
+                # letting "embedded 0 of 6" read as a lookup failure.
+                note = f"{note} (the stdlib renderer embeds no images)"
+        print(f"PDF generated: {out} (renderer: {used}, {note})")
         return 0
 
     sys.stderr.write("Failed to generate a PDF by any strategy.\n")

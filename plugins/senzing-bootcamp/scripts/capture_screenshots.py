@@ -78,6 +78,13 @@ from urllib.parse import urlparse, urlencode
 # Ids are the app's DOM ids (`tab-<id>`, `navbtn-<id>`) and are contract, not an
 # implementation detail, so a server written in any language (INV-090) is capturable.
 # The slug is what makes a caption hard to get wrong.
+#
+# ⛔ `network` and `merges` are RESERVED, not tabs to capture from a current app — a
+# current server MUST NOT serve them, and DEFAULT_TABS excludes them. They stay here
+# so this helper still names them correctly when pointed at a snapshot saved by an
+# earlier eight-tab run, and so nothing reuses those ids for a different tab. Deleting
+# them as "dead" silently re-slugs old snapshots to `<id>-<id>.png` (see _out_path's
+# fallback) and breaks graduation's caption mapping.
 TABS = {
     "graph": ("entity-graph", "Entity Graph"),
     "network": ("relationship-network", "Relationship Network"),
@@ -93,9 +100,36 @@ TABS = {
 # data is absent simply renders its empty state; the caller keeps what is useful.
 DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
 
+# The RESERVED ids, split out from TABS so no user-visible string can enumerate them as
+# live. `TABS` still accepts them (an old eight-tab snapshot must keep its slugs), but
+# `--help` and the unknown-id error name the live six only — those strings are built at
+# runtime and carry none of the framing the comment above TABS does, so a reader of
+# `--help` was being shown eight capturable tabs for a six-tab app (INV-155).
+RESERVED_TABS = tuple(t for t in TABS if t not in DEFAULT_TABS)
+
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
 _CHROME_VIRTUAL_TIME_MS = 15000
+
+# Tabs whose content ANIMATES to its final position need longer than the static ones.
+# This is settle time, not a timeout: the Entity Graph runs a d3 force simulation, and a
+# capture taken before it spreads shows every node bunched in a corner — a valid PNG of a
+# graph that looks like it found nothing. The static tabs (tables, histograms) are done as
+# soon as their data lands, so raising the budget globally would slow every capture to pay
+# for one tab.
+_CHROME_VIRTUAL_TIME_MS_ANIMATED = 30000
+_ANIMATED_TABS = frozenset({"graph", "network"})
+
+
+def _virtual_time_ms(tab: str = "") -> int:
+    """Virtual-time budget for ``tab`` — longer where the layout animates."""
+    return (
+        _CHROME_VIRTUAL_TIME_MS_ANIMATED
+        if tab in _ANIMATED_TABS
+        else _CHROME_VIRTUAL_TIME_MS
+    )
+
+
 _WINDOW = (1440, 900)
 
 # Injected into a temp copy of a snapshot. Retries because the app activates its
@@ -120,6 +154,12 @@ _ACTIVATE_JS = """
 })();
 </script>
 """
+
+
+_NON_LOCAL_TARGET = (
+    "refusing non-local target {target!r}: only local files and "
+    "localhost URLs are captured (offline guarantee, INV-091)"
+)
 
 
 def _is_local_target(target: str) -> bool:
@@ -156,12 +196,20 @@ def _tab_url(url: str, tab: str, query: str = "") -> str:
 
 
 def _page_source(target: str, is_url: bool) -> str:
-    """The page's HTML, for the tab-presence pre-flight. Empty string if unreadable."""
+    """The page's HTML, for the tab-presence pre-flight. Empty string if unreadable.
+
+    ⛔ The locality check is *outside* the ``try`` on purpose. Everything inside it
+    degrades to ``""`` so an unreachable page never blocks graduation — but a non-local
+    target must never reach ``urlopen`` at all, and swallowing that as "unreadable"
+    would fetch it first and then hide the fact (offline guarantee, INV-091).
+    """
+    if is_url and not _is_local_target(target):
+        raise ValueError(_NON_LOCAL_TARGET.format(target=target))
     try:
         if is_url:
             import urllib.request
 
-            with urllib.request.urlopen(target, timeout=10) as response:  # localhost only
+            with urllib.request.urlopen(target, timeout=10) as response:
                 return response.read().decode("utf-8", "replace")
         return Path(target).read_text(encoding="utf-8", errors="replace")
     except Exception:
@@ -268,8 +316,68 @@ def _capture_selenium(url: str, out: Path) -> bool:
             pass
 
 
-def _chrome_exe():
-    for cand in (
+# Where Windows installers put Chrome and Edge, relative to an environment variable.
+#
+# Windows puts neither browser on `PATH`, so `shutil.which()` finds nothing while both
+# executables sit on disk — which is how a Windows 11 machine carrying Edge *and* Chrome
+# reported "No headless screenshot capability available" and lost every recap screenshot.
+# The variables are expanded at call time rather than hard-coded: the drive letter varies,
+# and `Program Files` is localized on non-English installs.
+_WINDOWS_BROWSER_PATHS = (
+    ("PROGRAMFILES", r"Google\Chrome\Application\chrome.exe"),
+    ("PROGRAMFILES(X86)", r"Google\Chrome\Application\chrome.exe"),
+    ("LOCALAPPDATA", r"Google\Chrome\Application\chrome.exe"),
+    ("PROGRAMFILES", r"Microsoft\Edge\Application\msedge.exe"),
+    ("PROGRAMFILES(X86)", r"Microsoft\Edge\Application\msedge.exe"),
+    ("LOCALAPPDATA", r"Microsoft\Edge\Application\msedge.exe"),
+)
+
+# Registry fallback for a browser installed somewhere non-standard.
+_WINDOWS_APP_PATHS_KEY = r"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths"
+_WINDOWS_APP_PATHS_EXES = ("chrome.exe", "msedge.exe")
+
+
+def _windows_browser_candidates() -> list:
+    """Absolute Chrome/Edge paths to try on Windows, in preference order.
+
+    Returned whether or not they exist, so the failure message can name what was
+    searched — being told a capability is absent when it is present sends the reader to
+    install software they already have.
+    """
+    candidates = []
+    for variable, relative in _WINDOWS_BROWSER_PATHS:
+        base = os.environ.get(variable)
+        if base:
+            candidates.append(os.path.join(base, relative))
+    return candidates
+
+
+def _windows_registry_browsers() -> list:
+    """Chrome/Edge paths registered under `App Paths`, best-effort.
+
+    Any failure — no `winreg` (non-Windows), key absent, permission denied — yields
+    nothing and leaves the path probe as the answer, never an exception.
+    """
+    try:
+        import winreg  # type: ignore
+    except Exception:
+        return []
+    found = []
+    for exe in _WINDOWS_APP_PATHS_EXES:
+        for root in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+            try:
+                with winreg.OpenKey(root, f"{_WINDOWS_APP_PATHS_KEY}\\{exe}") as key:
+                    value = winreg.QueryValue(key, None)
+            except Exception:
+                continue
+            if value:
+                found.append(value.strip('"'))
+    return found
+
+
+def _chrome_search_paths() -> list:
+    """Every location `_chrome_exe` inspects, in order — the lookup, made reportable."""
+    paths = [
         "google-chrome",
         "google-chrome-stable",
         "chromium",
@@ -281,8 +389,16 @@ def _chrome_exe():
         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
         "/Applications/Chromium.app/Contents/MacOS/Chromium",
         "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
-    ):
-        if "/" in cand:
+    ]
+    if os.name == "nt":
+        paths.extend(_windows_browser_candidates())
+        paths.extend(_windows_registry_browsers())
+    return paths
+
+
+def _chrome_exe():
+    for cand in _chrome_search_paths():
+        if os.sep in cand or "/" in cand:
             if os.path.exists(cand):
                 return cand
         elif shutil.which(cand):
@@ -303,7 +419,7 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
                 "--disable-gpu",
                 "--hide-scrollbars",
                 f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
-                f"--virtual-time-budget={_CHROME_VIRTUAL_TIME_MS}",
+                f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
                 f"--screenshot={out}",
                 url,
             ],
@@ -347,13 +463,21 @@ _BACKENDS = (
 )
 
 
-def _capture_one(url: str, out: Path, backend=None):
+# The tab currently being captured, so a backend can size its settle time without every
+# backend signature growing a parameter — `_BACKENDS` is called uniformly, and tests
+# substitute two-argument callables for it.
+_CURRENT_TAB = ""
+
+
+def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     """Capture ``url`` to ``out``; return the backend that worked, else None.
 
     Returning the winner lets the caller reuse it for the remaining tabs instead of
     re-walking the list — which would multiply the cost of every missing backend by
     the number of tabs.
     """
+    global _CURRENT_TAB
+    _CURRENT_TAB = tab
     for candidate in (backend,) if backend else _BACKENDS:
         if candidate(url, out):
             return candidate
@@ -376,7 +500,16 @@ def resolve_tabs(spec: str) -> list:
             unknown.append(raw)
     if unknown:
         raise ValueError(
-            f"unknown tab id(s): {', '.join(unknown)}. Known ids: {', '.join(TABS)}"
+            f"unknown tab id(s): {', '.join(unknown)}. Tab ids: {', '.join(DEFAULT_TABS)}"
+        )
+    retired = [t for t in wanted if t in RESERVED_TABS]
+    if retired:
+        # Accepted, so an old eight-tab snapshot still captures under its own slugs —
+        # but say so, or a caller who read a stale list never learns the tab is gone.
+        sys.stderr.write(
+            "note: %s names a tab the current app no longer serves; it is kept only for "
+            "snapshots saved before the tab set was fixed at six. A current app will "
+            "report it as not present.\n" % ", ".join(retired)
         )
     return wanted
 
@@ -391,10 +524,7 @@ def capture(
 ) -> list:
     """Capture one PNG per tab; return ``(path, label)`` for each one written."""
     if not _is_local_target(target):
-        raise ValueError(
-            f"refusing non-local target {target!r}: only local files and "
-            "localhost URLs are captured (offline guarantee, INV-091)"
-        )
+        raise ValueError(_NON_LOCAL_TARGET.format(target=target))
     out_dir.mkdir(parents=True, exist_ok=True)
     html = None if is_url else Path(target)
     if html is not None and not html.is_file():
@@ -411,7 +541,7 @@ def capture(
             else:
                 temp = _snapshot_copy(html, tab)
                 url = _to_url(str(temp))
-            winner = _capture_one(url, out, working_backend)
+            winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner
                 written.append((out, TABS[tab][1]))
@@ -450,8 +580,8 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--tabs",
         default="",
-        help=f"Comma-separated tab ids (default: {','.join(DEFAULT_TABS)}). "
-        f"Known: {','.join(TABS)}.",
+        help=f"Comma-separated tab ids (default, and the app's full tab set: "
+        f"{','.join(DEFAULT_TABS)}).",
     )
     ap.add_argument(
         "--query",
@@ -479,6 +609,12 @@ def main(argv=None) -> int:
 
     target = args.url or args.html
     is_url = bool(args.url)
+    # Refuse a non-local target *before* the pre-flight below reads the page. The same
+    # check in capture() runs later, which is too late to keep the promise: the
+    # pre-flight would already have fetched the remote host (offline guarantee, INV-091).
+    if not _is_local_target(target):
+        print(_NON_LOCAL_TARGET.format(target=target), file=sys.stderr)
+        return 1
     if not is_url and not Path(target).is_file():
         print(f"no such HTML file: {target}", file=sys.stderr)
         return 1
@@ -510,12 +646,31 @@ def main(argv=None) -> int:
         return 1
 
     if not written:
-        print(
-            "No headless screenshot capability available (tried Playwright, "
-            "Selenium, headless Chrome/Chromium, wkhtmltoimage). Skipping "
-            "screenshots; keep the HTML link instead.",
-            file=sys.stderr,
-        )
+        # Two different failures used to share one message, and the shared wording named
+        # the wrong cause: a Windows machine with Edge and Chrome installed was told no
+        # capability was available, which sends the reader to install software they
+        # already have. Distinguish "nothing to run" from "it ran and produced nothing"
+        # (INV-122 requires the reported reason to be the actual one).
+        browser = _chrome_exe()
+        if browser is None:
+            searched = "; ".join(_chrome_search_paths())
+            print(
+                "No headless screenshot capability available. Tried Playwright, "
+                "Selenium, headless Chrome/Chromium, wkhtmltoimage. No Chrome, "
+                "Chromium or Edge executable was found — searched: "
+                f"{searched}. If a browser is installed elsewhere, put it on PATH. "
+                "Skipping screenshots; keep the HTML link instead.",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                f"A browser was found ({browser}) but every capture attempt failed, so "
+                "no image was written. This is not a missing install — do not install "
+                "anything. Re-run and check the browser's own error output; if the "
+                "target is a live server, confirm it is still serving. Skipping "
+                "screenshots; keep the HTML link instead.",
+                file=sys.stderr,
+            )
         return 2
 
     captured = [p for p, _ in written]

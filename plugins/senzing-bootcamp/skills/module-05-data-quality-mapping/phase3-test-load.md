@@ -44,6 +44,15 @@ registration via `sdk_guide(topic='configure')` (in the `programming_language`),
 generated file under `src/` (e.g. `src/load/`) per INV-018 — it loads the current default config,
 registers the code, and sets it as the new default, idempotently — and run it first. Never rely on Module 2's default config, which predates data collection.
 
+⚠️ **If this phase's sandbox database was created fresh, seed its default configuration first.** The
+registration snippet reads the current default config and builds from it, so against a
+just-schema-created datastore it fails with `SENZ7221
+EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID` — a different failure from the `SENZ2207` above, and one
+whose own `explain_error_code` guidance does not name the cause. Seed via the **`init_default_config`**
+alternative in the same `sdk_guide(topic='configure')` response (see
+`../module-02-sdk-setup/SKILL.md` → Step 8a), then register. Where `mapping_workflow` step 6 creates
+and initializes the sandbox database itself, this is already handled — confirm rather than assume.
+
 **Checkpoint:** write step 21a.
 
 ### 22. Test data loading
@@ -271,6 +280,11 @@ exit code was.
 - Detect encoding in the profiling step. Convert to UTF-8 in the transformation program.
 - Non-Latin scripts: `search_docs(query="globalization", category="globalization")`.
 - Strip the UTF-8 BOM from Windows CSV files. JSON libraries handle special character escaping.
+- That covers a BOM arriving in **input** data. The more damaging case is a BOM you *write*: on
+  PowerShell 5.1, `Out-File -Encoding utf8` prefixes the file it creates, so record 1 of a generated
+  JSONL fails to parse while the rest are fine — which reads as one bad source record, not an
+  encoding fault. See `../bootcamp-onboarding/ground-rules.md` → "Windows and PowerShell" before
+  writing any generated file through PowerShell.
 
 ## Hooks
 

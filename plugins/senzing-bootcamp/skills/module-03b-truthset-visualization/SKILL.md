@@ -72,9 +72,15 @@ When the bootcamper hits an error during this module:
 ## Truth Set source
 
 The Senzing MCP server is the primary and preferred TruthSet source; it always takes precedence.
-Only when `get_sample_data` exposes no named TruthSet (the response holds only the CORD collections:
-Las Vegas, London, Moscow) does this module (Step 1) fall back to a sanctioned external source
-for the demo TruthSet DATA.
+Retrieve it with **`get_sample_data(dataset='truthset')`** — `dataset` is a required parameter, so a
+bare `get_sample_data()` call fails rather than reporting availability (INV-136). Discover what is
+available with `dataset='list'` and read `available_datasets`. Only when that listing exposes **no**
+`truthset` entry does this module (Step 1) fall back to a sanctioned external source for the demo
+TruthSet DATA.
+
+> Verified on MCP server 1.32.1, 2026-07-29: `truthset` is listed with `available: true` alongside the
+> three CORD collections, so the fallback is exceptional, not routine. Re-verify rather than trusting
+> this note (INV-080). Full classification and the degradation path: `phase1-visualization.md`, 1.1.
 
 - **Sanctioned source:** reference it only by its registry identifier `senzing_truthset_demo`,
   declared in `config/fallback_sources.yaml`. Never embed a raw URL. The registry is the single

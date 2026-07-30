@@ -112,12 +112,27 @@ RETIRED_TERMS = (
         "INV-078",
         "inclusion driven by the Bootcamp preparation selection",
     ),
+    (
+        '"Claude app" / "Claude application" for an interface',
+        re.compile(r"\bClaude app(?:lication)?\b", re.IGNORECASE),
+        "INV-158",
+        'the interface by name: "Claude Desktop", "Claude Code CLI", '
+        '"the Claude web app", "a Claude IDE extension"',
+    ),
 )
 
 
 def shipped_files():
-    """Every file a bootcamper receives, excluding generated caches and binaries."""
-    for path in sorted(PLUGIN.rglob("*")):
+    """Every file a bootcamper receives, excluding generated caches and binaries.
+
+    Includes the repo-root install docs (`README.md`, `docs/*.md`): `propagate-to-public`
+    mirrors both into the public repo as user-facing content, so a retired term reads to a
+    bootcamper there exactly as it would inside the plugin. Leaving them out is how
+    "the Claude app" survived in the install instructions (INV-158).
+    """
+    roots = list(sorted(PLUGIN.rglob("*")))
+    roots += [REPO_ROOT / "README.md"] + sorted((REPO_ROOT / "docs").glob("*.md"))
+    for path in roots:
         if not path.is_file():
             continue
         if path.suffix not in (".md", ".py", ".json"):

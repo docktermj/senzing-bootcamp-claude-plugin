@@ -56,7 +56,13 @@ from records that merely look similar, which is the whole point of the exercise.
 
 ### End-of-Module Summary
 
-Built a working vocabulary for the hands-on modules that follow this one.
+**What you accomplished:** Built a working vocabulary for the hands-on modules that
+follow this one, and confirmed the two failure modes with the knowledge check.
+
+**Files produced:** (no files — conceptual primer)
+
+**Why it matters:** Every later module builds on this vocabulary, so the mapping and
+loading work has words for what it is doing.
 """
 
 # H2 headings but no recognised H3 sub-headings: the shape of the discoveries
@@ -268,6 +274,54 @@ def load_generator():
     return module
 
 
+def drawn_runs_by_page(path):
+    """Drawn text runs grouped per page: ``[(page_width, [(x, y, text), ...]), ...]``.
+
+    Needed wherever a bound depends on the page: the recap mixes orientations, since the
+    Certificate of Completion is landscape (INV-100). Pages are read through the page
+    tree's ``/Kids`` order and each page's own ``/Contents`` stream — never by walking
+    every ``stream ... endstream`` in file order, because embedded images are streams too
+    and counting one as a page silently shifts every later page's width.
+    """
+    import zlib
+
+    with open(path, "rb") as handle:
+        raw = handle.read()
+    objects = {
+        int(m.group(1)): m.group(2)
+        for m in re.finditer(rb"(\d+) 0 obj\r?\n(.*?)\r?\nendobj", raw, re.S)
+    }
+    tree = next((b for b in objects.values() if b"/Type /Pages" in b), b"")
+    kids = re.search(rb"/Kids \[(.*?)\]", tree, re.S)
+    default = re.search(rb"/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]", tree)
+    pattern = re.compile(r"([\d.]+)\s+([\d.]+)\s+(?:Td|Tm)\b(.*?)\bTj", re.S)
+    pages = []
+    for number in (int(n) for n in re.findall(rb"(\d+) 0 R", kids.group(1) if kids else b"")):
+        body = objects.get(number, b"")
+        box = re.search(rb"/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]", body) or default
+        contents = re.search(rb"/Contents (\d+) 0 R", body)
+        if not (box and contents):
+            continue
+        stream = re.search(
+            rb"stream\r?\n(.*?)\r?\nendstream", objects.get(int(contents.group(1)), b""), re.S
+        )
+        if not stream:
+            continue
+        try:
+            body = zlib.decompressobj().decompress(stream.group(1))
+        except zlib.error:
+            body = stream.group(1)
+        runs = []
+        for match in pattern.finditer(body.decode("latin-1", "replace")):
+            text = re.findall(r"\((.*?)\)\s*$", match.group(3).strip())
+            if text:
+                runs.append(
+                    (round(float(match.group(1)), 1), round(float(match.group(2)), 1), text[0])
+                )
+        pages.append((float(box.group(1)), runs))
+    return pages
+
+
 def drawn_runs(path):
     """Every drawn text run as (x, y, text) in points.
 
@@ -336,16 +390,22 @@ class CertificateCarriesThePluginVersion(unittest.TestCase):
             "the existing attribution line must survive",
         )
 
-    def test_both_attribution_lines_clear_the_inner_border(self):
-        """The ember border's bottom edge is at h - 14 mm; a line at h - 17 is clipped.
+    def test_both_attribution_lines_clear_the_card_border(self):
+        """A line laid over the card's ember border is sliced in half by the stroke.
 
         Text extraction reported the string present and correct while the glyphs were
-        visually sliced in half, so this asserts geometry, not presence.
+        visually cut, so this asserts geometry, not presence. The bound is derived from
+        the certificate's own constants rather than typed in, so moving the card moves
+        the test with it.
         """
         module = load_generator()
         runs = drawn_runs(render_to(SPACING_RECAP))
-        # Landscape A4 height = 210 mm; the border bottom sits 14 mm above the page
-        # bottom, i.e. at y = 14 mm in fpdf2's top-down space.
+        # Landscape A4 is 210 mm tall. The card's bottom edge is stroked, centred on the
+        # path, so the ink reaches half a line width past it; both attribution lines must
+        # sit above the top of that stroke.
+        border_top = (
+            210.0 - module._CERT_CARD_Y - module._CERT_CARD_H - module._CERT_BORDER / 2.0
+        ) * 72.0 / 25.4
         attribution = [
             (y, t) for _x, y, t in runs
             if t.strip() == "Senzing Bootcamp" or "Claude plugin v" in t
@@ -353,9 +413,8 @@ class CertificateCarriesThePluginVersion(unittest.TestCase):
         self.assertEqual(2, len(attribution), "expected exactly two attribution lines")
         for y, text in attribution:
             with self.subTest(text=text):
-                # y here is a PDF baseline in points from the page bottom; both lines
-                # must sit above the 14 mm (≈39.7 pt) border.
-                self.assertGreater(y, 39.7, f"{text!r} is clipped by the inner border")
+                # y is a PDF baseline in points from the page bottom.
+                self.assertGreater(y, border_top, f"{text!r} is clipped by the border")
         self.assertEqual(2, len(module._cert_attribution(module.parse_recap(SPACING_RECAP))))
 
     def test_partition_meta_docstring_matches_the_code(self):
@@ -651,8 +710,16 @@ class TablesInTheRecapRenderAsTables(unittest.TestCase):
 
     def test_every_cell_renders_inside_the_text_column(self):
         """Positional, not presence: off-page content extracts fine (INV-121/INV-129)."""
-        page_w, margin = 595.28, 10.0
-        offenders = [(x, t) for x, _y, t in self.runs if x < margin or x > page_w - margin]
+        margin = 10.0
+        # Per page, not one fixed width: the recap mixes orientations (INV-100), so a
+        # portrait bound would report the landscape certificate's right-hand signature
+        # block as off-page.
+        offenders = [
+            (x, text)
+            for page_w, runs in drawn_runs_by_page(self.pdf)
+            for x, _y, text in runs
+            if x < margin or x > page_w - margin
+        ]
         self.assertEqual([], offenders, f"text drawn outside the page: {offenders[:5]}")
 
     def test_the_stdlib_fallback_also_renders_a_table(self):

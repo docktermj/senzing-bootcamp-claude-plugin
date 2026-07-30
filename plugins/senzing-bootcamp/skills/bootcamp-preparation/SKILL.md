@@ -169,6 +169,11 @@ write in Step 6. Keep the list in module order so the journey map and transition
 
 ⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
 
+**Before asking, tell them the choice is not permanent** — that they can change it any time
+("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-005 requires the
+👉 question to end the turn, so nothing can follow it, and a reassurance delivered after the answer
+cannot inform the choice it was meant to inform.
+
 > 👉 **How much detail would you like in the bootcamp output? Reply with a number:**
 >
 > 1. **minimal** — near-zero output: only questions, results, and required banners/summaries; no explanations, code walkthroughs, or step recaps. Best for experts who want to move fast.
@@ -196,10 +201,10 @@ For `minimal`, every category is `0`. `minimal` reduces only *explanatory* outpu
 suppresses required output — every 👉 question (INV-005), gate, module banner (INV-079),
 end-of-module summary (INV-032), and the recap (INV-048) still appear.
 
-Tell them they can change it any time ("change verbosity", or "more code walkthroughs"). This is
-not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007): wait for their reply.
-If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that decline
-as choosing the recommended `standard` and say so — never assume a level before they have replied.
+This is not a ⛔ gate, but it is still a 👉 question the bootcamper answers (INV-007): wait for their
+reply. If they explicitly decline to choose (e.g. "no preference", "you pick", "skip"), treat that
+decline as choosing the recommended `standard` and say so — never assume a level before they have
+replied. (The can-change-it-any-time reassurance belongs **before** the question, above — not here.)
 
 ## 3a. Model guidance — no question (retired)
 
@@ -245,8 +250,17 @@ questions.
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6
   consolidated write so the recap and graduation report can address the bootcamper by name; if
   none is available, leave `name` unset. Never ask for it and never block on it.
-- Call `get_capabilities` or `sdk_guide` on the Senzing MCP server for the supported programming
-  languages on that platform.
+- Call **`get_capabilities`** on the Senzing MCP server for the supported programming languages.
+  It is the tool that carries that fact, and in the server's model the language set is
+  **platform-independent**: Python, Java and C# official, Rust and TypeScript/Node.js
+  community-maintained wrappers (verified 2026-07-29, server 1.32.2). What varies per platform is
+  the install *mechanism*, not which languages exist — so do **not** route this lookup to
+  `sdk_guide`: `sdk_guide(topic='install', platform=…)` returns install commands, env vars, paths
+  and gotchas and **no language list at all**, and with no `platform` it returns the platform
+  decision tree rather than a language one (both confirmed live, same server and date). The one
+  genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
+  only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules
+  below and in Module 2's routing, which is where it belongs.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
 - Present the MCP-returned options as a **numbered list**. Annotate an option **only where the

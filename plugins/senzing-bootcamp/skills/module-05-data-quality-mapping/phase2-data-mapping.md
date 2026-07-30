@@ -73,7 +73,7 @@ exists (`mapping_workflow` or `entity_specification`, with the reason when it is
 {"data_source":"NOMINO-RISK","current_step":3,"validation_rejections":["<raw rejection text, unedited>"],"mapper_source":"entity_specification","mapper_source_reason":"step-3 validation rejected twice with a truncated error naming no field"}
 ```
 
-Keep the rejection text unedited — truncating or summarising it destroys the only evidence the
+Keep the rejection text unedited — truncating or summarizing it destroys the only evidence the
 upstream defect can be diagnosed from.
 
 ## File placement during the workflow
@@ -89,10 +89,21 @@ ground-rules file-placement contract:
   reads and writes them for its own use. Do NOT relocate, delete, or redirect these mid-run:
   `profile_report.md`, `schema_hints.md`, `JOURNAL.md`, and generated JSONL output.
 - **After the run for a source completes (after the iterate/finalize step), relocate the
-  transient artifacts to their durable homes:** mapping-phase Markdown (`profile_report.md`,
-  `schema_hints.md`, `JOURNAL.md`) → `docs/mapping/`; mapping working data
-  (`*_mapping_spec.json`, the per-source `{source}_sample.jsonl`, intermediate analyzer JSONL)
-  → `data/mapping/`. Final transformed, load-ready JSONL stays in `data/senzing-ready/`.
+  transient artifacts to their durable homes — and source-qualify the three mapping-phase
+  Markdown filenames as you do:** `profile_report.md` → `docs/mapping/{source_name}_profile_report.md`,
+  `schema_hints.md` → `docs/mapping/{source_name}_schema_hints.md`, `JOURNAL.md` →
+  `docs/mapping/{source_name}_JOURNAL.md`. Mapping working data (`*_mapping_spec.json`, the
+  per-source `{source}_sample.jsonl`, intermediate analyzer JSONL) → `data/mapping/`. Final
+  transformed, load-ready JSONL stays in `data/senzing-ready/`.
+  - ⛔ **The source qualifier is required, not tidiness.** Every source's `mapping_workflow` run
+    uses the **same** `workspace_dir` (`data/mapping`, per step 8), and the workflow writes those
+    three files there under **fixed** names — verified against the live tool: step 1's instructions
+    name `<workspace_dir>/profile_report.md`, `<workspace_dir>/schema_hints.md` and
+    `<workspace_dir>/JOURNAL.md`, with `JOURNAL.md` explicitly append-only
+    (`mapping_workflow(action='start')`, server 1.32.2, verified 2026-07-29). So relocating them
+    under their unqualified names makes source B's run overwrite source A's durable record — and
+    for `JOURNAL.md`, append source B's entries onto source A's log. This matches the qualifier
+    step 18 already requires for `docs/mapping/{source_name}_mapper.md`.
 - If a downloaded file matches no placement rule, leave it in the workspace and surface it as a
   warning rather than inventing a destination. If the plugin write-gate blocks a write, leave
   the file in the workspace and report it: do not retry against a different location.
@@ -261,6 +272,13 @@ Map fields to Senzing attributes, then advance workflow step 3 with `action='adv
 attribute names. For non-Latin data: `search_docs(query="globalization")`. Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
+> **Heads-up before you map a dynamic-key field.** When a value is derived from the source **field
+> name** rather than a field value — the mapping reference's own
+> `"Digital Currency Address - <CODE>"` → `ACCOUNT_DOMAIN` pattern is the common case — the verbatim
+> check **will** report it when validation runs, and that report is a known checker limitation, not a
+> mapping defect. Read "⛔ A value derived from a source *field name*…" later in this step **before**
+> you get there, so an expected exit 1 does not read as a bug in your mapper.
+
 ⛔ **Shared-feature collision check (cross-source).** After mapping a source, compare its feature
 targets against the sources already mapped. When **two or more sources send different source fields
 to the same Senzing feature**, stop and confirm the two fields measure the *same quantity* — not
@@ -303,6 +321,91 @@ it produces silently suppressed merges that only the post-load match-key audit w
 > In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
 > blocked at this step because of a 404.
+
+⛔ **The verbatim check harvests source *values* only, so whatever it cannot harvest is
+unsatisfiable — not strict.** Verified against the current resource (server **1.32.2**,
+**2026-07-29**): `collect_strings()` flattens every **string** and every **int/float** (stringified
+via `str(obj)`) out of the nested source record, recursing through lists and dicts, and the test is
+whole-value membership (`if v.strip() not in allowed`). Its only waiver is key-based —
+`EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}` plus any attribute ending `_TYPE` — so a *value* cannot
+be exempted at all.
+
+Two things it cannot harvest, and they are the whole of this limitation:
+
+1. **A boolean.** `collect_strings()` skips `bool` deliberately, and says why in its own docstring:
+   there is no unambiguous verbatim string form for a JSON boolean (Python's `str(True)` is `"True"`,
+   not JSON's `"true"`), so admitting booleans would let a case transform slip through rather than
+   catch one. A source `true` emitted as `"true"` is therefore reported however you emit it.
+2. **A value derived from a source field NAME rather than a field value** — see the section below,
+   which is the common case in practice.
+
+✅ **Numbers are NOT in that list any more.** A numeric source value now enters the allowed set and
+passes: a source `RegKey: 1001` emitted as `"1001"`, and `98.6` emitted as `"98.6"`, both exit **0**
+(re-run 2026-07-29). Through server 1.32.1 they failed under either emission — reported on all 53,321
+relationship rows of one real run, reported upstream 2026-07-28, and **fixed in 1.32.2**. So do
+**not** record a numeric-value exemption: run the check and read its actual output. The plugin pins
+no MCP server version, so every bootcamper is on the current server and this is simply the behavior.
+
+**What to do — in this order:**
+
+1. **Do not conclude the mapping is wrong.** This finding is a limitation of the checker's harvesting,
+   not evidence about your data. Confirm separately that the emitted value is faithful to the source:
+   same value, and a JSON type you chose deliberately.
+2. **Choose the emission on the Entity Specification's terms, not the checker's.** Confirm the
+   attribute's expected form via `search_docs(category='data_mapping')` at the time you map it — for
+   the relationship keys, the specification's JSON examples show string values (`"ORG1001"`,
+   `"ACME-1001"`) while its `REL_ANCHOR_KEY` guidance column shows a bare `1001`, so it does not
+   mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
+   checker can see.
+3. **Record the exemption and its reason** in the source's mapping notes — which attribute, why the
+   checker cannot harvest it (a boolean source value, or a value derived from a field name), and that
+   the value is faithful — then **proceed**. A checker limitation MUST NOT become an iterate-forever
+   loop or a blocked module (INV-048).
+4. ⛔ **Never change a source value to satisfy the tool.** For a value the harvester cannot reach it
+   would not even work — the allowed set was built without it, under either emission — and distorting
+   data to turn a gate green is the one outcome worse than the gate being wrong.
+
+Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
+arrives from upstream and a fork would mask it (INV-080). The numeric case is the worked example —
+reported 2026-07-28, fixed in 1.32.2 — and a fork would still be carrying the workaround today.
+
+⛔ **A value derived from a source *field name* is a second, distinct cause of the same failure —
+and unlike the cases above it has no correct alternative emission.** The allowed set is built from
+source **values** only. So any value that is faithfully derived from a source **field name** — a
+dynamic-key convention such as `"Digital Currency Address - <CODE>"` or
+`"Listing Date (EO 14024 Directive N):"` — will never be in it, **whatever that value's own type
+is**. The upstream numeric fix does not help here: the string is simply not a value anywhere in the
+record.
+
+**The concrete case, which this module's own worked example produces.** The mapping reference
+delivered inline at `mapping_workflow` step 2 states (server **1.32.2**, verified **2026-07-29**):
+
+> "A crypto/'Digital Currency Address' (Bitcoin/XBT, ETH, USDT, XMR, LTC, TRX, XRP, BCH, …) maps as
+> ACCOUNT_NUMBER = the address string, ACCOUNT_DOMAIN = the currency/network code (e.g. 'Digital
+> Currency Address - XBT 1A1zP...' -> ACCOUNT_NUMBER:'1A1zP...', ACCOUNT_DOMAIN:'XBT'). One ACCOUNT
+> object per address."
+
+Follow that exactly on a source whose fields are `"Digital Currency Address - XBT"`,
+`"- LTC"`, `"- ETH"`, and the verbatim check **fails** every such record on `ACCOUNT_DOMAIN`
+(reproduced 2026-07-29: two records → `rec0 ACCOUNT_DOMAIN='XBT'; rec1 ACCOUNT_DOMAIN='LTC'`,
+exit 1). `ACCOUNT_DOMAIN` is not in `EXEMPT_KEYS` and does not end `_TYPE`, so there is no waiver.
+The mapping is **right** — `ACCOUNT_DOMAIN` is defined as "Domain/system for the account number"
+(`search_docs(category='data_mapping')`, Entity Specification, Feature: ACCOUNT, verified
+2026-07-29), and a currency/network code is exactly that.
+
+**What to do:**
+
+1. **Confirm it really is field-name-derived, not fabricated.** Check that the code does not appear
+   as a standalone value elsewhere in that same record. If it *does*, the checker is right and your
+   mapping should route the value from that field instead.
+2. **Do not submit `rework_code`.** `mapping_workflow` step 4's generic instruction — "Exit 1 = a
+   code bug… do NOT proceed until it passes" — **does not apply to this class**: no code change
+   produces a different, still-faithful `ACCOUNT_DOMAIN`, so `rework_code` would be inaccurate and
+   would loop. Advance with `verdict='approve'`.
+3. **Record the exemption and its reason** in the source's mapping notes — which attribute, that its
+   value is derived from the source field name, and that the checker harvests values only — then
+   proceed, exactly as for the boolean case above (INV-048: a checker limitation MUST NOT become an
+   iterate-forever loop or a blocked module).
 
 ⛔ **Separate structural invalidity from conformance-to-recommendation before acting on the
 analyzer's output.** The analyzer's exit code alone is NOT the gate — its findings fall into two
@@ -404,7 +507,7 @@ case.
    tell which sources went through `mapping_workflow` and which did not.
 
 `mapping_workflow` remains the default and documented path. Never offer this fallback
-pre-emptively — only after two unactionable rejections of the same source.
+preemptively — only after two unactionable rejections of the same source.
 
 ⛔ **These gates are structural, not semantic — say so; do not let green be mistaken for correct.**
 Every check above validates **one source at a time** and asks whether the output is *well-formed*:
@@ -501,7 +604,18 @@ it means for matching, any issues found.
 > 👉 **Would you like a web page showing the quality analysis (coverage charts and the field mapping summary)?**
 
 If yes, generate a self-contained HTML page and save it to
-`docs/visualizations/mapping_[name]_quality.html`.
+`docs/visualizations/mapping_[name]_quality.html` (INV-070).
+
+⛔ **Same four rules as the quality-assessment visual in `phase1-quality-assessment.md`** — this is a
+bootcamper-facing visual deliverable too, and the reasons are identical: brand tokens from
+`${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081); **renders offline**, so no CDN or web font
+— inline the vendored `scripts/vendor/d3.v7.min.js` if a chart library is needed (INV-081/INV-091);
+every data-sourced string escaped for the context it lands in, including `<`/`>`/`&` as `\uXXXX`
+inside any inline `<script>` payload (INV-106); and verify the rendered page rather than the exit
+status (INV-129). The mapping summary carries **more** bootcamper-authored text than the phase 1
+page — source field names, target attributes, sample values — so the escaping rule matters most here.
+`ground-rules.md` → "Visual deliverables (Senzing brand)" and the visualization contract's
+"Rendering contract" are the statements of record.
 
 **Checkpoint:** write step 15.
 
@@ -513,8 +627,13 @@ adjustment.
 **Iterate vs. proceed decision gate:** After presenting quality results, guide the decision and
 close the turn on one 👉 question:
 
-- **Quality ≥80% and all critical fields mapped:** "Quality looks strong. Ready to proceed to
-  loading (Data processing)."
+- **Quality ≥80% and all critical fields mapped:**
+
+  👉 **Quality looks strong. Ready to proceed to loading (Data processing)? Reply with a number:**
+
+  1. Yes, proceed to loading.
+  2. No, I'd like to iterate on something first.
+
 - **Quality 70-79%:**
 
   👉 **Quality is acceptable. What would you like to do? Reply with a number:**
@@ -630,6 +749,14 @@ production load still happens in Data processing regardless.
 ### 19. Repeat for remaining data sources
 
 Each source gets its own transformation program and its own `mapping_workflow` run.
+
+⛔ **Before starting the next source's `mapping_workflow(action='start')`, confirm this source's
+`profile_report.md`, `schema_hints.md` and `JOURNAL.md` have already been relocated to
+`docs/mapping/` under their source-qualified names** (`{source_name}_profile_report.md`,
+`{source_name}_schema_hints.md`, `{source_name}_JOURNAL.md` — see "File placement during the
+workflow"). Every source shares one `workspace_dir`, and the next run rewrites those three fixed
+workspace filenames for its own profiling, so anything still sitting there under an unqualified
+name is lost — silently, with no error.
 
 > **Mandatory internal gate (do not render to the bootcamper):** BEFORE writing the module
 > completion checkpoint, list ALL files in `data/senzing-ready/` and verify that EACH has a

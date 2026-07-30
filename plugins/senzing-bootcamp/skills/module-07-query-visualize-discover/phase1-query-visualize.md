@@ -63,6 +63,43 @@ bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag]
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
 and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
 
+⛔ **A method's own default-flags composite is NOT `SZ_ENTITY_DEFAULT_FLAGS`, and may omit
+sub-flags that one carries.** Before parsing an entity field out of a response, read the
+composite's `composite_members` and confirm the flag that populates *that* field is in it.
+Two confirmed cases, both of which apply when you pass **no** `flags` argument at all, because
+these are the signature defaults (`get_sdk_reference(topic='flags', filter=…, language='python')`,
+server 1.32.2, verified 2026-07-29):
+
+| Composite | Carries | Does **not** carry |
+|---|---|---|
+| `SZ_SEARCH_BY_ATTRIBUTES_ALL` (default for `search_by_attributes`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
+| `SZ_FIND_NETWORK_DEFAULT_FLAGS` (default for `find_network_*`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
+| `SZ_ENTITY_DEFAULT_FLAGS` (`get_entity_*`) | **both** | — |
+
+And the flag→field mapping that makes the consequence exact: `SZ_ENTITY_INCLUDE_RECORD_DATA` →
+`RESOLVED_ENTITY.RECORDS[]`; `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` → `RESOLVED_ENTITY.RECORD_SUMMARY[]`.
+So a habit learned on `get_entity` ("the defaults give me records") is correct there and **wrong**
+for search and network: `RECORDS[]` reads as an empty list, with a correct field name, and nothing
+raises. To get it, OR the sub-flag in explicitly —
+`SZ_SEARCH_BY_ATTRIBUTES_ALL | SZ_ENTITY_INCLUDE_RECORD_DATA`.
+
+**If all you need is "which sources is this entity in?", you do not need to widen the flags at
+all.** `RECORD_SUMMARY[]` carries `DATA_SOURCE` and `RECORD_COUNT` per source and is populated by
+both defaults (`get_sdk_reference(topic='response_schemas', filter='search_by_attributes')`, server
+1.32.2, verified 2026-07-29). Note the nesting differs per method, so read the schema rather than
+assuming: search returns `RESOLVED_ENTITIES[].ENTITY.RESOLVED_ENTITY.RECORD_SUMMARY[]`, while
+find_network returns `ENTITIES[].RESOLVED_ENTITY.RECORD_SUMMARY[]`.
+
+⚠️ **The two server sources differ in coverage for `find_network` + `RECORDS[]`, so confirm before
+relying on it.** `topic='flags'` lists `find_network_by_entity_id` in
+`SZ_ENTITY_INCLUDE_RECORD_DATA`'s `applies_to`, but `find_network`'s own
+`topic='response_schemas'` entry enumerates only `RECORD_SUMMARY[]` under
+`ENTITIES[].RESOLVED_ENTITY` — it does not list `RECORDS[]` at all (both verified 2026-07-29,
+server 1.32.2). That is two different questions answered by two different references, not a
+contradiction to resolve from the outside: if you need per-record detail out of a network call,
+OR the flag in and **dump one raw response to confirm the field arrived** before writing the
+parser (INV-115).
+
 ⛔ **Response shapes (INV-115).** Flags are only half the lookup. Before writing any code that
 *parses* a response, also call `get_sdk_reference(topic='response_schemas', filter='<method>')`
 — **never infer field names from an example snippet.** Wrong field names do not raise: they
@@ -70,10 +107,27 @@ render as blank text, so the output looks like "Senzing found nothing" rather th
 `response_schemas` documents the top-level shape per method; for deeper nesting (anything under
 `MATCH_INFO`), dump one raw response and read it before writing the parser.
 
-**Defensive parsing.** When a parsed field comes back null, empty, or blank, treat it as a
-**probable wrong field name first and absent data second**. Verify against `response_schemas` or
-a dumped raw response before rendering. Never render a blank value as though it were a real
-result — say "no value returned for X" so the failure is visible.
+**Defensive parsing.** A blank field has **three** possible causes, not two, and they need
+different fixes:
+
+1. **A wrong field name** — the most common, and what INV-115's lookup catches.
+2. **A correct field name the flags in force do not populate** — the case the lookup does **not**
+   catch, because the name is right. See the default-flags rule above.
+3. **Genuinely absent data** — the last thing to conclude, never the first.
+
+**The discriminator between 1 and 2:** if `response_schemas` confirms the path *and* a sibling
+field from the same response object reads fine, suspect the **flags** before the data — reading
+`RECORD_SUMMARY[]` correctly while `RECORDS[]` comes back empty is that signature exactly. Fix it
+by OR-ing in the missing sub-flag, not by switching to a different field and not by re-verifying a
+name that is already correct.
+
+Verify against `response_schemas` or a dumped raw response before rendering. Never render a blank
+value as though it were a real result — say "no value returned for X" so the failure is visible.
+
+⛔ **This whole class fails silently: valid JSON, no exception, an empty list that looks like an
+answer.** A bootcamper seeing no records concludes "the search found nothing useful" or "my data
+lacks that field", not "the flags I passed do not populate the field I read". So when a query's
+result is *empty rather than wrong*, re-check the three causes above before reporting the finding.
 
 **CRITICAL, file placement:** if the generated scaffold uses `/tmp/`, `ExampleEnvironment`, or
 any path outside the working directory, override the database path to `database/G2C.db` and
@@ -91,6 +145,32 @@ they loaded, they do NOT know entity IDs (those are internal to Senzing). Query 
 iterate over loaded records (from the input JSONL file or a record manifest) and use
 `get_entity_by_record_id(data_source, record_id)` to look up each record's entity. Never
 iterate over a guessed range of entity IDs.
+
+⛔ **One file row is NOT one record: fold on `(data_source, record_id)` before you count.** A
+Senzing record's identity is the pair the loader supplied —
+`add_record(data_source_code, record_id, record_definition, flags)` — and re-sending the same pair
+**replaces** the record rather than adding a second one: *"When a record with a unique key is sent
+to Senzing that matches a record already loaded, the new record replaces the current one in Senzing
+and doesn't contribute to the DSR count"* (`search_docs`, "Data Source Records (DSRs) Explained";
+signature via `get_sdk_reference(topic='parameters', filter='add_record', language='python')`;
+server 1.32.2, verified 2026-07-29).
+
+So a mapped file may legitimately hold **more rows than distinct keys** — that is the normal
+outcome when Module 5's mapping decision was to keep a source's verified duplicate rows rather
+than pre-deduplicate them. Any program that walks a source's rows to associate them with resolved
+entities MUST deduplicate by `(data_source, record_id)` **before** counting or grouping. This is a
+key-fold, not a language idiom: use whatever set/map your chosen language provides.
+
+**Why it matters, from a real run:** without the fold, `find_duplicates` counted physical rows as
+constituent records and reported two entities as holding **23 and 15** records. Inspecting them
+with `get_entity_by_entity_id` showed **2 each** — `add_record` had upserted the duplicates all
+along. Both were flagged for manual over-matching review that was never warranted: a wasted review
+cycle, and in a KYC context a wrong signal about which entities need analyst attention.
+
+**Cross-check before you report.** Senzing's own resolved view is the authority on how many records
+an entity has; the file is not. When a per-record count looks surprising, confirm it against
+`get_entity_by_entity_id` (or `RECORD_SUMMARY[]`'s `RECORD_COUNT`) before presenting it as a
+finding.
 
 **Checkpoint:** write step 2.
 
@@ -235,6 +315,15 @@ of the Truth Set. It MUST:
 - Honor the contract's **"Per-entity actions"** and **"Rendering contract"** sections in full:
   Records / Why? / How? on every entity surface, drill-down from every aggregate, plain-language
   Why?/How? with the raw JSON behind a twistie, and pre-verified search-hint chips.
+- ⛔ **Search organizations with `NAME_ORG`, not `NAME_FULL` alone** — in the query program *and* in
+  the visualization. Per the Senzing Entity Specification (Name > Feature: NAME — confirm via
+  `search_docs`, do not take it from here), `NAME_ORG` is the organization name attribute while
+  `NAME_FULL` is for a single-field name whose type is unknown; an organization name sent as
+  `NAME_FULL` matches nothing **and raises no error**. Try `NAME_FULL`, then `NAME_ORG` when the
+  first returns nothing (or send both and merge by `ENTITY_ID`). This module points at the
+  bootcamper's own data, which is frequently half organizations: a search that quietly finds none of
+  them reads as a failed load, not as a wrong query. Report an empty result as "nothing matched the
+  attributes tried", naming them — never as "not in your data" (INV-115).
 - **Mind the scale.** This module points the app at the bootcamper's real data, which is usually far
   larger than the Truth Set it was designed against — the graph label defaults are scale-aware
   (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable
@@ -246,8 +335,13 @@ of the Truth Set. It MUST:
   SQL.
 - Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
   from `scripts/brand_tokens.py` (INV-081).
-- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070); after
-  generating it, capture screenshots for the recap per
+- Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
+  the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
+  REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
+  here, and never pass "the Senzing Truth Set": this app points at the Bootcamper's data, the
+  snapshot is permanent, and a Truth Set label on their own data is a false claim in a keepsake
+  (INV-172). The contract's "Snapshot" section is the statement of record.
+  After generating it, capture screenshots for the recap per
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots" (skip
   silently with no headless capability, otherwise embed **every** captured tab in this module's
   recap, in the app's tab order — no count cap, INV-146).
@@ -342,7 +436,7 @@ Source every figure through generated SDK code and `reporting_guide` — never d
 2. **`## Merges and match keys`** — every merge with the match key that drove it, so each is
    explainable and auditable.
 3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
-   the most business value: each row is one human decision away from being actioned.
+   the most business value: each row is one human decision away from being acted on.
 4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
    **near-miss**. Why something did *not* merge teaches more than why something did.
 5. **`## Relationship networks`** — multi-hop paths no single record states.
@@ -353,10 +447,25 @@ Source every figure through generated SDK code and `reporting_guide` — never d
    low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
    suppressor findings belong here.
 
-Then render the PDF:
+⛔ **Write it in Latin-script characters, and build diagrams from ASCII.** The PDF's built-in fonts
+cover Latin-1 only, so any character outside it — Cyrillic, Greek, CJK, Arabic — is **dropped from
+the page**, and box-drawing connectors (`│`, `▼`, `└`) go with it. So when an entity's primary name
+is non-Latin, write the **verified** Latin-script name or alias the loaded data already carries for
+it (GLEIF/OFAC/OPEN-SANCTIONS records routinely hold both) and say which you used; and draw ASCII
+diagrams with `|` and `v`. ⛔ **Never transliterate or invent a name you have not confirmed in the
+data** — a wrong name in a shared report is worse than an awkward one (INV-065's principle: never
+fabricate to fill a field). The generator now reports every character it had to drop, naming them
+and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
+the loss, it cannot undo it: the characters are gone from that PDF.
+
+Then render the PDF with the bundled generator. ⛔ **It ships inside the plugin, not in the
+bootcamp project** — resolve it the same way every other bundled script is resolved, and never as a
+bare `scripts/…` path, which resolves against the project working directory where no top-level
+`scripts/` exists (INV-050 puts the project's own utilities under `src/scripts/`):
 
 ```bash
-python3 scripts/generate_discoveries_pdf.py
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_discoveries_pdf.py"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_discoveries_pdf.py
 ```
 
 That script is the discoveries **sibling** of the recap generator — do not point

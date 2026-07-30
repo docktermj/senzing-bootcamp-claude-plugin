@@ -12,12 +12,12 @@ steering files.)
   MCP calls.
 - **A value you measured on this machine governs over generic guidance about that same value.**
   MCP output is authoritative for Senzing *facts* (INV-080) — method names, attribute names, flags,
-  behaviour. It is **not** authoritative about the state of *this* installation when the tool never
+  behavior. It is **not** authoritative about the state of *this* installation when the tool never
   saw it: a note computed from a parameter you supplied is a conditional, not a measurement. Where
-  the bootcamp already holds a detected value for the same thing — the licence record limit, the
+  the bootcamp already holds a detected value for the same thing — the license record limit, the
   installed SDK version, the platform — the detected value decides, the generic note is suppressed
   rather than relayed (INV-012), and the divergence is recorded in the checkpoint rather than shown
-  to the bootcamper. This is **not** licence to answer from training data: both sides are still
+  to the bootcamper. This is **not** license to answer from training data: both sides are still
   MCP-sourced, one generically and one by measuring the bootcamper's own machine.
 - **Model/effort tuning.** Model/effort is a session-level choice the bootcamper controls with
   `/model` and `/effort` (it persists for the session; per-skill frontmatter would not — see
@@ -94,6 +94,16 @@ steering files.)
   error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
+- **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
+  path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
+  the search results already carry rather than relying on `content` from a `repo` + `file_path`
+  retrieval: verified 2026-07-28 against server 1.32.1, that retrieval currently returns an
+  **empty `content`** while reporting a correct non-zero `content_length` and `truncated: false`.
+  ⛔ **An empty `content` is never evidence that the file is empty.** If `content` is empty while
+  `content_length` is non-zero, the retrieval **failed** — regardless of what `truncated` says —
+  so fall back to the `raw_url` (or the clone step the response's `access_steps` lists), and never
+  tell the bootcamper an example file is empty on that basis. Re-check when the server updates;
+  this caution goes away when the retrieval does.
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
@@ -192,6 +202,67 @@ steering files.)
 - The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
   placement is your responsibility.
 
+## Windows and PowerShell
+
+Windows is a supported platform (INV-001) and several modules ship PowerShell command blocks
+alongside their bash ones. **`>` and `Out-File` are not equivalent to bash `>`, and `Get-Content` is
+not `cat`.** Assume **Windows PowerShell 5.1** — the default `powershell.exe` on Windows 11 — unless
+you have verified otherwise; `pwsh` is 7+ and has features 5.1 lacks.
+
+**Prefer not to use the shell at all.** Write generated files through Python or your file tools, not
+PowerShell redirection, and put multi-line or quote-heavy code in a script file under `src/`
+(INV-018) and run the file. Both encoding corruptions below came from PowerShell; every file written
+through Python or a file tool in the same session was clean.
+
+**Text encoding — both directions corrupt silently:**
+
+- ⛔ **`-Encoding utf8` writes a BOM on 5.1.** `Out-File -Encoding utf8` prefixed a generated JSONL
+  with `EF BB BF`, so the BOM became part of the first JSON key and record 1 failed to parse —
+  158 of 159 records fine, which reads as one bad source record rather than an encoding fault. For
+  BOM-free UTF-8 use
+  `[System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding($false)))`.
+- ⛔ **`Get-Content` decodes as the system ANSI codepage** for a file with no BOM. Appending with
+  `Add-Content -Value (Get-Content $src -Raw)` read UTF-8 as Windows-1252 and wrote the mojibake
+  back out as UTF-8: 25 em dashes became `â€”`. Always pass `-Encoding utf8`, or use
+  `[System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)`.
+
+The second one is the more instructive failure, because **every obvious check passes**: 0 BOM
+sequences, no U+FFFD, and the file is valid UTF-8 that decodes without error. It is simply wrong, and
+only rendering it reveals that. So do not treat "it decoded" as "it is correct" — compare rendered
+text against a known-good stretch of the same document. (The docs normalizer flags this class before
+the recap renders; see `../graduation/SKILL.md`.)
+
+**Syntax limits of 5.1 that break bash-shaped commands.** Each is a *parser* error, so the message
+points at syntax rather than at the real cause — a command written for another shell:
+
+| Bash-shaped | Why it fails on 5.1 | Use instead |
+|---|---|---|
+| `A && B`, `A \|\| B` | no pipeline chaining operators | `A; if ($?) { B }` |
+| `x=$(cond ? a : b)` | `if` is not an expression; no ternary, no `??` | assign in an `if` block first |
+| `python -c "…"` | quotes/parens reinterpreted before Python sees them | write a `.py` file under `src/scripts/` and run it |
+| `Start-Process … --title "Truth Set"` | quoted args re-split (`Unknown argument: Truth`) | escape the quoting inside `-ArgumentList` |
+| `<<'EOF'` heredoc | not a here-string (`unexpected EOF`) | `@'` … `'@` with the closing `'@` at column 0 |
+
+When a PowerShell counterpart to a bash block is offered anywhere in the bootcamp, it MUST use the
+PowerShell form — never a copied `&&`.
+
+## Sourced scripts and the default shell
+
+A script the bootcamper is told to `source` runs in **their** interactive shell, so it MUST work in
+the platform's **default** shell — not only in bash. On macOS that shell is **zsh**.
+
+- ⛔ **`${BASH_SOURCE[0]}` is bash-only and expands to *empty* under zsh.** A script that locates
+  itself that way resolves its project root to the wrong directory under zsh and carries on, so the
+  error surfaces later and elsewhere. Branch on `${ZSH_VERSION}` and use `${(%):-%x}` in the zsh
+  branch — the canonical idiom, with the fail-loudly root check that goes with it, is in
+  `../module-02-sdk-setup/SKILL.md` under
+  [the env script's path resolution](../module-02-sdk-setup/SKILL.md#env-script-path-resolution).
+  Do not restate it; link to it.
+- ⛔ **A sourced script must never `exit` or `set -e`.** It shares the bootcamper's shell, so `exit`
+  closes their terminal and `set -e` leaks into the rest of their session. Use `return`.
+- **Verify the resolved path before using it, and name it when it is wrong.** Silently exporting a
+  variable computed from a wrong root is the failure this prevents.
+
 ## Markdown files
 
 - **Write plain, functional Markdown during the bootcamp; defer CommonMark prettification to
@@ -206,20 +277,56 @@ steering files.)
   `## {Module name}` heading and the four required subsections (see `module-completion.md`), and
   the placement rules above are unchanged.
 
+## Naming the Claude interface (INV-158)
+
+Whenever output, a question, or a doc tells the bootcamper to do something **in their Claude
+interface** — set a model, change reasoning effort, restart an MCP server, click a control — name
+which interface. The bootcamp runs in more than one, and the names are not interchangeable:
+
+| Say | For |
+| --- | --- |
+| **Claude Desktop** | The desktop application (it runs Claude Code inside itself). |
+| **Claude Code CLI** | Claude Code in a terminal, where `/model` and `/effort` exist. |
+| **the Claude web app** | Claude Code at claude.ai/code. |
+| **a Claude IDE extension** | Claude Code in VS Code or a JetBrains IDE. |
+
+- **"Claude Code" alone names the product, never an interface.** It is correct for things that are
+  true of the harness everywhere — "the senzing MCP server configured in Claude Code", "a Claude
+  Code plugin", "Claude Code hooks" — and wrong as a way of saying *the terminal*, because Claude
+  Desktop is Claude Code too.
+- **"The Claude app" is retired vocabulary.** It named none of the four interfaces, so a bootcamper
+  told to use those unnamed "model and effort controls" had to guess which. Name the interface.
+- **Vague is allowed only where the plugin genuinely cannot tell.** When the interface is
+  undeterminable, "in your Claude interface" is honest; it is never a shortcut for one you know.
+
 ## Visual deliverables (Senzing brand)
 
-- **Apply the Senzing brand to generated visual artifacts, where appropriate.** Any visual
+- **Every bootcamper-facing visual deliverable MUST carry the Senzing brand.** Any visual
   deliverable the bootcamp produces — the Truth-Set visualization web app and its standalone
-  snapshot, the recap PDF, and any future charts/dashboards/HTML — should follow the
-  Senzing "Obsidian & Ember" style guide via the **shared brand tokens** shipped at
-  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), not an ad hoc
-  palette. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
+  snapshot, the recap PDF, the data-discoveries PDF, Data Quality, Mapping, and Transformation's
+  quality/mapping web pages, and any future charts/dashboards/HTML — **MUST** take its palette and
+  typography from the **shared brand tokens** shipped at
+  `../../scripts/brand_tokens.py` (colors, typography, data-source node colors), never an ad hoc
+  palette, and **MUST** render offline (INV-081). This is a MUST, not a preference: the carve-out
+  below is about *which artifacts* are bootcamper-facing, never about whether a bootcamper-facing
+  one may skip the tokens. The shipped reference generators (`senzing_viz_server.py`, `generate_recap_pdf.py`)
   already consume those tokens; any generator you build — including the chosen-language Truth Set
-  visualization server (INV-090) — should too. Key rules: dark backgrounds are
+  visualization server (INV-090) and any one-off HTML page a module offers — MUST too. Key rules: dark backgrounds are
   Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
   live/resolved states (never decorative), light sections are warm off-white (never cold grey),
   and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
-  INV-081). "Where appropriate" leaves plain functional/dev output unbranded.
+  INV-081).
+- **The one carve-out: plain functional/dev output stays unbranded.** A progress line, a log file, a
+  scratch table printed to the terminal — nothing the bootcamper keeps — needs no palette. The test
+  is whether the artifact is **saved and handed to them**; if it is, it is in scope, and "it's just a
+  quick chart" is not an exemption. Every generated HTML page under `docs/visualizations/` is in
+  scope by that test.
+- **Data-sourced strings in generated HTML MUST be escaped for the context they land in** (INV-106),
+  including `<`, `>` and `&` as `\uXXXX` escapes inside an inline `<script>` payload — a value
+  containing `</script>` otherwise breaks out, in an artifact that is saved and shared. The
+  statement of record is the visualization contract's "Rendering contract"
+  (`../module-03b-truthset-visualization/visualization-api-reference.md`); it binds **any** generated
+  page, not only that module's app.
 
 ## Progress and state
 
@@ -333,11 +440,17 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
   model + effort. Like the step overview and the time estimate, this is module-start apparatus, so
   the apparatus-exempt setup modules (Bootcamp preparation, Module 0) do not present it (INV-063
-  clarification). **Adapt the wording to the Claude application in use** (INV-098): on **Claude
-  Code (CLI)** present the exact `/model` and `/effort` commands; on **Desktop, web, or an IDE
-  extension** — or when the surface is unknown — phrase it by intent, naming the recommended model
-  and reasoning-effort level and directing the bootcamper to their Claude app's model/effort
-  controls, without hardcoding a UI label that may drift.
+  clarification). **Adapt the wording to the Claude interface in use** (INV-098): on the **Claude
+  Code CLI** present the exact `/model` and `/effort` commands; in **Claude Desktop, the Claude web
+  app, or a Claude IDE extension** — or when the interface is unknown — phrase it by intent, naming
+  the recommended model and reasoning-effort level and directing the bootcamper to that interface's
+  model/effort controls, without hardcoding a UI label that may drift.
+
+  ⛔ **Name the interface. "The Claude app" is retired vocabulary (INV-158).** This plugin is a
+  Claude Code plugin on every one of those interfaces — Claude Desktop runs Claude Code too — so
+  that phrase left the bootcamper guessing which controls were meant, and "Claude Code" on its own
+  does not distinguish the terminal from the desktop application. Say **Claude Code CLI** for the
+  terminal and **Claude Desktop** for the desktop application.
 
   ⛔ **This behavior is unconditional — there is no preference to read and no mode to choose
   (INV-137).** The bootcamp is never asked how it wants model guidance handled, and there is no
@@ -345,12 +458,21 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ⛔ **Compare the recommendation against what the bootcamper is running right now — not against
   the previous stage's recommendation.** You are told which model you are running, so read the
-  model side from that; for effort, use the value in force when you can determine it. **Only when
-  the current setting cannot be determined**, fall back to comparing against the stage just
-  completed. Comparing recommendation-to-recommendation asks a bootcamper already on Opus 5 at high
-  effort "would you like to switch to Opus 5 at high effort?" — a question whose answer changes
-  nothing, which is exactly what INV-006 and INV-012 forbid. Running one model for the whole
-  bootcamp is a supported choice, so this is the common case, not an edge case.
+  model side from that; for effort, use the value in force when you can determine it. **Resolve
+  "cannot be determined" PER DIAL, not for the setting as a whole** — model and effort are separate
+  dials (INV-137), and in a live session they routinely sit in different epistemic states at the
+  same moment: the model is knowable to the assistant, while the reasoning effort is exposed nowhere
+  and typically cannot be read at all. So compare each dial on its own evidence: a determinable
+  model is compared **directly** even when effort is not, and vice versa. **Only for a dial whose
+  current value cannot be determined**, fall back to that dial's value in the stage just completed.
+  ⛔ Applying the previous-stage row to a dial that *was* determinable is the failure this clause
+  exists to prevent: a bootcamper demonstrably on Opus 5 would be compared against the previous
+  stage's recommended Sonnet 5, found "unchanged", and never offered the switch — silently defeating
+  the purpose of the invariant this superseded. Comparing recommendation-to-recommendation asks a
+  bootcamper already on Opus 5 at high effort "would you like to switch to Opus 5 at high effort?" —
+  a question whose answer changes nothing, which is exactly what INV-006 and INV-012 forbid. Running
+  one model for the whole bootcamp is a supported choice, so this is the common case, not an edge
+  case.
 
   Two cases, decided only by that comparison:
 
@@ -363,15 +485,20 @@ never count against the one-question-per-turn rule and must not be treated as ga
     Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
     the effort only, never told to re-set the model they are already on.
 
-    On the **CLI**, pin the switch question verbatim, substituting only the bracketed values — the
-    stage's commands, and just the one dial when only one differs:
+    On the **Claude Code CLI**, pin the switch question verbatim, substituting only the bracketed
+    values — the stage's commands, and just the one dial when only one differs:
 
     > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current model.)
 
-    On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent — name the
-    stage's recommended model and effort, and do NOT present CLI commands as the only instruction:
+    In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface),
+    pin the intent-based equivalent — name the stage's recommended model and effort, and do NOT
+    present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
+
+    Substitute the one interface the bootcamper is actually on. When the interface cannot be
+    determined, say "in your Claude interface" — vague only where the plugin genuinely does not
+    know, never as a shorthand for an interface it does know (INV-158).
 
     ⛔ **When the recommendation sits *below* the current setting, say so in the question itself.**
     Add one clause naming it as a step down, stating that the recommendation is about cost rather
@@ -381,10 +508,11 @@ never count against the one-question-per-turn rule and must not be treated as ga
     reason. It never reads as advice to downgrade.
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
-    telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI,
-    or use the model and reasoning-effort controls in their Claude app — naming only the dial that
-    is moving), then end the turn on this pinned confirmation gate (its question verbatim,
-    INV-056/INV-069 — only the answer hint adapts to the surface) — do NOT show Step 1 yet:
+    telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude
+    Code CLI, or use the model and reasoning-effort controls in Claude Desktop / the Claude web app /
+    their Claude IDE extension — naming only the dial that is moving), then end the turn on this
+    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts to
+    the interface) — do NOT show Step 1 yet:
 
     > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
@@ -431,9 +559,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
   | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
   | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
-  The **Recommended** column is surface-neutral. On Desktop, web, or an IDE extension, set the same
-  model and reasoning effort using the app's model/effort controls; the **CLI commands** column is
-  the Claude Code equivalent (INV-098).
+  The **Recommended** column is interface-neutral. In Claude Desktop, the Claude web app, or a Claude
+  IDE extension, set the same model and reasoning effort using that interface's model/effort controls;
+  the **CLI commands** column is the Claude Code CLI equivalent (INV-098).
 
   From Data Quality, Mapping, and Transformation onward the recommendation is **flat** — a
   bootcamper who switches there is asked nothing further for the rest of the bootcamp.

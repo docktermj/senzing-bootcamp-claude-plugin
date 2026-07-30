@@ -60,7 +60,9 @@ When the bootcamper hits an error during this module:
   failed load can be recovered (see Phase D → Recovery from Failed Load).
 - **No direct SQL.** Never generate SQL against `database/G2C.db` or its internal tables. All
   entity access goes through generated SDK code. Counts, stats, and reporting come from
-  `reporting_guide`.
+  `reporting_guide` — **with a topic named**: `topic='evaluation'` for this module's statistics,
+  `topic='export'` for extraction. Not `topic='reports'`, whose SQL targets a data mart the bootcamp
+  never builds (see Phase D's header note).
 
 ## Phases
 

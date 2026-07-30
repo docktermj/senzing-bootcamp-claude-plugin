@@ -1,6 +1,6 @@
 ---
 name: implement-spec
-description: 'Implement one or more specs from the specs/ directory. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md, and records any new invariant an implementation establishes in specs/INVARIANTS.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-specs, which produces the specs this skill consumes.'
+description: 'Implement one or more specs from the specs/ directory, re-verifying every Senzing fact the spec asserts against the live Senzing MCP server before changing any code. With no argument, list every spec not yet implemented and ask the maintainer which one(s) to implement; with an argument, implement specs/<argument>.md (name without the .md suffix). Records completed specs in specs/IMPLEMENTED.md, and records any new invariant an implementation establishes in specs/INVARIANTS.md. Maintainer tool for developing the Senzing Bootcamp Claude Plugin (SBCP) — the counterpart to feedback-to-specs, which produces the specs this skill consumes.'
 ---
 
 # Implement Spec
@@ -14,6 +14,15 @@ establishes a new durable rule, it also promotes that rule to an invariant in
 
 It is the counterpart to the `feedback-to-specs` skill: that skill *writes*
 specs; this skill *implements* them.
+
+**A spec is a plan, not an authority on Senzing.** Its Senzing facts were true when
+it was written, against the MCP server version current that day — and that server
+ships independently of this plugin. By the time a spec is implemented the behavior it
+describes may be fixed, changed, or newly contradicted, so **every Senzing fact a spec
+asserts is re-verified against the live server before any code changes** (Step 3.3).
+Where the server now disagrees with the spec, the server wins and the deviation is
+recorded; implementing a stale spec faithfully means writing a fresh defect into the
+plugin, with a spec file that makes it look reviewed.
 
 ## Invocation modes
 
@@ -96,7 +105,7 @@ Work one spec at a time. For each:
    Watch for a `**Status:** Implemented` line in the spec header, checked-off
    acceptance criteria, or a diff/commit that already matches `## Proposed change`.
    If the code already satisfies the spec, **do not re-implement it** — jump to
-   Step 3.4 (verify against the acceptance criteria) and, if it holds, record it
+   Step 3.5 (verify against the acceptance criteria) and, if it holds, record it
    in Step 4. Only implement from scratch when the code does not yet satisfy it.
 1. **Read the spec in full.** Note its `## Problem`, `## Root cause`,
    `## Proposed change`, `## Acceptance criteria`, and `## Affected files`.
@@ -107,19 +116,102 @@ Work one spec at a time. For each:
    `skills/`, `commands/`, etc.), verify the cause is what the spec says, and
    cite `file:line`. If the spec's root cause turns out to be wrong or
    unconfirmable, pause and report it rather than implementing the wrong fix.
-3. **Make the change** described in `## Proposed change`, touching the
+3. **Re-verify the spec's Senzing facts against the live MCP server — also before
+   changing anything.** The spec is a plan; the server is the authority (INV-080).
+   Record the server version first (`get_capabilities` → `server_info.server_version`),
+   then re-ask the tool that owns each Senzing claim the spec relies on: a method's
+   shape or response via `get_sdk_reference(topic='parameters' | 'response_schemas',
+   filter=…, language=…)`, a flag and its `applies_to` via `topic='flags'`, an
+   attribute or mapping rule via `search_docs(category='data_mapping')`, an error code
+   via `explain_error_code`, export/report/evaluation behavior via `reporting_guide`,
+   install or config guidance via `sdk_guide`, an example file via `find_examples`.
+   Four outcomes, and each changes what you do:
+
+   - **Confirmed** → implement as specified, and cite the server (tool, parameters,
+     version, date) in whatever text you write into the plugin.
+   - **Changed** → the fix's *content* changes. Implement what the server says now,
+     not what the spec says, and record the deviation (Step 3.6).
+   - **Already fixed upstream** → do not add the workaround. If the plugin carries an
+     older workaround for the same defect, propose removing it; report and stop rather
+     than shipping a mitigation for a defect that no longer exists.
+   - **The spec is wrong** → do not implement it. Pause and report, exactly as for a
+     wrong root cause. Correcting spec content is `feedback-to-specs`' job; the one
+     thing you may add is the Step 3.6 deviation note.
+
+   ⛔ **Never copy a Senzing fact out of a spec into shipped guidance or code without
+   re-confirming it this session.** A spec is not an MCP source, and a fact laundered
+   through a spec file reads as reviewed when it was merely written down. Where the
+   server cannot reach a fact (a field only a live engine returns), keep it marked
+   observation-only with its version and date — do not promote it on implementation
+   (INV-080/INV-149). If the network is unavailable, say so and implement only the
+   parts that need no Senzing fact, leaving the rest reported and unimplemented.
+4. **Make the change** described in `## Proposed change`, touching the
    `## Affected files` (and any others the change genuinely requires). Keep edits
    minimal and in the style of the surrounding code. **Honor every invariant** —
-   in particular keep the change cross-platform and language-agnostic.
-4. **Verify against the acceptance criteria.** Walk each checkbox and confirm it
+   in particular keep the change cross-platform and language-agnostic. Any Senzing
+   fact you write into the plugin carries its provenance: the tool and parameters
+   that established it, the server version, and the date.
+5. **Verify against the acceptance criteria.** Walk each checkbox and confirm it
    holds — run the relevant script/hook/command or exercise the flow where
    possible (consider the `/verify` skill). If a criterion cannot be satisfied,
    do not mark the spec done; report what's blocking.
+
+   Two cases need naming rather than glossing:
+
+   - **A criterion that asserts a Senzing fact** is checked against the server, not
+     against the spec that asserted it.
+   - **A criterion that needs something this environment does not have** — most often
+     a live engine with loaded data — is reported as *not runtime-verified*, naming
+     what is missing, in both the report and the ledger entry. Do not tick it, and do
+     not silently treat the spec as fully verified. This is not a blocker on its own
+     when the criterion's content is implemented and otherwise test-asserted; it is a
+     disclosure.
+6. **Record any deviation from the spec.** When re-verification, the code, or the
+   environment made you implement something other than what the spec says — a
+   corrected fact, a substituted route, an unmet criterion — append a
+   `## Deviations from this spec, and why (<date>)` section to the spec file saying
+   what differed and on what evidence. This is a permitted append (see the
+   guardrails), and it is what keeps a future reader from treating the spec's text as
+   what shipped.
 
 If a spec is too ambiguous to implement safely, stop and ask for clarification
 rather than guessing.
 
 ## Step 4: Record the implementation
+
+⛔ **Walk the criteria one at a time before you write the entry — the ledger heading is a
+claim, and nothing downstream re-checks it.** For each `- [ ]` in `## Acceptance criteria`,
+name what proves it: a `file:line` you changed, a test that asserts it, or a command you
+ran. A criterion you cannot prove is **not** ticked — it is either implemented-but-not-
+runtime-verified (say what it needs, in both the report and the entry) or a deviation
+(Step 3.6). Do not summarise the *narrative* of the work in place of this walk: the
+narrative is what a spec's `## Proposed change` already says, and the criteria are what
+was actually promised.
+
+This step exists because it was skipped twice, with the same shape both times — a spec's
+criterion named a second consumer, only the first was built, and the ledger recorded the
+spec as done anyway:
+
+- `relocate-integration-deployment-questions-to-module1` (2026-07-22) — criterion 4 said
+  the answers are read "by the Module 1 problem statement **and by graduation**".
+  Graduation was never touched; `graduation/SKILL.md` is not even in that entry's
+  Files-changed list. INV-097 stood unimplemented for seven weeks.
+- `defer-commonmark-to-graduation` (2026-07-16) — criterion 1 said the pass runs over
+  `docs/*.md` **and the generated `production/*.md`**. Only `docs/` shipped. INV-060 stood
+  unimplemented for six weeks.
+
+Both were invisible to the whole suite, because neither INV-060 nor INV-097 is cited by any
+test. So: **a criterion that names a file, a module, or a second consumer is checked
+against that file** — open it and look — not against the change you remember making.
+
+Two supporting reports exist for the gaps this cannot catch by hand; run them when the
+audit workflows ask, or when a spec touches the ledger
+(`.claude/skills/dry-run/coverage_reports.py`, both stdlib-only):
+
+```bash
+python3 .claude/skills/dry-run/coverage_reports.py invariants   # invariants no test cites
+python3 .claude/skills/dry-run/coverage_reports.py affected     # predicted-but-unrecorded files
+```
 
 Only after the change is made **and** its acceptance criteria are met, prepend an
 entry to `specs/IMPLEMENTED.md` under the header (newest first). Get the date
@@ -131,11 +223,20 @@ the `## ` heading so detection in Step 1 stays reliable:
 
 - **Implemented:** YYYY-MM-DD
 - **Files changed:** `path/one`, `path/two`
-- **Summary:** <what was done and how the acceptance criteria were satisfied>
-- **Commit:** <hash, or "uncommitted">
+- **MCP re-check:** <server version + date, and the outcome — confirmed | changed (what) | already fixed upstream | n/a (no Senzing fact) | unverified (MCP unreachable). Name the tools called.>
+- **Summary:** <what was done and how the acceptance criteria were satisfied. Name any criterion that is not runtime-verified and what it needs, and any deviation from the spec with its evidence.>
+- **Commit:** <hash, "uncommitted", or "committed (hash not recorded)">
 ```
 
 Leave a blank line after the `##` heading and around the list (MD022/MD032).
+
+**The `Commit:` field takes one of three values and nothing else** — a hash,
+`uncommitted`, or `committed (hash not recorded)` (`tests/test_spec_ledger_invariants.py`
+enforces this). Write `uncommitted` when the entry precedes its commit, then **fill the
+hash in on the next `implement-spec` run**: before writing a new entry, scan the ledger for
+`uncommitted` fields whose work has since been committed and update them. Skipping that is
+how 66 entries went stale at once, leaving the field unable to answer the one question it
+exists for.
 
 If the maintainer chose to re-implement an already-recorded spec, update that
 spec's existing entry rather than adding a duplicate.
@@ -199,10 +300,16 @@ For each spec implemented, report:
 
 - The spec name and a one-line summary of the change.
 - The files changed (as clickable `path:line` where useful).
-- How each acceptance criterion was verified.
+- **What the MCP re-check found**, and the server version it ran against — say so
+  even when nothing changed, since "confirmed against 1.32.1 today" is itself the
+  result. If it changed the implementation, lead with that: it is the highest-value
+  thing in the report, and invisible if it only lives in the spec file.
+- How each acceptance criterion was verified, naming any that is **not
+  runtime-verified** and what it would need.
 - The `IMPLEMENTED.md` entry that was added.
 - Any new invariant(s) recorded (`INV-NNN`) in `specs/INVARIANTS.md`, or a note
   that the implementation introduced none.
+- Any `## Deviations from this spec, and why` note appended, and what it records.
 
 If several specs were requested, give a compact table:
 
@@ -217,11 +324,18 @@ remaining specs?"). Do not implement specs that were not requested.
 ## Guardrails
 
 - **Never mark a spec implemented that isn't.** The ledger must reflect reality;
-  if verification fails, leave the spec off the record and say why.
+  if verification fails, leave the spec off the record and say why. A criterion
+  that could not be run in this environment is disclosed, never ticked.
+- **The server outranks the spec on every Senzing fact.** Re-verify before changing
+  code (Step 3.3), implement what the server says now, and never copy a Senzing
+  fact from a spec into shipped guidance without re-confirming it this session
+  (INV-080). A stale spec implemented faithfully ships a fresh defect that looks
+  reviewed.
 - **Never invent or edit spec content** to make it easier to implement. If a
   spec is wrong, report it — fixing/authoring specs is `feedback-to-specs`' job.
-  The one exception is the post-implementation `## Invariants introduced` note
-  from Step 5, which records (does not alter) the spec's outcome.
+  Two appends are permitted, because both *record* an outcome rather than altering
+  the plan: the `## Invariants introduced` note from Step 5, and the
+  `## Deviations from this spec, and why` note from Step 3.6.
 - **Respect `@INVARIANTS.md`.** A change that would violate an invariant is not a
   valid implementation; surface the conflict instead.
 - **New invariants are confirmed and append-only.** Promote a rule to

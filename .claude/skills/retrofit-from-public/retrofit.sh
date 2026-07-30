@@ -55,9 +55,9 @@ echo
 # reported below for manual handling instead. Governance files (.github/, LICENSE,
 # .vscode/, .gitignore, public .claude/settings.json) are out of scope by
 # construction — they are never read from the source.
-excludes=(--exclude='__pycache__/' --exclude='*.pyc')
+excludes=(--exclude='__pycache__/' --exclude='*.pyc' --exclude='.pytest_cache/')
 
-echo "=== Updating plugins/ (add/update, minus __pycache__ / *.pyc) ==="
+echo "=== Updating plugins/ (add/update, minus __pycache__ / *.pyc / .pytest_cache) ==="
 rsync -a "${excludes[@]}" "$src/plugins/" "$here/plugins/"
 
 echo "=== Updating .claude-plugin/ (marketplace.json) ==="

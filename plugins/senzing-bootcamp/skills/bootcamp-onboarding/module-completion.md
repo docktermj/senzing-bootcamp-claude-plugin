@@ -94,7 +94,9 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
-- **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](docs/visualizations/<name>-<tab-slug>.png)` — in the same turn the capture ran, in the app's tab order. The graduation PDF embeds local images and silently skips any that are missing (INV-048), so an absent screenshot never breaks the recap PDF, and graduation backfills any capture whose embed was missed.
+  - ⛔ **Write all three as labeled blocks — `**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**` — never as one prose paragraph.** The three labels are what the recap PDF renders and what `--check` validates (INV-103); a summary written as flowing prose satisfies the *heading* and loses all three blocks. The renderer now prints any absent block as "(not recorded)" in the keepsake rather than letting it disappear, so an unlabeled summary is visible on the page — but a bootcamper's PDF should never carry that marker. Blocks with no content still get their label: "(no files — conceptual primer)" under **Files produced** is a real answer; silence is not.
+  - ⛔ **The shape of each block is required too, not just its label.** `**What you accomplished:**` and `**Files produced:**` are **lists** — label on its own line, then one bullet per accomplishment, and one bullet per file with a short "— what it is" gloss, exactly as the template above shows. `**Why it matters:**` is **prose** and stays inline after its label. The PDF renders bullets as bullets and inline text as one wrapped paragraph, so a list written inline — most often as a comma-joined run of paths — arrives in the keepsake as a paragraph, and nothing downstream can turn it back into a list: `--check` validates the label, not the shape. Write the shape you want the bootcamper to keep.
+- **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](visualizations/<name>-<tab-slug>.png)` — in the same turn the capture ran, in the app's tab order. ⛔ **The path is relative to `docs/bootcamp_recap.md`, the file you are writing into — so it is `visualizations/…`, never `docs/visualizations/…`** (INV-161). The recap lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and matches nothing: it breaks the Markdown recap for a human reader *and* drops the image from the PDF. Write the one path that is correct for both; never adjust it to suit the renderer, and never `cd` to make it resolve. The graduation PDF embeds local images and **reports** every one it drops — naming it on stderr and printing an `embedded N of M images` count (INV-162) — so an absent screenshot never breaks the recap PDF but is never silent either, and graduation backfills any capture whose embed was missed.
 
 ⛔ **Whenever a module step produces a bootcamper-facing artifact — a PDF, a PNG, an HTML
 visualization — verify the artifact itself, not the exit code.** A zero exit, a written file, and a
@@ -118,8 +120,21 @@ that the `## {Name}` heading (name-based, no catalog number) and all four subsec
 
 Re-read `docs/bootcamp_recap.md` and confirm a `## {Name}` heading for the
 just-completed module is present. If it is missing (a lost write or session
-boundary), append it again before continuing. Only then display the one-line
-confirmation: `Recap updated: {Name}.`
+boundary), append it again before continuing.
+
+In the same read, confirm this module's **End-of-Module Summary** carries all three labeled blocks
+(`**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**`). If any is absent, add it
+now, from what this module actually did — the Step 3 epilog you just showed the bootcamper is the
+same content, so copy it rather than composing something new. (Module 0 is the one module that runs
+this step without Step 3 — it is exempt from the bootcamper-facing summary, INV-078/INV-092 — so
+there is no epilog to copy and the three blocks are composed here from what the primer covered.
+"(no files — conceptual primer)" is the honest **Files produced** answer for it.) This is the
+cheapest place to catch it:
+the module's own work is still in context, whereas graduation has to reconstruct it from artifacts
+weeks of session-time later. Never invent a file that was not produced; write
+"(no files — {reason})" when there genuinely were none.
+
+Only then display the one-line confirmation: `Recap updated: {Name}.`
 
 (The recap PDF is not rendered per-module: it is rendered once at graduation by
 `scripts/generate_recap_pdf.py`, which reads this file. See `../graduation/SKILL.md`.)
@@ -145,9 +160,16 @@ few screenshots of it so the recap shows what the bootcamper actually built, not
 link. This runs at the visualization step, right after the page exists, and is **non-blocking with
 graceful degradation** — never a 👉 question, and never a reason to stall.
 
-The app is a **tabbed** artifact, so capture is **one image per tab** — never several shots of one
-tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and a short
-`{name}`):
+**The per-tab procedure below is for the tabbed visualization app** — the Truth Set app and the
+Module 7 results app, which share the six-tab contract. A **single-page** HTML deliverable (Data
+Quality, Mapping, and Transformation's quality and mapping pages) has no tabs: capture it as **one
+image**, with no `--tabs` argument, and embed that one image. Passing `--tabs` at a page that has
+none makes the helper skip every requested tab and report on stderr (INV-122) — correct behaviour,
+but it captures nothing, so the page silently misses the recap.
+
+For the tabbed app, it is a **tabbed** artifact, so capture is **one image per tab** — never several
+shots of one tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and
+a short `{name}`):
 
 1. Run the bundled helper. Prefer the **live app's `localhost` URL** while the server is still up,
    because that is the only way the Search / Probe tab can show real results; fall back to the
@@ -168,15 +190,29 @@ tab. Procedure (parameterized by the visualization's `{html}` file or live `{url
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
    fetches a remote URL (offline — INV-091). Pass only tabs the app actually shows for this data —
    the helper reports any tab that produced no image on stderr rather than dropping it silently.
-2. **If it exits non-zero** (exit 2 = no headless capability available): skip screenshots silently,
-   keep the visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at
-   the `minimal` preset).
+2. **If it exits non-zero** (exit 2 = nothing was captured): skip screenshots, keep the
+   visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at the
+   `minimal` preset). **Read which of the three reasons it gave** — they are not interchangeable and
+   only one is about a missing install: no requested tab exists in this app; **no browser was found**
+   (the message names every location searched); or **a browser was found but every capture failed**
+   (the message names it). In the last two cases do **not** install a browser or suggest installing
+   one — capture is dependency-optional by contract (INV-122), and a Windows machine that carried
+   both Edge and Chrome was once told no capability was available, which sent the reader to install
+   software they already had.
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
-   named `{name}-<tab-slug>.png`. **Keep every captured tab** — and, **as a required step, in the
+   named `{name}-<tab-slug>.png`. ⚠️ **Open the Entity Graph image and check the nodes are spread,
+   not bunched in one corner.** A graph tab whose force simulation was restarted or captured too
+   early produces a valid PNG of an empty-looking graph at exit 0 — the helper gives animated tabs a
+   longer settle budget and the app's `activate()` no longer redraws an already-active tab, but this
+   is the one image where "it rendered" and "it is right" come apart, and INV-123 requires the
+   caption to come from the opened image anyway. A graph PNG far smaller than its siblings is the
+   tell. **Keep every captured tab** — and, **as a required step, in the
    same turn** — embed them all in **this module's recap `Actions Taken`** as
-   `![caption](docs/visualizations/{name}-<tab-slug>.png)`. Writing the image lines is not
+   `![caption](visualizations/{name}-<tab-slug>.png)` — relative to `docs/bootcamp_recap.md`, so
+   **`visualizations/…`, never `docs/visualizations/…`** (INV-161; a `docs/`-prefixed path resolves
+   to `docs/docs/…` and embeds nothing). Writing the image lines is not
    optional once a capture succeeded; record it at the step checkpoint. The graduation PDF embeds
-   these local images and skips any that are missing (INV-048), and graduation backfills any that
+   these local images and reports any it drops (INV-162), and graduation backfills any that
    were captured but never embedded (see `../graduation/SKILL.md` Step 1).
 
    ⛔ **Do not prune to a "best" few.** Capture is one image per tab (INV-122), so every file is

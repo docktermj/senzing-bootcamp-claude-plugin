@@ -184,3 +184,153 @@ class TestBackwardCoverage(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------------------
+# Ledger-claim hygiene (deep-dive-audit-2026-07-29-minor-fixes, items 3 and 4).
+#
+# Two failures of the ledger AS EVIDENCE, both found by the 2026-07-29 audit:
+#
+#   Item 3 — 66 of 199 entries said `Commit: uncommitted` against a clean tree, so the
+#   field could not answer the one question it exists for. They were backfilled from a
+#   derived rule (the commit that added the entry's heading); this pins the field's shape
+#   so free text cannot creep back in and staleness has a fixed vocabulary.
+#
+#   Item 4 — two specs were recorded as implemented with an acceptance criterion unmet
+#   (`relocate-integration-deployment-questions-to-module1`, whose criterion named
+#   graduation as a reader, and `defer-commonmark-to-graduation`, whose criterion named
+#   the generated `production/*.md`). Both left an invariant standing unimplemented for
+#   weeks. The commonest visible symptom is a spec predicting a file its ledger entry
+#   never records changing, so that is what is gated here — forward-only.
+#
+# The affected-files gate is FORWARD-ONLY on purpose, exactly as TestForwardCoverage above
+# is. A spec's `## Affected files` is a prediction and the entry's `Files changed:` is the
+# outcome, so a gap is frequently legitimate (the change turned out not to need the file).
+# 38 pre-cutoff entries carry one. Gating them retroactively would be a gate that cannot
+# represent a legitimate input — the shape INV-144/INV-173 forbid — so the whole corpus is
+# reported instead, by `.claude/skills/dry-run/coverage_reports.py affected`.
+# ---------------------------------------------------------------------------------------
+
+# Entries implemented on or after this date must account for their predicted files.
+AFFECTED_CUTOFF = "2026-07-29"
+
+# Entries landed on the cutoff date itself, BEFORE this gate existed — named individually
+# so the exemption is auditable and cannot quietly widen, exactly as GRANDFATHERED above.
+# Both were reviewed and both gaps are legitimate prediction-vs-outcome differences:
+#
+#   generators-warn-on-dropped-unencodable-characters — predicted `tests/test_discoveries_pdf.py`
+#     but the entry explains the tests went to `test_recap_pdf_font_safety.py` instead ("one
+#     shared collector"), and `bootcamp_data_discoveries.md` is a generated *project* file the
+#     generator reads, never a repo file to change.
+#   recap-new-line-labels-regression-tests — a tests-only spec whose whole point was that the
+#     two generators already carried the behavior, so not touching them is the outcome.
+#
+# Do not add to this set: a new entry names its own files or says why it did not.
+AFFECTED_GRANDFATHERED = frozenset(
+    {
+        "generators-warn-on-dropped-unencodable-characters",
+        "recap-new-line-labels-regression-tests",
+    }
+)
+
+COMMIT_FIELD = re.compile(r"^- \*\*Commit:\*\*(.*)$", re.M)
+HASH = re.compile(r"`?\b[0-9a-f]{7,40}\b`?")
+PATH_IN_TICKS = re.compile(
+    r"`([A-Za-z0-9_./{}*-]+\.(?:md|py|sh|json|yaml|yml|js|png|pdf))`"
+)
+
+
+def predicted_paths(name):
+    """Paths named in a spec's `## Affected files`, or None when there is no spec file."""
+    spec = SPECS / f"{name}.md"
+    if not spec.is_file():
+        return None
+    m = re.search(
+        r"^## Affected files\s*$(.*?)(^## |\Z)",
+        spec.read_text(encoding="utf-8"),
+        re.M | re.S,
+    )
+    if not m:
+        return []
+    return sorted(set(PATH_IN_TICKS.findall(m.group(1))))
+
+
+class TestCommitFieldHygiene(unittest.TestCase):
+    """`Commit:` carries a hash, `uncommitted`, or `committed (hash not recorded)`."""
+
+    def test_every_entry_has_a_commit_field(self):
+        missing = [n for n, _, body in entries() if not COMMIT_FIELD.search(body)]
+        self.assertEqual(
+            [], missing, "IMPLEMENTED.md entries with no `Commit:` field:\n  "
+            + "\n  ".join(missing)
+        )
+
+    def test_commit_fields_use_the_fixed_vocabulary(self):
+        bad = []
+        for name, _, body in entries():
+            m = COMMIT_FIELD.search(body)
+            if not m:
+                continue
+            value = m.group(1).strip()
+            if HASH.search(value):
+                continue
+            if value in ("uncommitted", "`uncommitted`", "committed (hash not recorded)"):
+                continue
+            bad.append(f"{name}: {value!r}")
+        self.assertEqual(
+            [],
+            bad,
+            "`Commit:` must be a hash, `uncommitted`, or `committed (hash not "
+            "recorded)` — free text makes the field unreadable:\n  " + "\n  ".join(bad),
+        )
+
+
+class TestAffectedFilesAccounting(unittest.TestCase):
+    """A post-cutoff entry records what its spec predicted, or explains the difference."""
+
+    def test_recent_entries_account_for_their_predicted_files(self):
+        unaccounted = []
+        for name, date, body in entries():
+            if date is None or date < AFFECTED_CUTOFF:
+                continue
+            if name in AFFECTED_GRANDFATHERED:
+                continue
+            paths = predicted_paths(name)
+            if not paths:
+                continue
+            for path in paths:
+                # "Accounted for" is deliberately loose: the basename appearing anywhere
+                # in the entry counts, so `Files changed:` naming it OR the Summary
+                # explaining why it went untouched both pass. The gate is against
+                # silence, not against a considered decision.
+                if Path(path).name not in body:
+                    unaccounted.append(f"{name} (implemented {date}) never mentions {path}")
+        self.assertEqual(
+            [],
+            unaccounted,
+            "A spec predicted a file and its ledger entry neither records changing it "
+            "nor says why not — the shape that hid the graduation half of INV-097:\n  "
+            + "\n  ".join(unaccounted),
+        )
+
+    def test_the_affected_cutoff_actually_covers_something(self):
+        covered = [
+            n for n, d, _ in entries()
+            if d and d >= AFFECTED_CUTOFF
+            and n not in AFFECTED_GRANDFATHERED and predicted_paths(n)
+        ]
+        self.assertTrue(
+            covered,
+            "no entry is on or after AFFECTED_CUTOFF with a spec that predicts files, "
+            "so this gate checks nothing — grandfathering is for entries that predate "
+            "this gate, not new ones",
+        )
+
+    def test_affected_grandfather_list_matches_real_entries(self):
+        """A stale exemption silently widens the gate; a typo'd one does nothing."""
+        names = {n for n, _, _ in entries()}
+        self.assertEqual(
+            set(),
+            AFFECTED_GRANDFATHERED - names,
+            "AFFECTED_GRANDFATHERED names an entry absent from IMPLEMENTED.md",
+        )

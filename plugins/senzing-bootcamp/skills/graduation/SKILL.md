@@ -97,19 +97,21 @@ current setting, say so in the question itself.
 When it **does** differ, end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
-On the **CLI**, pin the switch question verbatim:
+On the **Claude Code CLI**, pin the switch question verbatim:
 
 > 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
 
-On **Desktop / web / IDE** (or an unknown surface), pin the intent-based equivalent (INV-098):
+In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface), pin
+the intent-based equivalent (INV-098), naming the one interface the bootcamper is on — "in your
+Claude interface" only when it cannot be determined (INV-158):
 
-> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with your Claude app's model and effort controls; reply no to keep your current model.)
+> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
 
 The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
-telling the bootcamper how to make the change (run the `/model`/`/effort` commands on the CLI, or
-use the model and reasoning-effort controls in their Claude app), then end the turn on this pinned
-confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts) — do NOT
-start the graduation work yet:
+telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude Code
+CLI, or use the model and reasoning-effort controls in Claude Desktop / the Claude web app / their
+Claude IDE extension), then end the turn on this pinned confirmation gate (its question verbatim,
+INV-056/INV-069 — only the answer hint adapts) — do NOT start the graduation work yet:
 
 > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
 
@@ -129,9 +131,54 @@ bootcamper can, which is why the switch is offered as a question rather than per
 
 Gather context before any step. Do this silently.
 
-1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract `name`, `language`, `path` (Core/Customized; older sessions may store this as `track`), `selected_modules`, `database` (SQLite/PostgreSQL), and `data_sources` if present.
+1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract, **by these exact key
+   names**:
+
+   | Key | Written by | Notes |
+   |---|---|---|
+   | `name` | Bootcamp preparation (detected, never asked — INV-134) | the certificate name; see pre-check 4 |
+   | `programming_language` | Bootcamp preparation (INV-133) | **not** `language` |
+   | `database_type` | SDK setup Step 7 | `sqlite` or `postgresql`, lowercase; **not** `database` |
+   | `path` | Bootcamp preparation | `core`/`customized`; older sessions may store this as `track` |
+   | `selected_modules` | Bootcamp preparation | drives the journey map (INV-076) |
+   | `integration_targets` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
+   | `deployment_target` / `cloud_provider` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
+
+   The data-source registry is **`config/data_sources.yaml`**, its own file (INV-050) — not a
+   preferences key.
+
+   ⛔ **Use the names in that table verbatim.** They are the names the writing modules actually
+   write, and a reader that invents its own is indistinguishable from a bootcamper who never
+   answered: SDK setup says so in its own words — *"a different key name is the same failure as no
+   key at all"*. Until 2026-07-29 this step read `language`, `database` and `data_sources`, which
+   nothing has ever written, so every consumer below silently got nothing.
+   **1a — what the Module 1 answers are for (INV-097).** `integration_targets` and
+   `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
+   asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
+   going to run. Graduation is the only place they can still change anything, because the
+   `production/` project **is** the thing being deployed: Step 3 stamps them into the container and
+   environment templates, Step 4 into the README and the migration checklist's Deployment section,
+   Step 5 into the graduation report.
+
+   ⛔ **Never ask for them here.** They are asked once, in Module 1 (INV-006/INV-097), and Module 1
+   may not even have run under a Customized path (INV-076) — so **absent is normal, silent, and
+   changes nothing**: every step below states its no-value behavior, and each simply stays generic.
+   An empty value is the same as absent.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
-3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
+3. **Fallback — and distinguish a missing file from a missing key.** They are different failures
+   and only one is the bootcamper's business:
+   - **A file is missing or unparseable** → tell the bootcamper, then ask for the programming
+     language and database type with one 👉 question at a time; use sensible defaults for the rest
+     (path unknown, data sources none).
+   - **A file is present but a key is absent** → do **not** announce it and do **not** ask. An
+     absent `database_type` means SDK setup Step 7 did not record the choice — a **plugin defect**,
+     not a bootcamper outcome — so note it internally so it surfaces in the Step 0 retrospective,
+     exactly as Data collection does for the same key
+     (`../module-04-data-collection/SKILL.md` → the SQLite volume warning), and carry on with the
+     value indeterminate. `integration_targets` and `deployment_target` are the exception: absent is
+     **normal** and silent (see 1a).
+
+   Either way graduation continues — nothing here blocks (INV-048).
 4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
    preparation and never asked (INV-134), so it can be absent or unsuitable. **The governing test is
    the whole test:** treat it as **unusable** when it is missing, empty/whitespace, or **clearly not
@@ -144,18 +191,42 @@ Gather context before any step. Do this silently.
    - **a bare single-token handle** — one lowercase word with no space, e.g. `docktermj`, `jsmith42`,
      `mdockter`. This holds whether or not it matches the OS username: a handle is a handle either
      way, and requiring it to equal the OS username let one through onto a certificate.
+   - **a name the recap PDF cannot print** — one written in a script the generator's built-in fonts
+     do not carry (Chinese, Japanese, Korean, Cyrillic, Arabic, Hebrew, Greek, Devanagari, Thai …).
+     The PDF is set in Latin-1 core fonts, so those characters are dropped rather than rendered, and
+     `generate_recap_pdf.py` warns on stderr naming them (INV-143 forbids printing them as `?`, which
+     it used to). Do **not** transliterate the name yourself — how it should be spelled in Latin
+     script is the bootcamper's decision, which is exactly what the question below asks. Ask it, and
+     record their answer; if they decline, the certificate reads "Bootcamper" and graduation
+     continues (INV-048).
 
    Be conservative in the other direction: a plausible real name must **never** trigger the
    question, because asking someone their name right after correctly detecting it is its own defect
-   (INV-006). A value containing a space and normal capitalisation ("Ada Lovelace") is a display
+   (INV-006). A value containing a space and normal capitalization ("Ada Lovelace") is a display
    name; a single lowercase token is not.
 
    When it is unusable, ask this once, pinned verbatim (INV-056), **before** Step 1 renders the PDF:
 
    > 👉 **What name would you like printed on your Certificate of Completion?**
 
-   Persist the answer as `name` in `config/bootcamp_preferences.yaml` so a re-render or a resumed
-   session never asks again (INV-006). If the bootcamper declines or gives nothing usable, continue
+   Persist the answer **in both places**, or the certificate prints the value you just rejected:
+
+   1. As `name` in `config/bootcamp_preferences.yaml`, so a re-render or a resumed session never
+      asks again (INV-006). The generator reads this **first** for the certificate — it is the
+      Bootcamper's answer, and it outranks anything detected earlier.
+   2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, which Bootcamp
+      preparation wrote at the **start** of the run from the auto-detected value. Leaving it means
+      the recap a reader opens still shows the rejected handle, and any re-render driven from the
+      recap alone reproduces it. Amending a preamble meta line is not a rewrite of a completed
+      module section, so the append-only rule (INV-085) does not forbid it.
+
+   ⛔ **Both, not either.** Preferences alone once printed `docktermj` on a signed certificate at
+   exit 0 with 99% content retention and no warning, because the generator read only the recap line
+   — the pre-check asked the question, the Bootcamper answered, and the answer was discarded
+   (INV-065). The generator now prefers preferences and prints a `NOTE:` on stderr when the two
+   disagree; treat that note as work still to do, not as confirmation.
+
+   If the bootcamper declines or gives nothing usable, continue
    — graduation is non-blocking and the generator still renders a certificate, warning on stderr
    that it used the "Bootcamper" placeholder. **Never print a rejected system-account value** on the
    certificate or into the recap (INV-065); ask, and use the answer.
@@ -246,6 +317,36 @@ module was interrupted before its completion step ran (e.g. synthesize a missing
 `truthset_visualization` section from its artifacts). If `docs/bootcamp_recap.md` does not exist at
 all, reconstruct it from `config/bootcamp_progress.json` and the files each module produced.
 
+**Backfill the End-of-Module Summary blocks (before rendering).** Every module section's
+**End-of-Module Summary** must carry three labeled blocks — `**What you accomplished:**`,
+`**Files produced:**`, `**Why it matters:**` (INV-103; the "Bootcamper's takeaway" line stays
+optional). Check each section and add any that is absent, drawn from that module's own recorded
+content: **Actions Taken** and the section's own prose say what was accomplished, the paths it names
+(plus the files the module actually produced) give **Files produced**, and the module's purpose in
+`../bootcamp-onboarding/onboarding-flow.md` gives **Why it matters**. Where the summary is already
+there as an unlabeled paragraph, keep the paragraph and add the labeled blocks — adding the labels a
+subsection was always required to carry is not a prose rewrite (INV-085), and the run this was
+found in had summaries whose three blocks were simply absent.
+
+**Write each block in its required shape.** `**What you accomplished:**` and `**Files produced:**`
+are **lists**: put the label on its own line and one bullet per accomplishment, and one bullet per
+file with a short "— what it is" gloss. `**Why it matters:**` is **prose**: it stays inline after its
+label. This is the shape `../bootcamp-onboarding/module-completion.md` prescribes and the shape
+`docs/examples/bootcamp_recap.example.md` shows. It is not cosmetic: the PDF renders bullets as
+bullets and inline text as one wrapped paragraph, so a list written inline — the comma-joined run of
+paths being the usual way it happens — reaches the keepsake as a paragraph and cannot be recovered
+later. The shape chosen here is the shape the bootcamper keeps.
+
+⛔ **Never invent content to fill a label.** If a module's own record does not support a block, write
+what is true — "(no files — {reason})" for a module that produced none — or leave that one block out
+and let the generator mark it "(not recorded)". A keepsake that overstates what the bootcamper did is
+worse than one that shows a gap (INV-065's principle: never fabricate to fill a field). Like every
+graduation step this is non-blocking: warn and continue.
+
+`--check` (Step 1b) reports these gaps per module, so run it after this backfill and re-render if it
+still finds any — the PDF renders every absent block as "(not recorded)" rather than dropping it, so
+a gap is visible on the page but should not survive to the bootcamper's copy.
+
 **Stamp the completion date.** Ensure the recap header carries a `**Completed:** {today's date, ISO
 8601}` line (add it directly under the `**Started:**` line if absent; leave an existing one intact).
 This is the date the Certificate of Completion shows (INV-100), distinct from `**Started:**` — so a
@@ -326,7 +427,7 @@ none of these are covered by it:
 2. **Duplicate images within one section.** If two embedded images in the same section are
    byte-identical, or have identical pixel dimensions and were written within the same second, warn:
    that is the signature of capturing one tab repeatedly rather than one image per tab.
-3. **Captions that cannot be checked.** If an embedded filename carries no recognised tab slug, warn
+3. **Captions that cannot be checked.** If an embedded filename carries no recognized tab slug, warn
    that its caption cannot be verified against a tab and should be confirmed by opening the image.
 
 **Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
@@ -399,8 +500,8 @@ should look professional). Install it **robustly**, never with a bare `pip`:
 
 (Rasterizing pages to PNG to check the layout is **not** a maintainer-only aid — it is part of
 verifying the render, below. `poppler`'s `pdftoppm` is the tool to reach for; `pymupdf` also works
-where it happens to be installed. Neither is required: every check degrades silently when its tool
-is absent.)
+where it happens to be installed. Neither is required — but a check that does not run MUST be
+reported as skipped rather than degrading silently, per "Say what you could not verify" below.)
 
 Locate and run the bundled script (it ships with this plugin). Use the venv's Python
 if you created one above; otherwise `python3`:
@@ -422,10 +523,11 @@ python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py
 
 The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 
-- **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over.
-- **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognisable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
+- **Success** is a `PDF generated:` line on stdout with exit 0. Only then tell the bootcamper: "📄 Recap PDF generated at `docs/bootcamp_recap.pdf`." Never claim success without that line. That line also reports how much of the recap reached the PDF (e.g. `rendered 25201 of 25467 source characters (99%)`); if it is well below 100%, content is being dropped — check the recap's structure before handing the PDF over. When the recap references screenshots it additionally reports `embedded N of M images` — **read this, and do not treat the retention figure as covering it.** Retention counts characters, so a PDF that lost every screenshot still reports ~99%; `embedded 0 of 6` is the only line that says so. Any shortfall means an image path did not resolve, and the generator names each one on stderr as `skipped image (not found): …` with the directories it searched.
+- **Image paths in the recap are relative to `docs/bootcamp_recap.md`, and the generator resolves them that way.** Write them exactly as Step 1a says — `![alt](visualizations/<file>.png)` — which is what a Markdown reader of the recap needs, and what the PDF now needs too. Do **not** "fix" a path to `docs/visualizations/...` to suit the PDF: that breaks the Markdown recap (it resolves to `docs/docs/...`) and is no longer necessary. Equally, do not `cd docs` before rendering to make images appear; if images are missing, the path or the file is wrong, not the working directory.
+- **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
-- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+- **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), flags any `![](…)` image target that resolves to no file (reported as `embedded image not found: …`, so a lost screenshot surfaces here rather than in the finished PDF), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high
@@ -450,7 +552,13 @@ bootcamper-facing output (INV-012).
   full. A count of **0** is the finding. This is the only check that catches content rendered outside
   the page box.
 - **Count unique image XObjects, not `/Subtype /Image` occurrences.** References are counted more than
-  once, so the naive grep reported 12 for 10 images. `pdfimages -list <pdf>` gives the honest count.
+  once, so the naive grep reported 12 for 10 images. Reach for these in order, and use the first
+  available: (1) the generator's own `embedded N of M images` line, which needs no tool at all and is
+  the count the renderer actually achieved; (2) **Pillow**, which `fpdf2` already pulls in — so when
+  you created the project-local venv above it is *already importable in that same interpreter*, and
+  opening the embedded images there gives an honest count and their dimensions with **no new
+  dependency**; (3) `pdfimages -list <pdf>` where poppler exists; (4) the `/Subtype /Image` grep,
+  **which overcounts** — if you fall back to it, label the number as approximate and say so.
 - **Open every captured PNG before writing its caption** (INV-123, and
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots").
 - **Re-run `--check --expect-modules "…"` after every render**, semicolon-separated — two module
@@ -464,11 +572,36 @@ looks exactly like a lost page. Cross-check a suspicious "missing content" resul
 independent tool (`pdftotext`) before concluding the artifact is broken — the reader is the likelier
 culprit.
 
-**Toolchain these assume.** In the field the machine had `fpdf2`, headless Chrome, and poppler
-(`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`); it did **not** have Playwright, Selenium, or
-PyMuPDF. Every check above is doable with plain headless Chrome and poppler, which is why nothing here
-— or in the screenshot capture path — is designed around a heavier dependency. Probe for a tool before
-using it and skip the check when it is missing; never install one to satisfy a verification step.
+**Toolchain these assume, and what it looks like per platform.** Every check above is doable with
+plain headless Chrome and poppler, which is why nothing here — or in the screenshot capture path — is
+designed around a heavier dependency. Probe for a tool before using it and skip the check when it is
+missing; **never install one to satisfy a verification step** (INV-129) — that includes poppler, so do
+not offer `scoop install poppler` / `brew install poppler` / `apt install poppler-utils` to make a
+check pass.
+
+- **Linux / macOS:** poppler is usually present (`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`),
+  so the full check set normally runs. One field machine had `fpdf2`, headless Chrome and poppler, and
+  did **not** have Playwright, Selenium, or PyMuPDF.
+- **Windows: poppler is typically absent.** On one Windows 11 workstation only `pdftotext` resolved —
+  `pdftoppm`, `pdfinfo` and `pdfimages` were all missing. That is the normal Windows case, not a
+  broken setup, and it removes exactly the two checks text extraction cannot substitute for: the page
+  raster and the honest image count. Use the Pillow route above for the count, keep the positive
+  `pdftotext` probe, and **report the page raster as not verified** — do not imply the layout was
+  checked.
+
+⛔ **Say what you could not verify.** Any check skipped for a missing tool MUST be recorded as skipped,
+naming the check and the tool, and the closing announcement MUST state which verification steps did
+not run. "Verified" that silently means "verified except for the two strongest checks" is the same
+class of overstatement this section exists to prevent: a keepsake whose layout nobody could inspect is
+acceptable, one described as verified when its layout was never inspected is not. A skipped check
+still never blocks graduation (INV-048, INV-052/INV-066), and this stays agent-side apparatus rather
+than bootcamper-facing output (INV-012).
+
+⚠️ **Spend a reduced check set on what only it can catch.** When tools are missing, prioritize: the
+positive `pdftotext` content probe (the only check that catches content positioned outside the page
+box) and the image count (which catches silently-dropped screenshots — the failure that shipped a
+recap with 2 images where 8 were expected, detectable *only* by counting). The page raster is the one
+genuinely tool-gated check; its absence is the thing to announce.
 
 ## Step 2: Build the production project
 
@@ -491,8 +624,15 @@ does not exist; on a copy failure, log and continue):
 | `src/load/**` | `production/src/load/` | Loading code |
 | `src/query/**` | `production/src/query/` | Query/discovery code |
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
-| `data/senzing-ready/**` | `production/data/` | Senzing-ready data |
+| `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
+
+⛔ **Every destination above keeps the source's path relative to the project root, and
+`data/senzing-ready/` in particular.** The code in `src/load/**` is copied **verbatim** and reads its
+input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phaseA-build-loading.md`
+step "Mapped sources"), so flattening the data to `production/data/` hands the bootcamper a project
+whose loader points at a directory that does not exist. Copy the tree, do not rewrite the code: the
+loader is theirs, and a path edited by graduation is a change they never saw made.
 
 Create `production/database/.gitkeep` as an empty placeholder (never copy the
 eval database itself).
@@ -501,38 +641,90 @@ eval database itself).
 `config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `data/samples/`,
 `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
 
+⛔ **`data/raw/` is excluded, so a CORD fast-pathed source's input is not carried over.** A
+fast-pathed source loads straight from `data/raw/` with no mapping (INV-040/INV-041), so its loader
+arrives in `production/` with no input file — deliberately, since raw source data is the
+bootcamper's to place, not graduation's to copy. Name each such source in the Step 5 graduation
+report's **files-excluded** table and in `production/README.md` → Configuration, saying where its
+input has to be supplied. An excluded input the handover never mentions is indistinguishable from a
+broken project.
+
 Present a short, one-line statement of what was copied, what was excluded, and the directories
 created, then continue directly to Step 3 — generate the production configuration files
 automatically. Do not gate this behind a 👉 question (one fewer low-stakes confirmation).
 
 ## Step 3: Production configuration files
 
-Generate these in `production/`, parameterized by the language and database from
+Generate these in `production/`, parameterized by `programming_language` and `database_type` from
 pre-checks. Use placeholder values only, never real secrets:
 
 - **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `SENZING_LICENSE_PATH`, `DATABASE_URL`, `LOG_LEVEL` with safe example values and comments.
-- **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per the chosen database.
+- **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per `database_type`.
+
+**Where `deployment_target`/`cloud_provider` is known, say so in both files** (INV-097): a header
+comment naming the intended target — e.g. `# Target: AWS (ECS/Fargate)`, `# Target: Kubernetes`,
+`# Target: on-premises` — and, in `.env.example`, a comment on the values that platform will supply
+differently (a managed-database `DATABASE_URL`, a secret-manager reference instead of a literal).
+⛔ Stay declarative: name the target and stop. Do **not** invent provider-specific resources,
+credentials, ARNs, or account identifiers — placeholder values only, as above, and a wrong
+infrastructure guess in a handed-over project is worse than a generic one. When the value is absent
+the files are exactly as they were before this paragraph.
 - **`.gitignore`:** language-appropriate, always including `.env`, `.env.production`, `*.db`, `*.sqlite`, `__pycache__/`, `node_modules/`, `target/`, `bin/`, `obj/`, `build/`, `dist/`, `*.log`.
 
 ## Step 4: Production README and migration checklist
 
-- **`production/README.md`:** parameterized by language, database, and data sources. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+- **`production/README.md`:** parameterized by `programming_language`, `database_type`, and the data sources from `config/data_sources.yaml`. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+  - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
+  - **The Deployment section is where `deployment_target`/`cloud_provider` lands** (INV-097): name the stated target in its heading or first item, and make its checkboxes the ones that target actually needs (a cloud target → managed database, secret storage, image registry, network egress to nothing external; Kubernetes → manifests/Helm, resource limits, liveness probes; on-premises → host provisioning, backup schedule). ⛔ Still ⚠️-marked and still not covered in depth by the bootcamp — naming the target makes the list *relevant*, not authoritative, and it must not read as a deployment guide the bootcamp did not give. Absent → the generic six-section list exactly as before.
 
-Author every `production/*.md` deliverable — this README, the migration checklist, and the
-Step 5 `GRADUATION_REPORT.md` — to the same CommonMark house rules applied to the recap in
-Step 1a (MD022/MD031/MD032 blank lines, MD040 fenced-block languages, `**Label:**` colon
-spacing), so the handed-over project reads clean. Best-effort and non-blocking, as everywhere in
-graduation.
+Write every `production/*.md` deliverable — this README, the migration checklist, and the
+Step 5 `GRADUATION_REPORT.md` — as **plain, functional Markdown**, exactly as the bootcamp's own
+docs were written (`../bootcamp-onboarding/ground-rules.md` → "Markdown files"). Do **not**
+hand-format them to the house rules: **Step 5a runs the normalizer over `production/`** and does it
+in code, with a content guard. Structure still matters and is not deferred — the sections listed
+above, the `- [ ]` checkboxes, and the tables are content, not formatting.
 
 ## Step 5: Graduation report
 
 Always generate `production/GRADUATION_REPORT.md`, even if earlier steps had
 errors. Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
-language, database type, a files-generated table, a files-excluded table, and
+`programming_language`, `database_type`, a files-generated table, a files-excluded table, and
 next steps (fill in secrets, obtain a production license, work through the
-checklist, configure CI/CD, test with production data). If any step failed, add a
+checklist, configure CI/CD, test with production data). Record the Module 1 answers too when
+present — the intended `deployment_target`/`cloud_provider` and the `integration_targets`
+(INV-097) — so the handover states what the project was aimed at; omit either line when absent.
+If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
+
+## Step 5a: Normalize the production Markdown (once, after the files exist)
+
+`production/` now holds its Markdown deliverables, written plain. Make the same single
+best-effort CommonMark pass over them that Step 1a made over `docs/*.md` — INV-060 requires the
+pass over **both** sets, and the `production/` half is why this step exists:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/normalize_docs_markdown.py" --docs-dir production
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/normalize_docs_markdown.py --docs-dir production
+```
+
+It applies the same rules as in Step 1a and globs top-level `production/*.md` only, never
+recursing — so nothing under `production/src/`, `production/config/` or a copied `docs/` subtree is
+touched.
+
+⛔ **Same content guard, same non-blocking contract as Step 1a.** The normalizer fingerprints each
+file's non-whitespace content before and after and **restores the original** if any source line
+would be lost, so a cosmetic pass can never silently shorten a handover document. If it reports a
+file left as written, that is a normalizer bug — say so and continue with the file unformatted;
+never hand-edit prose to make formatting pass. If the script fails or is unavailable, warn, leave
+the content as written, and continue (INV-048).
+
+⛔ **Run it after Step 5, not before.** `production/` does not exist at Step 1a and its Markdown is
+not finished until `GRADUATION_REPORT.md` is written, so an earlier pass would normalize nothing —
+which is precisely how this half of INV-060 went unbuilt from 2026-07-16 to 2026-07-29.
+
+`docs/REVISIT_BOOTCAMP.md` is written later still (Step 6c) and so is covered by **neither** pass;
+Step 6c states its own formatting rule.
 
 ## Step 6: Save the revisit/resume bundle
 
@@ -553,8 +745,12 @@ overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create
 
 ### 6a. Database backup
 
-Back up the resolved repository so it can be restored later. Read `database` (SQLite/PostgreSQL)
-from pre-checks and the connection from `config/engine_config.json`.
+Back up the resolved repository so it can be restored later. Read **`database_type`**
+(`sqlite`/`postgresql`) from pre-checks and the connection from `config/engine_config.json`.
+⛔ When `database_type` is indeterminate, **do not guess a branch** — determine the engine from
+`config/engine_config.json`'s connection string instead (and note the missing key per pre-check 3).
+Picking the wrong branch here means either no backup or `pg_dump` against a SQLite file, and the
+backup is the whole point of the bundle.
 
 - **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
   `cp database/G2C.db backups/revisit/database/G2C.db`).
@@ -576,15 +772,21 @@ Snapshot the resume-critical state into `backups/revisit/state/` (copy each if i
 `config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`, `config/data_sources.yaml`,
 `config/engine_config.json`, `config/license.json`, and `docs/mapping/`. Then write
 `backups/revisit/RESUME_STATE.json` — a manifest indexing what was saved: the bootcamp path and
-`modules_completed`, the programming language and database type, the business problem and data
+`modules_completed`, `programming_language` and `database_type` (the pre-check key names), the
+business problem and data
 sources, the relative path of each snapshotted file, the database backup path and its restore
 command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapshots under
 `docs/visualizations/`. Use only project-relative paths.
 
 ### 6c. Return guide
 
-Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017), authored to the same
-CommonMark house rules as the other graduation deliverables (Step 4). Cover:
+Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017). ⛔ **This is the one
+deliverable you do hand-format** to the house rules (MD022/MD031/MD032 blank lines, MD040 fenced-block
+languages, `**Label:**` colon spacing): it is written *after* both normalization passes — Step 1a's
+over `docs/*.md` and Step 5a's over `production/*.md` — so no pass will reach it. Re-running Step 1a
+here is deliberately **not** the answer: it would re-touch `docs/bootcamp_recap.md`, which the recap
+PDF was already rendered from in Step 1b, leaving the keepsake and its source subtly out of step.
+Cover:
 
 - **Quick start when you return** — a short command list at the very top (re-source the env, restore
   the database, re-init the engine, re-run a query and the visualization).
@@ -616,6 +818,8 @@ This runs exactly once, after the report, before graduation is reported finished
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
 2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+
+   **If any Step 1b verification check was skipped for a missing tool, say so here in one plain sentence** — name what was not checked, not the tool names. On Windows this is the common case (poppler is typically absent, so the page raster could not run). One sentence is enough: *"One note: I verified the PDF's contents but couldn't check its page layout on this machine, so if anything looks visually off, tell me and I'll re-render."* Never describe the keepsake as verified when a check did not run — and never turn this into a 👉 question or a to-do for the bootcamper.
 
 Example (list only what exists):
 

@@ -40,8 +40,8 @@ is installed, configured, and verified, ready to load data and resolve entities.
 in onboarding. All code generation, scaffold calls, and examples in this module must use that
 language.
 
-**Success indicator:** ✅ SDK installed + DB configured + test passes + engine initializes and
-connects without errors.
+**Success indicator:** ✅ SDK installed + DB configured + test passes + an engine-class call
+(`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (Step 9).
 
 > **User reference:** A detailed background document for this module (`MODULE_2_SDK_SETUP.md`)
 > is a later porting phase. For now, teach the steps directly from this skill.
@@ -320,6 +320,74 @@ environment script at `src/scripts/senzing-env.sh` (or `.bat` for Windows) that 
 before running bootcamp tasks. This keeps the bootcamp self-contained and avoids side effects on
 the user's system.
 
+<a id="env-script-path-resolution"></a>
+
+**The env script MUST resolve its own path in the platform's *default* shell, not only in bash.**
+This is the canonical statement of the rule; other modules link here rather than restating it.
+Because the documented pattern is to **source** the script into the bootcamper's interactive shell
+(see the same-shell requirement below), the shell it has to work in is whatever that bootcamper's
+shell actually is — and on macOS that is **zsh**, not bash. `${BASH_SOURCE[0]}` — the idiom anyone
+reaching for self-location writes first — is a bash array and expands to **empty** under zsh. The
+script then resolves the project root to the wrong directory and keeps going, so the failure lands
+later and somewhere else. Branch on the shell:
+
+```bash
+# --- resolve this script's own location (bash and zsh) ------------------------
+# ${BASH_SOURCE[0]} is bash-only and expands to EMPTY under zsh, macOS's default
+# shell, so branch rather than assume bash. bash parses the zsh-only expansion in
+# the untaken branch without complaint.
+if [ -n "${ZSH_VERSION:-}" ]; then
+  _sz_self=${(%):-%x}                # zsh: this file's own path
+else
+  _sz_self=${BASH_SOURCE[0]:-$0}     # bash: this file's own path
+fi
+_sz_root=$(cd -- "$(dirname -- "$_sz_self")/../.." && pwd)
+
+# --- fail loudly, naming the path that was computed --------------------------
+if [ ! -f "$_sz_root/config/engine_config.json" ]; then
+  printf 'senzing-env.sh: resolved project root has no config/engine_config.json\n' >&2
+  printf 'senzing-env.sh:   resolved root: %s\n' "$_sz_root" >&2
+  printf 'senzing-env.sh:   this is a path-resolution fault, not your Senzing install\n' >&2
+  unset _sz_self _sz_root
+  return 1 2>/dev/null || exit 1
+fi
+
+# --- never export an empty configuration ------------------------------------
+_sz_settings=$(cat -- "$_sz_root/config/engine_config.json")
+if [ -z "$_sz_settings" ]; then
+  printf 'senzing-env.sh: %s is empty — refusing to export an empty configuration\n' \
+    "$_sz_root/config/engine_config.json" >&2
+  unset _sz_self _sz_root _sz_settings
+  return 1 2>/dev/null || exit 1
+fi
+
+export SENZING_PROJECT_ROOT="$_sz_root"
+export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
+# Platform-specific exports (SENZING_ROOT, DYLD_LIBRARY_PATH / LD_LIBRARY_PATH, jar
+# paths) go here — take them from sdk_guide(topic='install', platform=…), never from
+# memory or from this file (INV-080).
+unset _sz_self _sz_root _sz_settings
+```
+
+Three things in that block are the point, not decoration:
+
+- **`return 1`, never `exit 1`.** A sourced script shares the bootcamper's shell, so `exit` closes
+  their terminal and `set -e` leaks into their session. `return 1 2>/dev/null || exit 1` returns when
+  sourced and still exits if someone runs the file directly.
+- **The guard names the path it computed.** A wrong root that exports nothing produces an error many
+  steps later that reads as a Senzing fault; a guard that prints the resolved root is diagnosable on
+  sight (the same fail-loudly rule INV-111 applies to generators).
+- **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
+  guard initialization with `if (settings == null)` — they test for **unset**, not empty — so an
+  `export SENZING_ENGINE_CONFIGURATION_JSON=""` sails straight past that check and fails later,
+  deeper, and less legibly than no export at all. (Verified this session: `search_docs` returns
+  `senzing/code-snippets-v4` `java/snippets/information/GetVersion.java` and the C# equivalents doing
+  exactly this; MCP server 1.32.1, 2026-07-28.)
+
+**Windows keeps its own script.** `senzing-env.bat` has no such problem — `%~dp0` is the batch file's
+own directory and is always available — and none of the zsh material applies there. Add the same
+fail-loudly root check to the `.bat`, and confirm the Windows variable set via `sdk_guide`.
+
 ### The launch environment (JVM languages, and macOS generally)
 
 Installing the SDK is not the same as being able to **launch** against it. These are
@@ -393,10 +461,39 @@ Non-JVM languages need none of the JVM-specific items above.
 
 ## Step 4: Verify Installation
 
-Generate a verification script in the bootcamper's chosen language using
-`generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')`.
-The script should initialize the Senzing engine and print the version to confirm the SDK is
-working.
+The script should initialize the Senzing engine **and** print the version to confirm the SDK is
+working. Those are two different `generate_scaffold` workflows, so it takes **two** calls:
+
+- `generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')` —
+  the **engine** half. Its snippets are factory/engine **lifecycle** only.
+- `generate_scaffold(language='<chosen_language>', workflow='information', version='current')` —
+  the **version-print** half. This is where the version snippet lives (for Python,
+  `information/get_version.py`, which calls `SzProduct.get_version()`).
+
+⛔ **`workflow='initialize'` alone cannot satisfy this step.** Verified live (server 1.32.2,
+2026-07-29): it returns ten snippets, every one under `initialization/` — abstract-factory
+variants, `engine_priming`, `purge_repository`, `factory_destroy`, `signal_handler`,
+`sz_engine_config_ini_to_json` — and **none of them prints the version**. Citing it alone leaves
+the guide to invent the missing half from memory, which is exactly the training-data fallback
+INV-080 forbids. (Step 8a already carries this warning for a different need, and Step 9 cites
+`workflow='initialize'` correctly for its own — the lesson generalises: **check what a workflow's
+snippets actually contain before citing it for a specific need.**)
+
+⛔ **`generate_scaffold` returns a **listing**, not code — you must fetch each file.** Its response
+carries `file_path`, `source_url`, `raw_url`, `size_bytes` and `line_count` per snippet and **no
+source text**, so there is nothing to "save" until you fetch it: follow the response's own
+`access_steps` step 1 and fetch each `raw_url`
+(`raw.githubusercontent.com/senzing/code-snippets-v4/...`), or clone the repo per step 2 if the
+fetch is blocked. This differs from `sdk_guide`, which does inline a `code.code` string — do not
+carry that expectation across.
+
+⛔ **Never pass `inline=true` to `generate_scaffold`.** Its own `access_steps` step 3 advertises
+that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
+all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.2,
+2026-07-29). Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
+adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
+instead — that path is confirmed working.
 
 If verification fails, use `explain_error_code` for any SENZ error codes and `search_docs` for
 troubleshooting.
@@ -580,6 +677,22 @@ PostgreSQL typically requires SSL (`PGSSLMODE=require`) — confirm via MCP.
 SQLite remains the default recommendation for pure evaluation; PostgreSQL (especially via Docker)
 is the production-style path. INV-037 is satisfied by any of these paths.
 
+⛔ **Record the choice where later modules read it.** Whichever option was taken, write the engine
+to `config/bootcamp_preferences.yaml` under the key **`database_type`**, with the value
+**`sqlite`** or **`postgresql`** (lowercase, exactly these two spellings):
+
+```yaml
+database_type: sqlite   # or: postgresql
+```
+
+This is the **only** step in the bootcamp that knows which engine was chosen, and two later steps
+depend on the answer: Module 4 Step 8b's SQLite load-time warning and Module 6's
+`phaseA-build-loading.md` heads-up both read `database_type` from that file by name. Without this
+write, both reads find nothing, both fall through their "indeterminate → say nothing" branches, and
+neither warning can **ever** fire — regardless of the database chosen or the dataset size. Do not
+record it only in `config/bootcamp_progress.json`: nothing reads it from there, and a different key
+name is the same failure as no key at all.
+
 **Checkpoint:** write step 7 to `config/bootcamp_progress.json`.
 
 ## Step 8: Create Engine Configuration
@@ -590,6 +703,24 @@ returned by
 Do not guess paths for CONFIGPATH, RESOURCEPATH, or SUPPORTPATH based on directory patterns: the
 correct paths vary by platform and installation method, and guessing causes engine
 initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong).
+
+**What `SENZ2027` is actually telling you: the support data is not where the configuration points.**
+Call `explain_error_code('SENZ2027')` first as always (INV-080) — it returns
+`EAS_ERR_PLUGIN_INIT: Plugin initialization error`. The actionable detail is in the Senzing FAQ
+(`search_docs`, verified 2026-07-28 on MCP server 1.32.1):
+
+> **I get SENZ2027 Plugin initialization error GNR data files failed to load** — You are missing the
+> senzingsdk-runtime data directory. The libraries are present but the GNR data files (in
+> `resources/data/`) are not deployed.
+
+So the code means *the libraries loaded and their data did not* — which is exactly what a wrong
+SUPPORTPATH produces, and on Windows/Scoop exactly the sibling-directory case the `Test-Path` check
+below fixes. Look for a misplaced data directory, not for a broken install.
+
+⚠️ **Because those two can be present independently, a version query does not validate the engine.**
+An `SzProduct` call can answer while the support data is absent, so "the SDK imports and reports its
+version" is not evidence that an engine can initialize — see Step 9, which requires an engine-class
+call for exactly this reason.
 
 Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
 the user's platform and database choice. Save the MCP-returned JSON directly to
@@ -632,25 +763,76 @@ paths without modification.
 
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 
+## Step 8a: Seed the default configuration (a freshly created datastore has none)
+
+⛔ **A datastore you just schema-created has NO registered Senzing configuration, and the
+data-source registration snippet assumes one exists.** Do this before Step 9 and before any
+data-source registration.
+
+`sdk_guide(topic='configure')`'s primary `RegisterDataSources` snippet opens by reading the default
+config id and building a config **from** it. On an unseeded datastore there is nothing to read, and
+the attempt fails with
+
+```text
+SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID
+```
+
+The error names no remedy — `explain_error_code('SENZ7221')` returns "No engine configuration
+registered with data ID" and resolution steps about paths, connection strings and initialization,
+none of which is the actual fix. So this is easy to chase in the wrong direction; seed first and it
+never arises.
+
+**How to seed — take the code from MCP, do not hand-write it (INV-080):**
+
+1. Call `sdk_guide(topic='configure', language='<chosen_language>')`.
+2. In the response's `alternatives`, take the **`init_default_config`** entry — that is the seeding
+   snippet. Verified on server 1.32.1 (2026-07-28), its sequence is: read the default config id →
+   if none, `create_config_from_template()` → `set_default_config(...)`, which registers the new
+   config and makes it default.
+3. Run it, then proceed to register data sources with the primary snippet, which now has a config
+   to build from.
+
+⚠️ **`generate_scaffold(workflow='initialize')` does not do this.** Its snippets cover factory and
+environment lifecycle — creation, priming, destroy, purge, signal handling — and none of them seeds a
+configuration, even though `get_capabilities` names that workflow for "schema and default config must
+exist". Use it for Step 9's connection test; use `init_default_config` for seeding.
+
+**Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
+here and report it — a missing config surfaces at this step as one clear failure, or later as
+`SENZ7221` several steps from its cause.
+
+**Checkpoint:** write step 8a to `config/bootcamp_progress.json`.
+
 ## Step 9: Test Database Connection
 
 Use `generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')`
 to get the current V4 initialization and connection test pattern, then use that MCP-generated
 initialization code to verify the database connection works.
 
+⛔ **The check MUST create and use an `SzEngine` (or `SzDiagnostic`) — not only `SzProduct`.** A
+version query proves the library loaded; it does not prove the engine can initialize, because the
+libraries and their support data can be present independently (see the `SENZ2027` note in Step 8).
+So a configuration whose SUPPORTPATH is wrong can satisfy a version probe and fail at the first real
+engine call, several steps later, where the cause is no longer obvious. Exercising an engine class
+here is what moves that failure back to the step designed to catch it.
+
+This constrains **which class the generated check touches**, not where the code comes from: keep
+using `generate_scaffold(workflow='initialize')` and pick the snippet that creates an engine
+(INV-080). Do not hand-write it.
+
 Never generate direct SQL against `database/G2C.db`; all access goes through Senzing SDK
 methods (per ground-rules).
 
 **Checkpoint:** write step 9 to `config/bootcamp_progress.json`.
 
-**Success indicator:** ✅ SDK installed + DB configured + test passes + engine initializes and
-connects without errors.
+**Success indicator:** ✅ SDK installed + DB configured + test passes + **an `SzEngine`/`SzDiagnostic`
+call succeeds** (not merely a version query).
 
 ## Success Criteria
 
 - ✅ Senzing SDK installed natively.
 - ✅ SDK imports/references work in the chosen language.
-- ✅ Engine initializes without errors.
+- ✅ Engine initializes without errors, proven by an `SzEngine`/`SzDiagnostic` call rather than a version query (Step 9).
 - ✅ Database connection works.
 - ✅ Project directory structure created.
 
@@ -671,6 +853,22 @@ connects without errors.
 ## Troubleshooting
 
 - Installation fails? Use `explain_error_code` for SENZ errors.
+- **`SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID`? The datastore has no default configuration —
+  seed one per Step 8a.** Call `explain_error_code('SENZ7221')` first as always (INV-080), but know
+  that its resolution steps (verify paths, check the connection string, ensure the engine is
+  initialized) do **not** name this cause, so do not be pulled toward re-checking paths that are
+  already correct. This is the expected symptom on a freshly schema-created datastore whose config
+  was never seeded, and it can appear several steps after the omission.
+- **`Unable to get settings`, or an empty `SENZING_ENGINE_CONFIGURATION_JSON`? This is the env
+  script's path resolution, not Senzing.** That message carries **no SENZ code** because it is not an
+  engine error: it is the null-check in Senzing's own official snippets, which print
+  `Unable to get settings.` and throw `IllegalArgumentException` / `ArgumentException` when
+  `SENZING_ENGINE_CONFIGURATION_JSON` is unset. So do not send it through `explain_error_code` — there
+  is no code to explain, and hunting through the engine config wastes the time. Check instead that
+  `senzing-env.sh` was **sourced** (not executed) in this shell, and that it resolved its own path
+  under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
+  zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
+  (Snippet guard verified this session via `search_docs`; MCP server 1.32.1, 2026-07-28.)
 - Platform not supported? Use `search_docs` for alternative installation methods.
 - Database errors? Confirm path requirements against the file placement rules in ground-rules
   (the Kiro `FILE_STORAGE_POLICY.md` reference is a later porting phase).

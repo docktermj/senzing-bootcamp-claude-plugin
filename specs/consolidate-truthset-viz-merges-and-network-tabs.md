@@ -178,3 +178,19 @@ None. This applies the visualization contract's existing **de-duplication** rule
 candidate tabs share their aggregates, they are one tab") and reverses one ruling made under it;
 it adds no new standing constraint. The tab set is bound by the contract plus
 `tests/test_viz_endpoint_sync.py` and `tests/test_viz_tab_consolidation.py`.
+
+## The reference's docstring was outside this spec's scope, 2026-07-29 (appended; criteria unchanged)
+
+This spec removed the `network` and `merges` tabs from `senzing_viz_server.py` and cited the
+eight-tab declaration it changed. It set no criterion for the file's **module docstring**, which
+argparse prints as `--help` — so that docstring went on saying "(Entity Graph + Relationship Network
+tabs)" and "The Relationship Network tab reuses `/api/graph`" after the tabs were gone, in the file
+INV-090 points every non-Python implementer at. The existing tab guards could not catch it either:
+`tests/test_tab_set_is_singular.py`'s file sweep globbed `*.md` only and never read the shipped
+Python.
+
+Found by the 2026-07-29 deep-dive audit and discharged by
+`specs/viz-reference-help-text-names-removed-tabs.md`, which corrects the docstring, adds a positive
+six-tab enumeration citing INV-155/INV-147, and extends the guard to the shipped Python. A second
+stale reference turned up in the same pass — a comment naming "Record Merges cards" as a live
+surface. Nothing in this spec's own text is altered (INV-181's append-not-edit discipline).

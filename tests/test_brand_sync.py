@@ -39,6 +39,22 @@ class BrandTokenSync(unittest.TestCase):
         import senzing_viz_server as viz
         self.assertEqual(viz.SOURCE_STROKES, viz._FALLBACK_STROKES)
 
+    def test_discoveries_pdf_fallback_in_sync(self):
+        """The third generator with an inlined fallback — previously unguarded.
+
+        INV-107 names `senzing_viz_server.py` and `generate_recap_pdf.py` only, so this
+        one's copies could drift silently. They happened to be in sync when the
+        2026-07-30 sweep checked them, and the script's own comment already claimed
+        "tests/test_brand_sync.py asserts it" — which was not true until now. The literals
+        also used to appear twice, once per `except` branch; they are one named dict now.
+        """
+        import generate_discoveries_pdf as disc
+        for name, rgb in disc._FALLBACK_RGB.items():
+            self.assertEqual(
+                getattr(disc, name), rgb,
+                f"{name} fallback diverged from brand_tokens.py",
+            )
+
 
 class SourceColorsComeFromTheData(unittest.TestCase):
     """`SOURCE_COLORS` names the Truth Set's sources, and no bootcamper uses those names

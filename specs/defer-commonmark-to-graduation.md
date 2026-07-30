@@ -95,3 +95,17 @@ guide-driven mechanism):
 ## Invariants introduced
 
 - `INV-060` — CommonMark prettification of bootcamp-authored `*.md` files MUST be deferred to graduation: during the bootcamp the guide writes functional, plain Markdown without incremental lint compliance, and graduation MUST perform a single best-effort, structure- and content-preserving CommonMark normalization pass over `docs/*.md` (before the recap PDF renders) and the generated `production/*.md`, never reordering, removing, or rewriting completed `## Module N:` recap sections or their four required subsections (recorded in `specs/INVARIANTS.md`).
+
+## Half of criterion 1 was found unmet, 2026-07-29 (appended; text above unchanged)
+
+The 2026-07-29 deep-dive audit found that acceptance criterion 1 above was only **half** met,
+although `specs/IMPLEMENTED.md` recorded this spec as implemented on 2026-07-16 (commit `d69c360`).
+The criterion required the pass "over `docs/*.md` … **and over the generated `production/*.md`
+files**". Only the `docs/*.md` invocation shipped; `production/*.md` was left to hand-authoring — the
+practice this very spec moved the plugin away from. INV-060's second half therefore stood
+unimplemented for six weeks.
+
+Discharged by `specs/normalize-production-markdown-at-graduation.md` (implemented 2026-07-29), which
+adds a Step 5a pass over `production/` after the deliverables exist. The ledger entry carries the
+same correction, appended. This note records the outcome and deliberately does not alter the
+criterion's text (INV-181's append-not-edit discipline).

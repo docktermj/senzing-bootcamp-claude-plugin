@@ -21,6 +21,7 @@ What this pins:
 
 Run:  python3 -m unittest discover -s tests
 """
+import ast
 import importlib.util
 import os
 import re
@@ -218,7 +219,18 @@ class SnapshotKeepsTheNoQueryBrowse(unittest.TestCase):
         self.assertRegex(
             page, r'const live=!!document\.getElementById\("search-in"\);'
         )
-        self.assertRegex(page, r"if\(live\)m\.entities\.slice")
+        # Chip construction must sit inside the `live` guard, so the snapshot — which has
+        # no search box — never renders them as dead controls. Asserted structurally
+        # rather than by pinning the guard's exact one-liner, which changed when chips
+        # gained live verification (organization-search-requires-name-org).
+        probes = page[
+            page.index("async function loadProbes") : page.index("function showAllMerges")
+        ]
+        self.assertLess(
+            probes.index("if(live)"),
+            probes.index(".text(e.entity_name)"),
+            "chips must be created only inside the live guard",
+        )
 
     def test_show_all_merges_does_not_require_a_search_box(self):
         """It runs in the snapshot, where #search-in does not exist."""
@@ -256,3 +268,180 @@ class YesNoHintConventionIsDocumented(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------------------
+# The shipped PYTHON is scanned too (viz-reference-help-text-names-removed-tabs).
+#
+# `shipped_markdown()` above globs `*.md` under skills/, commands/ and docs/ — so the
+# bundled reference server's own module docstring was never examined, and it still said
+# "(Entity Graph + Relationship Network tabs)" and "The Relationship Network tab reuses
+# /api/graph" long after INV-155 fixed the set at six with the network view as a *mode*.
+#
+# That docstring is not a comment: `argparse.ArgumentParser(description=__doc__)` prints it
+# as `--help`, and INV-090 makes this file the model a Java or C# server is built from. A
+# reader following it would build a seventh tab — the route INV-164 records for a defect
+# that lives in the reference and in no written rule.
+#
+# Matching is done on FLATTENED text with a window, not per line: every legitimate mention
+# here is framed ("the *removed* Relationship Network tab"), and once the prose or a comment
+# wraps, the framing word and the mention land on different lines. A per-line rule reports
+# the correct sentences as violations — it did, twice, while this was being written.
+# ---------------------------------------------------------------------------------------
+
+# Framing vocabulary for the Python sources, in addition to REMOVAL_CONTEXT above.
+PY_REMOVAL_CONTEXT = REMOVAL_CONTEXT + (
+    "removed Relationship Network",
+    "standalone Relationship Network",
+    "former Relationship Network",
+    "were removed",
+    "was removed",
+    "RESERVED",
+    "reserved rather than reused",
+    "no Results Dashboard",
+    "Two former tabs",
+)
+
+SHIPPED_PY = ("senzing_viz_server.py", "capture_screenshots.py")
+
+
+def shipped_python():
+    return [PLUGIN / "scripts" / name for name in SHIPPED_PY]
+
+
+def unframed_mentions(text, window=200):
+    """Removed-tab labels whose surrounding text never says they were removed.
+
+    Comment markers are stripped before flattening. A wrapped JS or Python comment puts
+    `//` (or `#`) between the framing word and the mention — "from the removed // Relationship
+    Network tab" — and leaving them in makes "removed Relationship Network" fail to match text
+    that plainly says it. Two correct comments were reported as violations before this.
+    """
+    text = re.sub(r"(?m)^\s*(//|#)\s?", " ", text)
+    flat = re.sub(r"\s+", " ", text)
+    out = []
+    for label in REMOVED_TAB_LABELS + ["Results Dashboard"]:
+        for m in re.finditer(re.escape(label), flat):
+            near = flat[max(0, m.start() - window):m.end() + window]
+            if not any(phrase in near for phrase in PY_REMOVAL_CONTEXT):
+                out.append((label, flat[max(0, m.start() - 70):m.end() + 70]))
+    return out
+
+
+class ShippedPythonDoesNotPresentARemovedTabAsLive(unittest.TestCase):
+    def test_no_shipped_script_presents_a_removed_tab_as_live(self):
+        problems = []
+        for path in shipped_python():
+            for label, excerpt in unframed_mentions(path.read_text(encoding="utf-8")):
+                problems.append(f"{path.name}: {label} — …{excerpt}…")
+        self.assertEqual(
+            [],
+            problems,
+            "a shipped script refers to a removed tab as if it were live (INV-155):\n  "
+            + "\n  ".join(problems),
+        )
+
+    def test_the_reference_help_text_names_the_live_six(self):
+        """The docstring IS the --help text, and the model INV-090 points implementers at."""
+        doc = ast.get_docstring(ast.parse(SERVER.read_text(encoding="utf-8")))
+        self.assertIsNotNone(doc, "the reference server lost its module docstring")
+        flat = re.sub(r"\s+", " ", doc)
+        for label in LIVE_TAB_LABELS:
+            self.assertIn(
+                label,
+                flat,
+                f"`--help` must name the live tab {label!r} (INV-155's six)",
+            )
+        self.assertIn(
+            "INV-155",
+            flat,
+            "the docstring should cite the invariant that fixes the tab set, so a reader "
+            "building in another language knows the six are binding",
+        )
+
+    def test_the_docstring_really_is_the_help_text(self):
+        """If this wiring changes, the test above stops testing `--help`."""
+        self.assertIn(
+            "description=__doc__",
+            SERVER.read_text(encoding="utf-8"),
+            "the docstring is no longer argparse's description — re-point this test",
+        )
+
+
+# ---------------------------------------------------------------------------------------
+# The capture helper's RUNTIME strings (deep-dive-audit-2026-07-30b).
+#
+# `viz-reference-help-text-names-removed-tabs` (2026-07-29) fixed the reference server's
+# docstring and extended the guard above to `capture_screenshots.py` — but that guard reads
+# comments and docstrings, and the helper's two user-visible tab lists are neither. They are
+# f-strings interpolated from the `TABS` dict at runtime:
+#
+#     --tabs   "… Known: {','.join(TABS)}."          -> eight ids
+#     error    "… Known ids: {', '.join(TABS)}"      -> eight ids
+#
+# `TABS` legitimately still holds `network` and `merges` so an eight-tab snapshot keeps its
+# slugs, and the comment above it frames them "⛔ RESERVED" — which is exactly why the
+# comment-scanning guard passed. A reader of `--help` sees none of that framing: they see
+# eight capturable tabs for an app INV-155 fixes at six.
+#
+# These run the strings rather than reading the source, because the defect was that the
+# source's framing and the emitted string had come apart.
+# ---------------------------------------------------------------------------------------
+
+
+def _capture_module():
+    spec = importlib.util.spec_from_file_location("_capture_probe", CAPTURE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class CaptureHelperRuntimeStringsNameTheLiveSix(unittest.TestCase):
+    def setUp(self):
+        self.mod = _capture_module()
+
+    def test_reserved_ids_are_still_accepted(self):
+        """Old snapshots must keep their slugs — the fix is about wording, not behaviour."""
+        self.assertEqual(["network"], self.mod.resolve_tabs("network"))
+        self.assertEqual(("network", "merges"), self.mod.RESERVED_TABS)
+
+    def test_help_text_lists_only_the_live_six(self):
+        import subprocess
+
+        out = subprocess.run(
+            [sys.executable, str(CAPTURE), "--help"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        self.assertIn("graph,stats,matchkeys,features,overlap,probe", out)
+        for retired in self.mod.RESERVED_TABS:
+            self.assertNotRegex(
+                out,
+                rf"(?<![a-z]){retired}(?![a-z])",
+                f"`--help` presents the removed tab id {retired!r} as available "
+                "(INV-155 fixes the set at six)",
+            )
+
+    def test_unknown_id_error_lists_only_the_live_six(self):
+        with self.assertRaises(ValueError) as caught:
+            self.mod.resolve_tabs("bogus")
+        message = str(caught.exception)
+        for retired in self.mod.RESERVED_TABS:
+            self.assertNotIn(
+                retired,
+                message,
+                f"the unknown-tab error offers {retired!r} as a valid id",
+            )
+        for live in self.mod.DEFAULT_TABS:
+            self.assertIn(live, message)
+
+    def test_a_reserved_id_is_reported_as_retired(self):
+        """Accepting it silently is how a stale list stays believed."""
+        import io
+        import contextlib
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.mod.resolve_tabs("merges")
+        self.assertIn("no longer serves", err.getvalue())

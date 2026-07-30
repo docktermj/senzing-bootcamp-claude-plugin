@@ -3,7 +3,18 @@
 Continues from Phase B (single source) or Phase C (multi-source). Follow the ground rules;
 `🛑`/`⛔` are internal control directives. Entity queries use SDK code generated via
 `generate_scaffold` / `get_sdk_reference`, never direct SQL against `database/G2C.db`. Counts
-and stats come from `reporting_guide`.
+and stats come from `reporting_guide` — **name the topic**: `topic='evaluation'` for the
+single-pass export statistics this phase needs, `topic='export'` for extraction patterns.
+
+⚠️ **`topic='reports'` is not this bootcamp's route.** Its SQL targets an analytical data mart
+(`sz_dm_entity`, `sz_dm_record`, `sz_dm_relation`, `sz_dm_report`) that the bootcamp never builds —
+the tool says so itself, in that response's own schema notes: *"These tables are NOT part of the
+Senzing SDK and do NOT exist out of the box. They must be created and maintained by a separate data
+mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.1, 2026-07-28).
+It is the production-reporting answer, not the evaluation one, so asking for it here returns
+well-formed SQL that cannot run against a single-database SQLite workspace. If you are already
+looking at that response, the usable subset is its `Validation:` patterns, which run against
+**exported entity JSON** rather than the data mart.
 
 ## Single-source validation (always)
 
@@ -31,7 +42,7 @@ done through generated SDK code.)
 Validate that the loaded data meets business expectations:
 
 - Verify record counts, does the number of loaded records match expectations? (Use
-  `reporting_guide` for counts.)
+  `reporting_guide(topic='evaluation')` for counts — not `topic='reports'`; see the header note.)
 - Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
@@ -48,6 +59,15 @@ single-source bootcampers, skip directly to step 28 (Document results).
 Validate: record counts match expectations, cross-source entities exist, no unexpected data
 loss, error logs clean. Use `reporting_guide(topic='graph', version='current')` for
 network-graph patterns.
+
+⛔ **Before treating a low or zero cross-source entity count as a finding about the data, read how
+the data was selected.** If Module 4 reduced any source, `config/data_sources.yaml` records the
+sampling method and the reason for it. A **random** slice of 2+ sources removes cross-source overlap
+by construction — one bootcamp got zero cross-source matches from a load reporting 1,147 records,
+no errors, redo drained and 94–100% quality — so a near-zero count there is an artifact of the
+sample, not a property of the sources, and the remedy is an overlap-preserving re-sample (Module 4
+→ "Sampling rule"), not a mapping change. Say which it is; never report "Senzing found no
+cross-source matches" without checking this first.
 
 Sample 15–25 entities that contain records from multiple data sources and verify they represent
 the same real-world person or organization. Check cross-source matches and spot-check
@@ -161,7 +181,18 @@ If a source fails during orchestration, present three options:
 Every mapping gate the bootcamp runs before this point is **static, single-source, and
 structural** — the analyzer, the verbatim check, the routing report, the quality score. None of
 them evaluates *meaning*. So a whole defect class survives them: two source fields that measure
-different things mapped to the same Senzing feature. Senzing is then told a conflict exists where
+different things mapped to the same Senzing feature.
+
+(Those gates also have blind spots of their own, so a finding from one is not automatically a defect
+in the mapping. The verbatim check in particular **harvests source *values* only**, so it reports any
+emitted value it cannot harvest — a **boolean** source value, or a value derived from a source **field
+name** rather than a field value — however that value was emitted (server 1.32.2, verified
+2026-07-29). If a violation list came into this module unresolved for one of those reasons, it is a
+checker limitation and not a mapping error; see
+`../module-05-data-quality-mapping/phase2-data-mapping.md` → the verbatim-check block, which also
+covers what to record. Numeric source values used to fail this way and **no longer do** — that was
+fixed upstream in 1.32.2 — so do not carry forward a numeric exemption from an older run without
+re-running the check.) Senzing is then told a conflict exists where
 none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
 
 This is the reading that catches it. It also matches the Senzing reporting guidance directly —
@@ -176,16 +207,40 @@ which is exactly the gap the UAT percentages below leave open.
    | What | Where | How to obtain it |
    |---|---|---|
    | Per-record match keys | `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` | a bulk export (`export_json_entity_report`) is fine |
-   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
+   | Relationship match keys | `RELATED_ENTITIES[].MATCH_KEY` | the same export **when its rows carry `RELATED_ENTITIES`** — dump one row to check; otherwise **per-entity** `get_entity_by_entity_id` / `get_entity_by_record_id`, or `find_network_by_entity_id` |
 
-   ⛔ **Do not expect `RELATED_ENTITIES` from `export_json_entity_report`.** Every
-   relationship-detail flag — `SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
-   `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS` — lists only the
-   per-entity, `why_*` and `find_*` methods in its `applies_to`; the export methods are **not**
-   among them (verify with `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`).
-   A live run on SDK 4.3.3 returned entity rows with **no `RELATED_ENTITIES` key at all** and no
-   error. Writing the audit as one pass over an export therefore measures only the first row of the
-   table above while appearing to measure both.
+   ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set, not on the method — so
+   dump one row and route on what you see.** Do not assume either answer:
+
+   - `reporting_guide(topic='evaluation')` documents the export-with-defaults case directly
+     (verified 2026-07-28): *"Use `export_json_entity_report` with `SZ_EXPORT_DEFAULT_FLAGS` … Each
+     exported row is a JSON object containing `RESOLVED_ENTITY` … **and `RELATED_ENTITIES[]`** (with
+     `ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`)"*, and its
+     worked `export_with_stats` pattern computes relationship categories in a **single pass over the
+     export**. A live run on SDK 4.3.3 with `SZ_EXPORT_DEFAULT_FLAGS` confirmed it: the first row's
+     top-level keys were `[RESOLVED_ENTITY, RELATED_ENTITIES]`.
+   - A different bootcamp session, on the same SDK version, assembled its flags from
+     `SZ_ENTITY_INCLUDE_*` members and got rows with **no `RELATED_ENTITIES` key at all** and no
+     error. Both observations are real; the flag set is the variable. Note that the
+     relationship-detail flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members) do **not** list
+     the export methods in their `applies_to`, which is why composing a flag set out of those alone
+     is the case that comes back without relationships — but that does not make the export incapable,
+     because `SZ_EXPORT_DEFAULT_FLAGS` is itself an export-family flag documented as matching *"the
+     normal entity defaults"*, and those defaults include the relationship-inclusion members.
+
+   **So: start from `SZ_EXPORT_DEFAULT_FLAGS`, dump one row, and read its top-level keys before you
+   choose a reader.** `RELATED_ENTITIES` present → do both reads in one export pass.
+   `RELATED_ENTITIES` absent → keep the per-record read on the export and use a per-entity reader
+   (or `find_network_by_entity_id`) for the relationship half. Never write the audit as if the answer
+   were settled in either direction (INV-115/INV-149: the dumped row is the authority).
+
+   ⚠️ **If you do read relationships from the export, deduplicate.** Per
+   `reporting_guide(topic='evaluation')`: *"Each relationship appears in BOTH entities'
+   `RELATED_ENTITIES` — deduplicate by sorting `(min_id, max_id)` pairs and using a set."* Skipping
+   this double-counts every relationship, which inflates a suppressor share rather than emptying it —
+   a wrong number that still looks plausible. The same guidance notes export iteration is
+   O(all entities): fine at bootcamp scale, and the reason the single-pass form is worth having
+   instead of one call per entity.
 
    The two export flag families also do different jobs. `SZ_EXPORT_INCLUDE_*` selects **which
    entities** appear as rows (`..._POSSIBLY_SAME`, `..._DISCLOSED`, `..._ALL_HAVING_RELATIONSHIPS`
@@ -226,7 +281,15 @@ which is exactly the gap the UAT percentages below leave open.
    Before parsing the whole reader output, **dump one raw row** and confirm the fields the parser
    expects are actually present (INV-115). This is the check that turns "4,587 rows exported
    successfully, all containing only `ENTITY_ID`" from a wasted validation pass into one line of
-   output.
+   output — and it is the same check that decides which reader the relationship half needs, above.
+   Print the row's **top-level keys**, not just the row, so the `RELATED_ENTITIES` question is
+   answered explicitly rather than by eyeballing a wall of JSON:
+
+   ```python
+   first = json.loads(row)
+   print("top-level keys:", sorted(first))
+   print("carries RELATED_ENTITIES:", "RELATED_ENTITIES" in first)
+   ```
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
@@ -241,7 +304,10 @@ which is exactly the gap the UAT percentages below leave open.
      `POSSIBLY_RELATED` link, or use the relationship count you already have from the load
      summary). If the loaded data genuinely has **zero** relationships, say that instead — the
      question does not arise.
-   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it.
+   - Confirm the reader returns a **non-empty** `RELATED_ENTITIES` for it. When the reader is the
+     export, the row dump in step 1 has already answered this for the whole pass — one check, not one
+     per entity — so this costs nothing; it is still required, because a reader that sees the key but
+     parses it under the wrong name fails exactly as silently.
 
    If that check fails, report **"the audit could not read relationship match keys"** and name the
    reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a

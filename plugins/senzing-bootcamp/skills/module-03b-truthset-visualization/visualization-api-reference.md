@@ -95,15 +95,29 @@ creating a new type the legend does not know about.
 > requirement in Step 2 of `phase1-visualization.md`).
 
 **Edge discovery.** The example JSON above shows the edge shape only; it does not imply edges come
-from an export. ⛔ **`export_json_entity_report` does not supply `RELATED_ENTITIES` — reading edges
-from an export yields an empty `edges` array, and no error.** Every relationship-detail flag
-(`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members, `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`,
-`SZ_INCLUDE_MATCH_KEY_DETAILS`) lists only the per-entity, `why_*` and `find_*` methods in its
-`applies_to`; the export methods are **not** among them. Confirm with
-`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`.
+from an export. ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set — dump one
+row and check before building edges from it, because reading edges from a row that lacks the key
+yields an empty `edges` array and no error.**
 
-`graph_builder.py` SHALL therefore discover relationships through a **per-entity or network**
-method:
+- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation')` documents each
+  exported row as carrying `RESOLVED_ENTITY` *and* `RELATED_ENTITIES[]` (with `ENTITY_ID`,
+  `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`), and its worked pattern derives
+  relationship statistics in a single export pass (verified 2026-07-28; a live SDK 4.3.3 run agreed).
+  If you build edges this way, **deduplicate `(min_id, max_id)` pairs** — that same guidance notes
+  each relationship appears in *both* entities' `RELATED_ENTITIES`, so an un-deduplicated edge list
+  draws every relationship twice.
+- With a flag set assembled from `SZ_ENTITY_INCLUDE_*` members instead, a bootcamp session on the
+  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. Those relationship-detail
+  flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
+  `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS`) do not list the export
+  methods in their `applies_to` — confirm with
+  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')` — which is why
+  composing an export's flags out of those alone is the case that loses relationships.
+
+So an export **is** a legitimate edge source when its rows carry the key, and the per-entity and
+network methods below remain correct and are the fallback when they do not.
+`graph_builder.py` MAY discover relationships from a detail-carrying export (dump one row first), or
+through a **per-entity or network** method:
 
 - **`find_network_by_entity_id`:** for multi-record/related entities, retrieve the relationship
   network and derive edges from the returned links. (Note the Python binding takes a plain
@@ -147,6 +161,24 @@ Each entity: `entity_id`, `entity_name`, `match_key`, `records`. Each record: `d
 returned.
 
 **`GET /api/search`:** Search entities with enriched resolution reasoning
+
+⛔ **Search MUST try `NAME_ORG`, not `NAME_FULL` alone.** Per the Senzing Entity Specification
+(Name > Feature: NAME — confirm via `search_docs`), `NAME_ORG` is the organization name attribute
+and `NAME_FULL` is the "single-field name when type (person vs org) is unknown"; the specification's
+rule is *"use `NAME_ORG` for organizations; use `NAME_FULL` only when the type is unknown or only a
+single field exists"*. An organization name sent as `NAME_FULL` matches **nothing**, and returns no
+error — so a `NAME_FULL`-only search silently fails for every organization in the data. On a
+half-organization dataset that is half the population unsearchable: `"ABSOLUTE DENTAL"` returned 0
+results while a person name returned a hit immediately. Build the attribute document per attribute
+and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both and merge by
+`ENTITY_ID`). This binds a server in **any** language (INV-090/INV-124), not only the bundled Python
+reference — the defect propagated into a generated query program precisely because it lived in the
+reference implementation and in no written rule.
+
+The response MUST report which attributes were searched (`attributes_tried`), and an empty result
+MUST be rendered as "no entity matched a `NAME_FULL` then `NAME_ORG` search for X" — never as "not
+in the data" (INV-115). An empty result set is indistinguishable from absence otherwise, so a
+bootcamper concludes their load failed rather than that the query was wrong.
 
 ```json
 {
@@ -246,7 +278,31 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
-> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]` |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.1, 2026-07-29 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
+> | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
+>
+> ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
+> `get_sdk_reference(topic='response_schemas', filter='getEntity')` lists per-record source-value
+> paths under the get_entity response — `RESOLVED_ENTITY.RECORDS[].JSON_DATA.ADDR_CITY`,
+> `.PRIMARY_NAME_FIRST`, `.DATE_OF_BIRTH` and siblings — but **no entity-family flag produces them**.
+> The flag that does, `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`, reports
+> `applies_to: ["get_record"]` and is a member of `SZ_RECORD_DEFAULT_FLAGS` (both re-verified
+> 2026-07-28). A viewer written against the documented get_entity paths therefore prints
+> "(no JSON_DATA returned for this record)" for **every** record — the silent-blank failure mode,
+> against a database with records loaded — because a wrong path yields null rather than an error.
+> This is the one place where the authoritative reference is the thing that misleads you, so it is
+> called out rather than left to be re-derived.
+>
+> **For per-record source values, prefer the entity family — it needs no second call.** The same
+> get_entity schema documents `RESOLVED_ENTITY.RECORDS[].FEATURES.<TYPE>[].ATTRIBUTES.*` (e.g.
+> `ATTRIBUTES.ADDR_CITY`, `ATTRIBUTES.PRIMARY_NAME_FIRST`, `ATTRIBUTES.DATE_OF_BIRTH`) plus
+> `RECORDS[].UNMAPPED_DATA.*`, and `SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS` — *"include full
+> feature details at the record level of an entity response"* — lists `get_entity_by_entity_id`,
+> `get_entity_by_record_id`, `search_by_attributes`, `why_*`, `find_path_*` and `find_network_*` in
+> its `applies_to` (verified 2026-07-28). These are the **mapped** attributes per feature, not the raw
+> record as loaded, so reach for `get_record` + `SZ_RECORD_DEFAULT_FLAGS` only when you genuinely need
+> the raw `JSON_DATA` document — and know that costs one extra SDK call **per record**, which is worth
+> knowing before designing a viewer over a large entity set.
 >
 > **Watch this asymmetry — it is a silent-blank trap.** With `SZ_INCLUDE_MATCH_KEY_DETAILS`, the
 > match-key breakdown sits under a **differently named key** depending on the call: `why_*` puts a
@@ -265,13 +321,27 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > still leaves you guessing at the very field names you are about to parse. Dump one raw link
 > element and read its keys before writing the parser (INV-115).
 >
-> ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** A bootcamp
-> session reported that parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
-> `RELATED_ENTITY_ID` pairing used elsewhere yielded `None` for **both** endpoints while `MATCH_KEY`
-> rendered correctly, and that the endpoints were instead carried under normalized low-to-high keys.
-> That observation is **not MCP-confirmable** — it is not in `response_schemas` and not in the
-> indexed documentation — so treat it as a **warning about where to look, never as the field names
-> to code against**. Dump the element and use what is actually there.
+> ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** Two bootcamp
+> sessions now agree: parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
+> `RELATED_ENTITY_ID` pairing used elsewhere yields `None` for **both** endpoints while `MATCH_KEY`
+> renders correctly, and the endpoints are instead carried under normalized low-to-high keys. A live
+> dump on SDK 4.3.3 (2026-07-28) gave the element's full key set, now recorded in the table above:
+> `MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`,
+> `IS_AMBIGUOUS`.
+>
+> **That list is now MCP-confirmed.** When it was first recorded it was dump-only, so it was carried
+> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.1,
+> 2026-07-29**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
+> element fields itself — `ENTITY_NETWORK_LINKS[].MIN_ENTITY_ID`, `.MAX_ENTITY_ID`, `.MATCH_KEY`,
+> `.MATCH_LEVEL_CODE`, `.ERRULE_CODE`, `.IS_AMBIGUOUS`, `.IS_DISCLOSED`, plus
+> `ENTITIES[].RESOLVED_ENTITY.*` and `ENTITY_PATHS[].*`. So these are authoritative names, and the
+> 2026-07-28 dump is corroboration rather than the only evidence.
+>
+> **Do the lookup anyway, and still dump before rendering.** The names being MCP-backed changes their
+> standing, not the discipline: run `response_schemas` for the method you are about to parse (it is
+> the authority, and its coverage grows — this entry is proof), then dump one element and use what is
+> actually there. A mismatch means the shape moved and this table is stale — report it rather than
+> coding around it (INV-115/INV-149).
 >
 > ⛔ **A partially populated row is a wrong field name, not partial data.** This is the shape the
 > above failure takes: `MATCH_KEY` renders, both endpoints are blank, and the row looks like a
@@ -436,7 +506,7 @@ not shown:
 
 | Tab | Endpoint(s) | Shown when |
 |-----|-------------|-----------|
-| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges coloured and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`). **Above 400 entities that toggle defaults ON** — see "Defaults at production scale" below |
+| **Entity Graph** (default) | `/api/graph`, `/api/records`, `/api/why`, `/api/how` | always — force-directed graph of the entity population, with a **"Show only entities with relationships"** mode toggle (shown only when `relationships_total` > 0) that switches to the relationship subgraph with edges colored and dashed by `relationship_type` and a click-to-filter relationship legend; also the cross-source entity-relationship view (subsumes the former `multi_source_results.html`). **Above 400 entities that toggle defaults ON** — see "Defaults at production scale" below |
 | **Merge Statistics** | `/api/stats`, `/api/records`, `/api/why`, `/api/how` | always — records-per-entity histogram (this **is** the entity-size distribution) with clickable bars drilling down via `bucket_entities`, plus the largest resolved entities from `sample_entities` |
 | **Match Keys** | `/api/matchkeys`, `/api/records`, `/api/why`, `/api/how` | multi-record entities exist — clickable rows drilling down via `match_key_entities` |
 | **Feature Scores** | `/api/features` | multi-record entities exist |
@@ -456,7 +526,7 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
 - There is **no "Relationship Network" tab.** This reverses an earlier ruling here that it *was*
   distinct: the related-entity subgraph is a filtered view of **Entity Graph's own** `/api/graph`
   data, so by this rule they are one tab. What made it look distinct — the relationship-type edge
-  colouring/dashing and the click-to-filter legend — is preserved as Entity Graph's
+  coloring/dashing and the click-to-filter legend — is preserved as Entity Graph's
   "Show only entities with relationships" mode, so nothing was lost by folding it in.
 - There is **no "Record Merges" tab.** For any entity present in both, Search / Probe's per-entity
   result is a strict **superset**: Record Merges showed entity name, record count and one
@@ -468,14 +538,29 @@ endpoint. When two candidate tabs share their aggregates, **they are one tab.** 
 ### Defaults at production scale (required)
 
 Every visual default here was chosen against the Truth Set's 84 entities, and Module 7 points this
-same app at the bootcamper's own data — routinely thousands. Two defaults do **not** survive that
+same app at the bootcamper's own data — routinely thousands. These defaults do **not** survive that
 and are therefore contract, not implementation detail:
 
-**1. Match-key labels must stay distinguishable.** Real match keys run to 70+ characters
+**1. Every truncated label must stay distinguishable — whatever it labels.** Wherever a label is
+shortened to fit, **no two rendered labels may be identical unless their underlying values are
+identical**, and the untruncated value must be reachable on hover (`<title>` or the surface's
+equivalent tooltip). This is the general requirement; item 2 is its match-key application, and it
+binds every truncated label equally — entity names on graph nodes, source codes in a legend, any
+future chart. Two entities named `ACME HOLDINGS INTERNATIONAL LLC` and
+`ACME HOLDINGS INTERNATIONAL INC` share their first 27 characters, so a head-only cut renders both
+identically; company names sharing a long prefix are routine rather than exotic, and roughly half a
+real dataset can be organizations (INV-164). Compare the **fitted** strings, not the source values,
+and disambiguate any pair that collides while its values differ — the Python reference appends a
+positional suffix. Truncation must never remove the leading characters. Implement this in whatever
+language the server is written in (INV-090/INV-124): it is stated here because a rule that lives only
+in the Python reference reaches no generated server, which is exactly how the `NAME_FULL` search
+defect shipped (INV-164).
+
+**2. Match-key labels must stay distinguishable.** Real match keys run to 70+ characters
 (`+NAME+ADDRESS+NATIONAL_ID+OTHER_ID+REGISTRATION_DATE+REGISTRATION_COUNTRY+LEI_NUMBER`). A fixed
 label gutter with right-anchored text pushes the **head** of each key off the left edge, so the
 highest bars all render as the same trailing fragment and cannot be told apart — counts correct,
-labels useless, chart looking fine. Required behaviour:
+labels useless, chart looking fine. Required behavior:
 
 - Size the label gutter from the longest key present, up to a cap, before truncating anything.
 - **Middle-ellipsize** (`+NAME+ADDRESS+NATIONAL_ID+…RATION_COUNTRY+LEI_NUMBER`); never trim from the
@@ -491,7 +576,7 @@ labels useless, chart looking fine. Required behaviour:
   stays reachable on hover regardless.
 - Expose the full, untruncated key on hover (`<title>` or equivalent), on both the bar and its label.
 
-**2. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
+**3. The entity graph must open on something readable.** Hiding labels does not thin 4,464 edges;
 at that density the graph conveys shape only, with no practical way to locate an entity. Required:
 **above 400 entities, Entity Graph opens on the relationship subgraph** rather than the full
 population, provided a subgraph exists (`relationships_total` > 0). The toggle still switches both
@@ -499,7 +584,7 @@ ways, a bootcamper's explicit choice is never overridden, and an inline note sta
 "Showing the N entities that have relationships, of M total" — for the same reason the label note
 exists: otherwise a default reads as the data.
 
-State the threshold as a number so every language implementation (INV-090) picks the same behaviour.
+State the threshold as a number so every language implementation (INV-090) picks the same behavior.
 Re-check these against the bootcamper's **actual** scale, not the Truth Set: both defects pass every
 check 84 entities can run.
 
@@ -526,7 +611,7 @@ app; images in capture or append order cannot be lined up against the interface.
 | Search / Probe | `probe` | `tab-probe` | `navbtn-probe` | `search-probe` |
 
 The two **REMOVED** rows are retained as reserved identifiers, not as tabs to build: a current app
-MUST NOT serve them. They stay listed so the recap screenshot helper still recognises them when
+MUST NOT serve them. They stay listed so the recap screenshot helper still recognizes them when
 pointed at a snapshot saved by an earlier, eight-tab run, and so nothing reuses those ids for a
 different view.
 
@@ -535,6 +620,17 @@ The app MUST provide:
 - **`activate(<id>)`** — a page-scope function that shows that tab. The screenshot helper injects a
   call to it into a temp copy of the standalone snapshot (falling back to clicking
   `#navbtn-<id>`), which is how a tab is captured with no browser-automation dependency.
+
+  ⛔ **`activate()` MUST be idempotent: called for the tab that is already active, it MUST
+  return without redrawing.** Redrawing rebuilds the tab, and for a tab whose layout
+  *animates* — the Entity Graph's force simulation — that restarts the animation from
+  scratch. Mid-capture that yields a screenshot of every node collapsed in a corner: a
+  valid PNG, at exit 0, of a graph that looks like it found nothing (47 KB where 227 KB
+  was expected), which then reaches the recap with a caption describing the graph the
+  image does not show. Both capture routes trigger it — the injected `activate('<tab>')`
+  and `?tab=<id>` deep-linking, since deep-linking calls `activate()` too — so the guard
+  belongs in `activate()` itself rather than in either caller. It also stops a user's
+  click on the already-active nav button from restarting the layout.
 - **`?tab=<id>` / `?q=<text>` deep-linking** — applied at the end of `init()`, after the async
   data load and `buildNav()` have settled. `?tab=` activates that tab when it is applicable and
   present; `?q=` fills the search box and runs the search, defaulting the tab to `probe` when `q` is
@@ -543,6 +639,22 @@ The app MUST provide:
 
 Deep-linking MUST be tolerant: an unknown or non-applicable `tab` value leaves the default tab
 active rather than erroring or blanking the page.
+
+⛔ **The snapshot's own text MUST NOT hardcode a port or name a dataset the caller did not
+supply.** The standalone snapshot is the retained keepsake, so anything it asserts about the
+environment ships permanently. Derive the URL it prints from the **parsed `--port`**, and take the
+dataset wording from the caller — defaulting to neutral wording ("the loaded data") rather than
+naming the Truth Set. One code path serves the Truth Set in its own module and the bootcamper's own
+data in Query, Visualize and Discover: a snapshot that says "this Truth Set" on a `--port 9001` run
+tells the reader to open a port nothing is listening on **and** mislabels their data, silently, in
+the artifact they keep.
+
+**So the server MUST accept the dataset wording as an argument** — in whatever form your language's
+CLI takes (the Python reference spells it `--dataset`; INV-090 leaves the spelling to you) — and the
+**caller MUST pass it**: Truth Set visualization passes "the Senzing Truth Set", Query, Visualize and
+Discover passes wording describing the Bootcamper's own sources. Accepting it and defaulting to
+neutral wording is only half the requirement; a snapshot that could have been labelled and was not
+is a vaguer keepsake than the data warranted.
 
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
 them in its own summary sentence.
@@ -621,9 +733,16 @@ Live `/api/*` responses served as `application/json` are **exempt** — they are
 surface.
 
 *Reference implementation (Python):* `senzing_viz_server.py` provides `_script_json()` for case 1 and
-`_esc_html()` for case 2. Those are the names in the bundled reference, **not** the requirement —
-implement the equivalent for your language (INV-090). A server that skips this ships a stored-XSS
-vector in a shared keepsake, which is why it is a ⛔ and not a nicety (INV-106).
+`_esc_html()` for case 2 — the latter escapes `&`, `<`, `>` **and both quote characters**, so one
+helper is safe in text and attribute position alike. Those are the names in the bundled reference,
+**not** the requirement — implement the equivalent for your language (INV-090). ⛔ **Whatever you
+implement, cover the quotes.** Until 2026-07-30 the reference escaped only the three, matching case 2's
+text half while this very paragraph promised the attribute half: every call site happened to be a text
+node, so nothing rendered wrong, and an implementer modelling the helper rather than the rule would
+have inherited an attribute-position hole with no symptom to find it by (the INV-164 pattern — a
+divergence between the reference and the written rule reaches generated code). A server that skips
+this ships a stored-XSS vector in a shared keepsake, which is why it is a ⛔ and not a nicety
+(INV-106).
 
 ### Offline rendering (required)
 
@@ -723,6 +842,15 @@ and **verified live to return at least one match** before being offered — a hi
 nothing is worse than no hint. Never present a bare search box: a bootcamper exploring a Truth Set
 they did not build has no idea what a good demo query looks like, and a failed first search is a
 poor first impression of the product.
+
+⛔ **"Verified" means the query was actually run and returned a hit — not that it was derived from
+real data.** Deriving a chip from a real merged entity's name is *not* verification: every chip
+named after an **organization** was a real entity and still returned nothing, because search tried
+`NAME_FULL` only (see `/api/search` above). So verify each candidate through **the same search path
+the click will take**, keep only those that return at least one result, and drop the rest with a
+reported reason (stderr for a build-time/snapshot example, `console.warn` for a live chip) — never
+ship a chip that finds nothing. This check is also the cheapest guard against the search defect
+returning: a chip that stops matching is a search regression announcing itself.
 
 **Distinguish "no data returned" from "rendered empty" (INV-115).** Where the UI renders a parsed
 field — a feature-score table, a match key, a resolution step — an absent or blank value MUST be

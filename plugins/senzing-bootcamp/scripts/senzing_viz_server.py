@@ -15,8 +15,8 @@ then serves:
 - ``GET /``            single-page D3 v7 visualization (all tabs + summary banner)
 - ``GET /api/stats``   aggregate resolution statistics (incl. per-bucket entity lists
   under ``bucket_entities`` for the clickable histogram, and ``data_sources_total``)
-- ``GET /api/graph``   entity nodes + relationship edges (Entity Graph + Relationship
-  Network tabs)
+- ``GET /api/graph``   entity nodes + relationship edges (the Entity Graph tab, in both
+  its full-population and relationship-subgraph modes)
 - ``GET /api/merges``  multi-record entities with constituent records
 - ``GET /api/search``  search-by-attributes with resolution reasoning
 - ``GET /api/why``     explain WHY the records in an entity resolved together
@@ -31,9 +31,18 @@ then serves:
 
 These endpoints back a single consolidated, tabbed visualization app — the one artifact
 Module 7 offers for results visualization (it no longer produces separate static pages).
-The Relationship Network tab reuses ``/api/graph`` (the related-entity subgraph); the
-entity-size distribution is the Merge Statistics histogram (``/api/stats``), not a
-separate view.
+Its tab set is exactly **six** (INV-155), in this order: Entity Graph, Merge Statistics,
+Match Keys, Feature Scores, Cross-Source, Search / Probe. The row order of the tab table
+in ``module-03b-truthset-visualization/visualization-api-reference.md`` is the ordering
+authority (INV-147); a tab is shown only when its data exists.
+
+Two former tabs were **removed** and their unique capabilities live on inside that six:
+the standalone *Relationship Network* tab is now the Entity Graph's "Show only entities
+with relationships" **mode** (same ``/api/graph`` payload), and *Record Merges* is now the
+"Show all merged entities" button on Search / Probe (``/api/merges``). There is no Results
+Dashboard tab either — the entity-size distribution is the Merge Statistics histogram
+(``/api/stats``), not a separate view. Their ids stay reserved rather than reused; see the
+``TABS`` note in ``capture_screenshots.py``.
 
 Data source: ``get_entity_by_record_id`` with ``SZ_ENTITY_DEFAULT_FLAGS`` (which
 includes ``SZ_ENTITY_INCLUDE_ALL_RELATIONS``), so nodes and edges come from one
@@ -429,21 +438,55 @@ class Model:
         out.sort(key=lambda e: -e["record_count"])
         return {"entities": out}
 
+    # Name attributes a search tries, in order.
+    #
+    # Per the Senzing Entity Specification (Name > Feature: NAME): `NAME_ORG` is the
+    # organization name attribute, `NAME_FULL` is the "single-field name when type
+    # (person vs org) is unknown", and the rule is "use NAME_ORG for organizations;
+    # use NAME_FULL only when the type is unknown or only a single field exists".
+    #
+    # Searching NAME_FULL alone therefore returns **nothing** for an organization,
+    # with no error — indistinguishable from "not in the data". On a dataset that is
+    # roughly half organizations that silently made half the population
+    # unsearchable: "ABSOLUTE DENTAL" returned 0 results while a person name
+    # returned a hit immediately, which is the only reason the empty result looked
+    # wrong rather than believable.
+    SEARCH_NAME_ATTRS = ("NAME_FULL", "NAME_ORG")
+
+    def _search_one(self, engine, flags, attr, query):
+        """One `search_by_attributes` call under a single name attribute."""
+        attrs = json.dumps({attr: query})
+        try:
+            raw = engine.search_by_attributes(attrs, flags)
+        except TypeError:
+            raw = engine.search_by_attributes(attrs, flags, "")
+        return json.loads(raw)
+
     def search(self, engine, flags, query):
         query = (query or "").strip()
         if not query:
             return {"results": []}
-        attrs = json.dumps({"NAME_FULL": query})
-        try:
+        items = []
+        tried = []
+        for attr in self.SEARCH_NAME_ATTRS:
+            tried.append(attr)
             try:
-                raw = engine.search_by_attributes(attrs, flags)
-            except TypeError:
-                raw = engine.search_by_attributes(attrs, flags, "")
-            resp = json.loads(raw)
-        except Exception as exc:
-            return {"results": [], "error": str(exc)}
+                resp = self._search_one(engine, flags, attr, query)
+            except Exception as exc:
+                # A later attribute failing must not discard a hit an earlier one
+                # already produced; only report the error if nothing matched at all.
+                if not items:
+                    return {
+                        "results": [],
+                        "error": str(exc),
+                        "attributes_tried": tried,
+                    }
+                break
+            items.extend(resp.get("RESOLVED_ENTITIES", []))
+            if items:
+                break  # first attribute that matches wins; no need to pay for the rest
         results = []
-        for item in resp.get("RESOLVED_ENTITIES", [])[:10]:
+        for item in items[:10]:
             ent = item.get("ENTITY", {}).get("RESOLVED_ENTITY", {})
             eid = ent.get("ENTITY_ID")
             match = item.get("MATCH_INFO", {})
@@ -458,7 +501,10 @@ class Model:
                     "resolution_rule": match.get("ERRULE_CODE", ""),
                 }
             )
-        return {"results": results}
+        # `attributes_tried` lets the UI say what was searched when nothing matched,
+        # so an empty result reads as "no match under these attributes" rather than
+        # as "this name is not in your data" (INV-115).
+        return {"results": results, "attributes_tried": tried}
 
     def how(self, engine, sz, entity_id):
         """Explain HOW an entity was constructed from its records
@@ -723,7 +769,16 @@ function drawFor(id){
   else if(id==="matchkeys")drawMatchKeys();
   else if(id==="features")drawFeatures();
   else if(id==="overlap")drawOverlap();}
-function activate(id){d3.selectAll("nav button").classed("active",false);d3.select("#navbtn-"+id).classed("active",true);
+function activate(id){
+  // Re-activating the tab that is ALREADY active must not redraw it. drawFor() rebuilds
+  // the tab, and for the Entity Graph that means a fresh d3.forceSimulation — so
+  // re-activating the default tab mid-capture restarts the layout and the screenshot
+  // catches the nodes still collapsed in a corner: a plausible-looking empty graph, at
+  // exit 0, in the keepsake. Both capture paths hit this (an injected activate('<tab>')
+  // and ?tab=<id> deep-linking), and a user clicking the active nav button did too.
+  const already=d3.select("#tab-"+id);
+  if(!already.empty()&&already.classed("active")&&d3.select("#navbtn-"+id).classed("active"))return;
+  d3.selectAll("nav button").classed("active",false);d3.select("#navbtn-"+id).classed("active",true);
   d3.selectAll(".tab").classed("active",false);d3.select("#tab-"+id).classed("active",true);drawFor(id);}
 function buildNav(){const nav=d3.select("#nav");nav.html("");
   const tabs=ALL_TABS.filter(function(t){return tabApplicable(t[0]);});
@@ -782,8 +837,8 @@ async function drawGraph(){
     .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
   const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
   const line=edge.append("line");
-  // Relationship-type colour plus a dash pattern, so the types stay distinguishable in a
-  // monochrome screenshot (contract: pair colour with a non-colour distinction).
+  // Relationship-type color plus a dash pattern, so the types stay distinguishable in a
+  // monochrome screenshot (contract: pair color with a non-color distinction).
   if(network){
     line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
         .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
@@ -799,8 +854,29 @@ async function drawGraph(){
   node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
     .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
     .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
+  // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
+  // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
+  // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
+  // in organization data -- would otherwise render as the same string, and the graph would
+  // show two nodes nothing distinguishes. Compare the FITTED labels, not the names, and
+  // suffix only a genuine collision: two entities that really share a name may legitimately
+  // render alike. The full name stays on hover via the group tooltip above.
+  const NODE_LABEL_MAX=20;
+  const nodeLabel={};
+  (function(){const taken={};
+    nodes.forEach(function(n){
+      const full=n.entity_name||"";
+      let lab=full.length>NODE_LABEL_MAX?full.slice(0,NODE_LABEL_MAX-1)+"…":full;
+      if(taken[lab]!==undefined&&taken[lab]!==full){
+        let k=2;while(taken[lab+" ("+k+")"]!==undefined)k++;
+        lab=lab+" ("+k+")";
+      }
+      taken[lab]=full;
+      nodeLabel[n.entity_id]=lab;
+    });})();
   node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
-      .text(function(d){var n=d.entity_name||"";return n.length>20?n.slice(0,19)+"…":n;});
+      .text(function(d){return nodeLabel[d.entity_id];})
+      .append("title").text(function(d){return d.entity_name||"";});
   sim.on("tick",function(){
     edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
       .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
@@ -837,8 +913,8 @@ function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
 // the same app was reused for production-scale data in Module 7 (contract:
 // "Scale principle"). Toggles stay available either way.
 const LABEL_AUTO_OFF=150;
-// Non-colour encoding companion to the relationship-type colour, so the types
-// stay distinguishable in a monochrome recap screenshot and for colour-vision
+// Non-color encoding companion to the relationship-type color, so the types
+// stay distinguishable in a monochrome recap screenshot and for color-vision
 // deficiency (contract: "Pair color with a non-color distinction").
 const R_DASH={possibly_same:"",possibly_related:"6,4",disclosed:"2,3",ambiguous:"10,3,2,3"};
 function rdash(ty){return R_DASH[String(ty||"").toLowerCase()]||"6,4";}
@@ -877,10 +953,10 @@ function addGraphControls(containerId,nodeCount){
     box.append("div").attr("class","why")
       .text("Showing the "+nodeCount+" entities that have relationships, of "+
             STATS.entities_total+" total — the full population is too dense to read at this "+
-            "scale. Untick above to show them all.");}
-// Built FROM the rendered nodes, never from a static colour config: a legend
+            "scale. Uncheck the toggle above to show them all.");}
+// Built FROM the rendered nodes, never from a static color config: a legend
 // entry then cannot exist without matching marks on screen, which is what makes
-// "the legend shows colours that appear nowhere in the graph" impossible.
+// "the legend shows colors that appear nowhere in the graph" impossible.
 // Clicking an entry filters the view and toggles back.
 function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const counts={};(nodes||[]).forEach(function(n){(n.data_sources||[]).forEach(function(s){counts[s]=(counts[s]||0)+1;});});
@@ -919,7 +995,8 @@ function modalShell(title,subtitle,bodyHtml){
     "<div class='mbody'>"+bodyHtml+"</div>";}
 // The canonical per-entity action set (contract: "Per-entity actions"). ONE
 // renderer, invoked from every surface that shows an entity — graph node modal,
-// Record Merges cards, every aggregate drill-down, and search results. Adding a
+// the merged-entity cards on Search / Probe, every aggregate drill-down, and
+// search results. Adding a
 // button here reaches all of them; that is the point. Wiring actions per
 // code-path is how surfaces previously shipped with different subsets.
 function addEntityActions(sel,eid,name){if(eid===undefined||eid===null)return;
@@ -951,9 +1028,16 @@ async function showRecords(eid,name){const m=d3.select("#modal");
   if(data&&data.error){body="<p class='muted'>"+esc(data.error)+"</p>";}
   else{const recs=(data&&data.records)||[];
     if(!recs.length){body="<p class='muted'>No records returned for this entity.</p>";}
-    else{body="<table class='tbl'><thead><tr><th>Source</th><th>Record</th><th>Name</th><th>Address</th><th>Phone</th></tr></thead><tbody>";
-      recs.forEach(function(r){body+="<tr><td>"+esc(r.data_source)+"</td><td>"+esc(r.record_id)+"</td><td>"+esc(r.name||"")+
-        "</td><td>"+esc(r.address||"")+"</td><td>"+esc(r.phone||"")+"</td></tr>";});
+    // Columns come from the fields the endpoint actually returned, never from a fixed
+    // list: this server's /api/records carries data_source/record_id/match_key, so a
+    // hardcoded Name/Address/Phone header rendered three empty columns for every row
+    // and read as missing data rather than as a payload that never had those fields.
+    else{const cols=[["match_key","Match key"],["name","Name"],["address","Address"],["phone","Phone"]]
+        .filter(function(c){return recs.some(function(r){return r[c[0]];});});
+      body="<table class='tbl'><thead><tr><th>Source</th><th>Record</th>"+
+        cols.map(function(c){return "<th>"+esc(c[1])+"</th>";}).join("")+"</tr></thead><tbody>";
+      recs.forEach(function(r){body+="<tr><td>"+esc(r.data_source)+"</td><td>"+esc(r.record_id)+"</td>"+
+        cols.map(function(c){return "<td>"+esc(r[c[0]]||"")+"</td>";}).join("")+"</tr>";});
       body+="</tbody></table>";}}
   m.html(modalShell("Records in this entity",sub,body));}
 function explainTitle(kind){return kind==="why"?"Why did these records resolve together?":"How was this entity built?";}
@@ -1049,7 +1133,12 @@ function showBucket(s,key,label){const box=d3.select("#bucket-list");if(box.empt
   if(total>list.length)box.append("p").attr("class","muted").text("Showing first "+list.length+" of "+total+".");}
 async function doSearch(){const q=document.getElementById("search-in").value;const box=d3.select("#results");box.html("<p class='muted'>Searching…</p>");
   const r=await getJSON("/api/search?q="+encodeURIComponent(q));box.html("");
-  if(!r.results||!r.results.length){box.append("p").attr("class","muted").text("No matching entities found.");return;}
+  // Name what was searched, so an empty result reads as "no match under these
+  // attributes" and not as "this name is not in your data" (INV-115).
+  if(!r.results||!r.results.length){const tried=(r.attributes_tried||[]).join(" then ");
+    const how=tried?("a "+tried+" search for "):"";
+    box.append("p").attr("class","muted").text(r.error?("Search could not run: "+r.error)
+      :("No entity matched "+how+'"'+q+'".'));return;}
   r.results.forEach(function(e){const card=box.append("div").attr("class","card");
     card.append("h4").text(e.entity_name);
     card.append("div").attr("class","muted").text("Entity "+e.entity_id+" · "+(e.record_count||"?")+" record(s) · "+(e.data_sources||[]).join(", "));
@@ -1060,8 +1149,20 @@ async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.se
   // The example chips drive the live search box. The static snapshot has none, so they would be
   // dead controls there — offer only the browse, which needs no engine.
   const live=!!document.getElementById("search-in");
-  if(live)m.entities.slice(0,6).forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
-    .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});
+  // Chips MUST be verified to return at least one match before being offered: a hint
+  // that finds nothing is worse than no hint, and that is exactly what a chip named
+  // after an organization did while search tried NAME_FULL only. Verify against the
+  // live engine — the same path the click will take — and drop any that come back
+  // empty rather than shipping a dead control.
+  if(live){const cands=(m.entities||[]).slice(0,10);const good=[];
+    for(const e of cands){if(good.length>=6)break;
+      if(!e.entity_name)continue;
+      try{const r=await getJSON("/api/search?q="+encodeURIComponent(e.entity_name));
+        if(r&&r.results&&r.results.length)good.push(e);
+        else console.warn("dropped example chip (no match): "+e.entity_name);}
+      catch(err){console.warn("dropped example chip (search failed): "+e.entity_name);}}
+    good.forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
+      .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
   // The one capability the removed Record Merges tab uniquely had: browse every merged
   // entity with no query. Search / Probe otherwise shows a strict superset per entity,
   // so this is what keeps the removal lossless rather than a trade.
@@ -1084,7 +1185,8 @@ function showAllMerges(entities){
     card.select("h4").append("span").attr("class","chip").text((e.data_sources||[]).join(" + "));
     const mk=(e.records||[]).map(function(r){return r.match_key;}).filter(function(x){return x;})[0]||"";
     card.append("div").attr("class","muted").text(e.record_count+" records · Entity "+e.entity_id);
-    if(mk){const c=card.append("div");mkChips(mk).forEach(function(h){c.html(c.html()+h);});}
+    // mkChips returns one HTML string, already escaped per chip — set it, do not iterate it.
+    if(mk)card.append("div").html(mkChips(mk));
     addEntityActions(card,e.entity_id,e.entity_name);});}
 // Cross-Source overlap heatmap: entities shared between each pair of data sources.
 async function drawOverlap(){const o=await getJSON("/api/overlap");const box=d3.select("#overlap");box.html("");
@@ -1351,11 +1453,28 @@ def build_model(settings, patterns):
 
 
 def _esc_html(s):
+    """Escape a data-sourced string for HTML **text or an attribute value** (INV-106).
+
+    Quotes are escaped as well as ``& < >``, so one helper is safe in both contexts. It
+    previously escaped only the three, which is correct for a text node and unsafe inside
+    ``attr="…"`` — a value containing a double quote closes the attribute early and the
+    remainder parses as markup. Every call site was a text node, so nothing was broken;
+    the hazard was that INV-106 and the guidance in
+    ``module-05-data-quality-mapping/phase1-quality-assessment.md`` both name the attribute
+    context, so the next caller could reasonably have reached for this and been wrong. A
+    footgun with no live victim is still a footgun (found by the 2026-07-30 sweep).
+
+    Escaping quotes costs nothing in a text node: ``&quot;`` and ``&#39;`` render as
+    ``"`` and ``'``. For a value going inside an inline ``<script>`` block use
+    ``_script_json`` instead — HTML escaping is the wrong tool there.
+    """
     return (
         str("" if s is None else s)
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
     )
 
 
@@ -1417,7 +1536,7 @@ def _result_card(searched, res):
     return "".join(html)
 
 
-def _snapshot_probe_html(model, engine, flags):
+def _snapshot_probe_html(model, engine, flags, port=8080, dataset=""):
     """Build the static snapshot's Search/Probe tab: a note plus a fixed set of
     pre-rendered example search results (no live search box, which cannot work in a
     static file). Examples are drawn from this snapshot's own multi-record entities
@@ -1437,18 +1556,31 @@ def _snapshot_probe_html(model, engine, flags):
         if not name:
             continue
         res = None
+        searchable = True
         try:
             hits = model.search(engine, flags, name).get("results", [])
             res = next(
                 (h for h in hits if h.get("entity_id") == ent.get("entity_id")),
                 hits[0] if hits else None,
             )
+            if res is None:
+                # The search ran and matched nothing, so this example is not
+                # "pre-verified" and must not be offered as one — a hint that
+                # returns nothing is worse than no hint. Distinct from the
+                # exception case below, where search is simply unavailable.
+                searchable = False
+                sys.stderr.write(
+                    f"dropped snapshot example {name!r}: search returned no match "
+                    "(the example is not verified, so it is not offered)\n"
+                )
         except Exception as exc:  # non-fatal (INV-077): fall back to merge data
             sys.stderr.write(
                 f"snapshot probe search failed for {name!r} (non-fatal): "
                 f"{type(exc).__name__}: {exc}\n"
             )
             res = None
+        if not searchable:
+            continue
         if res is None:  # search unavailable — render from the merge data itself
             res = {
                 "entity_id": ent.get("entity_id"),
@@ -1459,10 +1591,16 @@ def _snapshot_probe_html(model, engine, flags):
                 "resolution_rule": "",
             }
         cards.append(_result_card(name, res))
+    # The port comes from the parsed --port and the dataset wording from the caller: this
+    # text ships into docs/visualizations/*.html, which is the retained keepsake. Hardcoding
+    # them told a Module 7 bootcamper to open a port nothing was listening on and called
+    # their own data "this Truth Set" — the app serves the Truth Set in one module and the
+    # bootcamper's data in another, from this one code path.
+    where = _esc_html(dataset.strip()) if dataset and dataset.strip() else "the loaded data"
     note = (
         '<p class="muted">This is a saved snapshot, so live search is disabled. Below are '
-        "example searches run against this Truth Set. In the live app "
-        "(<code>http://localhost:8080</code>) you can search any name.</p>"
+        f"example searches run against {where}. In the live app "
+        f"(<code>http://localhost:{int(port)}</code>) you can search any name.</p>"
     )
     # #probe-btns must exist here too, or `loadProbes()` has nothing to render into and the
     # snapshot silently loses the "Show all merged entities" browse — the one capability the
@@ -1474,36 +1612,50 @@ def _snapshot_probe_html(model, engine, flags):
     return note + browse + '<div id="results">' + "".join(cards) + "</div>"
 
 
-def write_snapshot(model, engine, flags, title, out_path):
+def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset=""):
     """Write a fully self-contained HTML snapshot with D3 and data embedded, so it
     renders with no server and no network access."""
     payload = {
         "stats": model.stats(),
         "graph": model.graph(),
         "merges": model.merges(),
-        # Records for every entity, so the Records action works offline in the
-        # snapshot (it needs no engine call, unlike why/how).
-        "records": {
-            str(eid): model.records(eid) for eid in model.entities
-        },
+        # No "records" key: /api/records is per-entity, and graph.nodes already
+        # carries every entity with its constituent records, so the shim below
+        # indexes those instead. A second full copy would have embedded the same
+        # records twice in a file whose size grows with the bootcamper's dataset.
         "overlap": model.overlap(),
         "matchkeys": model.match_keys(),
         "features": model.feature_scores(),
     }
     # The embedded-data shim runs after D3 and before the page bootstrap, replacing
     # the fetch-based bootstrap with the inlined data.
+    #
+    # ⛔ /api/records is the one endpoint whose response depends on the query string.
+    # Returning the whole collection for it — as the aggregate endpoints below
+    # correctly do — hands showRecords() an object with no `records` array, so every
+    # entity in a standalone snapshot reported "No records returned for this entity"
+    # while the live server showed them. Resolve the entity_id here instead.
     shim = (
         "<script>const __DATA__=" + _script_json(payload) + ";"
+        "var __RECS__=null;"
+        "function __recordsFor(id){if(!__RECS__){__RECS__={};"
+        "(((__DATA__.graph||{}).nodes)||[]).forEach(function(n){"
+        "__RECS__[String(n.entity_id)]={entity_id:n.entity_id,entity_name:n.entity_name,"
+        "records:n.records||[]};});}"
+        "return __RECS__[id]||{entity_id:id,error:'not found: no such entity'};}"
         "window.fetch=function(u){var p=u.split('?')[0].replace('/api/','');"
         "var q=(u.split('?')[1]||'');"
         "if(p==='search'){return Promise.resolve({json:function(){return Promise.resolve({results:[]});}});}"
         "if(p==='why'||p==='how'){return Promise.resolve({json:function(){return Promise.resolve({error:'Why/How explanations run only against the live visualization server (start it with: python3 senzing_viz_server.py --records ...).'});}});}"
+        "if(p==='records'){var m=q.match(/entity_id=([^&]*)/);"
+        "var r=__recordsFor(m?decodeURIComponent(m[1]):'');"
+        "return Promise.resolve({json:function(){return Promise.resolve(r);}});}"
         "return Promise.resolve({json:function(){return Promise.resolve(__DATA__[p]);}});};</script>"
     )
     page = render_page(
         title,
         data_shim=shim,
-        probe_body=_snapshot_probe_html(model, engine, flags),
+        probe_body=_snapshot_probe_html(model, engine, flags, port=port, dataset=dataset),
         sources=model.data_sources(),
     )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
@@ -1518,6 +1670,10 @@ def main(argv=None):
                     help="JSONL file(s)/glob(s) of the records that were loaded")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--title", default="Senzing Entity Resolution")
+    ap.add_argument("--dataset", default="",
+                    help="what the loaded data IS, for snapshot wording (e.g. 'the Senzing "
+                         "Truth Set', 'your CUSTOMERS and REFERENCE data'). Left empty the "
+                         "snapshot says 'the loaded data' — never assume the Truth Set.")
     ap.add_argument("--snapshot", default=None,
                     help="also write a self-contained standalone HTML to this path")
     ap.add_argument("--no-serve", action="store_true",
@@ -1547,7 +1703,8 @@ def main(argv=None):
           f"{s['relationships_total']} relationships")
 
     if args.snapshot:
-        write_snapshot(model, engine, flags, args.title, args.snapshot)
+        write_snapshot(model, engine, flags, args.title, args.snapshot,
+                       port=args.port, dataset=args.dataset)
         print(f"Snapshot written: {args.snapshot}")
 
     if args.no_serve:

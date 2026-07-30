@@ -230,11 +230,29 @@ class TestTheTriggerIsTheCurrentSetting(unittest.TestCase):
                 )
 
     def test_the_previous_stage_is_only_a_fallback(self):
+        """The fallback is now scoped PER DIAL, not to "the current setting" as a whole.
+
+        Reworded 2026-07-29 (source: `dry-run-phase3-interaction-prose-defects` item 8). The
+        original phrasing — "only when the current setting cannot be determined" — treated model
+        and effort as one thing to determine or not. In a live session they differ: the model is
+        knowable, the reasoning effort is exposed nowhere. Read all-or-nothing, the fallback would
+        compare a determinable Opus 5 against the previous stage's Sonnet 5, find it unchanged, and
+        suppress the switch offer entirely. The intent this test guards is unchanged — the previous
+        stage is a fallback, never the primary rule — so only the wording moved.
+        """
         self.assertRegex(
             flat(GROUND_RULES),
-            r"[Oo]nly when the current setting cannot be determined",
+            r"[Oo]nly for a dial whose current value cannot be determined",
             "comparing against the previous stage is the fallback for an "
-            "undeterminable current setting — not the primary rule",
+            "undeterminable dial — not the primary rule",
+        )
+
+    def test_the_fallback_is_resolved_per_dial(self):
+        """The half the original wording left unsanctioned, and which the walk relied on."""
+        self.assertRegex(
+            flat(GROUND_RULES),
+            r"(?i)PER DIAL, not for the setting as a whole",
+            "a determinable model must be compared directly even when effort is not",
         )
 
     def test_only_the_differing_dial_is_named(self):
