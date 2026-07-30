@@ -45,7 +45,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   Bootcamper supplied must reach the generator that renders it, and "recording an answer in one
   place while the generator reads another is indistinguishable from never having asked". The
   reader/writer guard is apparatus enforcing that existing rule, not a new guarantee.
-- **Commit:** uncommitted
+- **Commit:** `e966b3d`
 
 ## graduation-reads-integration-and-deployment-answers
 
@@ -56,7 +56,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no new invariant.** It builds the half of **INV-097** that was never implemented
   ("read by the Module 1 problem statement **and by graduation**"). The guarantee has existed
   since 2026-07-20 (INV-088, superseded by INV-097); only its implementation was missing.
-- **Commit:** uncommitted
+- **Commit:** `e966b3d`
 
 ## normalize-production-markdown-at-graduation
 
@@ -67,7 +67,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Establishes no new invariant.** It builds the half of **INV-060** that was never implemented
   (the pass over "the generated `production/*.md`"). The guarantee has existed since 2026-07-16;
   only its implementation was missing.
-- **Commit:** uncommitted
+- **Commit:** `e966b3d`
 
 ## deep-dive-audit-2026-07-29-minor-fixes
 
