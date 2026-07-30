@@ -50,6 +50,22 @@ These also **re-verified unchanged**:
    `ENTITIES[].RESOLVED_ENTITY.{ENTITY_ID,ENTITY_NAME,RECORD_SUMMARY[]}` and
    `ENTITY_PATHS[].{START_ENTITY_ID,END_ENTITY_ID,ENTITIES[]}`.
 
+A third pass re-asked three more, all **unchanged**:
+
+6. `module-06-data-processing/phaseD-validation.md:13` — a **verbatim quote** of
+   `reporting_guide`'s schema notes. Matches word-for-word:
+   `reporting_guide(topic='data_mart', language='python', scale='poc')` returns
+   `schema.description` beginning *"IMPORTANT: These tables are NOT part of the Senzing
+   SDK and do NOT exist out of the box. They must be created and maintained by a separate
+   data mart replication pipeline that YOU build and operate."*
+7. `module-03b-truthset-visualization/visualization-api-reference.md:289` — the
+   `find_network_*` row of the MCP-confirmed response-paths table
+   (`ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`). Covered by the same
+   `response_schemas` evidence as site 5.
+8. `bootcamp-onboarding/ground-rules.md:100` — `find_examples` retrieval returns an empty
+   `content`. Still reproduces (`content: ""` against `content_length: 20706`), so the
+   claim stands and only the stamp is stale. Ledger keys `inv160-*`.
+
 **One of the first three also misdescribes its own call.** Site 3 says the lookup "returns both
 overloads for every binding". It does not. The response carried two entries because the
 filter matched two *different methods* — `get_record` (`variant: "record_id"`) and
@@ -68,7 +84,7 @@ fact it was fetched for, and the incidental second match was described from a gl
 
 ## Proposed change
 
-1. **Update the seven verified stamps to `MCP server 1.32.2, 2026-07-30`.** Change the
+1. **Update the ten verified stamps to `MCP server 1.32.2, 2026-07-30`.** Change the
    version and date only — the surrounding claims re-verified unchanged and their wording
    stays exactly as it is, including the "re-verify rather than trusting this note"
    instructions, which are what make these sites correct in the first place.
@@ -77,25 +93,25 @@ fact it was fetched for, and the incidental second match was described from a gl
    signature per binding, `record_definition` plus `flags`, and no prerequisite. Keep the
    order it prescribes (register the source codes from `sdk_guide(topic='configure')`,
    then preview) — that is correct and is the point of the passage.
-3. **Leave the remaining nine 1.32.1 stamps alone.** They were not re-asked in this
+3. **Leave the remaining six 1.32.1 stamps alone.** They were not re-asked in this
    sweep, and changing a stamp without re-verifying its claim is worse than leaving it
    expired: it would assert a check that never happened. They are listed below so the
    next sweep can pick them up.
 
 **Not in scope:** the recurring half of this problem. Stamps will expire again on the
 next server bump, and refreshing them is exactly what `delegate-to-mcp-server` does. This
-spec clears the seven that are already verified; it does not try to automate the rest.
+spec clears the ten that are already verified; it does not try to automate the rest.
 
 ## Acceptance criteria
 
-- [ ] The seven sites named above carry `MCP server 1.32.2, 2026-07-30`, and their claims
+- [ ] The ten sites named above carry `MCP server 1.32.2, 2026-07-30`, and their claims
       are otherwise byte-identical to what ships today.
 - [ ] `phase1-quality-assessment.md:124` no longer says the lookup returns "both
       overloads"; it describes the single `get_record_preview` signature and its two
       parameters.
 - [ ] The register-then-preview ordering and the `sdk_guide(topic='configure')` sourcing
       instruction survive the edit unchanged.
-- [ ] No stamp is advanced for a claim this spec did not re-verify — the remaining nine
+- [ ] No stamp is advanced for a claim this spec did not re-verify — the remaining six
       1.32.1 stamps still read 1.32.1.
 - [ ] **Re-verification clause:** implementing this requires, all on the current server:
       `get_sample_data(dataset='list')` to return exactly those four datasets with
@@ -122,31 +138,35 @@ spec clears the seven that are already verified; it does not try to automate the
 - `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase2b-discover.md` — stamp at line 50.
 - `tests/` — any assertion quoting the edited sentence.
 
-### Still expired, not re-asked in either pass
+### Still expired, not re-asked in any of the three passes
 
-`module-02-sdk-setup/SKILL.md` (lines 385, 789, 871) ·
-`module-03-system-verification/phase1-verification.md` (132) ·
-`module-03b-truthset-visualization/visualization-api-reference.md` (289) ·
-`module-05-data-quality-mapping/phase1-quality-assessment.md` (254) ·
-`module-05-data-quality-mapping/phase2-data-mapping.md` (344) ·
-`module-06-data-processing/phaseD-validation.md` (13 — a **verbatim quote** of
-`reporting_guide`'s schema notes, so worth checking early: a quotation is wrong the
-moment the source is reworded) ·
-`bootcamp-onboarding/ground-rules.md` (100 — covered by the INV-160 ledger rows; the
-defect it describes still reproduces, so its claim stands and only the stamp is stale).
+- `module-02-sdk-setup/SKILL.md` (385, 789, 871) and
+  `module-03-system-verification/phase1-verification.md` (132) — snippet-guard and
+  `sdk_guide(topic='configure')` sequence claims. Checkable, just not reached.
+- `module-05-data-quality-mapping/phase1-quality-assessment.md` (254) — the
+  PERSON/ORGANIZATION feature-applicability table. Checkable via
+  `search_docs(category='data_mapping')`.
+- `module-05-data-quality-mapping/phase2-data-mapping.md` (344) — **not checkable from
+  MCP alone.** The claim is about how the MCP-delivered `sz_verbatim_check.py` behaves on
+  numeric source values, which needs the validator run against data, not a tool response.
+  Leave the stamp until a run can produce the evidence (INV-163: a check that cannot run
+  is recorded as skipped, never as passed).
 
 ## Source
 
 - Sweep: `delegate-to-mcp-server`, 2026-07-30 (first run, two passes), ledger keys
   `sample-data-list-returns-four-datasets`, `truthset-listed-available-in-sample-data`,
   `record-preview-registration-prerequisite-undocumented`,
-  `senz2027-explain-error-code-is-a-stub`, `find-network-link-element-fields-documented`
+  `senz2027-explain-error-code-is-a-stub`, `find-network-link-element-fields-documented`,
+  `data-mart-tables-not-in-sdk-quote`, `inv160-find-examples-empty-content`
 - Verdict: `keep-by-design` (sites 1-2, 5), `keep-server-lacks-it` (sites 3-4) — every
   claim survives; this spec updates provenance, not content
 - MCP evidence: server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-30 —
   `get_sample_data(dataset='list')`; `get_sdk_reference(topic='parameters',
   filter='getRecordPreview', language='python')`; `explain_error_code('SENZ2027')`;
-  `get_sdk_reference(topic='response_schemas', filter='find_network')`. Quoted above.
+  `get_sdk_reference(topic='response_schemas', filter='find_network')`;
+  `reporting_guide(topic='data_mart', language='python', scale='poc')`;
+  `find_examples(repo=…, file_path=…)`. Quoted above.
 - Priority: Low — no claim is wrong; the audit trail is stale and one sentence
   misdescribes its own call.
 - Upstream: not applicable for sites 1-2. Site 3 is a genuine documentation gap on
