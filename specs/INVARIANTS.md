@@ -242,6 +242,10 @@ append order — IDs are permanent addresses (see [Maintaining this file](#maint
 INV-001 – INV-050 are **not** indexed here: they are the bootcamp's own outcomes and are
 already grouped into sections above. Everything below is a development rule.
 
+22 of the 142 development rules are **superseded** — listed separately per group so a
+reader looking for what applies never reads a retired rule by accident. They stay in the
+file because their IDs are permanent addresses.
+
 - **MCP sourcing and tool contracts** — where Senzing facts come from, and what a tool response means.  
   INV-080, INV-125, INV-136, INV-149, INV-150, INV-160, INV-165, INV-169, INV-181, INV-190, INV-192
 - **SDK usage: methods, flags and responses** — confirming a call's shape before writing it, and reading what comes back.  
@@ -253,13 +257,17 @@ already grouped into sections above. Everything below is a development rule.
 - **Generator behaviour: rendering, encoding, reporting** — how a bundled generator must behave when something goes wrong.  
   INV-110, INV-111, INV-121, INV-129, INV-142, INV-143, INV-159, INV-161, INV-162, INV-163, INV-172, INV-178, INV-183, INV-184, INV-186
 - **Visualization and screenshots** — the app, its offline guarantee, and capturing it faithfully.  
-  INV-070, INV-071, INV-077, INV-081, INV-087, INV-090, INV-091, INV-104, INV-106, INV-107, INV-122, INV-123, INV-124, INV-127, INV-130, INV-146, INV-147, INV-153, INV-154, INV-155, INV-171
+  INV-070, INV-077, INV-081, INV-087, INV-090, INV-091, INV-104, INV-106, INV-107, INV-122, INV-123, INV-124, INV-127, INV-130, INV-146, INV-147, INV-153, INV-154, INV-155, INV-171
+  *Superseded — skip these; each names its replacement:* INV-071
 - **Questions, gates and bootcamper-facing conversation** — how the Bootcamper is addressed and what is pinned verbatim.  
-  INV-051, INV-054, INV-055, INV-056, INV-057, INV-074, INV-079, INV-096, INV-099, INV-102, INV-112, INV-158
+  INV-051, INV-054, INV-055, INV-056, INV-057, INV-074, INV-096, INV-099, INV-102, INV-112, INV-158
+  *Superseded — skip these; each names its replacement:* INV-079
 - **Model and effort guidance** — what is recommended, when it is surfaced, and what is never configurable.  
-  INV-062, INV-063, INV-064, INV-069, INV-098, INV-114, INV-119, INV-120, INV-137, INV-138, INV-139, INV-140, INV-141
+  INV-098, INV-114, INV-138, INV-139, INV-140, INV-141
+  *Superseded — skip these; each names its replacement:* INV-062, INV-063, INV-064, INV-069, INV-119, INV-120, INV-137
 - **Module flow, selection and progress** — which modules run, in what order, and what is recorded between them.  
-  INV-058, INV-060, INV-068, INV-072, INV-073, INV-075, INV-076, INV-078, INV-082, INV-083, INV-086, INV-088, INV-092, INV-093, INV-094, INV-095, INV-097, INV-101, INV-105, INV-131, INV-133
+  INV-058, INV-060, INV-073, INV-075, INV-076, INV-078, INV-082, INV-083, INV-092, INV-093, INV-094, INV-095, INV-097, INV-101, INV-105, INV-131, INV-133
+  *Superseded — skip these; each names its replacement:* INV-068, INV-072, INV-086, INV-088
 - **Platform, shell, encoding and file placement** — cross-platform behaviour and where files go.  
   INV-052, INV-061, INV-066, INV-108, INV-166, INV-167, INV-168, INV-175, INV-185, INV-188, INV-189
 - **Security and privacy** — the one consented PII path, and what must never be written.  

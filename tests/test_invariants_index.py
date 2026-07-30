@@ -26,7 +26,10 @@ INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
 FIRST_DEV_RULE = 51
 
 DEFINITION = re.compile(r"(?m)^- \*\*INV-(\d{3})\*\*")
-GROUP_LINE = re.compile(r"(?m)^- \*\*(?P<name>[^*]+)\*\* — [^\n]*\n\s+(?P<ids>INV-\d{3}(?:, INV-\d{3})*)")
+#: A group is a `- **Name** — gloss.` line followed by one or more indented ID lines: the
+#: live rules, and optionally a second line of superseded ones. Both count as indexed —
+#: a retired rule still needs a home, or the "exactly one group" check cannot be total.
+GROUP_BLOCK = re.compile(r"(?m)^- \*\*(?P<name>[^*]+)\*\* — .*?(?=^- \*\*|\Z)", re.DOTALL)
 
 
 def text():
@@ -47,12 +50,29 @@ def index_section():
 
 
 def indexed_groups():
-    """{group name: [invariant numbers]} as the index actually reads."""
+    """{group name: [invariant numbers]} as the index actually reads.
+
+    Live and superseded IDs are both collected: a retired rule still occupies a group, so
+    the completeness check stays total and a supersession cannot quietly drop a rule out
+    of the index.
+    """
     out = {}
-    for match in GROUP_LINE.finditer(index_section()):
+    for match in GROUP_BLOCK.finditer(index_section()):
         out[match.group("name").strip()] = [
-            int(i[4:]) for i in match.group("ids").split(", ")
+            int(n) for n in re.findall(r"INV-(\d{3})", match.group(0))
         ]
+    return out
+
+
+def superseded_in_index():
+    """IDs the index marks as superseded, by group."""
+    out = {}
+    for match in GROUP_BLOCK.finditer(index_section()):
+        for line in match.group(0).splitlines():
+            if "Superseded" in line:
+                out[match.group("name").strip()] = [
+                    int(n) for n in re.findall(r"INV-(\d{3})", line)
+                ]
     return out
 
 
@@ -122,6 +142,47 @@ class TheIndexNamesNothingImaginary(unittest.TestCase):
         listed = {n for ids in indexed_groups().values() for n in ids}
         early = sorted(n for n in listed if n < FIRST_DEV_RULE)
         self.assertEqual([], early, "bootcamp-outcome invariants leaked into the index: %s" % early)
+
+
+class SupersededRulesAreMarkedSoReadersSkipThem(unittest.TestCase):
+    """13 of the 142 development rules are superseded, costing 2,198 words a reader
+    otherwise walks through to reach the rules that still apply. Marking them in the index
+    is the compaction: the text stays (IDs are permanent addresses), the reading path
+    shrinks. The marking must stay truthful in both directions or it misleads worse than
+    no marking would."""
+
+    def marked(self):
+        return {n for ids in superseded_in_index().values() for n in ids}
+
+    def actual(self):
+        body = text()
+        return {
+            int(m.group(1))
+            for m in re.finditer(
+                r"- \*\*INV-(\d{3})\*\* — (?:(?!\n)[\s\S])*?[Ss]uperseded by INV", body
+            )
+            if int(m.group(1)) >= FIRST_DEV_RULE
+        }
+
+    def test_every_superseded_rule_is_marked(self):
+        missing = sorted(self.actual() - self.marked())
+        self.assertEqual(
+            [], missing,
+            "superseded but not marked in the index — a reader will read a retired rule "
+            "as though it applies: " + "  ".join("INV-%03d" % n for n in missing),
+        )
+
+    def test_nothing_is_marked_superseded_that_is_not(self):
+        wrong = sorted(self.marked() - self.actual())
+        self.assertEqual(
+            [], wrong,
+            "marked superseded in the index but the invariant does not say so — a reader "
+            "will skip a live rule: " + "  ".join("INV-%03d" % n for n in wrong),
+        )
+
+    def test_the_marking_is_not_vacuous(self):
+        self.assertGreater(len(self.marked()), 5,
+                           "no superseded rules marked; the parser or format has drifted")
 
 
 class TheMaintenanceRuleTellsAppendersAboutIt(unittest.TestCase):
