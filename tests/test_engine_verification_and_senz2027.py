@@ -140,5 +140,21 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
                 )
 
 
+class TheSweepIsNotVacuous(unittest.TestCase):
+    """Both checks above assert an empty offender list over `SKILLS.rglob("*.md")`.
+
+    If that glob stops matching — a directory rename, a move — they pass forever while
+    checking nothing, and an empty result is indistinguishable from a clean one.
+    """
+
+    def test_skill_markdown_is_actually_being_scanned(self):
+        found = list(SKILLS.rglob("*.md"))
+        self.assertGreater(
+            len(found), 20,
+            "only %d skill .md files found; the glob has drifted and the SENZ7426 / "
+            "SzProduct-masking sweeps are now vacuous" % len(found),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

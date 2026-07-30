@@ -266,6 +266,22 @@ class YesNoHintConventionIsDocumented(unittest.TestCase):
         self.assertIn("do not add or remove it from a question whose wording is pinned", squashed)
 
 
+class TheMarkdownSweepIsNotVacuous(unittest.TestCase):
+    """`shipped_markdown()` spans skills, commands and docs; a rename in any one of them
+    silently shrinks the corpus these checks run over."""
+
+    def test_all_three_subtrees_contribute(self):
+        found = shipped_markdown()
+        self.assertGreater(len(found), 20, "corpus shrank to %d files" % len(found))
+        for sub in ("skills", "commands", "docs"):
+            with self.subTest(subtree=sub):
+                self.assertTrue(
+                    any(sub in p.parts for p in found),
+                    "no .md found under %s/ — the glob drifted and this subtree is "
+                    "no longer checked at all" % sub,
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
 

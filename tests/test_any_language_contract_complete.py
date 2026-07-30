@@ -211,5 +211,17 @@ class ShippedFilesDoNotCiteNeverPropagatedPaths(unittest.TestCase):
         self.assertEqual([], offenders, "\n  ".join(offenders))
 
 
+class TheExcludedPathSweepIsNotVacuous(unittest.TestCase):
+    """`test_no_shipped_markdown_cites_an_excluded_path` walks `plugins/**/*.md` and
+    asserts nothing cites a never-propagated path. An empty walk asserts nothing."""
+
+    def test_plugin_markdown_is_actually_being_scanned(self):
+        found = list((REPO_ROOT / "plugins").rglob("*.md"))
+        self.assertGreater(
+            len(found), 20,
+            "only %d plugin .md files found; the excluded-path sweep is vacuous" % len(found),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

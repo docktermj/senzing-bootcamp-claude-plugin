@@ -233,5 +233,16 @@ class InstallDocsCoverEverySupportedPlatform(unittest.TestCase):
                 self.assertNotIn("||", line, "bash chaining in a PowerShell command")
 
 
+class TheProseSweepIsNotVacuous(unittest.TestCase):
+    """`prose_files()` is skills + commands. If either half stops matching, the path
+    checks pass over a smaller corpus and report clean."""
+
+    def test_both_halves_contribute(self):
+        found = prose_files()
+        self.assertGreater(len(found), 20, "corpus shrank to %d files" % len(found))
+        self.assertTrue(any("skills" in p.parts for p in found), "no skill .md found")
+        self.assertTrue(any("commands" in p.parts for p in found), "no command .md found")
+
+
 if __name__ == "__main__":
     unittest.main()
