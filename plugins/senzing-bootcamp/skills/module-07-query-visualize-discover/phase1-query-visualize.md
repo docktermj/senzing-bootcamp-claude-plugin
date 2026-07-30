@@ -458,10 +458,14 @@ fabricate to fill a field). The generator now reports every character it had to 
 and the first affected passage on stderr, so a slip is visible rather than silent — but it reports
 the loss, it cannot undo it: the characters are gone from that PDF.
 
-Then render the PDF:
+Then render the PDF with the bundled generator. ⛔ **It ships inside the plugin, not in the
+bootcamp project** — resolve it the same way every other bundled script is resolved, and never as a
+bare `scripts/…` path, which resolves against the project working directory where no top-level
+`scripts/` exists (INV-050 puts the project's own utilities under `src/scripts/`):
 
 ```bash
-python3 scripts/generate_discoveries_pdf.py
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_discoveries_pdf.py"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_discoveries_pdf.py
 ```
 
 That script is the discoveries **sibling** of the recap generator — do not point

@@ -10,11 +10,21 @@ and starting the Bootcamp.
 For the desktop application instead, see
 [Using Claude Desktop](../README.md#using-claude-desktop).
 
-1. To install the Claude Code CLI on macOS or Linux:
+1. To install the Claude Code CLI on macOS, Linux, or WSL:
 
     ```console
     curl -fsSL https://claude.ai/install.sh | bash
     ```
+
+1. To install the Claude Code CLI on Windows, in PowerShell:
+
+    ```console
+    irm https://claude.ai/install.ps1 | iex
+    ```
+
+    (Windows is fully supported. If you would rather not use a terminal at all,
+    [Using Claude Desktop](../README.md#using-claude-desktop) is the graphical route and
+    works on Windows too.)
 
 1. Install Senzing Bootcamp Claude Plugin.
 

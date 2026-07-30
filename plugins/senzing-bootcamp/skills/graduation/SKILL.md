@@ -624,8 +624,15 @@ does not exist; on a copy failure, log and continue):
 | `src/load/**` | `production/src/load/` | Loading code |
 | `src/query/**` | `production/src/query/` | Query/discovery code |
 | `src/utils/**` | `production/src/utils/` | Shared helpers |
-| `data/senzing-ready/**` | `production/data/` | Senzing-ready data |
+| `data/senzing-ready/**` | `production/data/senzing-ready/` | Senzing-ready data |
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
+
+⛔ **Every destination above keeps the source's path relative to the project root, and
+`data/senzing-ready/` in particular.** The code in `src/load/**` is copied **verbatim** and reads its
+input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phaseA-build-loading.md`
+step "Mapped sources"), so flattening the data to `production/data/` hands the bootcamper a project
+whose loader points at a directory that does not exist. Copy the tree, do not rewrite the code: the
+loader is theirs, and a path edited by graduation is a change they never saw made.
 
 Create `production/database/.gitkeep` as an empty placeholder (never copy the
 eval database itself).
@@ -633,6 +640,14 @@ eval database itself).
 **Exclude (never copy):** `config/bootcamp_progress.json`,
 `config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `data/samples/`,
 `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+
+⛔ **`data/raw/` is excluded, so a CORD fast-pathed source's input is not carried over.** A
+fast-pathed source loads straight from `data/raw/` with no mapping (INV-040/INV-041), so its loader
+arrives in `production/` with no input file — deliberately, since raw source data is the
+bootcamper's to place, not graduation's to copy. Name each such source in the Step 5 graduation
+report's **files-excluded** table and in `production/README.md` → Configuration, saying where its
+input has to be supplied. An excluded input the handover never mentions is indistinguishable from a
+broken project.
 
 Present a short, one-line statement of what was copied, what was excluded, and the directories
 created, then continue directly to Step 3 — generate the production configuration files

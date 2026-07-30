@@ -366,3 +366,82 @@ class ShippedPythonDoesNotPresentARemovedTabAsLive(unittest.TestCase):
             SERVER.read_text(encoding="utf-8"),
             "the docstring is no longer argparse's description — re-point this test",
         )
+
+
+# ---------------------------------------------------------------------------------------
+# The capture helper's RUNTIME strings (deep-dive-audit-2026-07-30b).
+#
+# `viz-reference-help-text-names-removed-tabs` (2026-07-29) fixed the reference server's
+# docstring and extended the guard above to `capture_screenshots.py` — but that guard reads
+# comments and docstrings, and the helper's two user-visible tab lists are neither. They are
+# f-strings interpolated from the `TABS` dict at runtime:
+#
+#     --tabs   "… Known: {','.join(TABS)}."          -> eight ids
+#     error    "… Known ids: {', '.join(TABS)}"      -> eight ids
+#
+# `TABS` legitimately still holds `network` and `merges` so an eight-tab snapshot keeps its
+# slugs, and the comment above it frames them "⛔ RESERVED" — which is exactly why the
+# comment-scanning guard passed. A reader of `--help` sees none of that framing: they see
+# eight capturable tabs for an app INV-155 fixes at six.
+#
+# These run the strings rather than reading the source, because the defect was that the
+# source's framing and the emitted string had come apart.
+# ---------------------------------------------------------------------------------------
+
+
+def _capture_module():
+    spec = importlib.util.spec_from_file_location("_capture_probe", CAPTURE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+class CaptureHelperRuntimeStringsNameTheLiveSix(unittest.TestCase):
+    def setUp(self):
+        self.mod = _capture_module()
+
+    def test_reserved_ids_are_still_accepted(self):
+        """Old snapshots must keep their slugs — the fix is about wording, not behaviour."""
+        self.assertEqual(["network"], self.mod.resolve_tabs("network"))
+        self.assertEqual(("network", "merges"), self.mod.RESERVED_TABS)
+
+    def test_help_text_lists_only_the_live_six(self):
+        import subprocess
+
+        out = subprocess.run(
+            [sys.executable, str(CAPTURE), "--help"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        self.assertIn("graph,stats,matchkeys,features,overlap,probe", out)
+        for retired in self.mod.RESERVED_TABS:
+            self.assertNotRegex(
+                out,
+                rf"(?<![a-z]){retired}(?![a-z])",
+                f"`--help` presents the removed tab id {retired!r} as available "
+                "(INV-155 fixes the set at six)",
+            )
+
+    def test_unknown_id_error_lists_only_the_live_six(self):
+        with self.assertRaises(ValueError) as caught:
+            self.mod.resolve_tabs("bogus")
+        message = str(caught.exception)
+        for retired in self.mod.RESERVED_TABS:
+            self.assertNotIn(
+                retired,
+                message,
+                f"the unknown-tab error offers {retired!r} as a valid id",
+            )
+        for live in self.mod.DEFAULT_TABS:
+            self.assertIn(live, message)
+
+    def test_a_reserved_id_is_reported_as_retired(self):
+        """Accepting it silently is how a stale list stays believed."""
+        import io
+        import contextlib
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            self.mod.resolve_tabs("merges")
+        self.assertIn("no longer serves", err.getvalue())

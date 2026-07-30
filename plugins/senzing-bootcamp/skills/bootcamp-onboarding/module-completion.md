@@ -125,7 +125,11 @@ boundary), append it again before continuing.
 In the same read, confirm this module's **End-of-Module Summary** carries all three labeled blocks
 (`**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**`). If any is absent, add it
 now, from what this module actually did — the Step 3 epilog you just showed the bootcamper is the
-same content, so copy it rather than composing something new. This is the cheapest place to catch it:
+same content, so copy it rather than composing something new. (Module 0 is the one module that runs
+this step without Step 3 — it is exempt from the bootcamper-facing summary, INV-078/INV-092 — so
+there is no epilog to copy and the three blocks are composed here from what the primer covered.
+"(no files — conceptual primer)" is the honest **Files produced** answer for it.) This is the
+cheapest place to catch it:
 the module's own work is still in context, whereas graduation has to reconstruct it from artifacts
 weeks of session-time later. Never invent a file that was not produced; write
 "(no files — {reason})" when there genuinely were none.

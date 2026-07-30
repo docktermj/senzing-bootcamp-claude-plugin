@@ -100,6 +100,13 @@ TABS = {
 # data is absent simply renders its empty state; the caller keeps what is useful.
 DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
 
+# The RESERVED ids, split out from TABS so no user-visible string can enumerate them as
+# live. `TABS` still accepts them (an old eight-tab snapshot must keep its slugs), but
+# `--help` and the unknown-id error name the live six only — those strings are built at
+# runtime and carry none of the framing the comment above TABS does, so a reader of
+# `--help` was being shown eight capturable tabs for a six-tab app (INV-155).
+RESERVED_TABS = tuple(t for t in TABS if t not in DEFAULT_TABS)
+
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
 _CHROME_VIRTUAL_TIME_MS = 15000
@@ -493,7 +500,16 @@ def resolve_tabs(spec: str) -> list:
             unknown.append(raw)
     if unknown:
         raise ValueError(
-            f"unknown tab id(s): {', '.join(unknown)}. Known ids: {', '.join(TABS)}"
+            f"unknown tab id(s): {', '.join(unknown)}. Tab ids: {', '.join(DEFAULT_TABS)}"
+        )
+    retired = [t for t in wanted if t in RESERVED_TABS]
+    if retired:
+        # Accepted, so an old eight-tab snapshot still captures under its own slugs —
+        # but say so, or a caller who read a stale list never learns the tab is gone.
+        sys.stderr.write(
+            "note: %s names a tab the current app no longer serves; it is kept only for "
+            "snapshots saved before the tab set was fixed at six. A current app will "
+            "report it as not present.\n" % ", ".join(retired)
         )
     return wanted
 
@@ -564,8 +580,8 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--tabs",
         default="",
-        help=f"Comma-separated tab ids (default: {','.join(DEFAULT_TABS)}). "
-        f"Known: {','.join(TABS)}.",
+        help=f"Comma-separated tab ids (default, and the app's full tab set: "
+        f"{','.join(DEFAULT_TABS)}).",
     )
     ap.add_argument(
         "--query",
