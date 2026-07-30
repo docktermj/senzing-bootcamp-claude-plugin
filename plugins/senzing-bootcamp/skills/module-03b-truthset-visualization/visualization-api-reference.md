@@ -733,9 +733,16 @@ Live `/api/*` responses served as `application/json` are **exempt** — they are
 surface.
 
 *Reference implementation (Python):* `senzing_viz_server.py` provides `_script_json()` for case 1 and
-`_esc_html()` for case 2. Those are the names in the bundled reference, **not** the requirement —
-implement the equivalent for your language (INV-090). A server that skips this ships a stored-XSS
-vector in a shared keepsake, which is why it is a ⛔ and not a nicety (INV-106).
+`_esc_html()` for case 2 — the latter escapes `&`, `<`, `>` **and both quote characters**, so one
+helper is safe in text and attribute position alike. Those are the names in the bundled reference,
+**not** the requirement — implement the equivalent for your language (INV-090). ⛔ **Whatever you
+implement, cover the quotes.** Until 2026-07-30 the reference escaped only the three, matching case 2's
+text half while this very paragraph promised the attribute half: every call site happened to be a text
+node, so nothing rendered wrong, and an implementer modelling the helper rather than the rule would
+have inherited an attribute-position hole with no symptom to find it by (the INV-164 pattern — a
+divergence between the reference and the written rule reaches generated code). A server that skips
+this ships a stored-XSS vector in a shared keepsake, which is why it is a ⛔ and not a nicety
+(INV-106).
 
 ### Offline rendering (required)
 

@@ -1453,11 +1453,28 @@ def build_model(settings, patterns):
 
 
 def _esc_html(s):
+    """Escape a data-sourced string for HTML **text or an attribute value** (INV-106).
+
+    Quotes are escaped as well as ``& < >``, so one helper is safe in both contexts. It
+    previously escaped only the three, which is correct for a text node and unsafe inside
+    ``attr="…"`` — a value containing a double quote closes the attribute early and the
+    remainder parses as markup. Every call site was a text node, so nothing was broken;
+    the hazard was that INV-106 and the guidance in
+    ``module-05-data-quality-mapping/phase1-quality-assessment.md`` both name the attribute
+    context, so the next caller could reasonably have reached for this and been wrong. A
+    footgun with no live victim is still a footgun (found by the 2026-07-30 sweep).
+
+    Escaping quotes costs nothing in a text node: ``&quot;`` and ``&#39;`` render as
+    ``"`` and ``'``. For a value going inside an inline ``<script>`` block use
+    ``_script_json`` instead — HTML escaping is the wrong tool there.
+    """
     return (
         str("" if s is None else s)
         .replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#39;")
     )
 
 

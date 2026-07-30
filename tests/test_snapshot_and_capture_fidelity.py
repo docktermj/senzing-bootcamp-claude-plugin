@@ -179,3 +179,71 @@ class AnimatedTabsGetALongerSettleBudget(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EscapingIsSafeInBothContextsTheContractNames(unittest.TestCase):
+    """`_esc_html` covers attribute position, which the contract always promised.
+
+    The visualization contract's "Two contexts, two rules" has said "Escape `&`, `<` and `>`
+    (and quotes in attribute position)" for as long as INV-106 has existed. The reference
+    helper it points implementers at escaped only the three. Every call site was a text
+    node, so nothing rendered wrong — but the contract promised the attribute half and the
+    reference did not deliver it, which is the INV-164 pattern: a divergence between the
+    written rule and the reference reaches generated code, in a language whose author never
+    reads the Python.
+
+    Found by the 2026-07-30 sweep. Pinned in both directions: the helper escapes quotes, and
+    a value carrying one cannot close an attribute it is placed in.
+    """
+
+    HOSTILE = 'Acme" onmouseover="alert(1)'
+
+    def test_esc_html_escapes_both_quote_characters(self):
+        out = VIZ_MOD._esc_html("""double " and single ' quote""")
+        self.assertNotIn('"', out, "double quote left raw — unsafe in attribute position")
+        self.assertNotIn("'", out, "single quote left raw — unsafe in a single-quoted attribute")
+        self.assertIn("&quot;", out)
+        self.assertIn("&#39;", out)
+
+    def test_a_hostile_value_cannot_break_out_of_an_attribute(self):
+        """Parsed, not pattern-matched: the payload SHOULD survive as inert data.
+
+        A first version of this test stripped `&quot;` and then asserted the payload was
+        absent — which fails on correct output, because `onmouseover=` is legitimately
+        present as *text inside* the attribute value. The property is not "the dangerous
+        string is gone", it is "no second attribute was created". Only a parser can tell
+        those apart.
+        """
+        from html.parser import HTMLParser
+
+        seen = []
+
+        class Collect(HTMLParser):
+            def handle_starttag(self, tag, attrs):
+                seen.append((tag, dict(attrs)))
+
+        markup = '<div title="%s">x</div>' % VIZ_MOD._esc_html(self.HOSTILE)
+        Collect().feed(markup)
+        self.assertEqual(1, len(seen), "escaping produced more than one tag: %s" % markup)
+        tag, attrs = seen[0]
+        self.assertEqual(["title"], list(attrs), "a second attribute was injected: %s" % attrs)
+        # The payload survives, inert, as the attribute's value — that is the correct outcome.
+        self.assertEqual(self.HOSTILE, attrs["title"])
+
+    def test_the_three_original_characters_are_still_escaped(self):
+        out = VIZ_MOD._esc_html("<b>a & b</b>")
+        for raw in ("<", ">", "&b"):
+            self.assertNotIn(raw, out.replace("&amp;", "").replace("&lt;", "").replace("&gt;", ""))
+
+    def test_text_nodes_are_unharmed_by_quote_escaping(self):
+        """`&quot;`/`&#39;` render as the quote characters, so no visible change."""
+        import html as _html
+        for value in ('He said "hi"', "it's fine", "plain"):
+            self.assertEqual(value, _html.unescape(VIZ_MOD._esc_html(value)))
+
+    def test_the_contract_states_the_quote_requirement(self):
+        text = CONTRACT.read_text(encoding="utf-8") if hasattr(CONTRACT, "read_text") \
+            else open(CONTRACT, encoding="utf-8").read()
+        flat = re.sub(r"\s+", " ", text)
+        self.assertIn("quotes in attribute position", flat)
+        self.assertIn("cover the quotes", flat)

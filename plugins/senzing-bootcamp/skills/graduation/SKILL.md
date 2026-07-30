@@ -152,7 +152,7 @@ Gather context before any step. Do this silently.
    answered: SDK setup says so in its own words — *"a different key name is the same failure as no
    key at all"*. Until 2026-07-29 this step read `language`, `database` and `data_sources`, which
    nothing has ever written, so every consumer below silently got nothing.
-1a. **What the Module 1 answers are for (INV-097).** `integration_targets` and
+   **1a — what the Module 1 answers are for (INV-097).** `integration_targets` and
    `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
    asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
    going to run. Graduation is the only place they can still change anything, because the

@@ -83,6 +83,29 @@ except ImportError as exc:  # pragma: no cover - a broken install, not a data ca
     )
     raise SystemExit(2)
 
+# Inlined fallback palette, in ONE named place so it is both testable and unduplicated.
+# It must stay equal to the values `brand_tokens` derives (INV-107's property, which names
+# only `senzing_viz_server.py` and `generate_recap_pdf.py`; this generator has the same
+# fallback-drift surface and `tests/test_brand_sync.py` now asserts it here too). It was
+# previously written out twice, once per `except` branch — two copies of the same literals
+# is the drift surface, not a safeguard.
+_FALLBACK_RGB = {
+    "EMBER": (245, 120, 38),
+    "DARK_INK": (24, 22, 15),
+    "BODY_INK": (74, 70, 64),
+    "WARM_LINE": (229, 223, 211),
+}
+
+
+def _use_fallback_palette():
+    return (
+        _FALLBACK_RGB["EMBER"],
+        _FALLBACK_RGB["DARK_INK"],
+        _FALLBACK_RGB["BODY_INK"],
+        _FALLBACK_RGB["WARM_LINE"],
+    )
+
+
 try:
     import brand_tokens  # type: ignore
 
@@ -91,26 +114,20 @@ try:
     BODY_INK = brand_tokens.hex_to_rgb(brand_tokens.BODY_INK)
     WARM_LINE = brand_tokens.hex_to_rgb(brand_tokens.WARM_LINE)
 except ModuleNotFoundError:  # pragma: no cover - falls back to inlined brand values
-    # INV-111: a degraded path is never inferred from silence. The inlined values are
-    # kept equal to the tokens (tests/test_brand_sync.py asserts it), so nothing
-    # renders wrong — but say which case occurred, because a project-local copy of
-    # this script without brand_tokens.py beside it is easy to create by accident.
+    # INV-111: a degraded path is never inferred from silence. The two branches stay
+    # distinct because they are different failures — say which occurred, since a
+    # project-local copy of this script without brand_tokens.py beside it is easy to
+    # create by accident, and "present but unusable" points somewhere else entirely.
     sys.stderr.write(
         f"brand_tokens.py not importable from {Path(__file__).resolve().parent} "
         "(copy it next to this script); using the inlined brand palette.\n"
     )
-    EMBER = (245, 120, 38)
-    DARK_INK = (24, 22, 15)
-    BODY_INK = (74, 70, 64)
-    WARM_LINE = (229, 223, 211)
+    EMBER, DARK_INK, BODY_INK, WARM_LINE = _use_fallback_palette()
 except Exception as exc:  # pragma: no cover - present but unusable
     sys.stderr.write(
         f"brand_tokens.py present but unusable ({exc}); using the inlined brand palette.\n"
     )
-    EMBER = (245, 120, 38)
-    DARK_INK = (24, 22, 15)
-    BODY_INK = (74, 70, 64)
-    WARM_LINE = (229, 223, 211)
+    EMBER, DARK_INK, BODY_INK, WARM_LINE = _use_fallback_palette()
 
 # Header-row fill for rendered tables. Derived from the warm line color so the
 # grid stays inside the brand palette rather than introducing a new tone.
