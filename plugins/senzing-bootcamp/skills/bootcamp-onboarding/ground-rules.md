@@ -97,7 +97,7 @@ steering files.)
 - **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
   path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
   the search results already carry rather than relying on `content` from a `repo` + `file_path`
-  retrieval: verified 2026-07-28 against server 1.32.1, that retrieval currently returns an
+  retrieval: verified 2026-07-30 against server 1.32.2, that retrieval currently returns an
   **empty `content`** while reporting a correct non-zero `content_length` and `truncated: false`.
   ⛔ **An empty `content` is never evidence that the file is empty.** If `content` is empty while
   `content_length` is non-zero, the retrieval **failed** — regardless of what `truncated` says —
@@ -125,10 +125,14 @@ steering files.)
   blank value as a real result: say "no value returned for X" so the failure is visible. Note
   `response_schemas` documents the **top-level** shape per method; for deeper nesting (anything
   under `MATCH_INFO`), the raw-response dump is the authority.
-- **Parameter shapes, for the bootcamper's binding.** The `flags` and `response_schemas` topics
-  cover what a method *returns*, not what it *takes* — but **`get_sdk_reference` does answer
-  parameter shapes, via `topic='methods'`**, and that is the first place to look before **calling**
-  an SDK method:
+- **Parameter shapes, for the bootcamper's binding.** **`get_sdk_reference` answers parameter
+  shapes whenever `filter` names a method — under *any* topic**, not only `topic='methods'`. A
+  `flags` or `response_schemas` response you already hold therefore carries the signature too,
+  in a `method_signatures` block, so it needs no second call. (Verified on MCP server 1.32.2,
+  2026-07-30: `topic='flags', filter='find_network_by_entity_id'` returned it alongside the flag
+  data, and `topic='response_schemas', filter='get_version'` returned it alongside an *empty*
+  `data` array — a topic with no data of its own still carries the signature.) When you hold no
+  such response, ask for it directly before **calling** an SDK method:
 
   ```text
   get_sdk_reference(topic='methods', filter='find_network_by_entity_id')

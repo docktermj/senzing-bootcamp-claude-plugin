@@ -193,3 +193,39 @@ spec clears the twelve that are already verified; it does not try to automate th
   register-then-preview rule this spec preserves),
   `specs/sdk-reference-carries-signatures-under-every-topic.md` (the same sweep's
   `contradicted` finding).
+
+## Deviations from this spec, and why (2026-07-30)
+
+- **A blanket date bump restamped a provenance the sweep never re-verified, and a test
+  caught it.** `visualization-api-reference.md:289` carries **two** provenances in one
+  sentence: the MCP stamp *and* "corroborated by a dump on SDK 4.3.3, 2026-07-28". The
+  line-targeted edit advanced both dates, so the line briefly claimed a live-engine dump
+  performed on 2026-07-30 — a check that never happened, and precisely what this spec's
+  own criterion forbids. `tests/test_partial_row_and_schema_coverage.py::TheDumpConfirmedLinkKeysAreRecorded`
+  failed on it, the dump date was restored to 2026-07-28, and the remaining eleven edited
+  lines were audited for the same shape (none carried a second provenance). Recorded
+  because the lesson generalises: **a stamp refresh must target the MCP provenance
+  specifically, not every date on the line** — some lines cite a live-engine observation
+  the sweep structurally cannot re-run.
+- **The tests pin exact stamp values, so every future refresh will break them.** Seven
+  assertions hard-code a version and date (e.g. `r"(?i)Verified against MCP server
+  1\.32\.1, 2026-07-28"`); they were updated to 1.32.2 / 2026-07-30 as the spec asks. That
+  is the minimal faithful change, but it means each sweep that refreshes a stamp turns the
+  suite red until the matching assertion is edited by hand. Asserting the *shape* of a
+  provenance stamp instead would satisfy INV-080 and survive refreshes — deliberately not
+  done here, because it is a test-design change this spec did not ask for.
+- **Twelve stamps refreshed, four deliberately left at 1.32.1** (`module-02-sdk-setup/SKILL.md`
+  385 and 871, `module-03-system-verification/phase1-verification.md` 132,
+  `module-05-data-quality-mapping/phase2-data-mapping.md` 344), exactly as the spec
+  requires: none of the four was re-asked, and advancing a stamp without re-verifying its
+  claim asserts a check that never happened.
+
+## Invariants introduced
+
+- `INV-191` — A dated provenance stamp MUST NOT be advanced for a claim that was not
+  re-verified in that pass, and a refresh MUST target the specific provenance it
+  re-checked rather than every date in the sentence; a claim that cannot be re-checked in
+  the current environment keeps its stamp and is recorded as skipped (INV-163), never
+  closed by restamping. (Recorded in `specs/INVARIANTS.md` 2026-07-30, wording confirmed
+  with the maintainer. Established by this spec's implementation, where a blanket date
+  bump restamped a live-engine dump the sweep never ran.)

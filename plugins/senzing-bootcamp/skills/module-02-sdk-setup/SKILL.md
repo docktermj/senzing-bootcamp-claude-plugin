@@ -707,7 +707,7 @@ initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong).
 **What `SENZ2027` is actually telling you: the support data is not where the configuration points.**
 Call `explain_error_code('SENZ2027')` first as always (INV-080) — it returns
 `EAS_ERR_PLUGIN_INIT: Plugin initialization error`. The actionable detail is in the Senzing FAQ
-(`search_docs`, verified 2026-07-28 on MCP server 1.32.1):
+(`search_docs`, verified 2026-07-30 on MCP server 1.32.2):
 
 > **I get SENZ2027 Plugin initialization error GNR data files failed to load** — You are missing the
 > senzingsdk-runtime data directory. The libraries are present but the GNR data files (in
@@ -786,7 +786,7 @@ never arises.
 
 1. Call `sdk_guide(topic='configure', language='<chosen_language>')`.
 2. In the response's `alternatives`, take the **`init_default_config`** entry — that is the seeding
-   snippet. Verified on server 1.32.1 (2026-07-28), its sequence is: read the default config id →
+   snippet. Verified on server 1.32.2 (2026-07-30), its sequence is: read the default config id →
    if none, `create_config_from_template()` → `set_default_config(...)`, which registers the new
    config and makes it default.
 3. Run it, then proceed to register data sources with the primary snippet, which now has a config

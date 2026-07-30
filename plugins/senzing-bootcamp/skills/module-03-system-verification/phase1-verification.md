@@ -134,7 +134,7 @@ INV-080), create an engine, and release it.
 3. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
-   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.1, 2026-07-28.
+   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 

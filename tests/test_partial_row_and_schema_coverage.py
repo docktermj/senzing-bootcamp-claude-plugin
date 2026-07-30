@@ -145,7 +145,7 @@ class NoUnverifiedFieldNameIsShipped(unittest.TestCase):
         text = flat(CONTRACT)
         self.assertIn("MIN_ENTITY_ID", text)
         self.assertRegex(text, r"(?i)now (documented by|MCP-confirmed)")
-        self.assertRegex(text, r"1\.32\.1, 2026-07-29")
+        self.assertRegex(text, r"1\.32\.2, 2026-07-30")
         self.assertNotRegex(
             text,
             r"(?i)(still )?not MCP-confirmable",
@@ -203,7 +203,7 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
         """
         text = flat(CONTRACT)
         self.assertRegex(text, r"dump on SDK 4\.3\.3, 2026-07-28|dump-confirmed on SDK 4\.3\.3")
-        self.assertRegex(text, r"MCP server 1\.32\.1, 2026-07-29")
+        self.assertRegex(text, r"MCP server 1\.32\.2, 2026-07-30")
 
     def test_the_keys_are_no_longer_marked_unconfirmable(self):
         """The negative claim went stale when the server started documenting them.

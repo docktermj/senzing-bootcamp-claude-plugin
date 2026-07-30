@@ -175,7 +175,7 @@ class ValidationRoutingNamesItsTopic(unittest.TestCase):
         """INV-080: the tool's own words, dated — not the plugin's assertion."""
         text = flat(PHASE_D)
         self.assertRegex(text, r"(?i)NOT part of the Senzing SDK and do \*\*NOT\*\* exist out of the box|NOT part of the Senzing SDK")
-        self.assertRegex(text, r"(?i)verified on MCP server 1\.32\.1, 2026-07-28")
+        self.assertRegex(text, r"(?i)verified on MCP server 1\.32\.2, 2026-07-30")
 
     def test_the_usable_subset_is_named(self):
         """"Wrong topic" must not read as "nothing here helps"."""

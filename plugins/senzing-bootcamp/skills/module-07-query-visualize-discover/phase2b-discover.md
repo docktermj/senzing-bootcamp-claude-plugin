@@ -47,7 +47,7 @@ connections between entities using `find_network` and `find_path`.
    under **`MIN_ENTITY_ID` / `MAX_ENTITY_ID`** (normalized low-to-high). Those keys are recorded in
    `../module-03b-truthset-visualization/visualization-api-reference.md` → "MCP-confirmed response
    paths". They were dump-only when first recorded; `response_schemas` now documents them itself
-   (re-verified on MCP server 1.32.1, 2026-07-29), so they are MCP-confirmed names rather than an
+   (re-verified on MCP server 1.32.2, 2026-07-30), so they are MCP-confirmed names rather than an
    unverified caution. **Run the lookup and dump anyway** — its coverage grows, this entry is proof of
    that, and the dumped element remains the authority for what your installation returns (INV-080,
    INV-149).
@@ -64,12 +64,14 @@ connections between entities using `find_network` and `find_path`.
    — not the data.** A half-populated row reads as a real result precisely because part of it
    worked, which makes it more deceptive than an empty one (INV-115).
 
-   ⛔ **Neither of those topics tells you the ARGUMENT types — so ask the topic that does, before
-   writing the call.** `topic='flags'` covers flags and `topic='response_schemas'` covers the
-   response; the parameter shape comes from
-   `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')`, which returns the
-   binding's own signature. Read the one for the bootcamper's language: cross-language
-   documentation is **not** authoritative for the shape you pass, and it is wrong for Python here.
+   ⛔ **Confirm the ARGUMENT types before writing the call — and note you may already have
+   them.** `get_sdk_reference` returns a `method_signatures` block whenever `filter` names a
+   method, under **any** topic, so the signature is already in the `flags` or
+   `response_schemas` response you just read (verified on MCP server 1.32.2, 2026-07-30).
+   Where you hold neither, ask directly:
+   `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')`. Read the one for
+   the bootcamper's language: cross-language documentation is **not** authoritative for the
+   shape you pass, and it is wrong for Python here.
 
    For **Python**, both graph methods take native collections, not an entity-IDs JSON document:
 

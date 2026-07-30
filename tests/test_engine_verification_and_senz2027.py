@@ -91,7 +91,7 @@ class TheSenz2027DiagnosticIsNamed(unittest.TestCase):
         )
 
     def test_the_quote_carries_its_provenance(self):
-        self.assertRegex(flat(MODULE_02), r"(?i)verified 2026-07-28 on MCP server 1\.32\.1")
+        self.assertRegex(flat(MODULE_02), r"(?i)verified 2026-07-30 on MCP server 1\.32\.2")
 
     def test_explain_error_code_is_still_first(self):
         self.assertRegex(flat(MODULE_02), r"explain_error_code\('SENZ2027'\)")

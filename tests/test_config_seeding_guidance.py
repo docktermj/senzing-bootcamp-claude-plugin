@@ -124,7 +124,7 @@ class TheSeedingCodeComesFromMcp(unittest.TestCase):
         text = flat(MODULE_02)
         self.assertIn("create_config_from_template()", text)
         self.assertIn("set_default_config", text)
-        self.assertRegex(text, r"(?i)verified on server 1\.32\.1")
+        self.assertRegex(text, r"(?i)verified on server 1\.32\.2")
 
 
 class TheSeedIsVerifiedNotAssumed(unittest.TestCase):

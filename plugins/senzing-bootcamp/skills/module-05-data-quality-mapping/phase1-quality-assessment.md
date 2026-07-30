@@ -121,9 +121,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    SENZ2207|Data source code [<CODE>] does not exist
    ```
 
-   The prerequisite is **not** documented on the method — verified 2026-07-28 on MCP server 1.32.1,
-   `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns both overloads for every
-   binding with no mention of it. So the order is: register the source code(s) — taking the
+   The prerequisite is **not** documented on the method — verified 2026-07-30 on MCP server 1.32.2,
+   `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns one signature per
+   binding — `get_record_preview(record_definition, flags)` in Python — with no mention of it.
+   (The same call also returns `get_record`, which the filter matches too; that is a second
+   *method*, not a second overload.) So the order is: register the source code(s) — taking the
    registration code from `sdk_guide(topic='configure')`, never hand-written (INV-080) — then preview.
    Registration is idempotent and the loading phase needs it anyway, so doing it here costs nothing.
 
@@ -251,7 +253,7 @@ category='data_mapping')` answers it directly — read the feature's description
 | `NAME` (organization) — "Organization legal or trade name… `NAME_ORG`" | ORGANIZATION |
 | `ADDRESS`, `PHONE`, `EMAIL`, identifiers | either — do not exclude these |
 
-(Verified against MCP server 1.32.1, 2026-07-28. Re-read it for the source you are assessing rather
+(Verified against MCP server 1.32.2, 2026-07-30. Re-read it for the source you are assessing rather
 than trusting this table — it is an illustration of *how the specification marks type*, not a
 substitute for asking, and it is deliberately partial: features not listed here still have to be
 checked the same way, INV-080.)

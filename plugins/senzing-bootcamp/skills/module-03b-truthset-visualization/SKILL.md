@@ -78,7 +78,7 @@ available with `dataset='list'` and read `available_datasets`. Only when that li
 `truthset` entry does this module (Step 1) fall back to a sanctioned external source for the demo
 TruthSet DATA.
 
-> Verified on MCP server 1.32.1, 2026-07-29: `truthset` is listed with `available: true` alongside the
+> Verified on MCP server 1.32.2, 2026-07-30: `truthset` is listed with `available: true` alongside the
 > three CORD collections, so the fallback is exceptional, not routine. Re-verify rather than trusting
 > this note (INV-080). Full classification and the degradation path: `phase1-visualization.md`, 1.1.
 

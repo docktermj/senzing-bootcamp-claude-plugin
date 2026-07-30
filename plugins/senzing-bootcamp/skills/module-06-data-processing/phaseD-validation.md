@@ -10,7 +10,7 @@ single-pass export statistics this phase needs, `topic='export'` for extraction 
 (`sz_dm_entity`, `sz_dm_record`, `sz_dm_relation`, `sz_dm_report`) that the bootcamp never builds —
 the tool says so itself, in that response's own schema notes: *"These tables are NOT part of the
 Senzing SDK and do NOT exist out of the box. They must be created and maintained by a separate data
-mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.1, 2026-07-28).
+mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.2, 2026-07-30).
 It is the production-reporting answer, not the evaluation one, so asking for it here returns
 well-formed SQL that cannot run against a single-database SQLite workspace. If you are already
 looking at that response, the usable subset is its `Validation:` patterns, which run against

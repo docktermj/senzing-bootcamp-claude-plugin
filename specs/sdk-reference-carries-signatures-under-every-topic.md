@@ -167,3 +167,10 @@ flag-related guidance; out of scope here to keep this spec to one fix.
   INV-132; this corrects the premise clause that correction left standing),
   `specs/confirm-json-data-and-network-link-response-paths.md`,
   `specs/network-link-fields-and-uncovered-response-schemas.md`.
+
+## Invariants introduced
+
+- None. INV-132's premise clause was corrected **in place** — a clarification of fact that
+  leaves its MUST unchanged, so per `INVARIANTS.md`'s own rules it needs no new ID and the
+  existing one is neither renumbered nor removed. The correction note records the date,
+  the server version, and what the invariant previously asserted.

@@ -58,9 +58,15 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
     def test_parameter_shape_rule_exists(self):
         self.assertIn("Parameter shapes, for the bootcamper's binding", self.text)
 
-    def test_it_says_the_existing_topics_do_not_cover_inputs(self):
+    def test_it_says_every_topic_carries_the_signature_when_filtered_by_a_method(self):
+        """The 2026-07-30 correction: this pinned the opposite until server 1.32.2
+        disproved it. `flags` and `response_schemas` both return a `method_signatures`
+        block when `filter` names a method, so telling the reader those topics cover
+        only what a method *returns* teaches them to distrust data they can see."""
         squashed = squash(self.text)
-        self.assertIn("not what it takes", squashed)
+        self.assertIn("whenever `filter` names a method", squashed)
+        self.assertIn("method_signatures", squashed)
+        self.assertNotIn("not what it takes", squashed)
 
     def test_the_methods_topic_is_named_as_the_route_to_parameter_shapes(self):
         """The correction: MCP answers this, so the guide must be sent to MCP."""
@@ -157,9 +163,14 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
     def setUp(self):
         self.text = read(PHASE_2B)
 
-    def test_step_4d_states_the_topics_do_not_cover_arguments(self):
+    def test_step_4d_says_the_signature_is_already_in_the_response_it_just_read(self):
+        """Same 2026-07-30 correction as ground-rules: this file carried the same false
+        premise, and here it is sharper — step 4d has *just* told the reader to call
+        `topic='flags'` and `topic='response_schemas'`, so the signature is literally in
+        the response in front of them."""
         squashed = squash(self.text)
-        self.assertIn("Neither of those topics tells you the ARGUMENT types", squashed)
+        self.assertIn("whenever `filter` names a method", squashed)
+        self.assertNotIn("Neither of those topics tells you the ARGUMENT types", squashed)
 
     def test_step_4d_routes_to_the_methods_topic_not_to_guesswork(self):
         """Same correction as ground-rules: this file carried the false premise too."""

@@ -286,7 +286,7 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
-> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.1, 2026-07-29 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.2, 2026-07-30 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
 > | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
 >
 > ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
@@ -338,8 +338,8 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > `IS_AMBIGUOUS`.
 >
 > **That list is now MCP-confirmed.** When it was first recorded it was dump-only, so it was carried
-> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.1,
-> 2026-07-29**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
+> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.2,
+> 2026-07-30**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
 > element fields itself — `ENTITY_NETWORK_LINKS[].MIN_ENTITY_ID`, `.MAX_ENTITY_ID`, `.MATCH_KEY`,
 > `.MATCH_LEVEL_CODE`, `.ERRULE_CODE`, `.IS_AMBIGUOUS`, `.IS_DISCLOSED`, plus
 > `ENTITIES[].RESOLVED_ENTITY.*` and `ENTITY_PATHS[].*`. So these are authoritative names, and the

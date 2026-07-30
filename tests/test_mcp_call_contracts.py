@@ -162,10 +162,20 @@ class TestParameterShapeRoutingGoesToMcp(unittest.TestCase):
     def test_invariants_no_longer_claim_mcp_cannot_reach_parameter_shapes(self):
         text = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
         self.assertIn(
-            "The reference DOES reach parameter shapes",
+            "The reference reaches parameter shapes under **any** topic",
             text,
             "INV-132's correction has been reverted; it would again assert that the MCP "
             "reference cannot answer parameter shapes, which the live server disproves.",
+        )
+        self.assertNotIn(
+            "document neither the argument types nor what a flag family selects",
+            text.split("(Corrected in place 2026-07-30")[0],
+            "INV-132 again asserts that `flags` and `response_schemas` document neither "
+            "argument types nor flag-family membership. Both are false: filtered by a "
+            "method, every topic returns a `method_signatures` block, and flag entries "
+            "carry composite_members/depends_on/response_paths (server 1.32.2, "
+            "2026-07-30). The phrase is allowed only inside the correction note that "
+            "quotes what the invariant used to say.",
         )
 
 
