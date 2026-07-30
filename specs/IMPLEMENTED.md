@@ -35,6 +35,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## topical-index-for-the-invariants
+
+- **Implemented:** 2026-07-30
+- **Files changed:** `specs/INVARIANTS.md`, `tests/test_invariants_index.py`, `specs/topical-index-for-the-invariants.md`
+- **MCP re-check:** n/a (no Senzing fact) — this is a navigability change to the ruleset itself. `citations.py verify` was run before and after and stayed clean (192 invariants, every citation and Source resolving).
+- **Summary:** **All nine acceptance criteria hold, every one runtime-verified.** (1) `### Index by subject` sits inside `## Invariants added from implemented specs`, above the append marker — a test asserts the ordering, because an index below the marker would swallow appended invariants. (2)+(3) All **142** development rules (INV-051..192) appear in **exactly one** of 13 groups, and every indexed ID is defined; both directions were computed by script rather than by eye before the edit, and are now asserted by `tests/test_invariants_index.py`. (4) **Additions only**: the ID sequence extracted before and after is identical (192 entries, same order), and `git diff --numstat` is `+38 -1` where the single removed line is the maintenance-rule sentence that was rewritten — `grep` confirms **zero** `- **INV-` lines removed. (5) The guard was **mutation-tested in both directions**: appending an unindexed INV-193 failed `test_no_invariant_is_missing_from_the_index`, and indexing a non-existent INV-777 failed `test_every_indexed_id_is_defined`; both mutations were reverted. (6) "Maintaining this file" step 3 now tells an appender to add the ID to its group **in the same edit** and names the test that fails otherwise — pinned by `test_adding_an_invariant_says_to_update_the_index`. (7) `citations.py verify` clean. (8) Full suite green. (9) Documentation-only; no platform-specific content. INV-001..050 were deliberately left out of the index and a test enforces that: they are bootcamp outcomes (median 15 words, 8 of 50 stating a MUST) already grouped into their own sections, and mixing them in would bury the development rules the index exists to surface. **No deviation from the spec.** **Establishes no invariant** — it adds navigation, not a rule. Full suite: **1147 passed, 3 skipped, 912 subtests**.
+- **Commit:** uncommitted
+
 ## always-pass-language-to-reporting-guide
 
 - **Implemented:** 2026-07-30
