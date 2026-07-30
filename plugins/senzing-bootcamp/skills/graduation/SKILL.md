@@ -131,9 +131,54 @@ bootcamper can, which is why the switch is offered as a question rather than per
 
 Gather context before any step. Do this silently.
 
-1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract `name`, `language`, `path` (Core/Customized; older sessions may store this as `track`), `selected_modules`, `database` (SQLite/PostgreSQL), and `data_sources` if present.
+1. **Read preferences:** load `config/bootcamp_preferences.yaml` and extract, **by these exact key
+   names**:
+
+   | Key | Written by | Notes |
+   |---|---|---|
+   | `name` | Bootcamp preparation (detected, never asked — INV-134) | the certificate name; see pre-check 4 |
+   | `programming_language` | Bootcamp preparation (INV-133) | **not** `language` |
+   | `database_type` | SDK setup Step 7 | `sqlite` or `postgresql`, lowercase; **not** `database` |
+   | `path` | Bootcamp preparation | `core`/`customized`; older sessions may store this as `track` |
+   | `selected_modules` | Bootcamp preparation | drives the journey map (INV-076) |
+   | `integration_targets` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
+   | `deployment_target` / `cloud_provider` | Module 1 Phase 2 Step 10a (INV-097) | absent is normal — see pre-check 1a |
+
+   The data-source registry is **`config/data_sources.yaml`**, its own file (INV-050) — not a
+   preferences key.
+
+   ⛔ **Use the names in that table verbatim.** They are the names the writing modules actually
+   write, and a reader that invents its own is indistinguishable from a bootcamper who never
+   answered: SDK setup says so in its own words — *"a different key name is the same failure as no
+   key at all"*. Until 2026-07-29 this step read `language`, `database` and `data_sources`, which
+   nothing has ever written, so every consumer below silently got nothing.
+1a. **What the Module 1 answers are for (INV-097).** `integration_targets` and
+   `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
+   asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
+   going to run. Graduation is the only place they can still change anything, because the
+   `production/` project **is** the thing being deployed: Step 3 stamps them into the container and
+   environment templates, Step 4 into the README and the migration checklist's Deployment section,
+   Step 5 into the graduation report.
+
+   ⛔ **Never ask for them here.** They are asked once, in Module 1 (INV-006/INV-097), and Module 1
+   may not even have run under a Customized path (INV-076) — so **absent is normal, silent, and
+   changes nothing**: every step below states its no-value behavior, and each simply stays generic.
+   An empty value is the same as absent.
 2. **Read progress:** load `config/bootcamp_progress.json` and extract `modules_completed`.
-3. **Fallback if files are missing:** tell the bootcamper, then ask for the programming language and database type with one 👉 question at a time; use sensible defaults for the rest (path unknown, data sources none).
+3. **Fallback — and distinguish a missing file from a missing key.** They are different failures
+   and only one is the bootcamper's business:
+   - **A file is missing or unparseable** → tell the bootcamper, then ask for the programming
+     language and database type with one 👉 question at a time; use sensible defaults for the rest
+     (path unknown, data sources none).
+   - **A file is present but a key is absent** → do **not** announce it and do **not** ask. An
+     absent `database_type` means SDK setup Step 7 did not record the choice — a **plugin defect**,
+     not a bootcamper outcome — so note it internally so it surfaces in the Step 0 retrospective,
+     exactly as Data collection does for the same key
+     (`../module-04-data-collection/SKILL.md` → the SQLite volume warning), and carry on with the
+     value indeterminate. `integration_targets` and `deployment_target` are the exception: absent is
+     **normal** and silent (see 1a).
+
+   Either way graduation continues — nothing here blocks (INV-048).
 4. **Check the name is certificate-quality (INV-113).** `name` is auto-detected during Bootcamp
    preparation and never asked (INV-134), so it can be absent or unsuitable. **The governing test is
    the whole test:** treat it as **unusable** when it is missing, empty/whitespace, or **clearly not
@@ -595,32 +640,76 @@ automatically. Do not gate this behind a 👉 question (one fewer low-stakes con
 
 ## Step 3: Production configuration files
 
-Generate these in `production/`, parameterized by the language and database from
+Generate these in `production/`, parameterized by `programming_language` and `database_type` from
 pre-checks. Use placeholder values only, never real secrets:
 
 - **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `SENZING_LICENSE_PATH`, `DATABASE_URL`, `LOG_LEVEL` with safe example values and comments.
-- **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per the chosen database.
+- **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per `database_type`.
+
+**Where `deployment_target`/`cloud_provider` is known, say so in both files** (INV-097): a header
+comment naming the intended target — e.g. `# Target: AWS (ECS/Fargate)`, `# Target: Kubernetes`,
+`# Target: on-premises` — and, in `.env.example`, a comment on the values that platform will supply
+differently (a managed-database `DATABASE_URL`, a secret-manager reference instead of a literal).
+⛔ Stay declarative: name the target and stop. Do **not** invent provider-specific resources,
+credentials, ARNs, or account identifiers — placeholder values only, as above, and a wrong
+infrastructure guess in a handed-over project is worse than a generic one. When the value is absent
+the files are exactly as they were before this paragraph.
 - **`.gitignore`:** language-appropriate, always including `.env`, `.env.production`, `*.db`, `*.sqlite`, `__pycache__/`, `node_modules/`, `target/`, `bin/`, `obj/`, `build/`, `dist/`, `*.log`.
 
 ## Step 4: Production README and migration checklist
 
-- **`production/README.md`:** parameterized by language, database, and data sources. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+- **`production/README.md`:** parameterized by `programming_language`, `database_type`, and the data sources from `config/data_sources.yaml`. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
+  - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
+  - **The Deployment section is where `deployment_target`/`cloud_provider` lands** (INV-097): name the stated target in its heading or first item, and make its checkboxes the ones that target actually needs (a cloud target → managed database, secret storage, image registry, network egress to nothing external; Kubernetes → manifests/Helm, resource limits, liveness probes; on-premises → host provisioning, backup schedule). ⛔ Still ⚠️-marked and still not covered in depth by the bootcamp — naming the target makes the list *relevant*, not authoritative, and it must not read as a deployment guide the bootcamp did not give. Absent → the generic six-section list exactly as before.
 
-Author every `production/*.md` deliverable — this README, the migration checklist, and the
-Step 5 `GRADUATION_REPORT.md` — to the same CommonMark house rules applied to the recap in
-Step 1a (MD022/MD031/MD032 blank lines, MD040 fenced-block languages, `**Label:**` colon
-spacing), so the handed-over project reads clean. Best-effort and non-blocking, as everywhere in
-graduation.
+Write every `production/*.md` deliverable — this README, the migration checklist, and the
+Step 5 `GRADUATION_REPORT.md` — as **plain, functional Markdown**, exactly as the bootcamp's own
+docs were written (`../bootcamp-onboarding/ground-rules.md` → "Markdown files"). Do **not**
+hand-format them to the house rules: **Step 5a runs the normalizer over `production/`** and does it
+in code, with a content guard. Structure still matters and is not deferred — the sections listed
+above, the `- [ ]` checkboxes, and the tables are content, not formatting.
 
 ## Step 5: Graduation report
 
 Always generate `production/GRADUATION_REPORT.md`, even if earlier steps had
 errors. Include: completion timestamp, bootcamp path (Core/Customized) and the modules completed,
-language, database type, a files-generated table, a files-excluded table, and
+`programming_language`, `database_type`, a files-generated table, a files-excluded table, and
 next steps (fill in secrets, obtain a production license, work through the
-checklist, configure CI/CD, test with production data). If any step failed, add a
+checklist, configure CI/CD, test with production data). Record the Module 1 answers too when
+present — the intended `deployment_target`/`cloud_provider` and the `integration_targets`
+(INV-097) — so the handover states what the project was aimed at; omit either line when absent.
+If any step failed, add a
 "⚠️ Issues Encountered" section naming what failed and what was skipped.
+
+## Step 5a: Normalize the production Markdown (once, after the files exist)
+
+`production/` now holds its Markdown deliverables, written plain. Make the same single
+best-effort CommonMark pass over them that Step 1a made over `docs/*.md` — INV-060 requires the
+pass over **both** sets, and the `production/` half is why this step exists:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/normalize_docs_markdown.py" --docs-dir production
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/normalize_docs_markdown.py --docs-dir production
+```
+
+It applies the same rules as in Step 1a and globs top-level `production/*.md` only, never
+recursing — so nothing under `production/src/`, `production/config/` or a copied `docs/` subtree is
+touched.
+
+⛔ **Same content guard, same non-blocking contract as Step 1a.** The normalizer fingerprints each
+file's non-whitespace content before and after and **restores the original** if any source line
+would be lost, so a cosmetic pass can never silently shorten a handover document. If it reports a
+file left as written, that is a normalizer bug — say so and continue with the file unformatted;
+never hand-edit prose to make formatting pass. If the script fails or is unavailable, warn, leave
+the content as written, and continue (INV-048).
+
+⛔ **Run it after Step 5, not before.** `production/` does not exist at Step 1a and its Markdown is
+not finished until `GRADUATION_REPORT.md` is written, so an earlier pass would normalize nothing —
+which is precisely how this half of INV-060 went unbuilt from 2026-07-16 to 2026-07-29.
+
+`docs/REVISIT_BOOTCAMP.md` is written later still (Step 6c) and so is covered by **neither** pass;
+Step 6c states its own formatting rule.
 
 ## Step 6: Save the revisit/resume bundle
 
@@ -641,8 +730,12 @@ overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create
 
 ### 6a. Database backup
 
-Back up the resolved repository so it can be restored later. Read `database` (SQLite/PostgreSQL)
-from pre-checks and the connection from `config/engine_config.json`.
+Back up the resolved repository so it can be restored later. Read **`database_type`**
+(`sqlite`/`postgresql`) from pre-checks and the connection from `config/engine_config.json`.
+⛔ When `database_type` is indeterminate, **do not guess a branch** — determine the engine from
+`config/engine_config.json`'s connection string instead (and note the missing key per pre-check 3).
+Picking the wrong branch here means either no backup or `pg_dump` against a SQLite file, and the
+backup is the whole point of the bundle.
 
 - **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
   `cp database/G2C.db backups/revisit/database/G2C.db`).
@@ -664,15 +757,21 @@ Snapshot the resume-critical state into `backups/revisit/state/` (copy each if i
 `config/bootcamp_progress.json`, `config/bootcamp_preferences.yaml`, `config/data_sources.yaml`,
 `config/engine_config.json`, `config/license.json`, and `docs/mapping/`. Then write
 `backups/revisit/RESUME_STATE.json` — a manifest indexing what was saved: the bootcamp path and
-`modules_completed`, the programming language and database type, the business problem and data
+`modules_completed`, `programming_language` and `database_type` (the pre-check key names), the
+business problem and data
 sources, the relative path of each snapshotted file, the database backup path and its restore
 command, the recap PDF (`docs/bootcamp_recap.pdf`), and any visualization snapshots under
 `docs/visualizations/`. Use only project-relative paths.
 
 ### 6c. Return guide
 
-Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017), authored to the same
-CommonMark house rules as the other graduation deliverables (Step 4). Cover:
+Write `docs/REVISIT_BOOTCAMP.md` (Markdown under `docs/`, per INV-017). ⛔ **This is the one
+deliverable you do hand-format** to the house rules (MD022/MD031/MD032 blank lines, MD040 fenced-block
+languages, `**Label:**` colon spacing): it is written *after* both normalization passes — Step 1a's
+over `docs/*.md` and Step 5a's over `production/*.md` — so no pass will reach it. Re-running Step 1a
+here is deliberately **not** the answer: it would re-touch `docs/bootcamp_recap.md`, which the recap
+PDF was already rendered from in Step 1b, leaving the keepsake and its source subtly out of step.
+Cover:
 
 - **Quick start when you return** — a short command list at the very top (re-source the env, restore
   the database, re-init the engine, re-run a query and the visualization).

@@ -126,3 +126,22 @@ Do **not** widen this into "graduation should tailor the production project to t
 target" as a feature. INV-097 requires the values be *read*; the smallest change that makes them
 visibly affect the three deliverables satisfies it. Provider-specific infrastructure generation is
 an Advanced-Topics follow-up (INV-013's parenthetical), not this spec.
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **Implemented in one pass with two sibling specs**, all three landing in `graduation/SKILL.md`:
+  `graduation-prechecks-read-the-keys-that-are-written` (whose corrected Pre-checks table carries
+  these two keys) and `normalize-production-markdown-at-graduation`. One shared test file,
+  `tests/test_graduation_reads_persisted_answers.py`, asserts all three specs' properties — the
+  cheaper alternative to three files re-parsing the same skill.
+- **Criterion count.** This spec carries **six** acceptance criteria. A seventh `- [ ]` appears in its
+  Root cause section, but that is a *quotation* of the originating spec's unmet criterion
+  (`relocate-integration-deployment-questions-to-module1.md:48`), not a criterion of this spec.
+- **The "how a present value changes the deliverable" guidance is deliberately declarative.** Steps 3
+  and 4 name the target and adjust which checklist items appear; they do **not** generate
+  provider-specific infrastructure, credentials, ARNs or account identifiers. The spec's own scope
+  note asked for this, and it is restated as a ⛔ in the skill, because a wrong infrastructure guess
+  in a handed-over project is worse than a generic one.
+- **Not runtime-verified:** nothing needed a live engine. Each of the six criteria is static guidance
+  plus a test; the guards were mutation-tested by dropping each key's table row and by stripping the
+  keys out of Step 4, and reverted.

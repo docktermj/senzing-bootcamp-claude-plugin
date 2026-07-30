@@ -130,3 +130,30 @@ graduation reads the wrong *key*.
 Do the reader/writer guard even if the three renames feel like a two-line fix. The renames close
 today's instance; the guard closes the class — and this is the second instance in two days (the
 `database_type` writer itself was missing until 2026-07-29).
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **The reader/writer guard declares the contract instead of inferring it.** Criterion 5 asks for a
+  test that "every preference key graduation reads is written somewhere in
+  `plugins/senzing-bootcamp/skills/**`". Inference was implemented, measured, and rejected: scanning
+  for a `key: value` site outside graduation *passes* both broken keys (`language:` and `database:`
+  appear in prose in `bootcamp-onboarding/`, `module-07-.../`, `module-03-.../`) and *fails* four
+  legitimate ones (`deployment_target`, `cloud_provider`, `os`, `arch` appear in no `key: value` form
+  anywhere), and a YAML-fence scan finds only 4 of 15 keys. A rule that both false-passes and
+  false-fails is worse than none — the shape INV-144/INV-173 forbid — so
+  `tests/test_graduation_reads_persisted_answers.py` carries a `WRITERS` map (key → writing file) and
+  asserts **both** directions: every key graduation declares is in the map, and every map entry's
+  writer really mentions its key. A stale map fails its own test.
+- **The Pre-checks read became a table, not a corrected prose list.** The spec says "fix the three key
+  names". Seven keys with their writing module now sit in a table, because the same pass implemented
+  `graduation-reads-integration-and-deployment-answers` (INV-097's two keys belong in the same read)
+  and because the failure mode was a reader inventing names — a table naming the writer beside each
+  key is what makes that visible at the point of use.
+- **Guard scoping was itself mutation-caught.** The first version asked whether a key appeared
+  *anywhere* in Pre-checks; deleting the `integration_targets` table row still passed, because prose
+  below mentions it. Rescoped to the table's first column ("declared as a key to read"), and the
+  retired-name check had to be flattened before matching, since the framing phrase and the mention
+  land on different source lines once prose wraps.
+- **Not runtime-verified:** nothing needed a live engine. All 7 criteria are static guidance plus
+  tests; each guard was mutation-tested (key rename reverted, table rows dropped, missing-key branch
+  removed) and reverted.

@@ -66,3 +66,17 @@ these two questions to Module 1.
 ## Invariants introduced
 
 - `INV-097` — The software-integration and deployment-target questions are asked in Module 1 Phase 2 (Step 10a), after the scenario and before the problem-statement artifacts; persisted to `config/bootcamp_preferences.yaml` and read by the problem statement and graduation; Bootcamp preparation does not ask them (recorded in `specs/INVARIANTS.md`; INV-088 marked superseded, INV-075's cross-reference updated). Maintainer-approved wording.
+
+## Criterion 4 was found unmet, 2026-07-29 (appended; text above unchanged)
+
+The 2026-07-29 deep-dive audit found that acceptance criterion 4 above —
+*"`integration_targets` and `deployment_target`/`cloud_provider` are still persisted and read by the
+Module 1 problem statement **and by graduation**"* — was **never met**, although
+`specs/IMPLEMENTED.md` recorded this spec as implemented on 2026-07-22. Module 1's half shipped;
+graduation contained **zero** references to any of the three keys, and `graduation/SKILL.md` does not
+appear in that ledger entry's Files-changed list. INV-097's graduation half therefore stood
+unimplemented for seven weeks.
+
+Discharged by `specs/graduation-reads-integration-and-deployment-answers.md` (implemented
+2026-07-29). The ledger entry carries the same correction, appended. This note records the outcome
+and deliberately does not alter the criterion's text (INV-181's append-not-edit discipline).

@@ -125,3 +125,32 @@ production pass belongs **after Step 5** (and after `docs/REVISIT_BOOTCAMP.md` i
   discharges), `specs/artifact-level-verification-for-deliverables.md` (INV-129's requirement that a
   cosmetic pass prove it preserved content — already satisfied by the normalizer's guard),
   `specs/feedback-file-durability.md` (INV-067, why neither pass may recurse).
+
+## Deviations from this spec, and why (2026-07-29)
+
+- **`docs/REVISIT_BOOTCAMP.md` is covered by NEITHER pass, explicitly — not by one of them.**
+  Criterion 4 offers two options ("covered by one of the two passes, and the file says which"); a
+  third was taken and stated in the file. Step 6c writes that guide **after** both passes, so the
+  options were (a) re-run the `docs/*.md` pass at 6c or (b) hand-format it. (a) was rejected on
+  evidence: the docs pass also normalizes `docs/bootcamp_recap.md`, which Step 1b already rendered
+  the recap PDF from — re-touching it after the render leaves the keepsake and its source subtly out
+  of step, and INV-129's "prove the cosmetic pass preserved content" reasoning does not help a file
+  whose consumer has already run. So 6c now carries a ⛔ saying it is the one hand-formatted
+  deliverable, and why. **Flagged for the maintainer** as the one judgment call in this spec that
+  could reasonably go the other way.
+- **Criterion 3's `:675` reference was imprecise and is discharged under criterion 4 instead.** That
+  line governs `docs/REVISIT_BOOTCAMP.md`, which is not a `production/*.md` file, so "no longer ask
+  the guide to hand-format `production/*.md`" could not apply to it. `:611` (Step 4) was changed
+  exactly as asked — it now asks for plain, functional Markdown and points at the Step 5a pass.
+- **The pass is a new Step 5a rather than an addition to an existing step.** `production/` does not
+  exist until Steps 2-5 have run, and its Markdown is not finished until `GRADUATION_REPORT.md` is
+  written, so the pass needs its own position after Step 5. The step states that ordering and why —
+  an earlier pass would normalize nothing, which is how this half of INV-060 went unbuilt for six
+  weeks.
+- **Not runtime-verified:** the normalizer itself was not re-executed against a generated
+  `production/` tree, because no `production/` project exists in this environment — that needs a
+  completed bootcamp run. What *is* verified: the invocation and its post-Step-5 ordering are
+  asserted by `tests/test_graduation_reads_persisted_answers.py` (mutation-tested by deleting
+  `--docs-dir production`), `normalize_docs_markdown.py --docs-dir <dir>` already supports an
+  arbitrary directory and is covered by `tests/test_normalize_docs_markdown.py`, and no normalizer
+  behavior changed. Disclosed rather than ticked silently.
