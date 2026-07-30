@@ -45,7 +45,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   implemented until each acceptance criterion is individually verified with its evidence named.
   Items 1-3 established none: a one-off content fix, a restoration of INV-108's intent, and a data
   cleanup.
-- **Commit:** uncommitted
+- **Commit:** `60bc9da`
 
 ## dry-run-phase3-interaction-prose-defects
 
