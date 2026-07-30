@@ -143,11 +143,17 @@ Only the third case with *no* remaining relevance is a demotion candidate.
 
 A spec is a record of a decision; the ledger heading is what makes it findable.
 
-- **Implemented and stable** → **archive**, do not delete. Move to
-  `specs/archive/`, keep the `IMPLEMENTED.md` heading exactly as it is. Detection
-  in `implement-spec` reads the ledger, so nothing breaks, and the working set
-  that a maintainer (and every `specs/*.md` glob) has to scan shrinks. On
-  2026-07-30 that glob was 198 files.
+- **Implemented and stable** → leave them. ⛔ **Archiving was measured on 2026-07-30
+  and rejected**; an earlier draft of this skill recommended it, wrongly. Three
+  findings, all of which a future run should re-check rather than re-derive: (a) the
+  benefit is **3.5 ms** — spec discovery over 202 files is a glob, and no maintainer
+  reads 198 spec files, they read the computed list; (b) `feedback-to-specs` Step 4
+  lists **every** `specs/*.md` to deduplicate against, so archiving would hide solved
+  problems and it would start writing duplicate specs, silently; (c)
+  `tests/test_spec_ledger_invariants.py` resolves an invariant's `Source:` via
+  `SPECS / f"{name}.md"`. Archiving is only worth revisiting if those consumers are
+  taught to read `specs/archive/` **first**, and the reading burden is
+  `IMPLEMENTED.md` (2,873 lines) regardless, which archiving does not touch.
 - **Implemented but the change was later reverted or superseded** → the spec is
   now *misleading*, because it reads as describing shipped behaviour. Do not
   delete it: append a dated note saying what superseded it, then archive. The
@@ -164,11 +170,17 @@ provenance.
 
 ## Step 4: Assess the tests
 
-The measured inefficiency on 2026-07-30: **17 separate walks of the shipped
-Markdown corpus** across the test suite, each re-reading every file to check one
-thing.
+⛔ **Speed is not the reason to touch these tests.** Measured 2026-07-30: the four
+files that walk the corpus more than once run in **~0.3 s each** against 42 files /
+772 KB, while the suite's 67 s is dominated by PDF rendering (six tests at ~1.5 s
+doing real fpdf2 work). An earlier draft of this skill cited "17 separate walks" and
+implied consolidating them mattered; the count conflated `glob` with `rglob`, the real
+figure is nine files, and the saving is unmeasurable. **Do not consolidate for
+performance** — the churn risks the failure messages, which in this suite are most of
+a test's value. Consolidate only where one file genuinely re-reads the corpus for
+checks that belong together.
 
-**Combine the traversal, never the assertions.** The right shape reads each file
+When you do combine, **combine the traversal, never the assertions.** The right shape reads each file
 once and runs N independent checks, each in its own `subTest`:
 
 ```python
@@ -184,7 +196,8 @@ The anti-pattern is `assertTrue(a and b)`: it halves the walk and destroys the
 diagnosis, which in this repo is most of a test's value — the suite's failure
 messages routinely explain the defect better than the code does.
 
-Other test findings worth hunting, in value order:
+**The findings that are actually worth hunting**, in value order — the 2026-07-30 pass
+took item 4 and left the rest standing:
 
 1. **A test pinning a premise that has gone stale.** Worse than no test: it makes
    a false claim load-bearing and fails the suite when someone corrects the truth.
