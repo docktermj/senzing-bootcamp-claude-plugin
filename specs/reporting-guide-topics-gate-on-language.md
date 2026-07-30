@@ -118,3 +118,13 @@ not probed, so whether they gate is unknown. `entity_views` is referenced by the
 - Upstream: not applicable as a defect; a schema that marked `language` required for the
   gating topics would make this unmissable, which is worth raising separately.
 - Related specs: none directly; complements INV-136.
+
+## Invariants introduced
+
+- `INV-192` — A parameter an MCP tool's schema marks **optional** may still be mandatory to
+  its *answer*; a `needs_input` response is a **gate, not a result**, and MUST be re-called
+  with the parameter satisfied rather than parsed as content or read as "this topic has no
+  guidance". Where a tool gates on only some inputs, the guidance MUST say which. (Recorded
+  in `specs/INVARIANTS.md` 2026-07-30, wording confirmed with the maintainer. Extends
+  INV-136 from schema-declared requirements to runtime ones — a call can satisfy the schema
+  completely, return 200, and still carry no substance.)
