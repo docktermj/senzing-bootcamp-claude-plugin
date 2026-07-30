@@ -143,6 +143,56 @@ class TestRequiredParamsArePresent(unittest.TestCase):
         self.assertEqual([], offenders, "\n  ".join(offenders))
 
 
+class TestGatingTopicsAlwaysPassLanguage(unittest.TestCase):
+    """`reporting_guide` withholds its content until `language` is supplied.
+
+    Verified on server 1.32.2, 2026-07-30: `topic='evaluation'` and `topic='graph'` called
+    without `language` return a `needs_input` decision tree with empty `sdk_patterns`,
+    `sql_patterns` and `design_concepts` — the 4-Point ER Evaluation Framework appears only
+    once a language is passed. `topic='quality'` does not gate, which is why this went
+    unnoticed: the parameter is **optional in the schema**, so a bare call looks correct.
+
+    Six shipped sites omitted it, including one that cited the framework by name as the
+    reason for the call. This guard makes the seventh fail the suite rather than the
+    bootcamp.
+    """
+
+    GATING_TOPICS = ("evaluation", "graph", "data_mart")
+
+    def test_no_gating_reporting_guide_call_omits_language(self):
+        pattern = re.compile(
+            r"reporting_guide\(\s*topic\s*=\s*['\"](%s)['\"][^)]*\)" % "|".join(self.GATING_TOPICS)
+        )
+        offenders = []
+        for path in sorted(SKILLS.rglob("*.md")):
+            for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                for match in pattern.finditer(line):
+                    if "language" not in match.group(0):
+                        offenders.append(
+                            "%s:%d: %s" % (path.relative_to(REPO_ROOT), number, match.group(0))
+                        )
+        self.assertEqual(
+            [],
+            offenders,
+            "reporting_guide topics that gate on `language` were called without it — the "
+            "response is a needs_input decision tree, not content:\n  " + "\n  ".join(offenders),
+        )
+
+    def test_the_gate_is_documented_where_the_tool_is_routed(self):
+        text = (SKILLS / "bootcamp-onboarding" / "ground-rules.md").read_text(encoding="utf-8")
+        self.assertIn("needs_input", text)
+        self.assertRegex(text, r"(?i)gate, not an answer")
+
+    def test_the_scan_is_not_vacuous(self):
+        """A regex that stops matching would make the guard pass silently."""
+        found = sum(
+            len(re.findall(r"reporting_guide\(\s*topic", line))
+            for path in SKILLS.rglob("*.md")
+            for line in path.read_text(encoding="utf-8").splitlines()
+        )
+        self.assertGreater(found, 5, "found almost no reporting_guide calls; the glob drifted")
+
+
 class TestParameterShapeRoutingGoesToMcp(unittest.TestCase):
     """INV-080 forbids routing away from MCP; INV-132 briefly did exactly that."""
 

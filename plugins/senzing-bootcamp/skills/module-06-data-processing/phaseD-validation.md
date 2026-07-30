@@ -42,7 +42,7 @@ done through generated SDK code.)
 Validate that the loaded data meets business expectations:
 
 - Verify record counts, does the number of loaded records match expectations? (Use
-  `reporting_guide(topic='evaluation')` for counts — not `topic='reports'`; see the header note.)
+  `reporting_guide(topic='evaluation', language='<chosen_language>')` for counts — not `topic='reports'`; see the header note.)
 - Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
@@ -57,7 +57,7 @@ single-source bootcampers, skip directly to step 28 (Document results).
 ## 23. Validate cross-source results
 
 Validate: record counts match expectations, cross-source entities exist, no unexpected data
-loss, error logs clean. Use `reporting_guide(topic='graph', version='current')` for
+loss, error logs clean. Use `reporting_guide(topic='graph', language='<chosen_language>', version='current')` for
 network-graph patterns.
 
 ⛔ **Before treating a low or zero cross-source entity count as a finding about the data, read how
@@ -83,7 +83,7 @@ cross-source visualization, to avoid a duplicate/misplaced offer.
 
 ## 24. Validate cross-source results quality
 
-Use `reporting_guide(topic='evaluation', version='current')` for the 4-point ER evaluation
+Use `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` for the 4-point ER evaluation
 framework and `reporting_guide(topic='quality', version='current')` for precision/recall
 metrics.
 
@@ -212,7 +212,7 @@ which is exactly the gap the UAT percentages below leave open.
    ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set, not on the method — so
    dump one row and route on what you see.** Do not assume either answer:
 
-   - `reporting_guide(topic='evaluation')` documents the export-with-defaults case directly
+   - `reporting_guide(topic='evaluation', language='<chosen_language>')` documents the export-with-defaults case directly
      (verified 2026-07-28): *"Use `export_json_entity_report` with `SZ_EXPORT_DEFAULT_FLAGS` … Each
      exported row is a JSON object containing `RESOLVED_ENTITY` … **and `RELATED_ENTITIES[]`** (with
      `ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`)"*, and its
@@ -235,7 +235,7 @@ which is exactly the gap the UAT percentages below leave open.
    were settled in either direction (INV-115/INV-149: the dumped row is the authority).
 
    ⚠️ **If you do read relationships from the export, deduplicate.** Per
-   `reporting_guide(topic='evaluation')`: *"Each relationship appears in BOTH entities'
+   `reporting_guide(topic='evaluation', language='<chosen_language>')`: *"Each relationship appears in BOTH entities'
    `RELATED_ENTITIES` — deduplicate by sorting `(min_id, max_id)` pairs and using a set."* Skipping
    this double-counts every relationship, which inflates a suppressor share rather than emptying it —
    a wrong number that still looks plausible. The same guidance notes export iteration is

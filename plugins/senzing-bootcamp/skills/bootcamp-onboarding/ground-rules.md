@@ -94,6 +94,15 @@ steering files.)
   error codes -> `explain_error_code`; docs and facts -> `search_docs`; working examples ->
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
+- ⛔ **`reporting_guide` withholds content until `language` is supplied — always pass it.** Several
+  topics answer a call without `language` with a `needs_input` decision tree and **empty**
+  `sdk_patterns` / `sql_patterns` / `design_concepts`: verified on MCP server 1.32.2, 2026-07-30,
+  `topic='evaluation'` and `topic='graph'` both gate, and `topic='data_mart'` gates again on
+  `scale`. `topic='quality'` does **not**, which is exactly why the trap is easy to miss — the
+  parameter is *optional in the schema*, so the call looks correct and returns 200. A `needs_input`
+  response is a **gate, not an answer**: re-call with the Bootcamper's language rather than
+  proceeding on what came back, and never report a topic as having no guidance on the strength of
+  a gated response.
 - **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
   path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
   the search results already carry rather than relying on `content` from a `repo` + `file_path`

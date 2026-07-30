@@ -11,7 +11,7 @@ Load this file after completing steps 4a–4c in `phase2-discover.md`. When comp
 
 **No direct SQL and no fabricated methods (see SKILL.md):** `find_network` and `find_path` are
 SDK methods, not MCP tools. Generate the SDK code, sourcing flags and signatures from
-`get_sdk_reference` and network/path patterns from `reporting_guide(topic='graph', ...)`. Never
+`get_sdk_reference` and network/path patterns from `reporting_guide(topic='graph', language='<chosen_language>')`. Never
 query `database/G2C.db` tables directly.
 
 ## Step 4d: Discover (continued)

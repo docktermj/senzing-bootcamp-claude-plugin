@@ -99,7 +99,7 @@ from an export. ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on
 row and check before building edges from it, because reading edges from a row that lacks the key
 yields an empty `edges` array and no error.**
 
-- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation')` documents each
+- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation', language='<chosen_language>')` documents each
   exported row as carrying `RESOLVED_ENTITY` *and* `RELATED_ENTITIES[]` (with `ENTITY_ID`,
   `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`), and its worked pattern derives
   relationship statistics in a single export pass (verified 2026-07-28; a live SDK 4.3.3 run agreed).

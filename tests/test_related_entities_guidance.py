@@ -85,7 +85,12 @@ class TestExportCapabilityIsFlagConditional(unittest.TestCase):
         for path in (PHASE_D, VIZ_REF):
             with self.subTest(path=os.path.basename(path)):
                 self.assertRegex(
-                    read(path), r"reporting_guide\(topic='evaluation'\)"
+                    read(path),
+                    r"reporting_guide\(topic='evaluation', language='<chosen_language>'",
+                    "the attribution must name the call as it should actually be made — "
+                    "`evaluation` gates on `language` and returns no content without it "
+                    "(server 1.32.2, 2026-07-30), so a cited bare call does not fetch the "
+                    "documentation being cited",
                 )
 
     def test_both_files_require_pair_deduplication(self):

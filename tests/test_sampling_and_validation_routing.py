@@ -163,7 +163,10 @@ class ValidationRoutingNamesItsTopic(unittest.TestCase):
 
     def test_the_count_bullet_names_the_topic(self):
         self.assertRegex(
-            flat(PHASE_D), r"reporting_guide\(topic='evaluation'\)\` for counts"
+            flat(PHASE_D),
+            r"reporting_guide\(topic='evaluation', language='<chosen_language>'\)\` for counts",
+            "the topic must be named AND carry `language` — `evaluation` gates on it and "
+            "returns a needs_input tree with no content when it is omitted (1.32.2)",
         )
 
     def test_reports_is_characterised_rather_than_merely_avoided(self):

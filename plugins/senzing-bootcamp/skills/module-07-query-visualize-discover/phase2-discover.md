@@ -12,7 +12,7 @@ Load this file when Phase 1 reaches step 4. When steps 4a–4c are complete, loa
 **No direct SQL and no fabricated methods (see SKILL.md):** every entity operation here
 (`get_entity_by_record_id`, `why_records`, `why_entities`, `how_entity`) is generated SDK
 code, source flags and signatures from `get_sdk_reference` and code patterns from
-`reporting_guide(topic='entity_views', ...)` / `sdk_guide`. These are SDK methods, not MCP
+`reporting_guide(topic='entity_views', language='<chosen_language>')` / `sdk_guide`. These are SDK methods, not MCP
 tools. Never query `database/G2C.db` tables directly.
 
 ## Step 4: Discover phase, advanced Senzing capabilities
