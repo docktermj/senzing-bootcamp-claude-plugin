@@ -1,0 +1,289 @@
+"""An already-installed V4 SDK gets a version check and an update offer, per platform.
+
+Step 1 detected an existing install, compared it against the **V4.0 floor**, and stopped:
+"No need to reinstall, skipping straight to configuration verification." That answers "is it
+new enough to work", not "is it the newest available" — and a Bootcamper on an older 4.x
+build was never told a newer release existed. The only upgrade branch was for `<V4.0`.
+
+⚠️ **The spec this implements got the platform story wrong, and these tests pin the corrected
+version.** It concluded that availability is Linux-only and that macOS/Windows must report the
+check skipped. That came from asking `sdk_guide(platform='macos_arm', language='python')` —
+which returns nothing *because the Python SDK is Linux-only*. A language dead end, not a
+platform one. Asked with `language='java'`, both macOS and Windows return full install paths
+with their own package managers, and those package managers are the availability oracle:
+
+    linux_apt   dpkg-query / apt-cache policy   + direct_download for version-exact
+    linux_yum   rpm -q / yum check-update       (dnf on RHEL 8+/Fedora)
+    macos_arm   brew outdated --cask / brew info / brew upgrade --cask
+    windows     scoop status / scoop info / scoop update
+    docker      nothing in place — the image tag IS the version
+
+That is the INV-194 lesson a third time: one tool-and-parameters answering nothing is not the
+server answering nothing.
+
+What these tests pin, all verified against server 1.32.2 on 2026-07-31:
+
+* the version comparison, including the one-character trap — `szBuildVersion.json` writes
+  `4.3.3.26191` with a **dot** where every package manager writes `4.3.3-26191` with a
+  **hyphen**, and Step 1's filesystem fallback reads exactly that file
+* a distinct mechanism named for each platform family, not one generalised command
+* the offer is a single 👉 question, declining is safe and not re-asked (INV-006/INV-012)
+* macOS's zero-exit-code trap, which makes post-update verification mandatory not advisory
+* the per-platform EULA variable, where a wrong name or value is silently ignored
+* that no 4.x→4.y procedure is claimed to exist
+* nothing blocks (INV-048), and an undeterminable version reports skipped (INV-163)
+
+Run:  python3 -m unittest discover -s tests
+"""
+import os
+import re
+import unittest
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
+MODULE2 = os.path.join(PLUGIN, "skills", "module-02-sdk-setup", "SKILL.md")
+
+
+def read():
+    with open(MODULE2, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def flat():
+    return re.sub(r"\s+", " ", read())
+
+
+def step_1b():
+    text = read()
+    start = text.index("## Step 1b:")
+    return text[start : text.index("\n## ", start + 10)]
+
+
+class TheStepExistsAndIsReachable(unittest.TestCase):
+
+    def test_step_1b_exists(self):
+        self.assertIn("## Step 1b:", read())
+
+    def test_the_v4_branch_routes_into_it(self):
+        """An unreachable step is not an implemented step."""
+        text = read()
+        branch = text[text.index("**If the SDK is found and version is V4.0+:**") :][:900]
+        self.assertRegex(
+            re.sub(r"\s+", " ", branch),
+            r"(?i)run \*\*Step 1b\*\*",
+            "the V4.0+ branch must send the reader to the new step",
+        )
+
+    def test_it_says_why_the_floor_check_is_not_enough(self):
+        """Without this, a future editor reads Step 1b as duplicate work."""
+        self.assertRegex(
+            re.sub(r"\s+", " ", step_1b()),
+            r"(?i)is it new enough to work.{0,40}not.{0,40}newest available",
+        )
+
+
+class EachPlatformFamilyHasItsOwnMechanism(unittest.TestCase):
+    """One generalised command would be wrong on three platforms out of four."""
+
+    def setUp(self):
+        self.section = step_1b()
+        self.flat = re.sub(r"\s+", " ", self.section)
+
+    def test_apt_commands_are_named(self):
+        for probe in ("dpkg-query", "apt-cache policy", "senzingsdk-runtime"):
+            with self.subTest(probe=probe):
+                self.assertIn(probe, self.section)
+
+    def test_yum_commands_are_named_including_dnf(self):
+        for probe in ("rpm -q", "yum check-update"):
+            with self.subTest(probe=probe):
+                self.assertIn(probe, self.section)
+        self.assertRegex(self.flat, r"(?i)`dnf` on RHEL 8\+/Fedora")
+
+    def test_macos_uses_brew_not_a_generic_command(self):
+        for probe in ("brew outdated --cask", "brew info --cask", "brew upgrade --cask"):
+            with self.subTest(probe=probe):
+                self.assertIn(probe, self.section)
+
+    def test_windows_uses_scoop(self):
+        for probe in ("scoop status", "scoop info", "scoop update"):
+            with self.subTest(probe=probe):
+                self.assertIn(probe, self.section)
+
+    def test_docker_has_no_in_place_update(self):
+        self.assertRegex(self.flat, r"(?i)image tag is the version")
+
+    def test_the_package_manager_is_the_authority_not_the_mcp_server(self):
+        """`senzing_version` is the string "current" — it cannot answer this."""
+        self.assertRegex(
+            self.flat, r"(?i)package manager that installed Senzing is the authority"
+        )
+        self.assertRegex(self.flat, r'(?i)`senzing_version` as the string `"current"`')
+
+    def test_direct_download_is_not_offered_on_yum(self):
+        """`sdk_guide(platform='linux_yum')` returns .deb packages with apt commands."""
+        self.assertRegex(self.flat, r"(?i)Do not use `direct_download` on yum")
+        self.assertRegex(self.flat, r"(?i)wrong for an rpm system")
+
+
+class TheVersionComparisonTrapIsStated(unittest.TestCase):
+    """The one-character difference Step 1's own fallback walks into."""
+
+    def setUp(self):
+        self.flat = re.sub(r"\s+", " ", step_1b())
+
+    def test_both_forms_are_shown(self):
+        self.assertIn("4.3.3-26191", self.flat)
+        self.assertIn("4.3.3.26191", self.flat)
+
+    def test_the_dot_versus_hyphen_is_called_out(self):
+        self.assertRegex(self.flat, r"(?i)dot\*?\*? where every package manager uses a \*?\*?hyphen")
+
+    def test_it_says_which_source_to_prefer(self):
+        self.assertRegex(self.flat, r"(?i)Prefer the package manager's version string")
+        self.assertRegex(self.flat, r"(?i)normalise the separator before comparing")
+
+    def test_the_windows_json_location_differs(self):
+        """On Windows szBuildVersion.json is a sibling of er, not under SENZING_DIR."""
+        self.assertRegex(self.flat, r"(?i)sibling\*?\*? `?data`? directory")
+
+    def test_the_observation_is_marked_as_an_observation(self):
+        """INV-080: a local install reading is not an MCP-sourced fact."""
+        self.assertRegex(
+            self.flat, r"(?i)environment observation, not an MCP-sourced fact"
+        )
+
+
+class TheOfferIsOneQuestionAndDecliningIsSafe(unittest.TestCase):
+
+    def setUp(self):
+        self.flat = re.sub(r"\s+", " ", step_1b())
+
+    def test_exactly_one_pinned_question_in_the_step(self):
+        """INV-005: one 👉 ends the turn. More than one asked here would break it.
+
+        Counts 👉 at the start of a line (optionally inside a blockquote), which is the
+        form an *asked* question takes. A bare `👉` mid-sentence is prose describing the
+        rule — "One 👉 question, its own turn" — and counting those made this assert 2
+        against correct content.
+        """
+        asked = re.findall(r"(?m)^\s*>?\s*👉", step_1b())
+        self.assertEqual(1, len(asked), "the offer must be a single asked 👉 question")
+
+    def test_the_offer_is_conditional_on_a_newer_version(self):
+        self.assertRegex(self.flat, r"(?i)Only when a newer version is genuinely available")
+
+    def test_declining_keeps_the_install_and_is_not_re_asked(self):
+        self.assertRegex(self.flat, r"(?i)Keeping \[installed\]")
+        self.assertRegex(self.flat, r"(?i)do not ask again")
+        self.assertIn("INV-006", self.flat)
+
+    def test_declining_is_not_recorded_as_a_failure(self):
+        self.assertRegex(self.flat, r"(?i)Nothing recorded as a failure")
+
+    def test_a_named_version_is_supported_where_documented(self):
+        self.assertRegex(self.flat, r"(?i)or name a specific version")
+        self.assertRegex(self.flat, r"(?i)versioned `direct_download` URL")
+
+    def test_it_refuses_to_invent_a_pin_where_undocumented(self):
+        """Homebrew casks and Scoop: the server documents no version-exact install."""
+        self.assertRegex(
+            self.flat,
+            r"(?i)version-exact install is \*?\*?not documented by the server",
+        )
+        self.assertRegex(self.flat, r"(?i)rather than inventing a pin")
+
+
+class TheSilentFailureModesAreGuarded(unittest.TestCase):
+    """Two ways this feature could ship a lie: a no-op install, or a wrong EULA var."""
+
+    def setUp(self):
+        self.section = step_1b()
+        self.flat = re.sub(r"\s+", " ", self.section)
+
+    def test_the_macos_zero_exit_trap_is_stated(self):
+        self.assertRegex(
+            self.flat, r"(?i)ZERO EXIT CODE FROM `brew` DOES NOT MEAN IT INSTALLED"
+        )
+        self.assertRegex(self.flat, r"(?i)reads as success while installing nothing")
+
+    def test_the_macos_artifact_probe_is_given(self):
+        self.assertIn("libSz.dylib", self.section)
+        self.assertIn("TransRules.sz", self.section)
+
+    def test_the_windows_artifact_probe_is_given(self):
+        self.assertIn(r"Test-Path", self.section)
+        self.assertIn("Sz.dll", self.section)
+
+    def test_all_three_eula_variables_are_tabulated(self):
+        """A wrong name or value is IGNORED and the install silently does nothing."""
+        self.assertIn("HOMEBREW_SENZING_ACCEPT_EULA", self.section)
+        self.assertIn("i_accept_the_senzing_eula", self.section)
+        self.assertIn("SENZING_ACCEPT_EULA", self.section)
+        self.assertIn("I_ACCEPT_THE_SENZING_EULA", self.section)
+
+    def test_the_macos_variable_is_marked_lowercase(self):
+        """The one detail most likely to be normalised away by a later editor."""
+        self.assertRegex(self.flat, r"(?i)i_accept_the_senzing_eula.{0,40}lowercase")
+
+    def test_the_eula_question_is_reused_not_duplicated(self):
+        self.assertRegex(self.flat, r"(?i)reuse the existing wording in Step 3")
+        self.assertRegex(self.flat, r"(?i)An update is an install")
+
+    def test_verification_after_update_is_mandatory(self):
+        self.assertRegex(self.flat, r"(?i)Re-run Step 4")
+        self.assertRegex(self.flat, r"(?i)exit 0 is not evidence")
+        self.assertIn("INV-129", self.section)
+
+    def test_a_failed_update_names_the_working_version(self):
+        self.assertRegex(self.flat, r"(?i)name\*?\*? the version that was working")
+        self.assertRegex(self.flat, r"(?i)do \*?\*?not\*?\*? mark Module 2 complete")
+
+
+class ItNeitherBlocksNorOverclaims(unittest.TestCase):
+
+    def setUp(self):
+        self.section = step_1b()
+        self.flat = re.sub(r"\s+", " ", self.section)
+
+    def test_it_is_non_blocking(self):
+        self.assertIn("INV-048", self.section)
+        self.assertRegex(self.flat, r"(?i)Non-blocking, start to finish")
+
+    def test_an_undeterminable_version_reports_skipped(self):
+        """INV-163: "no data" must never render as "up to date"."""
+        self.assertIn("INV-163", self.section)
+        self.assertRegex(self.flat, r'(?i)"No data" is never "up to date"')
+
+    def test_it_states_that_no_point_release_procedure_is_documented(self):
+        """The honest limit: V3->V4 migration is documented; 4.x->4.y is not."""
+        self.assertRegex(self.flat, r"(?i)documents no 4\.x → 4\.y update procedure")
+        self.assertRegex(
+            self.flat, r"(?i)undocumented, not known to be unnecessary"
+        )
+
+    def test_it_does_not_claim_apt_version_pinning(self):
+        """`apt install pkg=version` is not documented by the server."""
+        self.assertNotRegex(
+            self.section,
+            r"apt install\s+senzingsdk-runtime=",
+            "apt version pinning is not server-documented; the versioned .deb is",
+        )
+
+    def test_the_outcome_is_checkpointed_so_a_resume_does_not_re_offer(self):
+        for outcome in ("up-to-date", "update-declined", "updated-to-", "check-skipped-"):
+            with self.subTest(outcome=outcome):
+                self.assertIn(outcome, self.section)
+
+    def test_the_senzing_facts_carry_their_provenance(self):
+        """INV-080: server version and date on every claim written into the plugin."""
+        self.assertRegex(self.flat, r"(?i)server 1\.32\.2")
+        self.assertIn("2026-07-31", self.section)
+
+    def test_the_scan_is_not_vacuous(self):
+        self.assertTrue(os.path.isfile(MODULE2))
+        self.assertGreater(len(step_1b()), 3000, "Step 1b must actually have content")
+
+
+if __name__ == "__main__":
+    unittest.main()

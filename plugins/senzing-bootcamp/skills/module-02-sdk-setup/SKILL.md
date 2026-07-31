@@ -87,6 +87,9 @@ or neither is found, proceed with the "SDK not found" path (Step 2).
 Tell the user: "Senzing SDK is already installed (version [X]). No need to reinstall, skipping
 straight to configuration verification."
 
+Then run **Step 1b** below to see whether a newer release is available, and offer it. A working
+install is never replaced without the bootcamper saying so.
+
 - Skip Steps 2 and 3 entirely.
 - Jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
@@ -111,6 +114,149 @@ Tell the user: "Senzing SDK is not installed yet. Let's set it up, this is a one
 Proceed with Step 2.
 
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
+
+## Step 1b: Offer an update when a newer release exists (V4.0+ installs only)
+
+Step 1 compares the installed version against the **V4.0 floor**. That answers "is it new enough
+to work", not "is it the newest available" — two different questions. Ask the second one too,
+then **offer**. Never update silently, and never treat declining as a problem.
+
+⛔ **Non-blocking, start to finish (INV-048).** A check that cannot run, a repository that is
+unreachable, or an update that fails must warn and continue with the working install. This step
+improves a working state; it is never a prerequisite for Module 2.
+
+### The three platform families need three different mechanisms
+
+⛔ **The package manager that installed Senzing is the authority on what is available** — not the
+MCP server. `get_capabilities` reports `senzing_version` as the string `"current"`, not a number
+(server 1.32.2, verified 2026-07-31), so it cannot answer this. Get the platform's commands from
+`sdk_guide(topic='install', platform='<platform>', language='<language>')` and use the ones below.
+
+**Linux, apt (`linux_apt`):**
+
+```bash
+dpkg-query -W -f='${Version}\n' senzingsdk-runtime   # installed, e.g. 4.3.3-26191
+apt-cache policy senzingsdk-runtime                  # Candidate: is what the repo offers
+sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest available
+```
+
+**Linux, yum/dnf (`linux_yum`):** `rpm -q --qf '%{VERSION}-%{RELEASE}\n' senzingsdk-runtime` for
+installed, `yum check-update senzingsdk-runtime` for available (**`dnf` on RHEL 8+/Fedora**), and
+the same documented `sudo yum install -y senzingsdk-runtime senzingsdk-setup` to update.
+
+> ⚠️ **Do not use `direct_download` on yum.** `sdk_guide(platform='linux_yum')` returns a
+> `direct_download` block, but its packages are **`.deb` files with `sudo apt install` commands**
+> (verified 2026-07-31, server 1.32.2). They are wrong for an rpm system. `direct_download` is the
+> apt/firewalled route only.
+
+**macOS, Homebrew cask (`macos_arm`):**
+
+```bash
+brew outdated --cask senzingsdk    # nothing printed = up to date
+brew info --cask senzingsdk        # installed and latest versions
+brew upgrade --cask senzingsdk     # takes the newest available
+```
+
+⛔ **A ZERO EXIT CODE FROM `brew` DOES NOT MEAN IT INSTALLED.** If the EULA variable's name or
+value is wrong the cask prints "No interactive terminal detected", purges the download, then
+**still prints its Caveats block listing install paths** — so it reads as success while installing
+nothing. After any macOS update, probe the artifact:
+
+```bash
+test -f "$(brew --prefix)/opt/senzing/er/lib/libSz.dylib" && ls "$(brew --prefix)/opt/senzing/data"/*TransRules.sz
+```
+
+Also on macOS: the tap must be trusted on Homebrew 6+ (`brew trust senzing/senzingsdk`), and
+**`SENZING_ROOT` can move between versions** — re-export the env vars from
+`sdk_guide(topic='install', platform='macos_arm')` after updating rather than assuming the old
+paths still resolve.
+
+**Windows, Scoop (`windows`):**
+
+```powershell
+scoop status                          # lists packages with updates available
+scoop info senzingsdk/senzingsdk      # installed and latest versions
+scoop update senzingsdk/senzingsdk    # takes the newest available
+Test-Path "$env:SENZING_DIR\lib\Sz.dll"   # verify it actually installed
+```
+
+**Docker (`docker`):** there is nothing to update in place — the **image tag is the version**.
+Offer to pull a newer tag and recreate the container instead, and do not run a package-manager
+update inside it.
+
+### Comparing the two versions
+
+⚠️ **`szBuildVersion.json` and the package version differ by one character.** Step 1's filesystem
+fallback reads `BUILD_VERSION` from that file, which uses a **dot** where every package manager
+uses a **hyphen**:
+
+| Source | Value |
+|---|---|
+| `dpkg-query` / `rpm -q` / `direct_download` filename | `4.3.3-26191` |
+| `szBuildVersion.json` → `BUILD_VERSION` | `4.3.3.26191` |
+
+Comparing those two raw strings reports a difference where none exists. **Prefer the package
+manager's version string**; when only the JSON is available, normalise the separator before
+comparing. (Observed on a real 4.3.3-26191 install, 2026-07-31 — an environment observation, not
+an MCP-sourced fact.) On Windows that file is in the **sibling** `data` directory, not under
+`%SENZING_DIR%`.
+
+⛔ **If the available version cannot be determined, say the check was skipped and name why**
+(INV-163). "No data" is never "up to date" — an unreachable repository, a missing package manager,
+or an install that no package manager owns are all *unknown*, and reporting them as current is the
+one outcome worse than not checking.
+
+### The offer
+
+Only when a newer version is genuinely available. **One 👉 question, its own turn** (INV-005), and
+it ends the turn:
+
+> 👉 **Senzing [available] is available and you have [installed] installed — would you like to
+> update?** (reply no to keep your current version; or name a specific version)
+
+- **On no:** one line — "Keeping [installed]." — then continue to Step 4. Nothing recorded as a
+  failure, and **do not ask again** this session or the next (INV-006).
+- **On yes:** update to the newest available using the platform command above.
+- **On a named version:** on **apt**, use the versioned `direct_download` URL from
+  `sdk_guide(topic='install', platform='linux_apt')` — the filenames carry the version and each
+  has a `sha256`; **verify that checksum before installing**, and note the download needs
+  `mcp.senzing.com` reachable with no inline fallback. ⛔ For **Homebrew casks and Scoop**, a
+  version-exact install is **not documented by the server** — say so and offer the latest instead,
+  rather than inventing a pin.
+
+⛔ **Ask the EULA question before any package installs** — reuse the existing wording in Step 3
+Phase 2 rather than writing a second copy. An update is an install.
+
+⛔ **The EULA variable differs per platform, and a wrong one is silently ignored:**
+
+| Platform | Variable | Value |
+|---|---|---|
+| `linux_apt`, `linux_yum` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
+| `macos_arm` | `HOMEBREW_SENZING_ACCEPT_EULA` | `i_accept_the_senzing_eula` (**lowercase**) |
+| `windows` | `SENZING_ACCEPT_EULA` | `I_ACCEPT_THE_SENZING_EULA` |
+
+(All three verified against `sdk_guide` on server 1.32.2, 2026-07-31.) Getting the name or value
+wrong does not error — the install does nothing and reports success, which is why the
+verification below is required rather than advisory.
+
+### After updating
+
+1. **Re-run Step 4** (verify installation). It is already a required stop; route through it.
+2. **Probe the platform artifact** as shown above — exit 0 is not evidence (INV-129).
+3. **If verification fails**, say so plainly, **name the version that was working**, and do
+   **not** mark Module 2 complete. Reinstalling the previous version is the fallback; on apt its
+   exact `.deb` is still addressable by filename.
+
+⚠️ **Senzing documents no 4.x → 4.y update procedure.** `search_docs` returns only V3→V4 migration
+material (`sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`), and `sdk_guide` has no `upgrade`
+topic (verified 2026-07-31). So whether a point release needs any schema or config step is
+**undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
+has a populated repository, mention that the update touches the SDK and not their data — then let
+them decide.
+
+**Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
+`check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
+does not re-offer what was already declined.
 
 ## Step 2: Determine Platform
 
