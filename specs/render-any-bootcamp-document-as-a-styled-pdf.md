@@ -112,3 +112,72 @@ runs at all.
   `specs/discoveries-pdf-offpage-blocks-and-list-spacing.md` (the layout engine this reuses),
   `specs/space-every-recap-bullet-list-by-default.md` (check whether the sibling generator
   carries the same opt-in spacing shape).
+
+## Deviations from this spec, and why (2026-07-31)
+
+All five proposed changes shipped. Five differences, one of which is a correction to the
+spec's own premise:
+
+1. **⚠️ "Its layout engine … contains nothing specific to the discoveries document" is
+   false.** The cover subtitle read `"What Senzing found in your data"` — hardcoded in
+   **both** renderers (`:476` fpdf2, `:732` stdlib) — plus a `"Data Discoveries"` title
+   fallback. Rendering `business_problem.md` therefore put a discoveries line at the top of
+   the document the spec itself calls "the one a stakeholder is most likely to be shown",
+   and it is the first thing that reader sees. Found by extracting text from a rendered
+   PDF rather than by reading the layout code, which is the only way it would have
+   surfaced. Fixed with a `--subtitle` flag carried on the parsed document (so neither
+   renderer needed a new signature and the two cannot drift), defaulting to the existing
+   string. **Without this, item 3 of this spec would have shipped a misleading keepsake.**
+
+2. **`--no-section-check` as well as `--require-sections`.** The spec offered "and/or"; both
+   shipped. `--require-sections` is what graduation uses, because naming a document's own
+   headings keeps a real guard — `--no-section-check` leaves retention as the only
+   structural check, and the guidance says so.
+
+3. **`--require-sections ""` is an error, not a silent skip.** Not in the spec. An empty
+   value quietly meaning "no check" would be a footgun in exactly the direction INV-110
+   cares about, so it exits 1 and points at `--no-section-check`.
+
+4. **The `--check` line counts against the effective list.** It reported `n/6` from
+   `len(REQUIRED_SECTIONS)`; with `--require-sections` naming two sections, `n/6` is a lie.
+   `DiscoveriesAudit` gained `sections_present` / `sections_expected` so the denominator
+   comes from what was actually expected.
+
+5. **A wrapper, not a rename.** The spec offered either. `generate_discoveries_pdf.py` is
+   named in the module-07 skill, the specs and the tests, so a rename breaks every one of
+   those addresses for a cosmetic gain. `generate_document_pdf.py` delegates and is asserted
+   to contain **no** argument parsing, defaults, or `REQUIRED_SECTIONS` reference, so it
+   cannot drift from what it wraps.
+
+**Three user-visible strings changed**, each pinned by a test that had to change with it:
+`"none of the required findings sections is present"` → `"…required sections…"`,
+`"n/6 findings sections present"` → `"…expected sections present"`, and
+`"missing findings sections:"` → `"missing sections:"`. All three said *findings*, which is
+wrong for every document but one now that the list is a parameter.
+
+**One test of mine was too weak and was rewritten.** The first
+`test_the_retention_floor_is_not_weakened_by_either_flag` accepted either outcome and was
+nearly tautological. It now asserts against a document that genuinely fails retention (55%
+against the 60% floor) and requires refusal, with `content retention` named on stderr, under
+**both** flags.
+
+**Observed and deliberately left alone** (out of scope, pre-existing, affects the
+discoveries document equally): the two renderers transliterate out-of-font characters
+differently. fpdf2 renders `≥` as `>=`; the stdlib fallback renders it as `?`. Both are
+silent — `dropped_character_warning()` fires for neither. That is an INV-143/INV-159 question
+worth its own spec; this change neither introduces nor worsens it, and
+`test_character_handling_is_unchanged_on_the_new_path` pins the fpdf2 behaviour so a future
+refactor cannot route the new path around `_safe` unnoticed.
+
+**Criterion 4 is verified for a synthetic document, not for a real bootcamp's.** Page count
+and text extraction were both probed positively here against a `business_problem`-shaped
+fixture (1 page, 977 extracted characters, content present). The criterion's real subject is
+a Bootcamper's own two documents, which this environment does not have; graduation's Step 5b
+now requires both probes per file, and the test asserts that requirement is stated.
+
+## Invariants introduced
+
+- None. Turning a constant into a parameter and adding a delegating wrapper adds no standing
+  constraint beyond what these tests already enforce; INV-110 (the retention floor), INV-129
+  (verify the artifact), INV-185 (`${CLAUDE_PLUGIN_ROOT}`) and INV-066 (both renderers) all
+  already applied and are asserted here rather than extended.

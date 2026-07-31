@@ -62,7 +62,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 # The recap generator ships in this same directory. Reuse its PDF plumbing
 # rather than carrying a second copy of a hand-rolled page writer.
@@ -133,6 +133,14 @@ except Exception as exc:  # pragma: no cover - present but unusable
 # grid stays inside the brand palette rather than introducing a new tone.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in WARM_LINE)
 
+# The two document-specific strings on the cover. Named because they are the ONLY part
+# of the layout engine that is not document-agnostic — everything else (section styling,
+# tables, typography) carries nothing discoveries-specific. Rendering another document
+# without overriding these puts "What Senzing found in your data" on its cover, which on
+# a stakeholder-facing keepsake is worse than no cover line at all.
+COVER_TITLE_FALLBACK = "Data Discoveries"
+COVER_SUBTITLE = "What Senzing found in your data"
+
 DEFAULT_INPUT = "docs/bootcamp_data_discoveries.md"
 DEFAULT_OUTPUT = "docs/bootcamp_data_discoveries.pdf"
 
@@ -167,6 +175,9 @@ class Block:
 @dataclass
 class Discoveries:
     title: str = ""
+    # Cover strings, overridable per document. Empty means "use the defaults", so the
+    # discoveries path is unaffected and the two renderers cannot drift on this.
+    subtitle: str = ""
     meta: List[Tuple[str, str]] = field(default_factory=list)
     blocks: List[Block] = field(default_factory=list)
 
@@ -378,15 +389,34 @@ class DiscoveriesAudit:
     warnings: List[str] = field(default_factory=list)
     retention: float = 0.0
     missing_sections: List[str] = field(default_factory=list)
+    # How many of the *expected* sections were found, against how many were expected.
+    # Reported instead of deriving the denominator from REQUIRED_SECTIONS, which is
+    # only the default: with --require-sections the constant is not the yardstick.
+    sections_present: int = 0
+    sections_expected: int = 0
 
 
-def audit_discoveries(doc: Discoveries, source: str) -> DiscoveriesAudit:
+def audit_discoveries(
+    doc: Discoveries,
+    source: str,
+    required_sections: Optional[Sequence[str]] = None,
+) -> DiscoveriesAudit:
     """Decide whether this document can render as a useful deliverable.
 
     Mirrors the recap generator's two-outcome contract (INV-110): an imperfect
     document still renders; a document this script cannot meaningfully parse
     does not, because an empty deliverable is worse than none.
+
+    ``required_sections`` defaults to ``REQUIRED_SECTIONS`` — the discoveries
+    document's own headings — so an unparameterised call behaves exactly as before.
+    Pass a different list to render another document in the same house style, or an
+    empty list to skip the section check entirely.
+
+    ⚠️ **The section check is not the guard that stops this being pointed at
+    unrelated Markdown** — the retention floor is, and it is not affected by this
+    parameter. The section list only says *which* document this is expected to be.
     """
+    required = list(REQUIRED_SECTIONS if required_sections is None else required_sections)
     fatal: List[str] = []
     warnings: List[str] = []
 
@@ -396,20 +426,20 @@ def audit_discoveries(doc: Discoveries, source: str) -> DiscoveriesAudit:
 
     normalized = [_normalize(h) for h in doc.headings()]
     missing = [
-        required
-        for required in REQUIRED_SECTIONS
-        if not any(required in heading for heading in normalized)
+        wanted
+        for wanted in required
+        if not any(_normalize(wanted) in heading for heading in normalized)
     ]
-    present = len(REQUIRED_SECTIONS) - len(missing)
+    present = len(required) - len(missing)
 
     if not doc.blocks:
         fatal.append("the document has no content-bearing lines")
     elif not doc.headings():
         fatal.append("the document has no '## ' sections")
-    elif present == 0:
+    elif required and present == 0:
         fatal.append(
-            "none of the required findings sections is present "
-            f"(looked for: {', '.join(REQUIRED_SECTIONS)})"
+            "none of the required sections is present "
+            f"(looked for: {', '.join(required)})"
         )
 
     if source_chars and retention < MIN_CONTENT_RETENTION:
@@ -420,7 +450,7 @@ def audit_discoveries(doc: Discoveries, source: str) -> DiscoveriesAudit:
 
     if missing and present:
         warnings.append(
-            "missing findings sections: " + ", ".join(missing) + " — rendering anyway"
+            "missing sections: " + ", ".join(missing) + " — rendering anyway"
         )
 
     return DiscoveriesAudit(
@@ -429,6 +459,8 @@ def audit_discoveries(doc: Discoveries, source: str) -> DiscoveriesAudit:
         warnings=warnings,
         retention=retention,
         missing_sections=missing,
+        sections_present=present,
+        sections_expected=len(required),
     )
 
 
@@ -449,10 +481,10 @@ def render_with_fpdf2(doc: Discoveries, output: Path) -> bool:
 
         pdf.set_font("Helvetica", "B", 22)
         pdf.set_text_color(*DARK_INK)
-        _full_width(pdf, epw, 10, _safe(doc.title or "Data Discoveries"))
+        _full_width(pdf, epw, 10, _safe(doc.title or COVER_TITLE_FALLBACK))
         pdf.set_font("Helvetica", "", 12)
         pdf.set_text_color(*EMBER)
-        _full_width(pdf, epw, 7, "What Senzing found in your data")
+        _full_width(pdf, epw, 7, _safe(doc.subtitle or COVER_SUBTITLE))
         pdf.ln(2)
 
         pdf.set_text_color(*BODY_INK)
@@ -707,8 +739,8 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
             """
             tokens.append(("", "GAP", points, 0.0))
 
-        add(doc.title or "Data Discoveries", "F2", 20, 0)
-        add("What Senzing found in your data", "F1", 12, 0)
+        add(doc.title or COVER_TITLE_FALLBACK, "F2", 20, 0)
+        add(doc.subtitle or COVER_SUBTITLE, "F1", 12, 0)
         add("", "F1", 6, 0)
         for key, value in doc.meta:
             add_wrapped(f"{key}: {_md_inline_to_text(value)}", "F1", 11, 0)
@@ -810,7 +842,44 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="audit the input without rendering; non-zero exit if it would not render usefully",
     )
+    parser.add_argument(
+        "--require-sections",
+        default=None,
+        metavar="A;B;C",
+        help="semicolon-separated section names this document must carry, replacing the "
+        "discoveries defaults. Semicolons rather than commas because section names "
+        "contain commas ('merges and match keys', 'why and how'). Matched the same way "
+        "as the defaults: case- and punctuation-insensitively against H2 headings.",
+    )
+    parser.add_argument(
+        "--subtitle",
+        default=None,
+        help="cover subtitle. Defaults to the discoveries line; override it for any other "
+        "document, or a stakeholder-facing keepsake ships with the wrong one.",
+    )
+    parser.add_argument(
+        "--no-section-check",
+        action="store_true",
+        help="skip the section check entirely. The content-retention floor still applies "
+        "and is what actually prevents rendering unrelated Markdown.",
+    )
     args = parser.parse_args(argv)
+
+    # Omitting both flags leaves the discoveries behaviour byte-for-byte unchanged.
+    if args.no_section_check:
+        required_sections: Optional[List[str]] = []
+    elif args.require_sections is not None:
+        required_sections = [
+            s.strip() for s in args.require_sections.split(";") if s.strip()
+        ]
+        if not required_sections:
+            sys.stderr.write(
+                "--require-sections was given but names no sections; pass "
+                "--no-section-check if that is what you meant.\n"
+            )
+            return 1
+    else:
+        required_sections = None
 
     source_path = Path(args.input)
     if not source_path.exists():
@@ -819,7 +888,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     source = source_path.read_text(encoding="utf-8")
 
     doc = parse_discoveries(source)
-    audit = audit_discoveries(doc, source)
+    if args.subtitle is not None:
+        doc.subtitle = args.subtitle
+    audit = audit_discoveries(doc, source, required_sections)
 
     for warning in audit.warnings:
         sys.stderr.write(f"Warning: {warning}\n")
@@ -838,8 +909,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stdout.write(
             f"OK: {source_path} would render "
             f"({audit.retention:.0%} of its content, "
-            f"{len(REQUIRED_SECTIONS) - len(audit.missing_sections)}"
-            f"/{len(REQUIRED_SECTIONS)} findings sections present).\n"
+            f"{audit.sections_present}/{audit.sections_expected} "
+            f"expected sections present).\n"
         )
         return 0
 

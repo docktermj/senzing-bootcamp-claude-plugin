@@ -788,6 +788,65 @@ which is precisely how this half of INV-060 went unbuilt from 2026-07-16 to 2026
 `docs/REVISIT_BOOTCAMP.md` is written later still (Step 6c) and so is covered by **neither** pass;
 Step 6c states its own formatting rule.
 
+## Step 5b: Render the two keepsake documents as styled PDFs
+
+The bootcamp already treats "rendered as a styled PDF" as the signal that a document is a
+keepsake rather than a working file. Two more qualify, and the renderer that makes them is
+already bundled:
+
+- **`docs/business_problem.md`** — the document a stakeholder is most likely to be shown.
+- **`docs/data_source_evaluation.md`** — the engine-verified readiness findings and the
+  unmapped-field audit with its rejected-field rationale; the reference a team returns to when
+  someone asks "why wasn't field X mapped?".
+
+Render each with the bundled general renderer, resolved the same way as every other bundled
+script and never as a bare `scripts/…` path (INV-185):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_document_pdf.py" \
+    --input docs/business_problem.md --output docs/business_problem.pdf \
+    --require-sections "<this document's own H2 headings, semicolon-separated>" \
+    --subtitle "The problem this bootcamp set out to solve"
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_document_pdf.py …
+```
+
+⛔ **Pass `--subtitle`.** The cover's subtitle defaults to the discoveries line, "What Senzing
+found in your data" — true of the discoveries document and wrong on either of these. It is the
+one part of the layout engine that is not document-agnostic, and it is the first thing a
+stakeholder reads. For `data_source_evaluation.md`, something like "How ready your sources were,
+and what was left unmapped".
+
+⛔ **Read each document's actual H2 headings and pass those.** Bootcampers word these documents
+differently, so there is no fixed list to hard-code — which is the whole reason the renderer took
+a `--require-sections` parameter instead of a constant. Omitting the flag applies the *discoveries*
+defaults and the document is refused; `--no-section-check` is the fallback when a document has no
+stable headings, and it is weaker, because the section check is what catches a document that
+silently lost its structure.
+
+⚠️ **Neither flag relaxes the content-retention floor** (INV-110). If a render is refused for
+retention rather than sections, the document genuinely would not survive the pass — say so and
+leave it unrendered rather than reaching for `--no-section-check`.
+
+⛔ **Verify each PDF, do not trust the `PDF generated:` line** (INV-129). Two positive probes per
+file, both required:
+
+1. **Extract text from the written file** and confirm real content appears — fpdf2 compresses its
+   content streams, so decompress before searching, or a raw byte search reports a false negative.
+2. **Count pages** (`/Type /Page` objects, or `pdfinfo` where poppler exists — which on macOS and
+   Windows it usually does not; see Step 1b). At least one, and a one-page PDF from a multi-section
+   document is a signal to look at the text probe again rather than to pass it.
+
+A zero exit and a plausibly-sized file are both necessary and neither is sufficient.
+
+**Non-blocking, like every graduation step** (INV-048): if a document is absent, refused, or fails
+verification, warn on stderr, say which PDF was not produced, and continue. Name the ones that
+succeeded in the closing summary alongside the recap PDF; never turn a failure into a 👉 question
+or a to-do for the bootcamper.
+
+Character handling is unchanged from the discoveries path — the renderer reports any character it
+had to drop (INV-143/INV-159). This step must not become a route that bypasses that report: if it
+names dropped characters, repeat them in the warning rather than only in the PDF.
+
 ## Step 6: Save the revisit/resume bundle
 
 Silently preserve everything a returning bootcamper needs to pick the bootcamp back up — so
