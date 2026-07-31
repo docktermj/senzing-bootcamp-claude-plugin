@@ -25,6 +25,7 @@ Run:  python3 -m unittest discover -s tests
 import contextlib
 import importlib.util
 import io
+import json
 import os
 import re
 import subprocess
@@ -188,8 +189,15 @@ class TestCapturesOneImagePerTab(unittest.TestCase):
                 "viz-merge-statistics.png": "Merge Statistics",
                 "viz-cross-source.png": "Cross-Source",
             }
-            written = sorted(os.listdir(out))
+            written = sorted(f for f in os.listdir(out) if f.endswith(".png"))
             self.assertEqual(sorted(expected), written)
+            # The manifest must name exactly the PNGs written, since the recap's
+            # coverage check compares the recap's image links against it.
+            with open(os.path.join(out, "viz-tabs.json"), encoding="utf-8") as handle:
+                manifest = json.load(handle)
+            self.assertEqual(
+                sorted(expected), sorted(e["file"] for e in manifest["captured"])
+            )
 
             # Each line reports its tab label, so the caller derives the caption from
             # the capture rather than from its plan.
@@ -241,9 +249,20 @@ class TestAbsentTabIsNeverCapturedUnderItsName(unittest.TestCase):
             result = run(["--html", html, "--out-dir", out, "--name", "viz",
                           "--tabs", "graph,features"])
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual(["viz-entity-graph.png"], sorted(os.listdir(out)))
+            # PNGs only: the sidecar tab manifest also lands here (see
+            # test_recap_tab_coverage.py), and it is not a capture.
+            pngs = sorted(f for f in os.listdir(out) if f.endswith(".png"))
+            self.assertEqual(["viz-entity-graph.png"], pngs)
             self.assertNotIn("viz-feature-scores.png", os.listdir(out))
             self.assertIn("not present in this visualization", result.stderr)
+            # The absent tab must be recorded as absent, not as failed capture:
+            # the recap's coverage check would otherwise expect an image for it.
+            with open(os.path.join(out, "viz-tabs.json"), encoding="utf-8") as handle:
+                manifest = json.load(handle)
+            self.assertEqual(
+                ["features"], [e["tab"] for e in manifest["not_present"]]
+            )
+            self.assertEqual([], manifest["failed"])
 
     def test_no_requested_tab_exists_reports_that_reason_not_a_missing_browser(self):
         """Reporting the wrong reason would be this spec's own defect class."""
@@ -413,9 +432,39 @@ class TestGraduationVerifiesScreenshots(unittest.TestCase):
         self.text = read(GRADUATION)
 
     def test_warns_when_a_visualization_module_has_no_image(self):
+        """Reworded 2026-07-31: the check widened from zero to any shortfall.
+
+        The old assertion pinned the heading "visualization-producing module with no
+        image", which described a check that only fired at **zero** — a section with 4
+        of 6 captured tabs passed it. Assert the requirement, not the old heading (the
+        same reasoning as `test_module_completion_requires_one_image_per_tab` above).
+        Zero is still covered, and is asserted separately below.
+        """
         self.assertRegex(
-            self.text, r"(?s)visualization-producing module with no image"
+            re.sub(r"\s+", " ", self.text),
+            r"(?i)fewer images than were captured|Warn on any \*\*shortfall\*\*",
         )
+        self.assertRegex(
+            re.sub(r"\s+", " ", self.text),
+            r"(?i)not only on zero",
+            "a check that fires only at zero is what let 4-of-6 ship",
+        )
+
+    def test_the_zero_image_case_is_still_covered(self):
+        self.assertRegex(
+            re.sub(r"\s+", " ", self.text), r"(?i)Zero remains the worst case"
+        )
+
+    def test_the_self_referential_count_is_not_offered_as_evidence(self):
+        """`embedded N of M images` cannot answer the coverage question at all.
+
+        Its denominator is the recap's own `![](…)` link count, so 4 of 6 captured
+        tabs reads `embedded 4 of 4 images`. A prior session cited `embedded 12 of 12`
+        to a Bootcamper as proof of completeness while being asked exactly this.
+        """
+        flat = re.sub(r"\s+", " ", self.text)
+        self.assertRegex(flat, r"(?i)Do not use the generator's `embedded N of M images`")
+        self.assertRegex(flat, r"(?i)captured tabs reached the recap")
 
     def test_warns_on_duplicate_images_in_one_section(self):
         self.assertRegex(self.text, r"(?s)byte-identical")

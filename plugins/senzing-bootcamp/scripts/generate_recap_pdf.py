@@ -70,6 +70,7 @@ missing.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
 import struct
@@ -715,9 +716,116 @@ def image_embed_note(referenced: int) -> str:
     The character-retention figure cannot see a dropped image — the characters do
     render — so a recap that lost every screenshot still reported ~99%. This is the
     figure that makes the loss visible (INV-110).
+
+    ⛔ **This measures embedding, not coverage.** ``referenced`` counts the ``![](…)``
+    links in the recap being rendered, so the denominator comes from the same file as
+    the numerator: a recap that only ever referenced four of six captured tabs reads
+    ``embedded 4 of 4 images``. Use ``tab_coverage_note`` for the coverage question —
+    it takes its denominator from capture's sidecar manifest, which is external.
     """
     embedded = sum(1 for outcome in _IMAGE_OUTCOMES.values() if outcome == "embedded")
     return f"embedded {embedded} of {referenced} images"
+
+
+# --- Tab coverage, measured against an external denominator ------------------
+#
+# `capture_screenshots.py` writes `<name>-tabs.json` beside the PNGs recording how many
+# tabs it actually captured. That is the only number in the system that does not come
+# from the recap Markdown, so it is the only one that can detect a tab which was
+# captured and then never referenced.
+
+TAB_MANIFEST_GLOBS = ("*-tabs.json", "*/*-tabs.json")
+
+
+def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]:
+    """Load every capture manifest reachable from the recap's image bases.
+
+    Globs one level down as well as at the top, because the recap lives in ``docs/``
+    while its PNGs (and their manifests) live in ``docs/visualizations/``. The
+    subdirectory is found by shape rather than by name, so a project that keeps them
+    elsewhere still works.
+
+    A manifest that cannot be read or parsed is skipped and reported — never fatal,
+    and never silently treated as "no tabs expected", which would turn a corrupt file
+    into a clean bill of health.
+    """
+    manifests: List[dict] = []
+    seen: set = set()
+    for base in (base_dirs if base_dirs is not None else _IMAGE_BASE_DIRS) or [Path.cwd()]:
+        for pattern in TAB_MANIFEST_GLOBS:
+            try:
+                candidates = sorted(Path(base).glob(pattern))
+            except OSError:
+                continue
+            for path in candidates:
+                key = path.resolve()
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    with open(path, encoding="utf-8") as fh:
+                        data = json.load(fh)
+                except (OSError, ValueError) as exc:
+                    sys.stderr.write(
+                        f"unreadable tab manifest {path} ({exc}); tab coverage cannot "
+                        "be checked from it\n"
+                    )
+                    continue
+                if isinstance(data, dict) and isinstance(data.get("captured"), list):
+                    data["_path"] = str(path)
+                    manifests.append(data)
+    return manifests
+
+
+def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[str]:
+    """Captured tabs that never reached the recap, named by slug.
+
+    This is the check `embedded N of M images` structurally cannot perform: it compares
+    what capture recorded against what the recap references.
+    """
+    referenced = {Path(target).name for target in recap_image_targets(source_text)}
+    problems: List[str] = []
+    for manifest in manifests:
+        missing = [
+            entry
+            for entry in manifest["captured"]
+            if isinstance(entry, dict) and entry.get("file") not in referenced
+        ]
+        if not missing:
+            continue
+        slugs = ", ".join(
+            str(entry.get("slug") or entry.get("tab") or entry.get("file"))
+            for entry in missing
+        )
+        name = manifest.get("name") or Path(str(manifest.get("_path", ""))).name
+        problems.append(
+            f"visualization {name!r}: {len(missing)} captured tab(s) are missing from "
+            f"the recap — {slugs} (captured {len(manifest['captured'])}, referenced "
+            f"{len(manifest['captured']) - len(missing)}; source: "
+            f"{manifest.get('_path', 'tab manifest')})"
+        )
+    return problems
+
+
+def tab_coverage_note(source_text: str, manifests: Sequence[dict]) -> str:
+    """``N of M captured tabs`` — empty when no manifest exists.
+
+    Deliberately worded so it cannot be mistaken for the Markdown-derived count that
+    sits beside it in the success line.
+    """
+    if not manifests:
+        return ""
+    referenced = {Path(target).name for target in recap_image_targets(source_text)}
+    captured = [
+        entry
+        for manifest in manifests
+        for entry in manifest["captured"]
+        if isinstance(entry, dict)
+    ]
+    if not captured:
+        return ""
+    present = sum(1 for entry in captured if entry.get("file") in referenced)
+    return f"{present} of {len(captured)} captured tabs reached the recap"
 
 
 @dataclass
@@ -3008,14 +3116,30 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"embedded image not found: {target} (relative to {inp.parent})"
             for target in unresolvable_image_targets(source_text)
         ]
+        # A captured tab that never reached the recap is invisible to every check
+        # above, because they all measure the recap against itself.
+        manifests = find_tab_manifests()
+        problems = problems + tab_coverage_problems(source_text, manifests)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
             sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
+        if not manifests:
+            # A check that could not run is reported as skipped, never folded into a
+            # pass (INV-163). Without a manifest there is no external denominator, so
+            # "every captured tab reached the recap" is unverified, not true.
+            sys.stderr.write(
+                "SKIPPED: tab-coverage check — no capture manifest (<name>-tabs.json) "
+                "was found beside the recap's images, so how many tabs were captured "
+                "is unknown. The embedded-image count cannot answer this: its "
+                "denominator comes from this same recap.\n"
+            )
         print(
             "Recap complete: all module sections carry the required subsections, "
             "and every End-of-Module Summary carries its labeled blocks."
+            + (f" Tab coverage: {tab_coverage_note(source_text, manifests)}."
+               if manifests else "")
         )
         return 0
 
@@ -3109,6 +3233,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                 # The stdlib renderer embeds no images at all; say so rather than
                 # letting "embedded 0 of 6" read as a lookup failure.
                 note = f"{note} (the stdlib renderer embeds no images)"
+        # Stated separately from the embedded count, and worded differently, because
+        # conflating the two is the defect: the embedded count's denominator comes from
+        # this recap, and this one's comes from capture's manifest.
+        coverage = tab_coverage_note(source_text, find_tab_manifests())
+        if coverage:
+            note = f"{note}, {coverage}"
         print(f"PDF generated: {out} (renderer: {used}, {note})")
         return 0
 

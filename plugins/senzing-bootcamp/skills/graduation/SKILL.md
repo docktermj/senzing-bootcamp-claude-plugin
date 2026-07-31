@@ -383,6 +383,7 @@ If an in-progress recap checkpoint at `docs/progress/recap_checkpoint.md` still 
 `docs/bootcamp_recap.md` and clear the checkpoint. This ensures the recap carries any
 narrative captured from an interrupted module and the PDF renders clean, completed
 sections.
+
 ⚠️ **The file existing is not evidence a module was interrupted.** `checkpoint-tick.py`
 creates it as an empty scaffold of HTML comments while the bootcamp runs, so the normal
 state at graduation is "present and unfilled". Fold only when there is real content
@@ -424,11 +425,31 @@ section's **narrative**, and these lines are the backfill's own output.
 best-effort and each non-blocking (INV-048) — the backfill above only maps PNGs that *exist*, so
 none of these are covered by it:
 
-1. **A visualization-producing module with no image.** For each completed module whose recap section
-   references a `docs/visualizations/*.html` artifact, confirm its section has at least one
-   `![...](...)` line. If not, warn: the capture produced nothing and the section will ship without
-   images. This is the case that shipped a Truth Set visualization section with zero screenshots —
-   no PNG existed, so the backfill found nothing to backfill and said nothing.
+1. **A visualization section carrying fewer images than were captured.** For each completed module
+   whose recap section references a `docs/visualizations/*.html` artifact, compare the count of
+   `![...](...)` lines in that section against how many tabs were actually captured for it. Warn on
+   any **shortfall**, not only on zero.
+
+   Get the captured count from an external source, never from the recap:
+   - **Preferred — the capture manifest.** `capture_screenshots.py` writes
+     `docs/visualizations/<name>-tabs.json` recording `captured` (one entry per PNG written),
+     `not_present` and `failed`. `generate_recap_pdf.py --check` already reads it and fails on a
+     shortfall, naming the missing tab slugs; if `--check` reported
+     `SKIPPED: tab-coverage check`, no manifest was found and this check has **not** run — say so
+     rather than treating it as passed (INV-163).
+   - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
+     visualization's base name and compare against the section's image lines.
+
+   ⛔ **Do not use the generator's `embedded N of M images` figure for this.** Its denominator is
+   the count of `![](…)` links in the recap it is measuring, so a section that embedded four of six
+   captured tabs reports `embedded 4 of 4 images` — a perfect score against an incomplete set. It
+   answers "did every link render", never "did every tab arrive". A prior session cited
+   `embedded 12 of 12` to a Bootcamper as proof the screenshots were complete while they were
+   asking about exactly this; it was right only by luck of the input.
+
+   Zero remains the worst case and is still covered: it shipped a Truth Set visualization section
+   with no screenshots at all — no PNG existed, so the backfill found nothing to backfill and said
+   nothing.
 2. **Duplicate images within one section.** If two embedded images in the same section are
    byte-identical, or have identical pixel dimensions and were written within the same second, warn:
    that is the signature of capturing one tab repeatedly rather than one image per tab.
@@ -564,6 +585,17 @@ bootcamper-facing output (INV-012).
   opening the embedded images there gives an honest count and their dimensions with **no new
   dependency**; (3) `pdfimages -list <pdf>` where poppler exists; (4) the `/Subtype /Image` grep,
   **which overcounts** — if you fall back to it, label the number as approximate and say so.
+- ⛔ **`embedded N of M images` measures references, not tab coverage — never cite it as evidence
+  that every tab is present.** Its denominator is the number of `![](…)` links in the recap being
+  rendered, so it is derived from the same file as its numerator: if only four of six captured tabs
+  were ever embedded, the line reads `embedded 4 of 4 images`. It is structurally incapable of
+  detecting the very incompleteness a Bootcamper asking "are all the tabs here?" is describing, and
+  a prior session cited `embedded 12 of 12` as proof of completeness while being asked exactly that
+  — correct by luck of the input, not by measurement. The count that *can* answer it is the
+  generator's separate `N of M captured tabs reached the recap`, whose denominator comes from
+  `capture_screenshots.py`'s `<name>-tabs.json` manifest; when `--check` prints
+  `SKIPPED: tab-coverage check`, no manifest was found and the question is **unanswered** rather
+  than answered yes (INV-163).
 - **Open every captured PNG before writing its caption** (INV-123, and
   `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots").
 - **Re-run `--check --expect-modules "…"` after every render**, semicolon-separated — two module

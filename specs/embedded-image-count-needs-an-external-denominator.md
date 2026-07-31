@@ -122,3 +122,58 @@ already happened once.
   `specs/per-tab-screenshot-capture-and-grounded-captions.md` (INV-122/INV-146 — both
   require every captured image to reach the recap; **neither adds a count check**, which is
   the gap this closes), `specs/recap-pdf-images-resolve-against-recap-directory.md` (INV-162).
+
+## Deviations from this spec, and why (2026-07-31)
+
+All five items shipped. Four differences from the text, and one limitation worth naming
+rather than leaving for a reader to discover:
+
+1. **`--check`'s coverage check is document-level, not per-section.** The criterion says
+   "fails when a *section* embeds fewer images than its manifest recorded". The manifest is
+   keyed by visualization `name`, and nothing in the recap records which module section a
+   given visualization belongs to — so `--check` compares each manifest's captured files
+   against the **whole recap's** image references. Consequence: a captured tab embedded in
+   the *wrong* section still passes `--check`. The per-section comparison is done by
+   graduation Step 1a, which has the section structure in hand; the spec's criterion is
+   therefore met across the two together, not by `--check` alone. Closing it inside
+   `--check` would need the recap to record a section↔visualization mapping, which is a
+   larger change than this spec proposes.
+2. **The manifest distinguishes three outcomes, not two.** The spec asks for "tabs
+   requested, tabs captured, and each tab that produced nothing with the reason". Capture
+   already separates *not present in this app* from *capture failed*, and collapsing them
+   would make a tab the app does not serve look like lost content — so `not_present` and
+   `failed` are separate lists. This matters for correctness, not tidiness: the coverage
+   check must not demand an image for a tab that never existed, or every partial capture
+   would fail graduation and INV-122 would be violated.
+3. **The manifest is written before the no-capture early returns.** A run that captured
+   *nothing* is the case the coverage check most needs to see, and the spec's placement
+   would have skipped writing a manifest exactly then. It is also written on the
+   "none of the requested tabs exist in this visualization" path.
+4. **A corrupt manifest is reported and then treated as absent.** Not in the spec. An
+   unreadable JSON file must not read as "no tabs expected" — that would convert a corrupt
+   file into a clean bill of health. It reports `unreadable tab manifest …` and falls
+   through to the `SKIPPED` path (INV-163). Mutation-proven.
+
+Two pre-existing tests had to change, both because they enumerated a whole directory that
+now also holds the sidecar (`test_absent_tab_produces_no_file_and_is_reported`,
+`test_each_tab_produces_a_distinct_image`) — scoped to `*.png` and given manifest
+assertions instead.
+
+One test **pinned wording this spec deliberately changes**:
+`test_warns_when_a_visualization_module_has_no_image` asserted the heading
+"visualization-producing module with no image", which named a check that fired only at
+zero — the very shortcoming being fixed. It now asserts the requirement (shortfall, not
+only zero) rather than the heading, following the reasoning already recorded on its
+neighbour `test_module_completion_requires_one_image_per_tab`; the zero case is asserted
+separately so it cannot be lost.
+
+The success line now reads, e.g.: `rendered 686 of 707 source characters (97%), embedded 6
+of 6 images, 6 of 6 captured tabs reached the recap` — the two counts deliberately worded
+differently, since reading alike is how they were conflated.
+
+## Invariants introduced
+
+- `INV-193` — A count or percentage presented as evidence of **completeness** MUST derive its
+  denominator from outside the artifact it measures; a self-derived figure MUST state what it
+  cannot detect and MUST NOT be cited as proof of completeness (recorded in
+  `specs/INVARIANTS.md`, maintainer-approved 2026-07-31).

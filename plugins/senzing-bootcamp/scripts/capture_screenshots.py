@@ -65,6 +65,7 @@ Exit codes: 0 = wrote at least one PNG; 2 = no headless capability available
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -73,6 +74,17 @@ import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import urlparse, urlencode
+
+# Sidecar manifest written beside the PNGs, recording what capture actually did.
+#
+# It exists because the recap PDF's `embedded N of M images` count derives its
+# denominator from the very Markdown it is measuring: if only four of six tabs were
+# ever captured, the line reads `embedded 4 of 4 images` — a perfect score against an
+# incomplete set. Only capture knows how many tabs there were, and capture is
+# best-effort and non-blocking by contract (INV-122), so the count it reached has to be
+# recorded here or it is lost. `generate_recap_pdf.py --check` reads this to get an
+# **external** denominator.
+MANIFEST_SCHEMA = 1
 
 # The visualization contract's tab inventory: id -> (filename slug, human label).
 # Ids are the app's DOM ids (`tab-<id>`, `navbtn-<id>`) and are contract, not an
@@ -538,6 +550,64 @@ def resolve_tabs(spec: str) -> list:
     return wanted
 
 
+def manifest_path(out_dir: Path, name: str) -> Path:
+    """Where the sidecar manifest for ``name`` lives — beside its PNGs."""
+    return Path(out_dir) / f"{name}-tabs.json"
+
+
+def write_manifest(out_dir: Path, name: str, requested, absent, written, missed) -> bool:
+    """Record what capture did, beside the PNGs. Returns True if written.
+
+    Best-effort like capture itself (INV-122): a manifest that cannot be written is
+    reported on stderr and never fails the run — the PNGs are the deliverable. But it
+    is reported, because a silently absent manifest downgrades the coverage check to
+    "skipped" much later, in graduation, where the cause is no longer visible.
+    """
+    slug_of = {tab: TABS.get(tab, (tab, tab))[0] for tab in requested}
+    captured_tabs = [
+        tab
+        for tab in requested
+        if _out_path(Path(out_dir), name, tab) in {p for p, _ in written}
+    ]
+    payload = {
+        "schema": MANIFEST_SCHEMA,
+        "name": name,
+        # Every tab asked for, before the page was consulted.
+        "requested": list(requested) + list(absent),
+        "captured": [
+            {
+                "tab": tab,
+                "slug": slug_of.get(tab, tab),
+                "file": _out_path(Path(out_dir), name, tab).name,
+                "label": TABS.get(tab, (tab, tab))[1],
+            }
+            for tab in captured_tabs
+        ],
+        # Two different reasons a tab produced nothing. Keeping them apart matters:
+        # "not in this app" is correct behaviour, "capture failed" is a real loss.
+        "not_present": [{"tab": tab, "reason": "not present in this visualization"}
+                        for tab in absent],
+        "failed": [{"tab": tab, "reason": "no image written by any backend"}
+                   for tab in missed],
+    }
+    payload["captured_count"] = len(payload["captured"])
+    payload["requested_count"] = len(payload["requested"])
+    target = manifest_path(Path(out_dir), name)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with open(target, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+    except OSError as exc:
+        print(
+            f"could not write the tab manifest {target} ({exc}); the recap's "
+            "tab-coverage check will report itself skipped rather than passed.",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
 def capture(
     target: str,
     out_dir: Path,
@@ -659,6 +729,9 @@ def main(argv=None) -> int:
             f"Requested: {', '.join(absent)}.",
             file=sys.stderr,
         )
+        # Still record it: "this app has none of these tabs" is a real answer to
+        # "how many tabs should the recap show", and the only one available here.
+        write_manifest(Path(args.out_dir), args.name, [], absent, [], [])
         return 2
 
     try:
@@ -668,6 +741,15 @@ def main(argv=None) -> int:
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    # Written before the no-capture branches below, because a run that captured
+    # nothing is exactly the case the recap's coverage check must be able to see.
+    _missed = [
+        t
+        for t in tabs
+        if _out_path(Path(args.out_dir), args.name, t) not in {p for p, _ in written}
+    ]
+    write_manifest(Path(args.out_dir), args.name, tabs, absent, written, _missed)
 
     if not written:
         # Two different failures used to share one message, and the shared wording named
@@ -697,8 +779,7 @@ def main(argv=None) -> int:
             )
         return 2
 
-    captured = [p for p, _ in written]
-    missed = [t for t in tabs if _out_path(Path(args.out_dir), args.name, t) not in captured]
+    missed = _missed
     if missed:
         # Never a silent partial result: say which tabs produced nothing.
         print(
