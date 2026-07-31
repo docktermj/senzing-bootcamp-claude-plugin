@@ -129,20 +129,50 @@ improves a working state; it is never a prerequisite for Module 2.
 
 ⛔ **The package manager that installed Senzing is the authority on what is available** — not the
 MCP server. `get_capabilities` reports `senzing_version` as the string `"current"`, not a number
-(server 1.32.2, verified 2026-07-31), so it cannot answer this. Get the platform's commands from
-`sdk_guide(topic='install', platform='<platform>', language='<language>')` and use the ones below.
+(server 1.32.2, verified 2026-07-31), so it cannot answer this.
+
+⛔ **Two kinds of command follow, and they have different owners. Do not treat them alike.**
+
+- **Server-documented (on loan — re-read it, do not trust the copy below).** The *install* command
+  comes from `sdk_guide(topic='install', platform='<platform>', language='<language>')`. Its live
+  response is authoritative; the forms below are a dated illustration (server 1.32.2, verified
+  2026-07-31) so you can see the shape without a round trip. If the response differs, **the
+  response wins.**
+- **Plugin-owned (there is nothing to re-ask).** The **installed-version query** and the
+  **available-version check** are ordinary package-manager commands. `sdk_guide` returns *install*
+  commands and *presence* checks (`ls libSz.so`, `Test-Path Sz.dll`) — it documents **no version
+  query and no update check on any of the four platforms** (verified 2026-07-31). So if you look
+  for these in its response and do not find them, that is expected, not an error: use the ones
+  below as given.
+
+  ⚠️ **The plugin-owned commands are exercised on Linux only.** This plugin's own test suite runs
+  on Linux, so the `brew` and `scoop` forms below are standard package-manager usage that no test
+  here has ever executed. Treat their *output* as the thing to check, not their success: read what
+  the command actually printed rather than assuming the version it reported, and on macOS obey the
+  zero-exit-code warning further down without exception. This is the same discipline INV-163
+  requires — say what you could not verify — applied to a command rather than a check.
+
+⚠️ **On macOS and Windows the update command is plugin-owned too.** The server documents
+`brew install --cask` and `scoop install`, never `brew upgrade --cask` or `scoop update` (checked
+across `install_commands`, `gotchas` and `post_install` for both, 2026-07-31). Only on apt and yum
+is the update command the same server-documented `install` command. That asymmetry is the same
+coverage gap reported upstream on 2026-07-31 — the server documents installing, not updating.
 
 **Linux, apt (`linux_apt`):**
 
 ```bash
+# plugin-owned — sdk_guide documents neither of these
 dpkg-query -W -f='${Version}\n' senzingsdk-runtime   # installed, e.g. 4.3.3-26191
 apt-cache policy senzingsdk-runtime                  # Candidate: is what the repo offers
+# server-documented — re-read from sdk_guide; this form is a dated illustration
 sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest available
 ```
 
-**Linux, yum/dnf (`linux_yum`):** `rpm -q --qf '%{VERSION}-%{RELEASE}\n' senzingsdk-runtime` for
-installed, `yum check-update senzingsdk-runtime` for available (**`dnf` on RHEL 8+/Fedora**), and
-the same documented `sudo yum install -y senzingsdk-runtime senzingsdk-setup` to update.
+**Linux, yum/dnf (`linux_yum`):** *plugin-owned* —
+`rpm -q --qf '%{VERSION}-%{RELEASE}\n' senzingsdk-runtime` for installed, and
+`yum check-update senzingsdk-runtime` for available (**`dnf` on RHEL 8+/Fedora**).
+*Server-documented* — `sudo yum install -y senzingsdk-runtime senzingsdk-setup` to update
+(re-read it from `sdk_guide`; the form here is a dated illustration).
 
 > ⚠️ **Do not use `direct_download` on yum.** `sdk_guide(platform='linux_yum')` returns a
 > `direct_download` block, but its packages are **`.deb` files with `sudo apt install` commands**
@@ -152,6 +182,8 @@ the same documented `sudo yum install -y senzingsdk-runtime senzingsdk-setup` to
 **macOS, Homebrew cask (`macos_arm`):**
 
 ```bash
+# ALL plugin-owned — sdk_guide documents brew tap / trust / install --cask only,
+# never outdated, info or upgrade (checked across its whole response, 2026-07-31)
 brew outdated --cask senzingsdk    # nothing printed = up to date
 brew info --cask senzingsdk        # installed and latest versions
 brew upgrade --cask senzingsdk     # takes the newest available
@@ -174,9 +206,12 @@ paths still resolve.
 **Windows, Scoop (`windows`):**
 
 ```powershell
+# plugin-owned — sdk_guide documents scoop bucket add / scoop install only,
+# never status, info or update (checked across its whole response, 2026-07-31)
 scoop status                          # lists packages with updates available
 scoop info senzingsdk/senzingsdk      # installed and latest versions
 scoop update senzingsdk/senzingsdk    # takes the newest available
+# server-documented — the presence probe sdk_guide gives under post_install
 Test-Path "$env:SENZING_DIR\lib\Sz.dll"   # verify it actually installed
 ```
 

@@ -131,3 +131,51 @@ and leave Step 1b unable to do its job.
   `specs/why-entities-default-flags-has-no-composite-members.md` (INV-194 — the same
   ask-the-right-tool discipline that surfaced this).
 
+## Deviations from this spec, and why (2026-07-31)
+
+**⚠️ This spec's own ownership table was wrong about `brew upgrade --cask`, and the
+re-verification clause caught it.** The table lists "`brew install --cask senzingsdk`,
+`brew upgrade --cask` (install form)" as **"yes — `install_commands`"**. Re-asking
+`sdk_guide(topic='install', platform='macos_arm')` and reading the *whole* response —
+`install_commands`, all twelve `gotchas`, `post_install`, `anti_patterns` — shows it documents
+`brew tap`, `brew trust`, `brew install --cask`, and `brew uninstall --cask`/`brew untap` (in the
+unofficial-tap note). **`brew upgrade --cask` appears nowhere.** The same holds on Windows:
+`scoop bucket add` and `scoop install` are documented; `scoop update` is not.
+
+So the split is sharper than the spec described, and it is **asymmetric across platforms**:
+
+| Platform | Server-documented | Plugin-owned |
+|---|---|---|
+| `linux_apt` | `apt install -y senzingsdk-runtime senzingsdk-setup` — installs *and* updates | `dpkg-query -W`, `apt-cache policy` |
+| `linux_yum` | `yum install -y senzingsdk-runtime senzingsdk-setup` | `rpm -q`, `yum check-update` |
+| `macos_arm` | `brew tap`, `brew trust`, `brew install --cask` | `brew outdated --cask`, `brew info --cask`, **`brew upgrade --cask`** |
+| `windows` | `scoop bucket add`, `scoop install` | `scoop status`, `scoop info`, **`scoop update`** |
+
+**On macOS and Windows the update command itself is plugin-owned.** Only on apt and yum does the
+update happen to use the same command the server documents. That is the strongest form of this
+spec's point and it is now stated at the step: the server documents *installing*, not *updating* —
+which is exactly the coverage gap sent upstream as a `feature` request on 2026-07-31. Had I
+implemented the spec's table as written, I would have labelled two plugin-owned commands as
+server-documented and shipped the same provenance defect I was fixing, one platform over.
+
+**Criterion 6 needed writing, not just checking.** It asks that the plugin-owned half "carry its
+real caveat: unverified on macOS and Windows in this repo's environment". Nothing in Step 1b said
+so. It is now stated in the actionable form rather than as testing trivia: the `brew` and `scoop`
+forms are exercised on Linux only, so *read what the command printed* rather than trusting its
+exit status — the same discipline INV-163 requires, applied to a command instead of a check. That
+strengthens the existing zero-exit-code warning rather than duplicating it.
+
+**On the mutation testing, since it is the evidence for the above.** Nine mutations, all caught —
+but five initially reported a missing target rather than a passing test, because `\n` passed
+through `python3 -c` argv is a literal backslash-n, and two more because I guessed the line
+wrapping instead of reading it. Re-run against real newlines and the actual wrapped forms, 9 of 9
+fail as they should. **That is the third time this session a "target missing" line has masqueraded
+as an escaped mutation** (the others: `_fold_to_latin1` vs `_pdf_escape` sharing a call at the same
+indent, and wrapped prose in `module-02`). A missing target is not a passing guard, and the two
+look identical in a loop's output — worth checking before believing a mutation escaped.
+
+## Invariants introduced
+
+- None. This is a provenance and wording fix. INV-080 (Senzing facts carry their tool, version and
+  date), INV-163 (say what could not be verified) and INV-194 (ask the tool that owns the fact)
+  already applied; the change makes the plugin's own text conform to them rather than adding a rule.

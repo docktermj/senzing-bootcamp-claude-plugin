@@ -126,6 +126,106 @@ class EachPlatformFamilyHasItsOwnMechanism(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)wrong for an rpm system")
 
 
+class CommandOwnershipIsDistinguished(unittest.TestCase):
+    """Half of Step 1b's commands are on loan from the server; half are not.
+
+    The preamble used to say "Get the platform's commands from sdk_guide(...) and use the
+    ones below" — two instructions, no precedence, over a list where only the *install*
+    command is server-documented. Verified 2026-07-31 against server 1.32.2 by reading all
+    four platform responses: `sdk_guide` returns install commands and *presence* checks
+    (`ls libSz.so`, `Test-Path Sz.dll`) and documents **no version query and no update
+    check on any platform**.
+
+    ⚠️ And on macOS and Windows even the *update* command is plugin-owned: the server
+    documents `brew install --cask` and `scoop install`, never `brew upgrade --cask` or
+    `scoop update`. Only apt and yum update via the same command the server documents.
+
+    Why it matters: an agent that fetches from `sdk_guide`, fails to find
+    `brew outdated --cask`, and substitutes the install command it *did* find would run
+    `brew install --cask` where a check was intended — performing the update before the
+    bootcamper has been asked.
+    """
+
+    def setUp(self):
+        self.section = step_1b()
+        self.flat = re.sub(r"\s+", " ", self.section)
+
+    def test_the_two_owners_are_named_with_precedence(self):
+        self.assertRegex(self.flat, r"(?i)Two kinds of command follow, and they have different owners")
+        self.assertRegex(self.flat, r"(?i)the\s+\*?\*?response wins")
+
+    def test_server_documented_commands_are_marked_as_on_loan(self):
+        self.assertRegex(self.flat, r"(?i)on loan — re-read it, do not trust the copy below")
+        self.assertRegex(self.flat, r"(?i)dated illustration")
+
+    def test_plugin_owned_commands_are_marked_as_having_nothing_to_re_ask(self):
+        self.assertRegex(self.flat, r"(?i)there is nothing to re-ask")
+
+    def test_it_says_a_missing_command_in_the_response_is_expected(self):
+        """The failure mode: a reader concludes the inlined list is wrong."""
+        self.assertRegex(self.flat, r"(?i)that is expected, not an error")
+
+    def test_the_server_documents_no_version_query_or_update_check(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)no version\s+query and no update check on any of the four platforms",
+        )
+
+    def test_the_macos_and_windows_update_command_is_plugin_owned(self):
+        """Corrects the spec's own table, which listed brew upgrade as documented."""
+        self.assertRegex(
+            self.flat, r"(?i)On macOS and Windows the update command is plugin-owned too"
+        )
+        self.assertRegex(self.flat, r"(?i)never `brew upgrade --cask` or\s+`scoop update`")
+
+    def test_only_apt_and_yum_update_via_the_documented_command(self):
+        self.assertRegex(
+            self.flat, r"(?i)Only on apt and yum is the update command the same"
+        )
+
+    def test_the_labels_are_inside_the_command_blocks_not_only_the_preamble(self):
+        """A reader who skims to the code fence must still see which kind it is."""
+        for fence_marker in (
+            "# plugin-owned — sdk_guide documents neither of these",
+            "# server-documented — re-read from sdk_guide",
+            "# ALL plugin-owned — sdk_guide documents brew tap / trust / install --cask only",
+            "# plugin-owned — sdk_guide documents scoop bucket add / scoop install only",
+        ):
+            with self.subTest(marker=fence_marker[:46]):
+                self.assertIn(fence_marker, self.section)
+
+    def test_the_yum_prose_form_is_labelled_too(self):
+        """It is prose rather than a fence, so it needs its own marking."""
+        self.assertRegex(self.flat, r"(?i)\*?plugin-owned\*?\s+—\s+`rpm -q")
+        self.assertRegex(self.flat, r"(?i)\*?Server-documented\*?\s+—\s+`sudo yum install")
+
+    def test_no_inlined_command_was_deleted(self):
+        """The plugin-owned half has no other source; removing it breaks the step."""
+        for command in (
+            "dpkg-query -W", "apt-cache policy", "rpm -q", "yum check-update",
+            "brew outdated --cask", "brew info --cask", "brew upgrade --cask",
+            "scoop status", "scoop info", "scoop update",
+        ):
+            with self.subTest(command=command):
+                self.assertIn(command, self.section)
+
+    def test_the_plugin_owned_half_says_it_is_linux_exercised_only(self):
+        """INV-163's discipline applied to a command: say what was not verified.
+
+        The brew and scoop forms are standard usage but no test here has run them — this
+        repo's suite is Linux. The actionable consequence is to read the command's output
+        rather than trust its exit status, which is what the text says.
+        """
+        self.assertRegex(self.flat, r"(?i)plugin-owned commands are exercised on Linux only")
+        self.assertRegex(self.flat, r"(?i)no test\s+here has ever executed")
+        self.assertRegex(self.flat, r"(?i)Treat their \*?output\*? as the thing to check")
+        self.assertIn("INV-163", self.section)
+
+    def test_the_asymmetry_is_tied_to_the_upstream_report(self):
+        """The server documenting installing-but-not-updating is the filed gap."""
+        self.assertRegex(self.flat, r"(?i)same\s+coverage gap reported upstream")
+
+
 class TheVersionComparisonTrapIsStated(unittest.TestCase):
     """The one-character difference Step 1's own fallback walks into."""
 
