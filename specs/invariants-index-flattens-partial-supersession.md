@@ -136,3 +136,50 @@ untouched — nothing here edits an invariant's statement.
 - Related specs: `specs/topical-index-for-the-invariants.md` (built the index and the binary
   model this corrects — its nine acceptance criteria all held; the gap is that none of them
   covered partial supersession).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The spec named five invariants; six are affected, and the sixth fails the opposite way.**
+The spec listed INV-079, INV-086 and INV-137 as partly superseded plus INV-063 and INV-069 as
+restored. Implementing it meant writing a classifier rather than editing three lines, and the
+classifier found **INV-104**: its *tab enumeration* is superseded by INV-155 while "every other
+guarantee here stands", yet the index listed it as fully **live**.
+
+That is the mirror image of the reported defect and it was not in the spec. Listing it live is
+*safe* — INV-104 does still bind — but it hides that its tab enumeration must not be trusted,
+which is the entire reason INV-155 exists. It is now in the partly-superseded sublist with its
+scope note, and `test_a_partly_superseded_rule_is_never_also_listed_as_live` pins the property.
+
+So the counts in the report are 8 fully superseded (INV-062, 064, 068, 071, 072, 088, 119, 120)
+and 6 partly superseded or restored (INV-063, 069, 079, 086, 104, 137) — not the 13-and-0 the
+index claimed, nor the 8-and-5 the spec implied.
+
+**The existing guard could not have caught any of it, and was written to.**
+`tests/test_invariants_index.py` already had `test_nothing_is_marked_superseded_that_is_not`,
+whose failure message reads *"a reader will skip a live rule"* — exactly this defect. It passed
+because its `actual()` matched any occurrence of `superseded by INV` anywhere in an invariant's
+body, so a clause-level supersession and a total one were indistinguishable. **The binary model
+was in the guard as well as in the index**, which is why a test written for this defect shipped
+alongside it. That class — a guard narrower than the property it claims — is
+`production-readiness-audit`'s Step 7 item 3, and this is a clean instance of it.
+
+**Criterion 5 was satisfied by removal plus a new guard, not by asserting the counts.** The
+spec allowed either. The counts are gone from the index prose and from this test file's own
+docstring (which carried "142 development rules", "4,614 citations" and "22 superseded", all
+drifted), and `test_no_count_is_pinned_in_the_index_prose` now fails if a count returns.
+
+**Three of my own bugs, all caught by the tests I was adding.** The parenthetical scope notes
+name the *replacing* invariant, so `re.findall(r"INV-(\d{3})")` counted INV-085/087/138/155 as
+sublist members and broke the exactly-one-group check — fixed by stripping parentheticals in a
+shared `ids_in()` helper. `^\s+INV-\d{3}` matched across a blank line because `\s` includes
+newlines, silently slicing away the prose the no-counts check was meant to read — caught only
+because that check asserts its own slice is non-vacuous first. And the two explanatory bullets I
+added were shaped `- **Name** — …`, which `GROUP_BLOCK` parses as index groups, creating two
+phantom groups; they now use a colon instead.
+
+**One mutation escaped and was a real test weakness.** `test_the_two_labels_give_opposite_
+instructions` used `next()`, so it checked only the *first* partly-superseded line and missed a
+"skip" injected into the third. It now iterates every occurrence of both labels under
+`subTest`. Two further escapes were no-op mutations rather than gaps — INV-162 mentions INV-193
+twice and INV-002 states the boundary test two ways, so single-instance replacements left the
+property satisfied.
