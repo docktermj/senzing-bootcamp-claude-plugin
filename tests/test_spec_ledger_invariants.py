@@ -27,6 +27,7 @@ them would be churn with no signal. The gate is forward-looking on purpose.
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -282,6 +283,58 @@ class TestCommitFieldHygiene(unittest.TestCase):
             bad,
             "`Commit:` must be a hash, `uncommitted`, or `committed (hash not "
             "recorded)` — free text makes the field unreadable:\n  " + "\n  ".join(bad),
+        )
+
+    def test_every_recorded_hash_resolves_to_a_real_commit(self):
+        """Hash-*shaped* is not hash-*valid*, and the difference hid for two weeks.
+
+        `test_commit_fields_use_the_fixed_vocabulary` accepts any 7–40 hex run, so a
+        hash that resolves to nothing passes it while answering the one question the
+        field exists for with a lie — and unlike `uncommitted`, it looks answered. On
+        2026-07-31, 22 of 228 entries recorded commits from a 2026-07-15/16 history
+        rewrite that no longer exist in the object store or any reflog. They were
+        repaired to the post-rewrite commits, but nothing would have caught them.
+
+        Skipped rather than failed when history is unavailable (shallow clone, no git,
+        not a work tree) — a partial clone must not read as a corrupt ledger.
+        """
+        if not (REPO_ROOT / ".git").exists():
+            self.skipTest("not a git work tree")
+        if subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "--is-shallow-repository"],
+            capture_output=True, text=True,
+        ).stdout.strip() == "true":
+            self.skipTest("shallow clone — pre-rewrite history is not present")
+
+        dangling, checked = [], 0
+        for name, _, body in entries():
+            m = COMMIT_FIELD.search(body)
+            if not m:
+                continue
+            value = m.group(1).strip()
+            if value.startswith("uncommitted") or "hash not recorded" in value:
+                continue
+            found = HASH.search(value)
+            if not found:
+                continue
+            # The primary hash is the first one; a repaired entry also cites the dead
+            # pre-rewrite hash in a trailing "(was `…`)" note, which must not be checked.
+            digest = found.group(0).strip("`")
+            checked += 1
+            if subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "cat-file", "-e", digest + "^{commit}"],
+                capture_output=True,
+            ).returncode:
+                dangling.append("%s: %s" % (name, digest))
+
+        self.assertGreater(checked, 100, "the scan is not vacuous")
+        self.assertEqual(
+            [], dangling,
+            "%d recorded commit hash(es) resolve to nothing — the field cannot answer "
+            "what it exists for. Find the surviving commit (its subject usually names "
+            "the spec, or it is the commit that added the entry's `## heading`) and "
+            "record it as `<new>` (was `<old>`, …):\n  %s"
+            % (len(dangling), "\n  ".join(dangling)),
         )
 
 
