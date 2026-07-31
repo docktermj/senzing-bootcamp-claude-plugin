@@ -173,3 +173,33 @@ decision, not taken here.
   lacks the fact; before recording that Senzing does not document X, also ask the tool that owns
   X in prose (`search_docs`), and scope every negative finding to the tool and parameters asked
   (recorded in `specs/INVARIANTS.md`, maintainer-approved 2026-07-31).
+
+## Upstream: follow-up sent 2026-07-31
+
+A **follow-up** to the 2026-07-31 submission was sent via
+`submit_feedback(category='bug')` after maintainer approval. ⛔ **Do not re-file either.**
+
+It carried what the first submission lacked: the membership is present in the indexed
+documentation (`flags_why` — "Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`") and missing only
+from `topic='flags'`'s structured `composite_members`, which makes this an **extraction**
+gap with a named source file rather than a documentation gap. Also sent: the corroborating
+binding defaults from `method_signatures` in the same response, the scope across all three
+`why_*` composites, and a three-step reproduction contrasting the empty field with
+`SZ_ENTITY_DEFAULT_FLAGS`'s nine members.
+
+Sent as `bug` rather than `feature` because two tools on the same server give different
+answers about the same flag, and the documentation already contains what the structured
+field omits.
+
+Scoped deliberately to the tool-vs-tool inconsistency — the only part verifiable this
+session. The null-entity-name consequence was described as a *shape* with no SDK build
+named, because the field observation behind it came from a run whose SDK version could not
+be confirmed (INV-080/INV-169).
+
+Anonymous, so **no reply is possible**; the server directs follow-up to support@senzing.com.
+A future submission is warranted only with something neither of these two carried — most
+likely a newer server version on which it still reproduces.
+
+**Re-check on the next sweep:** if `composite_members` becomes populated, the specific table
+row in `phase1-query-visualize.md` is unnecessary and only the general two-tool rule
+(INV-194) should remain.
