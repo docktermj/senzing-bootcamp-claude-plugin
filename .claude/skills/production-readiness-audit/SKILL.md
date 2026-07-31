@@ -1,0 +1,346 @@
+---
+name: production-readiness-audit
+description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honoured, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
+---
+
+# Production-readiness audit
+
+This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
+(SBCP). It is never invoked during a bootcamp.
+
+It is the **final static gate before `dry-run`**. When it passes, the SBCP should be
+consistent, coherent, complete and concise enough that a Bootcamper's experience is
+excellent — and whatever is left wrong is something only running the thing can find.
+
+This skill continues the `deep-dive-audit-*` series in `specs/IMPLEMENTED.md`
+(`2026-07-26`, `-27`, `-28`, `-28b`, `-30`, `-30b`). **Those six entries are required
+reading before a run** — see Step 1. They are the only record of what this audit
+actually finds, and re-deriving their findings is the most common way to waste a run.
+
+## Why this exists
+
+`specs/INVARIANTS.md` opens with four foundational constraints. Two of them are this
+skill's entire remit:
+
+- **INV-003** — The SBCP MUST be consistent, coherent, and complete.
+- **INV-004** — The SBCP MUST be production-ready.
+
+Every other invariant constrains a file, a script, a step or a string, so a test can
+hold it. These two are properties **of the whole**, which no test can hold — a suite
+asserts N things about N places and cannot notice that place N+1 disagrees with them.
+So INV-003 and INV-004 are enforced by a person doing this, or not at all.
+
+The six prior audits are the evidence that this is not ceremony. Each ran against a
+**fully green suite** and each found real defects anyway — 372 tests green in the
+first, 506, 573, 883, and 1059 in the last. Their own summaries say it plainly: *"none
+of the findings was mechanically enforced"*, and *"none of which any of the 1059
+existing tests could see."* A sample of what a green suite shipped:
+
+- **Every screenshot was being lost from every Bootcamper's recap PDF.** INV-161 made
+  image paths document-relative; `graduation/SKILL.md` said so correctly, and the three
+  other files that *produce* the path still wrote the old form. One rule, four sites,
+  fixed in one.
+- **A Bootcamper named 李明 got `?? (Li Ming)` at 34 pt on their certificate**, exit 0,
+  no warning — the page they frame.
+- **The shipped six-tab visualization app was non-conformant with a still-standing
+  invariant** whose text enumerated two tabs that had been removed, because the specs
+  that removed them registered no invariant.
+
+## What this skill is not
+
+Five neighbours overlap. Keeping them distinct keeps all five useful.
+
+| Skill | Asks |
+|---|---|
+| `dry-run` | Does the plugin work when **executed** — against the live server, a real filesystem, a human? |
+| `auto-test` | Has the **server** drifted under the calls the plugin already makes? |
+| `delegate-to-mcp-server` | What does the plugin still **own** that the server now owns? |
+| `compact-dev-environment` | What can the **development environment** stop carrying? |
+| **this skill** | Does the plugin agree **with itself and with its own ruleset**, in both directions? |
+
+`dry-run`'s own framing draws the line exactly:
+
+> Static analysis can only confirm the plugin agrees **with itself**. It cannot see
+> where the plugin disagrees with the world.
+
+This skill is the maximal version of the first half. It is the *last* static pass, so
+being thorough here is what makes `dry-run`'s time worth spending on the things only
+execution can reach.
+
+⛔ **The conversational invariants are out of scope and MUST be reported as such.**
+INV-005–INV-009 (one 👉 question, asked once, no unrequested skips) and every gate
+ordering rule govern what the model *does in a live turn*. Reading cannot establish
+them, and an assistant grading its own 👉 discipline proves nothing. Say they are
+untested and route them to `dry-run` phase 3. A report that lets them pass silently is
+a false clean bill of health.
+
+## The four properties
+
+The maintainer's standing prompt asks for three; the fourth was added because a plugin
+can satisfy all three and still be unusable through sheer bulk.
+
+| Property | Holds when | A violation looks like |
+|---|---|---|
+| **Consistent** | no two places disagree | `module-07/SKILL.md` described the retired A/B/C track model while its own `phase1` file described the current one |
+| **Coherent** | the parts compose into one thing that makes sense in order | a cross-reference citing INV-077 where INV-129 governs; a rule described in vocabulary retired two invariants ago |
+| **Complete** | everything promised exists, and every surface is reachable | two of three shipped slash commands documented nowhere; install docs covering macOS and Linux while INV-001 requires Windows |
+| **Concise** | not too much definition, not too little — *just right* | one rule restated in four files; a 10,850-word skill file where the reader needs the first screen |
+
+**On concision — the Goldilocks Principle.** Under-definition and over-definition fail
+the same way: the model does the wrong thing. Too little and it improvises; too much
+and the governing sentence is buried on screen three, which is functionally the same as
+absent. So the target is not "shorter" — it is **findable at the moment of use**.
+
+⛔ **Never cut rationale to make something shorter.** Every "observed:" clause in
+`INVARIANTS.md` and every "the reason is" in a skill file names a real defect, and that
+narrative is what stops the rule being re-argued or re-broken. `deep-dive-audit-2026-07-28b`
+records the cost of removing it: a corrected example with the reason stripped got
+"helpfully" corrected *back* to the broken form. The concision win is **merging
+duplicated statements and moving a rule to where it is used** — never deleting why.
+
+⚠️ **Concision is not currently an invariant.** INV-003 says "consistent, coherent, and
+complete" and `INVARIANTS.md` rule 2 forbids changing an invariant's meaning in place.
+So this property is audited because the maintainer asked for it, not because a rule
+binds it. If a run finds concision defects worth binding, **ask** whether to register a
+new invariant — do not read one into INV-003.
+
+## The bidirectional invariant contract
+
+This is the part no other skill does, and the direction that has repeatedly cost weeks.
+
+**Forward — does the plugin honour `INVARIANTS.md`?** For each invariant, find every
+site it binds and check them *all*. The dominant failure is not a rule ignored; it is a
+rule **applied incompletely**. INV-142 said "a bundled generator" and was implemented in
+one of two. INV-146's superseded "2-3 screenshots" survived in three places. INV-153 was
+implemented for match keys only. When you find one site wrong, **the finding is the
+class** — sweep for the rest before reporting.
+
+**Reverse — does `INVARIANTS.md` capture what the plugin actually guarantees?** When a
+change ships a durable rule and registers no invariant, the guarantee exists in the
+product and nowhere in the ruleset. Nothing binds future work to it, and nothing
+notices when a later change contradicts it. Both of these are real:
+
+- **INV-134** — "the Bootcamper's name is detected silently, never asked" shipped and
+  was ledgered with no invariant. Two files then cited **INV-076** as its authority — an
+  invariant about the Core-vs-Customized path choice, which says nothing about names.
+- **INV-155** — two specs removed visualization tabs and registered no invariant, so the
+  shipped app contradicted INV-104's still-standing enumeration.
+
+Run the mechanical half, then read every hit:
+
+```bash
+python3 .claude/skills/production-readiness-audit/conformance.py rules
+```
+
+It lists hard rules — the repo's own `⛔` / bolded MUST/NEVER convention — whose
+enclosing section cites no invariant. Measured 2026-07-31: **162 hard-rule lines, 16 in
+a section citing no invariant, across 11 files.** Each hit is *either* an unregistered
+rule (propose an invariant) *or* a missing citation to one that exists (fix the
+citation). Both are findings and they need different fixes; deciding which requires
+reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
+
+⛔ **Never propose deleting or renumbering an invariant.** `INVARIANTS.md` is
+append-only; a superseded invariant is *marked* superseded, and a wrong one gets a dated
+correction note. An invariant encoding a false premise is worse than a missing one — but
+removing it silently breaks every citation that resolved to it.
+
+## Step 1: Establish the baseline before looking at anything
+
+1. **Confirm the suite is green first.** `python3 -m pytest tests/ -q`. Every prior
+   audit began green; a red suite means you are debugging, not auditing, and findings
+   will be attributed to the wrong cause.
+2. **Read the six `deep-dive-audit-*` ledger entries** in `specs/IMPLEMENTED.md`. They
+   name what was already found, which invariants each established, and — most useful —
+   the *classes* that recur. Re-finding a fixed defect wastes the run; missing that a
+   class recurs wastes more.
+3. **Run every lead generator**, then read the hits:
+
+   ```bash
+   python3 .claude/skills/production-readiness-audit/conformance.py all
+   python3 .claude/skills/dry-run/coverage_reports.py both          # unguarded surface
+   python3 .claude/skills/compact-dev-environment/citations.py verify   # referential integrity
+   ```
+
+   ⛔ **These are lead generators, not verdicts.** A regex cannot tell a deliberately
+   restated rule from one that drifted, nor a worked illustration from a cached
+   authority. A run that reports these counts as findings has run a grep, not an audit.
+
+4. **Record what this environment cannot reach**, so the report discloses rather than
+   implies: is `fpdf2` installed? `pdftoppm`/poppler? a headless browser? `docker`?
+   `libSz.so`? Missing pieces are fine; silently skipping the paths that need them is
+   not (INV-111/INV-163).
+
+## Step 2: Sweep the invariants, forward
+
+Read `specs/INVARIANTS.md` in full — 194 invariants, and the per-module outcome blocks
+(INV-028–INV-049) are the ones most likely to have quietly stopped being true.
+
+For each invariant, ask two questions and prefer the second:
+
+1. Is it honoured **where I first look**?
+2. **What is the full set of sites it binds, and is it honoured in all of them?**
+
+Use the enumeration scan to prioritise, because enumerations rot fastest:
+
+```bash
+python3 .claude/skills/production-readiness-audit/conformance.py enumerations
+```
+
+Measured 2026-07-31: **24 of 194 invariants enumerate something** — an exact count, a
+closed list, or a series of three or more literals. An invariant stating a *property* survives
+change; one *listing members* breaks the moment a member moves, and it breaks silently
+because the list still reads authoritative. Check every enumeration against what the
+plugin ships **today**.
+
+## Step 3: Sweep the invariants, reverse
+
+Work the `conformance.py rules` output. For each hit, decide between:
+
+- **Unregistered rule** → the plugin guarantees something the ruleset does not record.
+  Draft the invariant, get the maintainer's sign-off on the wording (never record one
+  they have not agreed to), and append it per `INVARIANTS.md`'s own rules — next unused
+  ID, index entry in the same edit, provenance.
+- **Missing citation** → the rule *is* registered; the text just does not say which
+  invariant governs. Add the citation. This is not cosmetic: INV-183 requires a step
+  that generates an artifact to name its governing rules **at that step**, and a rule
+  with no ID is one a later editor cannot look up.
+- **Not a durable rule** → local instruction, one-off phrasing, or pedagogy. Out of
+  scope. Say so and move on.
+
+Also sweep the other way for **wrong** citations: an `INV-NNN` in shipped text whose
+subject does not match the claim it is attached to. Two are on record (INV-077 cited
+where INV-129 governs; INV-076 cited for the name rule). `citations.py verify` proves
+the ID *exists*; only reading proves it is the *right* one.
+
+## Step 4: Consistency and coherence
+
+- **Every cross-reference resolves and points at the right thing** — file paths,
+  step numbers ("pre-check 1a"), sibling phase files, invariant IDs.
+- **No file contradicts a sibling in the same skill.** The module-07 track-model defect
+  was a `SKILL.md` disagreeing with its own `phase1` file.
+- **Vocabulary is canonical.** Module names in full and exact (INV-079); no
+  abbreviations; no terminology retired by a later invariant.
+- **Rules described in current vocabulary.** A parenthetical explaining a rule in terms
+  of an invariant that has since been clarified is a coherence defect even when nothing
+  it says is false.
+- **Order makes sense.** A gate cannot depend on something a later step produces.
+
+## Step 5: Completeness
+
+- **Every enumerated thing exists** — files in the INV-050 layout tree, deliverables a
+  module promises, tabs the app claims, commands a doc lists.
+- **Every shipped surface is documented.** Slash commands, hooks, scripts, generated
+  artifacts. Two of three commands were once documented nowhere.
+- **Every platform is covered.** INV-001 makes Linux, macOS and Windows supported;
+  guidance covering two of three is a defect even when the third is untestable here —
+  disclose the untested half rather than omitting it.
+- **Every language is served.** INV-002 makes the SBCP language-agnostic; a rule stated
+  only for the reference implementation is incomplete.
+- **Every always-produced deliverable has a producing step and a verification step**
+  (INV-129 — verify the artifact, not the exit code).
+
+## Step 6: Concision
+
+```bash
+python3 .claude/skills/production-readiness-audit/conformance.py size
+python3 .claude/skills/production-readiness-audit/conformance.py duplication
+```
+
+Measured 2026-07-31: **42 shipped markdown files, 114,576 words**, the heaviest being
+`graduation/SKILL.md` at 10,850 and `module-02-sdk-setup/SKILL.md` at 9,335; **130
+repeated passages across 91 file pairs**.
+
+Neither number is a target. Use them to find:
+
+- **Repetition that has drifted.** Repetition *required* at a step is INV-183, not
+  redundancy — but where the same rule appears in several files, read them side by side
+  and check they still say the same thing. This is the same evidence trail as the
+  forward sweep's incomplete-application class, approached from the other end.
+- **A governing rule buried below the fold** of a long file, where the model reaches the
+  action before the constraint. Moving it up is a concision fix that removes nothing.
+- **Definition too thin** — a step that assumes a judgement the guidance never states.
+  Goldilocks cuts both ways, and this half is easy to forget because nothing looks wrong.
+
+## Step 7: The defect classes worth hunting, in value order
+
+Drawn from the six prior audits. The first three produced the highest-severity findings.
+
+1. **A rule applied to some of the sites it binds.** Every time. When you fix one site,
+   grep for the pattern and fix the class.
+2. **A string that is wrong only relative to a working directory or a runtime.** A bare
+   `scripts/…` path that works in the repo and fails in the Bootcamper's project; an
+   f-string interpolated at runtime so the `⛔ RESERVED` framing above the dict never
+   travelled with the value. Tests that model neither cannot see these.
+3. **A guard narrower than the invariant it claims to enforce.** The INV-146 guard's
+   regex required "most"|"best" after "2-3" and scanned two of three call sites, so it
+   passed while three violations shipped. Read what a guard *asserts*, not its name.
+4. **A stale enumeration inside an invariant** (Step 2).
+5. **A cross-reference to the wrong invariant** (Step 3).
+6. **A comment or docstring claiming a test exists that does not.** One generator's
+   comment claimed `test_brand_sync.py` asserted its palette; it did not.
+7. **An inlined constant diverging from its source of truth** — a fallback palette, a
+   duplicated table, a figure hardcoded where the guidance says to look it up.
+8. **A claim about behaviour that the code stopped doing** — "silently skips" where the
+   script now names each drop on stderr.
+
+## Step 8: What to do with a finding
+
+Follow `dry-run`'s discipline, which exists because findings held in conversation die at
+session end:
+
+1. ⛔ **Write it into `specs/` as you find it, before fixing anything** — one spec per
+   root cause, using `../feedback-to-specs/spec-template.md`. Cite `file:line`.
+2. **Fix the class, not the instance,** where the class is cheap to remove.
+3. **Write a repo-level test** (`tests/`, stdlib only, no `plugins/` import — INV-108).
+4. ⛔ **Negative-control it.** Reintroduce the defect, confirm the test fails, revert. A
+   guard whose docstring claims more than its assertion checks certifies what it never
+   tested. Verify the mutation actually landed — a "target missing" line and an escaped
+   mutation look identical in a loop's output.
+5. **Record the outcome in `specs/IMPLEMENTED.md`**, and either register the invariant it
+   establishes or state that it establishes none (`tests/test_spec_ledger_invariants.py`
+   enforces this). An audit that changes shipped code and leaves no ledger entry is the
+   failure adjacent to the one INV-182 prevents — follow the `deep-dive-audit-*`
+   precedent and record it as a dated `## production-readiness-audit-<date>` entry
+   marked **Not a spec**.
+6. **Correct an invariant in place when the invariant is what is wrong** — a dated note
+   saying what was verified and when. Never delete or renumber it.
+
+⛔ **Do not end a run with unwritten findings.** Before reporting, list what you found
+and confirm each is in a spec or the ledger. "I described it in the report" is not
+recorded; a report is a message, and messages are not durable.
+
+## Step 9: Report
+
+- **Lead with anything that breaks a documented path**, not the longest list. Severity
+  ordering, not discovery order.
+- **Name the spec file each finding was written into**, and say which are fixed and which
+  are recorded-but-open.
+- **State the verdict on each of the four properties separately.** "Consistent and
+  complete; two coherence defects; concision unchanged" is information. A single
+  pass/fail is not.
+- **Say what you verified as correct**, briefly — it stops the next audit re-checking it.
+- ⛔ **State the coverage limits explicitly**, including that the conversational
+  invariants were not tested and need `dry-run` phase 3, and any path this environment
+  could not exercise.
+- **Report your own mistakes.** A wrong probe or an over-claimed fix, said plainly. The
+  methodology's value depends on the reader trusting the parts that did work.
+- **Offer `dry-run` as the next step.** This skill is the gate before it, not a
+  substitute for it.
+
+## Guardrails
+
+- **Report before changing.** Present findings and let the maintainer choose what to fix;
+  fix in place only when asked. Every prior audit worked this way.
+- **Never mark a property satisfied that you did not check.** An unexamined area is a
+  disclosed gap, not a pass.
+- **The MCP server outranks the plugin on every Senzing fact**, and a fact is re-asked
+  this session or not asserted (INV-080). Do not launder a Senzing claim out of a spec,
+  the ledger, or this file. Most audit findings are internal consistency and touch no
+  Senzing fact — say so explicitly rather than implying a re-check happened.
+- **`INVARIANTS.md` is append-only.** New invariants need the maintainer's sign-off on
+  the wording, the next unused ID, and an index entry in the same edit.
+- **`.claude/` never ships.** `propagate.sh` mirrors `plugins/`, `.claude-plugin/`,
+  `docs/` and `README.md` only, so this skill and its helper stay maintainer-side.
+- **Apply the Goldilocks Principle to this file too.** If a future run finds this skill
+  has grown a section nobody reads, cutting it is in scope — provided the reason it was
+  written survives somewhere.
