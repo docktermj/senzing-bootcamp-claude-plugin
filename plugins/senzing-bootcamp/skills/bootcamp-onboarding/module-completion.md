@@ -151,7 +151,10 @@ appended (2b), that block is superseded. Do two things:
   from `docs/bootcamp_recap.md` (the finalized section replaces it — this keeps the
   recap clean and never rewrites a completed `## {Name}` section).
 - Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
-  module starts a fresh checkpoint.
+  module starts a fresh checkpoint. Either is safe: `checkpoint-tick.py` lays a fresh
+  empty scaffold back down on the next turn if you delete it, and an emptied file is
+  treated as an unfilled scaffold — the fold hooks skip both rather than appending an
+  empty block to the recap.
 
 ## Capturing visualization screenshots (optional)
 

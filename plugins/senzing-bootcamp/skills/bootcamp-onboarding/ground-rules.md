@@ -380,6 +380,12 @@ which interface. The bootcamp runs in more than one, and the names are not inter
   and `SessionStart` hooks fold it into `docs/bootcamp_recap.md` (append-only, idempotent). It is a
   single small file updated at step boundaries (INV-012), not per sub-step, and it is finalized and
   cleared on module completion (see `module-completion.md`).
+  **The plugin creates the file; you write what is in it.** `checkpoint-tick.py`
+  (`UserPromptSubmit`) lays down an empty scaffold within a turn of the bootcamp starting, so the
+  path always exists and you never have to create it — but a scaffold holds no narrative, and the
+  fold hooks skip it and say so on stderr. An unfilled checkpoint is therefore the same loss as a
+  missing one: on a mid-module interruption the recovery path finds nothing. Writing the narrative
+  is the half no hook can do for you.
 
 ## Verbosity
 

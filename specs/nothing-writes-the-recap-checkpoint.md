@@ -119,3 +119,57 @@ instructions imply a file that routinely exists.
 - Upstream: not applicable.
 - Related specs: `specs/recap-pdf-generator-fail-loudly-on-content-loss.md` (INV-111, the
   silent-no-op rule this invokes), `specs/consolidate-recap-per-module-summary.md` (INV-103).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**Option A was implemented, but it cannot deliver its own premise as written, and the
+difference matters.** The spec says to have `recap_checkpoint.py` "own creation as well as
+folding, invoked from the same hook family that already runs at step boundaries, so the file
+exists without model compliance." Two problems:
+
+1. **There is no step-boundary hook.** The available events are `SessionStart`,
+   `UserPromptSubmit`, `PreToolUse`, `Stop`, `PreCompact`, `SessionEnd`. A bootcamp module's
+   "step boundary" is a conversational construct, not a tool event.
+2. **A hook cannot author prose.** The checkpoint's entire value is the accumulating
+   narrative, and no deterministic component can write it. `fold_checkpoint()` also no-ops on
+   an empty checkpoint, so merely creating an empty file would have achieved nothing.
+
+So creation is deterministic and the **narrative is still model-authored**. What shipped is
+the honest split, and it is stated that way in `ground-rules.md` rather than implied away:
+
+- `ensure_checkpoint()` owns the file's existence, called from a **new `UserPromptSubmit`
+  hook** (`scripts/checkpoint-tick.py`, wired in `hooks.json`). Per-turn rather than at
+  session start because a bootcamp becomes active *partway through* a session —
+  `config/bootcamp_progress.json` is written during onboarding, by which time `SessionStart`
+  has already run and found no bootcamp. Only a per-turn hook creates the file within a turn
+  of the bootcamp starting.
+- **The reminder now arrives in time**, which is consequence #1 of the spec's Problem and the
+  half that actually changes compliance. It is emitted on the turn the file is created, not
+  from `PreCompact` — which cannot fire until a compaction is already under way.
+- `fold_checkpoint()` reports all four outcomes on stderr, and **distinguishes "missing" from
+  "present but unfilled"** (INV-111). The spec asked only for "folded anything or not"; those
+  are different failures — nobody created it versus nobody wrote to it — and conflating them
+  would have reproduced the silence at one remove.
+
+Three things shipped that the spec does not mention:
+
+- **A scaffold must never be foldable.** `generate_recap_pdf.py:772` warns when a
+  `RECAP-CHECKPOINT` block survives into the recap, so folding an empty scaffold would append
+  a meaningless block *and* raise a spurious warning at graduation. `checkpoint_state()`
+  returns `missing` / `scaffold` / `filled`, and a scaffold fold writes **nothing at all** —
+  not even an empty recap. Pinned by `test_folding_a_scaffold_writes_nothing_at_all`.
+- **All reporting goes to stderr, never stdout.** `UserPromptSubmit`'s stdout is a JSON
+  channel; a status line there corrupts the payload. Mutation-proven: redirecting `_report`
+  to stdout breaks seven tests including the JSON parse.
+- **Two shipped texts became wrong once the file normally exists**, neither in the spec's
+  Affected files. `graduation/SKILL.md:379` said "if an in-progress recap checkpoint
+  **remains**" — which now matches a scaffold, so graduation would fold an empty block and
+  could report an interruption that never happened; it now keys on a narrative between the
+  markers. And `hooks/README.md`'s hook table enumerates the wiring, so it would have shipped
+  a stale list.
+
+Criterion 4 (INV-059's superseding note) is **not applicable** — it is scoped to Option B, and
+INV-059 is now satisfied rather than superseded. Criterion 6 (INV-103, append-at-close) is
+untouched: `module-completion.md` step 2b is unchanged and `tests/test_recap_pdf_guard.py`
+still passes. No new invariant is proposed: INV-059 already required the checkpoint, and this
+implements it rather than establishing a new rule.

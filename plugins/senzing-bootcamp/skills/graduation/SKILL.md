@@ -376,13 +376,18 @@ and the PDF only — it is **never** shown in the bootcamp output (INV-012) — 
 hostname, username, IP address, or any other personal/host identifier (INV-065). Like every
 graduation step it warns-and-continues: if a value cannot be gathered, record "Unknown" and proceed.
 
-If an in-progress recap checkpoint remains at `docs/progress/recap_checkpoint.md` (a
-module interrupted before completion), fold its content into that module's
+If an in-progress recap checkpoint at `docs/progress/recap_checkpoint.md` still holds a
+**narrative** (a module interrupted before completion), fold its content into that module's
 `## {Module name}` section (append only), then remove the
 `<!-- RECAP-CHECKPOINT:START -->` … `<!-- RECAP-CHECKPOINT:END -->` block from
 `docs/bootcamp_recap.md` and clear the checkpoint. This ensures the recap carries any
 narrative captured from an interrupted module and the PDF renders clean, completed
 sections.
+⚠️ **The file existing is not evidence a module was interrupted.** `checkpoint-tick.py`
+creates it as an empty scaffold of HTML comments while the bootcamp runs, so the normal
+state at graduation is "present and unfilled". Fold only when there is real content
+**between** the `START` and `END` markers; a scaffold-only checkpoint is nothing to fold
+and nothing to report.
 
 **Backfill orphaned screenshots (before rendering).** Scan `docs/visualizations/*.png`. For any PNG
 **not already referenced** by an `![...](...)` image line in `docs/bootcamp_recap.md`, embed it into
