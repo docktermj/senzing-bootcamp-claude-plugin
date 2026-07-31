@@ -20,17 +20,31 @@ loses the reason a rule exists.
 
 The four asset classes look similar and behave completely differently, because
 each is either an **address** other things point at, or a **record** that stands
-alone. Measured in this repo on 2026-07-30:
+alone. Measured in this repo on 2026-07-31:
 
 | Asset | What it is | Citations | Safe operation |
 |---|---|---|---|
-| Invariant `INV-NNN` | an **address**: 5,210 live citations across plugin text, specs, tests and skills — **plus 753 in commit messages, which cannot be edited** | very high | merge, supersede, trim — **never renumber casually** |
+| Invariant `INV-NNN` | an **address**: 4,981 live citations across plugin text, specs, tests and skills — **plus 813 in commit messages, which cannot be edited** | very high | merge, supersede, trim — **never renumber casually** |
 | Spec file | a **record**; its address is the `## <name>` heading in `IMPLEMENTED.md` | moderate | archive (move), rarely delete |
 | Test | **enforcement**; deleting one silently removes a guarantee | n/a | merge traversals, never merge assertions |
 | Feedback archive | a **record**; its address is the `entry_id` hash in `feedback/PROCESSED.jsonl` | low | prune files, **never prune ledger lines** |
 
 **Never break an address. Records may be moved or pruned.** That single rule
 decides most calls this skill has to make.
+
+⚠️ **Re-measure these numbers; do not cite them.** The 2026-07-30 versions of the
+two figures above were **wrong the day they were written** — the table claimed
+5,210 live citations and Step 2 claimed 43 uncited invariants, while the tools
+shipped in that same commit (`f4a8e56`) reported **4,587** and **93**. Neither
+tool has been modified since, so there is no counting-method explanation; they
+were simply never measured. The 43 was the costlier one, because Step 2 built a
+whole guidance section on it: a later maintainer seeing 91 would reasonably infer
+that ~48 invariants had lost their enforcement, when the real movement was
+93 → 91, i.e. slightly better. This is the failure Step 4's first item describes —
+a false claim made load-bearing — occurring in this skill's own prose, where
+re-measuring never reaches it because a reader trusts the stated figure instead.
+So: run Step 1, use what it prints, and treat every number in this file as a
+dated illustration of scale.
 
 ## Renumbering invariants: read this before proposing it
 
@@ -39,7 +53,7 @@ cost/benefit in this repo. `specs/INVARIANTS.md` forbids it in its own rules
 ("IDs are permanent references"), and the reason is measurable rather than
 stylistic:
 
-- **753 `INV-NNN` citations live in commit messages.** Git history is immutable.
+- **813 `INV-NNN` citations live in commit messages.** Git history is immutable.
 - After a renumber, those citations do not dangle — they **silently resolve to a
   different real invariant**. A 2026-07-30 commit explaining a fix to "INV-132"
   would, post-renumber, point at whatever now holds 132. Dangling references get
@@ -61,7 +75,7 @@ authorized operation and it MUST:
    with the date), kept forever, so a historical citation can be resolved by hand.
 3. Rewrite every live citation mechanically (never by eye) and then pass
    `citations.py verify` with zero unresolved and zero unexpected IDs.
-4. State in the report, plainly, that the 753 commit-message citations are now
+4. State in the report, plainly, that the 813 commit-message citations are now
    wrong and that `RENUMBERING.md` is the only way to read them.
 
 Item 4 is not a formality. A maintainer who has not been told this will later
@@ -126,7 +140,7 @@ every existing citation still resolves. Propose merges only where the rules are
 genuinely the same — an invariant that is a *special case* of another is not a
 duplicate, and collapsing it loses the case.
 
-**On the 43 invariants no test cites** (measured 2026-07-30): "no test cites it"
+**On the ~91 invariants no test cites** (measured 2026-07-31): "no test cites it"
 is a prompt, not a verdict. Three different things produce it:
 
 - The invariant governs **prose the tests do not read** (module wording, question
@@ -146,14 +160,14 @@ A spec is a record of a decision; the ledger heading is what makes it findable.
 - **Implemented and stable** → leave them. ⛔ **Archiving was measured on 2026-07-30
   and rejected**; an earlier draft of this skill recommended it, wrongly. Three
   findings, all of which a future run should re-check rather than re-derive: (a) the
-  benefit is **3.5 ms** — spec discovery over 202 files is a glob, and no maintainer
-  reads 198 spec files, they read the computed list; (b) `feedback-to-specs` Step 4
+  benefit is **3.5 ms** — spec discovery over 215 files is a glob, and no maintainer
+  reads 212 spec files, they read the computed list; (b) `feedback-to-specs` Step 4
   lists **every** `specs/*.md` to deduplicate against, so archiving would hide solved
   problems and it would start writing duplicate specs, silently; (c)
   `tests/test_spec_ledger_invariants.py` resolves an invariant's `Source:` via
   `SPECS / f"{name}.md"`. Archiving is only worth revisiting if those consumers are
   taught to read `specs/archive/` **first**, and the reading burden is
-  `IMPLEMENTED.md` (2,873 lines) regardless, which archiving does not touch.
+  `IMPLEMENTED.md` (2,986 lines) regardless, which archiving does not touch.
 - **Implemented but the change was later reverted or superseded** → the spec is
   now *misleading*, because it reads as describing shipped behaviour. Do not
   delete it: append a dated note saying what superseded it, then archive. The
@@ -163,8 +177,8 @@ A spec is a record of a decision; the ledger heading is what makes it findable.
 - **Never implemented and no longer wanted** → the only real delete candidate,
   and it still needs the maintainer's explicit yes.
 
-⛔ **Do not delete a spec to make a count smaller.** `IMPLEMENTED.md` was 2,873
-lines on 2026-07-30 and is the actual reading burden; the spec files are looked at
+⛔ **Do not delete a spec to make a count smaller.** `IMPLEMENTED.md` was 2,986
+lines on 2026-07-31 and is the actual reading burden; the spec files are looked at
 one at a time. Archiving helps the glob; deleting helps nothing and costs
 provenance.
 
@@ -172,7 +186,7 @@ provenance.
 
 ⛔ **Speed is not the reason to touch these tests.** Measured 2026-07-30: the four
 files that walk the corpus more than once run in **~0.3 s each** against 42 files /
-772 KB, while the suite's 67 s is dominated by PDF rendering (six tests at ~1.5 s
+786 KB, while the suite's 67 s is dominated by PDF rendering (six tests at ~1.5 s
 doing real fpdf2 work). An earlier draft of this skill cited "17 separate walks" and
 implied consolidating them mattered; the count conflated `glob` with `rglob`, the real
 figure is nine files, and the saving is unmeasurable. **Do not consolidate for
@@ -212,12 +226,53 @@ took item 4 and left the rest standing:
    needs a not-vacuous guard, and this repo already uses that idiom
    (`test_the_scan_is_not_vacuous`); add it where it is missing.
 
+   ⚠️ **Grep cannot find this — read every hit, or report nothing.** On 2026-07-31 a
+   line-based scan for a count assertion flagged **ten** files as unguarded. On reading
+   them, **all ten were false positives** and the real answer was *zero* — every
+   corpus-walking test in this repo is already guarded. Four distinct reasons, each of
+   which will recur:
+
+   - **The guard spans lines.** `assertGreaterEqual(\n  len(...)` does not match a
+     single-line pattern (`test_markdown_is_actually_being_scanned`,
+     `test_the_check_is_actually_scanning_deferrals`).
+   - **The guard names a member instead of counting.**
+     `test_generated_html_deliverables.py` asserts two specific filenames are in the
+     sweep's result. That is *stronger* than a count — a count passes on the wrong
+     files — so a detector looking for `assertGreater` scores the better idiom as absent.
+   - **Empty is the pass condition.** `test_verbatim_check_limitation.py` asserts
+     `assertEqual([], PLUGIN.rglob("sz_verbatim_check*.py"))` — the plugin must ship no
+     copy of the checker. A not-vacuous guard there would invert the test.
+   - **The glob is over a fixture the test just created**, not the corpus
+     (`test_feedback_ledger.py` globs its own tmpdir). Vacuity is impossible.
+
+   So do not report this class from a grep at all. The signal is narrow — a glob over a
+   **real** corpus path whose results are *iterated* rather than *asserted about*, with
+   no count check **and** no named-member check anywhere in the file — and confirming it
+   means reading the file. A ten-hit list relayed as ten findings is how a clean result
+   gets reported as a backlog.
+
 ## Step 5: Assess the feedback
 
-Check the actual size before proposing anything. On 2026-07-30 the archive was
-**3 files, ~40 KB, 20 ledger entries** — not a burden, and no pruning was
+Check the actual size before proposing anything. On 2026-07-31 the archive was
+**4 files, 80.4 KB, 28 ledger entries** — not a burden, and no pruning was
 warranted. Say so rather than inventing work; a skill that always finds something
 to delete is a liability.
+
+The more useful check at this size is not the total but **whether every entry has a
+disposition**: `census` reports that, and an entry left at `unrecorded` has lost the
+entry→spec link the ledger exists to hold. Correct one with
+`feedback_ledger.py annotate <entry_id> <disposition>`, which appends a superseding
+line — the ledger reads last-wins and is never edited in place.
+
+⚠️ **Read the ledger last-wins, and do not trust a single `unrecorded` line.** On
+2026-07-31 `census` reported one entry with no disposition; the *next line in the
+ledger* already named its spec, because it had been corrected on 2026-07-28. The bug
+was in `census`, which read raw lines instead of collapsing by `entry_id` — and the
+run wasted an append "fixing" a ledger that was already right. `feedback_state()` now
+collapses last-wins and reports how many lines were superseded, and
+`tests/test_citation_census.py` pins it. The general lesson outlives the bug: in an
+append-only ledger, **the presence of a bad line is not evidence of a bad state** —
+only the last line for a key means anything.
 
 When it does grow:
 

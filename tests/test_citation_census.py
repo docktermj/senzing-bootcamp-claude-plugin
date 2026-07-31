@@ -170,6 +170,63 @@ class VerifyCatchesWhatCompactionBreaks(unittest.TestCase):
         self.assertEqual(0, self.run_verify(REPO_ROOT))
 
 
+class TheFeedbackLedgerIsReadLastWins(unittest.TestCase):
+    """`PROCESSED.jsonl` is append-only; a disposition is corrected by a later line.
+
+    A reader that treats every line as a distinct entry reports the *superseded* value
+    next to the current one. On 2026-07-31 `census` did exactly that, reported a phantom
+    undisposed entry whose very next ledger line already named the right spec, and the
+    compaction run "fixed" it with a redundant no-op append. These assert the collapse
+    behaviourally — a raw-line reader passes none of them.
+    """
+
+    UNRECORDED = {"entry_id": "e1", "title": "t", "archive": "F_1.md",
+                  "disposition": "unrecorded"}
+    CORRECTED = {"entry_id": "e1", "title": "t", "archive": "F_1.md",
+                 "disposition": "specs/real-spec.md"}
+
+    def state(self, entries):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = scratch(tmp, invariants="- **INV-001** — a rule.\n",
+                           feedback=([("F_1.md", "x")], entries))
+            return CIT.feedback_state(root)
+
+    def test_a_superseding_line_replaces_the_disposition_it_corrects(self):
+        _archives, entries, lines = self.state([self.UNRECORDED, self.CORRECTED])
+        self.assertEqual(2, lines, "both lines must still be read")
+        self.assertEqual(1, len(entries), "one entry_id is one entry, not two")
+        self.assertEqual("specs/real-spec.md", entries[0]["disposition"])
+
+    def test_the_earlier_line_does_not_win(self):
+        """Order matters: the fix is last-wins, not first-non-unrecorded."""
+        _archives, entries, _lines = self.state([self.CORRECTED, self.UNRECORDED])
+        self.assertEqual("unrecorded", entries[0]["disposition"],
+                         "a later line wins even when it is the less complete one")
+
+    def test_distinct_entries_are_not_collapsed_together(self):
+        other = dict(self.CORRECTED, entry_id="e2")
+        _archives, entries, lines = self.state([self.UNRECORDED, self.CORRECTED, other])
+        self.assertEqual(3, lines)
+        self.assertEqual({"e1", "e2"}, {e["entry_id"] for e in entries})
+
+    def test_an_entry_with_no_id_is_kept_rather_than_dropped(self):
+        """It cannot be superseded, but it must still be counted and reported."""
+        _archives, entries, _lines = self.state(
+            [{"title": "no id", "archive": "F_1.md"}, {"title": "also none",
+                                                       "archive": "F_1.md"}])
+        self.assertEqual(2, len(entries), "id-less lines must not collapse onto each other")
+
+    def test_the_live_ledger_has_no_effectively_undisposed_entry(self):
+        """The real check Step 5 wants — run against the repo, not a fixture."""
+        _archives, entries, _lines = CIT.feedback_state(REPO_ROOT)
+        self.assertTrue(entries, "the scan is not vacuous")
+        undisposed = [e.get("title") for e in entries
+                      if e.get("disposition") in (None, "", "unrecorded")]
+        self.assertEqual([], undisposed,
+                         "every entry needs its spec link; correct one with "
+                         "feedback_ledger.py annotate <entry_id> <disposition>")
+
+
 class TheSkillDocumentsWhatTheScriptCannotProtect(unittest.TestCase):
     """The renumbering hazard is the reason the skill has a default, so it must be stated."""
 

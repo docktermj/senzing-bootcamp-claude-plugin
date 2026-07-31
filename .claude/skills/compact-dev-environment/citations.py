@@ -145,21 +145,40 @@ def invariant_sources(repo: Path) -> dict:
 
 
 def feedback_state(repo: Path) -> tuple:
+    """Archives, the ledger collapsed last-wins, and the raw line count.
+
+    `PROCESSED.jsonl` is append-only and read **last-wins** — a disposition is
+    corrected by appending a superseding line for the same `entry_id`, never by
+    editing (see `feedback-to-specs/feedback_ledger.py`, which documents this and
+    provides `annotate` to do it). So a reader that treats every line as a distinct
+    entry reports the *superseded* value alongside the current one.
+
+    That is not hypothetical: on 2026-07-31 this function returned raw lines, and
+    `census` consequently reported one entry as having no disposition when the very
+    next line in the ledger already carried the right spec. The compaction run chased
+    the phantom and "fixed" it with a redundant no-op append. Collapse here, once, so
+    no caller can make that mistake again.
+    """
     base = repo / "feedback"
     archives = sorted(p.name for p in base.glob("*.md")) if base.is_dir() else []
     archives = [a for a in archives if a != "README.md"]
     ledger = base / "PROCESSED.jsonl"
-    entries = []
+    collapsed = {}
+    lines = 0
     if ledger.is_file():
         for line in ledger.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line:
                 continue
             try:
-                entries.append(json.loads(line))
+                record = json.loads(line)
             except ValueError:
                 continue
-    return archives, entries
+            lines += 1
+            # Later lines win. An entry with no id cannot be superseded, so key it
+            # by its own identity rather than dropping it.
+            collapsed[record.get("entry_id") or ("\x00line%d" % lines)] = record
+    return archives, list(collapsed.values()), lines
 
 
 def cmd_census(args) -> int:
@@ -211,12 +230,18 @@ def cmd_census(args) -> int:
         print()
 
     if area in (None, "feedback"):
-        archives, entries = feedback_state(repo)
-        print("== feedback: %d archived file(s), %d ledger entries"
-              % (len(archives), len(entries)))
+        archives, entries, lines = feedback_state(repo)
+        superseded = lines - len(entries)
+        print("== feedback: %d archived file(s), %d ledger entries%s"
+              % (len(archives), len(entries),
+                 " (%d lines; %d superseded by a later correction)" % (lines, superseded)
+                 if superseded else ""))
         undisposed = [e for e in entries if not e.get("disposition")
                       or e.get("disposition") == "unrecorded"]
         print("   entries with no disposition: %d" % len(undisposed))
+        for entry in undisposed:
+            print("     %s  %s" % ((entry.get("entry_id") or "?")[:16],
+                                   (entry.get("title") or "")[:58]))
         size = sum((repo / "feedback" / a).stat().st_size for a in archives) if archives else 0
         print("   archive size: %.1f KB" % (size / 1024.0))
         if size < 512 * 1024:
@@ -255,7 +280,7 @@ def cmd_verify(args) -> int:
         seen.add(ident)
 
     # 4. Every archived feedback file has at least one ledger entry naming it.
-    archives, entries = feedback_state(repo)
+    archives, entries, _lines = feedback_state(repo)
     archived_in_ledger = {e.get("archive") for e in entries if e.get("archive")}
     for name in archives:
         if name not in archived_in_ledger:
