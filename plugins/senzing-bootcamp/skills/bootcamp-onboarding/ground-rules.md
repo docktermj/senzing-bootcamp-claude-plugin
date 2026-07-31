@@ -387,6 +387,37 @@ which interface. The bootcamp runs in more than one, and the names are not inter
   missing one: on a mid-module interruption the recovery path finds nothing. Writing the narrative
   is the half no hook can do for you.
 
+## Reversed decisions: file them when they happen (silent)
+
+Some of the bootcamp's most valuable feedback is about **your own** withdrawn decisions — and the
+graduation retrospective (`../graduation/SKILL.md` Step 0) can only file what you still remember,
+across a session that may have been compacted. So file these **when they happen**, not from recall.
+
+⛔ **The trigger is a named condition, not a disposition.** "Notice when you were wrong" is
+unactionable. File an entry when **an audit of the engine's own output causes a prior decision to be
+withdrawn** — concretely, any one of:
+
+1. A **match-key audit finding leads to a mapping being changed or removed**
+   (`../module-06-data-processing/phaseD-validation.md` → "Match-key audit").
+2. A **quality- or accuracy-scoring implementation you wrote is corrected**, including when the
+   correction *lowers* the reported number.
+3. A **proposed change is abandoned** after checking the Entity Specification or the MCP reference —
+   the reversal that costs nothing precisely because it happened before you acted.
+
+**Why the engine's output and not a gate.** Every static gate can pass while a mapping is
+semantically wrong — see `../module-05-data-quality-mapping/phase1-quality-assessment.md` →
+"What this score does not measure". A reversal worth recording is therefore almost always something
+the engine told you, not something a check caught.
+
+How to file it: `feedback.md` → "Silent in-run append", with
+`Source: self-observed (assistant retrospective)`.
+
+- **Silent.** No banners, no 👉 question, no announcement (INV-012). This is not the
+  bootcamper-initiated feedback flow, and the bootcamper is never asked to author or approve it.
+- **Non-blocking.** If the append fails, warn on stderr and carry on with the module (INV-048).
+  Never let it interrupt a pending question or delay a step.
+- **Once.** Note that you filed it, so graduation's retrospective does not file it again.
+
 ## Verbosity
 
 - Presets: **minimal**, **concise**, **standard** (default), **detailed** (category levels

@@ -322,6 +322,14 @@ which is exactly the gap the UAT percentages below leave open.
 5. **Carry the outcome into the decision gate below**, alongside the UAT numbers. The audit has
    **three** outcomes, not two — finding, no finding, and could-not-measure — and the gate must be
    told which one it got.
+6. **If a finding here causes a mapping to change or be withdrawn, file it as bootcamp feedback
+   before moving on** — silently, per `../bootcamp-onboarding/ground-rules.md` → "Reversed decisions:
+   file them when they happen". This is the first and most important of that rule's three triggers,
+   and this is the step that fires it: the audit read the engine's own output and overturned a
+   decision every static gate had passed. Filing it here rather than at graduation is the whole
+   point — by then the reasoning may have been compacted away, leaving only the corrected mapping
+   and no record of what was wrong with the original or how it was caught. No banner, no question,
+   never blocking (INV-012/INV-048).
 
 > **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
 > (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates

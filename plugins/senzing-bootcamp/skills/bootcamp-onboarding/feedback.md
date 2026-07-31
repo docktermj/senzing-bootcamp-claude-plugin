@@ -233,3 +233,47 @@ never automatic.
   Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
 - Do NOT submit feedback anywhere external on your own initiative. The **only** sanctioned external path is Step 3c: an `mcp-server`/`both` verdict, the local entry already saved, the exact message shown, and the bootcamper answering yes to the pinned question. Everything else — `plugin` and `unclear` verdicts, and any other destination — stays local.
 - The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off by **re-presenting the exact pending 👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 ends the turn (INV-005). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.
+
+## Silent in-run append (no bootcamper involvement)
+
+⚠️ **This is a different entry point to the same file, not a variant of the flow above.**
+Everything from Step 1b to Step 4 — the entry banner, the 👉 questions, the exit banner, the
+resumed question — belongs to the *bootcamper-initiated* flow and **none of it applies here**.
+What is shared is the file, the Step 3 template, and Step 3b's verify-it-landed discipline.
+
+**When to use it.** When `ground-rules.md` → "Reversed decisions: file them when they happen"
+fires: an audit of the engine's own output has caused you to withdraw a prior decision. Also used
+by `../graduation/SKILL.md` Step 0, which files the same way at the end of the run.
+
+**How:**
+
+1. Ensure the file exists exactly as Step 1 describes (same path, same header).
+2. Append a `## Improvement:` entry using the **Step 3 template verbatim**, with:
+   - **`Source:` `self-observed (assistant retrospective)`** — never `bootcamper-reported`
+     (INV-116). A maintainer must be able to tell the two apart; they carry different weight.
+   - **`Module:`** the module you were in when the reversal happened.
+   - **`Routing:`** the Step 2b verdict with its one-line reason. A reversed *mapping* is usually
+     `plugin` (the guidance let you do it), but triage rather than defaulting.
+   - **`Upstream:`** `not applicable` unless Step 2b says `mcp-server`/`both`. ⛔ **Do not offer
+     the upstream forward here** — that offer needs a 👉 question, which this path must not ask.
+     Leave it for graduation's Step 0, which batches one offer for the whole session.
+   - **What happened / Why it matters / Suggested fix** describing what *you* did and withdrew,
+     in the plain past tense. The decision, the evidence that overturned it, and the effect of
+     withdrawing it.
+3. **Verify it landed** exactly as Step 3b requires: re-read the file, confirm the entry is
+   present, append again if not. An unwritten note is worse than none, because nobody is watching
+   for it.
+4. **Note that you filed it** so graduation's Step 0 does not file the same finding twice.
+
+**Constraints:**
+
+- ⛔ **Silent.** No banners, no 👉 question, no announcement, no line in the bootcamper-facing
+  output (INV-012). The bootcamper never authors, approves, or hears about this entry.
+- ⛔ **Never blocks.** If the append or the re-read fails, warn on stderr and continue the module
+  (INV-048). A failed note must not interrupt a pending question, delay a step, or become a
+  to-do for the bootcamper.
+- ⛔ **Local only.** The single sanctioned external path remains Step 3c, which this route does
+  not use.
+- **Include the reversal even when it is unflattering, and especially when the correction made a
+  number worse.** A correction that lowered a score you reported is the most useful kind: it means
+  the earlier number was wrong and something downstream may have been decided on it.

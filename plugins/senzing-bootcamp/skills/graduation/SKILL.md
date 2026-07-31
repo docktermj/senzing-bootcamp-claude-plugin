@@ -253,6 +253,26 @@ bootcamper?"** A one-off typo is noise. A documented tool that behaves different
 is signal — file it. Do not soften a finding to look better, and do not manufacture findings to
 look thorough; if the session genuinely produced none, write nothing and say so in one line.
 
+⛔ **Sweep for these three; do not rely on remembering them.** The four categories above are
+recalled from the session, and by graduation the session may have crossed one or more compaction
+boundaries — so the most valuable findings are exactly the ones least likely to still be in context.
+Go and look at what the project now contains:
+
+1. **Withdrawn or changed mappings.** Compare the mapping you finished with against what you first
+   proposed — `docs/data_source_evaluation.md`, the mapper code under `src/`, and the match-key
+   audit's outcome in Data processing. A field you routed to payload after the audit, or a feature
+   you stopped mapping two sources onto, is a reversal worth filing.
+2. **Corrected scoring or accuracy code** you wrote, including any correction that *lowered* a
+   number you had already reported. That one matters most: it means an earlier figure was wrong and
+   something may have been decided on it.
+3. **Abandoned proposals** — a change you recommended and then dropped after checking the Entity
+   Specification or the MCP reference. Cheap when it happens, invisible afterwards.
+
+**Do not re-file what is already there.** `ground-rules.md` → "Reversed decisions: file them when
+they happen" means some of these are already in the file from during the run. Read the existing
+entries first and skip any finding already recorded; add to an entry only if you now have evidence
+it lacked.
+
 For each finding, append a `## Improvement:` entry to
 `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` using the **exact template** in
 `../bootcamp-onboarding/feedback.md` Step 3 (append only — never rewrite the file), with:
