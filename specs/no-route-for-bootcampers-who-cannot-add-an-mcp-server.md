@@ -122,8 +122,12 @@ binary, name who to ask.
   coverage for obtaining either, so the honest half — "named but undocumented, ask your contact" — is
   also MCP-established. Tools called: `get_capabilities`, `sdk_guide`, `get_sample_data` (schema),
   `search_docs`.
-- Upstream: **candidate, not sent.** That the server advertises stdio mode and a private deployment
-  while the indexed corpus documents neither is a coverage gap Senzing could close, and would be a
-  `category='feature'` request. Held for the maintainer's decision rather than bundled with the
-  `explain_error_code` bug report already sent this session.
+- Upstream: **sent 2026-07-31 via `submit_feedback` (`category='feature'`, anonymous)**, with the
+  maintainer's explicit approval — quoting both tool descriptions, naming the `search_docs` query and
+  the corpus stamp that returned no coverage, and asking either for the documentation to be indexed
+  or for the descriptions to say the routes are not self-service. `feature` rather than `bug`: the
+  tools are not wrong, the corpus is incomplete. Anonymous, so no reply is possible. **This does not
+  block the spec** — the plugin change stands either way, since naming the routes and directing the
+  bootcamper to their Senzing contact is useful whether or not the corpus later documents them. If it
+  does, the re-verification clause above requires taking the better answer.
 - Related specs: none — no existing spec covers MCP reachability or the policy path.

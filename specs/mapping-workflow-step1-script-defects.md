@@ -126,10 +126,16 @@ do get fixed.
   `mapping_workflow` schema declares the `derived` disposition with its five `derived_as` values and
   the step-3 `type_discriminator` field, which is what makes defect A's double-counting a defect.
   Tools called: `get_capabilities`, `mapping_workflow` (schema).
-- Upstream: all three recorded as "offered at graduation" in their entries — i.e. **not sent**. They
-  are good upstream candidates (one tool, three concrete reproductions) and would be
-  `category='bug'`. Held for the maintainer's decision; not bundled with the `explain_error_code`
-  report already sent this session.
+- Upstream: **sent 2026-07-31 via `submit_feedback` (`category='bug'`, anonymous)**, with the
+  maintainer's explicit approval. All three defects in one report — one tool, three concrete
+  reproductions with the per-source counts, the colliding `-o` paths, and the headerless-CSV
+  mislabelling plus the sentinel-token observation. Source names were reduced to A–D and no machine
+  paths, employer details or record values were included. Their entries had recorded "offered at
+  graduation", i.e. never actually sent, so this is a first submission and not a re-file. The
+  submission is anonymous, so no reply is possible; a conversation would need
+  `support@senzing.com`. **Do not re-file.** A follow-up is warranted only with something this
+  lacked — most usefully, confirmation that each still reproduces on 1.32.3, which this triage did
+  not establish.
 - Related specs: `specs/verbatim-check-numeric-source-values.md` (INV-173's no-fork and
   exemption-path rules), `specs/module-05-shared-workspace-transient-filename-collision.md` (INV-177
   — the *cross-source* filename collision; defect B is the distinct intra-run, multi-file case),
