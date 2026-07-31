@@ -143,3 +143,33 @@ variable. Recorded as examined and deliberately not adopted.
 - Upstream: not applicable — the server is right on both.
 - Related: `specs/supportpath-failure-code-and-szproduct-masking.md` (routed back
   2026-07-28; this reopens only its masking claim, not its `SENZ2027` item).
+
+## Deviations from this spec, and why (2026-07-31)
+
+- **The spec's history is wrong, and the ledger is the authority.** It says
+  `supportpath-failure-code-and-szproduct-masking` was "routed back **unimplemented**",
+  citing `specs/todo.md`. `specs/IMPLEMENTED.md` shows it was routed back, then **rewritten
+  and implemented** the same day (`06c33e9`) with the `SENZ7426` link stripped as
+  unverifiable — and that Module 2 Step 9 already requires an `SzEngine`/`SzDiagnostic`
+  call, and `:719-722` already describes the masking. So the plugin already did the right
+  *thing*; what it could not do was say *why*. The change made was correspondingly smaller
+  than the spec describes: supply the missing citation and the concrete failure code, not
+  reopen a rejected proposal.
+- **Two test guards existed to prevent exactly this change, and both were right to fire.**
+  `TheRetractedClaimStaysRetracted` banned any SENZ7426/SUPPORTPATH pairing outright, and a
+  second test banned the SzProduct-masking wording, both on the premise that no MCP source
+  stated either. One now does. They were **reworked rather than removed**, and the
+  distinction they now enforce is INV-169's, applied the other way round from the original
+  retraction: the **absolute** ("SENZ7426 means SUPPORTPATH is wrong") is still unsupported
+  and still banned; the **conditioned** form (Windows/Scoop, `%SENZING_DIR%\data` absent) is
+  supported and permitted *only* when the text names both the platform and `sdk_guide`. The
+  masking guard now checks attribution instead of forbidding the claim. Both mutation-tested.
+- **The first guard needed a denial exemption.** Module 2 mentions `SENZ7426` twice: once
+  making the conditioned claim, once *denying* that `explain_error_code` supports it. A
+  literal reading banned the denial — the very sentence that stops the retracted absolute
+  being rebuilt from the wrong tool. The guard now skips windows that disclaim the link.
+- **`explain_error_code('SENZ7426')` was re-verified 2026-07-31 and still makes no
+  SUPPORTPATH connection** — generic transliteration causes only. The two tools differ in
+  coverage rather than contradicting each other: a missing data directory means no
+  transliteration modules, so a transliteration failure is what you would expect. That is
+  why the attribution requirement is load-bearing rather than cosmetic.

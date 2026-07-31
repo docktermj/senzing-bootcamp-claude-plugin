@@ -722,6 +722,17 @@ An `SzProduct` call can answer while the support data is absent, so "the SDK imp
 version" is not evidence that an engine can initialize — see Step 9, which requires an engine-class
 call for exactly this reason.
 
+> **This masking is now MCP-confirmed, and it has a concrete failure code.**
+> `sdk_guide(topic='install', platform='windows')` states that building `SUPPORTPATH` as
+> `%SENZING_DIR%\data` — which on Scoop resolves to a directory that does not exist — makes
+> "every SzEngine/SzDiagnostic call … fail with `SENZ7426 EAS_ERR_XLITERATOR_FAILED` ('No
+> transliteration rules found! Transliteration requires at least one module') **while SzProduct
+> keeps working — so the install looks healthy**" (verified on MCP server 1.32.2, 2026-07-30).
+> ⛔ Attribute this to `sdk_guide`, **not** to `explain_error_code`: re-checked the same day,
+> `explain_error_code('SENZ7426')` still returns only generic transliteration causes (malformed
+> input, missing `DATA_SOURCE`/`RECORD_ID`, bad JSON encoding) and makes no connection to
+> `SUPPORTPATH`. Two tools, two different coverages — ask the one that owns the fact.
+
 Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
 the user's platform and database choice. Save the MCP-returned JSON directly to
 `config/engine_config.json`; do not modify the paths.
@@ -751,7 +762,10 @@ MCP-returned JSON remains the starting point.
 5. If neither path exists, report the error clearly: "SUPPORTPATH directory not found at either
    `$SENZING_DIR\data` or `$SENZING_DIR\..\data`. Please verify your Senzing installation."
 
-> **Why the Scoop layout differs:** The unofficial Windows Scoop package places `SENZING_DIR`
+> **Why the Scoop layout differs:** The Windows Scoop package — Senzing's own bucket,
+> `github.com/Senzing/scoop-senzingsdk`, which `sdk_guide(topic='install', platform='windows')`
+> calls "the official Senzing Scoop bucket" (verified on MCP server 1.32.2, 2026-07-30) — places
+> `SENZING_DIR`
 > at the `er` subdirectory within the Scoop app folder (e.g.,
 > `C:\Users\<user>\scoop\apps\senzing\current\er`). The `data` directory containing
 > `g2SifterRules.ibm` and other GNR support files is at the Scoop app version root, one level

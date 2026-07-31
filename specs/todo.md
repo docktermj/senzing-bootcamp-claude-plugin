@@ -20,6 +20,16 @@ This are ideas for future specs.
     (broaden the symptom to `SENZ7426`) would write a false Senzing fact into the plugin (INV-080,
     INV-169). The feedback entry itself said the failure "was not hit in its damaging form" and that
     the code came from inference while writing the configuration.
+  - **✅ SUPERSEDED 2026-07-31 — the masking claim is now MCP-confirmed, by a different tool.**
+    `sdk_guide(topic='install', platform='windows')` (server 1.32.2) states that a `SUPPORTPATH`
+    built as `%SENZING_DIR%\data` makes "every SzEngine/SzDiagnostic call … fail with `SENZ7426`
+    … **while SzProduct keeps working — so the install looks healthy**". Both halves the 2026-07-28
+    check could not establish. Recorded in `module-02-sdk-setup/SKILL.md` beside the existing
+    masking warning, attributed to `sdk_guide`. **The 2026-07-28 reasoning below stands as written**
+    — it was correct on the evidence available, and the correction is the point: that check asked
+    `explain_error_code`, which *still* makes no SUPPORTPATH connection (re-verified 2026-07-31).
+    "The server does not cover X" is only ever "the tool I asked does not cover X".
+    (Source: `windows-scoop-facts-the-server-now-owns`.)
   - The `SzProduct`-succeeds-while-`SzEngine`-fails masking claim is **neither confirmed nor refuted**
     by any MCP source. The FAQ supports only a weaker form: the libraries can load while the support
     data is absent, so a check proving the SDK imports does not prove the engine can initialize.
