@@ -66,15 +66,52 @@ and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
 ⛔ **A method's own default-flags composite is NOT `SZ_ENTITY_DEFAULT_FLAGS`, and may omit
 sub-flags that one carries.** Before parsing an entity field out of a response, read the
 composite's `composite_members` and confirm the flag that populates *that* field is in it.
-Two confirmed cases, both of which apply when you pass **no** `flags` argument at all, because
+Three confirmed cases, all of which apply when you pass **no** `flags` argument at all, because
 these are the signature defaults (`get_sdk_reference(topic='flags', filter=…, language='python')`,
-server 1.32.2, verified 2026-07-29):
+server 1.32.2, verified 2026-07-29; the `why_*` row re-verified 2026-07-31):
 
 | Composite | Carries | Does **not** carry |
 |---|---|---|
 | `SZ_SEARCH_BY_ATTRIBUTES_ALL` (default for `search_by_attributes`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
 | `SZ_FIND_NETWORK_DEFAULT_FLAGS` (default for `find_network_*`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
+| `SZ_WHY_ENTITIES_DEFAULT_FLAGS` (`why_entities`) — **one flag, not a set** | `SZ_INCLUDE_FEATURE_SCORES` only | `SZ_ENTITY_INCLUDE_ENTITY_NAME`, and every other entity sub-flag |
 | `SZ_ENTITY_DEFAULT_FLAGS` (`get_entity_*`) | **both** | — |
+
+⚠️ **The `why_*` row is the one that costs you a field you did not ask about.**
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS` is documented as "the default recommended flags for
+`why_entities`. Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`" — a single flag, carrying no
+entity-name flag at all, so **`ENTITY_NAME` comes back `null` while every analytical field
+renders correctly**: match level, why key, ER rule, feature scores and buckets, CONFIRMATIONS
+and DENIALS. That is the deceptive form of the half-populated row (INV-148) — the analysis is
+complete and only the human-readable labels are missing, so it reads as unnamed data rather
+than as a flags problem. OR the flag in explicitly:
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME | SZ_INCLUDE_MATCH_KEY_DETAILS`
+(`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
+`why_record_in_entity` — verified 2026-07-31). The same holds for
+`SZ_WHY_RECORDS_DEFAULT_FLAGS` and `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS`, both documented
+as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not inferred from
+its sibling — INV-169).
+
+⛔ **When `topic='flags'` returns a composite with NO `composite_members`, the check is not
+unrunnable — you asked the wrong tool.** For all three `why_*` default composites
+`get_sdk_reference(topic='flags', …)` returns only a one-line description, no
+`composite_members` and no `response_paths`, with `applies_to` as the literal glob
+`["why_entities*"]` and a `source_file` of the V3→V4 breaking-changes document rather than the
+flags reference. The membership **is** documented — in the flags documentation, reachable with
+`search_docs(query='SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags')`, which returns
+the "Equivalent to:" line quoted above (source: `senzing.com/docs/flags/4/flags_why`). So:
+
+1. Ask `topic='flags'` first — it is authoritative and structured.
+2. If `composite_members` is absent, ask `search_docs` before concluding anything.
+3. Corroborate with the method signature: the same response's `method_signatures` shows the
+   binding's default, and for `why_entities` Python reads
+   `flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>` — independent
+   confirmation that the composite is that one flag.
+4. Only if **both** tools come back empty do you OR the needed sub-flags in explicitly and
+   record what you could not confirm (INV-080/INV-149).
+
+**"The server does not document X" is only ever "the tool I asked does not document X."**
+An empty structured field is not an absent fact.
 
 And the flag→field mapping that makes the consequence exact: `SZ_ENTITY_INCLUDE_RECORD_DATA` →
 `RESOLVED_ENTITY.RECORDS[]`; `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` → `RESOLVED_ENTITY.RECORD_SUMMARY[]`.

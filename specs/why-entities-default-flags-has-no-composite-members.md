@@ -111,3 +111,65 @@ The upstream half is already filed (the reporting entry records `Upstream: submi
   re-file. A follow-up would be warranted only with something the first submission lacked.
 - Related specs: `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132),
   `specs/find-path-and-find-network-links-diverge.md` (the sibling trap in the adjacent step).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The re-verification clause holds, and the spec's proposed rule is nevertheless wrong.**
+
+Re-verified on server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31:
+`get_sdk_reference(topic='flags', filter='SZ_WHY_ENTITIES_DEFAULT_FLAGS')` **still** returns no
+`composite_members`, no `response_paths`, `applies_to` as the literal glob `["why_entities*"]`,
+and a `source_file` of the V3→V4 breaking-changes document. Senzing has not populated the field,
+so the table row stands. Every sibling composite in the same response still carries a full
+membership list.
+
+**What changed is the remedy.** The spec's proposed rule was: when a composite comes back
+without `composite_members`, "the procedure **cannot be run**, and the sub-flags MUST be OR-ed
+in explicitly rather than assumed." That is a conclusion about the *tool that was asked*, not
+about the server — and it is false here. The membership **is** documented:
+
+```text
+search_docs(query='SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags')  →
+  flags_why: "The default recommended flags for `why_entities`.
+              Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`."
+  (source: senzing.com/docs/flags/4/flags_why)
+```
+
+So the composite is exactly **one** flag, `SZ_INCLUDE_FEATURE_SCORES`, which carries no
+entity-name flag — which is why `ENTITY_NAME` came back `null` while every analytical field
+rendered. The reported symptom is now *explained* rather than merely worked around, and the
+shipped rule is a two-tool lookup ending in explicit OR-ing as the **last** resort, not the
+first. `tests/test_sdk_parameter_shapes.py::…::test_or_ing_blindly_is_the_last_resort_not_the_first`
+pins the ordering, because a reader who takes the fallback as the immediate remedy loses the
+fact.
+
+Independent corroboration the spec did not have: the **method signatures** in the same
+`topic='flags'` response show the binding defaults — Python
+`why_entities(..., flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>)`, C#
+`flags: SzFlag? = SzFlag.SzIncludeFeatureScores`. So `SZ_WHY_ENTITIES_DEFAULT_FLAGS` is not even
+what the method defaults to; the documented default is that single flag directly.
+
+**Criterion 4 satisfied by verification, not by scoping.** The spec allowed marking the siblings
+unverified. Both were checked individually instead (INV-169):
+
+- `SZ_WHY_RECORDS_DEFAULT_FLAGS` — `get_sdk_reference(topic='flags', …)`: `applies_to`
+  `["why_records*"]`, same one-line breaking-changes description, no `composite_members`.
+  Identically affected.
+- `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS` — `search_docs`: "The default recommended flags for
+  `why_record_in_entity`. Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`." Same membership.
+
+Also confirmed rather than carried from the spec: `SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to`
+includes all three `why_*` methods, so OR-ing it in is valid for each.
+
+**Upstream:** not re-filed, per the spec. Worth noting a follow-up now *would* carry something
+the 2026-07-31 submission lacked — the membership is present in the `flags_why` documentation and
+missing only from the structured `composite_members` field, which makes this an extraction gap
+rather than a documentation gap, and names the source file to extract from. That is a maintainer
+decision, not taken here.
+
+## Invariants introduced
+
+- `INV-194` — An empty or absent field in one MCP tool's response is **not** evidence the server
+  lacks the fact; before recording that Senzing does not document X, also ask the tool that owns
+  X in prose (`search_docs`), and scope every negative finding to the tool and parameters asked
+  (recorded in `specs/INVARIANTS.md`, maintainer-approved 2026-07-31).
