@@ -59,6 +59,9 @@ EXAMPLES = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "docs", "examp
 EXAMPLE_MD = os.path.join(EXAMPLES, "bootcamp_recap.example.md")
 EXAMPLE_PDF = os.path.join(EXAMPLES, "bootcamp_recap.example.pdf")
 EXAMPLE_PNG = os.path.join(EXAMPLES, "bootcamp_recap.example.truthset.png")
+GENERATOR = os.path.join(
+    REPO_ROOT, "plugins", "senzing-bootcamp", "scripts", "generate_recap_pdf.py"
+)
 
 
 def pdf_text(path):
@@ -102,19 +105,43 @@ def pdf_bytes():
 
 
 def normalize(text):
-    """Fold the substitutions `_pdf_escape` makes, so comparisons are fair.
+    """Fold the generator's character substitutions, so comparisons are fair.
 
-    Non-Latin-1 typography is approximated on the way into the PDF (en dash ->
-    '-', curly quotes -> straight), so the Markdown side must be folded the same
-    way before searching.
+    Non-Latin-1 typography is approximated on the way into the PDF (en dash -> '-',
+    curly quotes -> straight, "∞" -> "infinity"), so the Markdown side must be folded
+    the same way before searching.
+
+    ⚠️ **Attribution corrected 2026-07-31.** This used to say it folded "the
+    substitutions `_pdf_escape` makes" and hardcoded 9 of them. `_pdf_escape` no longer
+    substitutes anything — it carried a 9-entry duplicate of `_UNICODE_MAP` with a `"?"`
+    default, which made the stdlib renderer print `?` for the other 24 (INV-143). The
+    substitutions still happen; they happen in `_safe` via `_UNICODE_MAP`.
+
+    Derived from `_UNICODE_MAP` rather than restating a subset of it, because a
+    hardcoded second copy is exactly the defect that was just removed from the source:
+    were the example recap to gain a "≥", a 9-entry list here would silently
+    mis-compare.
     """
-    for src, dst in (
-        ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'),
-        ("–", "-"), ("—", "-"), ("•", "-"), ("…", "..."),
-        ("→", "->"),
-    ):
+    for src, dst in _generator_unicode_map().items():
         text = text.replace(src, dst)
     return text
+
+
+def _generator_unicode_map():
+    """`_UNICODE_MAP` from the recap generator, loaded once."""
+    global _UNICODE_MAP_CACHE
+    if _UNICODE_MAP_CACHE is None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("recap_gen_for_normalize", GENERATOR)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        _UNICODE_MAP_CACHE = module._UNICODE_MAP
+    return _UNICODE_MAP_CACHE
+
+
+_UNICODE_MAP_CACHE = None
 
 
 def example_md_text():

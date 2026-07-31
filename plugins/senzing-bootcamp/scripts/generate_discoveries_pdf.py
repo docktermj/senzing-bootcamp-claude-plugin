@@ -724,11 +724,16 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            tokens.append((text, font, size, indent))
+            # Mirrors the recap generator's stdlib path: sanitise at the token boundary so
+            # `_pdf_escape` only ever sees Latin-1 and never substitutes (INV-143). Both
+            # writers share `_pdf_escape`, so both need this — it is not enough to fix one.
+            tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            for chunk in _wrap(text, width):
+            # Sanitise before wrapping: `_wrap` counts characters and transliteration can
+            # change the count ("∞" -> "infinity").
+            for chunk in _wrap(_safe(text), width):
                 add(chunk, font, size, indent)
 
         def add_gap(points: float) -> None:

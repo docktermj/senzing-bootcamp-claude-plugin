@@ -2695,6 +2695,10 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
              size: Optional[float] = None) -> None:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
+        # Sanitise BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
+        # measuring raw text and rendering sanitised text mis-centres the line — the same
+        # desync the comment below describes for escaping, one step earlier.
+        text = _safe(text)
         # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
         # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
         # and escaping twice prints the escape itself.
@@ -2716,7 +2720,9 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
         return _wrap_to_width(
-            text,
+            # Sanitise before wrapping: line breaks chosen on raw text do not hold once a
+            # character transliterates to a longer form.
+            _safe(text),
             _CERT_TEXT_W * _MM,
             lambda s: _stdlib_width(s, size, style == "B", spacing),
         )
@@ -2820,11 +2826,17 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            tokens.append((text, font, size, indent))
+            # The one choke point for stdlib text: sanitise here so `_pdf_escape` only ever
+            # sees Latin-1 and never has to substitute (INV-143). `_safe` is idempotent, so
+            # text already sanitised by `add_wrapped` passes through unchanged.
+            tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            for chunk in _wrap(text, width):
+            # Sanitise BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
+            # changes the count, so wrapping raw text yields lines that overrun once
+            # rendered.
+            for chunk in _wrap(_safe(text), width):
                 add(chunk, font, size, indent)
 
         add(recap.title, "F2", 22, 0)
@@ -3044,7 +3056,28 @@ def _wrap(text: str, width: int) -> List[str]:
 
 
 def _pdf_escape(s: str) -> str:
-    # PDF text within () strings: escape \, (, ) and drop non-Latin-1.
+    """Escape a string for a PDF `()` literal. ⛔ **Sanitise with `_safe` first.**
+
+    This does PDF *syntax* only: escape `\\`, `(`, `)`, and emit `\\ooo` octal for the
+    Latin-1 high range. It performs no transliteration.
+
+    ⚠️ **It used to, and that was an INV-143 violation.** It carried its own inline
+    substitution table of 9 entries — a subset of `_UNICODE_MAP`'s 33 — with a `"?"`
+    default. The fpdf2 renderer normalises through `_safe` and never reaches here, but the
+    stdlib writers called this on raw text, so **24 of the 33 mapped characters rendered as
+    `?`**: `≥ ≤ ≈ ≠ € ™ ∞ ← ↔ ⇒ ↑ ↓ ✅ ✓ ⚠` and the deliberately-dropped emoji. Silently, at
+    exit 0, with a green retention figure — because `?` is one character replacing one, so
+    retention is structurally unable to see it. INV-143 exists to forbid precisely that:
+    "MUST NOT substitute `?` for a character it cannot encode".
+
+    Two tables, one authoritative and one not, is the defect. There is now one:
+    `_UNICODE_MAP` via `_safe`. Do not reintroduce a table here — restoring parity by hand
+    is what drifted the first time.
+
+    A character that still arrives unencodable is **dropped and recorded**, so
+    `dropped_character_warning()` reports it (INV-111). Dropping is what INV-143 permits;
+    substituting is what it forbids.
+    """
     out = []
     for ch in s:
         o = ord(ch)
@@ -3055,19 +3088,10 @@ def _pdf_escape(s: str) -> str:
         elif 160 <= o <= 255:
             out.append("\\%03o" % o)
         else:
-            # Approximate common typographic characters, else '?'.
-            repl = {
-                0x2018: "'",
-                0x2019: "'",
-                0x201C: '"',
-                0x201D: '"',
-                0x2013: "-",
-                0x2014: "-",
-                0x2022: "-",
-                0x2026: "...",
-                0x2192: "->",
-            }.get(o, "?")
-            out.append(repl)
+            # Unreachable for `_safe`-sanitised text, which is every shipped caller.
+            # Reached only if a caller forgets — and then the loss must be legible on
+            # stderr rather than a `?` on a Bootcamper's keepsake.
+            _record_dropped_character(ch, s)
     return "".join(out)
 
 
