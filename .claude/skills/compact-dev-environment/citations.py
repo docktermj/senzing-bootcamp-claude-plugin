@@ -45,7 +45,7 @@ INV_DEF = re.compile(r"^- \*\*(INV-\d{3})\*\*", re.MULTILINE)
 SOURCE = re.compile(r"\(Source: `([^`]+)`")
 LEDGER_HEADING = re.compile(r"^## (.+)$", re.MULTILINE)
 
-META_SPECS = {"INVARIANTS", "todo", "IMPLEMENTED", "RENUMBERING"}
+META_SPECS = {"INVARIANTS", "todo", "IMPLEMENTED", "DECLINED", "RENUMBERING"}
 
 # A file may opt out of the citation scan by carrying this marker. It exists for exactly
 # one situation: a file whose *subject* is invariant identifiers, and which therefore
@@ -121,6 +121,21 @@ def spec_names(repo: Path) -> set:
         for path in archive.glob("*.md"):
             out.add(path.stem)
     return out
+
+
+def declined_headings(repo: Path) -> set:
+    """Spec names the maintainer decided not to build (`specs/DECLINED.md`).
+
+    The second terminal state a spec can reach. Without it, a settled decision reads as
+    outstanding work in every count that subtracts only `IMPLEMENTED.md` — which is how
+    `implement-spec` came to re-offer a declined spec on every run before this existed.
+    Absent file is not an error: the ledger is created on first use.
+    """
+    path = repo / "specs" / "DECLINED.md"
+    if not path.is_file():
+        return set()
+    return {h.strip() for h in LEDGER_HEADING.findall(path.read_text(encoding="utf-8"))
+            if not h.strip().startswith("<")}
 
 
 def ledger_headings(repo: Path) -> set:
@@ -221,12 +236,21 @@ def cmd_census(args) -> int:
     if area in (None, "specs"):
         specs = spec_names(repo)
         headings = ledger_headings(repo)
+        declined = declined_headings(repo)
+        # A spec has TWO terminal states. Counting a declined spec as unimplemented
+        # reports settled work as outstanding, which is the same misreport `implement-spec`
+        # Step 1 avoids by subtracting both ledgers.
+        outstanding = specs - headings - declined
         print("== specs: %d files, %d ledger headings" % (len(specs), len(headings)))
         print("   headings with no spec file : %d" % len(headings - specs))
         print("   spec files not in ledger   : %d" % len(specs - headings))
+        print("   declined (decided not to build): %d" % len(declined))
+        print("   genuinely unimplemented    : %d" % len(outstanding))
         if args.verbose:
-            for name in sorted(specs - headings):
+            for name in sorted(outstanding):
                 print("     unimplemented: %s" % name)
+            for name in sorted(declined):
+                print("     declined:      %s" % name)
         print()
 
     if area in (None, "feedback"):

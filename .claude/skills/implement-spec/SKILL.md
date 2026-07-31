@@ -48,14 +48,22 @@ are never implementable specs:
 - `INVARIANTS.md` — the ruleset every spec must respect (not a task).
 - `todo.md` — the lightweight idea backlog (not yet specs).
 - `IMPLEMENTED.md` — the record this skill maintains.
+- `DECLINED.md` — the record of specs deliberately **not** being built (see below).
 
 ## Step 1: Load state
 
 1. **List** `specs/*.md` and drop the meta files above → the candidate set.
 2. **Read `specs/IMPLEMENTED.md`** (create it from the scaffold if missing) and
    collect the `## <name>` headings → the implemented set.
-3. **Unimplemented = candidates − implemented.**
-4. **Read `specs/INVARIANTS.md`.** Every spec begins "Maintain the invariant
+3. **Read `specs/DECLINED.md`** (if present) and collect its `## <name>` headings →
+   the declined set. Same heading idiom, so the same parser reads both.
+4. **Unimplemented = candidates − implemented − declined.**
+
+   A spec reaches one of **two** terminal states, and both are subtracted. Omitting the
+   declined set re-offers a spec the maintainer has already ruled out, every run — and
+   the spec's own text argues *for* the change with nothing recording the argument
+   against it, so the next run re-derives and re-asks.
+5. **Read `specs/INVARIANTS.md`.** Every spec begins "Maintain the invariant
    conditions in @INVARIANTS.md" — the implementation must honor it (cross-platform
    Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/
    complete, and the per-module outcomes).
@@ -244,6 +252,46 @@ spec's existing entry rather than adding a duplicate.
 Leave the spec file itself in place under `specs/` — the ledger, not the file's
 location, records completion. Do not commit unless the maintainer asks; if they
 do, reference the commit hash in the entry.
+
+## Declining a spec instead of implementing it
+
+Some specs are correct and still should not be built — most often because the change
+they propose is an architectural decision rather than a defect repair. That outcome
+needs recording, or the spec is offered again on every run and the reasoning against it
+is lost.
+
+⛔ **Never decline a spec on your own initiative.** This skill implements what the
+maintainer chooses; deciding *not* to build something is theirs alone. If a spec looks
+like a poor idea, say so and let them rule — do not write to `DECLINED.md` without their
+explicit decision.
+
+When they do decline one, append an entry to `specs/DECLINED.md` using the same
+`## <spec-name>` heading idiom as `IMPLEMENTED.md` (Step 1 subtracts both):
+
+```markdown
+## <spec-name>
+
+- **Declined:** YYYY-MM-DD
+- **Decided by:** <who made the call>
+- **Reason:** <why not — required; never leave this empty>
+- **Revisit if:** <the condition that would reopen it, or "nothing foreseeable">
+```
+
+Two fields carry the weight. **Reason** is required for the same reason
+`delegate-to-mcp-server` requires one on a `keep-by-design` verdict: an unreasoned
+decline is indistinguishable from nobody having looked, and the next run looks again.
+**Revisit if** keeps the file from becoming a graveyard — most declines are made against
+current architecture or a current upstream gap, and naming the trigger lets a later run
+check cheaply instead of re-arguing.
+
+**Leave the spec file where it is.** Do not archive, move or delete it: its analysis is
+what made the decision possible, and its filename is a permanent address. A declined
+spec also stays visible to `feedback-to-specs`' Step 4 deduplication, so the same
+subject arriving again finds it rather than producing a second spec.
+
+**Declined is not superseded.** A spec whose facts are wrong, or that a later spec
+overtakes, is `feedback-to-specs`' business — the remedy there is a corrected or
+superseding spec, not a `DECLINED.md` entry.
 
 ## Step 5: Record any new invariants
 
