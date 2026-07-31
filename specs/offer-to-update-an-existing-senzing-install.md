@@ -273,3 +273,42 @@ escaped mutation at a glance, and this is the second time this session that has 
   block), INV-129 (verify the artifact, not the exit code), INV-163 (report a skipped check) and
   INV-080/INV-194 (provenance, and one tool's silence is not the server's) all already applied and
   are asserted here rather than extended.
+
+## Upstream: feature request sent 2026-07-31
+
+Sent via `submit_feedback(category='feature')` after maintainer approval.
+⛔ **Do not re-file.** Subject: **no documented procedure for updating an existing v4 install to
+a newer v4 release (4.x → 4.y).**
+
+Sent as `feature` rather than `bug` because nothing the server *returns* is wrong — a topic and
+its documentation do not exist, which is coverage.
+
+What the report carried, all re-confirmed the same day rather than recalled:
+
+- `sdk_guide(topic='upgrade', platform='linux_apt')` → `MCP error -32603: Unknown topic
+  'upgrade'`, with the full valid-topic enumeration quoted (install, configure, load, export,
+  redo, initialize, search, stewardship, delete, information, error_handling, full_pipeline).
+- **Two** differently-worded `search_docs` queries, the second deliberately point-release
+  specific, both returning only V3→V4 material — so the absence is a corpus gap, not a phrasing
+  artifact (INV-194's bar for asserting absence).
+- Evidence it is not hypothetical: the server publishes `senzingsdk-runtime 4.3.3-26191` for
+  Linux via `direct_download` while its own macOS guidance references cask **4.4.0.26206**, so a
+  4.3 → 4.4 step exists in the field today with nothing documenting it.
+- Four specific questions Senzing can answer directly (does it need `sz_dbupgrade`? does it need
+  `sz_configupgrade` + `sz_configtool`? is package replacement sufficient, and for every 4.x→4.y
+  pair or only within a minor line? any ordering constraint against a populated repository?), a
+  suggested home (`topic='upgrade'`, or an upgrade section under `topic='install'`), and a
+  three-step reproduction.
+
+Anonymous, so **no reply is possible**; the server directs follow-up to support@senzing.com.
+
+**Re-check on the next sweep:** if `sdk_guide` gains an `upgrade` topic, or `search_docs` starts
+returning 4.x→4.y content, Step 1b's "Senzing documents no 4.x → 4.y update procedure" paragraph
+is stale and must be replaced with the documented steps.
+
+**Not filed, and still open:** `sdk_guide(topic='install', platform='linux_yum')` returns a
+`direct_download` block whose packages are **`.deb` files with `sudo apt install` commands**,
+which cannot work on an rpm system (verified 2026-07-31, server 1.32.2). That is a separate
+subject and a `bug` rather than a `feature`; it was deliberately not bundled into this
+submission, because two subjects in one message makes both harder to action. Step 1b already
+warns readers off that field on yum.
