@@ -285,7 +285,7 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]` (carries `MATCH_INFO`), `ENTITIES[]` |
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
-> | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
+> | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, **`ENTITY_PATH_LINKS[]`** — *not* `ENTITY_NETWORK_LINKS[]`; each link element carries the **same seven fields** as the network row below (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). The element fields are identical and only the array name differs, so a parser carried over from `find_network` returns every edge blank |
 > | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.2, 2026-07-30 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
 > | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
 >

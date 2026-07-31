@@ -108,3 +108,44 @@ and the "run the lookup and dump anyway" instruction unchanged.
   guidance is what is incomplete.
 - Related specs: `specs/response-schemas-now-documents-match-info-depth.md` (the same
   block, corrected 2026-07-30), `specs/confirm-json-data-and-network-link-response-paths.md`.
+
+## Deviations from this spec, and why (2026-07-31)
+
+Re-verification confirmed both halves the spec asserts — server 1.32.2, docs indexed
+2026-07-29 11:11 UTC. `get_sdk_reference(topic='response_schemas', filter='find_path')`
+still returns `ENTITY_PATH_LINKS[]` and `filter='find_network'` still returns
+`ENTITY_NETWORK_LINKS[]`; the array names have **not** converged. Four things shipped that
+this spec does not say:
+
+1. **The real root cause was a sentence the spec did not identify.**
+   `phase2b-discover.md:41-42` read "For the graph methods `response_schemas` returns the
+   outer arrays (`ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`)" — the **network**
+   document's key set presented as covering *both* graph methods. `ENTITY_PATH_LINKS[]`
+   appeared nowhere in the plugin. So step 4d did not merely fail to warn about the
+   divergence; it stated the opposite. That sentence is now per-method.
+
+2. **A second site, in a file this spec does not list.** The "Confirmed paths" table at
+   `visualization-api-reference.md:288` listed `find_path_*` as `ENTITY_PATHS[]`,
+   `ENTITIES[]` — omitting the links array entirely, while the `find_network_*` row directly
+   below carried all seven link fields. Step 4d points readers at that table by name, so
+   following the pointer produced *confirmation* that `find_path` has no links array. Fixed
+   there too, with this session's provenance; the row's existing `1.32.2, 2026-07-30` stamp
+   and the SDK 4.3.3 dump date were left untouched (INV-191).
+
+3. **`SZ_FIND_PATH_INCLUDE_MATCHING_INFO` is named.** The spec says only that the network
+   flag is network-only. "Do not use this flag" without naming the right one is unactionable,
+   and the server documents a clean counterpart: `applies_to` the two `find_path_*` methods,
+   `response_paths` including `ENTITY_PATH_LINKS[]`, and `SZ_FIND_PATH_DEFAULT_FLAGS` carries
+   it exactly as `SZ_FIND_NETWORK_DEFAULT_FLAGS` carries the network one. Worth noting for a
+   future reader: a caller who leaves the default flags alone gets links populated — the
+   reported failure needs the *network* flag OR-ed in explicitly.
+
+4. **`find_network` also returns `ENTITY_PATHS[]`.** Not in the spec, and it is the sharpest
+   edge of the trap: the network response contains the word PATH, which reads as licence to
+   expect `ENTITY_PATH_LINKS[]` in it. Confirmed this session in both documents'
+   `detect_keys`. Stated at the step.
+
+Beyond that, the two documents are identical apart from the links array name — every key in
+`ENTITIES[]` and `ENTITY_PATHS[]` matches, and both link elements carry the same seven fields.
+That is a stronger claim than "the element fields are identical" and is what the guidance now
+makes.

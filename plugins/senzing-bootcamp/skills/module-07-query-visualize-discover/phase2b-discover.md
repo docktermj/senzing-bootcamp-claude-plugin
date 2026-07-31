@@ -37,10 +37,26 @@ connections between entities using `find_network` and `find_path`.
    ⛔ **Look up the response structure before writing any code that parses the response — never
    infer field names from an example snippet** (INV-115).
 
-   ⚠️ **That lookup reaches inside a link element — and the endpoint names are not the ones
-   you would guess.** For the graph methods `response_schemas` returns the outer arrays
-   (`ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`) **and** each link element's own
-   fields (re-verified on MCP server 1.32.2, 2026-07-30). Dump one raw link element and read
+   ⚠️ **That lookup reaches inside a link element — and neither the array name nor the
+   endpoint names are the ones you would guess.** For each graph method `response_schemas`
+   returns **that method's own** outer arrays **and** each link element's own fields
+   (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31).
+   **The two documents differ in exactly one key — the array you index by.** `find_path`
+   returns its edges under **`ENTITY_PATH_LINKS[]`**; `find_network` returns them under
+   **`ENTITY_NETWORK_LINKS[]`**. Everything else matches: both carry `ENTITIES[]` and
+   `ENTITY_PATHS[]` with the same sub-fields, and **both link elements carry the same seven
+   fields**, which is what makes the array name the one difference a shared parser misses.
+   `find_network` returning `ENTITY_PATHS[]` is the sharpest edge of it — seeing "PATH" in a
+   network response is not evidence that `ENTITY_PATH_LINKS[]` is there.
+   **The matching-info flags are paired, not shared:** `SZ_FIND_PATH_INCLUDE_MATCHING_INFO`
+   has `applies_to` of the two `find_path_*` methods, `SZ_FIND_NETWORK_INCLUDE_MATCHING_INFO`
+   of the two `find_network_*` methods, and each default composite carries its own. So
+   **neither the flags nor the parser can be carried from one of these calls to the other** —
+   do it and you get a path whose entity names render while every edge prints
+   `(link detail not returned)`, which reads as a path with no relationship detail rather than
+   as two wrong names at once (INV-148). Route: `get_sdk_reference(topic='response_schemas',
+   filter='find_path')` and the same with `filter='find_network'` (server 1.32.2, docs indexed
+   2026-07-29 11:11 UTC, verified 2026-07-31). Dump one raw link element and read
    its keys anyway before writing the parser. Do **not** assume a link's two
    endpoints use the `ENTITY_ID` / `RELATED_ENTITY_ID` pairing that related-entity records use:
    two sessions found both endpoints blank under those names while `MATCH_KEY` rendered fine, and
