@@ -292,3 +292,86 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
             self.text, r"(?i)they are the whole of this limitation",
             "the harvesting block still claims to cover every limitation",
         )
+
+
+class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
+    """Three `mapping_workflow` step-1 defects, each of which yields a wrong artifact silently.
+
+    Reported 2026-07-27 across four sources on SDK 4.3.3.26191 and sent upstream 2026-07-31. They
+    share a delivery channel and a failure signature — a plausible, well-formed output that is
+    wrong — but they fire at *different* steps, so INV-183 puts each where it happens: the two
+    profiler defects at `### 9. Profile`, the counter at `### 11. Map`. A limitations list one
+    section away is unreachable at the moment it bites.
+
+    These assert placement as well as presence, because presence alone was satisfied by the
+    limitations block already in this file.
+    """
+
+    @staticmethod
+    def _flatten(text):
+        """Same normalisation as `flat()`, applied to a slice rather than a whole file.
+
+        These are wrapped prose sections, so a phrase assertion on raw text is really an
+        assertion about where the line breaks fall — which is how the first version of
+        `test_the_multi_file_output_collision_is_at_the_profile_step` failed on correct text.
+        """
+        return re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
+
+    def setUp(self):
+        raw = PHASE2.read_text(encoding="utf-8")
+        self.profile = self._flatten(raw[raw.index("### 9. Profile"):raw.index("### 10. Plan")])
+        self.mapping = self._flatten(raw[raw.index("### 11. Map"):raw.index("### 12.")])
+        self.all = flat(PHASE2)
+
+    def test_the_multi_file_output_collision_is_at_the_profile_step(self):
+        self.assertRegex(self.profile, r"(?i)same output path",
+                         "the colliding -o path is not documented where the profiler runs")
+        self.assertRegex(self.profile, r"(?i)only the second file's profile survives",
+                         "the consequence — silent loss of the first profile — is not stated")
+        self.assertRegex(self.profile, r"profile_report_<stem>\.md",
+                         "the distinct-path workaround is not given")
+
+    def test_the_headerless_csv_limitation_is_at_the_profile_step(self):
+        self.assertRegex(self.profile, r"(?i)headerless CSV")
+        self.assertRegex(self.profile, r"(?i)one record disappears",
+                         "the lost record is the part that matters and is not stated")
+        self.assertRegex(self.profile, r"(?i)headered copy for profiling only",
+                         "the workaround is not given")
+
+    def test_the_sentinel_caveat_is_where_population_is_reported(self):
+        """INV-128 one layer up: a sentinel is a value, so population != information."""
+        self.assertRegex(self.profile, r"(?i)sentinel")
+        self.assertRegex(self.profile, r"(?i)100% population")
+        self.assertIn("INV-128", self.profile)
+
+    def test_the_field_count_warning_is_at_the_mapping_step(self):
+        self.assertRegex(self.mapping, r"(?i)field-count warning",
+                         "the counter is not documented where step 3 fires it")
+        self.assertRegex(self.mapping, r"(?i)wrong in both directions",
+                         "the double error is what makes it unfixable by eye; state it")
+        self.assertRegex(self.mapping, r"type_discriminator\.field_overrides",
+                         "the excluded half of the miscount is not named")
+
+    def test_the_warning_guidance_does_not_teach_ignoring_warnings(self):
+        """A step whose other warnings are real must not be written off wholesale."""
+        self.assertRegex(
+            self.mapping, r"(?i)Do not\s+start ignoring this step's warnings generally",
+            "the guidance must protect the step's other warnings",
+        )
+
+    def test_each_defect_is_marked_upstream_owned_and_dated(self):
+        """So a later run can retire one, the way the numeric-value entry was retired."""
+        for section, label in ((self.profile, "profile step"), (self.mapping, "mapping step")):
+            with self.subTest(section=label):
+                self.assertRegex(section, r"(?i)reported upstream 2026-07-31")
+                self.assertRegex(section, r"(?i)not re-run",
+                                 "must say the observation was not re-verified")
+
+    def test_the_prescriptions_carry_current_mcp_provenance(self):
+        """What *was* re-verified: the schema still declares derived and type_discriminator."""
+        self.assertRegex(self.mapping, r"(?i)1\.32\.3")
+        self.assertRegex(self.mapping, r"(?i)derived_as")
+
+    def test_it_forbids_forking_the_profiler(self):
+        self.assertRegex(self.profile, r"(?i)do not ship a patched profiler")
+        self.assertIn("INV-173", self.profile)

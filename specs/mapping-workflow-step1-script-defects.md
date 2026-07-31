@@ -140,3 +140,37 @@ do get fixed.
   exemption-path rules), `specs/module-05-shared-workspace-transient-filename-collision.md` (INV-177
   — the *cross-source* filename collision; defect B is the distinct intra-run, multi-file case),
   `specs/quality-scoring-presence-test.md` (INV-128, which the sentinel observation feeds).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The three limitations went to two different steps, not one block.** The spec grouped them because
+they share a delivery channel, a remedy and a failure signature — which justified one *spec*, and
+would have been wrong for one *location*. INV-183 puts a rule where it fires: the multi-file
+output-path collision and the headerless-CSV mislabelling are profiler-time, so they sit at
+`### 9. Profile`; the field-count warning is emitted by workflow step 3, so it sits at `### 11. Map`.
+A reader meeting the counter is not reading the profile step, and vice versa. The tests assert
+*placement* as well as presence, because presence alone was already satisfied by the limitations
+block elsewhere in the same file.
+
+**The sentinel-token observation was placed by consequence rather than by topic.** The spec called
+it a "secondary observation" of the headerless-CSV entry. It is really about population percentages
+feeding a completeness judgement, so it sits with the profile output where those percentages are
+reported, cross-referencing INV-128 — which governs the same confusion one layer downstream. Filing
+it under "headerless CSV" would have hidden it from every source that is not headerless, and the
+`-0-` sentinel has nothing to do with headers.
+
+**All eleven mutations were caught first time**, which is worth recording only because it breaks the
+session's pattern: the guards here assert consequences (`only the second file's profile survives`,
+`one record disappears`, `wrong in both directions`) rather than the presence of a topic word. That
+was a deliberate response to the four prior cases in this session where a guard of mine matched a
+word near the property instead of the property.
+
+**One of my own tests failed on correct text first.** The class ran its assertions against *raw*
+section slices while the prose is line-wrapped, so `only the second file's profile survives` did not
+match text that wraps between "second" and "file's" — an assertion about line breaks rather than
+content. The slices are now flattened the same way `flat()` flattens a whole file.
+
+**Upstream state changed between the spec and the implementation.** The spec recorded all three as
+"offered at graduation" — i.e. never sent. They were sent on 2026-07-31 as a single
+`category='bug'` report with the maintainer's approval, so the plugin text says "reported upstream
+2026-07-31" and the spec's `Upstream:` field has been updated to match.

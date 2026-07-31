@@ -206,6 +206,35 @@ Run the profiler, then summarize columns/types/completeness/quality. Advance wor
 `action='advance'`, carrying `profile_summary` (one entry per source schema, each with
 `schema_name`, `record_count`, `field_count`) in `data`.
 
+⛔ **Two profiler limitations to expect, both of which produce a wrong profile rather than an
+error.** Observed 2026-07-27 on SDK 4.3.3.26191; **reported upstream 2026-07-31** and **not re-run
+since**, so check whether they still apply rather than assuming — the numeric-value entry later in
+this file is the precedent for retiring one once the server fixes it.
+
+1. **For a multi-file source, the emitted commands write to the same output path.** A
+   `mapping_workflow(action='start', file_paths=[…, …])` returned two `sz_schema_generator.py`
+   invocations both using `-o <workspace_dir>/profile_report.md`. Run as issued, **only the second
+   file's profile survives** — and step 3 then tells you to consult `profile_report.md` for how
+   *each* source file is structured. The failure is silent: the file exists, is well-formed, and
+   describes one schema. **Profile each input to its own path** (`profile_report_<stem>.md`) and
+   concatenate, or pass all inputs to one invocation if it accepts them. Multi-file sources are
+   exactly where the profile matters most — join keys and per-schema field sets.
+2. **A headerless CSV is profiled by consuming its first data row as column names.** The profiler
+   assumes a header row. On a documented headerless source (the free-data catalog ships one, with 12
+   positional columns in its README) that means **one record disappears** and every column is
+   mislabelled with a value from that row. Nothing fails — you get a confident, wrong profile, and
+   every step-3 mapping decision rests on it. **Write a headered copy for profiling only**, using
+   the documented column order, and let the mapper keep reading the raw file positionally.
+
+⚠️ **A column's population percentage is not a quality signal when a sentinel token is in use.** A
+null sentinel is a *value*, so the profiler counts it as present: a source using `-0-` for "no data"
+reported **100% population on all 12 columns** when 8 carried no information. Treat population as
+"has a value", never as "has information", and do not let it feed a completeness judgement —
+that distinction is INV-128's, one layer upstream of where it usually bites.
+
+⛔ **Work around these; do not ship a patched profiler.** `sz_schema_generator.py` is
+MCP-delivered, and a forked copy masks the upstream fix (INV-173).
+
 ⛔ **Profile sanity check — interpret the field count, never just report it.** Before presenting
 anything, check whether the profile is *plausible*: roughly **more than 100 fields, or more than 50
 distinct field patterns**, is not a wide source — it is a signal that the source is shaped like a
@@ -278,6 +307,27 @@ the mapping table with reasoning for each decision and a confidence score.
 > check **will** report it when validation runs, and that report is a known checker limitation, not a
 > mapping defect. Read "⛔ A value derived from a source *field name*…" later in this step **before**
 > you get there, so an expected exit 1 does not read as a bug in your mapper.
+
+⛔ **Expect a field-count warning on exit, and do not chase it.** Step 3 emits
+"mapped N fields … but profile reported M fields" on **every** mapping that uses `derived` entries
+or a `type_discriminator` — which is every mapping that follows this workflow's own guidance, since
+`derived` `DATA_SOURCE`/`RECORD_ID` are mandatory for a master schema and `type_discriminator` is the
+prescribed way to handle a per-record entity type. Both are declared by the live `mapping_workflow`
+schema (server **1.32.3**, verified **2026-07-31**): `derived` carries a `derived_as` enum of
+`DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `REL_ANCHOR`, `REL_POINTER`, and `type_discriminator` is a
+step-3 field with its own `field_overrides`.
+
+The counter includes those `derived` entries — which are **not source fields** — while excluding
+fields declared only inside `type_discriminator.field_overrides`, which **are**. The two errors do
+not cancel, so the count is wrong in both directions. Observed 2026-07-27 across four sources on SDK
+4.3.3.26191: 12 fields reported as 13 (high), and 16 reported as 14 (low), with every source field
+dispositioned in both cases.
+
+**What to do:** confirm every source field carries a disposition — that is the real question the
+warning gestures at — and if it does, record the count mismatch as expected and proceed. ⚠️ **Do not
+start ignoring this step's warnings generally.** Its *other* warnings are real; this is one
+known-bad counter, not a noisy step. **Reported upstream 2026-07-31 and not re-run since**, so check
+whether it still fires rather than assuming.
 
 ⛔ **Shared-feature collision check (cross-source).** After mapping a source, compare its feature
 targets against the sources already mapped. When **two or more sources send different source fields
