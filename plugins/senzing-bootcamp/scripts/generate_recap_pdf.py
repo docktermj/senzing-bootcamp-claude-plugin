@@ -268,13 +268,33 @@ def _split_title_date(rest: str) -> Tuple[str, str]:
 _ITEM_GAP_MM = 2.4
 _ITEM_GAP_PT = 3.0
 
-# Compared through _normalize_heading, so the "Action Taken" singular variant is covered.
-_SPACED_SUBSECTIONS = ("information shared", "actions taken")
+# Bullet lists are spaced BY DEFAULT (inverted 2026-07-31 — see below). Where the gap
+# falls is decided **structurally**, by indentation, not by a list of names:
+#
+#     - **Q:** a question          <- no gap; its answer belongs with it
+#       - **R:** the answer        <- gap; the next question starts a new pair
+#     - **Q:** the next question
+#
+# "Emit a gap when the next content-bearing bullet is TOP-LEVEL" keeps a response with
+# its question *and* separates one Q/R pair from the next, with no name to keep in sync.
+#
+# ⚠️ This replaced an opt-in tuple of three subsection/label names, and the names were
+# themselves the defect: a list added or renamed later was silently unspaced, and
+# "Files produced" was excluded on the stated belief that it was "a short reference list
+# of one-line paths". `bootcamp-onboarding/module-completion.md` requires every entry to
+# be a path **plus** a "— what it is" gloss, so in real recaps that list runs 5-12 items
+# at 110-188 characters — the very case the gap exists for, and the one list where it was
+# switched off. The exclusion looked right because it was reasoned from the list's
+# *title* rather than from what the template makes its items contain.
+#
+# These opt-outs are the escape hatch, deliberately empty: the structural rule already
+# covers both cases the original opt-in list was protecting. Add a name here only when a
+# list must stay tight *between* top-level items — and say why.
+_UNSPACED_SUBSECTIONS: Tuple[str, ...] = ()
 
-# Spaced only where they appear as a `**Label:**` block, so that within End-of-Module
-# Summary the accomplishments list is spaced while "Files produced" — a short list of
-# one-line paths — stays tight.
-_SPACED_LABELS = ("what you accomplished",)
+# Compared through _block_label, so a `**Label:**` block inside a subsection can opt out
+# without silencing the whole subsection.
+_UNSPACED_LABELS: Tuple[str, ...] = ()
 
 # Labels whose value always starts on its own line, left-aligned to the page margin,
 # rather than continuing inline after the bold label. "Why it matters" is a short label
@@ -283,18 +303,26 @@ _SPACED_LABELS = ("what you accomplished",)
 # per module), which reads as ragged and off-margin rather than as a normal paragraph.
 _NEW_LINE_LABELS = ("why it matters",)
 
-# Deliberately NOT spaced:
-# * "Questions & Responses" — its responses are indented sub-bullets under their
-#   questions; spacing every bullet would separate each answer from its question and
-#   read worse, not better.
-# * "Files produced" — a short reference list of paths.
+# Both former exclusions are gone, and neither needed a name in the end (2026-07-31):
+# * "Questions & Responses" — the concern was real (spacing every bullet would tear each
+#   answer away from its question) but it only ever applied to the *indented* `- **R:**`
+#   sub-bullets. The top-level `- **Q:**` items wanted the gap all along, and the
+#   structural rule gives exactly that: a response stays attached to its question, and
+#   one Q/R pair is separated from the next.
+# * "Files produced" — excluded as "a short reference list of paths", which
+#   `module-completion.md` contradicts: it templates every entry as
+#   `` - `{path}` — {what it is} `` and requires the gloss, so real recaps run 5-12
+#   items at 110-188 characters. It is also the recap's index, so it was the worst list
+#   to render as an undifferentiated block.
 
 
 def _block_label(line: str) -> str:
     """The normalized `**Label:**` of a line, or "" when it carries none.
 
-    Used to switch spacing on inside a subsection: End-of-Module Summary holds both a
-    list that wants spacing and one that does not.
+    Used to switch spacing **off** inside a subsection, via `_UNSPACED_LABELS`. It read
+    the other way until 2026-07-31, when the default inverted: a labeled block that must
+    stay tight between its top-level items is now the exception that has to be named,
+    rather than every spaced list having to be.
     """
     m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
     return _normalize_heading(m.group(1)) if m else ""
@@ -347,6 +375,27 @@ def _is_bullet(line: str) -> bool:
     return bool(re.match(r"^\s*[-*]\s+\S", line))
 
 
+def _is_top_level_bullet(line: str) -> bool:
+    """A bullet with NO leading whitespace, as opposed to any indented sub-bullet.
+
+    ⚠️ **Deliberately a different threshold from the one used to *draw* the indent.**
+    Both renderers give a bullet its extra visual indent only at `>= 4` leading spaces
+    (`_render_line`'s `lead >= 4`, `_stdlib_subsection`'s `len(m.group(1)) >= 4`),
+    because that is where a second visual level is wanted. Spacing asks a different
+    question — "does this line belong with the one above it?" — and any indentation at
+    all is the author saying yes.
+
+    Being tolerant here is free and prevents a real regression. `module-completion.md`
+    mandates four spaces for a response (`    - **R:** …`), but a recap written with two
+    would, under a `>= 4` rule, have every answer torn away from its question — which is
+    precisely the failure the original "never space Questions & Responses" exclusion
+    existed to prevent. A genuine top-level list item never carries leading whitespace,
+    so nothing is lost by treating every indented bullet as a continuation.
+    """
+    m = re.match(r"^(\s*)[-*]\s+\S", line)
+    return bool(m) and not m.group(1)
+
+
 def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
     """True when the next content-bearing line after ``index`` is also a bullet.
 
@@ -357,6 +406,42 @@ def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
         if not line.strip():
             continue
         return _is_bullet(line)
+    return False
+
+
+def _still_in_list_item(line: str, was_in_item: bool) -> bool:
+    """Whether, after this line, we are still inside a list item.
+
+    A bullet opens one; a blank line closes it; an **indented non-bullet line is a
+    soft-wrapped continuation** of the item above and keeps it open.
+
+    ⚠️ The continuation case is why the inter-item gap is decided on this rather than on
+    `_is_bullet` alone. Gating on the bullet line asks "is the *next source line* another
+    item?", and for a bullet whose Markdown wraps across two source lines the answer is
+    no — it is that same item's continuation — so such an item received **no gap at all**
+    (found 2026-07-31; latent since the gap was introduced, and invisible because the
+    shipped example recap writes every entry as one long source line and lets the
+    renderer wrap it). The gap has to be emitted after an item's *last* source line.
+    """
+    if _is_bullet(line):
+        return True
+    if not line.strip():
+        return False
+    return was_in_item and line[:1].isspace()
+
+
+def _next_nonblank_is_top_level_bullet(lines: List[str], index: int) -> bool:
+    """True when the next content-bearing line is a **top-level** bullet.
+
+    This is the whole spacing rule. Gating on the next line keeps the gap strictly
+    between items (never after the last); requiring that line to be top-level keeps it
+    strictly between *logical* items, so an indented response stays attached to the
+    question above it while the following question is still separated from the pair.
+    """
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            continue
+        return _is_top_level_bullet(line)
     return False
 
 
@@ -2262,8 +2347,9 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
         pdf.multi_cell(epw, 6, "(not recorded)")
         pdf.ln(1)
         return
-    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    unspaced_section = _normalize_heading(name) in _UNSPACED_SUBSECTIONS
     active_label = ""
+    in_item = False
     index = 0
     while index < len(content or []):
         line = content[index]
@@ -2274,13 +2360,15 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
         if run:
             _render_table_fpdf2(pdf, epw, "\n".join(content[index : index + run]))
             index += run
+            in_item = False
             continue
         label = _block_label(line)
         if label:
             active_label = label
         _render_line(pdf, epw, line)
-        if _is_bullet(line) and (spaced_section or active_label in _SPACED_LABELS):
-            if _next_nonblank_is_bullet(content, index):
+        in_item = _still_in_list_item(line, in_item)
+        if in_item and not unspaced_section and active_label not in _UNSPACED_LABELS:
+            if _next_nonblank_is_top_level_bullet(content, index):
                 pdf.ln(_ITEM_GAP_MM)
         index += 1
     for block in missing_blocks:
@@ -2860,8 +2948,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
     if empty and not missing_blocks:
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
-    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    unspaced_section = _normalize_heading(name) in _UNSPACED_SUBSECTIONS
     active_label = ""
+    in_item = False
     cursor = 0
     while cursor < len(content or []):
         index, line = cursor, content[cursor]
@@ -2871,9 +2960,12 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if run:
             _stdlib_table(add, "\n".join(content[index : index + run]))
             cursor += run
+            in_item = False
             continue
         cursor += 1
         s = line.strip()
+        # Tracked before the skips below so a blank line still closes an item.
+        in_item = _still_in_list_item(line, in_item)
         if not s:
             add("", "F1", 4, 0)
             continue
@@ -2893,8 +2985,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
             s = _md_inline_to_text(s)
         add_wrapped(s, "F1", 10.5, indent)
         # Mirror the fpdf2 path's inter-item gap so the two renderers do not drift.
-        if m and (spaced_section or active_label in _SPACED_LABELS):
-            if _next_nonblank_is_bullet(content, index):
+        if in_item and not unspaced_section and active_label not in _UNSPACED_LABELS:
+            if _next_nonblank_is_top_level_bullet(content, index):
                 add("", "GAP", _ITEM_GAP_PT, 0)
     for block in missing_blocks:
         add_wrapped(f"{block}: (not recorded)", "F1", 10.5, 6.0)

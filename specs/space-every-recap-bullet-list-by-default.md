@@ -113,3 +113,67 @@ wrong in every real recap.
   one of its deliberate exclusions and narrows the other**),
   `specs/discoveries-pdf-offpage-blocks-and-list-spacing.md` (the same spacing machinery in
   the sibling generator — check whether it carries the same opt-in shape).
+
+## Deviations from this spec, and why (2026-07-31)
+
+All four proposed changes shipped, plus a defect the spec did not know about. Six differences:
+
+1. **The opt-out is structural, and the name lists ship empty.** The spec asks for "an
+   explicit **opt-out** list". Both of its exclusions turn out to be one rule: *emit the gap
+   when the next content-bearing bullet is top-level*. That keeps an indented `- **R:**` with
+   its question **and** separates one Q/R pair from the next, so neither exclusion needs a
+   name. `_UNSPACED_SUBSECTIONS` and `_UNSPACED_LABELS` still exist as the escape hatch the
+   spec wanted, deliberately empty — and **tested live** rather than left as dead code:
+   populating either must actually suppress the gap, or the next maintainer who needs a tight
+   list adds a name, sees no effect, and hard-codes something.
+
+2. **A latent pre-existing defect, found while proving criterion 7.** The gap was decided on
+   the *bullet* line, asking "is the next **source** line another item?" For a bullet whose
+   Markdown wraps across two source lines the answer is no — it is that item's own
+   continuation — so **such an item received no gap at all, in either renderer**. Unrelated to
+   the exclusions and present since the gap was introduced; invisible because the shipped
+   example recap writes every entry as one long source line and lets the renderer wrap it, so
+   no fixture had the shape. Fixed via `_still_in_list_item`, so the gap lands after an item's
+   *last* source line.
+
+3. **The required test's first draft passed vacuously, and the spec's wording is why it was
+   caught.** Comparing item 1's first line to item 2's first line clears any fixed threshold
+   whenever item 1 wraps — 31 pt against a 17 pt bar — with the gap switched off. The
+   criterion says "more than **its own internal line spacing**", which is the non-vacuous
+   comparison: last line of item 1 → first line of item 2, measured against the item's own
+   wrapped-line spacing from the same render. Corrected before it shipped.
+
+4. **The spacing indent threshold deliberately differs from the drawing threshold.** Both
+   renderers give a bullet its extra visual indent only at `>= 4` leading spaces; spacing
+   treats **any** indentation as a continuation. `module-completion.md:72` mandates four
+   spaces for a response, but a recap written with two would otherwise have every answer torn
+   away from its question — the exact regression the original blanket exclusion existed to
+   prevent. A genuine top-level item never carries leading whitespace, so tolerance costs
+   nothing. Documented at the helper so the three thresholds are not "unified" by mistake.
+
+5. **The test fixture carried the false premise too.** `SPACING_RECAP`'s "Files produced"
+   entries were bare paths with no gloss — a shape `module-completion.md` does not permit — so
+   the old test proved tightness on data the plugin never produces. Now glossed and long
+   enough to render-wrap, matching both the template and the shipped example recap.
+
+6. **Sibling generator checked, not changed** (the spec's related-specs note asks whether it
+   carries the same opt-in shape). It does not: `generate_discoveries_pdf.py` decides spacing
+   with `_needs_item_gap(blocks, index)` over typed blocks and is already spaced-by-default,
+   with no name list. Worth noting for a future reader that its `_LIST_KINDS` includes
+   `subbullet`, so it *would* space between a bullet and its sub-bullet — harmless there,
+   because the discoveries document has no Q/R structure, but not a rule to copy into the
+   recap.
+
+**Tests changed rather than added:** `test_files_produced_list_stays_tight` asserted the
+premise this spec reverses and is now `test_files_produced_wrapped_items_are_separated`;
+`test_action_taken_singular_is_covered` asserted membership in a constant that no longer
+exists, and its real guarantee — that the singular and plural forms normalize alike, so an
+opt-out written either way matches — is asserted directly instead. `test_new_line_labels.py`
+and `test_recap_pdf_certificate.py` both pass unchanged, as the spec requires.
+
+## Invariants introduced
+
+- None. Inverting a default and replacing a name list with a structural rule adds no standing
+  constraint that is not already enforced by the tests here, and INV-066 already binds the
+  two renderers not to drift. The durable half of this change lives in the mechanism itself:
+  a list added or renamed later is spaced without anyone remembering to name it.
