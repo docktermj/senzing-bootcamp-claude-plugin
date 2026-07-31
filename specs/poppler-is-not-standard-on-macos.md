@@ -108,3 +108,49 @@ this repo's CI runs on Linux, where the claim happens to hold.
 - Upstream: not applicable.
 - Related specs: `specs/pdf-layout-verification-without-poppler.md` (established INV-163;
   this corrects its premise), `specs/artifact-level-verification-for-deliverables.md` (INV-129).
+
+## Deviations from this spec, and why (2026-07-31)
+
+All four sites corrected as specified. Five things differ from the text:
+
+1. **A fifth site: this repo's own test docstring.** `tests/test_pdf_verification_toolchain.py`
+   opened by repeating the false claim verbatim — "poppler, which is standard on Linux and macOS
+   and **absent on Windows by default**". The spec lists that file for the new assertion but not
+   as a *source* of the claim. It is now corrected, with a note recording that it carried the
+   premise and that a wording assertion is the only defence available, since no suite can check
+   what is installed on a platform it is not running on.
+2. **Line references drifted.** The spec cites Step 1b at `:608-616`; the block is at `:619-635`
+   because commits `4cff770` and `022c4b2` added text to `graduation/SKILL.md` earlier the same
+   day. `:43` and `:77` in the originating spec were confirmed exactly as cited.
+3. **The macOS bullet is worded so the prohibition precedes the command.** A pre-existing guard
+   (`test_does_not_instruct_installing_poppler`) requires every occurrence of
+   `brew install poppler` to be preceded within 400 characters by "do not" / "never" /
+   "MUST NOT" — correct, and my first draft mentioned the command *descriptively* and tripped it.
+   Reworded to "you **must never install them** to make a check pass (INV-129) — they arrive only
+   via an explicit `brew install poppler`…" rather than relaxing the guard. Better guidance
+   anyway: a reader who sees the command sees the prohibition in the same breath.
+4. **The Pillow route is verified rather than asserted.** The spec says `fpdf2` brings in Pillow;
+   confirmed locally — `fpdf2` 2.8.5 declares `Pillow!=9.2.*,>=8.3.2`, and Pillow 10.2.0 imports
+   in this environment. The version constraint is quoted in the guidance so a future reader can
+   re-check it instead of trusting it.
+5. **The reduced-set answer is better than the spec could know.** The spec notes that
+   `embedded N of M images` measures Markdown references and "must not be cited as coverage
+   evidence" — correct, and as of commit `022c4b2` (implemented earlier today) the generator emits
+   a *separate*, manifest-derived `N of M captured tabs reached the recap`, which **is** the
+   coverage figure and also needs no external tool. So on macOS the reduced set now answers both
+   questions rather than only the render one. Step 1b names both and keeps them distinct.
+
+**Criterion not ticked, as the spec itself requires:** the macOS absence is **not
+runtime-verifiable in this environment**. This repo runs on Linux, where poppler is present. The
+evidence is the field observation (macOS 26.5.2, Apple Silicon, Homebrew installed and in active
+use, all four binaries absent, `fpdf2` 2.8.4 present) recorded in the feedback entry — an
+environment observation, not an MCP source and not a local run (INV-080).
+
+One artifact of the fix worth knowing for future audits: a grep for "poppler … present/standard …
+macOS" now matches INV-163, because its correction note **quotes** the false claim in order to
+retract it. That is the retraction, not a live claim.
+
+## Invariants introduced
+
+- None. This corrects the *platform example* inside `INV-163` in place — its ID, its MUST and its
+  no-new-dependency requirement are all unchanged — and adds no new standing rule.

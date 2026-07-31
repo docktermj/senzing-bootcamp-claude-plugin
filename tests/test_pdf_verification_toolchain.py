@@ -3,12 +3,22 @@ report the checks it could not run.
 
 Step 1b makes rasterizing a page and counting image XObjects "part of verifying the
 render" (INV-129) and named `pdftoppm` and `pdfimages` as the tools. Both ship with
-poppler, which is standard on Linux and macOS and **absent on Windows by default**. On
-one Windows 11 workstation only `pdftotext` resolved, so the two checks that catch what
+poppler, which is standard on Linux and **absent by default on both Windows and macOS**.
+On one Windows 11 workstation only `pdftotext` resolved, so the two checks that catch what
 text extraction cannot — border-clipped glyphs and content outside the page box — did
 not run at all, and the image count fell back to the `/Subtype /Image` grep the skill
 itself warns overcounts. Nothing said so: the recap was reported verified with its
 layout never inspected.
+
+⚠️ **This docstring said "standard on Linux and macOS" until 2026-07-31, and that was
+false.** poppler is a Linux distribution package, not a macOS system component: a macOS
+26.5.2 machine with Homebrew in active use had all four binaries absent. The claim came
+from `specs/pdf-layout-verification-without-poppler.md` and reached the skill, INV-163 and
+this file — and no test could catch it, because no suite can check what is installed on a
+platform it is not running on, and this repo's CI runs on Linux, where it happens to hold.
+The macOS grouping is now asserted below so the habitual "Linux / macOS" pairing cannot be
+reintroduced silently. That assertion is the only defence available; it checks what the
+guidance *says*, not what any machine *has*.
 
 The same session shipped a recap PDF missing all six of the bootcamper's screenshots,
 detectable only by counting image objects — the check that had been skipped.
@@ -85,6 +95,110 @@ class WindowsToolchainIsNamed(unittest.TestCase):
 
     def test_pdftotext_only_case_is_described(self):
         self.assertRegex(skill_text(), r"(?i)only\s+`?pdftotext`?\s+(?:resolved|was present)")
+
+
+class MacosIsNotGroupedWithLinux(unittest.TestCase):
+    """poppler is a Linux distribution package, not a macOS system component.
+
+    The guidance promised the full check set on macOS while removing the two checks it
+    itself calls irreplaceable. Observed 2026-07-31: macOS 26.5.2 (Apple Silicon) with
+    Homebrew installed and in active use had all four binaries absent.
+
+    ⚠️ These assertions check what the guidance *says*. Nothing here can verify what a
+    macOS machine actually has — this suite runs on Linux, where poppler is present, so
+    the absence is not reproducible in CI. That is exactly why the claim survived, and
+    why the wording is pinned instead.
+    """
+
+    def setUp(self):
+        self.text = skill_text()
+        # Collapse whitespace AND emphasis markers: these phrases carry bold runs
+        # whose placement moves whenever the paragraph is re-wrapped, and a test that
+        # fails on re-wrapping teaches the next editor to delete it.
+        self.flat = re.sub(r"[*\s]+", " ", self.text)
+
+    def test_macos_is_not_paired_with_linux_for_poppler(self):
+        """The habitual Unix pairing is the defect; it must not come back."""
+        for pairing in ("Linux / macOS", "Linux and macOS", "macOS / Linux"):
+            with self.subTest(pairing=pairing):
+                for match in re.finditer(re.escape(pairing), self.text, re.IGNORECASE):
+                    window = self.text[match.start(): match.start() + 400]
+                    self.assertNotRegex(
+                        window,
+                        r"(?i)poppler is (usually|typically) present|poppler is standard",
+                        "poppler ships on neither macOS nor Windows; grouping macOS with "
+                        "Linux promises the full check set on a platform that has none "
+                        "of the four binaries",
+                    )
+
+    def test_macos_is_stated_to_lack_poppler(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)macOS[^.]{0,80}poppler is NOT part of the base system"
+            r"|macOS ships none of the four binaries",
+        )
+
+    def test_macos_and_windows_are_the_same_case(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)missing-poppler (path|case) is the expected case on both macOS and Windows"
+            r"|Treat macOS as the missing-poppler case",
+        )
+
+    def test_the_pdftotext_fallback_is_not_offered_unconditionally(self):
+        """The Windows advice "keep the positive pdftotext probe" is unactionable on
+        macOS, where pdftotext is one of the four missing binaries."""
+        self.assertRegex(
+            self.flat,
+            r"(?i)Do not fall back on `pdftotext` without probing",
+        )
+        self.assertRegex(self.flat, r"(?i)not actionable there|missing along with the other three")
+
+    def test_the_remaining_route_is_named_and_needs_no_new_dependency(self):
+        """A reduced check set must be actionable, not merely reduced (INV-163)."""
+        # `Pillow\s*,` because stripping the bold run leaves a space before the comma.
+        self.assertRegex(self.flat, r"(?i)Pillow\s*, which `fpdf2` already requires")
+        self.assertRegex(self.flat, r"(?i)needs no tool at all")
+
+    def test_it_still_forbids_installing_poppler(self):
+        """INV-129 is unaffected: naming macOS must not become a reason to install."""
+        self.assertRegex(
+            self.flat, r"(?i)never install (?:one|a tool|anything) to satisfy"
+        )
+
+    def test_the_page_raster_is_reported_unverified(self):
+        self.assertRegex(self.flat, r"(?i)[Rr]eport the page raster as not verified")
+
+    def test_the_invariant_example_was_corrected_too(self):
+        """The false claim originated in the spec that established INV-163, so the
+        invariant carried it as well. A criterion that names a second file is checked
+        against that file."""
+        invariants = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
+        body = re.search(r"\*\*INV-163\*\* — .*", invariants).group(0)
+        self.assertRegex(
+            body,
+            r"(?i)absent by default on \*\*both Windows and macOS\*\*",
+            "INV-163's platform example named Windows alone",
+        )
+        self.assertIn("2026-07-31", body, "the in-place correction must carry its date")
+        self.assertRegex(
+            body,
+            r"(?i)MUST be recorded as skipped",
+            "the invariant's MUST must be unchanged by the example fix",
+        )
+
+    def test_the_originating_spec_carries_a_dated_correction(self):
+        spec = (
+            REPO_ROOT / "specs" / "pdf-layout-verification-without-poppler.md"
+        ).read_text(encoding="utf-8")
+        self.assertRegex(spec, r"(?i)## Correction: the platform claim was wrong for macOS")
+        self.assertIn("2026-07-31", spec)
+        self.assertRegex(
+            spec,
+            r"(?i)standard on Linux and macOS",
+            "the original wording must be left in place — the record of what was "
+            "believed is the point of a correction note",
+        )
 
 
 class SkippedChecksAreReported(unittest.TestCase):

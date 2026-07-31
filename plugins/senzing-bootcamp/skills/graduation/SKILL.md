@@ -616,15 +616,40 @@ missing; **never install one to satisfy a verification step** (INV-129) — that
 not offer `scoop install poppler` / `brew install poppler` / `apt install poppler-utils` to make a
 check pass.
 
-- **Linux / macOS:** poppler is usually present (`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`),
+- **Linux:** poppler is usually present (`pdftoppm` / `pdftotext` / `pdfinfo` / `pdfimages`),
   so the full check set normally runs. One field machine had `fpdf2`, headless Chrome and poppler, and
   did **not** have Playwright, Selenium, or PyMuPDF.
+- **macOS: poppler is NOT part of the base system.** macOS ships none of the four binaries, and you
+  **must never install them** to make a check pass (INV-129) — they arrive only via an explicit
+  `brew install poppler`, which a Bootcamper has no reason to have run.
+  Observed 2026-07-31 on macOS 26.5.2 (Apple Silicon) **with Homebrew installed and in active use for
+  the Senzing SDK itself**: all four absent, poppler not installed as a formula. Do **not** group
+  macOS with Linux here — the habitual pairing for Unix-like tooling is wrong for poppler, which is a
+  Linux distribution package rather than a macOS system component.
 - **Windows: poppler is typically absent.** On one Windows 11 workstation only `pdftotext` resolved —
   `pdftoppm`, `pdfinfo` and `pdfimages` were all missing. That is the normal Windows case, not a
-  broken setup, and it removes exactly the two checks text extraction cannot substitute for: the page
-  raster and the honest image count. Use the Pillow route above for the count, keep the positive
-  `pdftotext` probe, and **report the page raster as not verified** — do not imply the layout was
-  checked.
+  broken setup.
+- **So the missing-poppler path is the expected case on both macOS and Windows**, and it removes
+  exactly the two checks text extraction cannot substitute for: the page raster and the honest image
+  count.
+
+  ⚠️ **Do not fall back on `pdftotext` without probing for it.** On Windows it was the one binary
+  that resolved, so earlier guidance said to "keep the positive `pdftotext` probe" — on macOS it is
+  missing along with the other three, so that advice is not actionable there. Probe, then use it or
+  record it as skipped.
+
+  What needs **no** new dependency on either platform, so the reduced set is actionable rather than
+  merely reduced:
+
+  - **Pillow**, which `fpdf2` already requires (`fpdf2` 2.8.5 declares `Pillow>=8.3.2` — verified
+    2026-07-31), so when you created the project-local venv above it is *already importable in that
+    same interpreter*. This is the honest image count and their dimensions.
+  - **The generator's own success line**, which needs no tool at all: `embedded N of M images` is the
+    count the renderer achieved, and `N of M captured tabs reached the recap` is the coverage figure.
+    Keep them distinct — the first cannot answer the coverage question (see the ⛔ above), and the
+    second is absent when no capture manifest exists.
+
+  **Report the page raster as not verified** — do not imply the layout was checked (INV-163).
 
 ⛔ **Say what you could not verify.** Any check skipped for a missing tool MUST be recorded as skipped,
 naming the check and the tool, and the closing announcement MUST state which verification steps did
