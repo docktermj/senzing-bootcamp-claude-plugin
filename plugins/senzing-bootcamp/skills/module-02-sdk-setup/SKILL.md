@@ -903,16 +903,29 @@ An `SzProduct` call can answer while the support data is absent, so "the SDK imp
 version" is not evidence that an engine can initialize — see Step 9, which requires an engine-class
 call for exactly this reason.
 
-> **This masking is now MCP-confirmed, and it has a concrete failure code.**
+> **This masking is now MCP-confirmed on two platforms, and it has a concrete failure code.**
 > `sdk_guide(topic='install', platform='windows')` states that building `SUPPORTPATH` as
 > `%SENZING_DIR%\data` — which on Scoop resolves to a directory that does not exist — makes
 > "every SzEngine/SzDiagnostic call … fail with `SENZ7426 EAS_ERR_XLITERATOR_FAILED` ('No
 > transliteration rules found! Transliteration requires at least one module') **while SzProduct
 > keeps working — so the install looks healthy**" (verified on MCP server 1.32.2, 2026-07-30).
-> ⛔ Attribute this to `sdk_guide`, **not** to `explain_error_code`: re-checked the same day,
-> `explain_error_code('SENZ7426')` still returns only generic transliteration causes (malformed
-> input, missing `DATA_SOURCE`/`RECORD_ID`, bad JSON encoding) and makes no connection to
-> `SUPPORTPATH`. Two tools, two different coverages — ask the one that owns the fact.
+>
+> **The macOS cask has the same defect, and the server documents it in more detail.**
+> `sdk_guide(topic='install', platform='macos_arm')` states that `SENZ7426` on
+> `getEngine`/`getDiagnostic`/`addRecord` "means SUPPORTPATH is WRONG — it is NOT a broken
+> install": the cask's own shipped `etc/sz_engine_config.ini` sets
+> `SUPPORTPATH=${INSTALLPATH}/senzing/er/data`, **a directory that does not exist**, while the real
+> support data (`address_datamodel`, `nomicon`, and the `*TransRules.sz` transliteration modules)
+> lives one level up at `$(brew --prefix)/opt/senzing/data`. The server reports this confirmed
+> end-to-end on cask 4.4.0.26206 and **reported against 4.3.3.26191, which ships the same wrong
+> path** (verified on MCP server 1.32.3, 2026-07-31).
+>
+> ⛔ Attribute this to `sdk_guide`, **not** to `explain_error_code`: re-checked on 1.32.3,
+> 2026-07-31, `explain_error_code('SENZ7426')` still returns only generic input-validation causes
+> (malformed input, missing `DATA_SOURCE`/`RECORD_ID`, bad JSON encoding) and makes no connection to
+> `SUPPORTPATH`. Two tools, two different coverages — ask the one that owns the fact. This matters
+> more than it looks: `SENZ7426` fires at `getEngine()`, **before any record is submitted**, so
+> "validate your input data" sends the reader to inspect something that does not yet exist.
 
 Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
 the user's platform and database choice. Save the MCP-returned JSON directly to
@@ -953,8 +966,25 @@ MCP-returned JSON remains the starting point.
 > above `er`, rather than inside it. This is why the fallback to `$SENZING_DIR\..\data` is
 > needed for Scoop installs.
 
-This SUPPORTPATH verification applies to Windows only. On Linux and macOS, use the MCP-returned
-paths without modification.
+**This verification is about a *layout*, not a platform — run it wherever the support data can be a
+sibling of `er` rather than a child.** That is currently **two** platforms, both documented by
+`sdk_guide`: Windows/Scoop (above) and macOS/Homebrew.
+
+**On macOS, the same check with the Homebrew paths:**
+
+1. Confirm the `SUPPORTPATH` in the MCP-returned configuration exists —
+   `test -d "$(brew --prefix)/opt/senzing/data"`, and that it holds the transliteration modules:
+   `ls "$(brew --prefix)/opt/senzing/data"/*TransRules.sz`.
+2. If it does not, the cask's own `etc/sz_engine_config.ini` is the likely source: it sets
+   `SUPPORTPATH` to `${INSTALLPATH}/senzing/er/data`, which does not exist. **Do not use the shipped
+   `.ini` as-is, and do not copy transliteration files around** — set `SUPPORTPATH` to
+   `$(brew --prefix)/opt/senzing/data`, the `support_path` `sdk_guide` already returns.
+3. If neither path exists, report both that were tried rather than guessing a third.
+
+⚠️ **Linux was not re-checked for this layout** (verified 2026-07-31: `sdk_guide` was asked for
+`macos_arm` and `windows` only). Use the MCP-returned paths on Linux without modification, and if a
+Linux install ever produces `SENZ7426`, ask `sdk_guide(topic='install', platform='linux_apt' |
+'linux_yum')` before assuming this case applies — do not widen it by inference.
 
 **Checkpoint:** write step 8 to `config/bootcamp_progress.json`.
 

@@ -153,3 +153,42 @@ Writing it into the plugin would ship a fresh wrong fact carrying a bootcamper's
   engine-call verification and the `SENZ2027` diagnostic; its criterion 4 forbade an *unconditioned*
   SENZ7426→SUPPORTPATH claim, which this respects — the claim stays conditioned on `sdk_guide` and
   now names two platforms), `specs/windows-scoop-facts-the-server-now-owns.md`.
+
+## Deviations from this spec, and why (2026-07-31)
+
+**Module 3 was worse than this spec described, and the fix is larger as a result.** The spec said a
+failing macOS reader is "routed by Module 3 to a Step 8 that tells them the verification is
+Windows-only". Opening `phase1-verification.md` showed the routing keys on **`SENZ2027` only**
+(`:135-137`). `SENZ7426` matched no branch at all and fell through to step 4 — "any other code goes
+through `explain_error_code` and `search_docs`" — neither of which carries the SUPPORTPATH cause. So
+the reader never reached the gated check; they reached the generic input-validation advice and
+stopped. A new branch `3b` routes `SENZ7426` to the same Step 8 and explicitly forbids relaying what
+`explain_error_code` returned for it.
+
+**An existing guard had to be widened, and it was narrower than the property it enforced.**
+`test_senz7426_is_never_tied_to_supportpath_unconditionally` permits a SENZ7426→SUPPORTPATH pairing
+only where the surrounding text carries both a platform condition and the tool that states it —
+correct, and it is why the retracted absolute cannot return. But its condition regex accepted only
+`scoop|windows`, written when Windows was the only platform the server documented. It therefore
+rejected the **correct** macOS claim. The regex now accepts the macOS/Homebrew forms; the *rule* is
+untouched, and an unconditioned pairing is still an offence — verified by mutation.
+
+**Two of my own tests were too weak, both in the same way, and both caught by mutation.**
+`test_module_03_routes_senz7426_to_the_check` first asserted `SENZ7426.{0,400}(Step 8|SUPPORTPATH)`
+anywhere in the file. The paragraph's own *denial* sentence — "names no connection to `SUPPORTPATH`"
+— satisfied it, so renaming the routing branch's code to `SENZ9999` left the test green while
+nothing routed. Tightened to the routing condition (`If the code is \`SENZ7426\``), which then still
+escaped a second mutation: deleting the routing sentence left `SUPPORTPATH` present in the branch's
+*explanation*, satisfying the alternation. Now requires `Step 8` specifically — the thing it routes
+to, not a word it happens to use. That is the third time in this session a guard of mine asserted a
+string's presence rather than the property.
+
+**The re-verification clause was satisfied and changed nothing.** Both calls were made this session
+on server 1.32.3: `sdk_guide(topic='install', platform='macos_arm', language='java')` still carries
+the SUPPORTPATH gotcha with the `$(brew --prefix)/opt/senzing/data` fix and the 4.4.0.26206 /
+4.3.3.26191 provenance, and `explain_error_code('SENZ7426')` still returns only input-validation
+causes. Had either moved, the content would have shifted.
+
+**Linux was deliberately not widened.** `sdk_guide` was asked for `macos_arm` and `windows` only, so
+the plugin now says Linux was not re-checked and tells the reader to ask before assuming the case
+applies — rather than inferring a third platform from two.

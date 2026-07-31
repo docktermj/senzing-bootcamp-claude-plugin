@@ -126,6 +126,16 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
     So the guard now polices the absolute. A SENZ7426/SUPPORTPATH pairing is permitted only
     where the surrounding text carries **both** the platform condition and the tool that
     actually states it.
+
+    **Updated 2026-07-31: the server documents a second platform, and this guard was narrower
+    than the property it enforces.** `sdk_guide(topic='install', platform='macos_arm')` on
+    server 1.32.3 states the same conditioned claim for the Homebrew cask — its shipped
+    `etc/sz_engine_config.ini` points `SUPPORTPATH` at a nonexistent `er/data` while the real
+    support data sits one level up — so the macOS pairing is as well-founded as the Scoop one.
+    The condition regex accepted only `scoop|windows`, so it rejected a correct macOS claim.
+    The *requirement* is unchanged — a pairing must carry a platform condition **and** the tool
+    — only the set of platforms the server documents has grown. Widening the regex rather than
+    the rule is the point: an unconditioned pairing is still an offence.
     """
 
     def test_senz7426_is_never_tied_to_supportpath_unconditionally(self):
@@ -148,7 +158,10 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
                 )
                 if denial:
                     continue
-                conditioned = re.search(r"(?i)scoop|windows", window)
+                # Any platform the server documents this for, not just the first one found.
+                conditioned = re.search(
+                    r"(?i)scoop|windows|macos|macos_arm|homebrew|brew|cask", window
+                )
                 attributed = re.search(r"(?i)sdk_guide", window)
                 if not (conditioned and attributed):
                     offenders.append(
@@ -222,3 +235,66 @@ class TheSweepIsNotVacuous(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
+    """The check is about a *layout*, not a platform, and gating it re-creates the defect.
+
+    Module 2's SUPPORTPATH verification closed with "This SUPPORTPATH verification applies to
+    Windows only. On Linux and macOS, use the MCP-returned paths without modification." That was
+    reasoned from Scoop, where SENZING_DIR points at `er` and `data` sits beside it — and the
+    Homebrew cask has the identical shape, documented by `sdk_guide(topic='install',
+    platform='macos_arm')` on server 1.32.3.
+
+    So a macOS bootcamper hitting SENZ7426 was sent (via Module 3) to a check that told them it
+    did not apply to them. Worse, Module 3's routing fired only on SENZ2027, so SENZ7426 reached
+    no diagnostic at all and `explain_error_code` sent them to validate input data for a failure
+    that happens before any record is submitted.
+    """
+
+    def test_the_check_is_not_declared_windows_only(self):
+        self.assertNotRegex(
+            flat(MODULE_02), r"(?i)SUPPORTPATH verification applies to Windows only",
+            "the check is gated to one platform again; the macOS cask has the same layout",
+        )
+
+    def test_macos_carries_the_check_with_its_own_paths(self):
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)brew --prefix.{0,40}opt/senzing/data",
+                         "the macOS support-data path is missing")
+        self.assertRegex(text, r"(?i)TransRules\.sz",
+                         "the macOS verification command is missing")
+
+    def test_the_macos_cause_names_the_shipped_ini(self):
+        self.assertRegex(flat(MODULE_02), r"(?i)sz_engine_config\.ini")
+
+    def test_linux_is_marked_not_re_checked_rather_than_widened(self):
+        """Widening by inference is what this spec exists to stop doing."""
+        self.assertRegex(flat(MODULE_02), r"(?i)Linux was not re-checked")
+
+    def test_module_03_routes_senz7426_to_the_check(self):
+        """The criterion that names a second consumer, checked against that consumer (INV-182).
+
+        Asserts the routing *condition*, not the mere presence of the string. An earlier version
+        matched `SENZ7426.{0,400}SUPPORTPATH` anywhere, which the paragraph's own denial sentence
+        ("names no connection to `SUPPORTPATH`") satisfied — so renaming the routing rule's code
+        to SENZ9999 left the test green while nothing routed.
+        """
+        text = flat(PHASE1)
+        self.assertRegex(
+            text, r"(?i)If the code is `SENZ7426`",
+            "Module 3 has no branch keyed on SENZ7426, so it reaches no diagnostic at all — "
+            "step 4 sends it to explain_error_code, which names no SUPPORTPATH cause",
+        )
+        # `Step 8` specifically, not `Step 8|SUPPORTPATH`: the branch *explains* the cause using
+        # the word SUPPORTPATH, so the alternation was satisfied even after the routing sentence
+        # was deleted. The property is that it routes, and Step 8 is where it routes to.
+        self.assertRegex(text, r"(?i)If the code is `SENZ7426`.{0,300}Step 8",
+                         "the SENZ7426 branch does not route to Module 2's Step 8 check")
+
+    def test_module_03_does_not_relay_the_generic_explanation(self):
+        self.assertRegex(
+            flat(PHASE1), r"(?i)do \*\*not\*\* relay|not relay what `explain_error_code`",
+            "Module 3 must not pass explain_error_code's input-validation causes through for "
+            "SENZ7426 — the failure precedes any record",
+        )

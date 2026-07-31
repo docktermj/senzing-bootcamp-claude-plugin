@@ -135,6 +135,15 @@ INV-080), create an engine, and release it.
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
    the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
+3b. **If the code is `SENZ7426`**, send them to the *same* Step 8 check — and do **not** relay what
+   `explain_error_code` returned for it. `sdk_guide(topic='install', …)` states for both
+   `windows` and `macos_arm` that `SENZ7426` on `getEngine`/`getDiagnostic`/`addRecord` means
+   `SUPPORTPATH` is wrong, not that the install is broken; `explain_error_code('SENZ7426')`
+   returns only generic input-validation causes and names no connection to `SUPPORTPATH`
+   (both re-checked on MCP server 1.32.3, 2026-07-31). Relaying it sends the bootcamper to validate
+   input data for a failure that occurs **before any record is submitted**. On macOS the specific
+   cause is the cask's shipped `sz_engine_config.ini` pointing at a nonexistent `er/data`; Step 8
+   carries the fix for both platforms.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 
