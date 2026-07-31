@@ -120,6 +120,116 @@ class NoCountCapSurvives(unittest.TestCase):
         self.assertNotIn("most representative", read(EXAMPLE_RECAP))
 
 
+class OmittingAnInertCaptureIsNotAnOption(unittest.TestCase):
+    """INV-146 permits deleting only a true same-tab duplicate; nothing may offer omission.
+
+    INV-123 used to read "the caption MUST say so **or the image MUST be omitted**" for a
+    Search / Probe tab captured from the static snapshot, and `module-completion.md` shipped
+    that disjunction verbatim. It conflicted with INV-146, and — found 2026-07-31 — it did not
+    even lose the image: graduation's backfill embeds every PNG the recap does not already
+    reference and captions from the tab slug alone, so an omitted capture came back with a bare
+    "Search / Probe" caption and nothing saying the search box is inert. That is the exact
+    outcome INV-123 exists to prevent, reached by following INV-123.
+
+    So the property is not "the image survives" — the backfill already guaranteed that. It is
+    that **no shipped file offers omission as a remedy**, and that both sites requiring a
+    caption say what the caption must disclose.
+    """
+
+    #: Omission offered as an *alternative* remedy, with an image-ish object. Deliberately
+    #: narrow: a first attempt matched any "omit|drop|skip" near an image word and flagged
+    #: legitimate prose — the recap PDF "reports every one it drops" is required by INV-162,
+    #: and "the optional ones are yours to include or skip" is about modules. A guard that
+    #: fires on the rule it is protecting gets deleted rather than fixed.
+    OMISSION_OF_AN_IMAGE = re.compile(
+        r"\bor\s+(?:omit|drop)\s+(?:it|the\s+)?(?:image|screenshot|capture|png)\b"
+        r"|\bor\s+the\s+(?:image|screenshot|capture)\s+(?:MUST\s+)?be\s+omitted",
+        re.I,
+    )
+    #: In the two call sites the referent of a bare "or omit it" is always the capture, so the
+    #: looser form is checked there. This is the exact wording that shipped until 2026-07-31.
+    BARE_OMISSION_OFFER = re.compile(r"\bor\s+(?:omit|drop)\s+it\b", re.I)
+
+    def test_no_shipped_file_offers_to_omit_an_image(self):
+        offenders = []
+        for path in shipped_markdown():
+            for match in self.OMISSION_OF_AN_IMAGE.finditer(flat(path)):
+                offenders.append("%s: %r" % (os.path.basename(path), match.group(0)))
+        self.assertEqual(
+            [], offenders,
+            "shipped guidance offers omitting a captured image; INV-146 permits deleting only "
+            "a true same-tab duplicate:\n  " + "\n  ".join(offenders),
+        )
+
+    def test_neither_call_site_offers_a_bare_omission(self):
+        offenders = []
+        for path in CALL_SITES:
+            for match in self.BARE_OMISSION_OFFER.finditer(flat(path)):
+                offenders.append("%s: %r" % (os.path.basename(path), match.group(0)))
+        self.assertEqual([], offenders, "\n  ".join(offenders))
+
+    def test_both_patterns_catch_the_wording_that_shipped(self):
+        """Positive controls, so neither guard can go vacuous after a rewording."""
+        self.assertRegex("caption it explicitly as the empty/inactive state or omit it",
+                         self.BARE_OMISSION_OFFER)
+        self.assertRegex("the caption MUST say so or the image MUST be omitted",
+                         self.OMISSION_OF_AN_IMAGE)
+
+    def test_the_patterns_do_not_fire_on_the_rules_they_protect(self):
+        """Negative controls for the false positives the first version produced."""
+        for benign in (
+            "omit this whole line if the bootcamper gave no takeaway",
+            "the graduation PDF reports every one it drops, naming it on stderr",
+            "a count cap can only delete unique content",
+            "the optional ones are yours to include or skip",
+        ):
+            with self.subTest(benign=benign[:40]):
+                self.assertNotRegex(benign, self.OMISSION_OF_AN_IMAGE)
+                self.assertNotRegex(benign, self.BARE_OMISSION_OFFER)
+
+    def test_the_capture_site_requires_the_inert_caption(self):
+        text = flat(MODULE_COMPLETION)
+        self.assertRegex(text, r"(?i)inert")
+        self.assertRegex(text, r"(?i)caption it explicitly as the empty/inactive state")
+
+    def test_the_capture_site_states_the_prohibition_as_a_gate(self):
+        """Absence of the old wording is not the same as presence of the rule.
+
+        A mutation that downgraded the ⛔ block to a plain note escaped every other check
+        here: nothing offered omission, so the absence tests passed, while the instruction
+        that omission is forbidden had lost the marker `ground-rules.md` makes mandatory.
+        """
+        text = flat(MODULE_COMPLETION)
+        self.assertRegex(
+            text, r"⛔ \*\*Omitting the image is not an alternative",
+            "the no-omission rule must be a ⛔ gate, not a note — a reader skimming to the "
+            "code fence sees markers, not prose",
+        )
+        self.assertIn("INV-146", text,
+                      "the block must name the invariant that makes omission unavailable")
+
+    def test_the_backfill_also_discloses_an_inert_search_state(self):
+        """The backfill runs precisely when the capture step's own caption never happened, so
+        a slug-only caption there reproduces the defect one step later.
+
+        Asserts the *instruction*, not the noun: an earlier version accepted the phrase
+        "inert search box" alone, so deleting "say so in the caption" — the only actionable
+        half — left the test green.
+        """
+        text = flat(GRADUATION)
+        self.assertRegex(text, r"(?i)search\s*/\s*probe")
+        self.assertRegex(text, r"(?i)empty or inactive search state, say so in the caption",
+                         "the backfill must be told to disclose it, not merely told it exists")
+
+    def test_both_sites_still_forbid_implying_an_uncaptured_result_set(self):
+        for path in CALL_SITES:
+            with self.subTest(site=os.path.basename(path)):
+                self.assertRegex(
+                    flat(path), r"(?i)(never|not) imply a result set|implies a result set",
+                    "the INV-123 requirement itself must survive the edit",
+                )
+
+
 class TabOrderIsSpecifiedAndSourcedFromTheContract(unittest.TestCase):
 
     def test_the_contract_declares_its_row_order_is_the_embed_order(self):

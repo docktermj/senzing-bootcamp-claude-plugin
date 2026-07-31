@@ -434,6 +434,12 @@ deep-linking"), so the **tab slug gives the caption**: use the tab's display nam
 inventing a description. A backfilled caption must never assert content that was not confirmed by
 opening the image.
 
+One tab needs more than its slug. A **Search / Probe** capture taken from the static snapshot has an
+inert search box (the snapshot has no engine), and a bare "Search / Probe" caption on an empty search
+box implies a result set that was never captured — the defect INV-123 forbids. When the image opened
+shows an empty or inactive search state, say so in the caption. This matters here and not only at
+capture time because a backfill runs precisely when the capture step's own caption never happened.
+
 ⛔ **Insert in the app's tab order, not in filename-discovery order.** That same tab table's row
 order is the embedding order. Backfilling by directory scan is what produced a recap whose images
 ran Entity Graph → Cross-Source → Search/Probe → Merge Statistics → Match Keys → Feature Scores —

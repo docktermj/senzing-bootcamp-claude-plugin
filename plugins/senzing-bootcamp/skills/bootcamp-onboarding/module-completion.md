@@ -246,8 +246,16 @@ that both showed the Entity Graph, because the app *is* tabbed so the captures w
 tab-diverse. Never infer image content from the visualization contract.
 
 If the Search / Probe tab was captured from the **static snapshot** rather than the live server, its
-search box is inert (the snapshot has no engine), so caption it explicitly as the empty/inactive
-state or omit it — never imply a result set that was not captured.
+search box is inert (the snapshot has no engine), so **caption it explicitly as the empty/inactive
+state** — never imply a result set that was not captured.
+
+⛔ **Omitting the image is not an alternative.** INV-146 requires every screenshot the capture
+produced to reach the recap, and permits deleting only a true duplicate of the same tab. Omitting
+it here does not even lose it: graduation's orphaned-screenshot backfill embeds every PNG the recap
+does not already reference, and it captions from the tab slug alone — so the omitted image returns
+with a bare "Search / Probe" caption and **nothing saying the search box is inert**, which is the
+one outcome this instruction exists to prevent (INV-123). The caption is the remedy; there is no
+second option.
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 

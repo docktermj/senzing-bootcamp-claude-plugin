@@ -154,13 +154,63 @@ class LanguageAgnosticismNamesItsScope(unittest.TestCase):
                 self.assertRegex(self.b[ident], r"(?i)any.{0,3}language")
 
 
+class AnInertCaptureIsCaptionedNeverOmitted(unittest.TestCase):
+    """INV-123 ↔ INV-146. The omission branch INV-146 had already made unavailable.
+
+    Added after a mutation escaped: the shipped-guidance sweep in
+    `test_screenshot_retention_and_order.py` scans `plugins/` and never reads the ruleset, so
+    putting "or the image MUST be omitted" back into INV-123 broke nothing. The invariant's own
+    text needs its own guard.
+    """
+
+    def setUp(self):
+        self.b = bodies()
+
+    def operative(self, ident):
+        """The requirement itself, without the dated clarification note.
+
+        A note recording an in-place edit must quote the wording it replaced, so a naive
+        "the forbidden phrase is absent" check fires on the note's own history. Cut at the
+        first ⚠️ marker, which is how this file opens every such note.
+        """
+        body = self.b[ident]
+        marker = body.find("(⚠️")
+        operative = body[:marker] if marker > 0 else body
+        self.assertGreater(len(operative), 80,
+                           "%s's operative text could not be separated from its note" % ident)
+        return operative
+
+    def test_inv123_offers_no_omission(self):
+        self.assertNotRegex(
+            self.operative("INV-123"),
+            r"(?i)\bor\s+the\s+image\s+(?:MUST\s+)?be\s+omitted|\bor\s+(?:omit|drop)\s+it\b",
+            "INV-123 offers omission again; INV-146 permits deleting only a same-tab duplicate",
+        )
+
+    def test_inv123_still_requires_the_caption_to_say_so(self):
+        self.assertRegex(self.b["INV-123"], r"(?i)the caption MUST say so")
+
+    def test_inv123_points_at_inv146(self):
+        self.assertIn("INV-146", self.b["INV-123"])
+
+    def test_inv146_records_that_it_closed_the_branch(self):
+        self.assertIn("INV-123", self.b["INV-146"])
+
+    def test_inv146_is_unchanged_in_substance(self):
+        """Closing INV-123's branch must not have relaxed INV-146 itself."""
+        body = self.b["INV-146"]
+        self.assertRegex(body, r"(?i)Every screenshot a visualization capture produced MUST "
+                               r"reach the recap")
+        self.assertRegex(body, r"(?i)only a true duplicate")
+
+
 class TheClarificationsAreDatedAndDisclaimMeaningChange(unittest.TestCase):
     """Rule 2 allows in-place edits only to clarify. An undated edit that changed meaning
     silently is the one thing the maintenance rules forbid outright."""
 
     def test_each_edited_invariant_carries_a_date_and_a_no_meaning_change_note(self):
         b = bodies()
-        for ident in ("INV-002", "INV-048", "INV-110", "INV-162"):
+        for ident in ("INV-002", "INV-017", "INV-048", "INV-110", "INV-123", "INV-162"):
             with self.subTest(invariant=ident):
                 self.assertRegex(b[ident], r"20\d\d-\d\d-\d\d",
                                  "%s's clarification is undated" % ident)

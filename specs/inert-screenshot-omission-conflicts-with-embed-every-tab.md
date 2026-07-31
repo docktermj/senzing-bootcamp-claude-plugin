@@ -121,3 +121,56 @@ without deleting content.
 - Related specs: `specs/per-tab-screenshot-capture-and-grounded-captions.md` (INV-123's
   source), `specs/enforce-screenshot-embed-and-backfill.md` and
   `specs/capture-visualization-screenshots-for-recap.md` (the embed/backfill consumers).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The spec's `Unverified — needs investigation` half resolved, and the mechanism is not the
+one it predicted.** The spec said omission "loses a Bootcamper's screenshot" and set the
+priority to rise to High if shipped guidance took the branch. Both halves needed correcting:
+
+- **Shipped guidance did take it.** `module-completion.md:250` read *"caption it explicitly as
+  the empty/inactive state **or omit it**"* — the disjunction verbatim, at the capture-time
+  embed. So it was a live defect, not only a conflict between two invariant texts.
+- **But omitting does not lose the image.** Graduation's orphaned-screenshot backfill
+  (`graduation/SKILL.md:413-417`) scans `docs/visualizations/*.png` for PNGs *"not already
+  referenced"* and embeds **all** of them, citing INV-122 against a count cap. An omitted
+  Search / Probe capture is therefore recovered, and **INV-146 survives in outcome.**
+
+**What is actually lost is the caption, which makes the defect self-defeating rather than
+merely inconsistent.** The backfill captions from the tab slug — *"use the tab's display name
+rather than inventing a description"* (`:433`) — and knows nothing about inertness. So taking
+INV-123's omission branch produces an image of an empty search box captioned plainly
+"Search / Probe", with nothing disclosing that the snapshot has no engine. That is precisely
+the outcome INV-123 exists to prevent, **reached by following INV-123**. The recommendation in
+`## Proposed change` was right; the reason recorded for it was wrong.
+
+**One change beyond the spec's criteria, in a file it did list.** Criterion 4 asked only that
+both sites "instruct captioning rather than omitting", and graduation's backfill already did
+not omit — so it passed as written. But the backfill runs *precisely when the capture step's
+own caption never happened* (an interrupted module, a skipped embed), which leaves the
+slug-only caption reachable even with `module-completion.md` fixed. `graduation/SKILL.md` is in
+the spec's `## Affected files`, so closing that residual hole is in scope: the backfill is now
+required to say so when the image it opened shows an empty or inactive search state.
+
+**Criterion 6 had no work, and that was verified rather than assumed.** It asked that any test
+pinning the omission branch be repointed (INV-181). Grepping `tests/` for the removed wording
+returns nothing — no test pinned it, which is *why* the defect shipped: `module-completion.md`
+was swept by `test_screenshot_retention_and_order.py` for count caps and tab order, and nothing
+looked for an offered omission.
+
+**Two guards were written badly first, and both failures are worth recording because they are
+the same class this repo keeps hitting.** The first sweep regex matched any `omit|drop|skip`
+near an image word and fired on prose the rules *require* — the recap PDF "reports every one it
+drops" is INV-162, and "the optional ones are yours to include or skip" is about modules —
+while simultaneously **missing the actual shipped wording**, because it demanded an image noun
+after "or omit it". Too broad and too narrow at once. It is now two narrow patterns, each with
+positive controls (the exact clauses removed) and negative controls (the four benign phrases),
+so it cannot go vacuous or fire on the rule it protects.
+
+**Three mutations escaped and two were real gaps.** Putting the omission branch back into
+INV-123's *ruleset text* broke nothing, because the shipped-guidance sweep reads `plugins/` and
+never the invariants — fixed by a new `AnInertCaptureIsCaptionedNeverOmitted` class, which
+also needed an `operative()` helper, since a dated in-place note must quote the wording it
+removed and a naive absence check fires on that quotation. Downgrading the `⛔` gate to a plain
+note also escaped: absence of the old wording is not presence of the new rule, so the gate
+marker is now asserted directly. The third escape was an incomplete mutation, not a gap.
