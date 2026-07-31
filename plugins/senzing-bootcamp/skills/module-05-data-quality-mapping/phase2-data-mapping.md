@@ -315,8 +315,15 @@ it produces silently suppressed merges that only the post-load match-key audit w
 >    and report the result; if unavailable (HTTP 404 / no working inline fallback), tell the
 >    bootcamper it is being skipped because the script is unavailable, treat it as
 >    optional/best-effort, and proceed: do NOT block on it.
+>    ⛔ **On a CSV source it will crash, and that is expected.** Both this script and the routing
+>    report call `load_jsonl(source_path)` and are documented `<source.jsonl> <output.jsonl>`, while
+>    `mapping_workflow` accepts CSV inputs — so a CSV source produces
+>    `json.decoder.JSONDecodeError: Extra data: line 1 column 5 (char 4)`. Report it as a **tool
+>    limitation, not an environment problem**, and either adapt CSV→JSONL and call the checker's own
+>    `verify()` (keeping upstream's logic unmodified) or proceed without it. Observed 2026-07-27 on
+>    SDK 4.3.3.26191; see the ⛔ limitations block below.
 > 3. **`sz_routing_report.py` (routing-coverage, optional/best-effort):** same handling as the
->    verbatim check.
+>    verbatim check, including the CSV crash.
 >
 > In short: anchor validation on `sz_json_analyzer.py`; degrade the verbatim and routing checks
 > to optional/best-effort when their scripts are unavailable, and never leave the bootcamper
@@ -330,7 +337,9 @@ whole-value membership (`if v.strip() not in allowed`). Its only waiver is key-b
 `EXEMPT_KEYS = {"DATA_SOURCE", "RECORD_ID"}` plus any attribute ending `_TYPE` — so a *value* cannot
 be exempted at all.
 
-Two things it cannot harvest, and they are the whole of this limitation:
+Two things it cannot harvest. That is the whole of the **harvesting** limitation — three further
+limitations of a *different* kind are listed below it, where the harvester works fine and something
+else does not:
 
 1. **A boolean.** `collect_strings()` skips `bool` deliberately, and says why in its own docstring:
    there is no unambiguous verbatim string form for a JSON boolean (Python's `str(True)` is `"True"`,
@@ -364,6 +373,47 @@ no MCP server version, so every bootcamper is on the current server and this is 
 4. ⛔ **Never change a source value to satisfy the tool.** For a value the harvester cannot reach it
    would not even work — the allowed set was built without it, under either emission — and distorting
    data to turn a gate green is the one outcome worse than the gate being wrong.
+
+⛔ **Three further limitations, where the harvester works and something else does not.** These are
+**field observations from 2026-07-27** on SDK 4.3.3.26191, across four sources mapped end to end
+(`OPENSANCTIONS_PEP`, `OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`). They were **not** re-run against the
+current server, so treat them as "expect this, and check" rather than as current behaviour — exactly
+as the numeric-value entry above was retired once the server fixed it. All three were reported
+upstream on 2026-07-27.
+
+1. **Any correct `extract` output is rejected.** The workflow documents `extract` for prose fields
+   and names OFAC SDN `REMARKS` as its canonical example — the live `mapping_workflow` schema still
+   declares `extract` as a disposition with a required `expected_features` (server **1.32.3**,
+   verified **2026-07-31**). The gate's `allowed_values()` accepts only a whole value, a `|`/`;`
+   segment, or a whitespace token. Observed: `Remarks = "a.k.a. 'BNC'."` → a correct extraction emits
+   `NAME_ORG="BNC"` → reported as a violation, because the whitespace tokens are `a.k.a.` and
+   `'BNC'.`. **Any** substring pulled from prose fails the same way. Emitting `'BNC'.` to satisfy it
+   would write quotes and a period into a name field; dropping the alias loses real data. Take the
+   exemption path instead.
+2. **`REL_ANCHOR_DOMAIN`, `REL_POINTER_DOMAIN` and `REL_POINTER_ROLE` are rejected.** These are
+   structural constants that by definition have no source value, so the harvester cannot see them and
+   `is_exempt()`'s waiver — `DATA_SOURCE`, `RECORD_ID`, and any attribute ending `_TYPE` — does not
+   cover them. `REL_ANCHOR_KEY` and `REL_POINTER_KEY` **pass**, because those do carry source values,
+   which is what identifies the cause. Observed: 31 offenders across 21 records, every one of those
+   three attributes. The Entity Specification defines all of them — its *Feature: REL_ANCHOR* and
+   *Feature: REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and
+   `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with rules and worked examples (`search_docs`, server 1.32.3,
+   docs index 2026-07-31 20:21 UTC) — so the gate rejects scaffolding the specification prescribes.
+3. **Neither script runs on a CSV source.** `sz_verbatim_check.py` and `sz_routing_report.py` both
+   call `load_jsonl(source_path)` and are documented `<source.jsonl> <output.jsonl>`, while
+   `mapping_workflow` accepts CSV inputs. Observed on CSV: both crash with
+   `json.decoder.JSONDecodeError: Extra data: line 1 column 5 (char 4)`. A crash here is a **tool
+   limitation, not an environment problem** — see the gate presentation at step 4, which says so
+   where you will meet it.
+
+**Handling is the same for all three: the four steps above.** Do not conclude the mapping is wrong,
+confirm faithfulness against the Entity Specification via MCP, record the exemption and its reason,
+and proceed (INV-173). For the CSV case the workable route is to adapt CSV→JSONL and call the
+checker's own `verify()`, so the executed logic stays upstream's, unmodified.
+
+⛔ **Do not ship a patched copy of any of these scripts.** They are MCP-delivered, and a fork masks
+the upstream fix (INV-173) — the numeric-value entry above is the proof that these do get fixed. Work
+around them and re-check whether the workaround is still needed.
 
 Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
 arrives from upstream and a fork would mask it (INV-080). The numeric case is the worked example —

@@ -207,3 +207,88 @@ class TheEmissionChoiceIsSpecDriven(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
+    """The gate rejects two mechanisms the same server prescribes, and crashes on CSV.
+
+    Reported 2026-07-27 across four sources mapped end to end. All three are a *different* kind of
+    limitation from the two harvesting gaps above them: here the harvester works and something else
+    does not — the equality test's shape (`extract`), the key waiver's coverage (`REL_*`), and the
+    input format (CSV). Keeping them in a separate block is why the harvesting section can still
+    truthfully say "that is the whole of the harvesting limitation".
+
+    These assert the *requirement*, not phrasing: that a mapper meeting one of the three finds it
+    named, learns why, and is routed to INV-173's exemption path rather than to changing the data.
+    """
+
+    def setUp(self):
+        self.text = flat(PHASE2)
+
+    def test_the_extract_disposition_limitation_is_named(self):
+        # The *claim*, not words near it. An earlier version asserted that "`extract`",
+        # "allowed_values()" and "a.k.a." each appeared somewhere — all true even after the
+        # sentence stating that extract output is rejected was deleted, because `extract` is a
+        # documented disposition named elsewhere in this file and the rest of the paragraph
+        # survived. Assert the statement that makes it a limitation.
+        self.assertRegex(
+            self.text, r"(?i)`extract` output is rejected",
+            "the text never states that correct `extract` output fails the gate — without that "
+            "claim the surrounding detail explains nothing",
+        )
+        self.assertRegex(self.text, r"(?i)allowed_values\(\)",
+                         "the cause — whole value / delimiter segment / whitespace token — is absent")
+        self.assertRegex(self.text, r"(?i)a\.k\.a\.",
+                         "the worked repro that makes the failure concrete is absent")
+
+    def test_the_relationship_scaffolding_limitation_is_named(self):
+        for attribute in ("REL_ANCHOR_DOMAIN", "REL_POINTER_DOMAIN", "REL_POINTER_ROLE"):
+            with self.subTest(attribute=attribute):
+                self.assertIn(attribute, self.text)
+
+    def test_it_says_which_relationship_attributes_pass(self):
+        """`REL_*_KEY` passing is what identifies the cause as the waiver, not the harvester."""
+        self.assertRegex(self.text, r"(?i)REL_ANCHOR_KEY.{0,80}REL_POINTER_KEY.{0,60}pass")
+
+    def test_the_csv_limitation_is_named_with_its_error(self):
+        self.assertRegex(self.text, r"(?i)load_jsonl")
+        self.assertRegex(self.text, r"json\.decoder\.JSONDecodeError")
+
+    def test_the_csv_limitation_appears_at_the_gate_presentation(self):
+        """INV-183: the rule belongs where the artifact is produced, not one section away.
+
+        A crash reads as environment trouble unless the step that runs the script says otherwise,
+        and that step is where the reader is when it happens.
+        """
+        gate = self.text[:self.text.find("harvests source *values* only")]
+        self.assertIn("JSONDecodeError", gate,
+                      "the CSV crash is documented only in the limitations block, not at the gate")
+        self.assertRegex(gate, r"(?i)tool limitation, not an environment problem")
+
+    def test_all_three_are_dated_field_observations_not_current_mcp_claims(self):
+        """INV-080/INV-169: the rejection half was never re-run against the current server."""
+        self.assertRegex(self.text, r"(?i)field observations from 2026-07-27")
+        self.assertRegex(self.text, r"(?i)4\.3\.3\.26191")
+        self.assertRegex(self.text, r"(?i)not.{0,20}re-run",
+                         "the text must say the observations were not re-verified")
+
+    def test_the_prescriptions_carry_current_mcp_provenance(self):
+        """What *was* re-verified: that the server still prescribes both mechanisms."""
+        self.assertRegex(self.text, r"(?i)1\.32\.3")
+        self.assertRegex(self.text, r"(?i)Feature: REL_ANCHOR",
+                         "the Entity Specification sections that prescribe REL_* are not cited")
+
+    def test_handling_routes_to_the_existing_exemption_path(self):
+        self.assertRegex(self.text, r"(?i)Handling is the same for all three")
+        self.assertIn("INV-173", self.text)
+
+    def test_it_forbids_forking_the_scripts(self):
+        self.assertRegex(self.text, r"(?i)Do not ship a patched copy",
+                         "INV-173's no-fork rule must survive next to a workaround")
+
+    def test_the_harvesting_section_no_longer_claims_to_be_exhaustive(self):
+        """It said "they are the whole of this limitation", which three more entries falsify."""
+        self.assertNotRegex(
+            self.text, r"(?i)they are the whole of this limitation",
+            "the harvesting block still claims to cover every limitation",
+        )

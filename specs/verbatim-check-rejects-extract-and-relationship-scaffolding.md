@@ -129,3 +129,44 @@ get fixed.
   triage did not establish.
 - Related specs: `specs/verbatim-check-numeric-source-values.md` (INV-173, the governing class),
   `specs/verbatim-check-cannot-see-field-name-derived-values.md` (the second instance).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The three limitations were added as a sibling block, not appended to the existing list.** The
+spec said to add them "in the existing shape that file already uses". Opening
+`phase2-data-mapping.md` showed why that would have been wrong: the existing block is scoped
+precisely to what the checker **cannot harvest** — a boolean, and a value derived from a field name
+— and closes "Two things it cannot harvest, and they are the whole of this limitation." All three
+new entries are a *different* mechanism. The harvester works fine for each; what fails is the
+equality test's shape (`extract` emits a substring), the key waiver's coverage (`is_exempt()` has no
+entry for `REL_*_DOMAIN` / `REL_POINTER_ROLE`), or the input format (CSV never reaches the harvester
+at all). Appending them would have made an accurate sentence false. The harvesting block keeps its
+scope, gains "that is the whole of the **harvesting** limitation", and the three sit below it under
+their own ⛔ heading.
+
+**Criterion 4 required the CSV note in two places, and that is deliberate rather than duplication.**
+INV-183 puts the rule where the artifact is produced, so the crash is named at the step that runs the
+script — the reader is there when it happens, and without it a `JSONDecodeError` reads as environment
+trouble. The limitations block carries the fuller explanation.
+`test_the_csv_limitation_appears_at_the_gate_presentation` slices the text before the harvesting
+block and asserts it there specifically, so moving it back out fails.
+
+**One mutation escaped and it was a real test gap.** `test_the_extract_disposition_limitation_is_named`
+first asserted that `` `extract` ``, `allowed_values()` and `a.k.a.` each appeared *somewhere* in the
+file. Deleting the sentence "Any correct `extract` output is rejected." left all three true —
+`extract` is a documented disposition named elsewhere in the file, and the rest of the paragraph
+survived — so the limitation could be removed with the test green. It now asserts the claim itself,
+and a second mutation confirms softening it to "may be flagged" also fails. **That is the fifth time
+in this session a guard of mine asserted words near a property rather than the property**, and the
+second where the word in question legitimately appears elsewhere in the same file for an unrelated
+reason.
+
+**The re-verification split held, and is reflected in the text.** What was re-confirmed on server
+1.32.3 is that the server still *prescribes* both mechanisms — the live `mapping_workflow` schema
+declares `extract` with its required `expected_features`, and `search_docs` returns the Entity
+Specification's *Feature: REL_ANCHOR* and *Feature: REL_POINTER* sections. Whether the gate still
+*rejects* them was **not** re-run: that needs a live `mapping_workflow` run with a workspace and real
+sources. The plugin text therefore presents the rejections as dated field observations from
+2026-07-27 on SDK 4.3.3.26191 and says explicitly they were not re-run —
+`test_all_three_are_dated_field_observations_not_current_mcp_claims` pins that, so the framing cannot
+quietly harden into a current claim.
