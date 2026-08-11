@@ -107,12 +107,23 @@ yields an empty `edges` array and no error.**
   each relationship appears in *both* entities' `RELATED_ENTITIES`, so an un-deduplicated edge list
   draws every relationship twice.
 - With a flag set assembled from `SZ_ENTITY_INCLUDE_*` members instead, a bootcamp session on the
-  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. Those relationship-detail
-  flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
-  `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS`) do not list the export
-  methods in their `applies_to` — confirm with
-  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')` — which is why
-  composing an export's flags out of those alone is the case that loses relationships.
+  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+  and its members — `SZ_ENTITY_INCLUDE_RELATED_ENTITY_NAME`, `_RELATED_RECORD_SUMMARY`,
+  `_RELATED_MATCHING_INFO`, `_RELATED_RECORD_DATA`, `_RELATED_RECORD_TYPES` — do **not** list the
+  export methods in their `applies_to`, which is why composing an export's flags out of those alone
+  is the case that loses relationships. Confirm with
+  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`, which returns the
+  whole family in one reply.
+- ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception in that same reply — it *does* apply to
+  export.** Its `applies_to` names `export_json_entity_report` and `export_csv_entity_report`
+  alongside the entity, `why_*`, `how_entity_by_entity_id`, `find_path_*` and `find_network_*`
+  methods (verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11). So
+  match-key detail **is** available on an export. It also carries `depends_on`
+  (`SZ_ENTITY_INCLUDE_ALL_RELATIONS`, or one of the individual relations flags), so it produces
+  output only when the export's flag set already includes relationships — a dependency, not an
+  exclusion. ⛔ **Read each row's own `applies_to`, never the response as one group.** This flag is
+  returned by the `SZ_ENTITY_INCLUDE_ALL_RELATIONS` filter *because* it depends on those flags, and
+  that adjacency is precisely what makes its longer `applies_to` easy to miss.
 
 So an export **is** a legitimate edge source when its rows carry the key, and the per-entity and
 network methods below remain correct and are the fallback when they do not.

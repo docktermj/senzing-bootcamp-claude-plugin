@@ -113,6 +113,67 @@ class TestExportCapabilityIsFlagConditional(unittest.TestCase):
         self.assertIn("get_entity_by_entity_id", text)
 
 
+class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
+    """`SZ_INCLUDE_MATCH_KEY_DETAILS` applies to export; the relations flags do not.
+
+    Added 2026-08-11 (`match-key-details-does-list-the-export-methods`). The viz reference
+    grouped three things and said none applied to export. Two were right. Verified on MCP
+    server 1.32.8, docs indexed 2026-08-11 13:35 UTC:
+    `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')` returns
+    `SZ_INCLUDE_MATCH_KEY_DETAILS` with `export_json_entity_report` and
+    `export_csv_entity_report` in its `applies_to`, while the six relations flags omit both.
+
+    It is returned by that filter *because* it `depends_on` those flags, so the adjacency is
+    what makes the longer `applies_to` easy to miss — which is why this is pinned rather
+    than left to the next reader to re-derive.
+
+    Not required by the spec's acceptance criteria; added because nothing else guards the
+    correction and the grouped form is the natural way to write the sentence again.
+    """
+
+    def test_the_viz_reference_does_not_group_it_with_the_relations_flags(self):
+        text = read(VIZ_REF)
+        grouped = re.search(
+            r"`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members[^.]{0,160}?"
+            r"`SZ_INCLUDE_MATCH_KEY_DETAILS`[^.]{0,80}?do\s+\*?\*?not\*?\*?\s+list the\s+export",
+            text, re.S,
+        )
+        self.assertIsNone(
+            grouped,
+            "SZ_INCLUDE_MATCH_KEY_DETAILS must not be listed among the flags said to omit "
+            "the export methods — its applies_to names both export methods",
+        )
+
+    def test_the_viz_reference_states_that_it_does_apply_to_export(self):
+        text = read(VIZ_REF)
+        self.assertIn("`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception", text)
+        self.assertIn("export_json_entity_report", text)
+        self.assertIn("export_csv_entity_report", text)
+
+    def test_the_dependency_is_stated_so_it_is_not_read_as_unconditional(self):
+        """It only produces output when relationships are already included."""
+        text = read(VIZ_REF)
+        self.assertIn("depends_on", text)
+        self.assertRegex(text, r"(?i)a dependency, not an\s+exclusion")
+
+    def test_the_claim_carries_its_provenance(self):
+        """Scoped to this paragraph: the page carries other stamps, so a whole-file regex
+        matches them and passes even when THIS claim loses its provenance."""
+        text = read(VIZ_REF)
+        start = text.index("`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception")
+        para = text[start:text.index("\n\n", start)]
+        self.assertRegex(
+            para, r"verified on MCP server 1\.\d+\.\d+, docs indexed [^,]+, \d{4}-\d{2}-\d{2}",
+            "the export applies_to claim must name the server version and date it was asked",
+        )
+
+    def test_phase_d_stays_correctly_scoped(self):
+        """The sibling site was already right — it must not be 'harmonised' to the wrong form."""
+        text = read(PHASE_D)
+        self.assertIn("`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members", text)
+        self.assertNotIn("SZ_INCLUDE_MATCH_KEY_DETAILS", text)
+
+
 class TestEmptyResultIsTreatedAsPlumbingFailure(unittest.TestCase):
     """INV-115: a blank parsed field is a probable wrong reader before it is real absence."""
 
