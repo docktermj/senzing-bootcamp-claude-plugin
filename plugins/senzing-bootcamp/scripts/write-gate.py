@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""PreToolUse gate for Write/Edit: to block writes into the system temp or Downloads
-directory, and block obvious secrets -- DURING a bootcamp only.
+"""PreToolUse gate for Write/Edit: to block writes outside the Bootcamper's project,
+and block obvious secrets -- DURING a bootcamp only.
 
 Two independent checks, governed by two different invariants:
 
 * **Location (INV-200)** -- every file the bootcamp writes lives inside the Bootcamper's
-  project. Blocks a resolved target under system temp, ``~/Downloads``, or reached by a
-  ``..`` escape; allows project-relative and in-project absolute paths, including a
-  project that legitimately lives beneath a temp directory (resolve, then compare).
+  project. Blocks any resolved target outside it, including one reached by a ``..``
+  escape; allows project-relative and in-project absolute paths, including a project
+  that legitimately lives beneath a temp directory (resolve, then compare). System temp
+  and ``~/Downloads`` are not a separate rule -- they are the cases that get a more
+  specific message than the general boundary one.
 * **Secrets (INV-109)** -- PEM private keys, AWS access-key IDs and Senzing ``AQAAAD``
   license blobs are blocked whatever the path. Runs independently of the location logic
   and fails closed.
@@ -30,6 +32,10 @@ if not os.path.isfile(os.path.join("config", "bootcamp_progress.json")):
 LOC_MSG = (
     "Write blocked: use a project-relative path, not a system temp or Downloads "
     "directory."
+)
+OUTSIDE_MSG = (
+    "Write blocked: that path is outside the Bootcamp project. Every file the bootcamp "
+    "writes stays inside the project directory -- use a project-relative path."
 )
 SECRET_MSG = (
     "Write blocked: a possible hardcoded secret was detected. Use environment "
@@ -103,9 +109,12 @@ def norm(path):
     return leading + "/".join(out)
 
 
-# Location check: exempt the project directory FIRST, then block temp/Downloads. The
-# gate's intent is "don't write outside the project"; a project that merely lives
-# under a path containing /tmp/ (e.g. /home/user/tmp/proj) must not trip it.
+# Location check: exempt the project directory FIRST, then block everything outside it.
+# The gate's intent is "don't write outside the project" (INV-200), so the temp/Downloads
+# lists below do NOT decide *whether* to block -- they only choose the more specific
+# message. A project that merely lives under a path containing /tmp/ (e.g.
+# /home/user/tmp/proj) must not trip the gate for its own in-project writes, which is
+# why the exemption is checked first.
 if abs_path:
     target = norm(abs_path)          # `..` resolved, so escapes can't slip the block
     here = norm(os.getcwd())
@@ -125,6 +134,7 @@ if abs_path:
             # Per-user / relocated temp dirs the prefix lists cannot enumerate: macOS puts
             # its under $TMPDIR (e.g. /var/folders/...), Windows under %TEMP%/%TMP%. Consult
             # all three so no platform is covered less well than the others (INV-001).
+            # These now only refine the message -- the fall-through blocks them anyway.
             for var in ("TMPDIR", "TEMP", "TMP"):
                 env_tmp = os.environ.get(var, "")
                 if not env_tmp:
@@ -132,6 +142,11 @@ if abs_path:
                 tmp_norm = norm(env_tmp.rstrip("/\\")).lower()
                 if tmp_norm and low.startswith(tmp_norm + "/"):
                     block(LOC_MSG)
+            # Anything else that resolved outside the project. Without this the gate was
+            # a temp-and-Downloads blocker, not the boundary INV-200 states: a target
+            # outside the project that named no list -- including one reached by a `..`
+            # escape -- fell through here and was ALLOWED.
+            block(OUTSIDE_MSG)
 
 # Secrets: PEM private keys, AWS access-key IDs, and raw Senzing license payloads
 # (base64 blobs with the documented AQAAAD prefix). The long base64 tail keeps the
