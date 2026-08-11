@@ -47,7 +47,9 @@ REQUIRED_PARAMS = {
     "analyze_record": ("workspace_dir",),
 }
 
-# workspace_dir must stay inside the project (the file-placement rule as a parameter).
+# workspace_dir must stay inside the project: INV-200 binds MCP tool ARGUMENTS, not only
+# file writes. The server requires the parameter and warns "do NOT assume /tmp exists",
+# so a tool-suggested path outside the project is overridden, never followed.
 FORBIDDEN_WORKSPACE_DIRS = ("/tmp", "%TEMP%", "~/", "/var/tmp")
 
 SKILLS = PLUGIN / "skills"

@@ -1,4 +1,16 @@
-"""Tests for the PreToolUse write-gate security control.
+"""Tests for the PreToolUse write-gate security control (INV-200 location, INV-109 secrets).
+
+The gate runs two independent checks and each has its own invariant. **INV-200** governs
+the location half — every file the bootcamp writes lives inside the Bootcamper's project —
+and the twelve `TestLocation*` cases below are its enforcement: system temp, `~/Downloads`,
+`%TEMP%`/`TMPDIR` env vars, `..` escapes, and the two allowances that make it usable (a
+project-relative path, and a real project that lives beneath a temp directory). **INV-109**
+governs the secret half, which fails closed regardless of path.
+
+INV-200 was registered 2026-08-11: the behaviour and these tests long predated it, so the
+guarantee was enforced here and recorded in no rule — INV-109's own text scoped itself away
+from "the location logic" without anything picking it up. Cited here so `coverage_reports.py
+invariants` can see the enforcement that already existed.
 
 `plugins/senzing-bootcamp/scripts/write-gate.py` reads stdin at import time, so it
 cannot be imported directly — each case runs it as a subprocess with synthetic
@@ -66,6 +78,44 @@ class LocationChecks(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         rc, _ = run_gate(os.path.join(tmp, "x.txt"), env={"TMPDIR": tmp})
         self.assertEqual(rc, BLOCK)
+
+    def test_relocated_temp_dir_blocked_via_env_only(self):
+        """The env-var branch, reached only when the static prefix lists CANNOT match.
+
+        Added 2026-08-11. `test_tmpdir_env_blocked` and `test_windows_temp_env_blocked`
+        both look like they cover this branch and neither does: the first uses
+        `tempfile.mkdtemp()`, which on Linux returns `/tmp/...` and is caught by the
+        static prefix; the second passes the literal string `%TEMP%`, caught by the
+        substring list. Deleting the whole `for var in ("TMPDIR", "TEMP", "TMP")` loop
+        left the suite green — found by negative-controlling INV-200 on the day it was
+        registered.
+
+        The branch exists for the platforms this suite does not run on: macOS puts its
+        per-user temp under `/var/folders/...` and Windows under
+        `C:\\Users\\...\\AppData\\Local\\Temp`, neither of which any static prefix can
+        enumerate. So the target here is deliberately a path no prefix or substring
+        matches — the block can only come from consulting the env var. The directory need
+        not exist: the gate resolves and compares strings, it does not stat.
+        """
+        fake_temp = "/opt/relocated-temp-xyz"
+        for var in ("TMPDIR", "TEMP", "TMP"):
+            with self.subTest(var=var):
+                rc, _ = run_gate(fake_temp + "/out.txt", env={var: fake_temp})
+                self.assertEqual(
+                    rc, BLOCK,
+                    f"a relocated temp dir named by ${var} must be blocked; no static "
+                    "prefix can match it, so only the env-var branch can catch this",
+                )
+
+    def test_the_relocated_temp_probe_is_not_caught_by_a_static_list(self):
+        """Guard the guard: if the probe path ever matches a prefix, the test above
+        starts passing for the wrong reason and the branch is unguarded again."""
+        rc, _ = run_gate("/opt/relocated-temp-xyz/out.txt")
+        self.assertEqual(
+            rc, ALLOW,
+            "the probe path must be allowed WITHOUT the env var, or the test above "
+            "proves nothing about the env-var branch",
+        )
 
     def test_dotdot_escape_blocked(self):
         # config/../../etc/x resolves outside the project -> blocked as /etc is not

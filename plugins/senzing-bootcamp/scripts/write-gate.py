@@ -2,6 +2,16 @@
 """PreToolUse gate for Write/Edit: to block writes into the system temp or Downloads
 directory, and block obvious secrets -- DURING a bootcamp only.
 
+Two independent checks, governed by two different invariants:
+
+* **Location (INV-200)** -- every file the bootcamp writes lives inside the Bootcamper's
+  project. Blocks a resolved target under system temp, ``~/Downloads``, or reached by a
+  ``..`` escape; allows project-relative and in-project absolute paths, including a
+  project that legitimately lives beneath a temp directory (resolve, then compare).
+* **Secrets (INV-109)** -- PEM private keys, AWS access-key IDs and Senzing ``AQAAAD``
+  license blobs are blocked whatever the path. Runs independently of the location logic
+  and fails closed.
+
 Cross-platform: invoked in exec form (``python3 <path>``) so no shell is required.
 Native JSON parsing replaces the previous grep/sed field extraction.
 """

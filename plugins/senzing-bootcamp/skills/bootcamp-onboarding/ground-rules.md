@@ -221,8 +221,11 @@ steering files.)
 
 ## File placement
 
-- ALL files stay inside the working directory. Never `/tmp`, `%TEMP%`, or `~/Downloads`.
-  Override MCP-suggested paths (e.g. `/tmp/`, `ExampleEnvironment`) to project-relative ones.
+- **ALL files stay inside the working directory (INV-200).** Never `/tmp`, `%TEMP%`, or
+  `~/Downloads`. Override MCP-suggested paths (e.g. `/tmp/`, `ExampleEnvironment`) to
+  project-relative ones — this binds tool **arguments** too, not just writes: where a tool requires
+  a writable directory (`workspace_dir` on `mapping_workflow` and `analyze_record`), pass a
+  project-relative path. The `PreToolUse` write-gate enforces the write half and will block you.
   **Never modify global shell config** — `~/.zshrc`, `~/.bashrc`, `~/.profile`, PowerShell
   `$PROFILE` or equivalent are off-limits, and so is any other file outside the project (INV-199).
   Write a project-local environment script instead. MCP install guidance legitimately tells a
