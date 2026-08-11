@@ -135,6 +135,21 @@ Then give the overview (cover naturally, do not ask a question yet):
   Bootcamp preparation) and on how fast the SDK downloads and installs on your machine. **You do
   not have to finish in one sitting** — progress is saved as you go, and you can stop and pick up
   where you left off.
+- **If anything about the bootcamp itself is confusing, broken, or missing, tell me the moment you
+  notice it:** start a message with **"bootcamp feedback:"** and I will capture it. You do not lose
+  your place — the note is saved under `docs/feedback/`, then the bootcamp question you were on
+  comes straight back and we carry on. No need to save it for the end.
+
+**The feedback-trigger bullet is verbosity-aware, exactly like the version line above**
+(INV-011/INV-012 — the treatment INV-096 gives the time estimate): under `minimal`, suppress it;
+under `concise`, one line ("Say \"bootcamp feedback:\" any time — it is captured and you keep your
+place."); otherwise the full bullet. ⛔ Same caveat as the version line: on a **fresh** bootcamp no
+preset exists yet, so the full bullet is simply shown and that is correct, not an oversight
+(INV-075/INV-133). ⛔ **State it; never make it a 👉 question** — it needs no answer, and INV-012
+forbids output the bootcamper cannot act on. ⛔ **Do not repeat it at every module start** — the
+module-start apparatus is already dense (INV-028-031, INV-096, the model/effort nudge), and this is
+an always-available control (INV-010). Once, here, is the point; graduation's closing invitation
+(`../graduation/SKILL.md`, Step 7) stays as it is.
 
 ## 4. Any questions (preface item 2)
 

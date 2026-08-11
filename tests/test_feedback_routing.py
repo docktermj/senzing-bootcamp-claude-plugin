@@ -36,6 +36,7 @@ FEEDBACK = PLUGIN / "skills" / "bootcamp-onboarding" / "feedback.md"
 COMMAND = PLUGIN / "commands" / "bootcamp-feedback.md"
 HOOK = PLUGIN / "scripts" / "feedback-capture.py"
 GRADUATION = PLUGIN / "skills" / "graduation" / "SKILL.md"
+ONBOARDING = PLUGIN / "skills" / "bootcamp-onboarding" / "onboarding-flow.md"
 
 FEEDBACK_PATH = "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"
 VERDICTS = ("plugin", "mcp-server", "both", "unclear")
@@ -47,6 +48,13 @@ def read(path):
 
 def plain(text):
     return re.sub(r"\s+", " ", text.replace("**", ""))
+
+
+def onboarding_overview():
+    """Step 3 of the preface — the WELCOME banner and the overview every bootcamper reads
+    first, ending where the 'any questions' gate begins."""
+    t = read(ONBOARDING)
+    return t[t.index("## 3. Welcome and overview") : t.index("## 4. Any questions")]
 
 
 def triage_step():
@@ -74,6 +82,83 @@ def hook_context(prompt, active=True):
     if not proc.stdout.strip():
         return ""
     return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+class TheTriggerIsTaughtBeforeItCanBeUsed(unittest.TestCase):
+    """INV-196: the preface teaches the feedback trigger before the first content module.
+
+    A control nobody is told about is reachable only by people who were told out of band.
+
+    The phrase used to appear in four files: the workflow itself, the guide's own ground rules,
+    one mid-bootcamp module, and graduation — i.e. everywhere except the one place every
+    bootcamper reads before the first module. Feedback arriving only from those who already knew
+    the phrase skews every entry the project receives, so the mention must live in
+    bootcamper-facing overview text, not in developer-only prose that reads as if it did.
+    """
+
+    def setUp(self):
+        self.overview = onboarding_overview()
+
+    def test_the_overview_names_the_trigger_phrase(self):
+        self.assertIn("bootcamp feedback:", self.overview)
+
+    def test_the_mention_is_bootcamper_facing_overview_content(self):
+        """A bullet in the overview is spoken to the bootcamper; surrounding agent prose is not.
+        Asserting only on the file would pass again if the line were demoted to an instruction."""
+        bullets, current = [], None
+        for line in self.overview.splitlines():
+            if line.startswith("- "):
+                current = [line]
+                bullets.append(current)
+            elif current is not None and line.startswith("  ") and line.strip():
+                current.append(line)          # wrapped continuation of the same bullet
+            else:
+                current = None
+        teaching = [b for b in bullets if "bootcamp feedback:" in " ".join(b).lower()]
+        self.assertTrue(
+            teaching, "the trigger must be taught in an overview bullet, not only in agent prose"
+        )
+
+    def test_it_is_taught_before_the_first_content_module(self):
+        """Step 3 precedes the Bootcamp preparation handoff, which precedes every module."""
+        t = read(ONBOARDING)
+        self.assertLess(
+            t.index("bootcamp feedback:"),
+            t.index("## 5. Hand off to the Bootcamp preparation module"),
+            "the trigger must be taught in the preface, not after the handoff",
+        )
+
+    def test_it_promises_the_bootcamper_keeps_their_place(self):
+        """That is the barrier — raising something must not read as abandoning the module
+        (INV-074 brackets the flow and restores the pending question)."""
+        squashed = plain(self.overview)
+        self.assertIn("You do not lose your place", squashed)
+        self.assertIn("comes straight back", squashed)
+
+    def test_it_is_a_statement_not_a_question(self):
+        posed = [l for l in self.overview.splitlines() if l.lstrip().startswith("👉")]
+        self.assertEqual([], posed, "the preface overview must not pose a 👉 question")
+        self.assertIn("never make it a 👉 question", plain(self.overview))
+
+    def test_it_is_verbosity_aware(self):
+        """Explanatory output: suppressed under `minimal`, one line under `concise`
+        (INV-011/INV-012), the treatment INV-096 gives the time estimate."""
+        squashed = plain(self.overview)
+        self.assertIn("verbosity-aware", squashed)
+        self.assertIn("under `minimal`, suppress it", squashed)
+        self.assertIn("under `concise`, one line", squashed)
+
+    def test_it_is_not_repeated_at_every_module_start(self):
+        """An always-available control repeated at every boundary is the noise INV-012 suppresses."""
+        self.assertIn("Do not repeat it at every module start", plain(self.overview))
+
+    def test_the_graduation_invitation_is_still_there(self):
+        """Late is not useless — it is a last invitation with the whole run in view. Teaching the
+        phrase early must not trade one gap for another."""
+        self.assertIn(
+            'Say \\"bootcamp feedback\\" anytime if you\'d like to share your experience.',
+            read(GRADUATION),
+        )
 
 
 class TriageStepExists(unittest.TestCase):

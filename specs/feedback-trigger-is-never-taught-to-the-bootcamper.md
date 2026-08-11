@@ -98,3 +98,30 @@ boundary is the noise INV-012 exists to suppress.
 - Upstream: not applicable.
 - Related specs: none cover feedback discoverability. `specs/feedback-flow-boundary-banner.md`
   (INV-074) defines the bracketing this spec's second criterion relies on.
+
+## Deviations from this spec, and why (2026-08-11)
+
+**Criterion 4 (`minimal` suppression) is implemented conditionally, not unconditionally.** The
+spec treats the mention as ordinary explanatory output — suppressed under `minimal`, one line
+under `concise`. That holds only *where a preset is readable*, which on a fresh bootcamp it is
+not: INV-075 moved the verbosity question out of the preface into Bootcamp preparation, which runs
+after step 3, so no `verbosity` key exists in `config/bootcamp_preferences.yaml` when the overview
+is spoken. The bullet is therefore shown in full on a fresh run, and the suppression path is
+reachable on a resumed run or when the bootcamper pre-seeded the preference (INV-133). This is the
+same qualification INV-105 already carries for the plugin-version line eight lines above it in the
+same file, and `onboarding-flow.md` states the caveat in both places rather than only one.
+
+Evidence: `plugins/senzing-bootcamp/skills/bootcamp-onboarding/onboarding-flow.md:101-107` (the
+pre-existing version-line caveat) and `:143-152` (the same caveat for this bullet); INVARIANTS.md
+INV-105's "Clarified 2026-07-26" note, which records the identical finding from a phase-3 dry run.
+
+Nothing else deviates: the change touches exactly the two Affected files, and criterion 7 is
+reported as the spec already anticipated — not runtime-verified.
+
+## Invariants introduced
+
+- `INV-196` — The onboarding preface's overview MUST name the bootcamp-feedback trigger phrase in
+  bootcamper-facing text before the first content module, as a statement and never a 👉 question,
+  saying that using it does not cost the bootcamper their place; verbosity-aware where a preset is
+  readable; never repeated at every module start; graduation's closing invitation retained in
+  addition, never instead (recorded in `specs/INVARIANTS.md`, indexed under **Feedback capture**).
