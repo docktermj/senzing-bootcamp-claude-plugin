@@ -108,15 +108,26 @@ steering files.)
   the strength of a gated response: the payload of a gate is empty by design, not because the
   topic is undocumented.
 - **Working examples: search mode is the reliable route (INV-160).** `find_examples(query='...')` is the
-  path the bootcamp uses. When you need the source of **one specific file**, fetch the `raw_url`
-  the search results already carry rather than relying on `content` from a `repo` + `file_path`
-  retrieval: verified 2026-07-30 against server 1.32.2, that retrieval currently returns an
-  **empty `content`** while reporting a correct non-zero `content_length` and `truncated: false`.
-  ⛔ **An empty `content` is never evidence that the file is empty.** If `content` is empty while
-  `content_length` is non-zero, the retrieval **failed** — regardless of what `truncated` says —
-  so fall back to the `raw_url` (or the clone step the response's `access_steps` lists), and never
-  tell the bootcamper an example file is empty on that basis. Re-check when the server updates;
-  this caution goes away when the retrieval does.
+  path the bootcamp uses, and it returns real `code_snippet` content. **File retrieval does not
+  return content at all — by design.** `find_examples(repo=…, file_path=…)` elides the body and says
+  so: `content: ""` alongside a non-zero `content_length`, `truncated: false`, and
+  **`content_elided: true`**, with an `access_steps` array giving the route in order — fetch
+  `raw_url`, else `git clone`. Re-verified on MCP server 1.32.8, 2026-08-11, for a ~20 KB file and a
+  ~800-byte file, with and without `max_lines`: **the elision is unconditional, not a size
+  threshold**, so there is no smaller request that returns the body. The same elision now applies to
+  `generate_scaffold`, whose `snippets[]` carry `raw_url`, `size_bytes` and `line_count` and no
+  inline code.
+  ⛔ **An empty `content` is never evidence that the file is empty.** `content_elided: true` says the
+  body was withheld deliberately, so follow `access_steps` — `raw_url`, then clone — and never tell
+  the bootcamper an example file is empty on that basis.
+  ⛔ **Do not take the `inline` route the response's step 3 describes.** `inline` is still not
+  declared in the live `find_examples` schema, and only declared parameters may be passed (INV-136).
+  The server states this itself: *"Clients that validate arguments against the declared schema cannot
+  use this step; prefer fetching raw_url or cloning."*
+  (This replaces the earlier reading — through 2026-07-30 on server 1.32.2 the same empty `content`
+  arrived with no `content_elided` signal, so it was indistinguishable from a broken retrieval and
+  was treated as one. The behaviour was documented rather than reverted, so the guidance above is
+  permanent, not a temporary mitigation waiting on a fix.)
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
