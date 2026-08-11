@@ -500,11 +500,21 @@ details for a support request via `search_docs`, or take the fallback path if no
 tried). This terminal state names the blocker and the next step rather than looping.
 
 **🚨 NEVER modify the user's global shell configuration** (`~/.zshrc`, `~/.bashrc`,
-`~/.profile`, etc.) to set Senzing environment variables. Instead, create a project-local
-environment script at `src/scripts/senzing-env.sh` (or `.bat` for Windows) that sets
-`SENZING_ROOT`, library paths, and any other Senzing-specific variables. Source this script
-before running bootcamp tasks. This keeps the bootcamp self-contained and avoids side effects on
-the user's system.
+`~/.profile`, PowerShell `$PROFILE`, etc.) to set Senzing environment variables — **INV-199**.
+Instead, create a project-local environment script at `src/scripts/senzing-env.sh` (or the
+platform equivalent for Windows) that sets `SENZING_ROOT`, library paths, and any other
+Senzing-specific variables. Source this script before running bootcamp tasks. This keeps the
+bootcamp self-contained and avoids side effects on the user's system.
+
+⛔ **`sdk_guide` will tell you to persist to a shell profile. Do not act on it — say so instead.**
+`sdk_guide(topic='install', platform='macos_arm', language='java')` returns *"DYLD_LIBRARY_PATH must
+be set at the shell level before any JVM or Python launch. Add to `~/.zshrc` to persist"*
+(re-verified on MCP server 1.32.8, 2026-08-11), and the Windows guidance is equivalent. That is
+correct advice for a human operator configuring their own machine, and forbidden here: the bootcamp
+does not edit the Bootcamper's home directory on their behalf. When you relay this guidance, state
+that the bootcamp writes the project-local script instead and that persisting it globally is their
+choice to make later, by hand. This is the likeliest way INV-199 gets breached, which is why it is
+called out at the step rather than left to the ground rules (INV-183).
 
 <a id="env-script-path-resolution"></a>
 

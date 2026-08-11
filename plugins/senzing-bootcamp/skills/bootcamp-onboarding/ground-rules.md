@@ -223,7 +223,11 @@ steering files.)
 
 - ALL files stay inside the working directory. Never `/tmp`, `%TEMP%`, or `~/Downloads`.
   Override MCP-suggested paths (e.g. `/tmp/`, `ExampleEnvironment`) to project-relative ones.
-  Never modify global shell config.
+  **Never modify global shell config** — `~/.zshrc`, `~/.bashrc`, `~/.profile`, PowerShell
+  `$PROFILE` or equivalent are off-limits, and so is any other file outside the project (INV-199).
+  Write a project-local environment script instead. MCP install guidance legitimately tells a
+  *human* to persist variables to a shell profile; the bootcamp relays that without acting on it,
+  and says so.
 - Layout: source -> `src/`; scripts -> `src/scripts/`; docs and all `*.md` (except
   `README.md` and the generated `production/` project's own `.md` files) -> `docs/`; data -> `data/`; SQLite DB -> `database/G2C.db`; config ->
   `config/`; temp -> `data/temp/`; downloaded Senzing resources -> `src/resources/`; mapping
