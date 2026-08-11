@@ -116,16 +116,35 @@ class TheSeedingCodeComesFromMcp(unittest.TestCase):
     def test_init_default_config_is_named_as_the_route(self):
         self.assertIn("init_default_config", flat(MODULE_02))
 
-    def test_it_points_at_the_configure_response_alternatives(self):
-        self.assertRegex(flat(MODULE_02), r"(?i)`?alternatives`?")
+    def test_it_explains_which_call_puts_the_snippet_where(self):
+        """Repointed 2026-08-11 (INV-181): `alternatives` alone is not the requirement.
 
-    def test_the_wrong_route_is_explicitly_ruled_out(self):
-        """Implementation disproved the spec here: initialize does not seed."""
-        self.assertRegex(
-            flat(MODULE_02),
-            r"(?i)generate_scaffold\(workflow='initialize'\)\W{0,4}does not do this"
-            r"|initialize.{0,80}does not seed",
-        )
+        `sdk_guide(topic='configure')` called WITHOUT `data_sources` returns
+        `init_default_config` as the PRIMARY snippet and `register_data_sources` in
+        `alternatives`; called WITH `data_sources` the two swap. The module must state that
+        discriminator, because a step that just says "take the alternative" is right for one
+        call and wrong for the other."""
+        text = flat(MODULE_02).replace("*", "")   # emphasis must not decide the match
+        self.assertRegex(text, r"(?i)without\s+`?data_sources`?")
+        self.assertRegex(text, r"(?i)\bwith\s+`?data_sources`?")
+        self.assertRegex(text, r"(?i)`?alternatives`?")
+
+    def test_the_snippet_is_located_by_source_path_not_by_position(self):
+        """Repointed 2026-08-11 (`sdk-guide-configure-now-leads-with-seeding`, INV-181).
+
+        This asserted that the module rules `generate_scaffold(workflow='initialize')` out as
+        a seeding route — "does not do this". On server 1.32.8 that workflow DOES return the
+        `configuration/` snippets, so the assertion pinned a claim the server had falsified.
+
+        What the module actually promises, and what is worth pinning, is the discipline the
+        stale claim was a symptom of: `sdk_guide(topic='configure')` returns ONE primary
+        snippet and puts the other in `alternatives`, selected by whether `data_sources` was
+        passed — so a step must find the snippet by its `source_path`, never by its position
+        in the response. Pinning position is what went stale; pinning the rule cannot."""
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)source_path.{0,120}never by its position"
+                               r"|never by its position in the response")
+        self.assertIn("configuration/init_default_config.py", text)
 
     def test_no_seeding_code_is_hand_written_in_the_plugin(self):
         """Naming a method in prose is fine; shipping a code block is not."""
@@ -145,7 +164,12 @@ class TheSeedingCodeComesFromMcp(unittest.TestCase):
         text = flat(MODULE_02)
         self.assertIn("create_config_from_template()", text)
         self.assertIn("set_default_config", text)
-        self.assertRegex(text, r"(?i)verified on server 1\.32\.2")
+        self.assertRegex(
+            text, r"(?i)verified on MCP server 1\.\d+\.\d+, \d{4}-\d{2}-\d{2}"
+                  r"|verified on server 1\.\d+\.\d+",
+            "the sequence must carry a server version and date, whichever version is current "
+            "(repointed 2026-08-11: pinning 1.32.2 exactly made a correct re-verification fail)",
+        )
 
 
 class TheSeedIsVerifiedNotAssumed(unittest.TestCase):

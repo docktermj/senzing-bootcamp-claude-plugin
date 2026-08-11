@@ -48,9 +48,13 @@ registers the code, and sets it as the new default, idempotently — and run it 
 registration snippet reads the current default config and builds from it, so against a
 just-schema-created datastore it fails with `SENZ7221
 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID` — a different failure from the `SENZ2207` above, and one
-whose own `explain_error_code` guidance does not name the cause. Seed via the **`init_default_config`**
-alternative in the same `sdk_guide(topic='configure')` response (see
-`../module-02-sdk-setup/SKILL.md` → Step 8a), then register. Where `mapping_workflow` step 6 creates
+whose own `explain_error_code` guidance **does** now name the cause and the remedy — call it
+(re-verified on MCP server 1.32.8, 2026-08-11: its first cause is *"No default config has EVER been
+registered on this datastore"* and its first resolution step names `create_config_from_template()` →
+`set_default_config(...)`, adding that `sdk_guide` `topic='configure'` "called WITHOUT `data_sources`
+… returns the seeding snippet"). Seed by calling `sdk_guide(topic='configure', language=…)` **without
+`data_sources`** — that call's **primary** `code` block is `init_default_config` — then call it again
+**with** `data_sources` to register (see `../module-02-sdk-setup/SKILL.md` → Step 8a). Where `mapping_workflow` step 6 creates
 and initializes the sandbox database itself, this is already handled — confirm rather than assume.
 
 **Checkpoint:** write step 21a.

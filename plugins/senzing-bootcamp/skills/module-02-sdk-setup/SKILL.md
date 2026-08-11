@@ -1020,18 +1020,50 @@ an engine pointed at a different datastore than the one you seeded. Seed first a
 
 **How to seed — take the code from MCP, do not hand-write it (INV-080):**
 
-1. Call `sdk_guide(topic='configure', language='<chosen_language>')`.
-2. In the response's `alternatives`, take the **`init_default_config`** entry — that is the seeding
-   snippet. Verified on server 1.32.2 (2026-07-30), its sequence is: read the default config id →
-   if none, `create_config_from_template()` → `set_default_config(...)`, which registers the new
-   config and makes it default.
-3. Run it, then proceed to register data sources with the primary snippet, which now has a config
-   to build from.
+⛔ **`data_sources` is the switch that decides which snippet you get.** `sdk_guide(topic='configure')`
+returns **one** primary `code` block, and which one depends on whether you passed `data_sources` —
+the other becomes an entry in `alternatives`. Getting this backwards is why the seeding step is easy
+to misread: you ask one way and look for the answer in the place the *other* call puts it. Verified
+on MCP server 1.32.8, 2026-08-11, calling both ways in `language='python'`:
 
-⚠️ **`generate_scaffold(workflow='initialize')` does not do this.** Its snippets cover factory and
-environment lifecycle — creation, priming, destroy, purge, signal handling — and none of them seeds a
-configuration, even though `get_capabilities` names that workflow for "schema and default config must
-exist". Use it for Step 9's connection test; use `init_default_config` for seeding.
+| Call | Primary `code.source_path` | In `alternatives` |
+|---|---|---|
+| `sdk_guide(topic='configure', language=…)` — **no** `data_sources` | `python/configuration/init_default_config.py` | `register_data_sources` |
+| `sdk_guide(topic='configure', language=…, data_sources=[…])` | `python/configuration/register_data_sources.py` | `init_default_config` |
+
+1. **Seed:** call `sdk_guide(topic='configure', language='<chosen_language>')` **without
+   `data_sources`**. The **primary `code` block** is the seeding snippet — confirm
+   `code.source_path` ends `configuration/init_default_config.py`. Its sequence: read the default
+   config id → `create_config_from_template()` → `set_default_config(...)`, which registers the new
+   config and makes it default.
+2. **Register:** call it again **with** `data_sources=[…]`. Now the primary `code` block is the
+   registration snippet (`configuration/register_data_sources.py`), and it has a config to build
+   from.
+
+⛔ **Locate the snippet by its `source_path`, never by its position in the response.** Both snippets
+are always present; only which one is "primary" moves. A step that says "take the alternative" breaks
+the moment the call's arguments change — which is exactly how this instruction went stale once
+already.
+
+**The tool now states this precondition itself — relay it rather than asserting it.** The
+`data_sources` call carries a `compatibility_notes` entry (same verification, 1.32.8, 2026-08-11):
+
+> "PRECONDITION: this snippet reads the CURRENT default config (`get_default_config_id()` ->
+> `create_config_from_config_id()`) and replaces it — it assumes a default config is ALREADY
+> registered. On a freshly schema-created datastore, `get_default_config_id()` returns 0 and
+> `create_config_from_config_id(0)` raises SENZ7221 … call `sdk_guide(topic='configure', …)` WITHOUT
+> `data_sources` first — that returns the `init_default_config` snippet"
+
+Read `compatibility_notes` on each call and follow what it says; it is the authority on ordering here,
+not this file. The seeding call's own note adds the step after: `env.reinitialize(config_id)` must
+follow `set_default_config()` before loading records, using the id `set_default_config()` returned.
+
+`generate_scaffold(language='<chosen_language>', workflow='initialize')` reaches the same code by
+another route: alongside the factory-lifecycle snippets it returns the `configuration/` ones —
+`init_default_config.py`, `register_data_sources.py`, `get_config_registry.py`,
+`get_data_source_registry.py` (verified 1.32.8, 2026-08-11). Either route is fine; `sdk_guide` is
+preferred here because it also carries the `compatibility_notes` above, which `generate_scaffold`
+does not. Step 9's connection test uses the factory-lifecycle snippets from the same response.
 
 **Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
 here and report it — a missing config surfaces at this step as one clear failure, or later as
