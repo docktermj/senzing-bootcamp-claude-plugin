@@ -133,3 +133,62 @@ check.
   implementation with the "already-Senzing-ready" wording), `specs/cord-fastpath-load-readiness.md`
   (Module 6's handling of a fast-pathed source), `specs/record-preview-requires-registered-source.md`
   (the registration caveat this spec preserves).
+
+## Deviations from this spec, and why (2026-08-11)
+
+**1. Criterion 3's premise is inverted, with the maintainer's agreement.** It asks the
+implementation to state "how `payload`-worthy columns are **prevented** from counting as unmapped".
+They cannot be, and the attempt is the defect in miniature: from the record alone a column the
+publisher deliberately kept as payload and a column nobody dispositioned are the same thing — a
+non-catalog key at the root — and `getRecordPreview` does not help, since it reports which features
+Senzing read, never what the publisher intended. So they are not counted as *unmapped*; they are
+counted as **undecided** and routed to `mapping_workflow` step 3, which is where `payload` is
+actually assigned (one of `feature`, `payload`, `ignore`, `derived`, `extract` — confirmed against
+the live tool schema, MCP server 1.32.8, 2026-08-11). A payload-heavy CORD source therefore costs
+one mapping pass; the alternative was a gate deciding on the bootcamper's behalf, which is what this
+spec exists to stop.
+
+**2. The threshold is a count, not a proportion.** The spec left the choice open and required the
+reasoning to be recorded; it is, at the step itself. A percentage has to be tuned against how wide
+the source happens to be — `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it,
+while one undecided column in thirty passes an 80% rule and still hides a decision.
+
+**3. Criterion 8 was verified, not disclosed.** It marks the `PPP_LOANS` field list as the
+bootcamper's 2026-07-27 observation and asks for a `get_sample_data` call at implementation. That
+call was made — `get_sample_data(dataset=`'`las-vegas`'`, source=`'`PPP_LOANS`'`)`, MCP server
+1.32.8, 2026-08-11 — and returned exactly the split described: eight specification attributes
+(`DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `BUSINESS_NAME_ORG`,
+`BUSINESS_ADDR_LINE1`/`CITY`/`STATE`/`POSTAL_CODE`) and the eleven raw columns. The tool's
+documented "Denied." filtering did **not** occur on this call.
+
+**4. A hazard the spec did not anticipate: exact string matching.** The catalog names the
+attributes `NAME_ORG` and `ADDR_LINE1`/`ADDR_CITY`, while `PPP_LOANS` ships `BUSINESS_NAME_ORG` and
+`BUSINESS_ADDR_LINE1`. An exact-match coverage test would therefore report a genuinely mapped
+source as 100% unmapped and route it into mapping — the strict-direction failure the spec warns
+against, reached by a different road. The step rules exact matching out and shows the counter-
+example. Note the honest limit: the Entity Specification documents usage types as "a short label
+that distinguishes multiple instances of the same feature on one entity" (confirmed via
+`search_docs(category=`'`data_mapping`'`)`, 1.32.8, 2026-08-11), but the indexed documentation does
+not state the prefix **encoding** on a flat attribute name. That is marked in the step as an
+observed shape rather than a specified rule (INV-080/INV-149).
+
+**5. INV-040's parenthetical.** "CORD data does not require mapping nor transformation" now has a
+counter-example. Surfaced to the maintainer before recording; resolved by INV-198 partly
+superseding the parenthetical, with an in-place note on INV-040. Its main clause and INV-041/042's
+fast-pathed-source exemptions are unchanged.
+
+**6. Coherence edits beyond the Affected files list.** Step 5's "Categorize each data source" said
+CORD sources "are eligible for the fast-path … route directly to Module 6", which after this change
+was the same rule stated two ways with the copies disagreeing; it now defers to step 5a. The
+`fast_path_reason` example string and one "Senzing-ready" reference inside the preview note were
+updated to the new vocabulary.
+
+## Invariants introduced
+
+- `INV-198` — Module 5's CORD fast-path offer MUST be gated on a source being both structurally
+  loadable **and** fully mapped, recorded as separate fields; a source with unrecognised keys is
+  routed to mapping with every column **named**; payload-worthy columns are not excluded from the
+  count; the threshold is a count rather than a proportion; and an all-pre-mapped run is told the
+  mapping exercise is being skipped and offered an alternative. Partly supersedes INV-040's
+  parenthetical (recorded in `specs/INVARIANTS.md`, indexed under **Data quality, mapping and
+  validation gates**).

@@ -55,8 +55,11 @@ compliant attribute names.)
 
 - **Entity Specification-compliant:** Data already uses attribute names and structures that
   match the Entity Specification. CORD sources (the already-Senzing-ready fast-path class) are
-  eligible for the fast-path (Step 5a, offered only for `provenance: cord`) — route directly to
-  Module 6 (loading), skipping mapping. Other compliant sources, including non-CORD data that
+  **eligible to be considered** for the fast-path (Step 5a, offered only for `provenance: cord`);
+  Step 5a decides, and it offers the skip only when the source is both structurally loadable
+  **and** fully mapped — a CORD source carrying fields that resolve to no specification attribute
+  goes through mapping like any other. Do not route a source past mapping from this
+  categorization; that is Step 5a's call. Other compliant sources, including non-CORD data that
   looks Senzing-ready, continue to Phase 2, which confirms compliance and records lineage before
   loading.
 - **Needs mapping:** Data uses different field names or structures than those defined in the
@@ -93,16 +96,22 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    actual records rather than assuming a dataset's shape, and confirm the still-supported statement
    from the specification you retrieved (INV-080), not from this file.
 
-2. **Perform the readiness check:** Examine up to 100 sample records from the source file. For
-   each record, verify:
+2. **Perform the structural check: will it load?** Examine up to 100 sample records from the
+   source file. For each record, verify:
    - The record is valid JSON.
    - The record contains the structural indicators identified from the Entity Specification
      (top-level keys, array structures).
    - DATA_SOURCE and RECORD_ID are present or derivable.
 
-   If ALL sampled records pass, classify as Senzing-ready. If ANY sampled record fails,
-   classify as not Senzing-ready. (The Kiro `check_cord_readiness.py` helper is a later porting
-   phase; perform the check directly against the sampled records for now.)
+   If ALL sampled records pass, classify as **structurally loadable**. If ANY sampled record
+   fails, classify as not structurally loadable. (The Kiro `check_cord_readiness.py` helper is a
+   later porting phase; perform the check directly against the sampled records for now.)
+
+   ⛔ **This is the entry condition, not the fast-path condition.** Structurally loadable means the
+   engine will accept the record; it does not mean every field in it has been decided about. Step 3
+   below answers that second question, and the offer in step 5 is gated on **both**. Classifying a
+   partially-mapped source as ready on this test alone is what let a source with eleven
+   undispositioned columns skip the module (see step 3).
 
    **A stronger check, when the engine is available: ask Senzing how it reads the record.** The
    structural test above confirms the *shape*; it cannot tell you whether an attribute name will
@@ -136,19 +145,74 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    **Optional and non-blocking.** If the engine is not available, or registration has not happened
    and you would rather not do it at this point, skip the preview and keep the structural check
-   (INV-048). Say which check ran, so "Senzing-ready" never implies a stronger test than was
+   (INV-048). Say which check ran, so `senzing_loadable` never implies a stronger test than was
    performed. The prerequisite applies wherever a preview-based check is used, not only to the CORD
    sources this step covers.
 
-3. **Record the result:** Set the source's `senzing_ready` field in `config/data_sources.yaml`
-   to `true` or `false` and update `updated_at`.
+3. **Perform the coverage check: is every field actually decided about?** Structurally loadable
+   answers *will it load*. This answers *is there anything left to map* — and they are not the same
+   question. Over the same sampled records, partition every root key into three sets:
 
-4. **If Senzing-ready: present the fast-path offer:**
+   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and the legacy
+     per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
+   - **specification attributes** — keys that resolve to an attribute in the Entity Specification
+     you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
+   - **unrecognised keys** — everything else.
 
-   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+   ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
+   catalog attribute can arrive carrying a leading label, and an exact match reports it as
+   unrecognised — which would route a genuinely fully-mapped source into mapping, the pointless work
+   the fast-path exists to remove. This is not hypothetical: `get_sample_data(dataset='las-vegas',
+   source='PPP_LOANS')` ships `BUSINESS_NAME_ORG` and `BUSINESS_ADDR_LINE1`/`CITY`/`STATE`/
+   `POSTAL_CODE`, while the specification's catalog names the attributes `NAME_ORG` and
+   `ADDR_LINE1`/`ADDR_CITY`/… (Entity Specification, *Feature: NAME*; and *Usage types and payload
+   (optional attributes)*, which defines a usage type as "a short label that distinguishes multiple
+   instances of the same feature on one entity" — both confirmed via
+   `search_docs(category='data_mapping')`, MCP server 1.32.8, docs index 2026-08-11). Resolve each
+   key against the specification you hold, and where a key is a catalog attribute carrying such a
+   label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
+   is an observed shape, not something the indexed specification states — so where you cannot
+   resolve a key with confidence, treat it as unrecognised and let step 6 name it, or use the
+   optional `getRecordPreview` check above to ask Senzing directly how it reads the record.
 
-   *(The wording holds for both supported shapes — "properly structured features" covers a
-   `FEATURES` array and the still-supported per-feature sub-lists alike.)*
+   **The threshold is a count, not a proportion: zero unrecognised keys, or no fast-path offer.**
+   Recorded here with its reasoning, because it is a decision and not an obvious default:
+
+   - **Why not a percentage.** A proportion has to be tuned against how wide the source happens to
+     be. `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it; a source with one
+     undecided column in thirty passes an 80%-coverage rule while still hiding a decision from the
+     bootcamper. The number of columns nobody decided about is the thing that matters, and it does
+     not get less important because the record is wide.
+   - **Why `payload`-worthy columns are NOT excluded from the count.** They cannot be: from the
+     record alone, a column the publisher deliberately kept as payload and a column nobody
+     dispositioned look identical — both are a non-catalog key at the root, and even
+     `getRecordPreview` only reports which features Senzing read, never what the publisher intended.
+     So they are not counted as *unmapped*; they are counted as **undecided**, and they are routed
+     to the step that decides them. `payload` is one of the five dispositions
+     `mapping_workflow` step 3 assigns (`feature`, `payload`, `ignore`, `derived`, `extract` —
+     confirmed against the live tool schema, MCP server 1.32.8, 2026-08-11), so a payload-heavy
+     source loses nothing by going through mapping: mapping is where "this is payload" is actually
+     recorded, rather than assumed by a gate that cannot see intent.
+   - **Why this does not re-introduce pointless work.** A genuinely fully-mapped source — the
+     `truthset` class the fast-path was built for — has zero unrecognised keys and still fast-paths
+     with no extra question. Nothing changed for it.
+
+4. **Record the result:** In `config/data_sources.yaml`, set the source's `senzing_loadable` and
+   `fully_mapped` fields to `true` or `false`, record `unmapped_fields` as the sorted list of
+   unrecognised keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
+
+   *(These replace the single `senzing_ready` field, which recorded only the structural test while
+   the offer was presented on it. On a resumed bootcamp whose registry still carries
+   `senzing_ready`, read it as `senzing_loadable` and treat `fully_mapped` as unknown — re-run
+   step 3 rather than inferring it, since the old field never measured coverage.)*
+
+5. **If structurally loadable AND fully mapped: present the fast-path offer.** State the coverage
+   figure, so skipping is an informed choice rather than a silent default:
+
+   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form, and all [N] of its fields resolve to the Senzing Entity Specification — there is nothing left to map. Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+
+   *(The wording holds for both supported shapes — the structural check covers a `FEATURES` array
+   and the still-supported per-feature sub-lists alike.)*
 
    *(Internal: end the turn on this question and wait.)*
 
@@ -158,11 +222,47 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    - **If declined:** Continue through the normal quality assessment and mapping workflow for
      this source.
 
-5. **If NOT Senzing-ready or MCP unavailable:** Continue through the normal quality assessment
-   and mapping workflow. Do NOT present the fast-path offer.
+6. **If structurally loadable but NOT fully mapped: route to mapping, and name the columns.** Do
+   **not** present the fast-path offer — there is something to map, and the whole point of this
+   module is doing it. Say so in one statement (no 👉 question; the routing is not a choice):
 
-6. **Non-CORD sources:** Skip this step entirely. Never present the fast-path offer for sources
+   > "[SOURCE_NAME] will load as-is, but [N] of its fields aren't Senzing Entity Specification
+   > attributes — [list them] — so nothing has been decided about them yet. We'll map this one, and
+   > those fields are the exercise: some will become features, some payload, some ignored."
+
+   Name every unrecognised column. A count alone tells the bootcamper a decision exists without
+   telling them what it is about. For `PPP_LOANS` those columns are `Business_Type`, `CD`,
+   `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`,
+   `OwnedByRaceEthnicity`, `OwnedByVeteran` — eleven real decisions the fast-path used to skip.
+
+7. **If NOT structurally loadable or MCP unavailable:** Continue through the normal quality
+   assessment and mapping workflow. Do NOT present the fast-path offer.
+
+8. **Non-CORD sources:** Skip this step entirely. Never present the fast-path offer for sources
    with provenance other than `cord`.
+
+9. **After every source has been classified: if ALL of them were fully pre-mapped, say so and
+   offer mapping practice.** Never route the bootcamper past this module's core skill in silence —
+   they came to learn mapping, and a run where every source fast-pathed teaches none of it. This
+   fires only when no selected source reached step 6.
+
+   > "Every source you selected was already fully mapped to the Senzing Entity Specification, so
+   > the mapping exercise has nothing to work on. That's a real property of this data, not a
+   > shortcut — but it does mean you'd finish the bootcamp without writing a mapping."
+
+   👉 **Would you like to add a raw, unmapped source so you get the mapping practice? Reply with a number:**
+
+   1. Yes — a raw variant of the same data.
+   2. Yes — a raw sample from the free-data catalog (`https://github.com/docktermj/senzing-bootcamp-free-data`).
+   3. No — continue without a mapping exercise.
+
+   *(Internal: end the turn on this question and wait.)*
+
+   - **Options 1-2:** return to Module 4's data-collection flow to acquire the source, register it
+     with `provenance` other than `cord`, then run this module normally on it. Its caveats apply
+     — for the free-data catalog, give the ICIJ note in Module 4 before recommending that sample.
+   - **Option 3:** continue. Record the choice so graduation can state that no mapping was
+     authored, rather than leaving the recap silent about it.
 
 **Fast-path data-lineage entry:** Record a lineage entry ONLY for a source that was explicitly
 fast-pathed (the bootcamper confirmed the offer above). Never record one for a source that went
@@ -182,7 +282,7 @@ transformations:
     records_rejected: 0
     quality_score: null  # Quality assessment skipped
     fast_pathed: true
-    fast_path_reason: "CORD source already in Senzing-loadable form"
+    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognised fields"
 ```
 
 **Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
