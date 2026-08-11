@@ -282,7 +282,7 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | Method | Confirmed paths |
 > |---|---|
 > | `get_entity_by_entity_id` / `get_entity_by_record_id` | `RESOLVED_ENTITY.ENTITY_ID`, `.ENTITY_NAME`, `.FEATURES`, `.RECORD_SUMMARY`, `.RECORDS[]` with `.DATA_SOURCE` / `.RECORD_ID` / `.MATCH_KEY` / `.MATCH_LEVEL_CODE` / `.ERRULE_CODE`; `RELATED_ENTITIES[]` with `.ENTITY_ID` / `.MATCH_LEVEL_CODE` / `.MATCH_KEY` / `.IS_DISCLOSED` / `.IS_AMBIGUOUS` |
-> | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]` (carries `MATCH_INFO`), `ENTITIES[]` |
+> | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]`, `ENTITIES[]` — and the `MATCH_INFO` interior is documented too: `.CANDIDATE_KEYS.<KEY_TYPE>[]`, `.FEATURE_SCORES.<FAMILY>[]`, `.WHY_KEY_DETAILS.CONFIRMATIONS[]`, `.MATCH_LEVEL_CODE`, `.WHY_ERRULE_CODE`, `.WHY_KEY` (re-verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11 — partial, ask for the full `fields[]`) |
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, **`ENTITY_PATH_LINKS[]`** — *not* `ENTITY_NETWORK_LINKS[]`; each link element carries the **same seven fields** as the network row below (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). The element fields are identical and only the array name differs, so a parser carried over from `find_network` returns every edge blank |
@@ -318,9 +318,19 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > **`MATCH_KEY_DETAILS`** object inside each resolution step's `MATCH_INFO`. Both contain
 > `CONFIRMATIONS` (and optionally `DENIALS`). Reusing one parser for both silently yields nothing.
 >
-> Field names *inside* those `CONFIRMATIONS` entries, and the exact `FEATURE_SCORES` path, are
-> **not** documented by `response_schemas` — dump a raw response to confirm them. Do not copy
-> field names from any prior implementation, this file included.
+> **Both are documented — look them up rather than dumping first.**
+> `get_sdk_reference(topic='response_schemas', filter='why_entities')` returns the `data[]` entry
+> whose `id` is `why_entities`, and its `fields[]` array carries `path` and `field_type` for the
+> whole `MATCH_INFO` interior: `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS.CONFIRMATIONS[]` with
+> `FTYPE_CODE`, `TOKEN`, `SOURCE`, `SCORE`, `SCORE_BUCKET`, `SCORE_BEHAVIOR`, the
+> `CANDIDATE_FEAT_*` / `INBOUND_FEAT_*` pairs and `ADDITIONAL_SCORES.*`; and `FEATURE_SCORES` per
+> feature family — `.NAME[]`, `.ADDRESS[]`, `.DOB[]`, `.PHONE[]`, `.RECORD_TYPE[]` — each with its
+> own element fields. (Re-verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC,
+> 2026-08-11. The same entry covers `why_records` and `why_record_in_entity`, per its `methods[]`;
+> `why_search` is a **separate** document with its own `SEARCH_REQUEST` and `SEARCH_STATISTICS`.)
+> Dump a raw response when the lookup does not reach something, or to confirm what *this*
+> installation actually returned (INV-080/INV-149) — that is the fallback now, not the first move.
+> Do not copy field names from any prior implementation, this file included.
 >
 > **The link elements are documented now — and their endpoint names are still the trap.**
 > Re-verified on MCP server 1.32.2, 2026-07-30: `get_sdk_reference(topic='response_schemas',

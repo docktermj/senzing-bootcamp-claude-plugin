@@ -130,9 +130,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    SENZ2207|Data source code [<CODE>] does not exist
    ```
 
-   The prerequisite is **not** documented on the method — verified 2026-07-30 on MCP server 1.32.2,
+   The prerequisite is **not** documented on the method — **still true, re-verified 2026-08-11 on
+   MCP server 1.32.8** (first observed 2026-07-30 on 1.32.2):
    `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns one signature per
-   binding — `get_record_preview(record_definition, flags)` in Python — with no mention of it.
+   binding — `get_record_preview(record_definition: str, flags: int = …) -> str` in Python — with no
+   mention of it.
    (The same call also returns `get_record`, which the filter matches too; that is a second
    *method*, not a second overload.) So the order is: register the source code(s) — taking the
    registration code from `sdk_guide(topic='configure')`, never hand-written (INV-080) — then preview.
