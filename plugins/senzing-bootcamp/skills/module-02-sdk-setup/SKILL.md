@@ -379,11 +379,16 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 - Never drive interactive Senzing CLI tools (`sz_configtool`, `sz_explorer`): they require
   human input. Generate SDK code via `generate_scaffold` instead.
 - Senzing publishes native ARM64 images, so no x86 emulation is needed on Apple Silicon.
-- **Record the container for lifecycle tracking (INV-101).** When you `docker run` the container,
+- **Record the container for lifecycle tracking (INV-101).** When you start the container,
   give it a stable `--name` and append an entry to a `docker_containers` list in
-  `config/bootcamp_progress.json` (at least its `name`; also `image` and `purpose` when handy).
-  The `SessionEnd` hook stops recorded containers on exit (`docker stop`, not remove) and
-  `SessionStart` surfaces them on resume so they can be restarted or regenerated.
+  `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
+  (`docker`, `podman`, or `container` for Apple's `container` CLI); also `image` and `purpose`
+  when handy. **Record the runtime truthfully**: the hooks stop and report each container with
+  the CLI named there, so a wrong value means a container is reported under a tool that never
+  started it. An entry with no `runtime` is treated as `docker`. The `SessionEnd` hook stops
+  recorded containers on exit (`<runtime> stop`, not remove) and `SessionStart` surfaces them on
+  resume so they can be restarted or regenerated. (The list key stays `docker_containers` for
+  compatibility with in-flight bootcamps, whatever runtime its entries name.)
 
 **Phase 2: EULA acceptance (requires bootcamper input):**
 
@@ -825,8 +830,9 @@ the engine config with `sdk_guide(topic='configure', ...)` — never hand-constr
    preserves the baked-in password) rather than a fresh `docker run`.
 
 2. Record the container for lifecycle tracking (INV-101): append it to `docker_containers` in
-   `config/bootcamp_progress.json` (at least its `name`) so the SessionEnd hook stops it on exit
-   and SessionStart offers to restart it.
+   `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
+   (`docker`, or `podman` / `container` if that is what started it) — so the SessionEnd hook
+   stops it on exit and SessionStart offers to restart it.
 3. Wait until the server is ready (poll `docker exec bootcamp-postgres pg_isready`).
 4. Apply the Senzing PostgreSQL schema DDL **before any SDK use** — the SDK does NOT auto-create it
    (unlike SQLite). MCP confirms the DDL ships with the SDK install at

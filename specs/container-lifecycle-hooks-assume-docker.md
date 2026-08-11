@@ -116,3 +116,50 @@ they were told was stopped.
 - Upstream: not applicable (plugin-side, as the entry itself routes it).
 - Related specs: `specs/docker-container-lifecycle-teardown-and-resume.md` (INV-101's source, which
   established the Docker-only design this generalises).
+
+## Deviations from this spec, and why (2026-08-11)
+
+Implemented as specified except for the following, all recorded here so the spec's text is
+not mistaken for what shipped.
+
+1. **Container state is probed only for runtimes with a verified `ps` interface.** The spec
+   says to dispatch on the recorded runtime without distinguishing the *stop* command from
+   the *state* read. `<cli> stop <name>` is common to all three runtimes, but
+   `ps -a --filter name=^X$ --format '{{.Names}}\t{{.State}}'` is Docker's interface, shared
+   by podman and **not** by Apple's `container`, whose list syntax differs. Rather than issue
+   a command whose syntax this plugin has not verified — and which could only fail — the
+   probe is restricted to `STATE_PROBE_RUNTIMES = ("docker", "podman")` and any other runtime
+   reports state `unknown`. Evidence: Apple's `container` CLI is absent on this Linux
+   development machine, so its list syntax could not be verified here; guessing it would ship
+   exactly the kind of unexercised guidance the spec's first ⚠️ forbids.
+2. **The runtime set is a closed allowlist, and an unrecognised runtime is reported but never
+   executed.** The spec names `docker | container | podman`; the implementation additionally
+   refuses to resolve a CLI for any other recorded string, so a value in
+   `config/bootcamp_progress.json` cannot become a binary the hook invokes. Such an entry is
+   still surfaced in the resume message under the name it was recorded with, so the guide can
+   act on it. Asserted by `tests/test_container_lifecycle_runtimes.py`
+   (`test_unknown_runtime_is_never_executed`).
+3. **`docker_available()` was removed rather than kept alongside the new probe.** The spec
+   says to replace it; a grep of the repo confirmed no consumer outside
+   `docker_lifecycle.py` itself, so it was not retained as an alias. `runtime_cli(runtime)` is
+   its replacement.
+4. **Citation drift in the spec's Problem section, substance confirmed.** The spec attributes
+   `out.append(entry)` to `_load()` at `:55-59`; the function is actually
+   `tracked_containers()` and the append was at `:53`. The claim it supports — that dict
+   entries are appended whole, so a `runtime` key already survives storage — was correct.
+   Entries are now normalised through a copy, so `runtime` is always resolved on read while
+   `image`/`purpose` and any other recorded keys are preserved.
+
+**Not runtime-verified:** dispatch to Apple's `container` is asserted at the
+command-construction level with a stubbed CLI lookup, not against the real binary, which is
+not available on Linux. The spec's own acceptance criteria anticipated this and required the
+stub.
+
+## Invariants introduced
+
+- `INV-195` — Every container the bootcamp starts MUST be recorded with the `runtime` that
+  started it, and every lifecycle action MUST dispatch on that recorded runtime rather than
+  assuming Docker; an entry with no `runtime` is treated as `docker`, a runtime outside the
+  recorded set is reported but never executed, and no session-boundary message may name a
+  tool that did not start the container. Generalises INV-101 (recorded in
+  `specs/INVARIANTS.md`, maintainer-approved 2026-08-11).
