@@ -252,6 +252,49 @@ class SupersessionIsMarkedByDegreeNotAsABinary(unittest.TestCase):
             + "  ".join("INV-%03d" % n for n in wrong),
         )
 
+    def test_a_generalised_invariant_points_forward_to_the_rule_that_generalised_it(self):
+        """A one-sided generalisation leaves the older rule reading as complete.
+
+        Added 2026-08-11 (`compact-dev-environment`). Three invariants were found declaring
+        "Generalises INV-NNN" with the older invariant saying nothing back: INV-195→INV-101,
+        INV-089→INV-083, INV-183→INV-164. INV-101 was the costly one — a reader following it
+        alone writes Docker-only lifecycle dispatch, which INV-195 forbids.
+
+        No existing check could see it. `ANY_SUPERSESSION` matches only the passive
+        "superseded by INV", so an active "Generalises INV-101" in the *newer* invariant
+        registers nothing against the older one. This is INV-104's failure shape one level
+        up: the index was truthful about every rule it knew was superseded, and silent about
+        a rule whose scope had been overtaken in the other direction.
+
+        Deliberately scoped to **generalisation only**. Measured the same day: 4 Generalises
+        pairs (all now closed) against 39 Extends/Hardens/Complements pairs, none of which
+        point back — and none of which needs to. Those add to a rule that stays correct
+        standalone; a generalisation overtakes the older rule's scope, which is what makes
+        reading it alone actively wrong. Requiring bidirectionality on all 39 would put seven
+        forward pointers on INV-115 and buy nothing.
+        """
+        bodies = _invariant_bodies()
+        pairs = [
+            (newer, older)
+            for newer, body in bodies.items()
+            for older in {int(x) for x in re.findall(r"Generali[sz]e?s?\s+INV-(\d{3})", body, re.I)}
+        ]
+        self.assertGreaterEqual(
+            len(pairs), 4,
+            "the generalisation scan found almost nothing — the wording or regex has drifted "
+            "and this check would pass vacuously",
+        )
+        missing = sorted(
+            (older, newer) for newer, older in pairs
+            if older in bodies and "INV-%03d" % newer not in bodies[older]
+        )
+        self.assertEqual(
+            [], missing,
+            "an invariant is generalised by a later one but says nothing about it, so it "
+            "reads as complete: "
+            + "  ".join("INV-%03d (generalised by INV-%03d)" % (o, n) for o, n in missing),
+        )
+
     def test_the_full_list_matches_what_the_invariants_declare(self):
         full, _part = classify_from_the_invariants()
         self.assertEqual(
