@@ -16,7 +16,8 @@ the situation it governs:
 * **Order (item 4).** Step 3 said "wait for the answer, then … tell them they can change it any
   time" — a reassurance that cannot inform the choice once the choice is made, and that cannot
   follow the 👉 either, because INV-005 requires the question to end the turn.
-* **The quiz (items 5, 6).** The rules specified difficulty, sourcing, count and the exit path, and
+* **The knowledge check (items 5, 6).** The rules specified difficulty, sourcing, count and the
+  exit path, and
   said only "evaluating the bootcamper's answer" — nothing about what to do when it is **wrong**,
   the highest-value moment in a module whose purpose is to reinforce concepts. Nor what shape an
   answer takes, leaving open-ended items permitted by silence and outside INV-051/INV-008.
@@ -138,6 +139,73 @@ class ModuleZeroHasAPinnedFollowUpVariant(unittest.TestCase):
         )
 
 
+class TheKnowledgeCheckOffersABenefitNotAnAssessment(unittest.TestCase):
+    """INV-112 guarantees this question to every Bootcamper, so its framing is universal.
+
+    The offer used to read "Would you like to test your knowledge of entity resolution with a
+    short quiz?" — an offer to be assessed, put to someone who has just met the material and
+    has no evidence they absorbed it. A Bootcamper reported that "quiz", "test" and
+    "evaluation" make people recoil. The module's own prose two paragraphs above already says
+    the exercise "reinforces the concepts and drives curiosity"; that was the pitch, and the
+    Bootcamper never saw it.
+
+    Reworded 2026-08-11 (`reframe-the-quiz-as-a-knowledge-check`, maintainer-chosen wording).
+    The mechanism is untouched — count, difficulty, sourcing and the wrong-answer handling
+    pinned by `TheKnowledgeCheckDefinesWrongAnswersAndAnswerShape` all still hold. Per
+    INV-181 this pins the **requirement** (a benefit frame, unambiguous, no "or") alongside
+    the current string, so a future rewording fails on the string it must update rather than
+    on a rule it did not know about.
+    """
+
+    OFFER = "Would you like a few quick questions to help the concepts stick?"
+
+    def test_the_offer_is_pinned_verbatim_in_concepts(self):
+        """INV-056: exactly one authoritative place, not left to the model to improvise."""
+        self.assertIn(f"👉 **{self.OFFER}**", CONCEPTS.read_text(encoding="utf-8"))
+
+    def test_the_offer_names_the_gain_rather_than_the_measurement(self):
+        self.assertRegex(self.OFFER, r"(?i)help the concepts stick")
+        for assessment_word in ("quiz", "test your", "evaluat", "exam", "score", "grade"):
+            with self.subTest(word=assessment_word):
+                self.assertNotIn(assessment_word, self.OFFER.lower())
+
+    def test_the_offer_is_a_single_unambiguous_yes_no(self):
+        """INV-008, and INV-009/INV-051 on the absence of an "or"-joined choice."""
+        self.assertTrue(self.OFFER.startswith("Would you like"))
+        self.assertEqual(1, self.OFFER.count("?"))
+        self.assertNotRegex(self.OFFER, r"\bor\b")
+
+    def test_the_module_no_longer_frames_the_exercise_as_a_test(self):
+        """Heading and prose, not just the pinned line — the frame is the whole section."""
+        text = CONCEPTS.read_text(encoding="utf-8")
+        self.assertIn("## Optional knowledge check (offer before the readiness gate)", text)
+        uses = [
+            line for line in text.splitlines()
+            if "quiz" in line.lower() and "The words" not in line
+        ]
+        self.assertEqual(
+            [], uses,
+            "the only surviving mention may be the rule naming the words to avoid",
+        )
+
+    def test_the_reason_is_recorded_where_the_wording_lives(self):
+        """Otherwise the next editor restores "quiz" as a harmless simplification."""
+        text = flat(CONCEPTS)
+        self.assertRegex(text, r"(?i)Offer the benefit, never the assessment")
+        self.assertRegex(text, r"(?i)make\s+people recoil")
+
+    def test_it_is_not_softened_into_ambiguity_or_made_conditional(self):
+        text = flat(CONCEPTS)
+        self.assertRegex(text, r"(?i)Do not soften it further into\s+ambiguity")
+        self.assertRegex(text, r"(?i)INV-112 pins one sentence for every run")
+
+    def test_the_progress_keys_are_deliberately_unchanged(self):
+        """Internal state, not Bootcamper-facing text: renaming them was out of scope."""
+        skill = MODULE_00.read_text(encoding="utf-8")
+        self.assertIn("`quiz_offered`", skill)
+        self.assertIn("`quiz_taken`", skill)
+
+
 class TheChangeabilityNotePrecedesItsQuestion(unittest.TestCase):
     """Item 4: asserted coarsely on purpose — see the module docstring."""
 
@@ -161,7 +229,7 @@ class TheChangeabilityNotePrecedesItsQuestion(unittest.TestCase):
         )
 
 
-class TheQuizDefinesWrongAnswersAndAnswerShape(unittest.TestCase):
+class TheKnowledgeCheckDefinesWrongAnswersAndAnswerShape(unittest.TestCase):
     """Items 5 and 6."""
 
     def setUp(self):
@@ -186,7 +254,7 @@ class TheQuizDefinesWrongAnswersAndAnswerShape(unittest.TestCase):
         self.assertRegex(
             self.text,
             r"(?i)Name it as incorrect",
-            "nothing said what to do when a quiz answer is wrong",
+            "nothing said what to do when an answer is wrong",
         )
         self.assertRegex(
             self.text,

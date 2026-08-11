@@ -29,7 +29,7 @@
 
 - **Q:** Do you have any questions about entity resolution before we continue?
     - **R:** No.
-- **Q:** Would you like to test your knowledge of entity resolution with a short quiz?
+- **Q:** Would you like a few quick questions to help the concepts stick?
     - **R:** Yes.
     - Q1 (principles vs. rules): answered correctly.
     - Q2 (disclosed relationship example): answered correctly.
@@ -40,7 +40,7 @@
 
 ### Actions Taken
 
-- Presented the Entity Resolution Concepts primer and an optional 4-question knowledge-check quiz.
+- Presented the Entity Resolution Concepts primer and an optional 4-question knowledge check.
 - No project files are created by this preamble module.
 
 ### End-of-Module Summary
@@ -49,7 +49,7 @@
 
 - Learned what entity resolution is, its two failure modes, and the conceptual pipeline
 - Learned how Senzing's principle-based matching differs from rule-based approaches
-- Reinforced the concepts with a short quiz (3 of 4 correct, one concept re-taught)
+- Reinforced the concepts with a short knowledge check (3 of 4 correct, one concept re-taught)
 
 **Files produced:**
 

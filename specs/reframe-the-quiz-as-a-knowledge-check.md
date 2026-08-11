@@ -101,3 +101,49 @@ enforces it.
   preserves), `specs/concepts-module-verified-qa-and-quiz.md` and
   `specs/concepts-questions-before-quiz.md` (the mechanism and its ordering, both unchanged here),
   `specs/example-recap-reference.md` (INV-065 — why the example must be regenerated).
+
+## Deviations from this spec, and why (2026-08-11)
+
+**1. Criterion 5 was vacuous as written, so it was met a different way.** It asks that "any test
+asserting the old wording is repointed to the requirement rather than the phrase". No test asserted
+the old pinned wording — grep across `tests/` found only a recap **fixture** string and two
+docstring mentions, none of them an assertion on the question. Repointing nothing would have left
+the change unguarded, so a `TheKnowledgeCheckOffersABenefitNotAnAssessment` class was added to
+`tests/test_phase3_interaction_prose.py` pinning the **requirement** (benefit frame, unambiguous
+yes/no, no "or", heading and prose no longer framing an assessment) alongside the current string,
+with the INV-181 docstring the criterion asks for. Side effect worth naming: INV-112 — the every-run
+guarantee this spec depends on — **was cited by no test in the suite**; it now is.
+
+**2. The example PDF regeneration broke an unrelated test, and the test was fixed, not the source.**
+Re-rendering shifted pagination enough to push the licence-measurement line onto a page boundary.
+`test_example_recap_sync.test_source_lines_appear_in_the_pdf` compares a 50-character window of each
+source line, and the page-number footer landed inside it — `…assuming it 23 recordLimit: 0…` — so a
+line that is genuinely in the PDF read as missing. That module's own `sampled_lines` docstring
+already describes this hazard for `_NEW_LINE_LABELS`; it reaches ordinary prose too, and which line
+it hits depends only on where pagination falls, so any edit anywhere can move it. Added
+`pdf_text_without_page_footers`, which drops digit-only `Tj` fragments, and the test now accepts a
+match in either haystack. Verified by mutation that staleness is still caught: adding a sentence to
+the source without re-rendering still fails the test. (INV-181 — correct the assertion's model of
+the artifact, not the artifact.)
+
+**3. Scope beyond the Affected files list.** The spec named `concepts.md`, the example recap and
+`tests/`. Three more files carried the same vocabulary and would have left two copies of one word
+disagreeing: `module-00-entity-resolution-concepts/SKILL.md` (8 references, including the recap
+subsection instructions), `docs/model-selection.md` (the Module 0 row), and the recap fixture in
+`tests/test_recap_pdf_guard.py`.
+
+**4. One "quiz" deliberately survives** in `concepts.md`, in the new rule that names "quiz", "test"
+and "evaluation" as the words to avoid. That is a mention, not a use, and the test that forbids the
+others exempts exactly that line.
+
+**5. Cosmetic re-wrapping.** "Knowledge check" is longer than "quiz", so several lines exceeded the
+file's ~100-column style; they were re-wrapped. Two lines over that width in `SKILL.md` (the
+frontmatter `description` and line 27) pre-date this change and were left alone.
+
+## Invariants introduced
+
+- None. Confirmed with the maintainer on 2026-08-11: INV-056 already pins the wording in one
+  authoritative place and INV-112 already guarantees the question is asked every run, so the
+  framing change adds no standing rule. It is guarded by
+  `tests/test_phase3_interaction_prose.py::TheKnowledgeCheckOffersABenefitNotAnAssessment` and by
+  the reason note recorded beside the wording in `concepts.md`.

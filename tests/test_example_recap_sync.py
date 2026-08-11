@@ -89,6 +89,26 @@ def pdf_text(path):
     return " ".join(f.replace("\\(", "(").replace("\\)", ")") for f in fragments)
 
 
+def pdf_text_without_page_footers(path):
+    """`pdf_text`, minus fragments that are only a page number.
+
+    A page-number footer is its own `Tj` fragment, so when a source line straddles a
+    page break the footer lands *inside* it and `squash` welds the digits into the
+    middle of the compared window — "…assuming it **23** recordLimit: 0…". The line is
+    present; the comparison window is not contiguous. This module's `sampled_lines`
+    docstring already describes that hazard for `_NEW_LINE_LABELS`; it reaches ordinary
+    prose too, and which line it hits depends only on where the pagination happens to
+    fall, so any edit anywhere in the source can move it.
+
+    Dropping digit-only fragments cannot hide staleness: a sentence that is genuinely
+    missing from the PDF is still missing from this haystack. (Added 2026-08-11, when
+    a wording change in Module 0 shifted pagination and pushed the licence-measurement
+    line onto a page boundary — INV-181: fix the assertion's model of the artifact,
+    not the artifact.)
+    """
+    return re.sub(r"\s+\d+\s+", " ", " " + pdf_text(path) + " ")
+
+
 def squash(text):
     """Reduce to lowercase alphanumerics.
 
@@ -381,8 +401,14 @@ class TestPdfMatchesItsSource(unittest.TestCase):
         self.assertGreater(len(lines), 20, "sampler found too little to compare")
         haystack = squash(self.pdf)
         # Compare a distinctive leading run of each line, squashed, so wrapping
-        # and PDF escaping cannot produce a false failure.
-        missing = [ln for ln in lines if squash(ln)[:50] not in haystack]
+        # and PDF escaping cannot produce a false failure. A line that straddles a
+        # page break has the page-number footer welded into that window, so retry
+        # those against a haystack with digit-only fragments removed.
+        no_footers = squash(pdf_text_without_page_footers(EXAMPLE_PDF))
+        missing = [
+            ln for ln in lines
+            if squash(ln)[:50] not in haystack and squash(ln)[:50] not in no_footers
+        ]
         self.assertEqual(
             [],
             missing[:5],

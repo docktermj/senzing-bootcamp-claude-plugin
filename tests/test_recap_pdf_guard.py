@@ -52,7 +52,7 @@ from records that merely look similar, which is the whole point of the exercise.
 
 ### Actions Taken
 
-- Completed the concepts primer and the optional knowledge-check quiz.
+- Completed the concepts primer and the optional knowledge check.
 
 ### End-of-Module Summary
 

@@ -84,7 +84,7 @@ as they later became, and two rows had gone stale under them. Rows whose value c
 | Skill | Workload | Best value | Rationale |
 |---|---|:---:|---|
 | `bootcamp-onboarding` | Gated preface, exact-wording gates, preference capture | Sonnet 5, medium | Protocol adherence needs adaptive thinking + strong instruction-following; no heavy code → Opus overkill, Haiku risky |
-| `module-00-entity-resolution-concepts` | Concepts teaching, Q&A, quiz | Sonnet 5, medium | Conversational teaching, no code |
+| `module-00-entity-resolution-concepts` | Concepts teaching, Q&A, knowledge check | Sonnet 5, medium | Conversational teaching, no code |
 | `module-01-business-problem` | Discovery conversation, document the problem | Sonnet 5, medium | Conversation-led, light technical |
 | `module-02-sdk-setup` | Cross-platform install, license/engine/DB config, build-from-source recovery | Opus 5, high | Largest skill, most error-prone, platform-specific; install/config errors are high-cost |
 | `module-03-system-verification` | Verify end-to-end, write and run the first real SDK code, report | Sonnet 5, **high** ↑ | Not "run / check / report": it writes the first working SDK code against the installed engine, and the 2026-07-26 export-flag defect was filed against this module. Sonnet fits the volume; the reasoning load justifies high effort |
