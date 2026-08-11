@@ -115,3 +115,46 @@ exercise works. What is unavailable is specifically the disclosed-relationship e
   a maintainer action in another repository, outside what this skill may write.
 - Related specs: none. `specs/record-preview-requires-registered-source.md` touches ICIJ only
   incidentally.
+
+## Deviations from this spec, and why (2026-08-11)
+
+Four, all from checking the upstream repository this spec deliberately did not fetch.
+
+**1. Criterion 7 no longer applies as written — the finding was verified, not relayed.** The
+criterion marks the id ranges "not runtime-verified … the bootcamper's observation of 2026-07-27",
+because triage did not fetch the files. Implementation did: all four were pulled from
+`docktermj/senzing-bootcamp-free-data` (`samples/raw/icij-offshore-leaks/`) via `gh api` on
+2026-08-11 and parsed with `csv.DictReader`. Every claim holds — officers 12000001-12000010,
+entities 10000001-10000010, addresses 24000001-24000010, all 10 relationship rows
+`rel_type=registered_address`, `nodes-addresses-sample.csv` `name` 0 of 10 populated,
+`service_provider` 10 of 10 — and one is **stronger** than the spec states: 0 of 10 rows has
+*either* endpoint present in the node files, not merely both. The shipped note is therefore dated
+2026-08-11 as a checked fact, while still carrying criterion 4's re-check-and-retire framing.
+
+**2. The spec's filenames are wrong.** It names `nodes-addresses.csv`; upstream ships
+`nodes-addresses-sample.csv`, `nodes-officers-sample.csv`, `nodes-entities-sample.csv` and
+`relationships-sample.csv`. The plugin text and tests use the real names — a caveat naming a file
+that does not exist is unactionable.
+
+**3. `service_provider` is a single constant value.** The spec calls it "the workable alternative"
+without saying what it yields. All ten rows read `Mossack Fonseca`, so it supports one anchor with
+ten pointers — a real `REL_ANCHOR`/`REL_POINTER` exercise, but not the varied relationship graph a
+reader would assume from "workable alternative". The shipped note says so, so the choice is made
+knowingly.
+
+**4. The second site had drifted.** The spec cites `:190` and `:664`; the second recommendation is
+now at `:702`. `tests/test_free_data_catalog_caveats.py` keys on the catalog URL rather than on
+line numbers, so the both-sites assertion survives the next drift.
+
+Incidental, not spec scope: three pre-existing MD032 violations in the same file (numbered options
+abutting their 👉 question at what are now `:515`, `:525`, `:636`) were fixed, because the repo's
+PostToolUse CommonMark hook blocks on them. No wording changed.
+
+## Invariants introduced
+
+- `INV-197` — Where the bootcamp recommends a data source or resource it does not own, any known
+  limitation MUST be stated at **every** site that recommends it, dated and marked as an upstream
+  condition to re-check; the guidance MUST name a workable alternative where one exists, MUST NOT
+  call a partly-usable resource broken, and MUST NOT re-slice, repair or vendor a copy of the data
+  into this repo (recorded in `specs/INVARIANTS.md`, indexed under **Data quality, mapping and
+  validation gates**).

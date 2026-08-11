@@ -192,6 +192,41 @@ Use `get_sample_data(dataset='list')` to show available CORD datasets. Present t
 > - **Synthesized test data:** I can generate custom test data tailored to your specific
 >   scenario."
 
+⛔ **If they choose ICIJ Offshore Leaks from that catalog, tell them what it currently supports
+before they map it.** Checked directly against `docktermj/senzing-bootcamp-free-data`,
+`samples/raw/icij-offshore-leaks/`, on **2026-08-11** (first observed by a bootcamper 2026-07-27):
+
+1. **The four sample files do not join.** `nodes-officers-sample.csv` covers `node_id`
+   12000001-12000010, `nodes-entities-sample.csv` 10000001-10000010 and
+   `nodes-addresses-sample.csv` 24000001-24000010, while `relationships-sample.csv` references
+   pairs like 10002580 → 14106952. **Not one of its 10 rows has even a single endpoint present** in
+   the node files, and every row is `rel_type=registered_address`, so no officer↔entity ownership
+   link exists there even in principle. The files were sliced independently — the head of each —
+   rather than from a connected subgraph, which in a graph export is almost guaranteed to be
+   disjoint.
+2. **So the disclosed-relationship exercise is unavailable from that file.** That exercise is the
+   `REL_ANCHOR`/`REL_POINTER` family — `REL_ANCHOR_DOMAIN`/`REL_ANCHOR_KEY` on the record being
+   pointed at, `REL_POINTER_DOMAIN`/`REL_POINTER_KEY`/`REL_POINTER_ROLE` on the record pointing at
+   it (Senzing Entity Specification, *Feature: REL_ANCHOR* and *Feature: REL_POINTER*; confirmed via
+   `search_docs(category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11). Mapping
+   `relationships-sample.csv` anyway fails silently: the files parse, the mapping validates, the
+   load succeeds, and nothing relates.
+3. **The workable alternative on this source is `service_provider`**, populated on all 10 rows of
+   `nodes-entities-sample.csv`. Every row carries the same value (`Mossack Fonseca`), so it yields
+   one anchor with ten pointers — a real disclosed-relationship exercise, but not a varied
+   relationship graph. Say that when you offer it, so the choice is made knowingly.
+4. **`nodes-addresses-sample.csv` cannot be loaded as records.** Its `name` column is 0% populated
+   (0 of 10): these are address nodes, not entities.
+5. **Nothing else about the source is wrong** — the entity and officer files map and load normally.
+   Do not call the sample broken; exactly one exercise is unavailable.
+
+⛔ **Never re-slice, repair, or vendor this data into the bootcamp project.** Module 4 recommends the
+catalog; it does not own it. A local copy creates a second, divergent dataset and hides the upstream
+defect — the same reasoning INV-173 applies to forking an MCP-delivered validator. The fix belongs
+in `senzing-bootcamp-free-data`, where the slice would be taken from a connected subgraph instead.
+**This is an upstream condition, not a permanent fact: re-check the four files before repeating it,
+and retire this note outright — do not amend it — once they join.**
+
 Then proceed with the appropriate option:
 
 **Option A: Bootcamper uploads files**
@@ -478,6 +513,7 @@ training data.
    Four-option form (when `submit_feedback` is available):
 
    👉 **Which best describes your Senzing License Key situation? Reply with a number:**
+
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.
    3. No — I'll obtain one another way (a license I get elsewhere, or Senzing support).
@@ -486,6 +522,7 @@ training data.
    Three-option form (when `submit_feedback` is unavailable):
 
    👉 **Which best describes your Senzing License Key situation? Reply with a number:**
+
    1. Yes — a license file (`.lic`).
    2. Yes — a Base64-encoded license key.
    3. No — I need to obtain one.
@@ -597,6 +634,7 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
      returned, then end the turn on the question below and wait for the bootcamper's choice.
 
    👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
+
    1. Load all records into SQLite.
    2. Sample down to a smaller record count.
    3. Switch to an alternative database like PostgreSQL.
@@ -664,3 +702,12 @@ if it's already in the right format for Senzing."
   <https://github.com/docktermj/senzing-bootcamp-free-data> for raw samples and additional
   sources; (3) offer synthesized test data generation only as a last resort after CORD and
   free-data options are declined.
+- **If they pick ICIJ Offshore Leaks from the free-data catalog, give the dated caveat** stated in
+  full at the secondary-options step above: as of **2026-08-11** its four sample files do not join —
+  not one of the 10 rows in `relationships-sample.csv` has an endpoint present in the node files —
+  so the disclosed-relationship (`REL_ANCHOR`/`REL_POINTER`) exercise is unavailable from that file;
+  offer `service_provider` on `nodes-entities-sample.csv` as the workable alternative, and do not
+  load `nodes-addresses-sample.csv` as records (`name` is 0% populated — address nodes, not
+  entities). Everything else in the sample maps and loads normally, so do not call it broken. This
+  is an upstream condition in `senzing-bootcamp-free-data`: re-check it rather than repeating it,
+  and never re-slice or vendor the data here.
