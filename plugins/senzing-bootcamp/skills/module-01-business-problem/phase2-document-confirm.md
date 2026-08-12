@@ -204,10 +204,39 @@ reference how the bootcamp implements it.
 
 ## 14. Senzing value restatement
 
-Before confirming, reinforce why Senzing ER is valuable for THIS problem. Use
-`search_docs(query='value proposition <use_case_category>', version='current')` and tie the
-value to the bootcamper's specific data, sources, and outcomes (not generic marketing). If
-integration targets exist, explain how Senzing fits alongside them as a foundational layer.
+Before confirming, reinforce why Senzing ER is valuable for THIS problem. Tie the value to the
+bootcamper's specific data, sources, and outcomes (not generic marketing). If integration targets
+exist, explain how Senzing fits alongside them as a foundational layer.
+
+**Retrieve the material with `search_docs(query='entity resolution business value')`.** Verified live
+on **MCP server 1.32.9, docs index 2026-08-11, checked 2026-08-12**: it returns the *Entity Resolution
+Buyer's Guide* ("Five Primary Business Use Cases", and its evaluation steps including Time To Value)
+and *Agentic Entity Resolution* ("Why Agentic Entity Resolution Matters", whose Business Impact list
+is broken out by use case). Read the bootcamper's use case **out of** those results.
+
+⛔ **Do not append the use-case category to the query.** It is the token that breaks the search, not
+a refinement of it. Measured on the same server and date: `value proposition Supply Chain` — the
+phrasing this step used to prescribe — returns `senzing/libpostal`'s geodata *store-chains* scripts
+and a `sz_spark` changelog's "CI / supply chain" heading, because BM25 matches **"chains"** and the
+software sense of "supply chain"; the words "value proposition" contribute nothing. Appending the
+category to the working query re-triggers it: `entity resolution business value supply chain` puts
+that same libpostal script back at the top, outranking the real material. The category selects
+*which part of the results to use*; it does not help retrieve them.
+
+⛔ **If the result is empty or off-topic, re-query before concluding the material is uncovered.** Use
+the use case's own business vocabulary — "supplier due diligence", "beneficial ownership",
+"watchlist screening" — rather than an abstract phrase. This is the rule
+[`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+states in full, including why the failure is dangerous: a query that misses looks exactly like
+documentation that does not cover the topic, which makes a training-data fallback feel justified. Do
+not restate that reasoning here — follow it.
+
+**If nothing relevant comes back after re-querying, say less — do not invent value.** Tie the value
+to what MCP *did* return earlier in this module: the data sources you actually found, their record
+types and counts, and the mapping findings already in hand. Then say plainly that Senzing's
+published material does not cover this use case specifically. Inventing value claims from memory is
+forbidden (INV-080), and Senzing does not merchandise every category equally — a short, concrete,
+sourced statement is the correct outcome, not a failure of the step.
 
 **Checkpoint:** write step 14.
 

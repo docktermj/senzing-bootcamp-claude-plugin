@@ -133,3 +133,40 @@ the tool's signature rather than from a call that was run and inspected.
 - Related specs: `specs/find-examples-elision-is-by-design-not-a-failed-retrieval.md` and
   `specs/search-attribute-fallback-survives-a-failed-attempt.md` are the same
   "a retrieval that returns the wrong thing is read as absence" family.
+
+## Deviations from this spec, and why (2026-08-12)
+
+Re-verified against **server 1.32.9, docs index 2026-08-11 20:52 UTC**, on 2026-08-12. The failure
+reproduces **exactly** as recorded: `value proposition Supply Chain` returns `senzing/libpostal`'s
+geodata *store-chains* scripts (two of the top three) and `brianmacy/sz_spark`'s changelog "CI /
+supply chain" section. Three departures, the first of which changed the fix.
+
+1. **The category must NOT be offered as an optional refinement — measured, not reasoned.**
+   *Proposed change* §2 suggests prescribing a general query "with the category as an *optional*
+   refinement". Both halves were tested: `entity resolution business value` works, returning the
+   *Entity Resolution Buyer's Guide* ("Five Primary Business Use Cases") and *Agentic Entity
+   Resolution* ("Why Agentic Entity Resolution Matters", whose Business Impact list is broken out by
+   use case) — but `entity resolution business value supply chain` **re-triggers the original
+   failure**, putting the same libpostal script back on top at relevance 57.9 against the real
+   material's 57.5. So the category token is the defect itself, not a refinement of a working query.
+   Step 14 now prescribes the bare query and **forbids appending the category**, with that
+   measurement quoted; the category selects which part of the results to use.
+
+2. **The guard covers eight prescribed queries, not one — and the first version of it missed three.**
+   A line-based scan finds five `search_docs(query='…')` literals in the shipped skills; three more
+   are **wrapped across source lines** and were invisible to it, so the guard now collapses
+   whitespace before matching. All eight were then executed against the live server and recorded with
+   the top hit each returned, per criterion 4's option (b).
+
+3. **One of those eight is off target, and is recorded as such rather than blessed.**
+   `entity resolution quality evaluation` (`module-07-…/phase1-query-visualize.md`) returns the
+   Buyer's Guide's *"The Steps To Evaluating Entity Resolution"* — vendor-selection guidance, not
+   precision/recall or split/merge material, which lives in `reporting_guide(topic='quality')` and
+   `topic='evaluation'`. Fixing that phrasing is outside this spec's scope, so the allowlist entry
+   says ⚠️ OFF TARGET in as many words and names the right route. Two consequences worth stating: the
+   allowlist means *"executed and written down"*, never *"good"* — an allowlist that quietly upgrades
+   one into the other would be the same laundering this spec objects to — and **this entry is the
+   evidence for a follow-up spec**, which is where that query should be fixed.
+
+Criterion verified as prescribed: `concepts.md` is unchanged (`git diff` empty), and Step 14 links to
+it rather than restating its reasoning.
