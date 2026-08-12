@@ -29,6 +29,10 @@ directory no test had modelled.
 
 Written as sweeps, not as three assertions about three lines, so the next one is caught too.
 
+Enforces **INV-185** (a command run against a bundled script resolves it inside the plugin
+via `${CLAUDE_PLUGIN_ROOT}`, never by a bare project-relative path -- the script ships in
+the plugin while the command runs in the Bootcamper's project), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

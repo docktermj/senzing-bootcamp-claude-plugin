@@ -233,7 +233,10 @@ re-run SDK initialization from Module 2 / System Verification; check `config/eng
 and retry until the snapshot is written — the module does not complete without it.
 
 **Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
-running (2.3) and capture from **`--url http://localhost:8080`**, one image per tab, so the
+running (2.3) and capture from **`--url http://localhost:<port>`** — substituting the port the
+server was **actually started on** in 2.3, which is `8080` only when that port was free (INV-172).
+Capturing from a port nothing is listening on exits 2 and loses every image for this module, and
+those images cannot be re-taken after teardown. One image per tab, so the
 Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
 inert. `{name}` = `truthset_verification`. Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
@@ -364,7 +367,9 @@ copy.
 
 Tell the bootcamper the app is running and where the saved copy is:
 
-- "Your visualization is running at `http://localhost:8080`, open it in your browser."
+- "Your visualization is running at `http://localhost:<port>`, open it in your browser."
+  (Substitute the port actually in use — never a literal `8080` when 2.3 chose another, or this
+  line sends the Bootcamper to a port nothing is listening on. INV-172.)
 - "A saved copy is at `docs/visualizations/truthset_verification.html`, you can open that file
   any time, even after we stop the server. Every tab still works offline there, except **Why?**,
   **How?**, and live search — those need the running engine, so use them while the server is up."
@@ -415,8 +420,8 @@ Never treat a yes here as consent to stop the server.
 {
   "truthset_visualization": {
     "checks": {
-      "web_service": {"status": "passed|failed", "port": 8080},
-      "web_page": {"status": "passed|failed", "url": "http://localhost:8080/",
+      "web_service": {"status": "passed|failed", "port": <port>},
+      "web_page": {"status": "passed|failed", "url": "http://localhost:<port>/",
                    "snapshot": "docs/visualizations/truthset_verification.html"}
     }
   }

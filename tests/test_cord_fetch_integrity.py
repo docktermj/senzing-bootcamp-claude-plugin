@@ -23,6 +23,10 @@ The condition itself needs the network, which no offline test has. What is pinne
 the *instruction*: the count comparison, the 429/backoff handling, and the staging rule that
 keeps an unverified fetch out of `data/raw/` under the source's final name.
 
+Enforces **INV-203** (a fetched source reaches `data/raw/` under its final name only after
+**both** a 2xx status and a measured record count equal to the expected one, with a
+throttled response retried rather than saved as data), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

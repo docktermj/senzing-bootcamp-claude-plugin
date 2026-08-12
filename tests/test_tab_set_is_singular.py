@@ -19,6 +19,10 @@ What this pins:
 * A removed tab id may survive only as an explicit removal/reserved note.
 * Anything that enumerates the tab set names the same six.
 
+Enforces **INV-188** (a user-visible string a shipped script *emits* is bound by the same
+content invariants as the plugin's prose, and conformance is verified by **executing** the
+script -- this file runs `--help` and the unknown-id error path), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast

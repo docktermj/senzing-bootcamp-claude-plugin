@@ -41,6 +41,10 @@ element, treat a blank field as a wrong name, never present an unconfirmed name 
 authoritative) and the *record* (the dump-marked key list, and the `JSON_DATA`
 trap where the authoritative reference is itself what misleads).
 
+Enforces **INV-191** (a dated provenance stamp is never advanced for a claim that pass did
+not re-verify, and a claim this environment cannot re-check keeps its stamp and is recorded
+as skipped rather than restamped), which names this file as its enforcer.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

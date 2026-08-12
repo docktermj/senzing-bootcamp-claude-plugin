@@ -1,0 +1,111 @@
+"""An invariant that names its enforcing test must be cited back by that test.
+
+`INVARIANTS.md` rule 3 binds a new invariant to an index entry, and
+`tests/test_invariants_index.py` fails when that stops being true. Nothing bound an
+invariant to the **test it names as its enforcer** — *"`tests/test_brand_sync.py` enforces
+this and MUST pass"* — so the citation was a convention with no enforcement. Measured
+2026-08-12: **11 of 22** such pairs had no back-citation.
+
+That is not a docstring nicety. `.claude/skills/dry-run/coverage_reports.py invariants` is
+the repo's only signal for *"this rule has no guard"*, and it keys on the ID appearing
+**anywhere** under `tests/`. A missing back-citation is therefore scored one of two wrong
+ways:
+
+* **False alarm** — the invariant reads as unguarded while a dedicated test enforces it,
+  sending a future audit to build a guard that already exists (5 of the 11).
+* **False all-clear** — an unrelated file mentions the ID in passing, so the invariant reads
+  as covered and the gap becomes undiscoverable (6 of the 11). INV-183's five "citations"
+  were all *rationale* references — *"a rule deliberately restated at the step it governs is
+  INV-183"* — and none was in the test INV-183 names.
+
+The false all-clear is why this test exists rather than a report: `production-readiness-audit-2026-08-11`
+finding (3) recorded three of these as "three docstring lines", nothing failed while it went
+undone, and by 2026-08-12 all three were still missing with one of them newly masked.
+
+⛔ **Never satisfy this test by deleting an unrelated mention.** Those references are
+legitimate and are the reasoning the repo wants recorded. The fix is always the missing
+citation, never the removal of a correct one.
+
+Run:  python3 -m unittest discover -s tests
+"""
+import re
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
+TESTS = REPO_ROOT / "tests"
+
+#: One invariant entry: "- **INV-nnn** — body", to the next entry or heading.
+ENTRY = re.compile(r"^- \*\*(INV-\d{3})\*\* — (.+?)(?=\n- \*\*INV-|\n##|\Z)", re.M | re.S)
+#: A test file named inside an invariant's text.
+NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
+
+#: Invariant->test pairs found on 2026-08-12, when all 11 gaps were closed. Counts PAIRS,
+#: not invariants: one invariant may name several tests, and one test may be named by
+#: several invariants (test_model_guidance_sync.py serves INV-114 and INV-140). A pinned
+#: literal, derived by running the extractor -- not copied from the spec.
+EXPECTED_PAIRS = 22
+
+
+def pairs():
+    """[(INV-nnn, 'test_x.py')] for every test file an invariant names."""
+    text = INVARIANTS.read_text(encoding="utf-8")
+    out = []
+    for ident, body in ENTRY.findall(text):
+        flat = re.sub(r"\s+", " ", body)
+        for name in sorted(set(NAMED_TEST.findall(flat))):
+            out.append((ident, name))
+    return sorted(set(out))
+
+
+class TheScanIsNotVacuous(unittest.TestCase):
+    def test_the_expected_number_of_pairs_is_found(self):
+        found = pairs()
+        self.assertEqual(
+            EXPECTED_PAIRS, len(found),
+            "the invariant->test extractor found %d pairs, expected %d. If an invariant "
+            "was added or reworded, re-derive EXPECTED_PAIRS by running this extractor "
+            "and update it deliberately — do not relax the assertion." % (len(found), EXPECTED_PAIRS))
+
+    def test_known_pairs_are_present(self):
+        """A count alone passes on the wrong set; name members that must be in it."""
+        found = pairs()
+        for pair in (("INV-204", "test_liveness_probe_is_not_a_document_search.py"),
+                     ("INV-183", "test_generated_html_deliverables.py"),
+                     ("INV-107", "test_brand_sync.py")):
+            with self.subTest(pair=pair):
+                self.assertIn(pair, found)
+
+
+class EveryNamedEnforcerExistsAndCitesItsInvariant(unittest.TestCase):
+    def test_the_named_test_file_exists(self):
+        for ident, name in pairs():
+            with self.subTest(invariant=ident, test=name):
+                self.assertTrue(
+                    (TESTS / name).is_file(),
+                    "%s names tests/%s as its enforcer and that file does not exist — "
+                    "either the test was renamed without updating the invariant, or the "
+                    "invariant claims a guard that was never written" % (ident, name))
+
+    def test_the_named_test_cites_the_invariant_back(self):
+        for ident, name in pairs():
+            path = TESTS / name
+            if not path.is_file():
+                continue          # reported by the test above; do not double-fail
+            with self.subTest(invariant=ident, test=name):
+                # assertTrue, not assertIn: assertIn prints the whole container on failure,
+                # which here is an entire test file. The message IS the value of this guard,
+                # so the haystack must stay out of it.
+                self.assertTrue(
+                    ident in path.read_text(encoding="utf-8"),
+                    "%s names tests/%s as its enforcer, but that file never cites %s. "
+                    "coverage_reports.py keys on the ID appearing anywhere under tests/, "
+                    "so this gap reads either as a falsely-unguarded invariant or — if any "
+                    "unrelated file mentions %s — as a false all-clear. Add the citation to "
+                    "the test's docstring; never delete the unrelated mention."
+                    % (ident, name, ident, ident))
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -16,6 +16,10 @@ PDF; these tests pin both halves of the fix:
 * The module skill produces the deliverable on every branch of the Discover
   opt-in, at the convergence point all four branches return to.
 
+Enforces **INV-121** (no full-width write in a bundled generator depends on the ambient
+cursor position, verified positionally rather than by text extraction), which names this
+file as its enforcer. INV-121's coverage here is path-scoped by design -- see its note.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

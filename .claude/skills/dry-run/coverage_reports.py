@@ -11,6 +11,20 @@ is not buried under legitimate entries:
     cite them by name rather than number, so a hit is not a failure — but this is where
     INV-060 and INV-097 hid, and both would have appeared here.
 
+    ⚠️ **This report is unreliable in BOTH directions, and the second one bites harder.**
+    It keys on the ID appearing *anywhere* under ``tests/``, which under-reports as noted
+    above — and **over-reports** just as easily, because an incidental mention scores an
+    invariant as covered. Observed 2026-08-12: INV-183 was named by five test files, every
+    one of them invoking it as *rationale* (*"a rule deliberately restated at the step it
+    governs is INV-183"*), and none of them the test INV-183 names as its enforcer. The
+    missing citation was therefore invisible here, and a finding that recorded it on
+    2026-08-11 went unactioned with nothing failing.
+
+    So a **miss on this report is not evidence of coverage**. For the subset of invariants
+    that name their own enforcer, ``tests/test_invariant_enforcer_citations.py`` is the
+    reliable check — it asserts the named file exists and cites the ID back, and it fails
+    rather than reports.
+
 ``affected``
     Ledgered specs whose ``## Affected files`` predicted a path the entry's
     ``**Files changed:**`` never recorded. A prediction that did not come true is often

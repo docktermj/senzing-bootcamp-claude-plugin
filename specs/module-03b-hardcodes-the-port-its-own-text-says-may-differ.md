@@ -139,3 +139,22 @@ literal is illustrative and INV-188 governs its wording separately.
 
 **None proposed.** INV-172 already states the rule; this is an unswept site plus a guard narrower
 than the invariant. Registering a second invariant would duplicate INV-172 rather than enforce it.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**One addition beyond the criteria, disclosed rather than folded in.** The criterion named two
+forbidden shapes — the capture URL and the bootcamper-facing line. The guard ships **three**: it
+also rejects a hardcoded port in the *recorded checkpoint* (`"url": "http://localhost:8080/"`,
+`"port": 8080`), which was the third site the Problem section listed but which the criteria did not
+separately require. It is mutation-verified like the other two (restoring the literal at `:424`
+fails `check='recorded-checkpoint'`), so the extra coverage is asserted, not assumed.
+
+**Line numbers in this spec are pre-fix.** The three edits lengthened the file, so the sites now sit
+a few lines lower (the checkpoint moved `:419` → `:424`). The *content* claims are unchanged and
+were verified against the file, not against these numbers.
+
+**No other deviation.** Every criterion holds and all are runtime-verified. `:255`/`:262`/`:266`/
+`:408` are untouched (verified by a `git diff` filtered to lines mentioning `port 8080`, `--port` or
+`is in use`, which returned nothing), `bootcamp_recap.example.md` and `capture_screenshots.py` are
+absent from the changeset, and `tests/test_snapshot_and_capture_fidelity.py` passes unchanged at 24
+tests.

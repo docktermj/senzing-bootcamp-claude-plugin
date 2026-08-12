@@ -21,6 +21,9 @@ Note what this does NOT forbid: `search_docs` itself, which is the right tool wh
 is actually wanted, and the sentence in `onboarding-flow.md` that names the anti-pattern in
 order to ban it.
 
+Enforces **INV-204** (a reachability or liveness probe uses `get_capabilities`, never a
+content-returning tool whose retrieval is then discarded), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

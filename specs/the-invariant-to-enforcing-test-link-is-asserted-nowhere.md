@@ -125,3 +125,24 @@ missing citation, never the removal of a correct one.
 **None proposed.** INV-182 already governs verifying a criterion against the file it names, and
 `INVARIANTS.md` rule 3 already governs the index link; this is the same discipline applied to the
 enforcement link, and a test is the right enforcement, not a new rule.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**The uncited count fell by 6, not the predicted 5 — and the sixth is not this spec's doing.**
+The criterion predicted 79 → 74, the 5 invariants whose gap was *visible* (INV-140, INV-188,
+INV-191, INV-203, INV-204). Measured after: **73**. The extra one is **INV-172**, which left the
+list because `module-03b-hardcodes-the-port-its-own-text-says-may-differ` — implemented in the same
+session — added `tests/test_module_instructions_do_not_hardcode_the_port.py`, and that guard cites
+INV-172. Recorded so the number is not later read as evidence that this spec closed six gaps: it
+closed five, and the 6 **masked** ones did not move, exactly as the criterion said they would not.
+
+**A defect in my own guard, caught by its own mutation test.** The first version asserted the
+back-citation with `assertIn(ident, path.read_text())`. The mutation landed and was caught — but
+`assertIn` prints its container on failure, so the message carried an entire ~250-line test file and
+buried the one sentence that explains the defect. In this repo the failure message is most of a
+test's value, so that is a real defect, not a cosmetic one. Changed to `assertTrue(ident in text,
+msg)` with a comment recording why, and the mutation re-run to confirm the message is now the
+explanation alone.
+
+**No other deviation.** All eleven back-citations landed, no assertion in any of the ten files was
+changed, and both arms of the new guard are mutation-verified with distinct messages.
