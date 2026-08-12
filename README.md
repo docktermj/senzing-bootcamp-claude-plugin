@@ -10,17 +10,17 @@ a hands-on, module-by-module tutorial.
 A guided sequence of hands-on modules takes you from zero
 to working entity resolution:
 
-- **Bootcamp preparation:** choose Core (every module) or Customized, your level of detail, and your programming language
-- **Entity Resolution Concepts:** a primer on how entity resolution works *(optional)*
-- **Discover the Business Problem:** describe the problem you are trying to solve
-- **SDK setup:** — install and configure the Senzing SDK
-- **System verification:** — end-to-end checks that Senzing works on your machine *(optional)*
-- **Truth Set visualization:** — an interactive web app of the resolved Truth Set data *(optional)*
-- **Data collection:** — identify and collect your data sources
-- **Data Quality, Mapping, and Transformation:** make your data "Senzing-ready"
-- **Data processing:** ingest senzing-ready data
-- **Query, Visualize and Discover:** see what Senzing can do for you
-- **Graduation:** wrap up your bootcamp with a bow
+- ***Bootcamp preparation:*** choose Core (every module) or Customized, your level of detail, and your programming language
+- ***Entity Resolution Concepts:*** a primer on how entity resolution works *(optional)*
+- ***Discover the Business Problem:*** describe the problem you are trying to solve
+- ***SDK setup:*** install and configure the Senzing SDK
+- ***System verification:*** end-to-end checks that Senzing works on your machine *(optional)*
+- ***Truth Set visualization:*** an interactive web app of the resolved Truth Set data *(optional)*
+- ***Data collection:*** identify and collect your data sources
+- ***Data Quality, Mapping, and Transformation:*** make your data "Senzing-ready"
+- ***Data processing:*** ingest senzing-ready data
+- ***Query, Visualize and Discover:*** see what Senzing can do for you
+- ***Graduation:*** wrap up your bootcamp with a bow
 
 You finish with working Senzing code and data in your project, a professional
 recap PDF you can keep and share, and a production starter. See
