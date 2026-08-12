@@ -262,12 +262,14 @@ questions.
 - Call **`get_capabilities`** on the Senzing MCP server for the supported programming languages.
   It is the tool that carries that fact, and in the server's model the language set is
   **platform-independent**: Python, Java and C# official, Rust and TypeScript/Node.js
-  community-maintained wrappers (verified 2026-07-29, server 1.32.2). What varies per platform is
+  community-maintained wrappers (re-verified 2026-08-12, server 1.32.9). What varies per platform is
   the install *mechanism*, not which languages exist — so do **not** route this lookup to
   `sdk_guide`: `sdk_guide(topic='install', platform=…)` returns install commands, env vars, paths
   and gotchas and **no language list at all**, and with no `platform` it returns the platform
-  decision tree rather than a language one (both confirmed live, same server and date).
-  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — server 1.32.2, 2026-07-29 -->
+  decision tree rather than a language one — `needs_input.parameter` is `platform`, offering five
+  operating systems (both halves re-checked live, same server and date, `platform='linux_apt'` and
+  no-platform).
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — server 1.32.9, 2026-08-12 -->
   The one
   genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
   only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules
