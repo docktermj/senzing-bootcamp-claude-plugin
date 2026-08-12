@@ -3,10 +3,18 @@
 
 `compact-dev-environment` merges invariants, archives specs and prunes feedback. Every
 one of those operations can break a reference, and the references here are dense enough
-that eyeballing them is not a plan: on 2026-07-30 this repo held **5,210** live
-`INV-NNN` citations across shipped plugin text, specs, tests and skills — plus 753 more
+that eyeballing them is not a plan: on 2026-08-12 this repo held **6,265** live
+`INV-NNN` citations across shipped plugin text, specs, tests and skills — plus 990 more
 in commit messages, which cannot be edited and are therefore outside anything this script
 can protect.
+
+Both figures are a **dated illustration of scale, not a fact to quote**: run ``census`` and
+use what it prints. This paragraph previously claimed **5,210** and 753 for 2026-07-30, and
+the first of those was wrong on the day it was written — this script reported 4,587 that
+day. The skill's own header records the same error in its table and tells the reader to
+re-measure; the docstring of the tool it says to run *first* went on stating the discredited
+number as measured fact until 2026-08-12. A number in prose beside an append-only corpus has
+nothing coupling it to that corpus, so it drifts silently and is then believed.
 
 Two commands, and the second is the one that matters:
 
