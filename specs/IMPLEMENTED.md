@@ -42,6 +42,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## preparation-summarises-the-model-nudge-trigger-as-the-forbidden-comparison
+
+- **Implemented:** 2026-08-12
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-preparation/SKILL.md` (Step 3a), `tests/test_model_nudge_trigger_direction.py` (new), `specs/IMPLEMENTED.md` (this entry)
+- **MCP re-check:** **n/a (no Senzing fact).** The spec states this explicitly — internal consistency between two shipped files.
+- **Summary:** The only behavioural fix of this batch. Step 3a's one-clause summary said the switch question fires "when the recommendation changes … when it is unchanged", which is the stage-to-stage comparison `ground-rules.md` forbids by name — and because four consecutive stages share one recommendation, that reading suppressed the question through the entire opening of every Core run, for exactly the bootcamper already running a stronger model. **Criterion walk, 5 of 5.** (1) *Step 3a describes the trigger as the stage recommendation versus what the bootcamper is currently running, and defers for the procedure* — now "when that recommendation differs from what the bootcamper is running right now — compared per dial", followed by a ⛔ naming the live session as the reference and `ground-rules.md` as **authoritative**, with an explicit "do not restate that procedure here" and the reason (two copies is how it drifted). (2) *No shipped file states or implies the previous-stage reading* — a **sweep** found `bootcamp-preparation/SKILL.md` to be the only offender; `ground-rules.md:536` and `docs/model-selection.md:115` both already state the correct direction, and the new guard exempts them because they name the wrong comparison in order to forbid it. (3) *`ground-rules.md` unchanged* — `git diff` empty for that file, and a test asserts its rule and worked example are both still there, so a later "simplification" of the authority is caught too. (4) *A test asserts the property across shipped files, negative-controlled* — `tests/test_model_nudge_trigger_direction.py`, 7 tests; restoring the **exact original paraphrase** landed and failed 2 tests. A further test asserts the summary does **not** copy `ground-rules.md`'s per-dial reasoning, so satisfying criterion 1 by duplicating the rule would fail. (5) *Cross-platform and language-agnostic* — prose and text assertions only. No deviations: implemented as the spec specifies. **Establishes no invariant** — INV-138 already states this rule; the gap was that nothing tested the *other* files against it, which the new guard now does.
+- **Commit:** uncommitted
+
 ## preparation-recap-template-contradicts-its-own-rules
 
 - **Implemented:** 2026-08-12

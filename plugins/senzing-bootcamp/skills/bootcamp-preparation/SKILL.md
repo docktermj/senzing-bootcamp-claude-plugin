@@ -210,10 +210,18 @@ replied. (The can-change-it-any-time reassurance belongs **before** the question
 
 ⛔ **There is no model-guidance question and no `model_guidance` preference (INV-137).** Ask nothing
 here and write nothing for it. Model/effort guidance behaves one way for everyone: at each module
-start and graduation start the guide surfaces the stage's recommendation, and **when the
-recommendation changes** it pauses on the pinned switch question followed by the pinned "Are you
-done modifying the model and effort?" gate; when it is unchanged it is a one-line statement. The
-full behavior lives in `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt".
+start and graduation start the guide surfaces the stage's recommendation, and **when that
+recommendation differs from what the bootcamper is running right now** — compared per dial — it
+pauses on the pinned switch question followed by the pinned "Are you done modifying the model and
+effort?" gate; when it already matches, it is a one-line statement.
+
+⛔ **The comparison is against the live session, never against the previous stage's
+recommendation.** Four consecutive stages share one recommendation, so reading it stage-to-stage
+would suppress the switch question through the whole opening of a Core run — for precisely the
+bootcamper who is already running something stronger, which is the common case rather than an edge
+case. `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt" is
+**authoritative** for the comparison, including the per-dial rule for a value that cannot be read;
+do not restate that procedure here — two copies is how this drifted in the first place.
 
 This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
 stay stable. Skip straight from Step 3 to Step 4.
