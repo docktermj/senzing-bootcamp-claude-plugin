@@ -137,3 +137,20 @@ requires those exact strings, and `:155-159` names abbreviation as the thing to 
 - Related specs: none directly. `specs/inv050-tree-has-no-reachability-guard.md` and
   `specs/scaffold-banner-ignores-fresh-and-seeded-modes.md` are the same "the artifact drifted from
   the rule and nothing renders it" shape, if a reader wants precedent.
+
+## Deviations from this spec, and why (2026-08-12)
+
+Implemented as specified — both fixes, the module table untouched, no Senzing fact involved so no MCP
+re-check applied. One difference in where the reasoning went.
+
+**The "why" is adjacent to the template, not inside it.** *Proposed change* §2 suggests the inline
+form `• Modules: {ordered selected module names, semicolon-separated — two names contain commas}`.
+The template line instead reads `{ordered selected module names, separated by "; "}`, and the
+reasoning — both offending names, the fourteen-vs-eleven miscount, and the `--expect-modules`
+precedent — sits in a ⛔ block immediately below the fenced block, alongside the companion rule about
+the label. Two reasons: the fenced block is what a guide reads as the thing to print, so a
+parenthetical justification inside it competes with the value it is describing; and criterion 3
+requires the recap to still render as a single line under `minimal` verbosity, which an inline
+explanation works against. The spec offered its wording as an example ("e.g."), so this stays inside
+its latitude, and the substance — *say why, so it is not silently reverted* — is met and
+test-asserted (`test_the_reason_is_recorded_inline`).
