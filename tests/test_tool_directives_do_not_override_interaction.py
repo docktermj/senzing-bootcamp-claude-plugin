@@ -110,5 +110,48 @@ class TheOverrideIsScoped(unittest.TestCase):
             "tool conflict is to honour that promise, not to stop making it (INV-056)")
 
 
+
+class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
+    """`mapping_workflow` step 1 states its advance payload in two incompatible shapes.
+
+    Its prose shows `profile_summary` as an object keyed by schema name; its inline JSON
+    Schema and `advance_schema` define an array of objects each requiring `schema_name`,
+    with `additionalProperties: false`. Resolved empirically on server 1.32.9, 2026-08-12:
+    the ARRAY advances, the prose form cannot validate. The plugin was already sending the
+    array — this guard exists so a later edit cannot invert the caution and send readers to
+    the shape that fails. (Upstream defect; if the server corrects its prose, retire the
+    note rather than flipping it.)
+    """
+
+    def setUp(self):
+        self.body = text()
+
+    def test_the_caution_exists_and_names_both_shapes(self):
+        flat = re.sub(r"\s+", " ", self.body)
+        self.assertIn("profile_summary", flat)
+        self.assertRegex(
+            flat, r"(?i)two incompatible shapes|incompatible shapes",
+            "the step-1 advance caution is missing; without it a guide following the tool's "
+            "own prose sends a payload that cannot validate")
+
+    def test_it_names_the_array_as_the_working_form(self):
+        """The one thing that must never invert."""
+        flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertRegex(
+            flat, r"(?i)send the ARRAY|array form advanced|array.{0,40}works",
+            "the caution must say the ARRAY is what works. Inverting this would send every "
+            "reader to the shape the schema rejects.")
+        self.assertNotRegex(
+            flat, r"(?i)send the OBJECT|object form advanced",
+            "the caution names the object form as the working one — that is backwards; the "
+            "array is what advanced on server 1.32.9")
+
+    def test_it_carries_dated_provenance(self):
+        flat = re.sub(r"\s+", " ", self.body)
+        self.assertRegex(flat, r"1\.32\.9",
+                         "the caution must carry the server version it was verified against")
+        self.assertRegex(flat, r"2026-08-12",
+                         "the caution must carry the date, so a later run knows how stale it is")
+
 if __name__ == "__main__":
     unittest.main()

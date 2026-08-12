@@ -123,3 +123,18 @@ step's default branch, it does not remove the capability.
 **None proposed.** INV-006 (ask once) and INV-012 (suppress what the Bootcamper does not need)
 already govern; this is an unapplied instance, and a step whose default branch contradicts its
 module's stated input contract is a defect against INV-003 rather than a new rule.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**One change beyond the criteria, disclosed.** A pre-existing **MD032** lint violation elsewhere in
+the same file (step 5a item 2: a sub-list with no blank line above it, at what was `:128-129`) was
+flagged by the repo's markdown hook while this edit was applied. It predates this spec and is
+unrelated to it; it was fixed here because leaving a known violation in a file being edited is worse
+than the one-line diff. No prose changed — a blank line was inserted.
+
+**No other deviation.** Every criterion holds. Step 1 now takes its list from
+`config/data_sources.yaml` and uses `docs/business_problem.md` for the *why*, with an explicit
+instruction for when the two lists differ; Step 2 verifies against the registry and asks only when a
+registered file is missing or the registry is empty; the bring-your-own-data path is retained and
+asserted. Mutation verified: restoring the unconditional "ask the user to place sample files" fails
+3 assertions.

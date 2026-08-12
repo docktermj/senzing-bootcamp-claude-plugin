@@ -243,6 +243,29 @@ Run the profiler, then summarize columns/types/completeness/quality. Advance wor
 `action='advance'`, carrying `profile_summary` (one entry per source schema, each with
 `schema_name`, `record_count`, `field_count`) in `data`.
 
+⛔ **The step-1 response states this payload twice, in two incompatible shapes — send the ARRAY.**
+Its prose (`ADVANCE FORMAT:` at the top, and again under `ADVANCING TO STEP 2`) shows
+`profile_summary` as an **object keyed by schema name**:
+
+```text
+{"profile_summary": {"<schema_name>": {"record_count": N, "field_count": N}}}   ← prose, does NOT work
+```
+
+while the inline JSON Schema and the `advance_schema` field — introduced as *"the EXACT contract for
+the payload you send to advance FROM step 1. Match it exactly"* — define it as an **array** of
+objects each requiring `schema_name`, with `additionalProperties: false` and `minItems: 1`:
+
+```text
+{"profile_summary": [{"schema_name": "<name>", "record_count": N, "field_count": N}]}   ← works
+```
+
+Both cannot be satisfied: the prose form carries no `schema_name` key, which the schema requires and
+`additionalProperties: false` forbids substituting. **Resolved empirically, not by preference** — the
+array form advanced successfully to step 2. Verified on **MCP server 1.32.9**, first on 2026-08-12
+and re-confirmed the same day before this note was written. Step 2's own prose and schema **do**
+agree, so this is specific to step 1. Reported upstream; re-check whether it still applies rather
+than assuming, and if the prose is corrected, retire this note rather than inverting it.
+
 ⛔ **Two profiler limitations to expect, both of which produce a wrong profile rather than an
 error.** Observed 2026-07-27 on SDK 4.3.3.26191; **reported upstream 2026-07-31** and **not re-run
 since**, so check whether they still apply rather than assuming — the numeric-value entry later in

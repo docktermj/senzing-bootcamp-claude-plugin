@@ -121,3 +121,22 @@ the instruction, not to manufacture the question it implies.
 header contradicting one of its own branches. The general rule — *a branch-selecting instruction
 must hold for every branch beneath it* — is a real pattern but has one recorded instance besides
 this, so it is noted here rather than proposed.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**Two defects in my own guard, both caught by running the mutation rather than by reading it.**
+
+1. **The scope assertion searched the whole gate section**, so restoring the unconditional header
+   ("Ask exactly one 👉 question to close the turn.") **passed** — because the closing internal
+   note, several paragraphs below, happens to contain "gating branches" too. Fixed by splitting the
+   section into sentences and asserting the scope sits on **every sentence that carries the
+   instruction**, which is where the claim is actually made. This is the third instance today of the
+   same shape: a guard asserting a token appears *somewhere* rather than that the claim holds *where
+   it matters*.
+2. **A `%`-formatting bug in the failure message.** The message contained "≥80% branch", which
+   Python read as a format specifier and raised `ValueError: unsupported format character 'b'` —
+   turning the test into an ERROR on the correct tree as well as the mutated one. Escaped to `%%`.
+
+**No other deviation.** The two pinned gate questions (70-79% and <70%) are unchanged, verified by a
+`git diff` showing no removed 👉 line other than the header sentence this spec rescopes, and pinned
+by their own assertion. No 👉 was added to the ≥80% branch — asserted, and mutation-verified.

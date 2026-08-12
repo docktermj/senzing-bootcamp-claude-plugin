@@ -6,14 +6,42 @@ question and waiting.
 
 ## 1. List the agreed-upon data sources
 
-Recap the data sources identified during the business problem discussion. Review
-`docs/business_problem.md` for the list.
+Recap what the bootcamper actually brought into this module. **`config/data_sources.yaml` is the
+list** — Data collection registers every source it acquired there, with its counts and provenance.
+Read `docs/business_problem.md` for the **why**: the business context that motivated each source,
+which is what makes the recap worth reading.
+
+⛔ **Do not take the source list from `docs/business_problem.md`.** That file records what was
+*discussed* in Discover the Business Problem, before Data collection ran. The two routinely differ —
+Data collection is exactly where a bootcamper substitutes a CORD dataset for data they cannot share
+— and this module processes what is in `data/raw/`, not what was once intended. Where the two lists
+differ, say so in one line rather than silently preferring either: "we talked about X; what you
+collected is Y."
 
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
 
-## 2. Request sample data
+## 2. Confirm the source files are present
 
-For each data source, ask the user to place sample files in `data/raw/` or `data/samples/`:
+⛔ **Do not ask the bootcamper to place files here by default.** This module's prerequisite is
+"Module 4 complete (data sources collected, files in `data/raw/`)" — Data collection is a required
+module that runs immediately before this one, so asking for what it already fetched is a question
+the bootcamp does not need to ask (INV-006/INV-012). Worse, a bootcamper who takes it literally may
+re-fetch, which on a CORD source is a second download and a live rate-limit hazard
+(`cord-download-rate-limit-is-saved-as-data`, INV-203).
+
+**Verify instead.** For each source registered in `config/data_sources.yaml`:
+
+- confirm its file exists at the recorded path under `data/raw/`;
+- confirm its record count still matches the count recorded at collection (INV-203 wrote both);
+- report what you found — one line per source, not a wall of output (INV-012).
+
+**Ask only in the two cases where there is genuinely nothing to verify:**
+
+- a source is registered but its file is **missing**; or
+- the registry is **empty** — the bring-your-own-data path, which is real and supported: a
+  bootcamper whose data cannot leave their machine reaches this module with nothing collected.
+
+In either case, ask for what is missing in a single 👉 question, naming the forms that work:
 
 - CSV files (first 10-20 rows)
 - JSON samples
@@ -98,6 +126,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
 2. **Perform the structural check: will it load?** Examine up to 100 sample records from the
    source file. For each record, verify:
+
    - The record is valid JSON.
    - The record contains the structural indicators identified from the Entity Specification
      (top-level keys, array structures).
@@ -301,6 +330,41 @@ lineage write failure MUST NOT block the fast-path.
 
 For each data source, compute a quality score based on field completeness, format consistency,
 and duplicate rate.
+
+⛔ **Compute it this way — the number routes a gate banded to the percentage point, so two guides
+must reach the same figure.** The bands below (≥80 / 70-79 / <70) were precise while the arithmetic
+feeding them was never written down, which meant the score was reproducible only by accident:
+
+```text
+quality_score = 0.60 × completeness + 0.25 × format_consistency + 0.15 × (100 − duplicate_rate)
+```
+
+- **completeness (0-100)** — the mean, across records, of the share of **applicable** fields that
+  are present in that record, using the presence test defined below and per-`RECORD_TYPE`
+  applicability (INV-174). **Which fields count:** every field that resolves to an Entity
+  Specification attribute or a structural key, **plus** any source field already dispositioned in
+  mapping. A raw source column the bootcamper has not yet been asked about does **not** count —
+  scoring a source down for work this module has not done yet is the false-alarm shape INV-174
+  records. (On a real source this mattered: `PPP_LOANS` scored 100% on its 8 resolving fields and
+  94.4% averaged over all 19 root keys.)
+- **format_consistency (0-100)** — the share of populated values that match their field's dominant
+  observed pattern (date shape, postal-code shape, casing of a coded value). Report the fields that
+  drag it down; a single malformed field is more actionable than the aggregate.
+- **duplicate_rate (0-100)** — the share of records whose `(DATA_SOURCE, RECORD_ID)` pair is not
+  unique. ⛔ **Compute it on that pair, never on whole-row equality** (INV-180): re-sending the same
+  pair *replaces* a record rather than adding one, so identical rows under distinct keys are two
+  records and identical keys are one. Row-level duplicate counting measures something Senzing does
+  not do.
+
+**Worked example** — 1,000 records; applicable fields present on 96% of them on average; 3% of
+populated values off-pattern; 10 records share a `RECORD_ID` with another (1%):
+
+```text
+0.60 × 96  +  0.25 × 97  +  0.15 × (100 − 1)   =  57.6 + 24.25 + 14.85  =  96.7  ->  ✅ (≥80)
+```
+
+Round to one decimal and state the three inputs alongside the total, so the bootcamper can see
+which dimension moved it.
 
 ⛔ **Define "present" this way — do not re-invent it.** Completeness feeds the score that gates this
 module, so the presence test is part of the measurement, not an implementation detail. A field value
@@ -506,10 +570,20 @@ Create `docs/data_source_evaluation.md`:
 
 ### Quality gate: iterate vs. proceed
 
-After presenting the quality assessment, guide the user's decision. Ask exactly one 👉 question
-to close the turn:
+After presenting the quality assessment, guide the user's decision.
 
-- **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping."
+**Where the score gates — 70-79% and below 70% — ask exactly one 👉 question to close the turn.**
+At **≥80% there is no decision to make**: state the result and continue straight into Phase 2 in the
+same turn, letting Phase 2's first step supply that turn's single 👉.
+
+⛔ **Do not invent a gate question for the ≥80% branch.** "Your data is fine, shall we continue?" is
+exactly the pointless question INV-012 forbids and INV-006 counts against the ask-once budget, and
+improvising one breaches INV-056, which pins every gate question's wording precisely so it cannot
+drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
+scores there — so this is the path most runs take.
+
+- **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
+  continue into Phase 2 this turn)**
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
   mapping now, or improve the weakest fields first."
 
@@ -527,7 +601,9 @@ to close the turn:
   1. Work on improving the data first.
   2. Proceed anyway, knowing the results may be limited.
 
-*(Internal: end the turn on the applicable question and wait.)*
+*(Internal: in the two gating branches, end the turn on the applicable question and wait. In the
+≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
+end on its first 👉.)*
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.

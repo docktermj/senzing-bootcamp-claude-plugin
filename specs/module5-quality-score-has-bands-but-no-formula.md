@@ -130,3 +130,31 @@ number that the gap appears, which is why a walk found it and three audits did n
 INV-128, INV-174 and INV-180 already constrain the inputs. If the maintainer wants the general form
 ("a computed figure that routes a gate MUST have its computation stated"), that is worth its own
 discussion; it is deliberately not smuggled in here.
+
+## Deviations from this spec, and why (2026-08-12)
+
+⚠️ **The weights are my choice, not the spec's, and the maintainer should review them.** The spec
+required that a formula be *stated*, recommended which fields enter completeness, and explicitly
+left the decision to the maintainer. It did **not** specify weights. What shipped is:
+
+```text
+quality_score = 0.60 × completeness + 0.25 × format_consistency + 0.15 × (100 − duplicate_rate)
+```
+
+Completeness dominates because it is the dimension the module actually measures per record, against
+a defensible denominator (INV-174), and because it is the one a bootcamper can act on. Duplicate
+rate is weighted lowest because at this stage duplicates are *expected* — resolving them is what
+Senzing is for, so a high duplicate rate is not a data-quality defect in the way missing fields are.
+These are reasonable, they are not derived from anything, and a different split would move sources
+across the band boundaries. **If you disagree with the ratio, change the three numbers; nothing else
+in the implementation depends on them.**
+
+**The recommended field rule was implemented as recommended:** completeness counts fields resolving
+to an Entity Specification attribute or a structural key, plus any source field already dispositioned
+in mapping — with the `PPP_LOANS` 100% vs 94.4% measurement quoted inline as the reason.
+
+**A worked example was added** beyond the criteria's wording, because a formula stated but never
+exercised is still ambiguous about rounding and about whether `duplicate_rate` is inverted.
+
+**No other deviation.** The bands, the label ⛔ and both pinned gate questions are unchanged,
+verified by `git diff`.

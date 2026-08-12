@@ -120,3 +120,22 @@ only appears when the workflow is actually driven.
 
 **None proposed.** INV-136 and INV-125 already govern; this is an upstream defect plus a dated
 caution, not a new standing rule.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**None on content — the claim was re-verified live before anything was written.**
+`mapping_workflow(action='start')` was re-called on **server 1.32.9** during implementation, and the
+contradiction **still holds**: the prose `ADVANCE FORMAT:` and the `ADVANCING TO STEP 2` block both
+show `profile_summary` as an object keyed by schema name, while the inline JSON Schema and the
+`advance_schema` field define an array of objects requiring `schema_name`, with
+`additionalProperties: false` and `minItems: 1`. Step 2's prose and schema still agree, so it remains
+specific to step 1.
+
+**The upstream report was NOT sent**, as the spec requires. Its drafted text stands above awaiting
+the maintainer's approval; sending is a separate, maintainer-authorised action.
+
+**The caution is longer than the "one line" the Proposed change asked for** — it shows both shapes as
+fenced examples, because the difference is structural and a prose description of it is exactly what
+the tool already gets wrong. The guard additionally asserts the caution cannot be **inverted** (a
+`assertNotRegex` on "send the OBJECT"), which the criteria did not ask for and which is the failure
+mode that would do real damage: a reader sent to the shape the schema rejects.
