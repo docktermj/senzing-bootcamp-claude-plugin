@@ -105,11 +105,11 @@ the issue may be with an incomplete installation of Claude Desktop.
 
 - Claude Desktop requires `git` to be installed.
 
+[Bootcamp commands]: docs/README.md#bootcamp-commands
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
-[Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli
-[Bootcamp commands]: docs/README.md#bootcamp-commands
-[Senzing MCP server]: https://mcp.senzing.com/mcp
-[Senzing]: https://senzing.com
 [Claude Max 5x]: https://claude.com/pricing
 [Claude Pro]: https://claude.com/pricing
+[Senzing MCP server]: https://mcp.senzing.com/mcp
+[Senzing]: https://senzing.com
+[Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli
