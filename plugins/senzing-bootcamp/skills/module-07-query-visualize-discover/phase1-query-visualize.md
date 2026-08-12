@@ -63,6 +63,31 @@ bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag]
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
 and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
 
+⚠️ **The server cautions that DEFAULT composites are not for production code — relay this when you
+teach them.** Returned verbatim as the top-level `caution` field of
+`get_sdk_reference(topic='flags', filter='find_network_by_entity_id', language='python')`, **MCP
+server 1.32.9, 2026-08-12**:
+
+> **PRODUCTION GUIDANCE:** `*_DEFAULT_FLAGS` composites are intended for getting started and
+> exploration, not for production code. Their membership may change between Senzing versions, so
+> code pinned to a DEFAULT flag can silently change what it returns after an upgrade — no error is
+> raised. They also return more than most callers need, and unrequested data costs engine work and
+> response size. In production, request exactly the flags whose output you consume (OR the specific
+> `SZ_*` flags together) rather than relying on a DEFAULT composite.
+
+**Both halves of that are true here, and the split is the point.** Starting from a DEFAULT composite
+is the **right** thing for the bootcamp — the server's own wording calls it the getting-started and
+exploration path, and it is how you see a full response before deciding which parts you need. The
+code that **leaves with the Bootcamper** is different: graduation copies `src/query/**` into
+`production/src/`, so an exploration-shaped flag choice becomes their production artifact verbatim.
+Say that plainly when the composite table comes up, and note that the failure mode is **silent** —
+after a Senzing upgrade the response changes shape with no error, so nothing in their code will
+tell them. `production/MIGRATION_CHECKLIST.md` carries the corresponding action item.
+
+⛔ **Do not rewrite this module's examples to enumerate flags.** The exploration path is endorsed by
+the source that issues the caution, and turning a learning example into a production one trades a
+readable lesson for noise — the INV-169 mistake of letting a correct approach look broken.
+
 ⛔ **A method's own default-flags composite is NOT `SZ_ENTITY_DEFAULT_FLAGS`, and may omit
 sub-flags that one carries.** Before parsing an entity field out of a response, read the
 composite's `composite_members` and confirm the flag that populates *that* field is in it.

@@ -764,6 +764,18 @@ the files are exactly as they were before this paragraph.
 - **`production/README.md`:** parameterized by `programming_language`, `database_type`, and the data sources from `config/data_sources.yaml`. Use no bootcamp language (no "bootcamp", "module", "track", or "bootcamper"). Sections: Project Overview, Prerequisites, Installation, Configuration, Usage, Project Structure. Show it to the bootcamper and apply any requested revisions.
   - **Where `integration_targets` is known** (INV-097), name those systems in **Project Overview** as what the resolved entities are meant to feed, and in **Configuration** as the integration points a reader will need to wire up — the resolved data exists to reach them, so a README that never mentions them describes half the job. Absent → omit; never write "none" or a placeholder.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
+  - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
+    composites in `production/src/` with the explicit `SZ_*` flags whose output your code actually
+    consumes."* Give the reason, because it is what makes the item non-obvious: the server states
+    that DEFAULT composites are for getting started and exploration rather than production, that
+    their **membership may change between Senzing versions**, and that pinned code can therefore
+    *"silently change what it returns after an upgrade — no error is raised"*; they also over-fetch,
+    costing engine work and response size (`get_sdk_reference(topic='flags', …)` top-level
+    `caution`, MCP server 1.32.9, 2026-08-12). This matters here specifically because `src/query/**`
+    is copied into `production/src/` verbatim, so the bootcamp's exploration-shaped flag choice
+    becomes their shipped code. The bootcamp is right to teach the composites
+    (`../module-07-query-visualize-discover/phase1-query-visualize.md` relays the same caution) —
+    this checklist is where the production correction belongs.
   - **The Deployment section is where `deployment_target`/`cloud_provider` lands** (INV-097): name the stated target in its heading or first item, and make its checkboxes the ones that target actually needs (a cloud target → managed database, secret storage, image registry, network egress to nothing external; Kubernetes → manifests/Helm, resource limits, liveness probes; on-premises → host provisioning, backup schedule). ⛔ Still ⚠️-marked and still not covered in depth by the bootcamp — naming the target makes the list *relevant*, not authoritative, and it must not read as a deployment guide the bootcamp did not give. Absent → the generic six-section list exactly as before.
 
 Write every `production/*.md` deliverable — this README, the migration checklist, and the

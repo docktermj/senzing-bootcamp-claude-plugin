@@ -138,3 +138,29 @@ not this spec's copy (INV-080).
   `specs/why-entities-default-flags-has-no-composite-members.md` (INV-194),
   `specs/export-related-entities-is-flag-conditional.md` (INV-169) — all three govern composite
   *membership*, not production suitability.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**None of substance.** Re-verified at implementation time as INV-080 and criterion 5 require:
+`get_sdk_reference(topic='flags', filter='find_network_by_entity_id', language='python')` on **server
+1.32.9, 2026-08-12** still returns the top-level `caution` field **verbatim** as this spec quotes it,
+word for word, so the relayed text is the server's current string rather than a copy of this file.
+Both edits landed as specified, the bootcamp's own examples are untouched, and the guard covers both
+halves.
+
+Two small choices worth recording:
+
+1. **Checklist section: Performance, not Data.** The spec offers either. Performance was chosen
+   because two of the caution's three consequences are performance ones in the server's own words —
+   *"they also return more than most callers need, and unrequested data costs engine work and
+   response size"* — and the third (silent change on upgrade) has no better home among the six
+   sections. The item is ⚠️-marked, per that checklist's convention for topics the bootcamp does not
+   cover in depth.
+
+2. **The relay names its own limit.** Beyond the caution and the split, Module 7 now carries an
+   explicit ⛔ *not* to rewrite the module's examples to enumerate flags. This is not in the spec's
+   text as shipped guidance — it appears there only as an instruction to the implementer — but it is
+   the more durable place for it: the next reader of a production caution sitting beside a
+   DEFAULT-composite example is exactly who would "fix" the example, and the reason it must not be
+   fixed (the server blesses composites for exploration; INV-169's lesson about over-generalized
+   absolutes) is not self-evident from the caution alone.
