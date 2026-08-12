@@ -20,7 +20,7 @@ to working entity resolution:
 - ***Data Quality, Mapping, and Transformation:*** make your data "Senzing-ready"
 - ***Data processing:*** ingest your Senzing-ready data
 - ***Query, Visualize and Discover:*** see what Senzing can do for you
-- ***Graduation:*** wrap up your bootcamp with a bow
+- ***Bootcamp graduation:*** wrap up your bootcamp with a bow
 
 You finish with working Senzing code and data in your project, a professional
 recap PDF you can keep and share, and a production starter. See
