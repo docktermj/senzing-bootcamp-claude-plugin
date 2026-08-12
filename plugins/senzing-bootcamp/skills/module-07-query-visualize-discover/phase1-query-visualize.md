@@ -280,9 +280,44 @@ additional detail would be available with feature-score and match-key-detail fla
 
 ### 3b. Quality evaluation
 
-Call `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for
-the quality-evaluation methodology, then `search_docs(query='entity resolution quality
-evaluation', version='current')` for additional context on interpreting results.
+Call **both** `reporting_guide` topics — they carry different halves and this step needs both
+(verified live, **MCP server 1.32.9, 2026-08-12**):
+
+- `reporting_guide(topic='quality', language='<chosen_language>', version='current')` — the
+  **methodology**: precision/recall/F1 where a truth set exists, split/merge detection, and the
+  review-queue criteria (possible matches, ambiguous matches, large entities, and "review features"
+  — an entity carrying two different DOBs or SSNs).
+- `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` — how to
+  **interpret** what you found: the 4-Point ER Evaluation Framework (sanity check → over-matching →
+  under-matching → match principles), the `MATCH_LEVEL_CODE` reference, and the evidence rule below.
+
+⛔ **Do not reach for `search_docs` here.** This step used to add
+`search_docs(query='entity resolution quality evaluation')` "for additional context". Run live on
+server 1.32.9 (docs index 2026-08-11), that query returns the *Entity Resolution Buyer's Guide* →
+"The Steps To Evaluating Entity Resolution" — a nine-step guide to evaluating an ER **vendor**
+(deployment method, cloud vs on-prem, total cost of ownership), not to interpreting your results.
+BM25 matched "evaluation" in the procurement sense. `reporting_guide` owns this material; ask it.
+If a lookup here returns nothing relevant, re-query with the documentation's own vocabulary before
+concluding the material is uncovered — [`concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+states that rule in full; follow it rather than restating it here.
+
+⛔ **Never state a quality verdict without showing the evidence for it.** Verbatim from
+`reporting_guide(topic='evaluation', language='python')` (server 1.32.9, 2026-08-12), which calls
+this its hallucination-prevention mechanism:
+
+> CRITICAL: Every evaluation finding MUST be supported by specific evidence — actual records, entity
+> IDs, and data values. … An LLM can easily generate plausible-sounding evaluation narratives without
+> actually examining the data. **Bad:** *"The resolution quality looks good with reasonable
+> compression rates."* **Good:** *"Entity 1042 contains 3 records from CUSTOMERS and 1 from VENDORS.
+> Records CUST-001 (John Smith, 1985-03-15, 555-1234) and CUST-047 (J. Smith, 1985-03-15, 555-1234)
+> correctly resolved via +NAME+DOB+PHONE. Record VEND-203 (Smith Consulting, 555-1234) merged via
+> +PHONE only — this is suspicious and may be over-matching."*
+
+**Both topics say the same thing about aggregates**, so the table below is where the review *starts*,
+never where it ends. `topic='quality'`: *"Aggregate stats (entity count, compression ratio) hide
+errors. Always sample and manually review specific entities — especially large entities, possible
+matches, and ambiguous matches. Use `why_entities` to understand individual resolution decisions."*
+`topic='evaluation'`: *"Never assess ER quality from aggregate statistics alone."*
 
 Present a quality summary:
 
@@ -299,13 +334,23 @@ Present a quality summary:
 - **Poor** (iterate): possible matches > 15%, clear split/merge patterns, or no matching
   occurring.
 
-Based on the assessment:
+⛔ **Before stating any of the three verdicts, sample and show.** Pull two or three entities from
+the larger size buckets and two or three pairs from the possible-match queue, retrieve them with
+`why_entities` / `get_entity`, and show the Bootcamper the actual records: entity ID, how many
+records, which sources, and the match key that joined them. This applies to **every** branch,
+including the one that proceeds — a verdict with no records behind it is the "Bad" example above,
+and **Acceptable** is the branch a Bootcamper is least likely to question.
 
-- **Acceptable:** "Your entity resolution quality looks good. Let's proceed to visualizations."
-- **Marginal:** "I see some potential issues. Let me show you a few specific entities to
-  review." (Present examples, then ask whether to proceed or iterate.)
-- **Poor:** "The results suggest mapping improvements would help. Here's what I recommend..."
-  (Present specific recommendations and offer the Module 5 feedback loop.)
+Based on the assessment — evidence first, wording second:
+
+- **Acceptable:** name what you examined, then proceed. "I looked at entities [IDs]: [n] records
+  merged on [match keys], and each is the same [person/organization]. Possible matches are [x]% of
+  entities. Quality looks good — let's proceed to visualizations."
+- **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
+  sampled entities and pairs with their match keys, then ask whether to proceed or iterate.)
+- **Poor:** "The results suggest mapping improvements would help." (Show the entities or possible-match
+  pairs that demonstrate it — naming the match key pattern the near-misses share, since that is what
+  points at the unmapped feature — then give recommendations and offer the Module 5 feedback loop.)
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 

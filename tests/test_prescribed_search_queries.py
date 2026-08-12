@@ -71,13 +71,12 @@ VERIFIED_QUERIES = {
     "temporary evaluation license for a dataset larger than the default limit":
         "ON TARGET: End User License Agreement (EULA) -> 'Senzing Non-Production License' "
         "(relevance 171, the highest in this set)",
-    "entity resolution quality evaluation":
-        "⚠️ OFF TARGET: returns Entity Resolution Buyer's Guide -> 'The Steps To Evaluating "
-        "Entity Resolution', which is vendor-selection guidance, NOT precision/recall or "
-        "split/merge material. Quality metrics live in reporting_guide(topic='quality') and "
-        "topic='evaluation'. Recorded as measured; fixing the phrasing is out of scope for "
-        "step14-value-proposition-query-is-bm25-hostile-with-no-fallback and wants its own "
-        "spec — this entry is the evidence for one",
+    # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
+    # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
+    # vendor-selection steps rather than precision/recall material, and
+    # step3b-quality-lookup-misroutes-and-omits-the-evidence-requirement replaced it with
+    # reporting_guide(topic='evaluation'), the tool that owns the material. Left as a comment
+    # rather than deleted, so the phrasing is not helpfully reintroduced.
 }
 
 #: Vocabulary that shows a step handles a miss instead of assuming a hit.
