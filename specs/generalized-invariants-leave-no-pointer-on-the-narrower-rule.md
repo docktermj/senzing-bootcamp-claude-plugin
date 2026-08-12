@@ -150,7 +150,13 @@ under INV-155). Only the two above survive reading.
 
 ## Invariants introduced
 
-**None — recorded as a stop-marker instead, pending the maintainer's decision.**
+**None — held at stop-marker. Decided by the maintainer, 2026-08-12: hold, do not register.**
+
+⛔ **This is a settled decision, not an open question.** A later run that re-derives the
+candidate and re-proposes it is repeating work already done — read the revisit trigger below
+and check it before re-opening. Recorded here because the reasoning against registering is
+otherwise lost, and the spec's own text argues *for* the rule with nothing recording the
+argument against (the same failure `DECLINED.md` exists to prevent for specs).
 
 The candidate rule is: *a later invariant that widens an earlier one's scope MUST leave a
 dated forward pointer on the earlier one.* It is not registered here, following the
@@ -163,6 +169,36 @@ invariants that *interact* — one constraining, one bounding, one scoping anoth
 widening another's scope, so they should not be counted toward this threshold to make it look
 met. Registering an invariant from two instances would also make the ruleset assert a
 maintenance rule about itself that only two data points support.
+
+**Why holding costs nothing here.** Both known pairs are now pinned by
+`tests/test_invariant_crossreferences.py::AWidenedScopeIsAnnouncedOnTheNarrowerRule`, so
+neither can regress while the rule is unregistered — the guard does the work the invariant
+would, for the cases that actually exist. The convention is also already followed nine times
+unprompted (INV-083→089, INV-101→195, INV-040→198, INV-164→183, INV-162→193, INV-123→146,
+INV-104→155, INV-110→048, INV-086→087), which is evidence the rule is *real* but not evidence
+that the *failure* recurs — and the threshold counts failures.
+
+**Revisit if** a third instance appears: an invariant whose scope a later one widened, with no
+dated pointer forward. At three, the case for registering is that the class is
+under-detected rather than rare, and the stop-marker should become an invariant in the
+"development record itself" index group (alongside INV-182, INV-191, INV-202).
+
+**How to detect instance 3.** `.claude/skills/compact-dev-environment/widened_scope.py` reports
+one-way directional links over the whole ruleset in about a second. It is a **shortlist, not a
+verdict, and it is unsound in both directions** — read its docstring before trusting a run:
+
+- **False positives.** On 2026-08-12 it produced 17 candidates of which **15** were sentences
+  naming an ID precisely to record that it is *unchanged*. Every hit must be read before it is
+  counted; a hit list relayed as findings is how a clean result gets reported as a backlog.
+- **False negatives, including the one that mattered.** It would **not** have found
+  INV-107 → INV-184 — INV-184 states the widening in plain prose with no scope verb, so
+  nothing matched, and that pair was found by *reading* INV-184. A clean run means "nothing
+  matched these verbs", never "no instance exists".
+
+So the trigger is a prompt to look, not a detector to rely on. The honest position is that this
+class has no sound automatic detection today, which is itself an argument for holding: a rule
+the ruleset cannot police is a rule enforced by attention, and attention is what the two
+existing guards already supply for the cases that exist.
 
 ## Deviations from this spec, and why (2026-08-12)
 
