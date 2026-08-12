@@ -107,3 +107,40 @@ not reopen the finding the ⛔ records.
   citation is what needs refreshing.
 - Related specs: `specs/refresh-reverified-provenance-stamps.md` (the established practice for this
   class), `specs/verify-sdk-parameter-shapes-and-flag-families.md`.
+
+## Deviations from this spec, and why (2026-08-12)
+
+Re-verified against **server 1.32.9, 2026-08-12**. Python `initialize` returns **14** snippets — the
+10 under `python/initialization/` plus `get_config_registry.py`, `get_data_source_registry.py`,
+`init_default_config.py`, `register_data_sources.py` under `python/configuration/` — with **no
+version printer**, and `information` returns `python/information/get_version.py`. Exactly as this
+spec reports. Three things went further than it asked.
+
+1. **Criterion 6 was satisfied by checking Java, not by scoping the claim to Python — and Java
+   changed the reasoning.** `generate_scaffold(language='java', workflow='initialize')` on the same
+   server returns **5** snippets under `java/snippets/initialization/` and
+   `java/snippets/configuration/`, again with no version printer. So the conclusion generalises while
+   the inventory varies **per language in both size and path**, not merely over time. That is a
+   stronger argument against ever stating a count than this spec's (which reasons only from the
+   widening), and the shipped ⛔ now says so explicitly.
+
+2. **A guard was added, though this spec asks for none.** Its criteria are all prose, and its root
+   cause notes the suite cannot re-check a `generate_scaffold` claim offline (INV-108) — true of the
+   *fact*, but not of the *shape*: that Step 4's warning states no count is offline-checkable and is
+   precisely what regressed. `NoCountRestatesTheSnippetInventory` in
+   `tests/test_scaffold_citations_and_database_type.py` asserts no count, the absence-as-load-bearing
+   phrasing, a present version+date stamp, and the two-axis explanation; negative-controlled by
+   restoring the original "returns ten snippets" wording, verified to land and to fail.
+
+3. **Two further stale copies of the same evidence were refreshed.** Proposed change §3 offers the
+   `configuration/` overlap note as optional; Step 8a already carried it, dated 1.32.8/2026-08-11, so
+   its stamp was refreshed to today and it now records that the set is language-dependent (Java
+   returns the two writers and not the two registry readers). And the **docstring of
+   `tests/test_scaffold_citations_and_database_type.py`** restated the retired "ten snippets, all
+   under `initialization/`" claim as current fact — the same stale-docstring shape that
+   `explain-error-code-now-owns-senz7426` had to fix in a sibling file. Refreshed and de-quantified,
+   with the reason recorded inline.
+
+Criterion 4 verified as prescribed: the diff touches Step 4's ⛔, Step 8a's stamp, and (from a
+separate spec in the same batch) the SENZ7426 block — Step 4's two prescribed calls and Step 9's
+citation are unchanged.

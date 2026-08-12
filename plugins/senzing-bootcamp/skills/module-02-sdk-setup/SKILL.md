@@ -666,10 +666,21 @@ working. Those are two different `generate_scaffold` workflows, so it takes **tw
   the **version-print** half. This is where the version snippet lives (for Python,
   `information/get_version.py`, which calls `SzProduct.get_version()`).
 
-⛔ **`workflow='initialize'` alone cannot satisfy this step.** Verified live (server 1.32.2,
-2026-07-29): it returns ten snippets, every one under `initialization/` — abstract-factory
-variants, `engine_priming`, `purge_repository`, `factory_destroy`, `signal_handler`,
-`sz_engine_config_ini_to_json` — and **none of them prints the version**. Citing it alone leaves
+⛔ **`workflow='initialize'` alone cannot satisfy this step.** Verified live on server 1.32.9,
+2026-08-12, for **Python and Java**: its snippets are factory/engine **lifecycle** plus
+configuration helpers — abstract-factory / environment variants, engine priming, repository purge,
+factory destroy, signal handling, and the `configuration/` entries that seed a default config and
+register data sources — and **none of them prints the version**. That **absence** is the
+load-bearing fact. The version snippet lives only under `workflow='information'`
+(for Python, `information/get_version.py`), re-confirmed on the same server and date.
+
+⛔ **Do not restate this as a snippet count or a single directory.** The inventory varies on two
+axes at once: it has **widened over time** (Python gained the `configuration/` entries between
+1.32.2 and 1.32.9), and it **differs per language** in count and in path (on 1.32.9, Python returns
+snippets under `python/initialization/` and `python/configuration/`, Java a smaller set under
+`java/snippets/…`). A count is therefore wrong somewhere the moment it is written, while the
+conclusion above stays true — which is exactly how a correct ⛔ comes to look discredited by its own
+evidence. Citing it alone leaves
 the guide to invent the missing half from memory, which is exactly the training-data fallback
 INV-080 forbids. (Step 8a already carries this warning for a different need, and Step 9 cites
 `workflow='initialize'` correctly for its own — the lesson generalises: **check what a workflow's
@@ -1082,9 +1093,12 @@ not this file. The seeding call's own note adds the step after: `env.reinitializ
 follow `set_default_config()` before loading records, using the id `set_default_config()` returned.
 
 `generate_scaffold(language='<chosen_language>', workflow='initialize')` reaches the same code by
-another route: alongside the factory-lifecycle snippets it returns the `configuration/` ones —
-`init_default_config.py`, `register_data_sources.py`, `get_config_registry.py`,
-`get_data_source_registry.py` (verified 1.32.8, 2026-08-11). Either route is fine; `sdk_guide` is
+another route: alongside the factory-lifecycle snippets it returns the `configuration/` ones — for
+Python, `init_default_config.py`, `register_data_sources.py`, `get_config_registry.py`,
+`get_data_source_registry.py` (re-verified 1.32.9, 2026-08-12). The set is
+**language-dependent** — Java returns `InitDefaultConfig.java` and `RegisterDataSources.java` and
+not the two registry readers (same server and date) — so read what your language's response
+actually lists rather than expecting these four. Either route is fine; `sdk_guide` is
 preferred here because it also carries the `compatibility_notes` above, which `generate_scaffold`
 does not. Step 9's connection test uses the factory-lifecycle snippets from the same response.
 

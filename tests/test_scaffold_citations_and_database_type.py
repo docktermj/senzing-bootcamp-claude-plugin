@@ -5,14 +5,22 @@ where nothing downstream notices:
 
 1. **Module 2 Step 4 cited one `generate_scaffold` workflow for two different needs.** It asked
    for a script that initializes the engine *and* prints the version, naming only
-   `workflow='initialize'`. Verified live (server 1.32.2, 2026-07-29): that workflow returns ten
-   snippets, all under `initialization/` — abstract-factory variants, priming, purge, destroy,
-   signal handler — and **none prints the version**. The version snippet
+   `workflow='initialize'`. That workflow's snippets are factory/engine lifecycle plus
+   configuration helpers, and **none prints the version**; the version snippet
    (`information/get_version.py`, calling `SzProduct.get_version()`) lives only under
    `workflow='information'`. The same file already carries this warning at Step 8a for a different
    need and cites the workflow correctly at Step 9, so the plugin had one correct use, one fixed
    use, and one still-broken use of the same workflow — the lesson had been recorded as a fact
    about seeding rather than as a rule.
+
+   **Evidence refreshed 2026-08-12 (server 1.32.9), and deliberately de-quantified.** This
+   docstring used to say the workflow returns "ten snippets, all under `initialization/`
+   (server 1.32.2, 2026-07-29)". Both clauses have since gone false — Python now returns 14 across
+   `python/initialization/` and `python/configuration/` — while the conclusion never wavered. The
+   inventory varies on two axes, time *and* language (Java returns a smaller set under
+   `java/snippets/…`), so no count can be right everywhere for long. What is asserted below is the
+   absence of a version printer, which is the load-bearing fact, and
+   `NoCountRestatesTheSnippetInventory` now keeps the shipped ⛔ from reacquiring a number.
 
 2. **`generate_scaffold` never inlines code, and its own response advertises a parameter its
    schema does not declare.** The response is a listing (`file_path`, `raw_url`, `size_bytes`,
@@ -109,6 +117,48 @@ class Step4CitesTheWorkflowThatCarriesTheVersionSnippet(unittest.TestCase):
             "Step 4 should name the version call (SzProduct.get_version / get_version.py) so a "
             "guide can tell whether the snippet it fetched is the right one",
         )
+
+
+class NoCountRestatesTheSnippetInventory(unittest.TestCase):
+    """A count is the half that goes stale while the conclusion stays true.
+
+    Added 2026-08-12 from `refresh-the-initialize-workflow-snippet-count-in-step4`. Step 4's ⛔
+    said "ten snippets, every one under `initialization/`" (verified 1.32.2, 2026-07-29). By
+    1.32.9 Python returned 14 across two directories, so an editor re-checking the citation —
+    which this repo's discipline actively invites — would find the evidence wrong and could
+    reasonably infer the warning was obsolete, deleting a ⛔ whose conclusion still holds.
+
+    The inventory is unstable on two axes: it grows over time, and it differs per language in
+    both size and path. So the shipped text must describe the snippets' *character* and the
+    absence of a version printer, never a number.
+    """
+
+    def setUp(self):
+        self.step4 = re.sub(
+            r"\s+", " ", section(MODULE_02, "## Step 4: Verify Installation", r"\n## Step 5:")
+        )
+
+    def test_the_warning_states_no_snippet_count(self):
+        self.assertNotRegex(
+            self.step4,
+            r"(?i)(?:returns|it returns)\s+(?:\*\*)?(?:\d+|one|two|three|four|five|six|seven|"
+            r"eight|nine|ten|eleven|twelve|thirteen|fourteen)(?:\*\*)?\s+snippets",
+            "Step 4's warning states a snippet count. The set grows over time and differs per "
+            "language, so the number is wrong somewhere as soon as it is written — describe the "
+            "snippets' character and the absence of a version printer instead",
+        )
+
+    def test_the_absence_is_named_as_the_load_bearing_fact(self):
+        self.assertRegex(self.step4, r"(?i)none of them prints the version")
+        self.assertRegex(self.step4, r"(?i)\*\*absence\*\* is the load-bearing fact")
+
+    def test_the_stamp_is_present_so_the_claim_stays_re_checkable(self):
+        """De-quantified is not undated: a reader must know when this was last asked."""
+        self.assertRegex(self.step4, r"server 1\.32\.\d+, 20\d\d-\d\d-\d\d")
+
+    def test_the_instability_is_explained_so_a_count_is_not_helpfully_restored(self):
+        self.assertRegex(self.step4, r"(?i)differs per language")
+        self.assertRegex(self.step4, r"(?i)widened over time")
 
 
 class NoSkillAdoptsAnUndeclaredScaffoldParameter(unittest.TestCase):
