@@ -134,3 +134,11 @@ this error in seconds. If wanted, it needs its own spec with an honest premise.
 **Disposition:** do not implement. A spec whose facts are wrong is `feedback-to-specs` business —
 the remedy is a corrected or superseding spec, not a `DECLINED.md` entry (which records a decision
 not to build something correct).
+
+## Superseded by
+
+- `specs/inv050-tree-has-no-reachability-guard.md` (2026-08-11) — carries the one idea that
+  survives (a tree-walk guard over INV-050's leaf entries) on an **honest premise**: the
+  defect is the absence of a guard, not a stale tree. It states in its own Problem section
+  that this spec's central claim is false, and its acceptance criteria explicitly forbid a
+  test that encodes the claim. Nothing in this spec's Problem or Root cause is carried over.
