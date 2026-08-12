@@ -112,3 +112,14 @@ has been called — which is precisely the argument the preface makes for itself
 - Related specs: `specs/step14-value-proposition-query-is-bm25-hostile-with-no-fallback.md` and
   `specs/preparation-summarises-the-model-nudge-trigger-as-the-forbidden-comparison.md` — the same
   lesson-not-propagated shape, both from this run.
+
+## Invariants introduced
+
+- `INV-204` — A reachability or liveness probe MUST use `get_capabilities`, never a content-returning
+  tool (`search_docs`, `sdk_guide`, `reporting_guide`, `find_examples`, `get_sdk_reference`). The
+  probe's only output is whether the server answered, so a document search pays for a retrieval that
+  is then discarded; `get_capabilities` is already required once at session start, so the probe is a
+  call the guide has to make anyway. Maintainer-approved 2026-08-12, recorded in
+  `specs/INVARIANTS.md` and indexed under *MCP sourcing and tool contracts*. This spec's proposed
+  change §4 offered it while noting it "may be too small to warrant an ID"; the maintainer took it.
+  Enforced by `tests/test_liveness_probe_is_not_a_document_search.py`.

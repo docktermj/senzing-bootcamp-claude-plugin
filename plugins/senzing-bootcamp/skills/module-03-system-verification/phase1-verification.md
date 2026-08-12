@@ -78,10 +78,15 @@ The following rules are mandatory for the agent executing this module:
 
 Verify MCP server connectivity before code generation operations.
 
-1. Call `search_docs(query="Senzing SDK initialization")` with a 10-second timeout.
+1. Call `get_capabilities` with a 10-second timeout. ⛔ A reachability probe must **not** be a
+   document search: this step discards the content and keeps only "did the server answer", so a
+   `search_docs` query pays for retrieval it throws away. See
+   [`../bootcamp-onboarding/onboarding-flow.md`](../bootcamp-onboarding/onboarding-flow.md) →
+   "MCP health check", which states the reasoning; do not restate it here, and do not restore a
+   `search_docs` probe.
 2. **If a response is received** (including empty results): MCP connectivity confirmed. Proceed
    silently; do not display connectivity status to the bootcamper.
-3. **If the call fails** (timeout or error): retry `search_docs` once with the same 10-second
+3. **If the call fails** (timeout or error): retry `get_capabilities` once with the same 10-second
    timeout.
 4. **If the retry succeeds:** proceed silently.
 5. **If the retry fails:** display troubleshooting steps:

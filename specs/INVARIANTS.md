@@ -269,7 +269,7 @@ silently and were wrong when this was found (2026-07-31). Derive them from the f
 need them.
 
 - **MCP sourcing and tool contracts** — where Senzing facts come from, and what a tool response means.  
-  INV-080, INV-125, INV-136, INV-149, INV-150, INV-160, INV-165, INV-169, INV-181, INV-190, INV-192, INV-194, INV-201
+  INV-080, INV-125, INV-136, INV-149, INV-150, INV-160, INV-165, INV-169, INV-181, INV-190, INV-192, INV-194, INV-201, INV-204
 - **SDK usage: methods, flags and responses** — confirming a call's shape before writing it, and reading what comes back.  
   INV-089, INV-115, INV-132, INV-145, INV-148, INV-151, INV-152, INV-164, INV-179, INV-180
 - **Data quality, mapping and validation gates** — measuring a source honestly, and what a gate's finding may be used for.  
@@ -307,6 +307,8 @@ need them.
 - **INV-NNN** — <single testable MUST/ALWAYS condition.> (Source: `<spec-name>`, YYYY-MM-DD.)
 
 -->
+
+- **INV-204** — A reachability or liveness probe MUST use `get_capabilities`, never a content-returning tool (`search_docs`, `sdk_guide`, `reporting_guide`, `find_examples`, `get_sdk_reference`). The probe's only output is whether the server answered, so a document search pays for a retrieval that is then discarded; `get_capabilities` is already required once at session start (`ground-rules.md` → "Session start"), so the probe is a call the guide has to make anyway. (Naming the anti-pattern in order to forbid it is permitted — `onboarding-flow.md` does exactly that — and this does not restrict `search_docs` where content is actually wanted. The rule was reasoned out and written down in `onboarding-flow.md` in the first person of that file, *"It was specified **here** as…"*, so it read as a local fix; Module 3's Step 1 kept the `search_docs` probe for weeks after, and no test knew the rule existed. Enforced by `tests/test_liveness_probe_is_not_a_document_search.py`.) (Source: `module3-connectivity-probe-still-uses-the-deprecated-search-docs-call`, 2026-08-12.)
 
 - **INV-203** — A fetched data source MUST NOT be written to `data/raw/` under its final name, nor recorded as collected in `config/data_sources.yaml`, until **both** checks pass: the fetch returned a **2xx** HTTP status, and its **measured** record count equals the expected count — `record_count` from `get_sample_data(…, source='list')` for an uncapped fetch, or `min(record_count, download_url_max_records)` when fetched via the capped `download_url`. Both counts MUST be recorded in the registry entry. A mismatch is a **failed collection, never a warning**, and a throttled response (HTTP 429, body English prose) MUST be retried with a short backoff rather than treated as data. (The cap clause is load-bearing, not caution: `download_url` serves at most `download_url_max_records` records — 10,000 — so a bare equality test against `record_count` fails 6 of the 11 `las-vegas` sources on correct data. Both figures verified live against MCP server 1.32.9, 2026-08-12: `NOMINO-RISK`, `record_count` 14,119, returns exactly 10,000. Staging belongs in `data/temp/` — INV-050's existing scratch directory — and stays project-relative under INV-200; nothing may be staged in system temp. Enforced by `tests/test_cord_fetch_integrity.py`, whose four negative controls were verified to land.) (Source: `cord-download-rate-limit-is-saved-as-data`, 2026-08-12.)
 
