@@ -135,15 +135,18 @@ INV-080), create an engine, and release it.
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
    the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
-3b. **If the code is `SENZ7426`**, send them to the *same* Step 8 check — and do **not** relay what
-   `explain_error_code` returned for it. `sdk_guide(topic='install', …)` states for both
-   `windows` and `macos_arm` that `SENZ7426` on `getEngine`/`getDiagnostic`/`addRecord` means
-   `SUPPORTPATH` is wrong, not that the install is broken; `explain_error_code('SENZ7426')`
-   returns only generic input-validation causes and names no connection to `SUPPORTPATH`
-   (both re-checked on MCP server 1.32.3, 2026-07-31). Relaying it sends the bootcamper to validate
-   input data for a failure that occurs **before any record is submitted**. On macOS the specific
-   cause is the cask's shipped `sz_engine_config.ini` pointing at a nonexistent `er/data`; Step 8
-   carries the fix for both platforms.
+3b. **If the code is `SENZ7426`**, relay what `explain_error_code` returned (step 2 already says to)
+   and send them to the *same* Step 8 check. Re-verified on **MCP server 1.32.9, 2026-08-12**: it
+   now names the **macOS**-cask and **Windows**-Scoop `SUPPORTPATH` cases and points at
+   `sdk_guide(topic='install', …)` for the per-platform detail, ranking *"SUPPORTPATH points at a
+   directory with no transliteration modules … a configuration error, NOT a broken install"* as
+   `common_causes[0]` and *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`. So the tool now
+   agrees with Step 8 instead of contradicting it, and Step 8 is corroboration rather than a
+   correction. Its input-encoding cause is ranked **last** and conditioned on the error appearing
+   *"on a record operation after the engine has initialized successfully"* — not this failure, which
+   fires at engine construction, before any record is submitted.
+   ⛔ Never restate this as an unconditioned rule: stripped of the platform condition and that
+   record-level exception it becomes the over-generalization INV-169 forbids.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 

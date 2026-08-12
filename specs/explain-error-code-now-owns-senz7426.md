@@ -158,3 +158,59 @@ again — in which case record that and stop.
 - Related specs: `specs/senz7221-now-names-its-own-remedy.md` (instance 1 of this class, 2026-07-30),
   `specs/supportpath-failure-code-and-szproduct-masking.md`,
   `specs/supportpath-trap-is-not-windows-only.md`.
+
+## Deviations from this spec, and why (2026-08-12)
+
+The MCP re-check **confirmed** this spec: `explain_error_code('7426')` on server 1.32.9, 2026-08-12
+returns exactly what is quoted above — SUPPORTPATH as `common_causes[0]`, *"Check SUPPORTPATH
+FIRST"* as `resolution_steps[0]`, both platform cases, encoding cause last and conditioned. No
+regression, so the fix went in as designed. Four things differed in the doing.
+
+1. **Two more stale test assertions than this spec enumerated.** It names the docstring (`:113-114`)
+   and the `denial` exemption (`:155-160`). Two further assertions in the same file *required* the
+   retired claim, and the correct fix could not pass the suite until both changed — which is the
+   failure this spec predicted in the abstract (*"anyone fixing site 1 or 2 will trip a guard whose
+   docstring tells them the opposite"*) and understated in the particulars:
+
+   - `test_the_supported_form_names_the_tool_that_states_it` asserted that module 2 **must** say
+     `explain_error_code` makes no SUPPORTPATH connection. **Rescoped**, per this spec's
+     invert-don't-delete instruction, to require *attribution* (the passage names `sdk_guide`) plus
+     the absence of the denial.
+   - `test_module_03_does_not_relay_the_generic_explanation` asserted that Module 3 **must** contain
+     "do not relay". **Inverted** to require that Module 3 relays, and that it carries the tool's own
+     ranking (encoding cause last) and the pre-record condition — which is what made the original
+     worry legitimate and is the part worth keeping.
+
+   Both are recorded here because a guard that pins a retraction outlives the retraction: nothing
+   dates the premise, so the guard silently converts from protection into enforcement of a false
+   claim. That is the same shape as the prose defect, one layer down.
+
+2. **A new Senzing finding, written into the plugin.** `sdk_guide` gates the install response on
+   `language`: `sdk_guide(topic='install', platform='macos_arm', language='python')` returns only the
+   "Python is ONLY supported on Linux" compatibility note and **no install detail at all**, so the
+   SENZ7426 gotcha the plugin cites is invisible from that call. Asked with `language='java'` the
+   gotcha is present verbatim, including *"Confirmed end-to-end on cask 4.4.0.26206"* and *"Reported
+   against 4.3.3.26191, which ships the same wrong path"*. Recorded in `module-02-sdk-setup/SKILL.md`
+   with its version and date, because a reader who follows the citation with the wrong `language`
+   would conclude the plugin was wrong.
+
+3. **The new guard needed two hardening rounds, both found by mutation rather than review.** Its
+   first form bounded tool-to-claim distance with `[^.]{0,160}` to stay inside one sentence, and
+   silently passed a mutation that restated the retired claim — shipped provenance is full of periods
+   (*"server 1.32.9, 2026-08-12"*), so a version stamp between the tool name and the claim ended the
+   "sentence". Its second form used `do\s+not`, which does not match the wording the plugin actually
+   shipped: `do **not** relay`. The guard now uses plain character windows and tolerates markdown
+   emphasis, and is negative-controlled against **the exact historical sentence**. Two
+   false-positive classes are carved out with their reasons in the test: corroboration requirements
+   (*"do not present the first `search_docs` result as-is: make a second, confirming call"* — the
+   opposite of suppression) and descriptions of server behaviour (*"most topics withhold their
+   content unless `language` is passed"*).
+
+4. **Criterion 5 verified as specified:** `git diff` contains no `SENZ2027` line. That guidance is
+   untouched.
+
+Not runtime-verified: the macOS-cask and Windows-Scoop cases remain **documentation**, as this spec
+says — no macOS or Windows host was available. This spec's invariant threshold is respected: the
+SENZ7221 entry set *"a fifth instance of this class"* as the trigger, and this is **instance 2**, so
+no invariant was recorded. The durable rule lives as a test instead
+(`tests/test_mcp_output_is_never_suppressed.py`).

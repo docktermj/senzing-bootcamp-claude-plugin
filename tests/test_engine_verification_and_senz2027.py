@@ -109,10 +109,21 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
     """SENZ7426 must never be an *unconditioned* SUPPORTPATH symptom.
 
     History, because it decides what this class may and may not permit. On 2026-07-28 the
-    absolute claim "SENZ7426 is the symptom of a wrong SUPPORTPATH" was retracted:
-    `explain_error_code('SENZ7426')` returns generic transliteration causes and makes no
-    SUPPORTPATH connection — **re-verified 2026-07-31, still true**. A blanket ban on the
-    two appearing together was the right guard at the time.
+    absolute claim "SENZ7426 is the symptom of a wrong SUPPORTPATH" was retracted, on the
+    grounds that `explain_error_code('SENZ7426')` returned only generic causes and made no
+    SUPPORTPATH connection (re-verified 2026-07-31). A blanket ban on the two appearing
+    together was the right guard at the time.
+
+    **That premise is retired — do not restore it.** On server 1.32.9, 2026-08-12,
+    `explain_error_code('7426')` ranks "SUPPORTPATH points at a directory with no
+    transliteration modules … a configuration error, NOT a broken install" as
+    `common_causes[0]` and "Check SUPPORTPATH FIRST" as `resolution_steps[0]`, and carries
+    both the macOS-cask and Windows-Scoop cases. The two tools now AGREE, so the plugin no
+    longer withholds the tool's output, and the `denial` exemption this class used to grant
+    (any window whose text said explain_error_code was "generic"/"makes no connection" skipped
+    the check) has been removed with the sentences it protected — an exemption for the safety
+    text becomes an exemption for a false claim the moment the claim goes stale, which is how
+    a correct fix gets reverted by a passing suite.
 
     It is now too broad. `sdk_guide(topic='install', platform='windows')` (server 1.32.2)
     states the **conditioned** form: on Scoop, `%SENZING_DIR%\\data` resolves to a directory
@@ -149,15 +160,9 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
                 window = flat_text[max(0, match.start() - 400):match.end() + 400]
                 if not re.search(r"(?i)SUPPORTPATH", window):
                     continue
-                # A mention that *denies* the link is the safety text, not the claim —
-                # requiring it to carry the platform condition too would ban the very
-                # sentence that stops the retracted absolute being rebuilt.
-                denial = re.search(
-                    r"(?i)explain_error_code[^.]{0,220}?(?:generic|makes no|no connection)",
-                    window,
-                )
-                if denial:
-                    continue
+                # No `denial` exemption: as of 1.32.9 (2026-08-12) explain_error_code names
+                # SUPPORTPATH first, so a sentence denying the link is no longer safety text
+                # — it is a stale claim, and exempting it would let one be reintroduced.
                 # Any platform the server documents this for, not just the first one found.
                 conditioned = re.search(
                     r"(?i)scoop|windows|macos|macos_arm|homebrew|brew|cask", window
@@ -170,24 +175,43 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
         self.assertEqual(
             [],
             offenders,
-            "SENZ7426 tied to SUPPORTPATH without the condition that makes it true. "
-            "explain_error_code('SENZ7426') returns only generic transliteration causes "
-            "(re-verified 2026-07-31); only sdk_guide(topic='install', platform='windows') "
-            "states the Scoop-specific chain. Name the platform AND the tool, or do not "
-            "make the link (INV-080/INV-169):\n  " + "\n  ".join(offenders),
+            "SENZ7426 tied to SUPPORTPATH without the condition that makes it true. Both "
+            "explain_error_code('7426') and sdk_guide(topic='install') state the CONDITIONED "
+            "form (server 1.32.9, 2026-08-12), and explain_error_code still lists a genuine "
+            "record-level encoding cause — so the absolute remains an over-generalization. "
+            "Name the platform AND the tool, or do not make the link (INV-080/INV-169):\n  "
+            + "\n  ".join(offenders),
         )
 
     def test_the_supported_form_names_the_tool_that_states_it(self):
-        """Attributing it to explain_error_code would be the original error rebuilt."""
+        """Rescoped 2026-08-12: name a tool, and stop denying the other one.
+
+        Until today this asserted the opposite — that module 2 MUST say
+        `explain_error_code` makes no SUPPORTPATH connection — so the guard *required* the
+        claim it existed to keep honest, and correcting the prose failed the suite. That is
+        the failure mode worth naming: a guard written to hold a retraction in place will
+        hold it in place after the retraction expires, because nothing dates the premise.
+
+        Both tools now state the conditioned form (server 1.32.9, 2026-08-12), so the
+        requirement is **attribution** — name the tool that states it — plus the absence of
+        the retired denial. INV-169's ban on the unconditioned absolute is unchanged and is
+        enforced by `test_senz7426_is_never_tied_to_supportpath_unconditionally` above.
+        """
         text = re.sub(r"\s+", " ", MODULE_02.read_text(encoding="utf-8"))
         if "SENZ7426" not in text:
             self.skipTest("module 2 no longer mentions SENZ7426")
+        window = text[max(0, text.index("SENZ7426") - 600):text.index("SENZ7426") + 900]
         self.assertRegex(
+            window,
+            r"(?i)sdk_guide",
+            "where module 2 makes the SUPPORTPATH link it must name the tool that states "
+            "it, so the next reader can re-ask rather than re-derive",
+        )
+        self.assertNotRegex(
             text,
-            r"(?i)explain_error_code\('SENZ7426'\)[^.]{0,200}(?:generic|no connection|makes no)",
-            "where module 2 makes the SUPPORTPATH link it must also say that "
-            "explain_error_code does NOT make it — otherwise the next reader re-derives "
-            "the retracted absolute from the wrong tool",
+            r"(?i)explain_error_code[^.]{0,200}(?:only generic|no connection|makes no)",
+            "the retired claim must not be restated: explain_error_code('7426') ranks "
+            "SUPPORTPATH as common_causes[0] as of server 1.32.9, 2026-08-12",
         )
 
     def test_the_szproduct_masking_claim_carries_its_source(self):
@@ -292,9 +316,30 @@ class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
         self.assertRegex(text, r"(?i)If the code is `SENZ7426`.{0,300}Step 8",
                          "the SENZ7426 branch does not route to Module 2's Step 8 check")
 
-    def test_module_03_does_not_relay_the_generic_explanation(self):
+    def test_module_03_relays_the_explanation_and_conditions_it(self):
+        """Inverted 2026-08-12: the tool now owns this diagnosis, so relaying is required.
+
+        This asserted the opposite until today — that Module 3 MUST say "do not relay" —
+        which pinned the suppression instruction in place. `explain_error_code('7426')` on
+        server 1.32.9 ranks SUPPORTPATH as `common_causes[0]` and "Check SUPPORTPATH FIRST"
+        as `resolution_steps[0]`, so the passage that was protective became the defect.
+
+        What survives is the reason the original worried: the encoding cause must not be
+        presented as applying to a pre-record failure. The tool now ranks it last and
+        conditions it itself, and Module 3 must say so — that is what is asserted here.
+        """
+        text = flat(PHASE1)
         self.assertRegex(
-            flat(PHASE1), r"(?i)do \*\*not\*\* relay|not relay what `explain_error_code`",
-            "Module 3 must not pass explain_error_code's input-validation causes through for "
-            "SENZ7426 — the failure precedes any record",
+            text, r"(?i)relay what `explain_error_code` returned",
+            "Module 3 must relay what the tool returns for SENZ7426 — it now names "
+            "SUPPORTPATH first (server 1.32.9, 2026-08-12)",
+        )
+        self.assertRegex(
+            text, r"(?i)input-encoding cause is ranked \*\*last\*\*",
+            "relaying is only safe alongside the tool's own ranking: the encoding cause is "
+            "last and conditioned on the engine having initialized",
+        )
+        self.assertRegex(
+            text, r"(?i)fires at engine construction",
+            "the pre-record nature of this failure is why the encoding cause does not apply",
         )

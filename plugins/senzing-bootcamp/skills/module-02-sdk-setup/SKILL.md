@@ -936,12 +936,25 @@ call for exactly this reason.
 > end-to-end on cask 4.4.0.26206 and **reported against 4.3.3.26191, which ships the same wrong
 > path** (verified on MCP server 1.32.3, 2026-07-31).
 >
-> ⛔ Attribute this to `sdk_guide`, **not** to `explain_error_code`: re-checked on 1.32.3,
-> 2026-07-31, `explain_error_code('SENZ7426')` still returns only generic input-validation causes
-> (malformed input, missing `DATA_SOURCE`/`RECORD_ID`, bad JSON encoding) and makes no connection to
-> `SUPPORTPATH`. Two tools, two different coverages — ask the one that owns the fact. This matters
-> more than it looks: `SENZ7426` fires at `getEngine()`, **before any record is submitted**, so
-> "validate your input data" sends the reader to inspect something that does not yet exist.
+> ⛔ **Both tools state this now, and they agree** — re-verified on **MCP server 1.32.9,
+> 2026-08-12**. `sdk_guide(topic='install', platform='macos_arm', language='java')` carries the
+> gotcha above verbatim, and `explain_error_code('7426')` ranks *"SUPPORTPATH points at a directory
+> with no transliteration modules … This is a configuration error, NOT a broken install"* as
+> `common_causes[0]` with *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`, naming this same
+> macOS cask case and pointing back at `sdk_guide topic='install'` for the platform detail. So relay
+> either one. Keep `sdk_guide` cited for what it still owns — the paths, env vars and EULA variable
+> — and note that the principle the earlier note rested on is unchanged: **ask the tool that owns
+> the fact.** Only its example is obsolete, because these two coverages have since converged.
+>
+> ⚠️ `sdk_guide` gates this response on `language`: asked with `language='python'` for this platform
+> it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
+> the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
+> (Observed 1.32.9, 2026-08-12.)
+>
+> `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
+> input data" would send the reader to inspect something that does not yet exist — which is exactly
+> why `explain_error_code` now ranks that cause last and conditions it on the engine having
+> initialized successfully.
 
 Use `sdk_guide` with `topic='configure'` to generate the correct engine configuration JSON for
 the user's platform and database choice. Save the MCP-returned JSON directly to
