@@ -34,11 +34,12 @@ recap PDF you can keep and share, and a production starter. See
   looks up Senzing facts,
   and provides working examples.
 - Minimum of a [Claude Max 5x] plan.
-  - *Note:* Multiple 5-hour windows of a [Claude Pro] plan will work, but you will not be able to complete the bootcamp in one setting.
+  - *Note:* Multiple 5-hour windows of a [Claude Pro] plan will work, but you will not be able to complete the bootcamp in one session.
 
 ## Install and start
 
-This is a Claude Code plugin, and Claude Code has two interfaces you can run it in.
+This is a Claude Code plugin.
+Claude Code has two interfaces you can run it in.
 Pick either:
 
 - **Claude Desktop** — Claude Code inside the desktop application; the step-by-step
@@ -79,7 +80,7 @@ and starting the Bootcamp.
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5**".
     1. Choose the Effort: "**medium**".
-1. In Claude Desktop near the bottom in the agentic chat, enter:
+1. In Claude Desktop, near the bottom, in the agentic chat, enter:
 
     ```console
     Start the bootcamp
