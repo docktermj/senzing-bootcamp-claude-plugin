@@ -118,3 +118,35 @@ Make the banner report what was actually created, rather than a fixed list.
 - Upstream: not applicable.
 - Related specs: none. (`specs/inv050-tree-has-no-reachability-guard.md` is the same
   stale-enumeration class in a different artifact, if a reader wants the precedent.)
+
+## Deviations from this spec, and why (2026-08-12)
+
+Implemented with **proposed change §3's strongest form**, which the spec offers as optional
+("if that is more churn than wanted, (1) plus a test is sufficient"). Taking the weaker option would
+have left the same failure available: a corrected static list still drifts the next time `build()`
+gains a fixture, which is precisely how this defect arose.
+
+Rather than walking the tree at print time, each `FIXTURE_MAP` row now carries the project-relative
+**path** it describes alongside the modes it applies to. That keeps `explain()` pure and printable
+without a built project (so `--explain` still writes nothing, criterion 6) while making the map
+machine-comparable: `tests/test_scaffold_banner_matches_build.py` builds a real project in **all
+three** modes and asserts the two directions separately — nothing described is missing from disk,
+and nothing on disk is undescribed. Negative-controlled both ways, each mutation verified to land:
+adding an undescribed file to `build()` failed 3 tests, and widening one row's modes to claim a
+fixture `--fresh` does not create failed 2.
+
+Two additions beyond the spec:
+
+1. **The banner names what the mode omits**, under "NOT in this mode (so their invariants are NOT
+   exercised here)". The spec only requires the false lines to disappear. Silence about an absent
+   fixture is what a reader converts into coverage, and `dry-run/SKILL.md` requires a report to state
+   its limits explicitly — so the banner now supplies that list rather than leaving the operator to
+   derive it from what is missing.
+
+2. **`phase2-hooks-and-scripts.md` gained the mode note** (the spec's conditional affected file). Its
+   fixture list is correct — phase 2 uses the default mode — but the sentence introducing it now says
+   the banner is per-mode and points at `--explain`, so the list is not read as universal.
+
+Also fixed in passing: `mode_name()` resolves `--seeded` before `--fresh`, matching `build()`'s own
+precedence when both flags are passed, and a test pins that agreement — otherwise a
+`--fresh --seeded` invocation would build one mode and label itself the other.

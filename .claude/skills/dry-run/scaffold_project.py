@@ -233,23 +233,72 @@ RECORDS = "\n".join(
     )
 )
 
+#: The three modes `build()` can produce. `--fresh` and `--seeded` were added after this
+#: banner was written, and the banner was not revisited: it described the mid-bootcamp
+#: fixtures in every mode, so `--fresh` claimed 8 fixtures over a 4-file project and
+#: described an empty preferences file as carrying saved preferences — the exact inverse.
+#: An over-claiming banner is worse here than no banner, because it is the operator's
+#: primary input for the "coverage limits" section a dry-run report must state.
+MODES = ("mid", "fresh", "seeded")
+ALL_MODES = frozenset(MODES)
+
+#: (display, path, modes, why). `path` is the project-relative file the row describes, or
+#: None for a row annotating a key *inside* another fixture. Keeping the real path here —
+#: rather than only the display string — is what lets a test compare the banner against
+#: what `build()` actually writes, in every mode.
 FIXTURE_MAP = [
-    ("config/bootcamp_progress.json", "makes every hook consider the bootcamp active; mid-module so resume paths run"),
-    ("  └ docker_containers", "names an ABSENT container -> warn-and-continue (INV-101)"),
-    ("config/bootcamp_preferences.yaml", "saved verbosity + language to test honor-don't-ask (INV-133)"),
-    ("docs/bootcamp_recap.md", "a completed section carrying all four subsections (INV-103)"),
-    ("docs/progress/recap_checkpoint.md", "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059); its '— in progress' heading is the only chip long enough to reach the PDF cover's 46-char clip, so FOLD FIRST, then render (INV-048)"),
-    ("docs/feedback/...FEEDBACK.md", "a precious entry the normalizer must leave byte-identical (INV-067)"),
-    ("docs/loading_strategy.md", "deliberately messy Markdown for the normalizer (INV-060)"),
-    ("src/system_verification/records.jsonl", "records for the viz server's --no-serve snapshot build"),
-    ("config/engine_config.json", "minimal settings so scripts reach their real failure, not a missing-file one"),
+    ("config/engine_config.json", "config/engine_config.json", ALL_MODES,
+     "minimal settings so scripts reach their real failure, not a missing-file one"),
+    ("config/bootcamp_progress.json", "config/bootcamp_progress.json", frozenset({"mid"}),
+     "makes every hook consider the bootcamp active; mid-module so resume paths run"),
+    ("  └ docker_containers", None, frozenset({"mid"}),
+     "names an ABSENT container -> warn-and-continue (INV-101)"),
+    ("config/bootcamp_progress.json", "config/bootcamp_progress.json", frozenset({"fresh", "seeded"}),
+     "empty {} -> hooks see a project with NO active bootcamp; onboarding runs from the top"),
+    ("config/bootcamp_preferences.yaml", "config/bootcamp_preferences.yaml", frozenset({"mid", "seeded"}),
+     "saved verbosity + language to test honor-don't-ask (INV-133)"),
+    ("config/bootcamp_preferences.yaml", "config/bootcamp_preferences.yaml", frozenset({"fresh"}),
+     "deliberately EMPTY -> every question must be asked (the INERT direction of INV-133)"),
+    ("docs/bootcamp_recap.md", "docs/bootcamp_recap.md", frozenset({"mid"}),
+     "a completed section carrying all four subsections (INV-103)"),
+    ("docs/progress/recap_checkpoint.md", "docs/progress/recap_checkpoint.md", frozenset({"mid"}),
+     "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059); its '— in progress' heading is the only chip long enough to reach the PDF cover's 46-char clip, so FOLD FIRST, then render (INV-048)"),
+    ("docs/feedback/...FEEDBACK.md", "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md", ALL_MODES,
+     "a precious entry the normalizer must leave byte-identical (INV-067)"),
+    ("docs/loading_strategy.md", "docs/loading_strategy.md", frozenset({"mid"}),
+     "deliberately messy Markdown for the normalizer (INV-060)"),
+    ("src/system_verification/records.jsonl", "src/system_verification/records.jsonl", frozenset({"mid"}),
+     "records for the viz server's --no-serve snapshot build"),
 ]
 
 
-def explain():
-    print("Fixtures and the invariant each one exercises:\n")
-    for path, why in FIXTURE_MAP:
-        print(f"  {path:42} {why}")
+def mode_name(fresh: bool, seeded: bool) -> str:
+    """The mode key for the flags given. `--seeded` wins, matching build()'s own order."""
+    if seeded:
+        return "seeded"
+    if fresh:
+        return "fresh"
+    return "mid"
+
+
+def fixtures_for(mode: str):
+    return [row for row in FIXTURE_MAP if mode in row[2]]
+
+
+def explain(mode: str = "mid"):
+    print(f"Fixtures this {mode} project carries, and the invariant each one exercises:\n")
+    for display, _path, _modes, why in fixtures_for(mode):
+        print(f"  {display:42} {why}")
+    omitted = sorted(
+        {row[0] for row in FIXTURE_MAP if mode not in row[2] and row[1]}
+        - {row[0] for row in fixtures_for(mode)}
+    )
+    if omitted:
+        # Naming what is absent is the point: a dry-run report must state its coverage
+        # limits, and the operator writes that section from this banner.
+        print("\n  NOT in this mode (so their invariants are NOT exercised here):")
+        for display in omitted:
+            print(f"    {display}")
     print(
         "\nEvery fixture is here because a naive one hid a defect. An empty project\n"
         "exercises only each hook's gating branch."
@@ -296,13 +345,13 @@ def build(root: Path, fresh: bool, seeded: bool = False) -> None:
     )
 
     if seeded:
-        mode = "seeded (phase 3: honor-don't-ask path, INV-133)"
+        label = "seeded (phase 3: honor-don't-ask path, INV-133)"
     elif fresh:
-        mode = "fresh (phase 3: onboarding from zero)"
+        label = "fresh (phase 3: onboarding from zero)"
     else:
-        mode = "mid-bootcamp (phase 2)"
-    print(f"Built {mode} project at {root}\n")
-    explain()
+        label = "mid-bootcamp (phase 2)"
+    print(f"Built {label} project at {root}\n")
+    explain(mode_name(fresh, seeded))
     print(
         "\nReminders:\n"
         "  - test the hooks from a directory with NO bootcamp_progress.json first\n"
@@ -328,12 +377,17 @@ def main() -> int:
     ap.add_argument(
         "--explain",
         action="store_true",
-        help="print the fixture-to-invariant map and exit without writing",
+        help=(
+            "print the fixture-to-invariant map for the mode implied by --fresh/--seeded "
+            "(default: mid-bootcamp) and exit without writing"
+        ),
     )
     args = ap.parse_args()
 
     if args.explain:
-        explain()
+        # The map is mode-dependent, so --explain must name the mode it is describing —
+        # otherwise it reproduces the over-claim it was changed to fix.
+        explain(mode_name(args.fresh, args.seeded))
         return 0
     if not args.directory:
         ap.error("a directory is required (or pass --explain)")
