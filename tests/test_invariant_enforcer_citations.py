@@ -45,7 +45,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: not invariants: one invariant may name several tests, and one test may be named by
 #: several invariants (test_model_guidance_sync.py serves INV-114 and INV-140). A pinned
 #: literal, derived by running the extractor -- not copied from the spec.
-EXPECTED_PAIRS = 22
+#:
+#: 22 -> 23 on 2026-08-12: INV-205 was recorded naming
+#: tests/test_tool_directives_do_not_override_interaction.py as its enforcer. Re-derived by
+#: running the extractor, not incremented to make the assertion pass -- and the same session
+#: that added INV-205 was caught by this guard for omitting the back-citation, which is the
+#: whole reason the pair count is pinned rather than computed.
+EXPECTED_PAIRS = 23
 
 
 def pairs():

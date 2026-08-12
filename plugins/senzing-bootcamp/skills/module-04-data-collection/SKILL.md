@@ -632,9 +632,21 @@ training data.
 
    ⛔ **This is the only step in the entire bootcamp that transmits the Bootcamper's personal
    details off their machine, and it MUST NOT happen without their explicit yes.** The
-   `submit_feedback` tool's `license_request` category **requires** a first name and a **work**
-   email address (personal domains are rejected), optionally a last name and how they heard about
-   Senzing; it emails back a time- and volume-limited evaluation license.
+   `submit_feedback` tool's `license_request` category **requires three values**: a first name, a
+   **work** email address (personal domains are rejected), and **how they heard about Senzing**
+   (`how_heard`). Only the last name is optional. It emails back a time- and volume-limited
+   evaluation license.
+
+   ⛔ **`how_heard` is required, and the schema does not say so** — it is documented in the
+   property's own description, not in a `required` array, because `submit_feedback` has none: every
+   property is nullable. A caller who checks only what the schema marks required will omit it. This
+   is the INV-192 class (schema-optional, answer-mandatory) on the one call that sends the
+   Bootcamper's personal details, so getting the field list wrong means asking them to consent to a
+   payload that is not the payload (INV-135). Verified on **MCP server 1.32.9, 2026-08-12**, from
+   two places in one session: the `how_heard` property reads *"How the requester heard about
+   Senzing (required for license_request)"* against `lastname`'s *"(optional for
+   license_request)"*, and `get_capabilities`' manifest lists *"firstname (required), lastname
+   (optional), email (work email required …), and how_heard"*.
 
    ⛔ **Never state the license's duration — the server contradicts itself about it, so no figure
    is citable.** Verified on **MCP server 1.32.9, 2026-08-12**, both in one session:
@@ -665,7 +677,7 @@ training data.
    3. **Show the exact request, then ask permission**, pinned verbatim (INV-056), ending the turn on
       it. State what is sent, to whom, and what comes back:
 
-      > 👉 **Send this evaluation-license request, including your name and work email, to Senzing? Reply with a number:**
+      > 👉 **Send this evaluation-license request, including your name, work email, and how you heard about us, to Senzing? Reply with a number:**
       >
       > 1. **Yes, send it** — Senzing emails the license to that address.
       > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.

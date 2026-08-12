@@ -135,3 +135,32 @@ manifest; the runtime consequence is stated as unverified below and must stay th
 may still be mandatory — and INV-135 already requires the consent question to state what is sent.
 This is an unapplied instance of both, plus a guard that documents the requirement without
 asserting it.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**The guard took three attempts, and the two failures are worth recording because both were caught
+only by running the mutation — neither was visible by reading.**
+
+1. **The first version asserted the wrong thing.** It checked that the token `how_heard` appeared
+   somewhere in the licence-step window. Reverting the prose to the defective *"optionally a last
+   name and how they heard about Senzing"* left that token intact further down, inside the quoted
+   `get_capabilities` manifest added as provenance — so the mutation **passed**. A guard a restored
+   defect satisfies is worse than no guard.
+2. **The fix then failed on the correct tree.** Widening to "no 'optional' near 'heard'" fired on
+   the same quoted manifest, which legitimately reads *"lastname (optional), email (…), and
+   how_heard"*. Correct text, failing guard.
+
+Resolved by asserting the **claim where the claim is made** — the field-list statement, cut at the
+following ⛔ — with the quoted provenance deliberately out of scope, and an assertion that the
+statement still precedes that ⛔ so the scoping cannot silently drift. Both the mutation and the
+correct tree now behave.
+
+**The pinned consent question's wording changed** (INV-056 wording is pinned, and this spec's
+Proposed change §2 authorised it): it now reads *"including your name, work email, and how you heard
+about us"*. The pre-existing guard matches on the question's prefix, so it still passes untouched —
+verified rather than assumed.
+
+**No other deviation.** Every criterion holds; the only one not runtime-verified is the one the spec
+already marked so — that the server *rejects* a request missing `how_heard` is inferred from its
+schema and manifest, never observed, because confirming it would mean sending a real name and work
+email upstream.

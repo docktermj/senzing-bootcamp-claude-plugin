@@ -463,6 +463,19 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
 
     LICENSE_STEP = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
 
+    def license_window(self):
+        """The licence-request step's text, from its first mention to well past the gate.
+
+        Deliberately generous: the window is measured from the first `license_request`
+        occurrence, and the section grew when the `how_heard` requirement and its provenance
+        were written in (2026-08-12). A window sized to yesterday's prose is how a guard
+        quietly stops covering the thing it names.
+        """
+        text = self.LICENSE_STEP.read_text(encoding="utf-8")
+        start = text.find("license_request")
+        self.assertNotEqual(-1, start, "the license-request path has moved")
+        return text[start:start + 8000]
+
     def test_the_license_request_carries_a_pinned_consent_question(self):
         text = self.LICENSE_STEP.read_text(encoding="utf-8")
         self.assertIn("license_request", text, "the license-request path has moved")
@@ -475,6 +488,80 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
             "transmits the Bootcamper's name and work email off their machine (INV-135); "
             "it must never run without an explicit yes.",
         )
+
+    def test_the_step_names_every_required_field(self):
+        """The gate existing is not enough — it must ask for the right things.
+
+        `submit_feedback` has NO `required` array: every property is nullable, so the real
+        requirement lives in each property's description (the INV-192 class). Until
+        2026-08-12 this step grouped `how_heard` with the optional `lastname` — "optionally a
+        last name and how they heard about Senzing" — while the server documents `how_heard`
+        as "required for license_request" and `lastname` as "optional". Verified on server
+        1.32.9, 2026-08-12.
+        """
+        window = self.license_window()
+        for needed, why in (
+            ("first name", "the given name the server requires"),
+            ("work", "the work-email requirement (personal domains are rejected)"),
+            ("how_heard", "the third required field, documented only in the property description"),
+        ):
+            with self.subTest(field=needed):
+                self.assertIn(
+                    needed, window,
+                    "the licence step does not name %r — %s. INV-135 requires the consent "
+                    "question to state what is sent, so an incomplete field list means the "
+                    "Bootcamper consents to a payload that is not the payload." % (needed, why))
+
+        # ⛔ Presence of the token is NOT the requirement — assert the CLAIM, and assert it
+        # against the FIELD-LIST STATEMENT only.
+        #
+        # Two failures were needed to get this right, both caught by running the mutation:
+        #   1. Checking only that "how_heard" appeared anywhere in the window passed on a
+        #      reverted file, because the token survived in a quoted `get_capabilities`
+        #      manifest lower down. A guard a restored defect satisfies is worse than none.
+        #   2. Widening to "no 'optional' near 'heard'" then failed on the CORRECT file, for
+        #      the same reason inverted: that quoted manifest legitimately reads
+        #      "lastname (optional), email (…), and how_heard".
+        # So the claim is checked where the claim is made — the sentence before the ⛔ — and
+        # the quoted provenance below it is deliberately out of scope.
+        statement = window.split("⛔")[0]
+        self.assertIn("requires", statement,
+                      "the field-list statement no longer precedes the ⛔ note; re-scope this")
+        with self.subTest(check="not grouped with the optional field"):
+            self.assertNotRegex(
+                statement, r"(?i)optional(?:ly)?[^.]{0,100}heard",
+                "the field list files how-they-heard under 'optional'. The server documents "
+                "`how_heard` as 'required for license_request' and `lastname` as 'optional' "
+                "(server 1.32.9, 2026-08-12) — grouping them is the defect this guards.")
+        with self.subTest(check="stated as required"):
+            self.assertRegex(
+                statement, r"(?i)requires?[^.]{0,200}heard",
+                "no sentence states that how-they-heard is required; the field list must say "
+                "so, since the schema's `required` array does not (INV-192).")
+
+    def test_the_consent_question_states_the_full_payload(self):
+        """INV-135: the pinned question says what leaves the machine. All three, or none."""
+        window = self.license_window()
+        question = re.search(r"👉 \*\*Send this evaluation-license request[^\n]*", window)
+        self.assertIsNotNone(question, "the pinned consent question has moved")
+        asked = question.group(0).lower()
+        for phrase in ("name", "work email", "heard"):
+            with self.subTest(states=phrase):
+                self.assertIn(
+                    phrase, asked,
+                    "the consent question does not mention %r, so it understates what is "
+                    "transmitted: %s" % (phrase, question.group(0)))
+
+    def test_the_contract_entry_and_the_shipped_step_agree(self):
+        """The repo held both answers before this: the CONDITIONALLY_REQUIRED comment named
+        `how_heard` while the shipped step called it optional, and nothing compared them."""
+        entry = CONDITIONALLY_REQUIRED["submit_feedback"]
+        self.assertIn("how_heard", entry,
+                      "the contract entry stopped naming how_heard — if the server changed, "
+                      "update the shipped step too and re-verify against it")
+        self.assertIn("how_heard", self.license_window(),
+                      "the contract entry names how_heard as required and the shipped licence "
+                      "step does not — these must not drift apart again")
 
     def test_the_defect_report_path_scopes_its_stripping_rule(self):
         """Otherwise INV-065's 'strip the email' and this call contradict each other."""
