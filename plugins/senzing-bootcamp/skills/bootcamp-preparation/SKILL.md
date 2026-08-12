@@ -58,9 +58,9 @@ The **State token** column is the exact value to write into `selected_modules` a
 | 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `data_quality_mapping` | `module-05-data-quality-mapping` |
 | 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `data_processing` | `module-06-data-processing` |
 | 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `query_visualize_discover` | `module-07-query-visualize-discover` |
-| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
+| 11 | Bootcamp graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
 
-Because **Graduation is required** and it requires "Query, Visualize and Discover", which requires
+Because **Bootcamp graduation is required** and it requires "Query, Visualize and Discover", which requires
 "Data processing", which requires "Data Quality, Mapping, and Transformation", which requires "Data collection", that
 whole downstream chain is always included. So the genuinely deselectable modules are exactly three:
 **Entity Resolution Concepts**, **System verification**, and **Truth Set visualization** (and
@@ -154,7 +154,8 @@ Apply the prerequisite rules when recording the selection:
 
 - All Required modules are always included. Name them exactly as the module table above spells them
   — Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, **Data Quality,
-  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Graduation —
+  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Bootcamp
+  graduation —
   never an abbreviation, since these names are what the bootcamper reads here and in every later
   journey map and transition question (INV-079).
 - If the bootcamper chooses **Truth Set visualization** (3) without **System verification** (2),

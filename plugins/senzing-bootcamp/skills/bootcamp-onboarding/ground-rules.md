@@ -633,7 +633,7 @@ never count against the one-question-per-turn rule and must not be treated as ga
   | Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
   | Data processing | Opus 5, high effort | `/model opus` · `/effort high` |
   | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
-  | Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
+  | Bootcamp graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
   The **Recommended** column is interface-neutral. In Claude Desktop, the Claude web app, or a Claude
   IDE extension, set the same model and reasoning effort using that interface's model/effort controls;

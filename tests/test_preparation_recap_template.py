@@ -60,7 +60,7 @@ class TheTemplateIsFound(unittest.TestCase):
     def test_the_table_parses(self):
         names = display_names()
         self.assertGreaterEqual(len(names), 11, "the module table did not parse")
-        self.assertIn("Graduation", names)
+        self.assertIn("Bootcamp graduation", names)
 
     def test_the_template_parses(self):
         self.assertIn("• Modules:", recap_template())

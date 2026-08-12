@@ -222,7 +222,7 @@ WATCHLIST", acquired here via `get_sample_data(dataset='truthset')` (server 1.32
 2026-07-29). Query, Visualize and Discover passes its own wording for the Bootcamper's data; neither
 module may let the other's label reach its snapshot.
 
-(The **filename** stays `truthset_verification.html`. Graduation maps each screenshot to its module
+(The **filename** stays `truthset_verification.html`. Bootcamp graduation maps each screenshot to its module
 by that base name (`../graduation/SKILL.md` → "Backfill orphaned screenshots") and recaps already
 reference it, so renaming it would break that mapping for no Bootcamper-visible gain.)
 

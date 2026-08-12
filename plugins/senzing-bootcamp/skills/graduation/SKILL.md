@@ -3,7 +3,7 @@ name: graduation
 description: 'Bootcamp graduation: generate the recap PDF and a production-ready project. Use when the bootcamper finishes the last module (Module 7) and accepts the graduation offer, or says "graduate", "run graduation", or "finish the bootcamp".'
 ---
 
-# Graduation
+# Bootcamp graduation
 
 > **MCP grounding (mandatory — applies to this entire skill).** Every Senzing fact you present —
 > SDK method and attribute names, config options, error codes, and entity-resolution specifics —
@@ -13,9 +13,9 @@ description: 'Bootcamp graduation: generate the recap PDF and a production-ready
 > gate. The full rule and tool routing are the "MCP-first invariant" in
 > `../bootcamp-onboarding/ground-rules.md`.
 
-Graduation turns a completed bootcamp into two things the bootcamper keeps: a
+Bootcamp graduation turns a completed bootcamp into two things the bootcamper keeps: a
 professional **recap PDF** and a clean **`production/` project** they can
-build on. Graduation is the required, terminal module of the bootcamp. Load this
+build on. Bootcamp graduation is the required, terminal module of the bootcamp. Load this
 skill when the bootcamper accepts the graduation offer after the last module
 (Module 7), or asks to "graduate" / "run graduation".
 
@@ -23,20 +23,20 @@ Follow `../bootcamp-onboarding/ground-rules.md` throughout: `🛑`/`⛔` are int
 directives (never rendered); one 👉 question ends each yielding turn; keep all
 files project-relative; all Markdown goes under `docs/`, all code under `src/`.
 
-Graduation is non-blocking: every artifact step warns-and-continues on failure,
+Bootcamp graduation is non-blocking: every artifact step warns-and-continues on failure,
 and the recap guarantee at the end always produces a valid PDF. Steps that create
 the `production/` project ask for confirmation before large or destructive
 actions.
 
-Graduation is the terminal bookend module. Like every module it opens with the module-start
+Bootcamp graduation is the terminal bookend module. Like every module it opens with the module-start
 apparatus — journey map, before/after framing, a step overview, and an estimated time — adapted to
-a terminal module (see "Graduation preface" below), then the model/effort nudge. Because no
+a terminal module (see "Bootcamp graduation preface" below), then the model/effort nudge. Because no
 next-module transition applies, it shows no `✅ Module complete` line and no transition question,
-and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Graduation is NOT
+and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Bootcamp graduation is NOT
 apparatus-exempt — contrast the exemptions for Bootcamp preparation (INV-075) and Module 0
 (INV-078).)
 
-## Graduation banner (show first, exactly once)
+## Bootcamp graduation banner (show first, exactly once)
 
 Display this banner verbatim as the FIRST output of graduation, before any step.
 It bookends the bootcamp: the WELCOME banner marked the start, this marks the
@@ -44,11 +44,11 @@ finish. Show it at most once per graduation.
 
 ```text
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎓🎓🎓  GRADUATION  🎓🎓🎓
+🎓🎓🎓  BOOTCAMP GRADUATION  🎓🎓🎓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## Graduation preface (after the banner, before the model/effort prompt)
+## Bootcamp graduation preface (after the banner, before the model/effort prompt)
 
 Like every module, graduation opens with the module-start apparatus (INV-029–032), adapted to a
 terminal module — no next-module transition. Present these in order, right after the banner and
@@ -58,7 +58,7 @@ active verbosity preset (INV-011/INV-012): suppress the explanatory parts under 
 them to one line under `concise`. Refer to modules by name, never number (INV-079).
 
 1. **Journey map.** List the selected modules by name, every one marked ✅ (all experienced), with
-   **Graduation** marked 🔄 as the current, final stage — nothing ⬜ after it.
+   **Bootcamp graduation** marked 🔄 as the current, final stage — nothing ⬜ after it.
 2. **Before / After.** Before: every module is complete and your data is resolved, but your work
    still lives in the bootcamp workspace. After: you keep two things — a professional recap PDF
    (`docs/bootcamp_recap.pdf`) and a clean, production-ready `production/` project to build on.
@@ -72,14 +72,14 @@ them to one line under `concise`. Refer to modules by name, never number (INV-07
    rendering speed." If no meaningful estimate is possible, say "hard to estimate" rather than
    inventing a number. Suppress under `minimal`; one line under `concise`.
 
-Graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
+Bootcamp graduation is terminal, so it has no "what's next / next module" line and no `✅ Module complete`
 transition — it ends on the END OF SENZING BOOTCAMP banner (INV-057). What the bootcamper carries
 forward is the recap PDF and the `production/` project.
 
 ## Best-value model/effort prompt
 
 After the preface, surface the best-value model/effort before the heavier graduation work.
-Graduation is correctness-critical: **Opus 5 + high effort**.
+Bootcamp graduation is correctness-critical: **Opus 5 + high effort**.
 
 ⛔ **This is unconditional — no preference to read, no mode to choose (INV-137).** There is no
 `model_guidance` key; do not read one, and do not honor a stale one left in an old preferences file.
@@ -87,7 +87,7 @@ Graduation is correctness-critical: **Opus 5 + high effort**.
 ⛔ **Whether to ask is decided the same way as at any module start** — compare graduation's
 recommendation against **what the bootcamper is running right now**, not against the previous
 stage's recommendation (`../bootcamp-onboarding/ground-rules.md` → "Module start banners and
-transitions"). Graduation shares its recommendation with Query, Visualize and Discover, so a
+transitions"). Bootcamp graduation shares its recommendation with Query, Visualize and Discover, so a
 bootcamper arriving on Opus 5 at high effort is **already there**: give them the one-line statement
 and go straight into Step 1. Do not assume graduation is always a step up — it is not, and asking a
 bootcamper to switch to the model they are already running is the pointless question INV-006 and
@@ -155,7 +155,7 @@ Gather context before any step. Do this silently.
    **1a — what the Module 1 answers are for (INV-097).** `integration_targets` and
    `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
    asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
-   going to run. Graduation is the only place they can still change anything, because the
+   going to run. Bootcamp graduation is the only place they can still change anything, because the
    `production/` project **is** the thing being deployed: Step 3 stamps them into the container and
    environment templates, Step 4 into the README and the migration checklist's Deployment section,
    Step 5 into the graduation report.
@@ -757,6 +757,7 @@ differently (a managed-database `DATABASE_URL`, a secret-manager reference inste
 credentials, ARNs, or account identifiers — placeholder values only, as above, and a wrong
 infrastructure guess in a handed-over project is worse than a generic one. When the value is absent
 the files are exactly as they were before this paragraph.
+
 - **`.gitignore`:** language-appropriate, always including `.env`, `.env.production`, `*.db`, `*.sqlite`, `__pycache__/`, `node_modules/`, `target/`, `bin/`, `obj/`, `build/`, `dist/`, `*.log`.
 
 ## Step 4: Production README and migration checklist

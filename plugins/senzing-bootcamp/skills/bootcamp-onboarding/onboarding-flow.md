@@ -116,7 +116,7 @@ Then give the overview (cover naturally, do not ask a question yet):
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
   Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
   *Truth Set visualization* (optional), **Data collection**, **Data Quality, Mapping, and Transformation**, **Data
-  processing**, **Query, Visualize and Discover**, and **Graduation**.
+  processing**, **Query, Visualize and Discover**, and **Bootcamp graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
   the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
   modules to include). It also sets your level of detail and programming language, and sets up

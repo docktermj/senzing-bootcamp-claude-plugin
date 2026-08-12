@@ -305,7 +305,7 @@ summary content above into multiple questions: the summary is statements, the tr
 
 ## Reaching graduation (after the last content module)
 
-When the module just completed is the **last content module before Graduation in
+When the module just completed is the **last content module before Bootcamp graduation in
 `selected_modules`** — always **Query, Visualize and Discover** (Module 7), which is
 required in every path — do Steps 1-3 as usual, then, instead of a next-module
 transition, offer graduation (the mandatory terminal module):
@@ -314,6 +314,6 @@ transition, offer graduation (the mandatory terminal module):
 
 On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
 keep exploring first, stay available and offer graduation again whenever they are
-ready. Graduation is the required close-out module; its production project and
+ready. Bootcamp graduation is the required close-out module; its production project and
 migration checklist deliver the production-hardening guidance (performance,
 security, monitoring, deployment) for every bootcamper.

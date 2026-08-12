@@ -167,7 +167,7 @@ exactly one model and one effort: a conditional cell cannot be pinned into a ver
 | Data Quality, Mapping, and Transformation | Opus 5, high effort | `/model opus` · `/effort high` |
 | Data processing | Opus 5, high effort | `/model opus` · `/effort high` |
 | Query, Visualize and Discover | Opus 5, high effort | `/model opus` · `/effort high` |
-| Graduation | Opus 5, high effort | `/model opus` · `/effort high` |
+| Bootcamp graduation | Opus 5, high effort | `/model opus` · `/effort high` |
 
 ## Recommendation
 
