@@ -146,6 +146,9 @@ generate a scenario for me"*), and `docs/business_problem.md` carries a
 `🤖 Bootcamp-generated business case` marker for the same run — then the provision decision is
 **already made** for every source in that scenario. Skip the question below and go straight to
 downloading/collecting that source, saying which source you are fetching and where it came from.
+A generated scenario is the multi-source case, so fetch under
+[CORD fetch integrity](#cord-fetch-integrity) — back-to-back source fetches are exactly what the
+download endpoint throttles, and a throttled response arrives looking like a very small file.
 
 Asking anyway re-litigates a decision the Bootcamper already made, once per source: with a
 six-source generated scenario that is six questions whose honest answer is *"you already told me
@@ -179,8 +182,75 @@ data to practice with — recommend CORD data as the primary alternative:
 >
 > Learn more about CORD: <https://senzing.com/senzing-ready-data-collections-cord/>"
 
-Use `get_sample_data(dataset='list')` to show available CORD datasets. Present the
-`download_url` from the response so the bootcamper can download the full JSONL file.
+Use `get_sample_data(dataset='list')` to show available CORD datasets. Present the fetch URL from
+the response exactly as the tool gives it, and say **which** of the two you are presenting — they
+are not interchangeable (both fields verified live, `get_sample_data(dataset='las-vegas',
+source='GLEIF', limit=1)`, MCP server 1.32.9, 2026-08-12):
+
+- **`download_url`** serves at most `download_url_max_records` records per request — **10,000** —
+  and needs only `mcp.senzing.com` reachable.
+- **`source_download_url`** is the complete uncapped file, and needs egress to `senzing.com`.
+
+So `download_url` is **not** "the full file" for any source larger than the cap: of the 11
+`las-vegas` sources **6 exceed it**, `EQUIFAX` alone having 72,799 records. Verified live —
+`download_url` for `NOMINO-RISK`, whose MCP `record_count` is 14,119, returned exactly 10,000
+records (server 1.32.9, 2026-08-12). When the Bootcamper needs a whole source, present
+`source_download_url`; when egress is restricted to the MCP host, present `download_url` and say
+plainly that it is a 10,000-record slice.
+
+<a id="cord-fetch-integrity"></a>
+
+**⛔ CORD fetch integrity — a throttled download is saved as the source's data.** The download
+endpoint rate-limits, and the limit message comes back **as the response body**: 43 bytes of English
+prose, `Rate limit exceeded. Try again in 1 second.`, written into the file you were saving. Verified
+live on server 1.32.9, 2026-08-12 — fetching four sources of a generated `las-vegas` scenario back to
+back, **two of the four** (`OPEN-OWNERSHIP`, `US-LABOR-VIOLATIONS`) came back throttled, each a
+single-line file whose one line is prose. Likelihood rises with the number of sources, and
+multi-source scenarios are the normal case.
+
+The response **is** machine-readable: it carries HTTP **429** (verified in the same run). But a
+downloader invoked the ordinary way will not tell you — `curl -sS -o <file> <url>` exits **0** and
+writes the prose body, because no status check was asked for. Left uncaught, `data/raw/` holds a
+one-line file that fails in Module 5's mapping or lands as a "1 record" quality assessment, and the
+Bootcamper debugs their mapping for a fault created two modules earlier.
+
+Three checks, all required, in this order. **This is the canonical statement; do not restate it
+elsewhere.**
+
+1. **Check the HTTP status of every fetch.** Anything outside 2xx is a **failed fetch** — never treat
+   the body as data. Use whatever your chosen language offers: an HTTP client raises or exposes a
+   status, `curl` must be asked (`--fail`, or `-w '%{http_code}'`), and PowerShell's
+   `Invoke-WebRequest` already raises on non-2xx. On **429**, retry with a short backoff — the
+   server's own message suggests one second — for a few attempts before reporting failure, and put a
+   brief pause between sequential source fetches so the limit is not tripped at all. Verified live:
+   the same four-source fetch that lost two sources returned **all four complete** when each request
+   retried with a one-second backoff (server 1.32.9, 2026-08-12).
+
+2. **Compare the record count against the count the server already gave you.** The authoritative
+   figure is already in hand — `get_sample_data(dataset=…, source='list')` returns `record_count` per
+   source. Count the records in the fetched file (a count, in whatever language the Bootcamper chose;
+   this is not a shell idiom) and compare against the expected count **for the URL you used**:
+
+   - fetched via **`source_download_url`** → expect exactly `record_count`;
+   - fetched via **`download_url`** → expect `min(record_count, download_url_max_records)`, because
+     the endpoint caps the response. Comparing a capped fetch against the full `record_count` would
+     fail 6 of the 11 `las-vegas` sources for no reason.
+
+   A mismatch is a **failed collection, not a warning**: re-fetch with the backoff from check 1, and
+   if it persists, report it to the Bootcamper and leave the source uncollected rather than passing a
+   short file downstream. Note that "plausible record count" is a judgement and does **not** catch
+   this — one line is arguably plausible for a source whose size you never looked up.
+
+3. **Never write an unverified fetch to `data/raw/` under the source's final name.** Fetch to a
+   staging path inside the Bootcamper's project — `data/temp/<source>.jsonl`, the scratch directory
+   INV-050 already provides — and move it to `data/raw/<source>.jsonl` only once checks 1 and 2 pass.
+   Every path stays project-relative and never uses system temp (INV-200). A throttled response that
+   never reaches the source's final name cannot be mistaken for its data by Module 5 or Module 6.
+
+Record **both** counts in the source's `config/data_sources.yaml` entry — `record_count` (what you
+counted) and `expected_record_count` (what the server stated) — and both checks under
+`validation_checks` (`http_status_ok`, `record_count_matches_expected`), so the comparison stays
+auditable instead of living only in the turn that ran it.
 
 **If the bootcamper declines CORD data** or needs something different, offer secondary options:
 
@@ -281,7 +351,11 @@ Module 5 can evaluate.
 > **Data Source Registry:** After collecting each data source file, record it in a registry at
 > `config/data_sources.yaml` so later modules can track it. If the file doesn't exist, create
 > it with `version: "1"` and an empty `sources:` mapping first. For each source set: `name`,
-> `file_path`, `format`, `record_count` (if known, else null), `file_size_bytes`,
+> `file_path`, `format`, `record_count` (the count you **measured** in the collected file; null only
+> when no file was collected, e.g. a documented-location-only source), `expected_record_count` (the
+> count the provider stated, so the two can be compared here and re-checked later — for CORD this is
+> the MCP `record_count`, capped as [CORD fetch integrity](#cord-fetch-integrity) describes; null
+> when no independent figure exists), `file_size_bytes`,
 > `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`,
 > `validation_status: pending`, `validation_checks: {}`, and `added_at` and
 > `updated_at` to the current ISO 8601 timestamp. If an entry already exists for that
@@ -293,7 +367,9 @@ Module 5 can evaluate.
 > Step 7 cannot confirm what this entry never recorded, so both fields belong in the schema here.
 
 > **Data File Validation:** After each file is saved to `data/raw/`, sanity-check it (readable,
-> non-empty, expected format/encoding, plausible record count) and update the registry with the
+> non-empty, expected format/encoding, and — wherever an independent expected count exists — a record
+> count that **matches** it rather than one that merely looks plausible, per
+> [CORD fetch integrity](#cord-fetch-integrity)) and update the registry with the
 > results — set that source's `validation_status` to `passed` or `failed` and record each check's
 > outcome under `validation_checks`, which is what Step 7 reads. Present the outcome to the bootcamper. If all checks pass, confirm the file is ready
 > and move on to the next data source. If any check fails, show the failure details and

@@ -140,3 +140,72 @@ kind this repo registers. Offer it to the maintainer rather than assuming it.
 - Related specs: `specs/cord-fastpath-load-readiness.md` and
   `specs/module5-fastpath-cord-only-vs-senzing-ready.md` (what happens to a CORD source downstream);
   `specs/get-sample-data`-adjacent work on provenance. None covers fetch integrity.
+
+## Invariants introduced
+
+- `INV-203` — A fetched data source MUST NOT be written to `data/raw/` under its final name, nor
+  recorded as collected in `config/data_sources.yaml`, until both checks pass: the fetch returned a
+  2xx HTTP status, and its measured record count equals the expected count (`record_count` for an
+  uncapped fetch, `min(record_count, download_url_max_records)` for a capped `download_url` fetch).
+  Both counts are recorded in the registry entry; a mismatch is a failed collection, never a
+  warning; a throttled response (HTTP 429) is retried with a short backoff rather than treated as
+  data. Maintainer-approved 2026-08-12 and recorded in `specs/INVARIANTS.md`, indexed under *Data
+  quality, mapping and validation gates*. The wording extends what this spec proposed: the 2xx
+  clause and the cap clause both come from the implementation-time re-check below, not from this
+  spec's text.
+
+## Deviations from this spec, and why (2026-08-12)
+
+Re-verified against MCP server **1.32.9** on 2026-08-12 before any code changed. The condition
+**still reproduces** — fetching the same four `las-vegas` sources back to back, `OPEN-OWNERSHIP` and
+`US-LABOR-VIOLATIONS` came back throttled (43-byte prose bodies), `PPP_LOANS` and `GLEIF` complete.
+Two of this spec's factual claims did not survive that check, and both changed what was built.
+
+1. **The throttled response is a real HTTP `429`, not an unbranchable 200.** This spec's *Problem*
+   says *"There is no exception, no non-zero exit, no HTTP error for a caller to branch on"* and its
+   *Root cause* §1 calls the response *"a 200-ish body containing prose rather than a
+   machine-readable error … the server's choice and it is entitled to it"*. Measured with
+   `curl -sS -w '%{http_code}'`: **`http=429`** on both throttled sources. The response *is*
+   machine-readable. What is true is narrower: `curl -sS -o <file> <url>` exits **0** and writes the
+   prose body regardless, because no status check was requested.
+
+   **Effect on the fix:** the HTTP-status check leads, as check 1 of three, and is the decisive test;
+   the count comparison this spec proposed is kept as an independent second check rather than the
+   primary one. Both are required, so nothing this spec asked for was dropped — the ordering changed
+   and a stronger check was added ahead of it.
+
+   **Effect on the upstream question:** this spec's *Upstream* note reasons from the refuted premise
+   (*"a throttled response that is indistinguishable from data without body inspection is a client
+   trap"*). It is distinguishable, by status code. No upstream report is warranted, and none was
+   sent.
+
+2. **`download_url` caps its response, so "mismatch = failure" cannot be a bare equality test.**
+   The citation carries `download_url_max_records: 10000` (`get_sample_data(dataset='las-vegas',
+   source='GLEIF', limit=1)`, 1.32.9, 2026-08-12), and the cap bites: `NOMINO-RISK`, MCP
+   `record_count` 14,119, returned **exactly 10,000** records. *Proposed change* §1 says to compare
+   against `record_count` and treat any mismatch as a failed collection; implemented literally that
+   fails **6 of the 11** `las-vegas` sources on correct data. This spec's four sample sources were
+   all under the cap (3,488 / 2,039 / 1,952 / 1,554), so it never surfaced.
+
+   **Effect on the fix:** the expected count is `min(record_count, download_url_max_records)` for a
+   `download_url` fetch and exactly `record_count` for a `source_download_url` fetch. Mismatch
+   remains a failed collection, as specified.
+
+3. **One correction outside this spec's scope, required by it.** `SKILL.md:183` told the guide to
+   present `download_url` *"so the bootcamper can download the full JSONL file"* — untrue for the 6
+   `las-vegas` sources above the cap. The count rule in §2 cannot be stated correctly without
+   distinguishing the two URLs, so that sentence was replaced with the distinction rather than left
+   to contradict the new check.
+
+4. **Staging path chosen from the existing layout, not invented.** *Proposed change* §3 asks for "a
+   temporary name within the project". Implemented as `data/temp/<source>.jsonl` — the scratch
+   directory INV-050's layout tree already provides — because a new directory would need registering
+   in that tree under INV-202. Project-relative throughout, as INV-200 requires.
+
+5. **The retry remedy was verified, not just prescribed.** The same four-source fetch that lost two
+   sources returned all four complete, at full record counts, when each request retried with a
+   one-second backoff (1.32.9, 2026-08-12).
+
+Not runtime-verified: no macOS or Windows host was available, so the cross-platform criterion rests
+on the instruction being platform-neutral (asserted by test) rather than on execution. The condition
+itself remains network-dependent and unreachable by the offline suite, exactly as this spec states.
