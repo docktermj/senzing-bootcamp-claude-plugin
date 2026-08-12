@@ -210,12 +210,61 @@ class TheClarificationsAreDatedAndDisclaimMeaningChange(unittest.TestCase):
 
     def test_each_edited_invariant_carries_a_date_and_a_no_meaning_change_note(self):
         b = bodies()
-        for ident in ("INV-002", "INV-017", "INV-048", "INV-110", "INV-123", "INV-162"):
+        for ident in ("INV-002", "INV-017", "INV-048", "INV-050", "INV-107",
+                      "INV-110", "INV-123", "INV-162"):
             with self.subTest(invariant=ident):
                 self.assertRegex(b[ident], r"20\d\d-\d\d-\d\d",
                                  "%s's clarification is undated" % ident)
                 self.assertRegex(b[ident].lower(), r"no meaning change",
                                  "%s must state that the edit changed no meaning" % ident)
+
+
+class AWidenedScopeIsAnnouncedOnTheNarrowerRule(unittest.TestCase):
+    """INV-107 → INV-184 and INV-050 → INV-202.
+
+    When a later invariant widens an earlier one's scope, the earlier one is the rule an
+    implementer reaches *first* — INV-107 names the actual palette constants, and INV-050
+    holds the tree itself. Both were left with no pointer forward, so each read as complete
+    while binding less than the ruleset actually requires. INV-107 is the sharper case: it
+    is the exact wording that let `generate_discoveries_pdf.py` drift out of scope, which is
+    why INV-184 exists at all.
+
+    Asserted as the requirement, not a phrase — a reworded note carrying the link and the
+    substance passes (2026-08-12).
+    """
+
+    def setUp(self):
+        self.b = bodies()
+
+    def test_inv107_points_at_inv184(self):
+        self.assertIn("INV-184", self.b["INV-107"],
+                      "INV-107 enumerates two generators; INV-184 widened it to every "
+                      "generator and INV-107 must route the reader there")
+
+    def test_inv107_says_the_rule_is_not_limited_to_the_files_it_names(self):
+        self.assertRegex(self.b["INV-107"].lower(),
+                         r"every.{0,40}generator|belongs to the pattern|enumerates two")
+
+    def test_inv107_still_binds_its_own_constants(self):
+        """Routing forward must not read as retirement: 15 citations rely on this rule."""
+        self.assertRegex(self.b["INV-107"], r"(?i)MUST equal the values")
+        self.assertRegex(self.b["INV-107"].lower(), r"nothing here is superseded|still bind")
+
+    def test_inv050_points_at_inv202(self):
+        self.assertIn("INV-202", self.b["INV-050"],
+                      "INV-202 binds every edit to INV-050's tree and INV-050 must say so")
+
+    def test_inv050_states_the_annotate_rather_than_delete_rule(self):
+        """The half an editor gets wrong: deleting a dead entry looks like tidying."""
+        self.assertRegex(self.b["INV-050"].lower(),
+                         r"rather than being deleted|rather than be deleted|gain the annotation")
+
+    def test_the_named_successors_really_do_generalize_the_narrower_rule(self):
+        """INV-182 discipline: a criterion naming a second consumer is checked against it."""
+        self.assertIn("INV-107", self.b["INV-184"],
+                      "INV-184 is cited as generalizing INV-107 but does not name it")
+        self.assertIn("INV-050", self.b["INV-202"],
+                      "INV-202 is cited as binding INV-050's tree but does not name it")
 
 
 if __name__ == "__main__":

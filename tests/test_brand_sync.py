@@ -1,5 +1,10 @@
 """Guard against silent drift between brand_tokens.py and the inlined fallback
-palettes in senzing_viz_server.py and generate_recap_pdf.py.
+palettes in senzing_viz_server.py, generate_recap_pdf.py and generate_discoveries_pdf.py.
+
+This file discharges **INV-184** — "every shipped generator that inlines a fallback copy
+of the brand palette" — not only **INV-107**, which enumerates the first two. INV-107 is
+the narrower, older statement and remains binding; INV-184 is the one that puts the third
+generator in scope, so a new generator with an inlined palette belongs here on sight.
 
 Each script keeps a hardcoded copy of the brand palette so it still renders if
 brand_tokens.py is unavailable. The runtime prefers the imported values whenever
@@ -47,6 +52,9 @@ class BrandTokenSync(unittest.TestCase):
         2026-07-30 sweep checked them, and the script's own comment already claimed
         "tests/test_brand_sync.py asserts it" — which was not true until now. The literals
         also used to appear twice, once per `except` branch; they are one named dict now.
+
+        **INV-184** is the invariant this test discharges: it generalized INV-107 from those
+        two files to the pattern, which is what makes this third generator in scope at all.
         """
         import generate_discoveries_pdf as disc
         for name, rgb in disc._FALLBACK_RGB.items():
