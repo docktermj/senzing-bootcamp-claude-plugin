@@ -62,7 +62,10 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    `invariants` lists invariants no test mentions by ID — INV-060 and INV-097 both sat
    there while standing unimplemented for weeks. `affected` lists ledgered specs whose
    `## Affected files` predicted a path the entry's `Files changed:` never recorded —
-   which is how the graduation half of INV-097 went missing. Read-only, stdlib-only, exit 0
+   which is how the graduation half of INV-097 went missing. `negatives` lists every dated
+   "this MCP tool does **not** contain X" claim, oldest server version first — that one is
+   **phase 1's worklist**, not just a report, because a negative is the single claim shape
+   the offline suite can never notice going stale. Read-only, stdlib-only, exit 0
    whatever it finds. The `auto-test` skill can call it the same way.
 
 ## Absolute rules

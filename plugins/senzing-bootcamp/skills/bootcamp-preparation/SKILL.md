@@ -266,7 +266,9 @@ questions.
   the install *mechanism*, not which languages exist — so do **not** route this lookup to
   `sdk_guide`: `sdk_guide(topic='install', platform=…)` returns install commands, env vars, paths
   and gotchas and **no language list at all**, and with no `platform` it returns the platform
-  decision tree rather than a language one (both confirmed live, same server and date). The one
+  decision tree rather than a language one (both confirmed live, same server and date).
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — server 1.32.2, 2026-07-29 -->
+  The one
   genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
   only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules
   below and in Module 2's routing, which is where it belongs.

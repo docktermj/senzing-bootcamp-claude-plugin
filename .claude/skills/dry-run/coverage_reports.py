@@ -18,11 +18,21 @@ is not buried under legitimate entries:
     cannot be a gate — see ``tests/test_spec_ledger_invariants.py``, which enforces the
     same property only for entries dated on or after its cutoff.
 
-Both are read-only, stdlib-only, and platform-independent (INV-052/INV-108). Run from the
-repo root, or pass ``--repo``:
+``negatives``
+    Every ``MCP-NEGATIVE:`` marker — a dated claim that some MCP tool does NOT contain
+    something — oldest server version first. This is the worklist a dry run's phase 1
+    re-asks. A negative cannot go stale *detectably*: the suite is offline (INV-108), so
+    nothing can notice that a tool has since gained the coverage the plugin routed around.
+    It has happened twice (``senz7221-now-names-its-own-remedy``,
+    ``explain-error-code-now-owns-senz7426``), and the second time the stale claim was
+    also written into the guards, so correcting the prose *failed* the suite.
+
+All three are read-only, stdlib-only, and platform-independent (INV-052/INV-108). Run from
+the repo root, or pass ``--repo``:
 
     python3 .claude/skills/dry-run/coverage_reports.py invariants
     python3 .claude/skills/dry-run/coverage_reports.py affected
+    python3 .claude/skills/dry-run/coverage_reports.py negatives
     python3 .claude/skills/dry-run/coverage_reports.py both
 
 Exit status is 0 whatever the findings — these inform an audit, they do not gate one.
@@ -37,6 +47,20 @@ INV_REF = re.compile(r"INV-(\d{3})")
 LEDGER_HEAD = re.compile(r"^## (\S+)$", re.M)
 FILES_CHANGED = re.compile(r"^- \*\*Files changed:\*\*(.*)$", re.M)
 PATH_IN_TICKS = re.compile(r"`([A-Za-z0-9_./{}*-]+\.(?:md|py|sh|json|yaml|yml|js|png|pdf))`")
+
+#: `MCP-NEGATIVE: <tool(params)> — <what is absent> — server <version>, <YYYY-MM-DD>`
+#: The em dash is what the plugin's prose uses; a plain `--` is accepted so the marker can
+#: be written in a context where an em dash is awkward.
+MCP_NEGATIVE = re.compile(
+    r"MCP-NEGATIVE:\s*(?P<claim>.+?)\s*(?:—|--)\s*server\s*(?P<version>[0-9][0-9.]*)\s*,\s*"
+    r"(?P<date>\d{4}-\d{2}-\d{2})"
+)
+#: A file that legitimately contains the marker text without making a claim (this script,
+#: its test, the spec that defines the format) opts out with this line.
+NEGATIVE_OPT_OUT = "MCP-NEGATIVE-SCAN: ignore-file"
+#: Where a live claim can live. `specs/` and `feedback/` are records, not shipped claims.
+NEGATIVE_ROOTS = ("plugins", "tests", os.path.join(".claude", "skills"), "docs")
+SKIP_DIRS = {"__pycache__", "vendor", "node_modules", ".git", ".history", ".pytest_cache"}
 
 
 def _read(path):
@@ -116,10 +140,63 @@ def report_affected(repo):
     return gaps
 
 
+def _scan_files(repo):
+    """Every file a live MCP-NEGATIVE claim could sit in."""
+    for root in NEGATIVE_ROOTS:
+        base = os.path.join(repo, root)
+        if not os.path.isdir(base):
+            continue
+        for dirpath, dirnames, filenames in os.walk(base):
+            dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
+            for name in sorted(filenames):
+                if name.endswith((".md", ".py")):
+                    yield os.path.join(dirpath, name)
+
+
+def find_negatives(repo):
+    """[(version_key, version, date, claim, relpath, lineno)] for every marker found."""
+    found = []
+    for path in _scan_files(repo):
+        text = _read(path)
+        if NEGATIVE_OPT_OUT in text:
+            continue
+        for lineno, line in enumerate(text.split("\n"), 1):
+            m = MCP_NEGATIVE.search(line)
+            if not m:
+                continue
+            version = m.group("version")
+            key = tuple(int(p) for p in version.split(".") if p.isdigit())
+            found.append((key, version, m.group("date"), m.group("claim").strip(),
+                          os.path.relpath(path, repo), lineno))
+    found.sort(key=lambda r: (r[0], r[2]))
+    return found
+
+
+def report_negatives(repo):
+    """Dated 'this tool does not contain X' claims, oldest server version first."""
+    found = find_negatives(repo)
+    print("== Dated MCP negatives, oldest server version first ==")
+    print("A negative about a tool's content cannot go stale detectably: the suite is")
+    print("offline (INV-108), so nothing notices when the server gains the coverage the")
+    print("plugin routed around. Re-ask the tool for each of these; the oldest is the")
+    print("most likely to have moved. When one no longer holds, correct the claim AND")
+    print("invert or rescope the guard that pins it — do not delete the guard.")
+    print()
+    if not found:
+        print("  (none found — if that is a surprise, the markers are missing, not the claims)")
+        return found
+    print("markers: %d" % len(found))
+    print()
+    for _key, version, date, claim, relpath, lineno in found:
+        print("  server %-8s %s  %s:%d" % (version, date, relpath, lineno))
+        print("      %s" % claim)
+    return found
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("report", choices=("invariants", "affected", "both"))
+    ap.add_argument("report", choices=("invariants", "affected", "negatives", "both"))
     ap.add_argument("--repo", default=os.getcwd(),
                     help="repo root (default: current directory)")
     args = ap.parse_args(argv)
@@ -133,6 +210,10 @@ def main(argv=None):
         print()
     if args.report in ("affected", "both"):
         report_affected(repo)
+    if args.report == "both":
+        print()
+    if args.report in ("negatives", "both"):
+        report_negatives(repo)
     return 0
 
 

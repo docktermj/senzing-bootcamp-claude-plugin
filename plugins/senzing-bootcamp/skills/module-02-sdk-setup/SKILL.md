@@ -961,6 +961,7 @@ call for exactly this reason.
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
 > (Observed 1.32.9, 2026-08-12.)
+> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — server 1.32.9, 2026-08-12 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
 > input data" would send the reader to inspect something that does not yet exist — which is exactly

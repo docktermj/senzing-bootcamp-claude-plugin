@@ -159,6 +159,20 @@ Work one spec at a time. For each:
    in particular keep the change cross-platform and language-agnostic. Any Senzing
    fact you write into the plugin carries its provenance: the tool and parameters
    that established it, the server version, and the date.
+
+   ⛔ **A Senzing fact that is a *negative* — "tool X does not contain Y" — additionally
+   carries an `MCP-NEGATIVE` marker**, so it lands on the worklist a dry run re-asks:
+
+   ```text
+   MCP-NEGATIVE: <tool(params)> — <what is absent> — server <version>, <YYYY-MM-DD>
+   ```
+
+   A negative is the one claim shape that cannot go stale detectably. The suite is offline
+   (INV-108), so nothing notices when the server gains the coverage the plugin routed
+   around — it has happened twice, and the second time the claim was in the **guards** too,
+   so correcting the prose failed the suite. `coverage_reports.py negatives` lists every
+   marker oldest-first; a negative with no marker is invisible to it. Prefer asserting what
+   **is** true over what must not be said: the latter is the form that expires.
 5. **Verify against the acceptance criteria.** Walk each checkbox and confirm it
    holds — run the relevant script/hook/command or exercise the flow where
    possible (consider the `/verify` skill). If a criterion cannot be satisfied,
@@ -219,6 +233,7 @@ audit workflows ask, or when a spec touches the ledger
 ```bash
 python3 .claude/skills/dry-run/coverage_reports.py invariants   # invariants no test cites
 python3 .claude/skills/dry-run/coverage_reports.py affected     # predicted-but-unrecorded files
+python3 .claude/skills/dry-run/coverage_reports.py negatives    # dated "tool lacks X" claims
 ```
 
 Only after the change is made **and** its acceptance criteria are met, prepend an
