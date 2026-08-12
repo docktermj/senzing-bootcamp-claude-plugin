@@ -59,7 +59,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 
 # When the contract below was last checked against https://mcp.senzing.com/mcp.
-CONTRACT_VERIFIED_ON = "2026-08-11"
+# Refreshed by `dry-run` phase 1 on 2026-08-12: all 42 action/topic/category/workflow/
+# platform/dataset/language literals still in enum, required-parameter lists unchanged,
+# and `get_capabilities` still reports tool_count 13, matching MCP_TOOLS below.
+CONTRACT_VERIFIED_ON = "2026-08-12"
 # The server the required-parameter lists and MCP_TOOLS below were read from, via the
 # loaded tool schemas and `get_capabilities` on that date. Recorded because the server
 # ships independently of this plugin: without a version, "the schema requires this" is
