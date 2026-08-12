@@ -336,8 +336,16 @@ must reach the same figure.** The bands below (≥80 / 70-79 / <70) were precise
 feeding them was never written down, which meant the score was reproducible only by accident:
 
 ```text
-quality_score = 0.60 × completeness + 0.25 × format_consistency + 0.15 × (100 − duplicate_rate)
+quality_score = 0.70 × completeness + 0.25 × format_consistency + 0.05 × (100 − duplicate_rate)
 ```
+
+**Why duplicates barely count.** Completeness and format consistency are things the bootcamper can
+act on before mapping — a missing field stays missing, a malformed date stays malformed. A high
+duplicate rate is **not a defect to remediate**: resolving duplicate records is what Senzing is for,
+and this module runs *before* it has had the chance. Weighting duplicates heavily would send a
+bootcamper to "fix" the very condition that makes their data worth resolving. It stays in the score
+at 0.05 so a pathological source still registers, and it is **reported in full** regardless of its
+weight.
 
 - **completeness (0-100)** — the mean, across records, of the share of **applicable** fields that
   are present in that record, using the presence test defined below and per-`RECORD_TYPE`
@@ -360,7 +368,7 @@ quality_score = 0.60 × completeness + 0.25 × format_consistency + 0.15 × (100
 populated values off-pattern; 10 records share a `RECORD_ID` with another (1%):
 
 ```text
-0.60 × 96  +  0.25 × 97  +  0.15 × (100 − 1)   =  57.6 + 24.25 + 14.85  =  96.7  ->  ✅ (≥80)
+0.70 × 96  +  0.25 × 97  +  0.05 × (100 − 1)   =  67.2 + 24.25 + 4.95  =  96.4  ->  ✅ (≥80)
 ```
 
 Round to one decimal and state the three inputs alongside the total, so the bootcamper can see

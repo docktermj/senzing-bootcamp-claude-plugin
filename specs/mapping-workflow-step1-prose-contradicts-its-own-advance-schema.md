@@ -139,3 +139,16 @@ fenced examples, because the difference is structural and a prose description of
 the tool already gets wrong. The guard additionally asserts the caution cannot be **inverted** (a
 `assertNotRegex` on "send the OBJECT"), which the criteria did not ask for and which is the failure
 mode that would do real damage: a reader sent to the shape the schema rejects.
+
+## Upstream report sent (2026-08-12)
+
+The maintainer approved the drafted text **verbatim** and it was sent as
+`submit_feedback(category='bug')` on 2026-08-12 — a separate, maintainer-authorised action, taken
+after the dry run closed and therefore outside the skill's ⛔ on invoking `submit_feedback` during a
+run. No text was changed between approval and sending.
+
+The server's response records that **submissions are anonymous and cannot be followed up**, so no
+reply will arrive and none should be waited for. The plugin-side caution in `phase2-data-mapping.md`
+therefore remains the operative protection for our users regardless of what upstream does with the
+report; re-check the claim on a later server version rather than assuming it was acted on, and if
+the prose is corrected, retire the caution rather than inverting it.

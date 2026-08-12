@@ -158,3 +158,23 @@ exercised is still ambiguous about rounding and about whether `duplicate_rate` i
 
 **No other deviation.** The bands, the label ⛔ and both pinned gate questions are unchanged,
 verified by `git diff`.
+
+## Weights settled by the maintainer (2026-08-12)
+
+The open weighting question above is **closed**. Put to the maintainer with the concern that
+duplicates at 0.15 could deduct up to 15 points — enough to move a source from ✅ into the gated
+band on duplication alone, when duplicate records are precisely what Senzing resolves and this
+module runs *before* it has had the chance. Decision:
+
+```text
+quality_score = 0.70 × completeness + 0.25 × format_consistency + 0.05 × (100 − duplicate_rate)
+```
+
+Completeness and format consistency are what a bootcamper can act on before mapping; a high
+duplicate rate is the *reason to use the product*, not a defect to remediate. Duplicates stay in the
+score at 0.05 so a pathological source still registers, and are **reported in full** regardless of
+weight. The reasoning is written into Step 6 beside the formula, so the next reader does not
+re-derive it. The worked example was recomputed: 96.7 → **96.4** (same band).
+
+No test pins the numbers — the guard asserts a formula exists and every named dimension is defined —
+so a future reweighting is a three-number edit and nothing else.
