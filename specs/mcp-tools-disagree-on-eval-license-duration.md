@@ -129,3 +129,40 @@ Senzing can.
   `specs/reconcile-sdk-guide-license-note-with-detected-limit.md`,
   `specs/license-request-option.md`, `specs/single-license-gate-at-data-processing.md` — all concern
   the same licence flow; none records this contradiction.
+
+## Deviations from this spec, and why (2026-08-12)
+
+Re-verified at implementation time against **server 1.32.9, 2026-08-12**, both sides in one session:
+`get_capabilities` → `submit_feedback`'s description still says *"A **10-day**, 250K-record eval
+license…"*, and `sdk_guide(topic='install', platform='macos_arm', language='java')` still offers
+*"a free **5-day** evaluation license (250K records)"* in the paragraph pointing at `submit_feedback`.
+**The contradiction persists**, so the plan stood. Four notes on what differed.
+
+1. **The upstream report was already sent, before this session.** Criterion 4 asks for it to be
+   drafted, shown, and sent only on an explicit yes. The `dry-run-2026-08-12` ledger entry records
+   that the maintainer approved the exact text after the run closed and it went as `category='bug'`
+   on 2026-08-12. It was therefore **not re-sent**, and `submit_feedback` was **not called** in this
+   session at all. This criterion is satisfied by that record rather than by anything done here —
+   stated plainly because the evidence is someone else's action, not an artifact I produced.
+
+2. **Note home: the plugin, not `INVARIANTS.md`.** The spec left this to the maintainer. It went to
+   `module-04-data-collection/SKILL.md`, immediately after the sentence that describes what the
+   licence call returns, because that is where an editor tempted to add a duration is standing.
+   `specs/INVARIANTS.md` is unchanged.
+
+3. **The guard's pattern was wrong on first write, and a mutation caught it.** `\b\d+\s*[-\s]\s*day\b`
+   does not match *"The evaluation license lasts 10 days"* — `\bday\b` will not match `days` — which
+   is the phrasing prose naturally reaches for. The pattern now covers the plural and the spelled-out
+   forms, and is negative-controlled against three separate phrasings (`10 days`, `ten-day`,
+   `10-day`), each verified to land and each failing the suite.
+
+4. **The note is exempt from the guard, by design and narrowly.** A contested-fact note has to quote
+   both figures or a reader cannot re-check it, so it necessarily contains durations. The exemption
+   is a ±320-character window around the disagreement vocabulary, not a file-level allowance: a
+   mutation adding a duration **elsewhere in the same file** is still caught (verified). The
+   exemption is deliberately robust to rewording — six alternative phrasings satisfy it — so it
+   cannot be un-exempted by a one-word edit; that is a chosen trade, favouring a note that survives
+   copy-editing over a guard that polices the note's exact prose.
+
+No invariant recorded: this spec proposes none, and its durable content is a contested **fact**,
+which the repo records as a dated note plus a guard rather than as a rule.

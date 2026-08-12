@@ -634,7 +634,24 @@ training data.
    details off their machine, and it MUST NOT happen without their explicit yes.** The
    `submit_feedback` tool's `license_request` category **requires** a first name and a **work**
    email address (personal domains are rejected), optionally a last name and how they heard about
-   Senzing; it emails back a time- and volume-limited evaluation license. Those are the
+   Senzing; it emails back a time- and volume-limited evaluation license.
+
+   ⛔ **Never state the license's duration — the server contradicts itself about it, so no figure
+   is citable.** Verified on **MCP server 1.32.9, 2026-08-12**, both in one session:
+   `submit_feedback`'s own tool description (via `get_capabilities`) says *"A **10-day**, 250K-record
+   eval license is generated and emailed"*, while `sdk_guide(topic='install', platform='macos_arm',
+   language='java')` offers *"a free **5-day** evaluation license (250K records)"* in the same
+   paragraph that points at `submit_feedback` to request it. Two tools, one server, one session, two
+   answers — so "source the figure from MCP at runtime" does **not** disambiguate here, and a
+   duration written into this file would carry a real citation while having a coin-flip chance of
+   being wrong. Say **time- and volume-limited** and let Senzing's email state the terms. Reported
+   upstream as `category='bug'` on 2026-08-12 with the maintainer's approval; **retire this note
+   outright — do not amend it — once the two tools agree.** The **500-record no-license cap** is
+   unaffected and stays MCP-cited: today's `sdk_guide` response confirms it verbatim (*"Without a
+   license, Senzing is limited to 500 Distinct Source Records (DSRs). Loading record 501 fails with
+   SENZ9000|LIMIT"*).
+
+   Those are the
    Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every
    identifier (INV-065, `../bootcamp-onboarding/feedback.md` Step 3c) cannot apply here — the call
    does not work without them. What carries over is the **consent discipline**, and it applies with
