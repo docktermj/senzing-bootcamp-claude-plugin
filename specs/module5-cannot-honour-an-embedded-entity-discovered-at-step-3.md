@@ -173,3 +173,34 @@ the legacy payload shape**, neither of which Module 5 mentions. Add to the Propo
 **Not an upstream report yet.** Unlike `mapping-workflow-step1-prose-contradicts-its-own-advance-schema`
 this one has no drafted text and was not sent — a dry run must not send, and whether to report the
 typed branch's missing disposition is the maintainer's call.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**The guard shipped larger than the criteria asked, and one assertion needed rework caught by its
+own mutation.**
+
+The criteria asked for a test asserting three things. What shipped is a five-test class plus a
+`five-actions was not restated` check — that last one guards against *fixing* this by forking the
+action list, which would create the second statement of record `phase2-data-mapping.md` already
+warns about elsewhere.
+
+⚠️ **One mutation escaped on the first attempt.** `test_the_legacy_entity_plan_requirement_is_stated`
+asserted `"entity_plan" in <whole file>`. Deleting the entire legacy-shape ⛔ still **passed**,
+because `entity_plan` also appears ~100 lines above, in the list of payload field names once
+mistaken for action names. Fixed by extracting the embedded-master section and asserting the claim
+*inside it*, plus a second assertion that the note says **why** the legacy shape is needed (the
+typed/preferred branch cannot express it) — so a note that names the shape without the reason no
+longer passes. Re-run: the mutation now fails.
+
+This is the same shape as three other guard defects today: asserting a token appears *somewhere*
+rather than that the claim holds *where it is made*. Worth stating plainly — it is the single
+recurring error of the session, and every instance was caught by the mandatory negative control
+rather than by review.
+
+**Criterion coverage note:** the spec's Proposed change grew during the dry run (items 5 and 6 were
+appended after `action='back'` and the typed-branch limitation were verified live). Both shipped:
+the legacy `entity_plan` requirement is documented with its dated reason, and it carries its own
+assertion.
+
+**No other deviation.** The five-actions ⛔ at `:136` and the routing table are unchanged, verified
+by `git diff` showing neither in the removed lines.

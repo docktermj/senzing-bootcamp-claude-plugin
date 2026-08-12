@@ -127,3 +127,21 @@ hook for the step-3 case either.
 
 **None.** This clarifies INV-205 in place under maintenance rule 2; a second invariant on the same
 subject would fragment the address.
+
+## Deviations from this spec, and why (2026-08-12)
+
+**The scope was extended by an appended dated note, not by editing the original clause.** Proposed
+change §1 said both "widen INV-205's scope clause in place" and "⛔ a dated note, never a rewrite —
+the original wording must remain readable". Those pull in opposite directions if taken literally;
+the note satisfies the ⛔, which is the binding half. INV-205's first sentence is untouched, and a
+`⚠️ Scope extended to the FORM of a question, 2026-08-12, no meaning change.` note follows it,
+saying to read the list as *whether, when, what, or in what form*. That is the same shape every
+other in-place clarification in the file uses (INV-002, INV-017, INV-048, INV-110, INV-123, INV-163).
+
+**No new ID, and the index entry is unchanged** — verified: `INV-206` appears zero times, and the
+**MCP sourcing and tool contracts** group still reads `… INV-201, INV-204, INV-205`.
+
+**No other deviation.** All eight criteria hold. The recommendation-is-welcome clause was asserted
+separately because over-correcting is the likelier failure than under-correcting: a reader told the
+tool's format is forbidden strips the recommendation with it, and the tool's content is good — only
+its shape is not.

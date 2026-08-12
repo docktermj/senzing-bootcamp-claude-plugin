@@ -210,6 +210,82 @@ nothing shown and nothing asked.
 - **The language directive is already satisfied**, so do not act on it: `programming_language` was
   captured in Bootcamp preparation and persisted (INV-075/INV-133), so there is nothing to ask and
   nothing to infer.
+- **The rule covers the FORM of a question too, not only whether to ask one.** Step 3 supplies a
+  `QUESTION FORMAT` for uncertain fields (server 1.32.9, 2026-08-12):
+
+  > **QUESTION FORMAT (interactive mode only):** … use numbered options:
+  > `**<field_name>** (<type>, <pop%> populated, samples: <values>)` / *"I'm leaning toward
+  > \<recommendation\> because \<reasoning\>."* / `1. … 2. …`
+  > **State your recommendation clearly before the options.**
+
+  That shape carries **no 👉** and opens with a recommendation instead of a lead question —
+  breaching INV-005 and INV-051. **Keep the content, change the shape:** present the field, its
+  population, its sample values, the numbered options **and** the recommendation, as a 👉 question
+  with a neutral lead followed by the numbered list.
+
+  ⚠️ **The recommendation is welcome — do not strip it.** INV-051 requires the *lead question* to be
+  neutral, not the absence of advice; the plugin recommends inside pinned questions routinely (the
+  model-switch question carries "Recommended for best value"). The tool's format is good content in
+  a forbidden shape, and over-correcting throws away the useful half. (INV-205, scope extended
+  2026-08-12.)
+
+### ⛔ A second entity hiding in a column: `embedded_master`, and when to go `back`
+
+Some sources carry a **secondary entity inside a column** — an employer on an employee record, a
+lender on a loan record, a parent company on a subsidiary. `mapping_workflow` models this as
+**`embedded_master`**: the value becomes its own Senzing record, and the parent points at it.
+
+**Three signals that a column holds one:**
+
+- it holds many **distinct real-world names** rather than categories (239 bank names, not 3 status
+  values — check the values, never the column name);
+- the same name **repeats across records**, so resolving it merges them;
+- a **later source could name the same thing**, so resolving it links the two sources.
+
+**Why it matters:** as `payload`, the name rides along on each record and Senzing never matches on
+it. As an `embedded_master`, every record naming the same organisation resolves to one entity, and a
+later source naming it resolves against that. That difference *is* entity resolution.
+
+⛔ **The timing is a trap, and going `back` is the sanctioned fix.** An embedded master is
+**declared at step 2** (`plan_entity_structure`) but is usually only **discoverable at step 3**,
+when you finally look at the values. Step 3 cannot introduce a new schema — its `schema_mappings`
+are keyed to the step-2 plan and the server validates `FIELD INTEGRITY` against it. So when step 3
+reveals one:
+
+1. call **`mapping_workflow(action='back')`** — it returns to step 2 with the existing `schema_plan`
+   preserved (verified on server 1.32.9, 2026-08-12);
+2. re-plan with the embedded master declared;
+3. re-advance to step 3 and map it.
+
+This is the documented route, not a failure. `back` is one of the five valid actions; **this is what
+it is for.**
+
+⛔ **Declaring an `embedded_master` requires the LEGACY `entity_plan` payload.** The typed step-2
+branch (`for_step 2`) enumerates `support_schemas.disposition` as `lookup | relationship | child`
+only, with `additionalProperties: false` — **`embedded_master` is in neither slot**, so the tool's
+own *preferred* typed payload cannot express it. Send the legacy flat shape as `data` instead:
+
+```text
+data={'entity_plan': [{'schema_name': …, 'disposition': 'embedded_master', 'data_source': …,
+                       'record_type': 'ORGANIZATION', 'field_count': <fields belonging to it>}]}
+```
+
+The step-2 response documents this shape as "also accepted for backward compatibility". Verified on
+**server 1.32.9, 2026-08-12** — re-check it rather than assuming; if the typed branch gains the
+disposition, retire this note rather than inverting it.
+
+**What the tool requires once it is declared** (its step-3 EMBEDDED MASTER RULES): the embedded
+master gets a derived `RECORD_ID` (a deterministic hash of its identifying features, e.g.
+`hash(NAME_ORG + ADDR_FULL)`), a derived `REL_ANCHOR` so the parent can point at it, and a derived
+`RECORD_TYPE`; the parent master gets a derived `REL_POINTER` naming domain, key and role.
+
+⛔ **Never silently downgrade a bootcamper's choice to `payload`.** Offer the decision **at step 3**,
+where the values are in front of them, and state the trade-off both ways — a resolvable entity and
+more records, against a string that never matches. If the bootcamper asks for the entity, carry it
+out. If it will not be modelled — they declined, or going back is not possible — **say so and record
+it** in `config/data_sources.yaml`, so the outcome is visible rather than inferred from its absence.
+Mapping it to `payload` while they asked for an entity is assuming an answer they gave differently,
+which **INV-007** forbids.
 
 ## Workflow (per data source)
 

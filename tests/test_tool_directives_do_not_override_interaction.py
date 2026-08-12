@@ -153,5 +153,121 @@ class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
         self.assertRegex(flat, r"2026-08-12",
                          "the caution must carry the date, so a later run knows how stale it is")
 
+
+class TheQuestionFormatDirectiveIsAddressed(unittest.TestCase):
+    """INV-205 covers the FORM of a question, not only whether to ask one.
+
+    `mapping_workflow` step 3 supplies a QUESTION FORMAT for uncertain fields: numbered
+    options with "State your recommendation clearly before the options" — carrying no 👉
+    and a recommendation in place of a lead question, which breaches INV-005 and INV-051.
+    INV-205 as first written enumerated "whether, when, or what to ask" and did not reach
+    *how*; its scope was extended in place on 2026-08-12.
+
+    ⚠️ The recommendation is NOT the defect. INV-051 constrains the lead question being
+    neutral, not the presence of advice — the plugin recommends inside pinned questions
+    routinely. Over-correcting by stripping it throws away the useful half, so that is
+    asserted too.
+    """
+
+    def setUp(self):
+        self.body = text()
+
+    def test_the_step3_question_format_is_named(self):
+        flat = re.sub(r"\s+", " ", self.body)
+        self.assertRegex(
+            flat, r"(?i)QUESTION FORMAT",
+            "the step-3 QUESTION FORMAT directive is not named; a guide cannot recognise "
+            "it in a live response if the plugin never quotes it")
+
+    def test_the_conforming_shape_is_stated(self):
+        flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertRegex(
+            flat, r"(?i)neutral lead",
+            "the conforming shape (👉 question, neutral lead, numbered list) must be stated, "
+            "or naming the conflict leaves the guide to invent a resolution")
+
+    def test_the_recommendation_is_explicitly_kept(self):
+        flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertRegex(
+            flat, r"(?i)recommendation is welcome|do not strip it",
+            "without this, a reader over-corrects and strips the tool's recommendation — "
+            "the fix is the shape, not the content")
+
+
+class TheEmbeddedMasterRouteIsDocumented(unittest.TestCase):
+    """A secondary entity is discovered at step 3 and can only be declared at step 2.
+
+    `embedded_master` appeared nowhere in Module 5 while `mapping_workflow` treats it as a
+    first-class disposition with its own step-3 rules. `action='back'` was listed among the
+    valid actions with no trigger stated anywhere, so a guide that spotted a lender in a
+    column had no sanctioned route — and the path of least resistance silently downgraded
+    the bootcamper's choice to `payload`, which INV-007 forbids.
+
+    Verified live on server 1.32.9, 2026-08-12: `action='back'` returns to step 2 with the
+    plan preserved, AND the typed `for_step 2` branch cannot express `embedded_master` at
+    all (its `disposition` enum is lookup|relationship|child with additionalProperties
+    false), so the legacy `entity_plan` shape is required.
+    """
+
+    def setUp(self):
+        self.body = text()
+
+    def test_embedded_master_is_documented(self):
+        self.assertIn("embedded_master", self.body,
+                      "embedded_master is a first-class disposition the tool documents and "
+                      "Module 5 must too, or a secondary entity has nowhere to go")
+
+    def test_going_back_has_a_stated_trigger(self):
+        flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertRegex(
+            flat, r"action='back'",
+            "the sanctioned route must name the action")
+        self.assertRegex(
+            flat, r"(?i)declared at step 2.{0,120}discover|discover.{0,120}step 3",
+            "the trigger must explain WHY going back is needed — declared at step 2, "
+            "discoverable at step 3 — or it reads as an arbitrary instruction")
+
+    def embedded_master_section(self):
+        """Just the embedded-master section, so a claim is checked where it is made.
+
+        `entity_plan` also appears far above, in the list of payload field names that were
+        once mistaken for actions. A whole-file `assertIn` therefore passed on a mutation
+        that deleted this section's legacy-shape note entirely — caught by running it.
+        """
+        start = self.body.index("### ⛔ A second entity hiding in a column")
+        end = self.body.index("## Workflow (per data source)", start)
+        return self.body[start:end]
+
+    def test_the_legacy_entity_plan_requirement_is_stated(self):
+        """The typed payload cannot express it; a guide following the preferred path fails."""
+        section = self.embedded_master_section()
+        self.assertIn(
+            "entity_plan", section,
+            "the embedded-master section does not name the legacy `entity_plan` shape. The "
+            "typed for_step 2 branch enumerates lookup|relationship|child with "
+            "additionalProperties false, so a guide using the tool's PREFERRED payload "
+            "cannot declare an embedded master at all.")
+        self.assertRegex(
+            section, r"(?i)typed|preferred",
+            "the note must say why the legacy shape is needed — that the typed/preferred "
+            "branch cannot express it — or it reads as an arbitrary choice of payload")
+
+    def test_the_silent_downgrade_is_forbidden(self):
+        flat = re.sub(r"\s+", " ", self.body).replace("**", "")
+        self.assertRegex(
+            flat, r"(?i)never silently downgrade|silently downgrade",
+            "the ⛔ against quietly mapping a bootcamper-chosen entity to payload is the "
+            "half that protects INV-007; without it the rest is advice")
+        self.assertIn("INV-007", flat,
+                      "the prohibition must cite INV-007 — assuming an answer the bootcamper "
+                      "gave differently is what it forbids")
+
+    def test_the_five_action_rule_was_not_restated(self):
+        """This adds a trigger; it must not fork the action list (one statement of record)."""
+        self.assertEqual(
+            1, len(re.findall(r"exactly five actions", self.body)),
+            "the five-actions rule is stated more than once — a second copy is a fork that "
+            "will drift from the first")
+
 if __name__ == "__main__":
     unittest.main()
