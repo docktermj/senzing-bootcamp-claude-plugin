@@ -18,7 +18,7 @@ to working entity resolution:
 - ***Truth Set visualization:*** an interactive web app of the resolved Truth Set data *(optional)*
 - ***Data collection:*** identify and collect your data sources
 - ***Data Quality, Mapping, and Transformation:*** make your data "Senzing-ready"
-- ***Data processing:*** ingest your senzing-ready data
+- ***Data processing:*** ingest your Senzing-ready data
 - ***Query, Visualize and Discover:*** see what Senzing can do for you
 - ***Graduation:*** wrap up your bootcamp with a bow
 
