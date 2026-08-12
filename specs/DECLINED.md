@@ -41,6 +41,31 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
 
 -->
 
+## inv050-layout-tree-names-three-artifacts-nothing-produces
+
+- **Declined:** 2026-08-11
+- **Decided by:** maintainer ("remove #2 as we won't be doing that")
+- **Reason:** **Its central factual claim is false, and the work it proposes does not exist.** The
+  spec says three tree entries — `config/session_log.jsonl`, `config/visualization_tracker.json`,
+  `docs/completion_summary.md` — "say nothing" about not being produced. All three carry
+  `(reserved)` (`specs/INVARIANTS.md:166,167,197`), annotated deliberately on 2026-07-17 via
+  `specs/layout-tree-reconciliation.md` (commit `cc46a55`). The audit that produced it ran
+  `line.split("#")[0]` before matching, discarding the comment column where the annotation lives —
+  the evidence refuting the finding sat in the part the scan deleted. Re-verified 2026-08-11: the
+  corrected check returns **zero** unaccounted entries across 24 files and 30 directories. The one
+  idea worth keeping was rebuilt on an honest premise as
+  `specs/inv050-tree-has-no-reachability-guard.md`, implemented the same day.
+- ⚠️ **This entry deliberately widens what this file records, and a reader should know it.** The
+  header above says declined is "only for specs that are *correct* and deliberately not being
+  built", and by that rule a wrong spec belongs to `feedback-to-specs` instead. That remedy was
+  applied first — the superseding spec exists and this spec carries a `## Superseded by` pointer —
+  but supersession is **not** a state `implement-spec` Step 1 subtracts, so the spec kept being
+  offered on every run with its false Problem section as the summary. This is recorded here because
+  it is the only terminal state available, not because the spec was correct.
+- **Revisit if:** `implement-spec` gains a third terminal state for superseded specs, in which case
+  this entry should move there and this file's stated scope stops being stretched. Nothing about the
+  spec's own subject would reopen it — the claim is refuted, not merely unwanted.
+
 ## no-route-for-bootcampers-who-cannot-add-an-mcp-server
 
 - **Declined:** 2026-07-31
