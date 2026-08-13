@@ -161,6 +161,11 @@ removing it silently breaks every citation that resolved to it.
    python3 .claude/skills/compact-dev-environment/citations.py verify   # referential integrity
    ```
 
+   `both` includes **`shipped`** — invariants that name a shipped artifact and that no file
+   under `plugins/` cites. Read it alongside `conformance.py rules` in Step 3: the two are the
+   same contract from opposite ends, and `rules` alone cannot see a rule that is registered,
+   guarded by a test, and named at no step (the INV-212 case).
+
    ⛔ **These are lead generators, not verdicts.** A regex cannot tell a deliberately
    restated rule from one that drifted, nor a worked illustration from a cached
    authority. A run that reports these counts as findings has run a grep, not an audit.

@@ -216,6 +216,138 @@ def report_invariants(repo):
     return uncited
 
 
+#: The index group whose members bind the DEVELOPMENT environment, not the shipped plugin.
+#: `specs/INVARIANTS.md` names this group as the exemption in its own text, so the rule lives
+#: in the data an author already edits (rule 3 makes an index entry mandatory) rather than in
+#: a list here that they would have to know to update.
+DEV_GROUP = "development record itself"
+
+#: An invariant's text NAMES a shipped artifact when it points at something under `plugins/`.
+#: This is the filter that makes the report readable: a rule naming a file, module or step is
+#: one INV-183 requires to be reachable AT that step, so an uncited one is a real gap. A rule
+#: stating a general property with no artifact ("a value the Bootcamper was asked for MUST
+#: outrank...") is honoured by behaviour and is not expected to be cited anywhere in
+#: particular — reporting it is the noise that gets a report ignored.
+SHIPPED_ARTIFACT = re.compile(
+    r"plugins/|"
+    r"\bmodule-\d\d|\bModule \d|"
+    r"SKILL\.md|phase[0-9A-Za-z-]*\.md|ground-rules\.md|"
+    r"scripts/[\w-]+\.py|hooks/[\w-]+\.py|"
+    r"\bgraduation\b|\bbootcamp-onboarding\b|\bbootcamp-preparation\b"
+)
+
+INDEX_GROUP = re.compile(r"(?m)^- \*\*(?P<name>[^*]+)\*\* — .*?(?=^- \*\*|\Z)", re.DOTALL)
+
+#: File kinds a citation can appear in. `plugins/` also holds PDFs and PNGs.
+TEXT_SUFFIXES = frozenset(
+    (".md", ".py", ".json", ".yaml", ".yml", ".sh", ".ps1", ".txt", ".js", ".html", ".css")
+)
+
+
+def _index_groups(inv_txt):
+    """{group name: {INV ids}} from `### Index by subject`, or {} when absent."""
+    start = inv_txt.find("### Index by subject")
+    if start < 0:
+        return {}
+    section = inv_txt[start:]
+    end = section.find("<!-- New invariants")
+    if end > 0:
+        section = section[:end]
+    # INV_REF captures the DIGITS; re-attach the prefix so these compare against `INV-NNN`.
+    # Getting this wrong is silent and total: the exemption set simply never matches.
+    return {m.group("name").strip(): {"INV-" + n for n in INV_REF.findall(m.group(0))}
+            for m in INDEX_GROUP.finditer(section)}
+
+
+def find_uncited_in_shipped(repo):
+    """([(id, text)] to report, [ungrouped ids]) — invariants no shipped file cites.
+
+    Three filters, and the second two are what make the output worth reading:
+
+    1. Not cited by any file under `plugins/`.
+    2. Not in the `INVARIANTS.md` index group that binds the development environment — those
+       are *supposed* to be absent from shipped text, and flagging them trains the reader to
+       skip the whole report.
+    3. Its own text names a shipped artifact (a path, module, step or bundled script). That is
+       the class INV-183 governs: a rule binding a step must be reachable AT that step.
+
+    An invariant in **no** group is returned separately rather than silently exempted — a
+    missing index entry must not become a way to disappear from this report.
+    """
+    inv_txt = _read(os.path.join(repo, "specs", "INVARIANTS.md"))
+    entries = re.findall(r"(?m)^- \*\*(INV-\d{3})\*\* — (.+)$", inv_txt)
+    groups = _index_groups(inv_txt)
+    exempt = set()
+    for name, ids in groups.items():
+        if DEV_GROUP in name.lower():
+            exempt |= ids
+    grouped = set().union(*groups.values()) if groups else set()
+
+    # Text only: `plugins/` also carries the certificate PDF and screenshot assets, and
+    # `_read` raises UnicodeDecodeError on them. A citation can only live in text anyway.
+    plugins = os.path.join(repo, "plugins")
+    cited = set()
+    for root, _dirs, files in os.walk(plugins):
+        for name in files:
+            if os.path.splitext(name)[1].lower() not in TEXT_SUFFIXES:
+                continue
+            # INV_REF captures the DIGITS, not the whole id — re-attach the prefix.
+            cited |= {"INV-" + n
+                      for n in INV_REF.findall(_read(os.path.join(root, name)))}
+
+    hits, ungrouped = [], []
+    for inv_id, text in entries:
+        # INV-001–INV-050 are the bootcamp's own OUTCOMES, which `INVARIANTS.md` states are
+        # deliberately not indexed ("everything below is a development rule"). They are
+        # honoured by the flow existing rather than by any file naming them, so scoring them
+        # against shipped citations measures the wrong thing — and, being unindexed, the
+        # exemption cannot classify them either way.
+        if int(inv_id[4:]) <= 50:
+            continue
+        if inv_id not in grouped:
+            ungrouped.append(inv_id)
+        if inv_id in cited or inv_id in exempt:
+            continue
+        # ⚠️ lowercase BOTH sides. Searching for "INV" inside `text.lower()` never matches,
+        # which silently let every superseded invariant through on the first run.
+        if "superseded by inv" in text.lower():
+            continue
+        if not SHIPPED_ARTIFACT.search(text):
+            continue
+        hits.append((inv_id, text))
+    hits.sort(reverse=True)                       # newest ID first: most likely an oversight
+    return hits, sorted(ungrouped)
+
+
+def report_shipped(repo):
+    """Invariants that bind a shipped artifact and that no shipped file cites."""
+    hits, ungrouped = find_uncited_in_shipped(repo)
+    print("== Invariants naming a shipped artifact that NO file under plugins/ cites ==")
+    print("The mirror of the `invariants` report, which looks at tests/ only. A rule that")
+    print("names a file, module or step must be reachable AT that step (INV-183); one that")
+    print("is cited nowhere in shipped text is a rule the guide cannot look up.")
+    print("(A hit is not a defect. An invariant can be honoured by behaviour without being")
+    print(" named — this is where to look, not a bug list. Development-environment rules are")
+    print(" exempt via the INVARIANTS.md index group that declares them; invariants stating a")
+    print(" general property with no artifact are not reported at all.)")
+    print()
+    if ungrouped:
+        print("  ⛔ %d invariant(s) are in NO index group, so the exemption could not be"
+              % len(ungrouped))
+        print("     applied to them. Fix the index (INVARIANTS.md rule 3) — a missing group")
+        print("     entry must not become a way to vanish from this report:")
+        print("     " + "  ".join(ungrouped))
+        print()
+    if not hits:
+        print("  (none — every invariant naming a shipped artifact is cited in shipped text)")
+        return hits
+    print("hits: %d, newest first" % len(hits))
+    print()
+    for inv_id, text in hits:
+        print("  %s  %s" % (inv_id, text[:104]))
+    return hits
+
+
 def report_affected(repo):
     """Ledgered specs whose predicted Affected files never reached Files changed."""
     entries = _ledger_entries(repo)
@@ -458,7 +590,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("report",
-                    choices=("invariants", "affected", "negatives", "unmarked", "both"))
+                    choices=("invariants", "shipped", "affected", "negatives", "unmarked",
+                             "both"))
     ap.add_argument("--repo", default=os.getcwd(),
                     help="repo root (default: current directory)")
     args = ap.parse_args(argv)
@@ -468,6 +601,10 @@ def main(argv=None):
         return 2
     if args.report in ("invariants", "both"):
         report_invariants(repo)
+    if args.report == "both":
+        print()
+    if args.report in ("shipped", "both"):
+        report_shipped(repo)
     if args.report == "both":
         print()
     if args.report in ("affected", "both"):

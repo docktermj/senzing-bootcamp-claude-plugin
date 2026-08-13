@@ -133,6 +133,209 @@ class TestInvariantsReport(unittest.TestCase):
         )
 
 
+#: Fixture ids for the scratch trees below, assembled at runtime. Written as literals they
+#: read as citations of UNDEFINED invariants and fail `citations.py verify` — which is exactly
+#: what happened on this test's first run, turning the suite red for five dangling references.
+#: `test_citation_census.py` takes the file-level `citations.py: ignore-file` route instead;
+#: that is right for the file which tests the scanner and wrong here, because this file carries
+#: eight REAL invariant citations that must stay verified.
+_I = "INV-"
+FIX_A, FIX_B, FIX_C = _I + "800", _I + "801", _I + "802"
+FIX_DEV, FIX_OTHER = _I + "900", _I + "999"
+
+
+class TestShippedReport(unittest.TestCase):
+    """`shipped` — the mirror of `invariants`, looking at plugins/ instead of tests/.
+
+    The gap it fills: `conformance.py rules` is satisfied by ANY `INV-NNN` in a section, so it
+    reported 0 uncited hard rules on 2026-08-13 while INV-212 was named nowhere near the step
+    it had been registered from. Nothing asked the simpler question — which invariants does
+    shipped text never mention at all.
+
+    Built with a scratch tree rather than the live repo wherever the property is about the
+    *rule*, because the live answer legitimately changes as citations are added. The live repo
+    is used only for the two things that must hold whatever it contains: the report runs, and
+    the exemption comes from the data.
+    """
+
+    def _tree(self, root, invariants_md, plugin_files=(), test_files=()):
+        (root / "specs").mkdir(exist_ok=True)
+        (root / "plugins").mkdir(exist_ok=True)
+        (root / "tests").mkdir(exist_ok=True)
+        (root / "specs" / "INVARIANTS.md").write_text(invariants_md, encoding="utf-8")
+        for name, body in plugin_files:
+            (root / "plugins" / name).write_text(body, encoding="utf-8")
+        for name, body in test_files:
+            (root / "tests" / name).write_text(body, encoding="utf-8")
+
+    @staticmethod
+    def _invariants(*entries, dev_group=(FIX_DEV,)):
+        """An INVARIANTS.md with a subject index, in the live file's shape."""
+        body = ["# Invariants", ""]
+        body += ["- **%s** — %s" % (i, t) for i, t in entries]
+        body += ["", "### Index by subject", ""]
+        body += ["- **Everything else** — the rest.  ",
+                 "  " + ", ".join(i for i, _ in entries if i not in dev_group)]
+        body += ["- **The development record itself** — rules governing specs.  ",
+                 "  " + ", ".join(dev_group)]
+        return "\n".join(body) + "\n"
+
+    def test_an_invariant_naming_a_shipped_artifact_and_cited_nowhere_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Module 5's `SKILL.md` MUST do the thing."),
+                (FIX_B, "Module 6's `SKILL.md` MUST do the other thing."),
+            ), plugin_files=[("m6.md", "governed by %s here" % FIX_B)])
+            hits, ungrouped = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_A], [h[0] for h in hits],
+                             "exactly the uncited one must be reported; got %r" % (hits,))
+            self.assertEqual([], ungrouped)
+
+    def test_an_invariant_cited_only_by_a_test_is_still_reported(self):
+        """The INV-212 case, and the whole reason this is not the `invariants` report.
+
+        `coverage_reports.py invariants` scores an invariant covered when a test names it —
+        which is exactly what made INV-212 invisible: guarded, and unreachable from the step.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Module 5's `SKILL.md` MUST do the thing."),
+            ), test_files=[("test_it.py", "# enforces %s\n" % FIX_A)])
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_A], [h[0] for h in hits],
+                             "a test citation must NOT count as shipped coverage")
+
+    def test_the_development_group_is_exempt_and_read_from_the_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_DEV, "A spec's `SKILL.md` entry MUST be recorded."),
+                dev_group=(FIX_DEV,),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([], hits, "a member of the development group must be exempt")
+
+    def test_moving_an_invariant_out_of_the_development_group_un_exempts_it(self):
+        """Proves the exemption tracks the DATA, not a list hardcoded in the script."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_DEV, "A spec's `SKILL.md` entry MUST be recorded."),
+                dev_group=(FIX_OTHER,),          # the dev entry now sits in the other group
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_DEV], [h[0] for h in hits],
+                             "re-filing must change the outcome, or the rule is not in the data")
+
+    def test_an_invariant_in_no_group_is_surfaced_not_silently_exempted(self):
+        """A missing index entry must not become a way to vanish from this report."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            body = ("# Invariants\n\n"
+                    "- **%s** — Module 5's `SKILL.md` MUST do the thing.\n\n"
+                    "### Index by subject\n\n"
+                    "- **The development record itself** — rules governing specs.  \n"
+                    "  %s\n" % (FIX_A, FIX_DEV))
+            self._tree(root, body)
+            _hits, ungrouped = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_A], ungrouped)
+
+    def test_an_invariant_naming_no_shipped_artifact_is_quiet(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "A value the Bootcamper was asked for MUST outrank a detected one."),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([], hits,
+                             "a general property with no artifact is honoured by behaviour; "
+                             "reporting it is the noise that gets a report ignored")
+
+    def test_a_superseded_invariant_is_quiet(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Module 5's `SKILL.md` MUST do it. (Superseded by %s.)" % FIX_B),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([], hits, "a retired rule is not a coverage gap")
+
+    def test_bootcamp_outcome_invariants_are_out_of_scope(self):
+        """INV-001–050 are outcomes the flow satisfies, and are deliberately unindexed."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                ("INV-013", "All shipped modules are performed in order: Module 1 -> 2."),
+            ))
+            hits, ungrouped = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([], hits)
+            self.assertEqual([], ungrouped, "an unindexed outcome invariant is not a gap")
+
+    def test_hits_are_newest_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Module 5's `SKILL.md` MUST a."),
+                (FIX_C, "Module 6's `SKILL.md` MUST b."),
+                (FIX_B, "Module 7's `SKILL.md` MUST c."),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_C, FIX_B, FIX_A], [h[0] for h in hits],
+                             "a newly registered invariant is the most likely oversight and "
+                             "must lead")
+
+    def test_the_report_runs_on_the_live_repo_and_exits_zero(self):
+        code, out, err = run("shipped", REPO_ROOT)
+        self.assertEqual(0, code, err)
+        self.assertIn("plugins/", out)
+
+    def test_the_preamble_says_a_hit_is_a_lead_not_a_defect(self):
+        _code, out, _err = run("shipped", REPO_ROOT)
+        self.assertIn("not a defect", out,
+                      "without this the report reads as a bug list and its first run, which "
+                      "is always the longest, gets it ignored")
+
+    def test_the_live_index_declares_the_group_the_script_depends_on(self):
+        """The script reads an exemption out of prose; the prose must say it is one.
+
+        ⚠️ Negative control found this by ruling a mutation *invalid* rather than missed:
+        re-filing an ID out of the development group changes nothing in the suite, and should
+        not — the maintainer chose "the group IS the rule" (2026-08-13), so re-filing is a
+        permitted edit, not a regression. What a test can protect is the coupling itself: a
+        future editor tidying the index could drop the sentence naming this group as the
+        exemption, and `coverage_reports.py shipped` would keep matching on `DEV_GROUP`
+        with nothing left to tell them why.
+        """
+        body = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
+        groups = reports._index_groups(body)
+        dev = [name for name in groups if reports.DEV_GROUP in name.lower()]
+        self.assertEqual(
+            1, len(dev),
+            "exactly one index group must match coverage_reports.DEV_GROUP (%r); found %r. "
+            "Zero means the exemption silently applies to nothing and every development rule "
+            "floods the report; two means it is ambiguous."
+            % (reports.DEV_GROUP, dev),
+        )
+        block = next(m.group(0) for m in reports.INDEX_GROUP.finditer(body)
+                     if reports.DEV_GROUP in m.group("name").lower())
+        self.assertIn(
+            "exemption", block.lower(),
+            "the development-record group must state IN THE INDEX that it is the exemption "
+            "`coverage_reports.py shipped` uses, so an author filing a new invariant there "
+            "knows what it turns off",
+        )
+
+    def test_both_still_runs_every_report_including_this_one(self):
+        code, out, err = run("both", REPO_ROOT)
+        self.assertEqual(0, code, err)
+        for heading in ("cited by no test file", "NO file under plugins/ cites",
+                        "Predicted-but-unrecorded", "Dated MCP negatives"):
+            with self.subTest(heading=heading):
+                self.assertIn(heading, out)
+
+
 class TestNegativesScanSurface(unittest.TestCase):
     """`specs/DECLINED.md` is in the negatives scan; the rest of `specs/` stays out.
 

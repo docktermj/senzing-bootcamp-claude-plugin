@@ -113,3 +113,57 @@ rather than implying every hit is a defect.
 - MCP re-check: **n/a (no Senzing fact).** This spec concerns this repo's own reference graph only. Note INV-207: any claim it makes about that graph must be re-verified **after** the change, not before — the counts in `## Problem` were measured at 220 defined invariants on 2026-08-13 and will have moved.
 - Upstream: not applicable.
 - Related specs: `the-invariant-to-enforcing-test-link-is-asserted-nowhere` (the same gap on the test side, and the precedent for how to report it), `triage-the-twelve-uncited-hard-rules` (closed `conformance.py rules` to 0, which is what made this gap the next one), `globalization-retrieval-names-a-query-that-returns-homonyms` (the INV-212 instance this would have caught first).
+
+## Decisions taken at implementation (2026-08-13)
+
+Both were the maintainer's, asked before any code was written, because the spec exists to force
+them:
+
+- **Exemption — option (b), re-file.** INV-201, INV-209 and INV-213 moved into *"The development
+  record itself"*; the exemption is then exactly that group, with nothing else to keep in sync.
+  The group's own index entry now **declares** that it is the exemption, so an author filing a
+  new invariant there can see what it turns off.
+- **Scope — report only invariants whose text names a shipped artifact.** A rule naming a file,
+  module, step or bundled script is one INV-183 requires to be reachable at that step; a rule
+  stating a general property with no artifact is honoured by behaviour and is not expected to be
+  cited anywhere in particular.
+
+Measured effect: **57 → 51** from the exemption alone, **51 → 14** once the artifact filter is
+applied. The second filter is what makes it a report rather than a backlog.
+
+## Deviations from this spec, and why (2026-08-13)
+
+- **The spec's framing under-counted the problem, and the maintainer was shown that before
+  choosing.** It described the exemption as the decision; measuring it showed the exemption moves
+  the count by six and the artifact filter moves it by thirty-seven. The scope question was added
+  to the decision and is recorded above.
+- **INV-001–INV-050 are out of scope, which the spec did not say.** They are the bootcamp's own
+  outcomes, `INVARIANTS.md` states they are deliberately not indexed ("everything below is a
+  development rule"), and being unindexed the exemption cannot classify them either way. They are
+  honoured by the flow existing rather than by any file naming them. Excluded, with the reason in
+  the code, and a test pins it.
+- ⚠️ **The report surfaced a re-filing candidate on its first live run: INV-108** ("dev-only tests
+  MUST live in the repo top-level `tests/`"). It is a development rule filed under *Platform,
+  shell, encoding and file placement*, and it matches the artifact filter because its text names
+  `plugins/`. **Deliberately not re-filed** — the maintainer approved three specific IDs, and
+  quietly extending that list is how a data-driven exemption becomes a hardcoded one. It stands as
+  the report's first genuine finding about itself.
+- **Five bugs were found by *running* the report, none by reading it.** `INV_REF` captures the
+  three digits rather than the whole ID, so both the citation set and — worse — the **exemption
+  set** compared against `INV-NNN` and matched nothing, silently disabling the exemption
+  entirely; `_read` raised `UnicodeDecodeError` on the certificate PDF and screenshot assets under
+  `plugins/`; a `print("… %d …")` was never given its argument; and the superseded filter searched
+  for `"superseded by INV"` inside an **already-lowercased** string, so every retired invariant was
+  reported on the first run. Each is now covered by a mutation.
+- ⚠️ **One of my mutations was invalid, and ruling it so produced a better test.** "Re-file INV-209
+  out of the development group" was MISSED — correctly: under the chosen rule the group *is* the
+  exemption, so re-filing is a permitted maintainer edit rather than a regression, and a test
+  failing on it would freeze the classification. Replaced with the coupling that can genuinely
+  rot: the index must keep **declaring** that group as the exemption, and must keep a name the
+  script recognises. Both mutations are caught.
+- **Fixture invariant IDs are assembled at runtime.** Written as literals, `INV-800`/`801`/`802`/
+  `900`/`999` read as citations of undefined invariants and failed `citations.py verify` with five
+  dangling references — the trap `implement-spec` Step 4 documents, hit here for real.
+  `test_citation_census.py` takes the file-level `citations.py: ignore-file` route; that is right
+  for the file which tests the scanner and wrong here, since this file carries **eight real**
+  citations that must stay verified.

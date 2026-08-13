@@ -60,7 +60,15 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    ```
 
    `invariants` lists invariants no test mentions by ID — INV-060 and INV-097 both sat
-   there while standing unimplemented for weeks. `affected` lists ledgered specs whose
+   there while standing unimplemented for weeks. `shipped` is its mirror on the other side of
+   the contract: invariants that **name a shipped artifact** (a path, module, step or bundled
+   script) and that no file under `plugins/` cites, so the rule binds a step the guide cannot
+   look it up from (INV-183). It is the question `conformance.py rules` cannot ask — that scan
+   is satisfied by *any* `INV-NNN` in a section, which is how it reported **0** on 2026-08-13
+   while INV-212 was named nowhere near the step it was registered from. Development-environment
+   rules are exempt via the `INVARIANTS.md` index group that declares itself the exemption, and
+   invariants stating a general property with no artifact are not reported at all — both filters
+   exist so the output stays short enough to read. `affected` lists ledgered specs whose
    `## Affected files` predicted a path the entry's `Files changed:` never recorded —
    which is how the graduation half of INV-097 went missing. `negatives` lists every dated
    "this MCP tool does **not** contain X" claim, oldest server version first — that one is
