@@ -121,3 +121,56 @@ only in a Python reference implementation").
   row, `keep-by-design` at 1.32.2 and due for re-check), INV-002 (the any-language boundary test),
   INV-183 (state the rule at the step), INV-128 (the sibling emptiness-test rule, which *is* cited by
   tests).
+
+## Deviations from this spec, and why (2026-08-13)
+
+**The forward sweep found INV-174 already honoured — all four requirements present, at the step that
+authors the helper, and the metric definition already cites the invariant by ID.** So proposed change
+3 ("where a requirement is missing, add it as behaviour") was **not needed**: nothing was missing.
+The work was entirely proposed change 4 — guard what is guardable — plus the re-ask.
+
+Where each requirement lives, verified by opening the file:
+
+| INV-174 requirement | `phase1-quality-assessment.md` |
+|---|---|
+| Per-record scoring against `RECORD_TYPE`, aggregated | `:350-352` (the metric's own definition, citing INV-174) and `:403-406` |
+| Never one average per feature across the source | `:404`, with the worked failure at `:408-415` |
+| Applicability derived from the specification, not a list | `:417-419`, naming `search_docs(query='what features to map', category='data_mapping')` |
+| Kind-independent fields not excluded | `:428` — "either — do not exclude these" |
+| Unknown `RECORD_TYPE` scored kind-independently **and counted** | `:435-440` |
+
+Three things differ from the plan.
+
+1. **The MCP fact is confirmed but the table's stamp was deliberately NOT advanced (INV-191).**
+   `search_docs(query='Entity Specification features by record type person organization date of birth
+   registration date', category='data_mapping')` on server **1.32.9**, 2026-08-13, confirms the
+   *mechanism* INV-174 rests on: `REGISTRATION_DATE` sits under a heading marked **"(organizations)"**,
+   and the "What features to map" table marks type in descriptions (`NATIONALITY` "Person
+   nationality", `CITIZENSHIP` "Person citizenship", `PLACE_OF_BIRTH` "Person place of birth",
+   `REGISTRATION_DATE` "Organization registration/incorporation date"). ⚠️ **The `DOB` row's exact
+   wording was not in the retrieved excerpt**, so the table's "Verified against MCP server 1.32.2,
+   2026-07-30" stamp stays as it is: advancing a date for a claim only partly re-verified in that pass
+   is exactly what INV-191 forbids. The coverage-ledger row records the partial result in those terms.
+
+2. **The guard pins structure, not the specification's wording — INV-219, registered hours earlier.**
+   The table quotes the specification, and those quotes are the server's to change. Pinning "Person
+   date of birth" would have failed whoever corrects the table after a rewording, with a message
+   asserting the opposite of what the server says. So the tests assert that the table exists, maps
+   features to PERSON / ORGANIZATION / either, marks shared fields not-to-exclude, and carries the
+   re-read-rather-than-trust disclaimer. First application of INV-219 to new code.
+
+3. ⚠️ **I made the over-report error the `invariants` report documents, and had to undo it.** The
+   test's first docstring named **INV-141 and INV-177** as rationale ("the other two were checked and
+   hold"). Because `coverage_reports.py invariants` greps `tests/` for an ID, that immediately scored
+   both as "covered" while nothing asserts either — dropping the enumerating ∩ uncited intersection
+   from 3 to **0** and making the repo look better than it is. That is precisely the failure that file
+   records (one invariant named by five test files, every one as rationale, none its enforcer). The
+   IDs were removed and the reason written into the docstring; the intersection is now honestly
+   `{INV-141, INV-177}`, and INV-174 alone left it.
+
+⚠️ **A process note worth keeping.** Negative control R5's first two attempts reported `OK` from a
+**missing mutation target**, not an escaped mutation — first a newline typed as a space, then a
+lower-case `re-read` where the file has `Re-read`. Only the `assert` in the mutation harness
+distinguished them; without it, two clean-looking passes would have certified an untested guard. That
+is the third time this hazard is recorded in this repo, and the argument for asserting the target
+rather than eyeballing the loop's output.
