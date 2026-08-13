@@ -167,6 +167,10 @@ Work one spec at a time. For each:
    MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact + outcome> — server <version>, <YYYY-MM-DD>
    ```
 
+   <!-- MCP-NEGATIVE-SCAN: ignore-file — this file documents the marker FORMAT; the template
+   above is a placeholder, not a dated claim about the current server, and the scanner would
+   otherwise report it as a malformed marker. -->
+
    A negative is the one claim shape that cannot go stale detectably. The suite is offline
    (INV-108), so nothing notices when the server gains the coverage the plugin routed
    around — it has happened twice, and the second time the claim was in the **guards** too,

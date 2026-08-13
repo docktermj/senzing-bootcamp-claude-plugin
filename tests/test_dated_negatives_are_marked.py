@@ -128,6 +128,13 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
         """
         found = reports.find_negatives(str(REPO_ROOT))
         self.assertGreaterEqual(len(found), 1, "no markers to check — see the vacuity test")
+        self.assertEqual(
+            [], reports.find_malformed_negatives(str(REPO_ROOT)),
+            "an `MCP-NEGATIVE:` marker is present but does not parse — almost always a "
+            "missing `owner:` clause. This is worse than a missing marker: the claim still "
+            "ships and still routes the plugin, but it has dropped off the re-check "
+            "worklist, which is the invisibility the convention exists to prevent.",
+        )
         for row in found:
             _key, _version, _date, _claim, owner, relpath, lineno = row
             with self.subTest(where="%s:%d" % (relpath, lineno)):

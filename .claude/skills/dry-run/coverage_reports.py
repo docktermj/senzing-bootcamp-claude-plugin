@@ -79,6 +79,14 @@ MCP_NEGATIVE = re.compile(
     r"MCP-NEGATIVE:\s*(?P<claim>.+?)\s*(?:—|--)\s*owner:\s*(?P<owner>.+?)\s*(?:—|--)\s*"
     r"server\s*(?P<version>[0-9][0-9.]*)\s*,\s*(?P<date>\d{4}-\d{2}-\d{2})"
 )
+#: The bare token, used to catch markers that are PRESENT but do not fully parse.
+#: Making `owner:` required has a failure mode of its own: a marker missing the clause stops
+#: matching `MCP_NEGATIVE`, so without this it would silently drop off the worklist instead of
+#: failing — invisibility being the exact condition the marker convention exists to prevent.
+#: A malformed marker is therefore worse than a missing one and is reported separately.
+#: (Found by negative control: stripping the clause from one marker left the suite green and
+#: quietly shrank the worklist from three to two.)
+MCP_NEGATIVE_TOKEN = re.compile(r"MCP-NEGATIVE:")
 #: A file that legitimately contains the marker text without making a claim (this script,
 #: its test, the spec that defines the format) opts out with this line.
 NEGATIVE_OPT_OUT = "MCP-NEGATIVE-SCAN: ignore-file"
@@ -196,6 +204,25 @@ def find_negatives(repo):
     return found
 
 
+def find_malformed_negatives(repo):
+    """[(relpath, lineno, line)] for every `MCP-NEGATIVE:` that does not fully parse.
+
+    A marker that is present but malformed — most often missing its required `owner:`
+    clause — is worse than a missing marker: the claim is still shipped and still shapes
+    the plugin's routing, but it no longer appears on the re-check worklist. Report it
+    loudly rather than letting the count quietly shrink.
+    """
+    bad = []
+    for path in _scan_files(repo):
+        text = _read(path)
+        if NEGATIVE_OPT_OUT in text:
+            continue
+        for lineno, line in enumerate(text.split("\n"), 1):
+            if MCP_NEGATIVE_TOKEN.search(line) and not MCP_NEGATIVE.search(line):
+                bad.append((os.path.relpath(path, repo), lineno, line.strip()))
+    return bad
+
+
 def report_negatives(repo):
     """Dated 'this tool does not contain X' claims, oldest server version first."""
     found = find_negatives(repo)
@@ -213,10 +240,20 @@ def report_negatives(repo):
     print("route the claim actually rests on; if it is where the fact lives, the negative")
     print("is about ROUTING and the reader should be sent there instead.")
     print()
+    malformed = find_malformed_negatives(repo)
+    if malformed:
+        print("⛔ MALFORMED markers: %d — shipped claims that fell OFF the worklist. A"
+              % len(malformed))
+        print("   malformed marker is worse than a missing one: the claim still routes the")
+        print("   plugin, but nothing re-asks it. Usually a missing `owner:` clause.")
+        for relpath, lineno, line in malformed:
+            print("     %s:%d" % (relpath, lineno))
+            print("       %s" % line[:150])
+        print()
     if not found:
         print("  (none found — if that is a surprise, the markers are missing, not the claims)")
         print("  A marker with no `owner:` clause does NOT parse, by design: it is reported")
-        print("  as absent rather than as well-formed.")
+        print("  above as malformed rather than silently accepted.")
         return found
     print("markers: %d" % len(found))
     print()
