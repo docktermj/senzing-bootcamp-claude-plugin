@@ -48,7 +48,44 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Files changed:** `plugins/senzing-bootcamp/skills/graduation/SKILL.md` (the `.env.example` bullet at `:749`), `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` (Step 5's license check order and its ⛔ note), `tests/test_license_env_var_absent.py` (new, 3 tests), `specs/INVARIANTS.md` (INV-208), `tests/test_invariant_enforcer_citations.py` (`EXPECTED_PAIRS` 25 → 26), `specs/no-license-path-environment-variable.md` (the spec), `specs/IMPLEMENTED.md` (this entry)
 - **MCP re-check:** server **1.32.9, 2026-08-13** — **the server contradicts the plugin**, which is the finding. `sdk_guide(topic='configure', language='python', platform='linux_apt')` returns exactly two entries in `environment.env_vars` (`LD_LIBRARY_PATH`, `PYTHONPATH`) and states the license options as `LICENSESTRINGBASE64` or `LICENSEFILE` under `PIPELINE`; `sdk_guide(topic='install', platform='macos_arm')` agrees; `search_docs(query='license file environment variable SENZING_LICENSE_FILE path')` returns EULA/pricing prose with no variable name. So **neither** spelling the plugin has used is real, including the one module-02 claimed `sdk_guide` returns.
 - **Summary:** A fabricated environment variable is out of a shipped production deliverable, and the note that was supposed to prevent it no longer asks for something impossible. **Criteria, 6 of 6 hold.** (1) *No `SENZING_LICENSE_` token under `plugins/`* — `grep -rn` returns **0**; the guard scans `.md`/`.py`/`.sh`/`.json`/`.yaml`/`.yml` across the whole plugin tree. (2) *`graduation`'s `.env.example` names no license variable and expresses a license as a `PIPELINE` key* — the bullet now lists `SENZING_ENGINE_CONFIGURATION_JSON`, `DATABASE_URL`, `LOG_LEVEL`, plus a ⛔ that no license-path variable exists and that `LICENSEFILE`/`LICENSESTRINGBASE64` go **inside** the engine-config value. (3) *Module-02 states the absence and drops the env-var step from its check order* — the order now reads `licenses/g2.lic` → an engine-config `PIPELINE` license key → system CONFIGPATH → built-in evaluation license. (4) *The record-capacity route is unchanged* — Step 5a still sends the figure to `sdk_guide(topic='load', …, record_count=1000)` and hardcodes no number (INV-080). (5) *A stdlib-only guard fails on reintroduction* — negative-controlled below. (6) *Cross-platform and language-agnostic* — the claim is about Senzing's config mechanism, not a platform or binding. **Negative control, 4 mutations — and the first version of the guard FAILED it.** ⚠️ Recorded because the failure is the useful part. (1) Restoring `SENZING_LICENSE_PATH` to `graduation:749` failed 2 of 3 tests (the tree scan and the `.env.example` block scan) — caught. (2) Restoring module-02's "Confirm the environment variable's exact name from MCP" wording **passed**, i.e. was NOT caught: the assertion was a bare `assertRegex(text, "no license-path environment variable")`, and that phrase also occurs in the `MCP-NEGATIVE` source comment added at `module-02:729`, so the check was satisfied by a comment while the ⛔ directive the guide actually reads had been reverted to the unsatisfiable form. A guard whose docstring claimed it pinned the positive statement was in fact pinning the existence of a comment. Strengthened to (a) ban the unsatisfiable wording by its own regex and (b) require the phrase on a non-comment line **carrying a ⛔**, then re-run: caught. (3) A *third* spelling (`SENZING_LICENSE_KEY`) — the case an allowlist of the two known-bad names would miss — caught by the prefix ban. (4) Demoting the ⛔ directive to hedged prose ("…, probably.") while keeping the phrase — caught by the new ⛔ requirement. **The lesson generalises past this spec:** the mutation that slipped through was the one whose evidence the fix itself had introduced, so the guard and the thing it guarded shared a source. Negative-controlling the *obvious* mutation (the banned token) would have certified the file; only mutating the **compensating prose** exposed it. **Suite:** `1805 → 1808`, `OK (skipped=3)`, zero failures — the delta is exactly the three tests added, measured by holding the new file aside and re-running (baseline 1805 fails 1, the enforcer-citation guard, because INV-208 was defined with no enforcer file yet — the guard working in the direction it was built for). Stdlib only (`re`, `unittest`, `pathlib`), no `plugins/` import, per INV-108. `citations.py verify` run **after** this entry was written, per INV-207: *clean, 208 invariants defined, every citation and Source resolving.* ⚠️ **The guard also caught the fix's own first draft:** the corrective note initially quoted both wrong spellings in prose to record the history, and then a `SENZING_LICENSE_*` glob; both were rejected, and the history moved to the spec and this entry, where no guide reads it. That is the intended behaviour — a wrong variable name in front of the guide is liftable even when framed as a warning — and it is the strongest evidence the prefix ban is the right shape. **Establishes `INV-208`** — *the plugin names no Senzing license-path environment variable in any spelling; where it must say so it states the absence positively and names the `PIPELINE` mechanism, and never instructs the guide to confirm a name MCP cannot return.* Recorded beneath the append marker with the bidirectional enforcer link; `EXPECTED_PAIRS` re-derived 25 → 26 by running the extractor, the guard having fired on the arithmetic rather than on a missing back-citation. **Found by:** dry run phase 1 (MCP call-contract sweep) — the sweep that also re-verified all three dated `MCP-NEGATIVE` markers as still holding on 1.32.9 and re-dated them to 2026-08-13.
-- **Commit:** uncommitted
+- **Commit:** d90a5b9
+
+### ⚠️ Correction, same day (2026-08-13) — the fix above was wrong on its central fact
+
+- **Superseding commit:** see the follow-up commit re-scoping INV-208; the entry above is kept
+  unedited as the record of what was believed at `d90a5b9`.
+- **What was wrong:** the claim "Senzing reads no license-path environment variable" is **false**.
+  `sdk_guide(topic='load', language=…, record_count=<above the default limit>)` returns
+  `SENZING_LICENSE_FILE` in its `compatibility_notes` — verified on 1.32.9, 2026-08-13 at
+  `(python, 1000)` and `(java, 600)`, language-independent, present only above the limit. So (a)
+  module-02's original note, which said `sdk_guide` returns `SENZING_LICENSE_FILE`, had been
+  **correct**, and the "fix" replaced a true statement with a false one; (b) INV-208's prefix ban
+  forbade the **correct** name; (c) the negative-control run that "proved" the guard was sound proved
+  only that it enforced a false premise consistently.
+- **Root cause of the error:** absence inferred from three tools that do not carry the fact
+  (`configure`, `install`, `search_docs`) without asking the tool that owns it — precisely
+  **INV-194**, which was already registered and indexed and was simply not applied. Three silences
+  read as proof because there were three of them.
+- **How it was caught:** the phase-3 conversational walk called
+  `sdk_guide(topic='load', record_count=1000)` at Module 1 Step 5a for the *evaluation-license record
+  limit*, and `SENZING_LICENSE_FILE` was sitting in the same `compatibility_notes` block. Nothing in
+  the offline suite could have caught it (INV-108 keeps the suite offline, and the false claim had
+  been written into the guard, so the guard agreed with it). ⚠️ **This is the second time in this
+  repo's history that a stale/false negative was load-bearing in a test** — the phase-1 procedure
+  warns about exactly this shape, and the run still produced a fresh instance.
+- **What still stands:** `SENZING_LICENSE_PATH` really is a confabulation returned by no tool, and it
+  really did ship in graduation's `.env.example`. The defect was real; only the diagnosis was wrong.
+- **Corrected:** `graduation/SKILL.md` now names `SENZING_LICENSE_FILE` plus the `PIPELINE`
+  alternative; `module-02-sdk-setup/SKILL.md` Step 5 names the correct variable, the **`record_count`
+  condition** on the one route that returns it, and a ⚠️ against inferring absence from the omitting
+  topics; **INV-208 rescoped in place** to ban the single wrong spelling and forbid the absence claim,
+  with a dated correction note; `tests/test_license_env_var_absent.py` rewritten (3 → 5 tests) to ban
+  the exact spelling, allow the two notes whose subject is that it is wrong while requiring each to
+  mark it wrong nearby, require the correct spelling and its route, and pin the INV-194 warning.
+- **Structural lesson recorded in the spec:** a prefix ban is *more* dangerous than a single-spelling
+  ban, because it asserts a fact about every member; and a negative documented with dated evidence
+  from the wrong route is indistinguishable from a verified one, so an `MCP-NEGATIVE` marker must name
+  the route that **owns** the fact, not the routes that happen to omit it.
 
 ## proving-an-id-is-unused-by-writing-it-cites-it
 

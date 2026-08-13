@@ -1,114 +1,130 @@
-# No license-path environment variable
+# SENZING_LICENSE_PATH is a confabulation; the real variable is SENZING_LICENSE_FILE
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
+> ⚠️ **This spec was substantially wrong on first writing and was corrected the same day.** Its
+> original claim — that Senzing reads *no* license environment variable — was false, and the fix it
+> prescribed removed a **true** statement from module-02 and shipped a guard that banned the
+> **correct** variable name. The section "The error in the first version" below records what
+> happened, because the mistake is more instructive than the defect.
+
 ## Problem
 
-Two places in the plugin assume Senzing reads a license *path environment variable*.
-The live MCP server documents no such variable — not under either name the plugin has
-used. The consequences differ by site:
+`graduation/SKILL.md:749` wrote **`SENZING_LICENSE_PATH`** into the `.env.example` that the
+bootcamper carries into production. No MCP tool returns that spelling. A bootcamper who sets it gets
+no license, and the failure surfaces much later as a capacity error (`SENZ9000|LIMIT`) with nothing
+pointing back at the unread variable. Wrong environment-variable names are on the MCP server's own
+`common_confabulations` list.
 
-1. `graduation/SKILL.md:749` writes `SENZING_LICENSE_PATH` into the `.env.example`
-   the bootcamper carries into production. It is a fabricated environment variable in
-   a shipped deliverable: a bootcamper who sets it gets no license, and the failure
-   surfaces later as a capacity error (`SENZ9000|LIMIT`) with nothing pointing back at
-   the empty variable.
-2. `module-02-sdk-setup/SKILL.md:717-725` states a "license check order" whose second
-   step is "a license-path environment variable", then ⛔-instructs the guide to
-   "Confirm the environment variable's exact name from MCP before naming it to the
-   bootcamper". That instruction is **unsatisfiable**: MCP has no name to return, and
-   the note supplies no fallback for that outcome, so a guide following it faithfully
-   calls the server, gets nothing, and is left improvising in exactly the place the
-   note exists to prevent improvisation.
-
-The module-02 note is self-aware about the risk — it records that the text "previously
-hardcoded `SENZING_LICENSE_PATH` while `sdk_guide` returns `SENZING_LICENSE_FILE`; the
-two differ by one word and neither was verified here". Neither is right, and the wrong
-one of the two is still live in graduation.
+The correct spelling is **`SENZING_LICENSE_FILE`**.
 
 ## Root cause
 
-The plugin models licensing as an environment variable. Senzing models it as an
-**engine-configuration `PIPELINE` key**. The plugin already knows this in two other
-places — `module-04-data-collection/SKILL.md:616-617` correctly writes `LICENSEFILE`
-into the PIPELINE section, and `module-02-sdk-setup/SKILL.md:769` describes "wiring
-`LICENSEFILE`" — so the defect is a stale third model surviving alongside the correct
-one, not a misunderstanding.
+The plugin held a remembered variable name instead of the server's. Compounding it, the correct name
+is reachable through **exactly one** tool route, and it is not one of the routes a reader would try
+first — which is how a second, worse error got layered on top (below).
 
 Live MCP server, **1.32.9, verified 2026-08-13**:
 
-- `sdk_guide(topic='configure', language='python', platform='linux_apt')` — the
-  `environment.env_vars` map contains exactly two entries, `LD_LIBRARY_PATH` and
-  `PYTHONPATH`. No license variable. Its `engine_config_notes` state the license
-  options outright: "License options: LICENSESTRINGBASE64 (inline base64 string in
-  config — preferred for containers/automation) or LICENSEFILE (path to .lic file on
-  disk)", both shown inside `"PIPELINE"`.
-- `sdk_guide(topic='install', platform='macos_arm')` — same: license appears only as
-  `LICENSESTRINGBASE64` / `LICENSEFILE` under `PIPELINE`.
-- `search_docs(query='license file environment variable SENZING_LICENSE_FILE path')` —
-  returns EULA/pricing prose only, no variable name.
+- ✅ **The route that carries it:** `sdk_guide(topic='load', language=…, record_count=<above the
+  default limit>)`. Its `compatibility_notes` say a licensed user should "place the license file at
+  the path specified by `SENZING_LICENSE_FILE` or in the `etc/` directory". Confirmed at
+  `language='python', record_count=1000` and `language='java', record_count=600` — the note is
+  language-independent and appears **only** when the count exceeds the limit.
+- ❌ `sdk_guide(topic='configure', language='python', platform='linux_apt')` — `environment.env_vars`
+  holds exactly two entries, `LD_LIBRARY_PATH` and `PYTHONPATH`. No license variable.
+- ❌ `sdk_guide(topic='install', platform='macos_arm')` — license appears only as the `PIPELINE` keys
+  `LICENSEFILE` / `LICENSESTRINGBASE64`.
+- ❌ `search_docs(query='license file environment variable SENZING_LICENSE_FILE path')` — EULA and
+  pricing prose, no variable name.
 
-So `SENZING_LICENSE_FILE` is also not returned by `sdk_guide` today, whatever it
-returned when the module-02 note was written. The note's premise has expired; the
-premise it warns against is a confabulation either way ("Wrong file paths and
-environment variables" is on the server's own `common_confabulations` list).
+A `PIPELINE` key (`LICENSEFILE` for a `.lic` path, `LICENSESTRINGBASE64` for an inline key) is the
+other supported route, and is what `module-04-data-collection/SKILL.md:616` already wires.
 
-`SENZING_ENGINE_CONFIGURATION_JSON` is fine to keep in `.env.example` — the server
-names it, with the caveat that it "is a naming convention used by POC tools and most
-official examples. It is NOT required by the SDK."
+## The error in the first version
+
+The first pass called `configure`, `install`, and `search_docs`, found no license variable in any of
+them, and concluded that none exists. It then:
+
+1. Rewrote `module-02-sdk-setup/SKILL.md` Step 5 to assert "There is no license-path environment
+   variable" — **replacing a true statement with a false one.** The note it overwrote had said that
+   `sdk_guide` returns `SENZING_LICENSE_FILE`. That was correct.
+2. Registered INV-208 as a ban on the entire `SENZING_LICENSE_` prefix, so the guard **forbade the
+   correct name**.
+3. Recorded all of it as verified, with dated MCP evidence — evidence that was real but from the
+   wrong tools.
+
+This is textbook **INV-194**: *an empty or absent field in one MCP tool's response is NOT evidence
+the server lacks the fact; ask the tool that owns it before recording a negative, and scope every
+negative to the tool and parameters actually asked.* The invariant existed, was indexed, and was not
+applied. Three tools' silence felt like proof because it was three rather than one.
+
+It surfaced only because a phase-3 walk called `sdk_guide(topic='load', …, record_count=1000)` for an
+unrelated reason — the evaluation-license record limit — and the license variable was sitting in the
+same `compatibility_notes` block. Nothing in the offline suite could have caught it: the suite is
+offline by INV-108, and the wrong claim had been written into the guard, so the guard agreed with it.
+
+Two structural lessons worth keeping:
+
+- **A prefix ban is only sound when every member is genuinely wrong**, and establishing that requires
+  the same ask-the-owning-tool discipline as any other negative. Banning a family is *more*
+  dangerous than banning a spelling, not safer.
+- **A negative recorded with dated evidence from the wrong route is indistinguishable from a
+  verified one.** The `MCP-NEGATIVE` marker convention makes such claims re-checkable, which is what
+  eventually saves them — but only if the marker names the route, and the original marker named the
+  routes that omit the fact rather than the one that owns it.
 
 ## Proposed change
 
-1. **`graduation/SKILL.md:749`** — drop `SENZING_LICENSE_PATH` from the `.env.example`
-   key list. Licensing belongs inside the `SENZING_ENGINE_CONFIGURATION_JSON` value as
-   a `PIPELINE` key, so add a comment line to that effect instead of a separate
-   variable: the example should show `LICENSEFILE` (or `LICENSESTRINGBASE64`) as a
-   commented-out `PIPELINE` entry within the engine-config placeholder, matching what
-   `module-04-data-collection/SKILL.md:616` already does.
-2. **`module-02-sdk-setup/SKILL.md:717-725`** — correct the license check order to
-   drop the environment-variable step, and replace the unsatisfiable ⛔ note with the
-   positive fact: there is no license-path environment variable; a custom license is
-   supplied as a `PIPELINE` key (`LICENSEFILE` for a `.lic` path,
-   `LICENSESTRINGBASE64` for an inline key). Keep the INV-080 routing for the
-   *record-capacity figure*, which the server does answer and which must still not be
-   hardcoded.
-
-Fix the class, not just the instance: any remaining `SENZING_LICENSE_*` spelling in
-the plugin is wrong by construction, so a guard should assert the plugin contains no
-`SENZING_LICENSE_` token at all rather than blocking one of the two spellings.
+1. **`graduation/SKILL.md`** — `.env.example` lists `SENZING_LICENSE_FILE` (not
+   `SENZING_LICENSE_PATH`), names the `sdk_guide(topic='load', …, record_count>limit)` route to
+   confirm the spelling, and shows the `PIPELINE` alternative as a comment so both routes are
+   visible.
+2. **`module-02-sdk-setup/SKILL.md`** — Step 5 states the correct variable, names the single route
+   that returns it *including the `record_count` condition*, marks `SENZING_LICENSE_PATH` as a
+   confabulation, and carries a ⚠️ warning not to conclude absence from the topics that omit it,
+   citing what that inference already cost.
+3. **INV-208** — rescoped in place to ban the one wrong spelling and require the correct one, with a
+   dated correction note. Per this repo's own rule, an invariant encoding a false premise is worse
+   than a missing one.
+4. **The guard** — bans `SENZING_LICENSE_PATH` as an exact spelling; permits the two files whose
+   subject *is* that it is wrong to quote it, and asserts each marks it wrong nearby; requires the
+   correct spelling and its route to be present; and pins the INV-194 warning in the file that got it
+   wrong.
 
 ## Acceptance criteria
 
-- [ ] No file under `plugins/` contains the token `SENZING_LICENSE_` in any spelling.
-- [ ] `graduation/SKILL.md`'s `.env.example` description names no license environment
-      variable, and expresses a custom license as a `PIPELINE` key.
-- [ ] `module-02-sdk-setup/SKILL.md` Step 5 states that no license-path environment
-      variable exists, and its license check order has no environment-variable step.
-- [ ] Module-02 Step 5 still routes the evaluation-license **record limit** to
+- [x] No file under `plugins/` uses `SENZING_LICENSE_PATH`, except the two notes that name it in
+      order to mark it wrong — each of which states nearby that it must not be used.
+- [x] `graduation`'s `.env.example` names `SENZING_LICENSE_FILE` and asserts no absence claim.
+- [x] `module-02` Step 5 names `SENZING_LICENSE_FILE`, the `record_count` condition on the route that
+      returns it, and the `PIPELINE` alternative.
+- [x] `module-02` keeps a warning that the omitting topics are not evidence of absence (INV-194).
+- [x] Module-02 Step 5a still routes the evaluation-license **record limit** to
       `sdk_guide(topic='load', …, record_count=…)` and hardcodes no figure (INV-080).
-- [ ] A repo-level stdlib-only test in `tests/` enforces the first criterion, and
-      fails when `SENZING_LICENSE_PATH` is reintroduced at `graduation/SKILL.md:749`.
-- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
+- [x] A repo-level stdlib-only test in `tests/` enforces the above and fails when
+      `SENZING_LICENSE_PATH` is reintroduced as a variable, and when either absence claim returns.
+- [x] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
 
-- `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — remove the fabricated
-  variable from the `.env.example` key list; express license as a PIPELINE key.
-- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — correct the license
-  check order and replace the unsatisfiable confirm-from-MCP note.
-- `tests/test_license_env_var_absent.py` — new guard for the class.
+- `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — the `.env.example` bullet.
+- `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — Step 5's license note.
+- `tests/test_license_env_var_absent.py` — the guard (5 tests).
+- `specs/INVARIANTS.md` — INV-208, corrected in place.
 
 ## Source
 
-- Feedback: none — dry run phase 1 (2026-08-13), MCP call-contract sweep
-  (`Source: self-observed (assistant retrospective)`)
-- Priority: High — a fabricated environment variable ships to the bootcamper in a
-  production deliverable, and the compensating instruction cannot be followed.
-- MCP re-check: server 1.32.9, 2026-08-13 — **server contradicts the plugin**. Called
-  `sdk_guide(topic='configure', language='python', platform='linux_apt')`,
-  `sdk_guide(topic='install', platform='macos_arm')`, and
-  `search_docs(query='license file environment variable SENZING_LICENSE_FILE path')`.
-  None returns any license environment variable; all license references are
-  `PIPELINE.LICENSEFILE` / `PIPELINE.LICENSESTRINGBASE64`.
-- Upstream: not applicable — the plugin is wrong here, not the server.
+- Feedback: none — dry run phase 1 found the defect; dry run **phase 3** found the error in the fix
+  (both 2026-08-13). `Source: self-observed (assistant retrospective)`
+- Priority: High — a fabricated environment variable shipped in a production deliverable, and the
+  first correction made module-02 actively wrong for the duration of one commit.
+- MCP re-check: server 1.32.9, 2026-08-13. `sdk_guide(topic='load', language='python',
+  record_count=1000)` and `(language='java', record_count=600)` both return `SENZING_LICENSE_FILE`;
+  `sdk_guide(topic='configure', …)`, `sdk_guide(topic='install', platform='macos_arm')` and
+  `search_docs` all omit it. The plugin was wrong about the spelling, and the first fix was wrong
+  about the existence.
+- Upstream: not applicable — the plugin was wrong on both passes, not the server. Worth noting for
+  the maintainer that the server surfaces this name in only one topic's
+  `compatibility_notes`, which is a discoverability wrinkle rather than a defect.
 - Related specs: none
