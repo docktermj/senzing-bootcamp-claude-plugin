@@ -60,9 +60,28 @@ Usage:
     python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl \\
         --snapshot docs/visualizations/truthset_verification.html --no-serve
 
-Settings come from ``--settings`` (default ``config/engine_config.json``) or the
-``SENZING_ENGINE_CONFIGURATION_JSON`` env var. The Senzing native library must be
-importable (source the project ``src/scripts/senzing-env.sh`` first).
+Settings resolution, in this order — the precedence is **content-aware**, not
+existence-based:
+
+1. ``--settings`` (default ``config/engine_config.json``) when the file exists AND its
+   ``PIPELINE`` carries ``CONFIGPATH``, ``RESOURCEPATH`` and ``SUPPORTPATH``.
+2. ``SENZING_ENGINE_CONFIGURATION_JSON`` when the file is absent, unreadable, or
+   incomplete and the env var is complete. Which source won is stated on stderr whenever
+   both are present.
+3. Otherwise the run fails, naming the source it used and the ``PIPELINE`` keys that are
+   missing — it does NOT proceed into the engine.
+
+⛔ Step 3 exists because proceeding produced a **misleading** failure. A file containing
+``{"PIPELINE": {}}`` is valid JSON and truthy, so an emptiness check passes, and the engine
+then aborts with ``SENZ7426`` (transliteration). That error means ``SUPPORTPATH`` is wrong —
+``explain_error_code('7426')`` says "Check SUPPORTPATH FIRST … This is a configuration
+error, NOT a broken install" — so the reader is sent to fix a ``SUPPORTPATH`` that is
+correct in the place they are looking, while the value actually in force came from a file
+they were not told was preferred. Validating first turns a three-step misdiagnosis into one
+line naming the real cause.
+
+The Senzing native library must be importable (source the project
+``src/scripts/senzing-env.sh`` first).
 
 Exit code 0 means the entity model was built successfully (and, if requested, the
 snapshot was written); non-zero means it could not be built.
@@ -1684,6 +1703,101 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
         fh.write(page)
 
 
+#: The `PIPELINE` keys the engine needs before it can initialize. A settings document
+#: missing any of them is incomplete, however valid its JSON.
+REQUIRED_PIPELINE_KEYS = ("CONFIGPATH", "RESOURCEPATH", "SUPPORTPATH")
+
+
+def _pipeline_gaps(raw):
+    """Missing REQUIRED_PIPELINE_KEYS for `raw`, or None when `raw` is not usable JSON.
+
+    None and [] are deliberately different: None means "cannot tell" (unparseable, or not
+    an object), [] means "parsed and complete".
+    """
+    if not raw or not raw.strip():
+        return None
+    try:
+        doc = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(doc, dict):
+        return None
+    pipeline = doc.get("PIPELINE")
+    if not isinstance(pipeline, dict):
+        return list(REQUIRED_PIPELINE_KEYS)
+    return [k for k in REQUIRED_PIPELINE_KEYS if not str(pipeline.get(k, "")).strip()]
+
+
+def resolve_settings(path, env_value, log):
+    """(settings, source, problem) — pick the settings document, content-aware.
+
+    Returns `problem` as a ready-to-write message when neither source is usable; otherwise
+    `problem` is None and `source` describes what won, for the caller to report.
+
+    ⛔ Precedence is content-aware on purpose. The previous implementation was
+    `if os.path.exists(path)` — existence-based — so a `{"PIPELINE": {}}` stub silently beat
+    a fully populated env var, and the run then failed deep in the engine with `SENZ7426`,
+    an error whose documented meaning ("check SUPPORTPATH first; this is a configuration
+    error, not a broken install") points at the wrong thing entirely. The losing source is
+    never discarded silently: whenever both are present, which one is in force is stated.
+    """
+    file_raw = ""
+    file_unreadable = False
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                file_raw = fh.read()
+        except OSError as exc:
+            file_unreadable = True
+            log.write(f"settings: cannot read {path} ({exc}); falling back to "
+                      f"$SENZING_ENGINE_CONFIGURATION_JSON\n")
+
+    file_gaps = _pipeline_gaps(file_raw)
+    env_gaps = _pipeline_gaps(env_value)
+    file_ok = file_gaps == []
+    env_ok = env_gaps == []
+    both_present = bool(file_raw.strip() or file_unreadable) and bool(env_value.strip())
+
+    if file_ok:
+        if both_present and env_ok and file_raw.strip() != env_value.strip():
+            log.write(f"settings: using {path}; $SENZING_ENGINE_CONFIGURATION_JSON is also "
+                      "set and differs — the file wins.\n")
+        return file_raw, path, None
+
+    if env_ok:
+        if file_raw.strip() or file_unreadable:
+            why = "unreadable" if file_unreadable else (
+                "missing PIPELINE " + ", ".join(file_gaps) if file_gaps
+                else "not usable JSON")
+            log.write(f"settings: {path} is {why}; using "
+                      "$SENZING_ENGINE_CONFIGURATION_JSON instead.\n")
+        return env_value, "$SENZING_ENGINE_CONFIGURATION_JSON", None
+
+    # Neither is usable. Name the source that was tried and exactly what it lacks, so the
+    # reported cause is the real one rather than whatever the engine says three calls later.
+    if file_gaps:
+        return "", path, (
+            f"Engine settings in {path} are incomplete: PIPELINE is missing "
+            f"{', '.join(file_gaps)}.\n"
+            "The engine cannot initialize without them, and proceeding would fail with "
+            "SENZ7426 (transliteration), which points at SUPPORTPATH rather than at this "
+            "file. Fix the file, or unset it and export a complete "
+            "$SENZING_ENGINE_CONFIGURATION_JSON.\n")
+    if env_gaps:
+        return "", "$SENZING_ENGINE_CONFIGURATION_JSON", (
+            "Engine settings in $SENZING_ENGINE_CONFIGURATION_JSON are incomplete: "
+            f"PIPELINE is missing {', '.join(env_gaps)}.\n")
+    if file_raw.strip() and file_gaps is None:
+        return "", path, (
+            f"Engine settings in {path} are not usable JSON (expected an object with a "
+            "PIPELINE section).\n")
+    if env_value.strip() and env_gaps is None:
+        return "", "$SENZING_ENGINE_CONFIGURATION_JSON", (
+            "Engine settings in $SENZING_ENGINE_CONFIGURATION_JSON are not usable JSON "
+            "(expected an object with a PIPELINE section).\n")
+    return "", None, "No engine settings (missing --settings file and env var).\n"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--settings", default="config/engine_config.json")
@@ -1701,14 +1815,13 @@ def main(argv=None):
                     help="build the model (and snapshot) then exit without serving")
     args = ap.parse_args(argv)
 
-    if os.path.exists(args.settings):
-        with open(args.settings, encoding="utf-8") as _sf:
-            settings = _sf.read()
-    else:
-        settings = os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", "")
-    if not settings:
-        sys.stderr.write("No engine settings (missing --settings file and env var).\n")
+    settings, source, problem = resolve_settings(args.settings,
+                                                 os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", ""),
+                                                 sys.stderr)
+    if problem:
+        sys.stderr.write(problem)
         return 2
+    _ = source
 
     try:
         factory, model, engine, flags, sz = build_model(settings, args.records)

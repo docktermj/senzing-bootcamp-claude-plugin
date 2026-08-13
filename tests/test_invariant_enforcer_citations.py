@@ -75,7 +75,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: running the extractor. Note INV-208 and INV-209 are the same defect at two altitudes --
 #: the wrong claim, and the convention that let it look reviewed -- so the pair count grew
 #: twice for one root cause.
-EXPECTED_PAIRS = 27
+#:
+#: 27 -> 28 on 2026-08-13 (dry run, implementing the viz-settings spec): INV-210 (a script
+#: taking config from several sources picks by CONTENT and validates before acting) names
+#: tests/test_viz_settings_resolution.py, which cites INV-210 back. Re-derived by running
+#: the extractor.
+EXPECTED_PAIRS = 28
 
 
 def pairs():

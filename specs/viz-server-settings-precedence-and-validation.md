@@ -14,7 +14,7 @@ with an error that points somewhere else entirely.
 Observed in the dry run (2026-08-13), with the SDK present and `LD_LIBRARY_PATH` set,
 a correct env var exported, and a stub settings file on disk:
 
-```
+```text
 2026-08-13 09:59:36 [szstatic] ERR: No transliteration rules found! Transliteration
 requires at least one module.
 Could not build entity model: SzBadInputError: SENZ7426|Transliteration failed: No
@@ -96,9 +96,17 @@ bundled script that accepts both a settings file and the env var.
 
 ## Acceptance criteria
 
-- [ ] With a `{"PIPELINE": {}}` settings file present, the script exits non-zero, writes
+- [x] With a `{"PIPELINE": {}}` settings file present, the script exits non-zero, writes
       no snapshot, and its stderr names the settings **source** and the **missing
-      `PIPELINE` keys** — and does not mention transliteration.
+      `PIPELINE` keys** — and does not present transliteration as the **cause**.
+      ⚠️ **Criterion refined during implementation, deliberately and recorded here rather
+      than silently.** As first written it said "does not mention transliteration" at all.
+      That is too strict: naming `SENZ7426` as what *would* have happened, and saying it
+      points at `SUPPORTPATH` rather than at this file, is exactly the sentence that saves
+      the reader who has already seen the error and is searching for it. What must not
+      happen is transliteration being reported as the cause. The guard pins the refined
+      form — the headline (first) line must name the incomplete settings, and must not
+      contain "transliteration".
 - [ ] With a stub file present and a populated `SENZING_ENGINE_CONFIGURATION_JSON`, the
       env var's values are the ones used, and stderr says which source won.
 - [ ] With both present and populated but differing, stderr names the source in force.
