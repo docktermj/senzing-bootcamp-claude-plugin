@@ -71,6 +71,18 @@ VERIFIED_QUERIES = {
     "temporary evaluation license for a dataset larger than the default limit":
         "ON TARGET: End User License Agreement (EULA) -> 'Senzing Non-Production License' "
         "(relevance 171, the highest in this set)",
+    # ⚠️ Not a query a step tells the guide to RUN — it is the evidence slot of an
+    # MCP-NEGATIVE marker in module-02 Step 1, recording a query that was run and came back
+    # without the fact. The guard cannot tell the two apart (both are `search_docs(query='…')`
+    # literals in shipped markdown), and that is the right default: an unexecuted phrasing is
+    # indistinguishable from an executed one, so both must be accountable. Executed against
+    # server 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    "szBuildVersion.json build version file location":
+        "OFF TARGET BY DESIGN — this is the negative's evidence: no indexed document gives the "
+        "file's path on any platform. All four hits are SDK version-call examples, top hit "
+        "brianmacy/sz-rust-sdk -> code-snippets/information/get_version.rs (relevance 39.5). "
+        "The corpus serves SzProduct.get_version(), not a file location, which is why Step 1 "
+        "routes the reader to the SDK call and marks the file paths as environment observations",
     # "entity resolution quality evaluation" was listed here as OFF TARGET on 2026-08-12 and is
     # gone: Module 7 Step 3b no longer prescribes it. It returned the Buyer's Guide's
     # vendor-selection steps rather than precision/recall material, and

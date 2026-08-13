@@ -305,7 +305,7 @@ need them.
   *Fully superseded — skip these; each names its replacement:* INV-068, INV-072, INV-088
   *Partly superseded — still binding; read the invariant:* INV-086 (its **recording-location framing** only → INV-087; the first-class-module, full-apparatus and not-apparatus-exempt guarantee otherwise stands), INV-101 (its **Docker-only scope** only → INV-195, which dispatches on the recorded container runtime; the progress-file recording requirement and the warn-and-continue contract otherwise stand)
 - **Platform, shell, encoding and file placement** — cross-platform behaviour and where files go.  
-  INV-052, INV-061, INV-066, INV-108, INV-166, INV-167, INV-168, INV-175, INV-185, INV-188, INV-189, INV-199, INV-200
+  INV-052, INV-061, INV-066, INV-108, INV-166, INV-167, INV-168, INV-175, INV-185, INV-188, INV-189, INV-199, INV-200, INV-218
 - **Security and privacy** — the one consented PII path, and what must never be written.  
   INV-109, INV-135
 - **Feedback capture** — how bootcamper feedback is recorded so it can be triaged later.  
@@ -318,6 +318,8 @@ need them.
 - **INV-NNN** — <single testable MUST/ALWAYS condition.> (Source: `<spec-name>`, YYYY-MM-DD.)
 
 -->
+
+- **INV-218** — A step that **installs or updates software** MUST verify the installed **artifact on the filesystem** rather than the installer's exit status: a zero exit, printed install paths, or a "success" line are necessary and insufficient, because a package manager can purge a download and still print its caveats block listing paths it never wrote. The artifact probed MUST be named for the Bootcamper's platform, and where it cannot be probed the outcome is reported as **undetermined** (INV-163), never as installed. ⛔ INV-129 governs the parallel rule for rendered **deliverables** (PDF, PNG, HTML) and does not reach an install; the two are siblings, not one rule. (Source: `install-verification-has-no-invariant-so-inv129-is-borrowed`, 2026-08-13.)
 
 - **INV-217** — An absence claim recorded in `specs/DECLINED.md` — in a `Revisit if:` clause or a dated revisit note — MUST carry a parseable `MCP-NEGATIVE` marker in INV-209's form, `owner:` clause included, and `specs/DECLINED.md` MUST stay inside `coverage_reports.py`'s negatives scan surface while the rest of `specs/` stays out. ⛔ **This file is the one Senzing claim in the repo with no re-verification path:** a declined spec is never implemented, so `implement-spec` Step 3.3 never re-asks its facts, while INV-216 directs the next reader to trust this file OVER the spec's own citations — so a stale negative here sends the revisit check to the wrong answer while looking evidenced. Prose that QUOTES a retracted claim is exempt and MUST declare it with `MCP-NEGATIVE-SCAN: quoted-history`, so a correction can restate what it corrects. (Source: `declined-ledger-negatives-are-invisible-to-the-scanner`, 2026-08-13.)
 

@@ -70,17 +70,41 @@ Run a language-appropriate import/version check for the bootcamper's chosen lang
 `sdk_guide(topic='install', platform='<user_platform>', language='<chosen_language>', version='current')`
 to get the correct verification command.
 
-**Filesystem fallback (if the import check fails):** When the language import check does not
-succeed (e.g., `PYTHONPATH` is not configured or the package manager query finds nothing),
-check for these sentinel files before concluding the SDK is not installed:
+**Filesystem fallback (if the import check fails):** The import check fails for reasons that have
+nothing to do with the SDK being absent — `PYTHONPATH` unset on Linux, `DYLD_LIBRARY_PATH` not
+exported before the JVM starts on macOS, `CLASSPATH` unset on Windows — so before concluding
+anything, check for the **platform's native library**. That is the artifact which must exist for the
+SDK to work, and it is what `sdk_guide` names for each platform (**INV-001**: all three are
+supported, so all three are listed):
 
-- `/opt/senzing/er/lib/libSz.so` (native shared library)
-- `/opt/senzing/er/szBuildVersion.json` (build version metadata)
+| Platform | Native library — verify this exists |
+|---|---|
+| `linux_apt`, `linux_yum` | `/opt/senzing/er/lib/libSz.so` |
+| `macos_arm` | `$(brew --prefix)/opt/senzing/er/lib/libSz.dylib` (never a hardcoded `/opt/homebrew`) |
+| `windows` | `%SENZING_DIR%\lib\Sz.dll` — `SENZING_DIR` already points at the `er` subdirectory |
+| `docker` | Not applicable — there is no host install to probe; the image tag is the version |
 
-Both sentinel files must be present to conclude the SDK is installed via filesystem detection.
-If both exist, read the version from `/opt/senzing/er/szBuildVersion.json`, report the SDK as
-installed, skip Steps 2 and 3 entirely, and proceed to Step 4 verification. If only one file
-or neither is found, proceed with the "SDK not found" path (Step 2).
+(Each path as `sdk_guide(topic='install', platform=…)` gives it under `post_install`/`env_vars`,
+verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
+
+If the library is present, report the SDK as installed, skip Steps 2 and 3 entirely, and proceed to
+Step 4 verification.
+
+⛔ **Only conclude "not installed" for a platform whose library you actually checked.** If the
+platform is undetermined, or the check could not run, the result is **unknown** — say so and name
+why (INV-163), then treat it as unknown rather than reporting an absent SDK. Concluding "not
+installed" from a path that cannot exist on this platform is how a Bootcamper with a working install
+gets sent to reinstall it, which is exactly what this step opens by forbidding.
+
+**Reading the version once the library is found:** use the primary route — the language version
+check, or `SzProduct.get_version()`, which returns `VERSION`, `BUILD_DATE`, `BUILD_NUMBER` and
+`NATIVE_API_VERSION` (`search_docs`, server 1.32.9, 2026-08-13). Failing that, build metadata sits
+in `szBuildVersion.json`: on Linux under `/opt/senzing/er/` (and also `/opt/senzing/data/`), and on
+Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "Comparing the two
+versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
+observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
+version through the SDK rather than concluding the SDK is missing.
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.32.9, 2026-08-13 -->
 
 **If the SDK is found and version is V4.0+:**
 
@@ -194,7 +218,7 @@ brew info --cask senzingsdk        # installed and latest versions
 brew upgrade --cask senzingsdk     # takes the newest available
 ```
 
-⛔ **A ZERO EXIT CODE FROM `brew` DOES NOT MEAN IT INSTALLED.** If the EULA variable's name or
+⛔ **A ZERO EXIT CODE FROM `brew` DOES NOT MEAN IT INSTALLED** (INV-218). If the EULA variable's name or
 value is wrong the cask prints "No interactive terminal detected", purges the download, then
 **still prints its Caveats block listing install paths** — so it reads as success while installing
 nothing. After any macOS update, probe the artifact:
@@ -284,7 +308,7 @@ verification below is required rather than advisory.
 ### After updating
 
 1. **Re-run Step 4** (verify installation). It is already a required stop; route through it.
-2. **Probe the platform artifact** as shown above — exit 0 is not evidence (INV-129).
+2. **Probe the platform artifact** as shown above — exit 0 is not evidence (INV-218).
 3. **If verification fails**, say so plainly, **name the version that was working**, and do
    **not** mark Module 2 complete. Reinstalling the previous version is the fallback; on apt its
    exact `.deb` is still addressable by filename.

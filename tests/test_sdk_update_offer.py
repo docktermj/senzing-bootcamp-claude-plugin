@@ -344,9 +344,19 @@ class TheSilentFailureModesAreGuarded(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)An update is an install")
 
     def test_verification_after_update_is_mandatory(self):
+        """⚠️ Cites INV-218, not INV-129 (corrected 2026-08-13).
+
+        This asserted `INV-129` until an audit read what that invariant actually says: its subject
+        is a rendered **deliverable** — "PDF, PNG, HTML artifact" — with remedies like "rasterize
+        the page, open the image". An SDK install is none of those, so the citation sent a reader to
+        a rule about PDFs. INV-218 registers the install case and names INV-129 as the sibling it is
+        distinguished from. Pinning the wrong ID here is what kept the wrong citation alive, so the
+        pair is now also guarded directly by
+        `tests/test_install_verification_citation.py`.
+        """
         self.assertRegex(self.flat, r"(?i)Re-run Step 4")
         self.assertRegex(self.flat, r"(?i)exit 0 is not evidence")
-        self.assertIn("INV-129", self.section)
+        self.assertIn("INV-218", self.section)
 
     def test_a_failed_update_names_the_working_version(self):
         self.assertRegex(self.flat, r"(?i)name\*?\*? the version that was working")

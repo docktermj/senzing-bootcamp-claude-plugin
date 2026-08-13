@@ -84,6 +84,7 @@ as they later became, and two rows had gone stale under them. Rows whose value c
 | Skill | Workload | Best value | Rationale |
 |---|---|:---:|---|
 | `bootcamp-onboarding` | Gated preface, exact-wording gates, preference capture | Sonnet 5, medium | Protocol adherence needs adaptive thinking + strong instruction-following; no heavy code → Opus overkill, Haiku risky |
+| `bootcamp-preparation` | Setup preferences: verbosity, language, Core-vs-Customized path, module selection | Sonnet 5, medium | Same workload class as onboarding — pinned questions and recorded answers, no code. The choices steer every later module, so instruction-following matters more than raw capability |
 | `module-00-entity-resolution-concepts` | Concepts teaching, Q&A, knowledge check | Sonnet 5, medium | Conversational teaching, no code |
 | `module-01-business-problem` | Discovery conversation, document the problem | Sonnet 5, medium | Conversation-led, light technical |
 | `module-02-sdk-setup` | Cross-platform install, license/engine/DB config, build-from-source recovery | Opus 5, high | Largest skill, most error-prone, platform-specific; install/config errors are high-cost |
