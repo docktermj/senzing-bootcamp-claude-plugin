@@ -42,7 +42,7 @@ steering files.)
   question, never after it. Two reasons, and the first is mechanical: nothing may follow the
   👉, because it ends the turn — so text placed after it is either not delivered or delivered
   a turn late. The second is that a caveat arriving *after* the answer cannot inform the
-  choice it exists to inform, which is the whole point of it. This binds the **skill files
+  choice it exists to inform, which is the whole point of it (INV-211). This binds the **skill files
   too**, not only the output: an instruction written below a pinned question, telling you to
   say something the bootcamper needs in order to answer, is misplaced in the file and must be
   read as belonging before it. The numbered choices that are part of the question, and

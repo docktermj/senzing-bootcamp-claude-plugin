@@ -36,7 +36,7 @@ from Phase 2 unchanged; checkpoint to `config/mapping_state_[datasource].json` a
 ### 21a. Register the data source code (before the test load)
 
 Before the step 22 test load, ensure the source's `DATA_SOURCE` code is registered in the Senzing
-engine config, so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
+engine config (INV-089), so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
 the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
 `DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
 registers the code as part of loading, this is already satisfied; otherwise generate the

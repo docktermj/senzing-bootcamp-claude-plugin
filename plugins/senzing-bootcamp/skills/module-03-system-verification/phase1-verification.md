@@ -329,7 +329,7 @@ all build commands.
 ### Step 5a: Register the Synthetic Data Source Code
 
 Register the synthetic verification data's source code(s) in the Senzing configuration
-**before** loading, so Step 6 does not fail with `SENZ2207: Data source code [...] does not
+**before** loading (INV-083), so Step 6 does not fail with `SENZ2207: Data source code [...] does not
 exist`. The default config seeded in Module 2 has no data sources registered, yet
 the load below references the code(s) the Step 2 records carry, which must exist
 first — so without this step every Module 3 run hits SENZ2207 on the first load attempt.

@@ -87,7 +87,7 @@ compliant attribute names.)
   match the Entity Specification. CORD sources (the already-Senzing-ready fast-path class) are
   **eligible to be considered** for the fast-path (Step 5a, offered only for `provenance: cord`);
   Step 5a decides, and it offers the skip only when the source is both structurally loadable
-  **and** fully mapped — a CORD source carrying fields that resolve to no specification attribute
+  **and** fully mapped (INV-198) — a CORD source carrying fields that resolve to no specification attribute
   goes through mapping like any other. Do not route a source past mapping from this
   categorization; that is Step 5a's call. Other compliant sources, including non-CORD data that
   looks Senzing-ready, continue to Phase 2, which confirms compliance and records lineage before

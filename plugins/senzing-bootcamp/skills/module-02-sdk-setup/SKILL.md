@@ -756,7 +756,7 @@ troubleshooting.
 >
 > <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.32.9, 2026-08-13 -->
 > ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
-> it — do not go looking for it anywhere else.** It appears in the `compatibility_notes` of
+> it — do not go looking for it anywhere else.** (INV-208) It appears in the `compatibility_notes` of
 > `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
 > bootcamper with a license should "place the license file at the path specified by
 > `SENZING_LICENSE_FILE` or in the `etc/` directory". Verified on server **1.32.9, 2026-08-13**, for

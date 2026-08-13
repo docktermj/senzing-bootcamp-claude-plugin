@@ -30,7 +30,7 @@ actions.
 
 Bootcamp graduation is the terminal bookend module. Like every module it opens with the module-start
 apparatus — journey map, before/after framing, a step overview, and an estimated time — adapted to
-a terminal module (see "Bootcamp graduation preface" below), then the model/effort nudge. Because no
+a terminal module (INV-102; see "Bootcamp graduation preface" below), then the model/effort nudge. Because no
 next-module transition applies, it shows no `✅ Module complete` line and no transition question,
 and it ends on the terminal END OF SENZING BOOTCAMP banner (INV-057). (Bootcamp graduation is NOT
 apparatus-exempt — contrast the exemptions for Bootcamp preparation (INV-075) and Module 0
@@ -152,6 +152,7 @@ Gather context before any step. Do this silently.
    answered: SDK setup says so in its own words — *"a different key name is the same failure as no
    key at all"*. Until 2026-07-29 this step read `language`, `database` and `data_sources`, which
    nothing has ever written, so every consumer below silently got nothing.
+
    **1a — what the Module 1 answers are for (INV-097).** `integration_targets` and
    `deployment_target`/`cloud_provider` are the bootcamper's own answers to two pinned 👉 questions
    asked in Module 1 Phase 2 Step 10a — what the resolved results must talk to, and where this is
@@ -213,7 +214,7 @@ Gather context before any step. Do this silently.
 
    1. As `name` in `config/bootcamp_preferences.yaml`, so a re-render or a resumed session never
       asks again (INV-006). The generator reads this **first** for the certificate — it is the
-      Bootcamper's answer, and it outranks anything detected earlier.
+      Bootcamper's answer, and it outranks anything detected earlier (INV-170).
    2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, which Bootcamp
       preparation wrote at the **start** of the run from the auto-detected value. Leaving it means
       the recap a reader opens still shows the rejected handle, and any re-render driven from the
@@ -716,7 +717,7 @@ does not exist; on a copy failure, log and continue):
 | `requirements.txt` / `pom.xml` / `Cargo.toml` / `package.json` / `*.csproj` | `production/` | Dependency manifest |
 
 ⛔ **Every destination above keeps the source's path relative to the project root, and
-`data/senzing-ready/` in particular.** The code in `src/load/**` is copied **verbatim** and reads its
+`data/senzing-ready/` in particular.** (INV-186) The code in `src/load/**` is copied **verbatim** and reads its
 input from `data/senzing-ready/` (INV-084 — `../module-06-data-processing/phaseA-build-loading.md`
 step "Mapped sources"), so flattening the data to `production/data/` hands the bootcamper a project
 whose loader points at a directory that does not exist. Copy the tree, do not rewrite the code: the
@@ -734,7 +735,7 @@ fast-pathed source loads straight from `data/raw/` with no mapping (INV-040/INV-
 arrives in `production/` with no input file — deliberately, since raw source data is the
 bootcamper's to place, not graduation's to copy. Name each such source in the Step 5 graduation
 report's **files-excluded** table and in `production/README.md` → Configuration, saying where its
-input has to be supplied. An excluded input the handover never mentions is indistinguishable from a
+input has to be supplied (INV-187). An excluded input the handover never mentions is indistinguishable from a
 broken project.
 
 Present a short, one-line statement of what was copied, what was excluded, and the directories
@@ -748,7 +749,7 @@ pre-checks. Use placeholder values only, never real secrets:
 
 - **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `SENZING_LICENSE_FILE`, `DATABASE_URL`,
   `LOG_LEVEL` with safe example values and comments. ⛔ **The license variable is
-  `SENZING_LICENSE_FILE`, never `SENZING_LICENSE_PATH`** — the latter is a confabulation that shipped
+  `SENZING_LICENSE_FILE`, never `SENZING_LICENSE_PATH`** (INV-208) — the latter is a confabulation that shipped
   here for a time and no MCP tool returns it. The correct spelling comes from
   `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, whose
   `compatibility_notes` name it; confirm it there this session rather than from memory (INV-080),

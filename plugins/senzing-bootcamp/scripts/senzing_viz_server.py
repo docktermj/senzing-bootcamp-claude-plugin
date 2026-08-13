@@ -1734,7 +1734,7 @@ def resolve_settings(path, env_value, log):
     Returns `problem` as a ready-to-write message when neither source is usable; otherwise
     `problem` is None and `source` describes what won, for the caller to report.
 
-    ⛔ Precedence is content-aware on purpose. The previous implementation was
+    ⛔ Precedence is content-aware on purpose (INV-210). The previous implementation was
     `if os.path.exists(path)` — existence-based — so a `{"PIPELINE": {}}` stub silently beat
     a fully populated env var, and the run then failed deep in the engine with `SENZ7426`,
     an error whose documented meaning ("check SUPPORTPATH first; this is a configuration

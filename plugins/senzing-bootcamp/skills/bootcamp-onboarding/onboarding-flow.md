@@ -39,7 +39,8 @@ record in the recap.
 Confirm the Senzing MCP server is reachable before starting. It is required: it generates SDK
 code in the chosen language, looks up Senzing facts, and provides working examples.
 
-- **Probe:** call `get_capabilities` (about a 10-second timeout). This is the call
+- **Probe:** call `get_capabilities` (about a 10-second timeout) — never a content-returning
+  tool (INV-204). This is the call
   `ground-rules.md` → "Session start" already requires once before any other Senzing MCP call, so
   it doubles as the reachability probe and the preface makes **one** MCP call here, not two. Its
   response is also the tool manifest the guide needs anyway.
@@ -156,7 +157,10 @@ file.
   your place — the note is saved under `docs/feedback/`, then the bootcamp question you were on
   comes straight back and we carry on. No need to save it for the end.
 
-**The feedback-trigger bullet is verbosity-aware, exactly like the version line above**
+**The feedback-trigger bullet above is required here** (INV-196: the trigger phrase is named in
+bootcamper-facing text before the first content module, as a statement and never a 👉 question,
+and it says that using it costs them nothing), **and it is verbosity-aware, exactly like the
+version line above**
 (INV-011/INV-012 — the treatment INV-096 gives the time estimate): under `minimal`, suppress it;
 under `concise`, one line ("Say \"bootcamp feedback:\" any time — it is captured and you keep your
 place."); otherwise the full bullet. ⛔ Same caveat as the version line: on a **fresh** bootcamp no
