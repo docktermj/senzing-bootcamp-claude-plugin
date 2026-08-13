@@ -155,6 +155,63 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
                     "owner clause is present but empty",
                 )
 
+    def test_the_pattern_itself_rejects_a_marker_with_no_owner_clause(self):
+        """Unit-test the regex, not the repo's current contents.
+
+        Asserting `find_malformed_negatives(REPO) == []` is satisfied by a repo whose markers
+        all happen to be well-formed — so it cannot notice the pattern being loosened. Caught
+        by negative control: making `owner:` optional in `MCP_NEGATIVE` left the suite green,
+        because nothing in the tree was missing its clause at the time. The next marker
+        written would then slip through silently.
+        """
+        stamp = "— server 1.32.9, 2026-08-13"
+        well_formed = ("MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list "
+                       "— owner: get_capabilities carries it " + stamp)
+        clauseless = "MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list " + stamp
+        self.assertIsNotNone(
+            reports.MCP_NEGATIVE.search(well_formed),
+            "the pattern must still accept a well-formed marker (positive control)",
+        )
+        self.assertIsNone(
+            reports.MCP_NEGATIVE.search(clauseless),
+            "the pattern must REJECT a marker with no `owner:` clause. If it matches, a "
+            "clauseless marker is accepted as well-formed and the ownership evidence INV-209 "
+            "requires is never recorded.",
+        )
+
+    def test_the_malformed_detector_actually_detects(self):
+        """A detector that always returns [] satisfies the no-malformed assertion trivially.
+
+        Caught by negative control: stubbing `find_malformed_negatives` to `return []` left
+        the suite green, because the only other check on it compares against the live repo,
+        where the correct answer *is* empty. So exercise it against a scratch tree.
+        """
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "specs").mkdir()                    # find_* expects a repo shape
+            (root / "plugins").mkdir()
+            stamp = "— server 1.32.9, 2026-08-13"
+            (root / "plugins" / "bad.md").write_text(
+                "MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list " + stamp,
+                encoding="utf-8",
+            )
+            (root / "plugins" / "good.md").write_text(
+                "MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list "
+                "— owner: get_capabilities carries it " + stamp,
+                encoding="utf-8",
+            )
+            malformed = reports.find_malformed_negatives(str(root))
+            parsed = reports.find_negatives(str(root))
+            self.assertEqual(
+                ["bad.md"], [Path(r[0]).name for r in malformed],
+                "the clauseless marker must be reported as malformed; got %r" % (malformed,),
+            )
+            self.assertEqual(
+                ["good.md"], [Path(r[5]).name for r in parsed],
+                "only the well-formed marker belongs on the worklist; got %r" % (parsed,),
+            )
+
     def test_markers_are_ordered_oldest_server_first(self):
         """The oldest is the one most likely to have moved — it must lead the worklist."""
         keys = [row[0] for row in reports.find_negatives(str(REPO_ROOT))]
