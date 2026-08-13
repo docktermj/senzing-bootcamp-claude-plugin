@@ -47,8 +47,9 @@ code in the chosen language, looks up Senzing facts, and provides working exampl
     `search_docs(query="health check")`", which it is not: that query returns a multi-page FAQ
     article (~5 KB) for a question that only needed "did the server answer at all".
 - **Success** (any response, even empty results): proceed silently.
-- **Failure** (timeout or error): display a blocking message and STOP. Do not proceed until the
-  bootcamper fixes the connection and says "retry":
+- **Failure** (timeout or error): display a blocking message and STOP. ⛔ **Two different blockers
+  produce this same symptom, and only one of them is a network problem** — so separate them before
+  giving advice. Present the message, then end the turn on the single 👉 question below.
 
   ```text
   The Senzing MCP server is unreachable.
@@ -61,9 +62,70 @@ code in the chosen language, looks up Senzing facts, and provides working exampl
   2. Confirm the "senzing" MCP server is configured and enabled in Claude Code
      (it ships with this plugin's .mcp.json, pointing at https://mcp.senzing.com/mcp).
   3. If behind a corporate proxy, allowlist mcp.senzing.com.
-
-  After fixing the connection, say "retry".
   ```
+
+  👉 **Are you allowed to add an external MCP server on this machine? (respond yes or no)**
+
+  - **Yes**, or an unsure answer → treat it as a **connectivity** failure: the troubleshooting above
+    is the right advice. Ask them to fix it and say "retry", and wait.
+  - **No** — "my employer blocks that", "security policy" → it is a **policy** failure, which no
+    amount of proxy configuration fixes. Go to step 0c.
+
+## 0c. Blocked by policy rather than by the network
+
+At many companies, adding a new external MCP server is restricted or prohibited outright. A
+bootcamper in that position did everything right, and network troubleshooting is the wrong answer to
+give them. Say so plainly, then give them the only thing that helps: what to ask for, and who to ask.
+
+⛔ **Name only what the server documents *now*, and attribute it** (INV-080). At server **1.32.9,
+2026-08-13**, `get_capabilities`' tool manifest — inside its `get_sample_data` entry — names a
+**private deployment** as a supported configuration: *"For full record access, call the MCP server
+endpoint directly (https://mcp.senzing.com/mcp) or use the private deployment."* That is the route to
+ask about. The same manifest notes the server *"hosts official Senzing SDK .deb packages at
+/downloads/ … eliminating the need to configure apt/yum repositories in firewalled environments"* —
+relevant to restricted **egress**, but be precise with the bootcamper: it addresses package
+*download*, not MCP access, so on its own it does not clear this blocker.
+
+⛔ **The plugin cannot supply or configure a private deployment, and must not imply it can.**
+`search_docs` returns no documentation for obtaining or running one, re-verified on the current corpus
+(**index_built 2026-08-11, 14,240 documents**) two ways: by keyword query, and by asking the document
+that owns the subject — `senzing.com/docs/agentic`, the MCP server's own page, which describes what
+the server *is* and carries no setup or self-hosting content. So the honest message is "this
+configuration exists, here is who to ask", never invented setup steps.
+<!-- MCP-NEGATIVE: search_docs — no documentation for obtaining or running a private MCP deployment — owner: search_docs(query='Agentic Entity Resolution MCP server configuration setup connect assistant') reaches senzing.com/docs/agentic, the MCP server's own page in the corpus, which returns an overview only and no setup content — server 1.32.9, 2026-08-13 -->
+
+⚠️ **A second route was named at server 1.32.3 and is NOT named at 1.32.9 — do not cite it.** At
+1.32.3 `sdk_guide`'s description described a **stdio mode** whose package URL was a local
+`sz-mcp-coworker extract` command. At 1.32.9 neither "stdio" nor `sz-mcp-coworker` appears in that
+description or anywhere in the `get_capabilities` manifest. Whether the mode was retired or the text
+merely trimmed cannot be told from here, so it MUST NOT be offered as an available route: a fact the
+server no longer states is not a fact the plugin may assert (INV-080). Re-check on a later server, and
+if it returns, add it here with its attribution.
+<!-- MCP-NEGATIVE: sdk_guide(description) — no longer names a stdio mode or the sz-mcp-coworker binary, which it did at 1.32.3 — owner: sdk_guide's own description is where that claim lived, and get_capabilities' manifest entry for the tool agrees it is absent — server 1.32.9, 2026-08-13 -->
+
+Tell the bootcamper, in your own words:
+
+- This is a policy restriction, not something wrong with their machine or their setup — and not
+  something they did.
+- A **private deployment** of the Senzing MCP server is a configuration Senzing recognises, and it may
+  satisfy a policy that forbids adding a public external endpoint. Attribute it: it comes from the MCP
+  server's own tool manifest, read this session.
+- The plugin cannot set one up, and Senzing's indexed documentation does not currently cover how to
+  obtain one — so the next step is a person: their **Senzing contact**, or **support@senzing.com**.
+- ⛔ **Never offer to continue without the server.** Every Senzing fact in this bootcamp comes from it
+  (INV-080); there is no offline mode, and a bootcamp answering Senzing questions from training data
+  is worse than one that does not start. Saying this plainly respects their time.
+
+⚠️ **Do not present a private deployment as verified to satisfy any particular policy.** Whether a
+given configuration is permitted is their organisation's decision, not a fact the plugin can assert.
+Offer it as the thing to ask about.
+
+Then end the turn on this single 👉 question and wait:
+
+👉 **Would you like me to stop here so you can follow that up? (respond yes or no)**
+
+- **Yes** → acknowledge what they are following up, and stop. Do not loop.
+- **No**, or "let me try something first" → return to 0b's troubleshooting and wait for "retry".
 
 ## 1. Project setup
 
