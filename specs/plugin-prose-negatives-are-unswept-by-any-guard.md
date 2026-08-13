@@ -101,3 +101,48 @@ is evadable by paraphrase. Say so in the guard, as `tests/test_declined_ledger.p
   `declined-ledger-negatives-are-invisible-to-the-scanner` (INV-217, the same hole closed for one
   file), `guards-pinning-a-dated-negative-outlive-it`, INV-209 (marker form), INV-108 (offline
   suite), INV-192 (the sentence that must not trigger).
+
+## Deviations from this spec, and why (2026-08-13)
+
+Two deviations, and the first changed what shipped.
+
+1. ⛔ **It shipped as a REPORT, not a test — criteria 1 and 2 are not met as written.** The spec
+   asked for "a test asserts that every line … carries a marker", negative-controlled. Building the
+   detector and measuring it against the real corpus showed why that cannot ship yet: **the
+   population is 6, not the 4 this spec assumed.** The four in `module-02` Step 1b were the ones the
+   2026-08-13 sweep happened to read; `search_docs`/`generate_scaffold` claims at `:316`, `:728`,
+   `:748`, `:802` and `phase1-verification.md:206` were never seen. A gating test therefore could not
+   go green without either marking six claims — each of which needs its owning route **re-asked**
+   before a stamp can honestly be written on it (INV-080), and two of which are 1.32.2 and may have
+   *changed* — or excluding them, which is the silent cap this repo has learned to refuse.
+
+   So the mechanism landed as `coverage_reports.py unmarked`, in the same shape and for the same
+   stated reason as `invariants` and `affected`: read-only, exit 0, judgement required. The six are
+   its **named output**, and the verify-and-mark work is
+   `specs/verify-and-mark-the-six-unmarked-prose-negatives.md`. **The gate remains unbuilt and is not
+   claimed** — it becomes worth building once the report reads zero, at which point a regression is
+   the only thing it can catch.
+
+   Chosen by the maintainer on 2026-08-13 from three options (verify all six now; ship the report and
+   follow up; pause this spec for another).
+
+2. **The detector was tuned by measurement, and two decisions are pinned that the spec did not
+   anticipate.** The spec proposed "tool + absence + date" on a *line*. Both parts needed correcting:
+   - **Line-level detection cannot work.** A claim's tool name and its date routinely sit on
+     different lines — `module-02`'s fence comments put the tool on one comment line and the date on
+     the next. Units are per fenced block, per bullet, and per paragraph.
+   - **Per-bullet granularity is load-bearing.** A contiguous bullet list read as one unit produced a
+     false positive on `ground-rules.md`'s tool-routing list, where a tool name, an absence phrase
+     and a date sat in three *different* bullets. Same correction `tests/test_declined_ledger.py`
+     needed (per-bullet, not per-entry).
+   - **A bare `never` is 15 of 23 hits** — "never from training data", "never `exit 1`", "never
+     re-read". Excluded; measured 23 → 8 → 6 after granularity.
+
+   All five decisions are pinned by scratch-tree tests and **negative-controlled**: re-adding bare
+   `never`, dropping the date requirement, disabling per-bullet units, ignoring nearby markers, and
+   opening the scan beyond `plugins/` each fail the suite (1, 4, 1, 1 and 45 failures respectively),
+   every mutation verified to land.
+
+Criterion 3 (INV-192's "empty by design" must not trigger) **is** met, and is now a pinned
+non-trigger test rather than an incidental property — it was the design constraint that produced the
+date discriminator.

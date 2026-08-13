@@ -47,12 +47,34 @@ is not buried under legitimate entries:
     as authority and never re-asked. Adding that one file does not open the rest of
     ``specs/``.
 
-All three are read-only, stdlib-only, and platform-independent (INV-052/INV-108). Run from
+``unmarked``
+    The complement of ``negatives``: dated absence claims in **shipped plugin prose** that carry
+    no marker. ``negatives`` can only list what is already tagged, so an unmarked negative is
+    invisible to it by construction — and nothing else looks either.
+    ``tests/test_dated_negatives_are_marked.py`` scans ``tests/*.py`` assertion lines, and
+    INV-217 covers ``specs/DECLINED.md``; shipped prose, the largest surface, was unswept until
+    2026-08-13.
+
+    **The date is the discriminator.** A unit is reported only when it carries an MCP tool name
+    *and* absence vocabulary *and* a date or server version. Prose that explains how a tool
+    behaves without dating it is not a re-checkable claim — INV-192's rule contains the sentence
+    "the payload of a gate is empty by design, not because the topic is undocumented", which is
+    true, must never require a marker, and carries no date. Every defect found on 2026-08-13 was
+    dated.
+
+    ⚠️ **A report, not a gate, and deliberately so.** Deciding whether a hit is a live claim or
+    prose about tool behaviour needs judgement, which is the same reason ``invariants`` and
+    ``affected`` are reports. The absence vocabulary is also a phrase list, so it is evadable by
+    paraphrase: a miss is weak evidence. The marker is the durable route; this finds the ones
+    nobody marked.
+
+All four are read-only, stdlib-only, and platform-independent (INV-052/INV-108). Run from
 the repo root, or pass ``--repo``:
 
     python3 .claude/skills/dry-run/coverage_reports.py invariants
     python3 .claude/skills/dry-run/coverage_reports.py affected
     python3 .claude/skills/dry-run/coverage_reports.py negatives
+    python3 .claude/skills/dry-run/coverage_reports.py unmarked
     python3 .claude/skills/dry-run/coverage_reports.py both
 
 Exit status is 0 whatever the findings — these inform an audit, they do not gate one.
@@ -111,6 +133,41 @@ NEGATIVE_ROOTS = ("plugins", "tests", os.path.join(".claude", "skills"), "docs")
 #: looking evidenced — which is what happened on 2026-08-13 (`specs/DECLINED.md`'s
 #: `no-route-for-bootcampers-who-cannot-add-an-mcp-server` note).
 NEGATIVE_EXTRA_FILES = (os.path.join("specs", "DECLINED.md"),)
+#: Where shipped prose lives, for the `unmarked` report. Only the plugin: a spec or a test may
+#: discuss an absence freely, and both have their own mechanisms (Step 3.3, INV-217, the
+#: assertion-line guard).
+PROSE_ROOT = os.path.join("plugins", "senzing-bootcamp")
+#: The 13 MCP tools. Restated here rather than imported from a test, because this script is the
+#: dependency and not the dependent — `tests/test_declined_ledger.py` imports its grammar FROM here.
+MCP_TOOLS = (
+    "explain_error_code", "search_docs", "sdk_guide", "get_sdk_reference", "reporting_guide",
+    "generate_scaffold", "get_sample_data", "find_examples", "mapping_workflow",
+    "analyze_record", "get_capabilities", "download_resource", "submit_feedback",
+)
+PROSE_TOOL = re.compile(r"(?i)(%s)" % "|".join(MCP_TOOLS))
+#: Phrasings asserting a tool LACKS content. ⛔ Deliberately excludes a bare `never`: it matched
+#: "never from training data", "never `exit 1`" and "never re-read", which is 15 false positives on
+#: this corpus (measured 2026-08-13: 23 hits with it, 8 without). Only content-negatives here.
+PROSE_ABSENCE = re.compile(
+    r"(?i)documents? (?:neither|no\b)|returns? no\b|carr(?:y|ies) no\b|contains? no\b|has no\b|"
+    r"no indexed document|appears? nowhere|nowhere in|is not documented|not documented by|"
+    r"returns? only|only generic|makes no\b|never names|never documents|"
+    r"does (?:\*\*)?not(?:\*\*)? (?:name|document|carry|return|list|mention|cover|answer|contain)"
+)
+#: What turns prose about a tool into a CLAIM that can expire.
+PROSE_DATED = re.compile(r"\b20\d\d-\d\d-\d\d\b|\bserver\s+\d+\.\d+")
+#: Block-level escape for prose quoting a retracted claim (same token `implement-spec` documents).
+PROSE_QUOTED_HISTORY = "MCP-NEGATIVE-SCAN: quoted-history"
+#: Block-level escape for an absence that is NOT about a tool's content. The vocabulary cannot tell
+#: "the datastore has no default configuration" — a fact about the Bootcamper's environment — from
+#: "the declared schema has no `inline` parameter", and both must stay sayable: the second needs a
+#: marker and the first cannot have one, because there is no route to re-ask. Declaring it converts
+#: a judgement into a greppable, reviewable decision, which is the same reason `quoted-history`
+#: exists. Triaged 2026-08-13: exactly one site in the corpus (`module-02` Step 9's SENZ7221 bullet).
+PROSE_NOT_A_CLAIM = "MCP-NEGATIVE-SCAN: not-a-tool-claim"
+#: How far from a unit a marker may sit and still cover it. Markers are written as HTML comments
+#: immediately before or after the claim, and a fenced claim's marker sits outside the fence.
+PROSE_MARKER_WINDOW = 6
 SKIP_DIRS = {"__pycache__", "vendor", "node_modules", ".git", ".history", ".pytest_cache"}
 
 
@@ -246,6 +303,110 @@ def find_malformed_negatives(repo):
     return bad
 
 
+def _prose_units(text):
+    """[(first_lineno, unit_text)] — one unit per fenced block, per bullet, per paragraph.
+
+    Granularity is the whole game here. A contiguous bullet list read as ONE unit produced a false
+    positive on `ground-rules.md`'s tool-routing list: a tool name in one bullet, "returns no" in
+    another and a date in a third co-occurred without ever being a single claim. Same lesson as
+    `tests/test_declined_ledger.py`, which had to go per-bullet rather than per-entry.
+
+    A fenced block stays whole, because a claim there is routinely split across two comment lines —
+    the tool on one, the date on the next.
+    """
+    units, cur, start, fence = [], [], None, False
+
+    def flush():
+        if cur:
+            units.append((start, "\n".join(cur)))
+
+    for lineno, line in enumerate(text.split("\n"), 1):
+        if line.lstrip().startswith("```"):
+            if fence:                                   # closing
+                cur.append(line)
+                flush()
+                cur, start, fence = [], None, False
+            else:                                       # opening
+                flush()
+                cur, start, fence = [line], lineno, True
+            continue
+        if fence:
+            cur.append(line)
+            continue
+        if not line.strip():                            # blank line ends a unit
+            flush()
+            cur, start = [], None
+        elif re.match(r"^\s*(?:[-*+]|\d+\.)\s", line):  # a bullet starts its own unit
+            flush()
+            cur, start = [line], lineno
+        elif cur:
+            cur.append(line)                            # continuation
+        else:
+            cur, start = [line], lineno
+    flush()
+    return units
+
+
+def find_unmarked_negatives(repo):
+    """[(date, relpath, lineno, phrase, excerpt)] for dated tool-absence prose with no marker."""
+    base = os.path.join(repo, PROSE_ROOT)
+    found = []
+    for dirpath, dirnames, filenames in os.walk(base):
+        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
+        for name in sorted(filenames):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(dirpath, name)
+            text = _read(path)
+            if NEGATIVE_OPT_OUT in text:
+                continue
+            lines = text.split("\n")
+            for start, unit in _prose_units(text):
+                phrase = PROSE_ABSENCE.search(unit)
+                dated = PROSE_DATED.search(unit)
+                if not (phrase and dated and PROSE_TOOL.search(unit)):
+                    continue
+                # A marker or an escape covers the claim when it sits NEAR it, not only inside
+                # the same unit: both are written as HTML comments immediately before or after,
+                # which puts them in a different unit whenever the claim is a bullet or a fence.
+                lo = max(0, start - 1 - PROSE_MARKER_WINDOW)
+                hi = min(len(lines), start - 1 + len(unit.split("\n")) + PROSE_MARKER_WINDOW)
+                near = "\n".join(lines[lo:hi])
+                if PROSE_QUOTED_HISTORY in near or PROSE_NOT_A_CLAIM in near:
+                    continue                            # declared not-a-claim / quoted history
+                if MCP_NEGATIVE.search(near):
+                    continue                            # a marker already covers it
+                found.append((dated.group(0), os.path.relpath(path, repo), start,
+                              phrase.group(0), " ".join(unit.split())[:150]))
+    found.sort()                                        # oldest stamp first, like `negatives`
+    return found
+
+
+def report_unmarked(repo):
+    """Dated tool-absence prose carrying no marker — the complement of `negatives`."""
+    found = find_unmarked_negatives(repo)
+    print("== Dated tool-absence claims in shipped prose with NO marker ==")
+    print("`negatives` lists what is already tagged, so it cannot see these. Each is a claim")
+    print("that expires with no way to notice: the suite is offline (INV-108), and nothing")
+    print("re-asks an unmarked negative. Give each one a marker with its `owner:` clause — after")
+    print("re-asking the owning route, never by stamping today's date on an unverified claim.")
+    print()
+    print("⚠️ Judgement required, which is why this is a report. A hit may be prose ABOUT tool")
+    print("behaviour rather than a live claim. The date is what separates the two: undated prose")
+    print("is not re-checkable, so it is not reported. Vocabulary is a phrase list and evadable")
+    print("by paraphrase — a miss is weak evidence, a hit is worth reading.")
+    print()
+    if not found:
+        print("  (none — every dated tool-absence claim in shipped prose carries a marker)")
+        return found
+    print("unmarked: %d" % len(found))
+    print()
+    for stamp, relpath, lineno, phrase, excerpt in found:
+        print("  %-12s %s:%d   [%s]" % (stamp, relpath, lineno, phrase))
+        print("      %s" % excerpt)
+    return found
+
+
 def report_negatives(repo):
     """Dated 'this tool does not contain X' claims, oldest server version first."""
     found = find_negatives(repo)
@@ -290,7 +451,8 @@ def report_negatives(repo):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("report", choices=("invariants", "affected", "negatives", "both"))
+    ap.add_argument("report",
+                    choices=("invariants", "affected", "negatives", "unmarked", "both"))
     ap.add_argument("--repo", default=os.getcwd(),
                     help="repo root (default: current directory)")
     args = ap.parse_args(argv)
@@ -308,6 +470,10 @@ def main(argv=None):
         print()
     if args.report in ("negatives", "both"):
         report_negatives(repo)
+    if args.report == "both":
+        print()
+    if args.report in ("unmarked", "both"):
+        report_unmarked(repo)
     return 0
 
 

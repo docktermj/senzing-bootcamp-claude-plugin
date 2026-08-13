@@ -29,6 +29,7 @@ Three properties, one per way it could rot:
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
+import pathlib
 import re
 import subprocess
 import sys
@@ -210,6 +211,154 @@ class TestNegativesScanSurface(unittest.TestCase):
             "one in plugins/ is — that is the whole point of adding the file; got %r"
             % (malformed,),
         )
+
+
+class TestUnmarkedReport(unittest.TestCase):
+    """`unmarked` finds dated tool-absence prose that carries no marker.
+
+    It is the complement of `negatives`, which can only list what is already tagged. Every design
+    decision below was made by measuring against the real corpus on 2026-08-13, and each is pinned
+    here because the tuning is what makes the report readable:
+
+    * A bare `never` matched "never from training data", "never `exit 1`", "never re-read" — 23 hits
+      with it, 8 without. Excluded.
+    * A contiguous bullet list read as one unit produced a false positive on `ground-rules.md`'s
+      tool-routing list, where a tool name, an absence phrase and a date sat in three *different*
+      bullets. Units are per-bullet.
+    * A fenced block stays whole, because a claim there is routinely split across two comment
+      lines — the tool on one, the date on the next.
+    * The **date** is the discriminator: undated prose about tool behaviour is not a re-checkable
+      claim, so it is not reported.
+    """
+
+    def report(self, root):
+        return reports.find_unmarked_negatives(str(root))
+
+    def test_it_runs_from_an_unrelated_directory_and_exits_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code, out, err = run("unmarked", tmp)
+        self.assertEqual(0, code, "a report informs an audit; it never gates one. stderr:\n%s" % err)
+        self.assertIn("NO marker", out)
+
+    def test_the_live_corpus_is_clean(self):
+        """⚠️ Was `assertGreaterEqual(len(found), 1)` until 2026-08-13, and the change is the point.
+
+        The report was built with 6 live hits, so non-vacuity on the real corpus was then the
+        useful assertion. `verify-and-mark-the-six-unmarked-prose-negatives` re-asked all five
+        genuine claims against server 1.32.9, marked them, and triaged the sixth as not-a-tool-claim
+        — so the live count is now 0 and the old assertion would fail on a **clean** repo.
+
+        Rewritten rather than deleted: the expectation flipped, and the detector's non-vacuity is
+        now proven on scratch trees below, which is where it belonged all along. A live-corpus
+        count is a fact about today's corpus, not about whether the detector works.
+        """
+        found = self.report(REPO_ROOT)
+        self.assertEqual(
+            [], found,
+            "shipped prose carries a dated tool-absence claim with no marker. Re-ask its owning "
+            "route, then mark it — never stamp today's date on an unverified claim. If it is not "
+            "a claim about a tool's content, declare that with the not-a-tool-claim escape:\n  "
+            + "\n  ".join("%s:%d  %s" % (r[1], r[2], r[4]) for r in found),
+        )
+
+    def test_the_live_hits_carry_the_five_fields_the_report_prints(self):
+        for row in self.report(REPO_ROOT):
+            stamp, relpath, lineno, phrase, excerpt = row
+            with self.subTest(where="%s:%d" % (relpath, lineno)):
+                self.assertRegex(stamp, r"^(20\d\d-\d\d-\d\d|server \d)")
+                self.assertTrue(relpath.startswith("plugins"), "prose scan is plugin-only")
+                self.assertGreater(lineno, 0)
+                self.assertTrue(phrase.strip() and excerpt.strip())
+
+    def _tree(self, tmp, body):
+        root = pathlib.Path(tmp)
+        (root / "specs").mkdir(exist_ok=True)
+        d = root / "plugins" / "senzing-bootcamp" / "skills" / "m"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "SKILL.md").write_text(body, encoding="utf-8")
+        return root
+
+    def test_a_dated_absence_with_no_marker_is_reported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, "- `sdk_guide` returns no upgrade topic (verified 2026-07-31).\n")
+            self.assertEqual(1, len(self.report(root)))
+
+    def test_the_same_claim_with_a_marker_is_not_reported(self):
+        marker = ("<!-- MCP-NEGATIVE: sdk_guide(topic='install') — returns no upgrade topic "
+                  "— owner: sdk_guide is the route that would carry it — server 1.32.9, "
+                  "2026-08-13 -->")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(
+                tmp,
+                "- `sdk_guide` returns no upgrade topic (verified 2026-07-31).\n" + marker + "\n")
+            self.assertEqual([], self.report(root))
+
+    def test_an_undated_absence_is_not_reported(self):
+        """The discriminator. INV-192's 'empty by design' sentence must never need a marker."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "- A `needs_input` response is a gate, not an answer. Never report a topic as "
+                "having no guidance on the strength of a gated response: the payload of a gate "
+                "is empty by design, not because the topic is undocumented.\n"))
+            self.assertEqual([], self.report(root),
+                             "undated prose explaining how a tool behaves is not a claim that "
+                             "expires, and requiring a marker for it would push authors to "
+                             "weaken correct writing")
+
+    def test_signals_split_across_separate_bullets_are_not_one_claim(self):
+        """The `ground-rules.md` false positive, pinned so the granularity cannot regress."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "- Tool routing: SDK code -> `sdk_guide`; docs -> `search_docs`.\n"
+                "- Some other rule that returns no value here.\n"
+                "- Verified on 2026-07-31 against the live server.\n"))
+            self.assertEqual([], self.report(root))
+
+    def test_a_fenced_claim_split_across_two_comment_lines_is_one_unit(self):
+        """The module-02 shape: tool on one comment line, date on the next."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "```bash\n"
+                "# plugin-owned — sdk_guide documents no version-management command:\n"
+                "# never outdated or upgrade (checked across its whole response, 2026-08-13)\n"
+                "brew outdated --cask senzingsdk\n"
+                "```\n"))
+            self.assertEqual(1, len(self.report(root)),
+                             "a fence must be one unit, or a claim whose tool and date sit on "
+                             "different comment lines is invisible")
+
+    def test_quoted_history_is_exempt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "- It once said `sdk_guide` returns no upgrade topic (verified 2026-07-31).\n"
+                "  <!-- MCP-NEGATIVE-SCAN: quoted-history — retracted claim, kept verbatim -->\n"))
+            self.assertEqual([], self.report(root))
+
+    def test_the_file_level_opt_out_is_honoured(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "MCP-NEGATIVE-SCAN: ignore-file — fixtures below.\n\n"
+                "- `sdk_guide` returns no upgrade topic (verified 2026-07-31).\n"))
+            self.assertEqual([], self.report(root))
+
+    def test_a_bare_never_does_not_trigger_it(self):
+        """15 of 23 measured hits were this. Pinned so the vocabulary cannot be re-loosened."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = self._tree(tmp, (
+                "- ALL Senzing facts come from `search_docs` and friends, never from training "
+                "data. Re-assessed 2026-07-26.\n"))
+            self.assertEqual([], self.report(root))
+
+    def test_specs_and_tests_are_out_of_scope(self):
+        """They have their own mechanisms: Step 3.3, INV-217, and the assertion-line guard."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "specs").mkdir()
+            (root / "tests").mkdir()
+            claim = "- `sdk_guide` returns no upgrade topic (verified 2026-07-31).\n"
+            (root / "specs" / "a-spec.md").write_text(claim, encoding="utf-8")
+            (root / "tests" / "t.md").write_text(claim, encoding="utf-8")
+            self.assertEqual([], self.report(root))
 
 
 class TestAffectedReport(unittest.TestCase):

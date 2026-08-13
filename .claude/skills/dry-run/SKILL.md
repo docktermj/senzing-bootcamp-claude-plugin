@@ -68,6 +68,15 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    the offline suite can never notice going stale. Read-only, stdlib-only, exit 0
    whatever it finds. The `auto-test` skill can call it the same way.
 
+   `unmarked` is `negatives`' complement and the newer half of phase 1's worklist: dated
+   tool-absence claims in **shipped plugin prose that carry no marker**, which `negatives` cannot
+   see because it only lists what is already tagged. The **date** is the discriminator — undated
+   prose explaining how a tool behaves is not a re-checkable claim and is not reported. A hit needs
+   judgement (it may be prose *about* behaviour), which is why this reports rather than gates, and
+   the vocabulary is a phrase list, so a miss is weak evidence. ⛔ **Never mark one of these by
+   stamping today's date on it** — re-ask the owning route first; if the server has moved, the fix
+   is to correct the prose, not to certify it.
+
    `negatives` also reads **`specs/DECLINED.md`** — the only file under `specs/` it scans,
    added 2026-08-13. A spec body's Senzing facts are re-asked by `implement-spec` Step 3.3 on
    the way in, but a *declined* spec is never implemented, so a negative in a `Revisit if:`

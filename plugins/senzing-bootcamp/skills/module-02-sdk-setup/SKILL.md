@@ -180,7 +180,11 @@ MCP server. `get_capabilities` reports `senzing_version` as the string `"current
 `brew install --cask` and `scoop install`, never `brew upgrade --cask` or `scoop update` (checked
 across `install_commands`, `gotchas` and `post_install` for both, re-confirmed 2026-08-13). Only on
 apt and yum is the update command the same server-documented `install` command. That asymmetry is the
-same coverage gap reported upstream on 2026-07-31 — the server documents installing, not updating.
+same coverage gap reported upstream on 2026-08-13 — the server documents installing, not updating.
+<!-- Date corrected from 2026-07-31 on 2026-08-13: the earlier claim was unsubstantiated. A
+     feature request WAS sent on 2026-07-31, but for the stdio-mode / private-deployment route — a
+     different subject — and the two had been conflated, so 2026-08-13 is this gap's first report
+     rather than a duplicate. Full evidence chain in the maintainer's development record. -->
 <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.32.9, 2026-08-13 -->
 
 **Linux, apt (`linux_apt`):**
@@ -315,10 +319,11 @@ verification below is required rather than advisory.
 
 ⚠️ **Senzing documents no 4.x → 4.y update procedure.** `search_docs` returns only V3→V4 migration
 material (`sz_dbupgrade`, `sz_configupgrade`, `sz_configtool`), and `sdk_guide` has no `upgrade`
-topic (verified 2026-07-31). So whether a point release needs any schema or config step is
+topic (re-checked 2026-08-13). So whether a point release needs any schema or config step is
 **undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
 has a populated repository, mention that the update touches the SDK and not their data — then let
 them decide.
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.32.9, 2026-08-13 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -727,8 +732,9 @@ carry that expectation across.
 
 ⛔ **Never pass `inline=true` to `generate_scaffold`.** Its own `access_steps` step 3 advertises
 that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
-all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.2,
-2026-07-29). Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.9,
+2026-08-13).
+<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.32.9, 2026-08-13 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
 about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
 adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
 instead — that path is confirmed working.
@@ -748,6 +754,7 @@ troubleshooting.
 > **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
 > CONFIGPATH → the built-in evaluation license.
 >
+> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.32.9, 2026-08-13 -->
 > ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
 > it — do not go looking for it anywhere else.** It appears in the `compatibility_notes` of
 > `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
@@ -799,8 +806,9 @@ written into this skill on purpose.** The route that answers it is `sdk_guide` w
 sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
 ```
 
+<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.32.9, 2026-08-13 -->
 `search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
-EULA and pricing prose with no figure (checked 2026-07-26), which is why the tool is named here
+EULA and pricing prose with no figure (re-checked 2026-08-13), which is why the tool is named here
 rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
 seconds). If it returns no figure, drop the parenthetical entirely and say the current limit is
 unavailable from the MCP server. Never substitute a hardcoded or remembered figure — the published
@@ -1208,6 +1216,10 @@ call succeeds** (not merely a version query).
 ## Troubleshooting
 
 - Installation fails? Use `explain_error_code` for SENZ errors.
+<!-- MCP-NEGATIVE-SCAN: not-a-tool-claim — "the datastore has no default configuration" is a fact
+     about the Bootcamper's environment, not about an MCP tool's content, so it needs no marker. The
+     tool claims in this bullet are POSITIVE (explain_error_code returns the cause and the seeding
+     sequence) and are cited inline. Triaged 2026-08-13 from `coverage_reports.py unmarked`. -->
 - **`SENZ7221 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID`? The datastore has no default configuration —
   seed one per Step 8a.** Call `explain_error_code('SENZ7221')` first as always (INV-080) and
   **follow what it returns**: its first cause is the never-seeded datastore and its first resolution

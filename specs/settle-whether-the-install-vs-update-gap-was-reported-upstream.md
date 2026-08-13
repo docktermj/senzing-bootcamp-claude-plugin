@@ -108,3 +108,55 @@ gap. Filing again on the strength of a resolved discrepancy would be the third s
   discrepancy in its Source block), `no-route-for-bootcampers-who-cannot-add-an-mcp-server` (the
   decline documenting a different 2026-07-31 submission), INV-135 (never `license_request`),
   INV-163 (report what could not be determined).
+
+## Deviations from this spec, and why (2026-08-13)
+
+**Resolved, and the answer is the opposite of the one the spec leaned toward.** It framed a
+2026-07-31 submission as "plausible" and the duplicate as the likely finding. The evidence says the
+plugin was wrong and the ledger row was right, so the 2026-08-13 filing was this gap's **first**
+report.
+
+The chain, from repo evidence only (no `submit_feedback` call was made, as required):
+
+1. `git log -S` places the sentence in commit **`8ba1b5c`** (2026-07-31, *"split server-owned
+   commands from plugin-owned update checks"*). Its message documents a **provenance** fix and
+   records "No new invariant"; it says nothing about filing anything upstream.
+2. That commit's spec,
+   `separate-server-owned-commands-from-plugin-owned-update-checks.md:125-127`, states the gap "was
+   sent as a `feature` request on 2026-07-31 and **must not be re-filed**" and cites
+   `specs/offer-to-update-an-existing-senzing-install.md` as the evidence.
+3. **That spec says the opposite.** Its `Upstream` field (`:198-200`) reads: *"worth considering
+   separately — the absence of a documented 4.x→4.y update procedure is a genuine coverage gap, and
+   `sdk_guide` has no `upgrade` topic. **Not filed by this spec.**"*
+4. A `category='feature'` request **was** sent on 2026-07-31 — recorded in `specs/DECLINED.md:82`
+   for `no-route-for-bootcampers-who-cannot-add-an-mcp-server`, about the **stdio-mode / private
+   deployment** route. Different subject. The two appear to have been conflated, which is the
+   mechanism this spec's proposed change item 4 anticipated.
+
+So `module-02-sdk-setup/SKILL.md:159` was corrected (date → 2026-08-13) with the trail in an
+adjacent HTML comment, and the coverage-ledger row was re-recorded confirming its own earlier
+`not reported upstream` was right.
+
+Two departures from the plan:
+
+1. **The false claim's *source* was left untouched.**
+   `separate-server-owned-commands-from-plugin-owned-update-checks.md:125-127` still asserts the
+   2026-07-31 filing. Correcting spec content is `feedback-to-specs`' business and `implement-spec`
+   permits only two appends, so editing another spec's `Source` block was out of scope here. It is
+   named in the ledger entry so the next `feedback-to-specs` run can correct it; until then, the
+   shipped text and the coverage ledger are both right and only that spec's provenance note is
+   wrong.
+2. **A fourth guard pinning claim wording surfaced, and it happened to survive.**
+   `tests/test_sdk_update_offer.py:239` asserts `"same coverage gap reported upstream"` — the phrase
+   but **not** the date — so a date correction passes it. Had it pinned the date, correcting a false
+   provenance claim would have failed the suite. Recorded because the near-miss is the point:
+   `a-guard-must-not-pin-the-wording-of-a-claim-about-an-mcp-tool` counts three instances, and this
+   is a fourth site of the same shape that was saved by how narrowly it was written.
+
+3. **My first correction cited `specs/` paths in shipped text, and a guard caught it.**
+   `tests/test_any_language_contract_complete.py`'s `test_no_shipped_markdown_cites_an_excluded_path`
+   failed on four lines: `propagate.sh` mirrors only `plugins/`, `.claude-plugin/`, `docs/` and
+   `README.md`, so a bootcamper's copy has no `specs/` directory and every one of those references
+   would dangle. The trail was moved to the ledger entry and this note — where it always belonged —
+   and the shipped comment now states the correction and the conflation without naming a
+   maintainer-side path. The guard is right and was not weakened.

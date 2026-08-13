@@ -71,12 +71,22 @@ VERIFIED_QUERIES = {
     "temporary evaluation license for a dataset larger than the default limit":
         "ON TARGET: End User License Agreement (EULA) -> 'Senzing Non-Production License' "
         "(relevance 171, the highest in this set)",
-    # ⚠️ Not a query a step tells the guide to RUN — it is the evidence slot of an
-    # MCP-NEGATIVE marker in module-02 Step 1, recording a query that was run and came back
-    # without the fact. The guard cannot tell the two apart (both are `search_docs(query='…')`
-    # literals in shipped markdown), and that is the right default: an unexecuted phrasing is
-    # indistinguishable from an executed one, so both must be accountable. Executed against
-    # server 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    # ⚠️ The three below are NOT queries a step tells the guide to RUN. Each is the evidence slot
+    # of an `MCP-NEGATIVE` marker — a query that was executed and came back without the fact. The
+    # guard cannot tell the two apart (both are `search_docs(query='…')` literals in shipped
+    # markdown), and that is the right default: an unexecuted phrasing is indistinguishable from an
+    # executed one, so both must be accountable. All three executed against server 1.32.9, docs
+    # indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    "upgrade Senzing SDK 4.3 to 4.4 procedure":
+        "OFF TARGET BY DESIGN — the negative's evidence: all six hits are V3-to-V4, top hit the "
+        "FAQ 'What are the exact steps to migrate from V3 to V4?' (relevance 191) naming "
+        "sz_dbupgrade/sz_configupgrade. No 4.x-to-4.y procedure exists in the corpus, which is "
+        "what module-02 Step 1b records",
+    "evaluation license record limit how many records without a license":
+        "OFF TARGET BY DESIGN — the negative's evidence: top hit the EULA's 'Senzing "
+        "Non-Production License' (relevance 174), which says 'up to the number of DSRs "
+        "designated therein' and gives no figure. The number lives in sdk_guide(topic='load', "
+        "record_count=<above the limit>) instead — 'the default Senzing license limit of 500'",
     "szBuildVersion.json build version file location":
         "OFF TARGET BY DESIGN — this is the negative's evidence: no indexed document gives the "
         "file's path on any platform. All four hits are SDK version-call examples, top hit "
