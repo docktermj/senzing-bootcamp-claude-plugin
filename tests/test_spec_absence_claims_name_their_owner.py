@@ -203,13 +203,24 @@ class TheRuleIsDocumentedWhereSpecsAreWrittenAndRead(unittest.TestCase):
         self.assertIn("INV-194", text)
 
     def test_implement_spec_treats_a_missing_clause_as_a_blocker(self):
+        """Scoped to the owner-checked paragraph, not the whole file.
+
+        A whole-file `blocker` regex passed while the clause had been demoted to "worth
+        noting", because `blocker` occurs elsewhere in this skill (at line ~223, about a
+        different check that explicitly is *not* one). Caught by negative control -- the fourth
+        instance today of an assertion satisfied by text adjacent to the thing under test.
+        """
         text = IMPLEMENT_SKILL.read_text(encoding="utf-8")
         self.assertIn("owner-checked:", text)
+        start = text.index("owner-checked:")
+        # The paragraph that introduces the rule: from the first mention to the next blank line
+        # followed by a non-indented line, or 900 chars, whichever comes first.
+        para = text[max(0, start - 400):start + 900]
         self.assertRegex(
-            text, r"(?i)blocker",
+            para, r"(?i)blocker",
             "implement-spec must treat a missing owner clause on an absence claim as a blocker "
             "rather than a note — a note gets read past, and this is the step where the second "
-            "instance was actually caught",
+            f"instance was actually caught.\nParagraph read:\n{para[:400]}",
         )
 
 
