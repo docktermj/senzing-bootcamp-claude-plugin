@@ -87,6 +87,33 @@ VERIFIED_QUERIES = {
         "Non-Production License' (relevance 174), which says 'up to the number of DSRs "
         "designated therein' and gives no figure. The number lives in sdk_guide(topic='load', "
         "record_count=<above the limit>) instead — 'the default Senzing license limit of 500'",
+    # Module 5's multi-language retrieval strategy (INV-212), added 2026-08-13. The first two are
+    # queries the step tells the guide to RUN; the last two are the evidence slots of its two
+    # `MCP-NEGATIVE` markers — quoted in order to be forbidden. All four executed against server
+    # 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-13.
+    "UTF-8 encoding non-Latin character support multi-language data quality":
+        "ON TARGET with category='globalization': Senzing Globalization Guide -> 'What languages "
+        "does Senzing support?', which states the UTF-8 and cross-script answer outright. ⚠️ Three "
+        "of six hits are category='code_example' rows (libpostal encoding.py, a Rust FFI guide) "
+        "carrying HIGHER relevance_score (63.6 vs 39.8) but returned AFTER the on-topic rows — the "
+        "filter promotes rather than restricts, so never rank this set by score",
+    "data quality practices multi-language non-Latin":
+        "ON TARGET with category='globalization': Globalization Guide -> 'Address matching examples "
+        "> CJK+English cross-script matching (new in v4)' (relevance 12.8), whose prose carries the "
+        "practice — native-to-native beats native-to-Romanized, and for non-CJK cross-script, "
+        "Romanize via an address-hygiene product and supply both forms. All three hits are the Guide",
+    "globalization":
+        "OFF TARGET BY DESIGN — the negative's evidence, and the anti-pattern Module 5 quotes: "
+        "ranks the Rust SDK's static GLOBAL_ENVIRONMENT (39.8), postgresql-performance-v4's "
+        "'Global — more workers' autovacuum tuning (19.3) and, at max_results=6, an MDM-Lite FAQ "
+        "on 'globally unique ID'. Its best Guide hit is the bare title '# Senzing Globalization "
+        "Guide' with no prose, and the UTF-8 answer is absent entirely",
+    "multi-language data quality best practices":
+        "OFF TARGET BY DESIGN — the negative's evidence: FIVE OF FIVE hits are repo "
+        "docs/best-practices.md template files (senzingsdk-tools, scoop-senzingsdk, "
+        "homebrew-senzingsdk, senzingapi-tools, senzingsdk-runtime), all about Markdown lint and "
+        "Dockerfiles, scores 89.5-89.8, two of them title-only stubs. No globalization content at "
+        "all — the phrase 'best practices' is the whole defect",
     "szBuildVersion.json build version file location":
         "OFF TARGET BY DESIGN — this is the negative's evidence: no indexed document gives the "
         "file's path on any platform. All four hits are SDK version-call examples, top hit "

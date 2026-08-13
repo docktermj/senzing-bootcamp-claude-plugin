@@ -504,7 +504,11 @@ linked at the step that needs it, never forked into a second copy).
 Map fields to Senzing attributes, then advance workflow step 3 with `action='advance'`, carrying
 `schema_mappings` in `data` (per schema, a `field_mappings` list whose entries each declare a
 `disposition` — `feature`, `payload`, `ignore`, `derived`, or `extract`). NEVER guess
-attribute names. For non-Latin data: `search_docs(query="globalization")`. Tell the user: show
+attribute names. For non-Latin data:
+`search_docs(query='data quality practices multi-language non-Latin', category='globalization')`
+— the other query terms, the sections to ask for, and the phrasings that return wrong content
+are in this module's `SKILL.md` → "Multi-language data" (INV-212); do not re-derive them here.
+Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
 > **Heads-up before you map a dynamic-key field.** When a value is derived from the source **field

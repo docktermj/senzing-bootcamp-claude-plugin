@@ -131,3 +131,57 @@ shape; the retrieval strategy is what was missing.
 - MCP re-check: **server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13 — the plugin's named route does not reach its promised content.** Tools called: `get_capabilities` (version), `search_docs(query='globalization', max_results=6)` (the six results above), `search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization', max_results=6)` (the working route). `owner-checked: search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization')` — **returns it**: the Globalization Guide's "What languages does Senzing support?" section states the UTF-8 and cross-script answer outright. The material is served; only the plugin's query misses it, so this is a routing finding and **not** an absence claim about the server.
 - Upstream: not applicable — the corpus carries the material; the defect is in this plugin's query.
 - Related specs: `pattern-gallery-asks-for-more-than-mcp-can-supply` (the spec that registered INV-212, and the first instance of this class), `triage-the-twelve-uncited-hard-rules` (added the one INV-212 citation that exists), `step3b-quality-lookup-misroutes-and-omits-the-evidence-requirement` (the same misrouting shape in Module 7).
+
+## Deviations from this spec, and why (2026-08-13)
+
+- **The re-check found a route this spec never established, and a trap it did not know about.**
+  This spec named sections for three of the four promised topics and left "multi-language data
+  quality practices" without one. Asked at implementation:
+  `search_docs(query='data quality practices multi-language non-Latin',
+  category='globalization')` returns, as its **top hit**, the Guide's *"Address matching
+  examples > CJK+English cross-script matching (new in v4)"*, whose prose carries the actual
+  practice — native-to-native beats native-to-Romanized, and for non-CJK cross-script, Romanize
+  via an address-hygiene product and supply **both** forms. So no topic is unreached and no
+  absence claim was needed. Separately, the phrase **"best practices" is a second trap:**
+  unfiltered, `query='multi-language data quality best practices'` returned **five of five**
+  hits as repo `docs/best-practices.md` template files (Markdown lint, Dockerfiles), two of them
+  title-only stubs, and **no globalization content at all**. The shipped strategy therefore names
+  three traps where the spec named one.
+- **The promised topic wording lost one word.** "multi-language data quality **best practices**"
+  → "…quality practices", because the phrase itself is the trap above. The promise is unchanged
+  in content; only the query-poisoning words are gone.
+- ⚠️ **A claim in my first draft was imprecise and an existing guard forced the correction.**
+  I wrote that the `best-practices.md` files rank *"above the on-topic rows"*.
+  `tests/test_dated_negatives_are_marked` rejected the marker's prose `owner:` clause, and
+  re-asking to write a concrete one showed the accurate picture: **unfiltered** the query returns
+  5/5 wrong; **with `category='globalization'`** the on-topic rows come back **first** while those
+  same files remain in the set carrying the **highest `relevance_score`** (~89–92 against ~12–16).
+  The ordering claim was wrong and the score claim was right; both now ship stated separately,
+  per INV-169's don't-flatten rule.
+- **`tests/test_prescribed_search_queries.py` was not in `## Affected files` and had to change.**
+  It requires every prescribed `search_docs` query to be executed and recorded with its observed
+  top hit. Four queries were added to `VERIFIED_QUERIES` — two prescribed, two as the evidence
+  slots of the markers. It also caught that the marker's `owner:` clause named a phrasing I had
+  **not** run (`'data quality practices multi-language non-Latin'`); it was executed before the
+  clause was allowed to keep it. Placeholder pseudo-queries (`query='<terms below>'`) were
+  replaced with the concrete verified call for the same reason: an unexecuted phrasing is
+  indistinguishable from an executed one.
+- ⚠️ **Two of my own guard drafts were self-defeating, and their own mutations caught both.**
+  The first banned `search_docs(query="globalization")` *at the site whose purpose is to forbid
+  it* — INV-219's exact shape, failing on the ⛔ warning and on the marker. The second asserted a
+  token appeared **anywhere** in the file, so the trap warning's own quotation satisfied an
+  assertion about the instruction; deleting the document name from the prescription left the test
+  green. Both are now paragraph-scoped and comment-stripped. That is the **sixth and seventh**
+  recorded instances in this repo of asserting a token exists rather than where the claim is made.
+- ⚠️ **My markers were malformed on the first pass, which is worse than missing.** Written wrapped
+  across lines, they did not match `coverage_reports.py`'s `MCP_NEGATIVE` regex — which is not
+  `re.DOTALL` — so both **fell off the re-ask worklist** while looking correct, and the guard test's
+  own literal regex registered as a *third* malformed marker. All three fixed: markers are one line
+  each, and the test assembles the token at runtime. **Candidate rule, not registered:** the marker
+  format is single-line-only and nothing in `implement-spec` Step 3.4 or the scanner's docstring
+  says so. Left for the maintainer to rule on rather than smuggled in here.
+- **One false alarm of mine, recorded because the method depends on it.** I briefly read the
+  prescribed call as missing its closing paren; it was a 118-character terminal truncation of a
+  119-character line. Nothing was wrong. The regex tightening it prompted was kept — line-scoped
+  `[^)\n]` instead of `[^)]`, which would report an unclosed call as well-formed — and an
+  eleventh mutation now proves that guard.

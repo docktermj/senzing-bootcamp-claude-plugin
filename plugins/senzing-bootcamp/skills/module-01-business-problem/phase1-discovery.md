@@ -27,7 +27,9 @@ later porting phase; that is why this step retrieves rather than reads from a sh
 ⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one
 generic query is not it: the documentation's own words are industry terms, so "entity resolution use
 cases" reaches about four categories and leaves the rest looking uncovered when they are not. Two
-routes carry most of the material:
+routes carry most of the material. Everything from here to the end of this step **is** the retrieval
+strategy INV-212 requires — the vocabulary, the documents that hold the material, the queries that
+return confidently wrong content, and what to do with a topic the searches do not reach:
 
 - **Business value, for nearly every category** — `search_docs(query='total economic cost mismatched
   identity data by sector …')` returns `economic-cost-mismatched-identity-data.md`, whose
