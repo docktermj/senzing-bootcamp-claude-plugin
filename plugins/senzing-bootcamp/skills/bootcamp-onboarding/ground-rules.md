@@ -106,13 +106,18 @@ steering files.)
   `find_examples`; sample data -> `get_sample_data`; reporting / counts -> `reporting_guide`;
   tool discovery -> `get_capabilities`.
 - ⛔ **Always pass `language` to `reporting_guide` — every call, whatever the topic** (INV-192).
-  Most topics withhold their content until it is supplied, answering instead with a `needs_input`
-  decision tree and **empty** `sdk_patterns` / `sql_patterns` / `design_concepts` (verified on MCP
-  server 1.32.2, 2026-07-30). The parameter is *optional in the schema*, so a call without it looks
-  correct and returns 200 — which is the whole trap. Passing it where a topic does not gate costs
-  nothing and only adds content, so pass it unconditionally rather than tracking which topics
-  gate: that list is a per-topic fact about the server, and the last attempt to keep one went
-  stale within a day.
+  Most topics withhold their content until it is supplied, answering instead with a **`needs_input`**
+  object naming the parameter they want, while the content arrays in that same reply come back
+  **empty**. ⚠️ **Recognise the gate by `needs_input.parameter` — never by a particular field being
+  empty.** Which arrays a topic carries is the server's to rename, so a list of them here is the
+  same liability as the list of gating topics this rule already refuses to keep. Observed on MCP
+  server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13: `topic='evaluation'` and
+  `topic='graph'` each returned `needs_input.parameter` of `language` with empty `sdk_patterns`,
+  `sql_patterns` and `visualization`, while `topic='dashboard'` returned its content ungated. The
+  parameter is *optional in the schema*, so a call without it looks correct and returns 200 — which
+  is the whole trap. Passing it where a topic does not gate costs nothing and only adds content, so
+  pass it unconditionally rather than tracking which topics gate: that list is a per-topic fact
+  about the server, and the last attempt to keep one went stale within a day.
 - ⛔ **A `needs_input` response is a gate, not an answer.** Satisfy every gate the response asks
   for — some topics gate twice (`topic='data_mart'` asks for `language`, then `scale`) — and
   re-call rather than proceeding on what came back. Never report a topic as having no guidance on
