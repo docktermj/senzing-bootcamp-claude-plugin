@@ -287,7 +287,12 @@ def find_negatives(repo):
 def find_malformed_negatives(repo):
     """[(relpath, lineno, line)] for every `MCP-NEGATIVE:` that does not fully parse.
 
-    A marker that is present but malformed — most often missing its required `owner:`
+    Two causes, and they need different fixes: a missing `owner:` clause, or a marker
+    **wrapped across lines** — `MCP_NEGATIVE` is not `re.DOTALL`, so it cannot match past a
+    newline and a wrapped marker fails identically to a clauseless one. `tests/
+    test_dated_negatives_are_marked.py` diagnoses which per row; do not guess one for both.
+
+    A marker that is present but malformed — whatever the cause, missing its required `owner:`
     clause — is worse than a missing marker: the claim is still shipped and still shapes
     the plugin's routing, but it no longer appears on the re-check worklist. Report it
     loudly rather than letting the count quietly shrink.
@@ -429,7 +434,8 @@ def report_negatives(repo):
         print("⛔ MALFORMED markers: %d — shipped claims that fell OFF the worklist. A"
               % len(malformed))
         print("   malformed marker is worse than a missing one: the claim still routes the")
-        print("   plugin, but nothing re-asks it. Usually a missing `owner:` clause.")
+        print("   plugin, but nothing re-asks it. Either a missing `owner:` clause or a")
+        print("   marker WRAPPED across lines — it must be on ONE line (regex is not DOTALL).")
         for relpath, lineno, line in malformed:
             print("     %s:%d" % (relpath, lineno))
             print("       %s" % line[:150])

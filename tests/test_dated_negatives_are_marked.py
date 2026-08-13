@@ -68,6 +68,39 @@ NEGATIVE_VOCAB = re.compile(
 TOOL_RE = re.compile(r"(?i)(%s)" % "|".join(MCP_TOOLS))
 
 
+def _diagnose_malformed(rows):
+    """Name the likely cause per malformed marker, rather than guessing one for all.
+
+    The message this feeds used to read "almost always a missing `owner:` clause". It is not:
+    a marker **wrapped across lines** fails identically, because `coverage_reports.py`'s
+    `MCP_NEGATIVE` regex is not `re.DOTALL` and so cannot match past the newline. On
+    2026-08-13 two wrapped markers were written in good faith, both fell off the worklist, and
+    this assertion blamed the owner clause — which was present and correct. The two causes need
+    different fixes, and the offending line already carries enough to tell them apart.
+    """
+    if not rows:
+        return ""
+    out = []
+    for relpath, lineno, line in rows:
+        if "owner:" not in line:
+            cause = ("the line has no `owner:` clause. Either it is missing — add it, naming "
+                     "the route that would CARRY the fact (INV-209) — or the marker is "
+                     "WRAPPED across lines and the clause is on a continuation line. "
+                     "⛔ A marker MUST be written on ONE line: the scanner's regex is not "
+                     "re.DOTALL, so a wrapped marker cannot match at any length.")
+        elif "server" not in line:
+            cause = ("the `owner:` clause is present but the `— server <version>, "
+                     "<YYYY-MM-DD>` tail is not on this line. Put the whole marker on one "
+                     "line; the regex cannot match across a newline.")
+        else:
+            cause = ("all field names are on the line, so the order or the separators are "
+                     "wrong. The form is exactly: `MCP-NEGATIVE: <tool(params)> — <what is "
+                     "absent> — owner: <route + outcome> — server <version>, <YYYY-MM-DD>`, "
+                     "with em dashes between fields.")
+        out.append("  %s:%d — %s" % (relpath, lineno, cause))
+    return "\n".join(out)
+
+
 def assertion_lines(path):
     """(lineno, line) for each line that performs an assertion."""
     for n, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
@@ -128,12 +161,13 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
         """
         found = reports.find_negatives(str(REPO_ROOT))
         self.assertGreaterEqual(len(found), 1, "no markers to check — see the vacuity test")
+        malformed = reports.find_malformed_negatives(str(REPO_ROOT))
         self.assertEqual(
-            [], reports.find_malformed_negatives(str(REPO_ROOT)),
-            "an `MCP-NEGATIVE:` marker is present but does not parse — almost always a "
-            "missing `owner:` clause. This is worse than a missing marker: the claim still "
-            "ships and still routes the plugin, but it has dropped off the re-check "
-            "worklist, which is the invisibility the convention exists to prevent.",
+            [], malformed,
+            "an `MCP-NEGATIVE:` marker is present but does not parse. This is worse than a "
+            "missing marker: the claim still ships and still routes the plugin, but it has "
+            "dropped off the re-check worklist, which is the invisibility the convention "
+            "exists to prevent.\n%s" % _diagnose_malformed(malformed),
         )
         for row in found:
             _key, _version, _date, _claim, owner, relpath, lineno = row
@@ -211,6 +245,54 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
                 ["good.md"], [Path(r[5]).name for r in parsed],
                 "only the well-formed marker belongs on the worklist; got %r" % (parsed,),
             )
+
+    def test_a_wrapped_marker_is_reported_and_diagnosed_as_a_wrap(self):
+        """The failure message must name the cause it actually is.
+
+        A wrapped marker and a clauseless one fail identically — `MCP_NEGATIVE` is not
+        `re.DOTALL`, so it cannot match past a newline — and the assertion used to blame the
+        `owner:` clause for both. Two wrapped markers were written that way on 2026-08-13 with
+        the clause present and correct, and the message sent the author to the wrong field.
+        """
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "specs").mkdir()
+            (root / "plugins").mkdir()
+            (root / "plugins" / "wrapped.md").write_text(
+                "<!-- MCP-NEGATIVE: sdk_guide(topic='install') —\n"
+                "     returns no language list — owner: get_capabilities carries it\n"
+                "     — server 1.32.9, 2026-08-13 -->\n",
+                encoding="utf-8",
+            )
+            malformed = reports.find_malformed_negatives(str(root))
+            self.assertEqual(
+                ["wrapped.md"], [Path(r[0]).name for r in malformed],
+                "a marker wrapped across lines must be reported as malformed, not skipped — "
+                "otherwise it drops off the worklist with nothing saying so; got %r"
+                % (malformed,),
+            )
+            self.assertEqual(
+                [], reports.find_negatives(str(root)),
+                "a wrapped marker must NOT be counted as a live marker",
+            )
+            diagnosis = _diagnose_malformed(malformed)
+            self.assertIn("ONE line", diagnosis,
+                          "the diagnosis must name the wrap; got %r" % diagnosis)
+            self.assertIn("re.DOTALL", diagnosis,
+                          "the diagnosis must say WHY one line is required, or the next author "
+                          "reformats for readability and breaks it again")
+
+    def test_the_diagnosis_distinguishes_a_clauseless_marker_from_a_wrap(self):
+        """Same output for both causes would be no better than the guess it replaced."""
+        stamp = "— server 1.32.9, 2026-08-13"
+        clauseless = [("f.md", 1, "MCP-NEGATIVE: sdk_guide(topic='install') — no list " + stamp)]
+        misordered = [("f.md", 1, "MCP-NEGATIVE: sdk_guide(topic='install') — no list "
+                                  "— owner: get_capabilities carries it — server 1.32.9 BAD")]
+        self.assertIn("no `owner:` clause", _diagnose_malformed(clauseless))
+        self.assertIn("order or the separators", _diagnose_malformed(misordered))
+        self.assertEqual("", _diagnose_malformed([]),
+                         "no malformed markers must produce no diagnosis noise")
 
     def test_markers_are_ordered_oldest_server_first(self):
         """The oldest is the one most likely to have moved — it must lead the worklist."""
