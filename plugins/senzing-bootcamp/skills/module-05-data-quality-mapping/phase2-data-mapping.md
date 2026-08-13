@@ -311,7 +311,7 @@ legacy shape with five keys — `schema_name`, `disposition`, `data_source`, `re
 `'embedded_master' requires 'record_id_source'` / `'embedded_master' requires 'embedded_in'`. Because
 no response text names it, **`embedded_in` is discoverable only by sending a payload without it and
 reading the error** — so send it from the start.
-<!-- MCP-NEGATIVE: mapping_workflow(action='advance', from step 2) — step-2 instructions never name the required embedded_in key — server 1.32.9, 2026-08-12 -->
+<!-- MCP-NEGATIVE: mapping_workflow(action='advance', from step 2) — step-2 instructions never name the required embedded_in key — server 1.32.9, 2026-08-13 -->
 
 **`record_id_source` is `RECORD_HASH` for the embedded entity**, because a name embedded in someone
 else's row has no per-record natural key of its own. That sentinel is not a placeholder — step 4

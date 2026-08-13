@@ -746,7 +746,14 @@ automatically. Do not gate this behind a 👉 question (one fewer low-stakes con
 Generate these in `production/`, parameterized by `programming_language` and `database_type` from
 pre-checks. Use placeholder values only, never real secrets:
 
-- **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `SENZING_LICENSE_PATH`, `DATABASE_URL`, `LOG_LEVEL` with safe example values and comments.
+- **`.env.example`:** `SENZING_ENGINE_CONFIGURATION_JSON`, `DATABASE_URL`, `LOG_LEVEL` with safe example
+  values and comments. ⛔ **There is no license-path environment variable — do not invent one.** A
+  custom license is a `PIPELINE` key *inside* the engine-config value, so show it as a commented-out
+  `LICENSEFILE` (a `.lic` path) or `LICENSESTRINGBASE64` (an inline key) within the
+  `SENZING_ENGINE_CONFIGURATION_JSON` placeholder, matching Data collection's wiring. Confirm the
+  spelling against the MCP server this session rather than from memory (INV-080) — wrong environment
+  variable names are on the server's own confabulation list, and this file is one the bootcamper
+  carries into production, where an unread variable fails as a capacity error far from its cause.
 - **`docker-compose.yml`:** SQLite (single service + volume mount) or PostgreSQL (app + db service with a health check), per `database_type`.
 
 **Where `deployment_target`/`cloud_provider` is known, say so in both files** (INV-097): a header

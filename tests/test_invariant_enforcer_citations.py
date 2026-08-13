@@ -62,7 +62,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: AFTER it is recorded) names tests/test_spec_ledger_invariants.py. Re-derived by running
 #: the extractor. Third consecutive new invariant, and the first where the back-citation was
 #: written before this guard had to ask for it.
-EXPECTED_PAIRS = 25
+#:
+#: 25 -> 26 on 2026-08-13 (dry run, phase 1): INV-208 (the plugin names no license-path
+#: environment variable in any spelling) names tests/test_license_env_var_absent.py, which
+#: cites INV-208 back. Re-derived by running the extractor. Fourth consecutive new invariant;
+#: this time the guard DID fire -- the pair was complete but the pin was not moved, which is
+#: the arithmetic half of the check rather than the missing-back-citation half.
+EXPECTED_PAIRS = 26
 
 
 def pairs():

@@ -714,15 +714,20 @@ troubleshooting.
 > per INV-093. SDK setup only confirms that the built-in evaluation license is active; the
 > "License Key" reference notes below are kept for context.
 
-> **License check order:** project-local `licenses/g2.lic` → a license-path environment variable →
+> **License check order:** project-local `licenses/g2.lic` → an engine-config `PIPELINE` license key →
 > system CONFIGPATH → the built-in evaluation license.
 >
-> ⛔ **Confirm the environment variable's exact name from MCP before naming it to the bootcamper**
-> (`sdk_guide(topic='configure', …)` or `search_docs`). This note previously hardcoded
-> `SENZING_LICENSE_PATH` while `sdk_guide` returns `SENZING_LICENSE_FILE`; the two differ by one
-> word and neither was verified here. Wrong environment-variable names are on the MCP server's own
-> list of common confabulations, so state whichever the server returns this session and never the
-> remembered one (INV-080). The record capacity is likewise looked up, not written here.
+> ⛔ **There is no license-path environment variable. Do not name one to the bootcamper.** A custom
+> license is supplied as a `PIPELINE` key *inside* the engine config — `LICENSEFILE` for a `.lic`
+> path, `LICENSESTRINGBASE64` for an inline Base64 key — which is what Module 4 Step 8a wires. Two
+> different license-variable spellings were asserted here before, both from memory rather than from
+> the server; wrong environment-variable names are on the MCP server's own list of common
+> confabulations, so do not reach for a third. Verified against the live server: `sdk_guide(topic='configure',
+> language='python', platform='linux_apt')` returns exactly two env vars, `LD_LIBRARY_PATH` and
+> `PYTHONPATH`, and states the license options as `LICENSESTRINGBASE64` or `LICENSEFILE` under
+> `PIPELINE`; `search_docs` returns no variable name at all (server 1.32.9, 2026-08-13).
+> <!-- MCP-NEGATIVE: sdk_guide(topic='configure', …) / search_docs — return no license-path environment variable; license is a PIPELINE key — server 1.32.9, 2026-08-13 -->
+> The record capacity **is** looked up, not written here (INV-080) — see below.
 
 > **"Senzing License Key" vs. the EULA:** the **Senzing License Key** configured in this step is a
 > *runtime-capacity* license (it sets how many records Senzing will resolve) — supplied as a `.lic`
@@ -961,7 +966,7 @@ call for exactly this reason.
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
 > (Observed 1.32.9, 2026-08-12.)
-> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — server 1.32.9, 2026-08-12 -->
+> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — server 1.32.9, 2026-08-13 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
 > input data" would send the reader to inspect something that does not yet exist — which is exactly
