@@ -89,7 +89,14 @@ systems do you expect to integrate with?**" — and **hold** the named systems (
 Salesforce) as `integration_targets`. On **no**, hold `integration_targets: []`. Either way, do not
 write yet.
 
-Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051):
+Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051).
+
+**Reassure them first**, as a statement before the question: "We'll develop everything locally
+first; deployment is addressed in the graduation production project and migration checklist." It
+has to come before, per `../bootcamp-onboarding/ground-rules.md` → anything meant to inform the
+answer precedes the 👉. Here it earns its place: it is what makes **4. Not sure yet** a comfortable
+answer instead of a guess, and a bootcamper who does not yet know their target should not feel
+pushed into naming one.
 
 👉 **Where do you plan to deploy the final solution? Reply with a number:**
 
@@ -98,8 +105,7 @@ Then, deployment target — a separate, pinned 👉 question (neutral lead + num
 3. Local / on-premises.
 4. Not sure yet.
 
-*(Internal: end the turn and wait.)* Reassure: "We'll develop everything locally first; deployment
-is addressed in the graduation production project and migration checklist."
+*(Internal: end the turn and wait.)*
 
 **Now write both answers together**, in one update to `config/bootcamp_preferences.yaml`:
 `integration_targets` (held above) and `deployment_target` (`aws`/`azure`/`gcp` — also

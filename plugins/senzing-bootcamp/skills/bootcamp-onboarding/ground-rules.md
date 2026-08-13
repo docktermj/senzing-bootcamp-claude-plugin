@@ -37,6 +37,17 @@ steering files.)
 - **Prefix** every input-requiring question with `👉` at the start of the line, and wrap the
   question text in `**bold**`.
 - **Exactly one** 👉 question ends each yielding turn (zero or two-or-more is a violation).
+- ⛔ **Anything meant to inform the answer goes BEFORE the 👉.** A reassurance, caveat,
+  recommendation, framing statement, or consent disclosure MUST be presented ahead of the
+  question, never after it. Two reasons, and the first is mechanical: nothing may follow the
+  👉, because it ends the turn — so text placed after it is either not delivered or delivered
+  a turn late. The second is that a caveat arriving *after* the answer cannot inform the
+  choice it exists to inform, which is the whole point of it. This binds the **skill files
+  too**, not only the output: an instruction written below a pinned question, telling you to
+  say something the bootcamper needs in order to answer, is misplaced in the file and must be
+  read as belonging before it. The numbered choices that are part of the question, and
+  internal directives such as `*(Internal: end the turn and wait.)*`, are not "after" — they
+  belong to the question. Answer-*handling* instructions ("on yes, …") correctly sit after.
 - Each 👉 question has exactly one meaning for "yes" and one for "no". For two or more
   alternatives, use a neutral lead question plus a numbered list. Confirm first; ask for
   corrections only if the answer is no.

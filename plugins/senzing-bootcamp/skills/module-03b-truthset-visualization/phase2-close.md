@@ -55,12 +55,16 @@ Terminate the web service and purge the Truth Set data from the database.
 yes.** Per the server-lifetime contract in `visualization-api-reference.md` → "Server lifetime",
 present this pinned question verbatim (INV-056) and end the turn on it:
 
-> 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
+⛔ **State what they are agreeing to FIRST, in the same turn but above the question, so the yes is
+informed:** the live URL goes dead, the Truth Set records are removed from the database (exploring
+further means reloading them), and the saved snapshot at
+`docs/visualizations/truthset_verification.html` keeps every tab that renders from embedded data but
+**not** the live `why`/`how`/`search` actions. This precedes the 👉 because nothing may follow it —
+the question ends the turn — and because a disclosure arriving after the answer cannot inform it
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol). The teardown is irreversible, so an
+uninformed yes here is the costliest kind.
 
-State what they are agreeing to before they answer, so the yes is informed: the live URL goes dead,
-the Truth Set records are removed from the database (exploring further means reloading them), and
-the saved snapshot at `docs/visualizations/truthset_verification.html` keeps every tab that renders
-from embedded data but **not** the live `why`/`how`/`search` actions.
+> 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
 
 *(Internal: end the turn on this question and wait.)*
 

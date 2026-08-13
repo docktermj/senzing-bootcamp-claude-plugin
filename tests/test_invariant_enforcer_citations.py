@@ -80,7 +80,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: taking config from several sources picks by CONTENT and validates before acting) names
 #: tests/test_viz_settings_resolution.py, which cites INV-210 back. Re-derived by running
 #: the extractor.
-EXPECTED_PAIRS = 28
+#:
+#: 28 -> 29 on 2026-08-13 (dry run, implementing the reassurance spec): INV-211 (anything
+#: informing an answer precedes its 👉) names tests/test_reassurance_precedes_question.py,
+#: which cites INV-211 back. Re-derived by running the extractor.
+EXPECTED_PAIRS = 29
 
 
 def pairs():

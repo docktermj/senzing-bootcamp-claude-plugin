@@ -932,7 +932,17 @@ The sequence in every module that starts a server is therefore:
 
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is
-about to happen in that module and nothing more, because the consequences differ:
+about to happen in that module and nothing more, because the consequences differ.
+
+⛔ **First, state what they are consenting to — this precedes the question, never follows it**
+(`../bootcamp-onboarding/ground-rules.md` → anything meant to inform the answer goes before the 👉;
+nothing may follow it, since it ends the turn). Say that the live URL goes dead, and that the
+standalone snapshot preserves every tab rendering from embedded data but **not** the live
+`why`/`how`/`search` actions, which need the running engine (see "Static snapshot degradation"
+above). **A yes given without that is not an informed yes** — and here the consent authorizes an
+irreversible teardown, so a disclosure arriving after the answer is worth nothing at all.
+
+Then ask the gate that matches the module:
 
 - Where teardown stops the server **and** removes data (Truth Set visualization, whose records are
   scaffolding): say both. → 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
@@ -942,11 +952,6 @@ about to happen in that module and nothing more, because the consequences differ
 ⛔ Never ask a vague "and clean up" in a module that has no purge — the bootcamper's own loaded
 data is needed downstream (recap, graduation), and a gate that sounds like it authorizes deleting it
 either frightens them or licenses a destructive step the module never intended.
-
-Tell the bootcamper what they are consenting to before they answer: the live URL goes dead, and the
-standalone snapshot preserves every tab that renders from embedded data but **not** the live
-`why`/`how`/`search` actions, which need the running engine (see "Static snapshot degradation"
-above). A yes given without that is not an informed yes.
 
 ⛔ **This is not an INV-006 violation.** INV-006 forbids re-asking *the same* question. An earlier
 "are you ready to continue?" or "done with the tour?" asks whether the bootcamper is ready to move
