@@ -311,13 +311,15 @@ need them.
 - **Feedback capture** — how bootcamper feedback is recorded so it can be triaged later.  
   INV-053, INV-067, INV-116, INV-196
 - **The development record itself** — rules governing specs, the ledger and provenance.  
-  INV-182, INV-191, INV-202, INV-207, INV-216, INV-217
+  INV-182, INV-191, INV-202, INV-207, INV-216, INV-217, INV-219
 
 <!-- New invariants go directly below this line. Format:
 
 - **INV-NNN** — <single testable MUST/ALWAYS condition.> (Source: `<spec-name>`, YYYY-MM-DD.)
 
 -->
+
+- **INV-219** — A test MUST NOT pin the **verbatim wording** of a claim about an MCP tool's content or about an upstream submission. It asserts the **structural property** the text must carry instead — that a citation names the governing invariant, that a fence carries its ownership label, that a path resolves through a prefix variable — so that correcting the claim when the server moves does not fail the guard. Where such a claim is pinned and must change, the guard is **rescoped, never deleted**, and the reason recorded in its docstring. ⛔ **The failure is asymmetric and lands on the wrong person:** the guard passes on the day it is written and fails only whoever later corrects the claim, with a message asserting the opposite of what the server now says. (Four instances, 2026-08-13: `:195` pinned "documents brew tap / trust / install --cask only" and failed the correction of "only"; `:349` pinned INV-129 where INV-218 governs, which is what kept that wrong citation alive; a new guard banned the string `/opt/homebrew` on a line naming it in order to forbid it; and `:239` pinned "same coverage gap reported upstream" — the phrase but not the date — surviving a false-provenance correction only by how narrowly it was written.) (Source: `a-guard-must-not-pin-the-wording-of-a-claim-about-an-mcp-tool`, 2026-08-13.)
 
 - **INV-218** — A step that **installs or updates software** MUST verify the installed **artifact on the filesystem** rather than the installer's exit status: a zero exit, printed install paths, or a "success" line are necessary and insufficient, because a package manager can purge a download and still print its caveats block listing paths it never wrote. The artifact probed MUST be named for the Bootcamper's platform, and where it cannot be probed the outcome is reported as **undetermined** (INV-163), never as installed. ⛔ INV-129 governs the parallel rule for rendered **deliverables** (PDF, PNG, HTML) and does not reach an install; the two are siblings, not one rule. (Source: `install-verification-has-no-invariant-so-inv129-is-borrowed`, 2026-08-13.)
 

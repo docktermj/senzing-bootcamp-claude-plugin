@@ -172,11 +172,30 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         )
 
     def test_the_macos_and_windows_update_command_is_plugin_owned(self):
-        """Corrects the spec's own table, which listed brew upgrade as documented."""
+        """Corrects the spec's own table, which listed brew upgrade as documented.
+
+        ⚠️ **Asserts the ownership distinction, not the sentence that carries it (INV-219).**
+        This used to also pin `never \`brew upgrade --cask\` or \`scoop update\`` — the verbatim
+        wording of a dated claim about `sdk_guide`'s content. The claim is currently true
+        (re-confirmed on both platforms, server 1.32.9, 2026-08-13), which is exactly why the pin
+        was worth removing before it broke: the guard would have failed whoever corrected the
+        sentence once the server started documenting an update command, with a message asserting
+        the opposite of what the server says. The dated claim itself lives in the `MCP-NEGATIVE`
+        marker beside it, which is the artifact built to carry it and to be re-asked.
+
+        Rescoped, not deleted — the property that must hold is that Step 1b tells the reader the
+        update command is **plugin-owned on macOS and Windows and server-documented on apt/yum**,
+        which is what a reader needs and what survives the server moving.
+        """
         self.assertRegex(
             self.flat, r"(?i)On macOS and Windows the update command is plugin-owned too"
         )
-        self.assertRegex(self.flat, r"(?i)never `brew upgrade --cask` or\s+`scoop update`")
+        # The per-platform split, in whatever words: plugin-owned off Linux, server-documented on it.
+        self.assertRegex(self.flat, r"(?i)plugin-owned")
+        self.assertRegex(self.flat, r"(?i)server-documented")
+        self.assertRegex(
+            self.flat, r"(?i)Only on apt and yum is the update command the same"
+        )
 
     def test_only_apt_and_yum_update_via_the_documented_command(self):
         self.assertRegex(

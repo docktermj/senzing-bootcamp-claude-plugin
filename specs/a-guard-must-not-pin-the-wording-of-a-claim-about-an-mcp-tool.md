@@ -120,3 +120,47 @@ scanner that cannot work would be worse than none.
   `step1-filesystem-fallback-is-linux-only` (instance 3),
   `guards-pinning-a-dated-negative-outlive-it`, INV-209, and
   `plugin-prose-negatives-are-unswept-by-any-guard` (the sibling gap on the prose side).
+
+## Invariants introduced
+
+- `INV-219` — A test MUST NOT pin the **verbatim wording** of a claim about an MCP tool's content or
+  about an upstream submission; it asserts the structural property the text must carry instead, and a
+  pinned claim that must change is **rescoped, never deleted**, with the reason recorded in its
+  docstring. (Recorded in `specs/INVARIANTS.md`, indexed under **The development record itself**
+  beside INV-207, approved by the maintainer 2026-08-13.)
+
+## Deviations from this spec, and why (2026-08-13)
+
+Two, and the first widens what this spec proposed.
+
+1. **The approved wording covers upstream-submission claims too, not only MCP tool content.** This
+   spec drafted the rule for "a claim about an MCP tool's content" on the strength of three
+   instances. A **fourth** appeared while implementing
+   `settle-whether-the-install-vs-update-gap-was-reported-upstream`:
+   `tests/test_sdk_update_offer.py:239` pins `"same coverage gap reported upstream"` — the phrase but
+   **not** the date — so correcting a **false provenance claim** passed it. Had it pinned the date,
+   fixing a falsehood would have failed the suite. Both kinds of claim are externally-owned facts the
+   offline suite cannot re-check, and both fail the same way, so the maintainer chose the wider scope
+   from four options on 2026-08-13. The provenance names all four instances rather than the three this
+   spec knew about.
+
+2. **The rescoped test also absorbed the apt/yum half of the distinction.** The spec asked only that
+   `:179` assert "the per-platform ownership distinction". The rewritten
+   `test_the_macos_and_windows_update_command_is_plugin_owned` asserts `plugin-owned`,
+   `server-documented`, **and** "Only on apt and yum is the update command the same" — which
+   duplicates the existing `test_only_apt_and_yum_update_via_the_documented_command`. Kept
+   deliberately: the ownership distinction is only meaningful as a *contrast*, and a test that
+   asserts one half is satisfiable by prose that has lost the other.
+
+**Negative controls, three, and the third is the invariant's own property.** Dropping the
+macOS/Windows ownership sentence fails the guard (1 failure); dropping the apt/yum half fails it (2);
+and **rewording the dated claim itself — `scoop update` → `scoop upgrade` — now passes**, which is
+precisely what INV-219 requires and what the old pin would have failed. Every mutation verified to
+land; restored from a `cp` backup.
+
+**A mechanical guard for INV-219 remains deliberately unbuilt**, with the reason this spec gave:
+detecting "this assertion pins wording rather than a property" requires making the same judgement the
+rule asks a human to make. A scan keying on "assertion line contains a long verbatim quote and a tool
+name" would flag `:195`'s *corrected* form, which legitimately quotes an ownership label, and would
+miss a paraphrased pin. Registering the rule and citing it in review is the remedy; a scanner that
+cannot work would be worse than none.
