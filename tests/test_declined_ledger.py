@@ -1,5 +1,9 @@
 """`specs/DECLINED.md` is the second terminal state a spec can reach, and it must stay honest.
 
+MCP-NEGATIVE-SCAN: ignore-file — this file quotes the marker format and one retracted
+historical claim as fixtures for its own detector; none of them is a live assertion about the
+current server.
+
 A spec used to have exactly one ending: implemented. `implement-spec` computed
 ``Unimplemented = candidates - implemented``, so a spec the maintainer ruled out stayed in the
 candidate set permanently — re-offered every run, with the spec's own text arguing *for* the change
@@ -16,9 +20,20 @@ second ledger introduces — no spec in both, and no entry naming a file that do
 rather than headings. `test_no_declined_name_is_prose` is what catches a regression: a `## Why …`
 section added to the header was counted as a declined spec the first time this ran.
 
+⛔ And an absence claim here names the route that owns the fact (INV-194), because this file is
+the one Senzing record with no re-verification path: a declined spec is never implemented, so
+`implement-spec` Step 3.3 never re-asks its facts, while the skill positions this file as the
+*higher* authority over the spec's own citations. `AnAbsenceClaimNamesItsOwningRoute` is the
+guard. It exists because the 2026-08-13 revisit note on
+`no-route-for-bootcampers-who-cannot-add-an-mcp-server` concluded that `sz-mcp-coworker` had
+lost its citations by asking a tool description and the tool manifest — neither of which would
+carry an install or invocation fact — when the binary was that manifest's own `server_name`.
+
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
+import sys
 import unittest
 from pathlib import Path
 
@@ -27,10 +42,66 @@ SPECS = REPO_ROOT / "specs"
 DECLINED = SPECS / "DECLINED.md"
 IMPLEMENTED = SPECS / "IMPLEMENTED.md"
 SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
+REPORTS = REPO_ROOT / ".claude" / "skills" / "dry-run" / "coverage_reports.py"
 
 HEADING = re.compile(r"^## (.+)$", re.M)
 #: The template block inside the HTML comment, which is not an entry.
 PLACEHOLDER = "<spec-name>"
+
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+#: The marker grammar is imported, never restated: a second copy of it would drift, and the
+#: whole point is that a marker here parses exactly as one in `plugins/` does.
+reports = load(REPORTS, "coverage_reports_for_declined")
+
+#: Same 13 tools as `tests/test_dated_negatives_are_marked.py`, which polices assertion lines
+#: in `tests/`. Kept local rather than shared because the two guards read different corpora and
+#: neither should be able to break the other by narrowing its list.
+MCP_TOOLS = (
+    "explain_error_code", "search_docs", "sdk_guide", "get_sdk_reference", "reporting_guide",
+    "generate_scaffold", "get_sample_data", "find_examples", "mapping_workflow",
+    "analyze_record", "get_capabilities", "download_resource", "submit_feedback",
+)
+TOOL_RE = re.compile(r"(?i)(%s)" % "|".join(MCP_TOOLS))
+
+#: Prose phrasings that assert a tool LACKS something. Broader than the assertion-line vocab in
+#: `test_dated_negatives_are_marked.py`, because this runs over maintainer prose where a false
+#: positive costs a marker rather than a rewrite — and because the wording that motivated the
+#: guard ("neither X nor Y appears in the manifest") matches none of the narrow forms.
+#:
+#: ⚠️ It is a phrase list, so it is evadable by paraphrase, and that is disclosed rather than
+#: papered over: it catches the shapes that have actually appeared, not every possible way to
+#: say "absent". The backstop is `report_negatives`, which now reads this file — a negative that
+#: dodges the vocab and carries no marker is invisible to both, so prefer the marker.
+ABSENCE_VOCAB = re.compile(
+    r"(?i)appear(?:s|ed)? nowhere|nowhere in|(?:does|do|did|would) not appear|"
+    r"neither\b[^.]{0,200}\bnor\b[^.]{0,200}\bappear(?:s|ed)?\b|"
+    r"return(?:s|ed|ing)? no\b|carr(?:y|ies|ied|ying) no\b|contain(?:s|ed|ing)? no\b|"
+    r"has no\b|have no\b|(?:is|are|was|were) absent|names? neither|lost its citation|"
+    r"(?:no longer|does not|did not|doesn't|never) "
+    r"(?:names?|named|mentions?|contains?|carr(?:y|ies)|includes?|lists?|documents?)"
+)
+#: Block-level escape for prose that QUOTES a retracted claim, mirroring the file-level
+#: `MCP-NEGATIVE-SCAN: ignore-file` that `coverage_reports.py` already honours. A correction has
+#: to be able to restate what it corrects; without this, the honest move (quote the wrong claim
+#: verbatim) is the one the guard punishes, and the author is pushed to paraphrase history
+#: instead of adding evidence. Same abuse risk as the file-level opt-out, and the same answer:
+#: it is one grep away from review.
+QUOTED_HISTORY = "MCP-NEGATIVE-SCAN: quoted-history"
+
+#: The wording this guard was built from, pinned so the detector cannot be quietly narrowed
+#: into uselessness. Retracted 2026-08-13 — see the entry's correction bullet.
+RETRACTED_WORDING = (
+    'At 1.32.9 neither "stdio" nor `sz-mcp-coworker` appears in that description or anywhere '
+    "in the `get_capabilities` manifest."
+)
 
 
 def headings(path):
@@ -45,6 +116,57 @@ def entries():
     text = DECLINED.read_text(encoding="utf-8")
     found = re.findall(r"^## (.+?)$(.*?)(?=^## |\Z)", text, re.M | re.S)
     return [(n.strip(), b) for n, b in found if n.strip() != PLACEHOLDER]
+
+
+def bullet_blocks(text):
+    """[(first_lineno, block_text)] — one per Markdown list item, continuation lines included.
+
+    Per BULLET, not per entry. A whole-entry check would have passed on the wording this guard
+    exists for: the wrong sub-claim and a well-formed marker sat in the same entry, so any
+    entry-level rule is satisfied by a marker attached to a different claim.
+    """
+    blocks, current = [], None
+    for lineno, line in enumerate(text.split("\n"), 1):
+        if re.match(r"^\s*[-*+]\s", line):
+            current = [lineno, [line]]
+            blocks.append(current)
+        elif current is not None and line.strip():
+            current[1].append(line)                     # continuation of the current item
+        else:
+            current = None                              # blank line ends the item
+    return [(lineno, "\n".join(lines)) for lineno, lines in blocks]
+
+
+def skill_section(text, title):
+    """The named `## ` section of a skill file, fenced code blocks included.
+
+    Fence-aware on purpose: the decline section's own entry template is a fenced block whose
+    first line is `## <spec-name>`, so a plain `(?=^## )` boundary truncates the section right
+    where the interesting part starts.
+    """
+    out, inside, fenced = [], False, False
+    for line in text.split("\n"):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+        elif not fenced and line.startswith("## "):
+            inside = line[3:].strip().startswith(title)
+        if inside:
+            out.append(line)
+    return "\n".join(out)
+
+
+def unmarked_absence_claims(text):
+    """[(lineno, excerpt)] for each bullet asserting a tool lacks something with no marker."""
+    found = []
+    for lineno, block in bullet_blocks(text):
+        if QUOTED_HISTORY in block:
+            continue
+        if not (TOOL_RE.search(block) and ABSENCE_VOCAB.search(block)):
+            continue
+        if reports.MCP_NEGATIVE.search(block):
+            continue
+        found.append((lineno, " ".join(block.split())[:160]))
+    return found
 
 
 class TheLedgerExists(unittest.TestCase):
@@ -218,6 +340,118 @@ class TheCensusSeparatesTheTwoStates(unittest.TestCase):
             "census is counting settled decisions as outstanding work"
             % (outstanding, not_in_ledger, declined),
         )
+
+
+class AnAbsenceClaimNamesItsOwningRoute(unittest.TestCase):
+    """INV-194 applied to the file that most needs it, because nothing else re-verifies it.
+
+    `implement-spec` Step 3.3 re-asks a spec's Senzing facts at implementation time. A declined
+    spec is never implemented, so its `Revisit if:` clause and any dated revisit note are the
+    one Senzing claim shape in the repo with no re-verification path — and the skill tells the
+    next reader to trust this file over the spec's own citations. A stale or wrong-route
+    negative here therefore sends the recheck to the wrong answer while looking evidenced.
+    """
+
+    def setUp(self):
+        self.text = DECLINED.read_text(encoding="utf-8")
+
+    def test_every_absence_claim_carries_a_parseable_marker(self):
+        found = unmarked_absence_claims(self.text)
+        self.assertEqual(
+            [], found,
+            "A bullet in DECLINED.md states that an MCP tool LACKS something and carries no "
+            "parseable `MCP-NEGATIVE:` marker. Nothing re-verifies this file, so that claim "
+            "can never be re-asked — and naming the route that would CARRY the fact is what "
+            "separates a verified negative from a wrong-route one (INV-194). Add the marker "
+            "with its `owner:` clause, or mark quoted history with %r:\n  %s"
+            % (QUOTED_HISTORY, "\n  ".join("line %d: %s" % row for row in found)),
+        )
+
+    def test_the_scan_reaches_this_file_at_all(self):
+        """Not vacuous: the guard above passes trivially if the file is outside the scan.
+
+        `coverage_reports.py` excluded all of `specs/` until 2026-08-13, which is precisely how
+        a wrong negative reached a terminal-state record with nothing looking at it.
+        """
+        scanned = [Path(p).name for p in reports._scan_files(str(REPO_ROOT))]
+        self.assertIn("DECLINED.md", scanned,
+                      "specs/DECLINED.md is not in the negatives scan surface, so its markers "
+                      "are on no worklist and this file's claims are unre-checkable")
+
+    def test_this_files_markers_reach_the_worklist(self):
+        found = reports.find_negatives(str(REPO_ROOT))
+        here = [r for r in found if Path(r[5]).name == "DECLINED.md"]
+        self.assertTrue(
+            here,
+            "DECLINED.md contributes no marker to `coverage_reports.py negatives`. If its "
+            "absence claims were all retired, say so in the entry; otherwise the worklist "
+            "silently lost them",
+        )
+        for _key, _version, _date, _claim, owner, relpath, lineno in here:
+            with self.subTest(where="%s:%d" % (relpath, lineno)):
+                self.assertTrue(
+                    TOOL_RE.search(owner)
+                    or re.search(r"(?i)validator|rejection|error|response", owner),
+                    "the owner clause must name the route that would carry the fact, not "
+                    "restate the absence. Got: %r" % owner,
+                )
+
+    def test_the_detector_fires_on_the_retracted_wording(self):
+        """Negative control, pinned. Reintroducing the 2026-08-13 wording must fail the guard.
+
+        Asserting only that the live file is clean cannot notice the vocabulary being narrowed
+        until it detects nothing — the failure mode `test_the_detector_recognises_the_historical
+        _offenders` guards against in `test_dated_negatives_are_marked.py`.
+        """
+        block = "  - ⚠️ **One of the two routes lost its citation.** " + RETRACTED_WORDING
+        self.assertTrue(TOOL_RE.search(block), "tool name not detected")
+        self.assertTrue(ABSENCE_VOCAB.search(block), "absence phrasing not detected")
+        self.assertEqual(
+            [(1, " ".join(block.split())[:160])], unmarked_absence_claims(block),
+            "the retracted wording must be reported as an unmarked absence claim",
+        )
+
+    def test_the_detector_accepts_the_same_claim_once_it_names_its_owner(self):
+        """Positive control: the guard asks for evidence, not for silence about absences."""
+        marked = (
+            "  - **The stdio install citation is gone.** sdk_guide(topic='install', "
+            "platform='linux_apt') names neither stdio nor extract.\n"
+            "    MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — no stdio "
+            "mode and no sz-mcp-coworker extract command — owner: mapping_workflow"
+            "(action='start') step-1 instructions still name stdio/airgap mode (routing "
+            "negative) — server 1.32.9, 2026-08-13"
+        )
+        self.assertTrue(ABSENCE_VOCAB.search(marked), "the fixture must be absence-shaped")
+        self.assertEqual([], unmarked_absence_claims(marked))
+
+    def test_quoted_history_is_exempt_but_only_when_declared(self):
+        quoted = "  - Corrected: it once said " + RETRACTED_WORDING
+        self.assertEqual(1, len(unmarked_absence_claims(quoted)))
+        self.assertEqual([], unmarked_absence_claims(
+            quoted + "\n    <!-- %s — retracted claim, kept verbatim -->" % QUOTED_HISTORY))
+
+    def test_a_bullet_that_makes_no_absence_claim_is_not_flagged(self):
+        """Stating what IS true is the form the convention asks for; it must stay unencumbered."""
+        positive = ("  - `get_capabilities` returns it as the server's own name — "
+                    "`server_info.server_name = \"sz-mcp-coworker\"`.")
+        self.assertTrue(TOOL_RE.search(positive))
+        self.assertEqual([], unmarked_absence_claims(positive))
+
+    def test_the_skill_shows_the_marker_in_its_declined_template(self):
+        """A convention only the tests know about is a convention the next entry will miss.
+
+        Scoped to the decline section, not the whole file: `MCP-NEGATIVE` appears in Step 3.4
+        already, and a whole-file check would therefore have passed before this shipped.
+        """
+        section = skill_section(SKILL.read_text(encoding="utf-8"), "Declining a spec")
+        self.assertTrue(section, "the decline section is gone from implement-spec/SKILL.md")
+        self.assertIn(
+            "MCP-NEGATIVE", section,
+            "implement-spec's decline section must show the marker form for an absence-shaped "
+            "`Revisit if:`, or the next entry is written without one — and nothing re-verifies "
+            "DECLINED.md afterwards",
+        )
+        self.assertIn("Revisit if", section)
 
 
 if __name__ == "__main__":

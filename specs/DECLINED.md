@@ -84,24 +84,57 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
   changes: pointing a blocked bootcamper at a documented route becomes a small documentation change
   rather than an architectural one, and this should be reopened. The spec's own re-verification
   clause already requires that check at implementation time.
-- **Revisit check, 2026-08-13 (server 1.32.9, docs index 2026-08-11, 14,240 docs): condition NOT met,
-  and it has moved further away.** Decision unchanged — this note records evidence, not a reversal.
+- **Revisit check, 2026-08-13 (server 1.32.9, docs index 2026-08-11, 14,240 docs): condition NOT
+  met.** Decision unchanged — this note records evidence, not a reversal.
   - The corpus still documents neither route. Re-ran the spec's keyword query (same result as
     2026-07-31), and additionally asked the document that *owns* the subject:
     `search_docs(query='Agentic Entity Resolution MCP server configuration setup connect assistant')`
     reaches `senzing.com/docs/agentic`, the MCP server's own page, which returns an overview and
     carries no setup or self-hosting content. So "named but undocumented" is now established via the
     owning route rather than by a query that merely missed.
-  - ⚠️ **One of the two routes lost its citation.** At 1.32.3 `sdk_guide`'s description named a
-    **stdio mode** whose package URL was a local `sz-mcp-coworker extract` command. At 1.32.9 neither
-    "stdio" nor `sz-mcp-coworker` appears in that description or anywhere in the `get_capabilities`
-    manifest. Whether the mode was retired or the text trimmed cannot be told from here.
+    MCP-NEGATIVE: search_docs(query='sz-mcp-coworker selfcheck airgap binary stdio mode') — no indexed document names sz-mcp-coworker at all (10 hits at the default max_results, every one unrelated: a Scala SelfCheck.scala in brianmacy/sz_spark, the @senzing/sdk-* npm prebuilt-binary tables, assorted loaders) — owner: search_docs IS the route that would carry it, and the one the Revisit-if condition is written against, so this empty result is the answer rather than a miss (absence negative) — server 1.32.9, 2026-08-13
+  - **The stdio *install* citation is gone; the mode itself is still named.** At 1.32.3 `sdk_guide`'s
+    description named a **stdio mode** whose package URL was a local `sz-mcp-coworker extract`
+    command. At 1.32.9 that text is gone: `sdk_guide(topic='install', platform='linux_apt')` offers
+    `direct_download` .deb URLs on `mcp.senzing.com/downloads/` plus `dpkg-deb -x` extraction as its
+    firewalled-environment route, and names neither stdio nor `extract`. The **mode**, however, is
+    still a live branch the server expects a client to handle — `mapping_workflow(action='start')`
+    step-1 resource instructions: *"either a 'url' (HTTP mode — download from it) or a 'fetch'
+    command (**stdio/airgap mode** — run it in your shell to extract the file)"*.
+    MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — no stdio mode and no sz-mcp-coworker extract command, where the 1.32.3 tool description the spec cited had both — owner: mapping_workflow(action='start') step-1 instructions still name stdio/airgap mode as a live branch, and explain_error_code('SENZ9000') still names the binary, so the mode did not go away — only its install citation did (routing negative) — server 1.32.9, 2026-08-13
+  - **The binary is still named, on two surfaces this sweep did not ask.** `get_capabilities` returns
+    it as the server's own name — `server_info.server_name = "sz-mcp-coworker"`, in the same response
+    object this note cites for the version — and `explain_error_code('SENZ9000')` names it as
+    something the reader can run, in `resolution_steps`: *"Verify license is active: run
+    `sz-mcp-coworker` **selfcheck** (airgap binary) or call `SzProduct::license()` from any SDK to
+    inspect record_limit and expire_date"*.
   - The **private deployment** is still named, though on a different surface than the spec cited:
     `get_capabilities`' tool manifest, in its `get_sample_data` entry — not that tool's own schema
     description.
   - Net effect on the revisit test: the upstream `feature` request has not been actioned in the
-    corpus, and the evidence base for the spec's routes has **narrowed from two to one**. Anyone
-    reopening this should re-run the check above rather than trusting the spec's 1.32.3 citations.
+    corpus, and **both of the spec's routes are still cited by the server** — only the stdio
+    *install* citation is gone. The condition therefore stays unmet on the strength of the
+    `search_docs` sweep recorded above, not because the routes stopped being named. Anyone reopening
+    this should re-run all four surfaces — `search_docs`, `get_capabilities`,
+    `explain_error_code('SENZ9000')` and `mapping_workflow(action='start')` — rather than trusting
+    the spec's 1.32.3 citations.
+  - ⚠️ **This sweep was under-scoped, and its first version got the evidence wrong; corrected
+    2026-08-13, same day.**
+    <!-- MCP-NEGATIVE-SCAN: quoted-history — the absence quoted below is the RETRACTED claim,
+    kept verbatim so the correction is legible as one. It is not a live statement about the
+    server and deliberately carries no marker; the live findings are the bullets above, which
+    do. -->
+    As first written it reported that at 1.32.9 neither "stdio" nor
+    `sz-mcp-coworker` appeared in `sdk_guide`'s description "or anywhere in the `get_capabilities`
+    manifest", and concluded the evidence base had "narrowed from two to one". Both were false. The
+    binary is that very response's `server_name`, and the two routes asked — a tool description and
+    the tool manifest — are not routes that would carry an install or invocation fact about the
+    server binary, so their silence was recorded as the binary's disappearance. This is the INV-194
+    failure mode (an absence concluded from routes that never owned the fact) landing in a revisit
+    note rather than a spec, which is why no guard saw it. Specced as
+    `specs/declined-revisit-note-asserts-an-absence-from-two-surfaces.md`; the class defect — that
+    nothing ever re-verifies this file — as
+    `specs/declined-ledger-negatives-are-invisible-to-the-scanner.md`.
   - ⚠️ **Recorded because this entry was briefly implemented in error on 2026-08-13** (reverted in
     `f12de7d`). The cause was a candidate-listing that compared only against `IMPLEMENTED.md` and did
     not subtract `DECLINED.md`, as `implement-spec` Step 3 requires; `tests/test_declined_ledger.py`

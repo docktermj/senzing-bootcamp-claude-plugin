@@ -1,5 +1,8 @@
 """The maintainer coverage reports run, and report the two gaps they exist for.
 
+MCP-NEGATIVE-SCAN: ignore-file — the marker strings below are scratch-tree fixtures for the
+scan surface, not claims about the current server.
+
 `deep-dive-audit-2026-07-29-minor-fixes` item 4 added
 `.claude/skills/dry-run/coverage_reports.py` because two blind spots let an invariant stand
 unimplemented for weeks while `IMPLEMENTED.md` recorded its spec as done: an invariant no
@@ -25,6 +28,7 @@ Three properties, one per way it could rot:
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
 import subprocess
 import sys
@@ -34,6 +38,17 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / ".claude" / "skills" / "dry-run" / "coverage_reports.py"
+
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+reports = load(SCRIPT, "coverage_reports_surface")
 
 
 def run(report, cwd):
@@ -114,6 +129,86 @@ class TestInvariantsReport(unittest.TestCase):
             leaked,
             "the report called these uncited while a test file cites them: "
             + ", ".join("INV-" + n for n in leaked),
+        )
+
+
+class TestNegativesScanSurface(unittest.TestCase):
+    """`specs/DECLINED.md` is in the negatives scan; the rest of `specs/` stays out.
+
+    The exclusion of `specs/` is right for a spec body — `implement-spec` Step 3.3 re-verifies
+    a spec's Senzing facts at implementation time — and wrong for `DECLINED.md`, which no
+    implementation ever reaches. So it is added as a named FILE rather than by opening the
+    directory, and both halves are asserted: one file in, everything else still out.
+    """
+
+    def scanned(self):
+        return [Path(p).resolve() for p in reports._scan_files(str(REPO_ROOT))]
+
+    def test_declined_md_is_in_the_scan_surface(self):
+        self.assertIn((REPO_ROOT / "specs" / "DECLINED.md").resolve(), self.scanned())
+
+    def test_no_other_file_under_specs_is_scanned(self):
+        specs = (REPO_ROOT / "specs").resolve()
+        leaked = sorted(p.name for p in self.scanned()
+                        if p.parent == specs and p.name != "DECLINED.md")
+        self.assertEqual(
+            [], leaked,
+            "adding one file must not open specs/ — a spec body's negatives are re-verified "
+            "by implement-spec Step 3.3 and an IMPLEMENTED.md entry is a point-in-time "
+            "record, so both would be noise on the worklist: %s" % leaked,
+        )
+
+    def test_the_exclusion_it_asserts_is_not_vacuous(self):
+        """Other files under `specs/` really do contain the marker text.
+
+        Without this, `test_no_other_file_under_specs_is_scanned` would pass just as well on a
+        corpus where no spec body mentions a negative at all, and would stop meaning anything
+        the moment the scan surface widened.
+        """
+        others = [p.name for p in (REPO_ROOT / "specs").glob("*.md")
+                  if p.name != "DECLINED.md" and "MCP-NEGATIVE:" in p.read_text(encoding="utf-8")]
+        self.assertTrue(others, "no other specs/ file carries marker text — the exclusion test "
+                                "above is asserting nothing")
+
+    def test_the_comment_says_why_declined_md_is_the_exception(self):
+        """A bare constant invites the next reader to 'tidy' it into NEGATIVE_ROOTS."""
+        src = SCRIPT.read_text(encoding="utf-8")
+        m = re.search(r"((?:^#:.*\n)+)NEGATIVE_EXTRA_FILES", src, re.M)
+        self.assertIsNotNone(m, "NEGATIVE_EXTRA_FILES carries no explanatory comment")
+        why = m.group(1)
+        self.assertIn("Step 3.3", why, "the comment must say what does NOT re-verify this file")
+        self.assertRegex(why, r"(?i)never implemented|declined spec is never")
+
+    def test_the_surface_distinguishes_declined_from_the_rest_of_specs(self):
+        """Exercised on a scratch tree, so it holds however the real corpus moves.
+
+        A live-repo assertion alone cannot notice the file-level scan being replaced by a
+        directory walk that happens to find the same markers today.
+        """
+        stamp = "— server 1.32.9, 2026-08-13"
+        good = ("MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list "
+                "— owner: get_capabilities carries it " + stamp)
+        clauseless = "MCP-NEGATIVE: sdk_guide(topic='install') — returns no language list " + stamp
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "specs").mkdir()
+            (root / "plugins").mkdir()
+            (root / "plugins" / "shipped.md").write_text(good, encoding="utf-8")
+            (root / "specs" / "DECLINED.md").write_text(good + "\n" + clauseless, encoding="utf-8")
+            (root / "specs" / "a-spec.md").write_text(good, encoding="utf-8")
+            (root / "specs" / "IMPLEMENTED.md").write_text(good, encoding="utf-8")
+            found = sorted(Path(r[5]).name for r in reports.find_negatives(str(root)))
+            malformed = sorted(Path(r[0]).name for r in reports.find_malformed_negatives(str(root)))
+        self.assertEqual(
+            ["DECLINED.md", "shipped.md"], found,
+            "the worklist must carry the shipped claim and DECLINED.md's, and neither the "
+            "spec body's nor IMPLEMENTED.md's; got %r" % (found,),
+        )
+        self.assertEqual(
+            ["DECLINED.md"], malformed,
+            "an `owner:`-less marker in DECLINED.md must be reported as malformed exactly as "
+            "one in plugins/ is — that is the whole point of adding the file; got %r"
+            % (malformed,),
         )
 
 

@@ -68,6 +68,13 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    the offline suite can never notice going stale. Read-only, stdlib-only, exit 0
    whatever it finds. The `auto-test` skill can call it the same way.
 
+   `negatives` also reads **`specs/DECLINED.md`** — the only file under `specs/` it scans,
+   added 2026-08-13. A spec body's Senzing facts are re-asked by `implement-spec` Step 3.3 on
+   the way in, but a *declined* spec is never implemented, so a negative in a `Revisit if:`
+   clause is re-read as authority and never re-verified. Give those markers the same weight as
+   a shipped claim: a wrong one sends the next revisit check to the wrong answer, which is
+   exactly what a phase 1 sweep found there.
+
 ## Absolute rules
 
 ⛔ **Never send anything outside the machine.** Do not call `submit_feedback` under

@@ -41,6 +41,12 @@ is not buried under legitimate entries:
     ``explain-error-code-now-owns-senz7426``), and the second time the stale claim was
     also written into the guards, so correcting the prose *failed* the suite.
 
+    Scanned under ``NEGATIVE_ROOTS`` — plus the single file ``specs/DECLINED.md``, which is
+    the one record with no re-verification path at all: a declined spec never reaches
+    ``implement-spec`` Step 3.3, so a dated negative in a ``Revisit if:`` clause is re-read
+    as authority and never re-asked. Adding that one file does not open the rest of
+    ``specs/``.
+
 All three are read-only, stdlib-only, and platform-independent (INV-052/INV-108). Run from
 the repo root, or pass ``--repo``:
 
@@ -90,8 +96,21 @@ MCP_NEGATIVE_TOKEN = re.compile(r"MCP-NEGATIVE:")
 #: A file that legitimately contains the marker text without making a claim (this script,
 #: its test, the spec that defines the format) opts out with this line.
 NEGATIVE_OPT_OUT = "MCP-NEGATIVE-SCAN: ignore-file"
-#: Where a live claim can live. `specs/` and `feedback/` are records, not shipped claims.
+#: Where a live claim can live. `specs/` and `feedback/` are records, not shipped claims — a
+#: spec's Senzing facts are re-verified by `implement-spec` Step 3.3 on the way in, and an
+#: `IMPLEMENTED.md` entry's `MCP re-check:` field is a point-in-time record of that check.
 NEGATIVE_ROOTS = ("plugins", "tests", os.path.join(".claude", "skills"), "docs")
+#: `specs/DECLINED.md` is the one exception, and it is a file rather than a root so that
+#: including it does not open the rest of `specs/`. A declined spec is never implemented, so
+#: Step 3.3 never runs on it — the re-verification path that justifies excluding `specs/` does
+#: not exist here. That makes a negative in a `Revisit if:` clause or a dated revisit note the
+#: only Senzing claim in the repo with neither a scanner nor any re-verification path, while
+#: `implement-spec` positions this file as the HIGHER authority ("re-verify the condition rather
+#: than trusting the spec's original citations"). A `Revisit if:` exists precisely to be
+#: re-checked later, so a stale negative inside one sends that recheck to the wrong answer while
+#: looking evidenced — which is what happened on 2026-08-13 (`specs/DECLINED.md`'s
+#: `no-route-for-bootcampers-who-cannot-add-an-mcp-server` note).
+NEGATIVE_EXTRA_FILES = (os.path.join("specs", "DECLINED.md"),)
 SKIP_DIRS = {"__pycache__", "vendor", "node_modules", ".git", ".history", ".pytest_cache"}
 
 
@@ -183,6 +202,10 @@ def _scan_files(repo):
             for name in sorted(filenames):
                 if name.endswith((".md", ".py")):
                     yield os.path.join(dirpath, name)
+    for rel in NEGATIVE_EXTRA_FILES:                   # named files, not roots — see above
+        path = os.path.join(repo, rel)
+        if os.path.isfile(path):
+            yield path
 
 
 def find_negatives(repo):

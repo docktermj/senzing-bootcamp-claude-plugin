@@ -370,6 +370,30 @@ decline is indistinguishable from nobody having looked, and the next run looks a
 current architecture or a current upstream gap, and naming the trigger lets a later run
 check cheaply instead of re-arguing.
 
+⛔ **An absence claim in a `Revisit if:` clause or a dated revisit note carries the same
+`MCP-NEGATIVE` marker Step 3.4 requires — this file needs it most, not least.** A declined
+spec is never implemented, so Step 3.3 never re-asks its facts: a negative written here is
+the only Senzing claim in the repo with no re-verification path, while this skill tells the
+next reader to trust it *over* the spec's own citations. Write the marker on the same bullet
+as the claim:
+
+```markdown
+- **Revisit if:** Senzing documents a self-service route for <X>.
+  MCP-NEGATIVE: search_docs(query='<terms>') — no indexed document names <X> — owner: search_docs IS the corpus route the condition is written against, so the empty result is the answer rather than a miss (absence negative) — server <version>, <YYYY-MM-DD>
+```
+
+`coverage_reports.py negatives` scans `specs/DECLINED.md` (and no other file under `specs/`)
+for exactly this reason, so a marker here reaches the worklist a dry run re-asks;
+`tests/test_declined_ledger.py` fails on an absence-shaped bullet that has none. Prose that
+**quotes a retracted claim** is exempt and must say so on the bullet with
+`MCP-NEGATIVE-SCAN: quoted-history`, so a correction can restate what it corrects.
+
+This is INV-194 applied where it was actually breached: the 2026-08-13 revisit note on
+`no-route-for-bootcampers-who-cannot-add-an-mcp-server` concluded a binary had lost its
+citations after asking a tool description and the tool manifest — when the binary was that
+manifest's own `server_name`. Requiring the `owner:` clause is what forces the owning route
+to be asked.
+
 **Leave the spec file where it is.** Do not archive, move or delete it: its analysis is
 what made the decision possible, and its filename is a permanent address. A declined
 spec also stays visible to `feedback-to-specs`' Step 4 deduplication, so the same
