@@ -65,6 +65,23 @@ are never implementable specs:
 
 ## Step 1: Load state
 
+⛔ **Compute the set with the script, not by hand:**
+
+```bash
+python3 .claude/skills/implement-spec/list_specs.py
+```
+
+It does exactly steps 1–4 below, prints the counts alongside the open set so an empty result is
+visible rather than ambiguous, and flags a spec that is in **both** ledgers. Steps 1–4 remain as
+the explanation of *what* it computes and *why*; run the script to get the answer.
+
+⚠️ **This became a script because the by-hand version failed.** On 2026-08-13 a run subtracted
+only `IMPLEMENTED.md`, reported a **declined** spec as open, recommended it to the maintainer,
+and implemented it; `tests/test_declined_ledger.py` caught the contradiction afterwards, but
+nothing caught the listing. The instruction below was correct at the time and was simply not
+followed — which is the argument for mechanising it rather than restating it more firmly
+(INV-207).
+
 1. **List** `specs/*.md` and drop the meta files above → the candidate set.
 2. **Read `specs/IMPLEMENTED.md`** (create it from the scaffold if missing) and
    collect the `## <name>` headings → the implemented set.

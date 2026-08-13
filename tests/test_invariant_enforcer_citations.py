@@ -97,7 +97,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: 31 -> 32 on 2026-08-13 (dry run, final spec): INV-214 (a verbosity preset governs form as
 #: well as kind) names tests/test_minimal_verbosity_scope.py, which cites INV-214 back.
 #: Re-derived by running the extractor.
-EXPECTED_PAIRS = 32
+#:
+#: 32 -> 33 on 2026-08-13: INV-216 (the candidate set is computed and subtracts DECLINED.md)
+#: names tests/test_list_specs.py, which cites INV-216 back. Re-derived by running the
+#: extractor. Arose from a process failure rather than a spec: a hand-computed listing
+#: re-offered a declined spec.
+EXPECTED_PAIRS = 33
 
 
 def pairs():
