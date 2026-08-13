@@ -52,13 +52,6 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: that quietly upgrades "I ran it" into "it is good" is the same laundering this guard exists
 #: to stop.
 VERIFIED_QUERIES = {
-    "Agentic Entity Resolution MCP server configuration setup connect assistant":
-        "ON TARGET for the DOCUMENT, and that is the finding: top hit is Agentic Entity "
-        "Resolution (senzing.com/docs/agentic), the MCP server's own page — so the query "
-        "reaches the document that would own self-hosting/private-deployment setup. The page "
-        "returns its overview section only and carries no setup content, which is why the "
-        "onboarding policy branch says the route is named but undocumented rather than "
-        "inventing steps. Executed 1.32.9, index_built 2026-08-11, 2026-08-13",
     "entity resolution business value":
         "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases'; "
         "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",

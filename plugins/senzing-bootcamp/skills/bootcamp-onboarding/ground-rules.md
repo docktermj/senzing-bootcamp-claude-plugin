@@ -141,16 +141,8 @@ steering files.)
   permanent, not a temporary mitigation waiting on a fix.)
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
-  unreachable and they must resolve it before continuing. Never fabricate. If MCP
+  unreachable and they must fix the connection before continuing. Never fabricate. If MCP
   returns no answer, say so and point to <https://docs.senzing.com> / <support@senzing.com>.
-  ⛔ **Do not assume the cause is the connection.** "Unreachable" has two causes with the same
-  symptom and different remedies: a **connectivity** failure (network, proxy, allowlist), and a
-  bootcamper whose organisation does **not permit adding an external MCP server** — which no proxy
-  configuration fixes, and for whom connectivity advice is simply the wrong answer. Separate them
-  with the one question that distinguishes them, and take the policy branch when it applies: the
-  procedure and the attributed routes are in `onboarding-flow.md` → step 0b's failure branch and
-  step 0c. This applies at **any** point in the bootcamp, not only at onboarding — a server that
-  was reachable at session start can stop being reachable mid-module.
 - **Flags:** before an SDK call that accepts flags, look them up with
   `get_sdk_reference(topic='flags', filter='<method>')`, pick the flags matching the
   bootcamper's intent, explain the choice in one sentence, and reuse that knowledge within the
