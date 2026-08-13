@@ -88,7 +88,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: that retrieves bootcamper-facing content carries a retrieval strategy) names
 #: tests/test_pattern_gallery_shortfall.py, which cites INV-212 back. Re-derived by running
 #: the extractor.
-EXPECTED_PAIRS = 30
+#:
+#: 30 -> 31 on 2026-08-13 (dry run, follow-up): INV-213 (a spec asserting server absence names
+#: the owning route) names tests/test_spec_absence_claims_name_their_owner.py, which cites
+#: INV-213 back. Re-derived by running the extractor. INV-209 and INV-213 are one rule at two
+#: altitudes -- shipped prose, and the spec that is the input to implementation.
+EXPECTED_PAIRS = 31
 
 
 def pairs():

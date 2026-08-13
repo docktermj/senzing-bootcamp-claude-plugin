@@ -24,6 +24,19 @@ Where the server now disagrees with the spec, the server wins and the deviation 
 recorded; implementing a stale spec faithfully means writing a fresh defect into the
 plugin, with a spec file that makes it look reviewed.
 
+⛔ **When a spec's diagnosis rests on the server LACKING something, re-ask the OWNER, not the
+tools the spec listed.** Its `MCP re-check` line must carry `owner-checked: <route that would
+carry the fact> — <what it returned>` (`../feedback-to-specs/spec-template.md`). Re-ask that
+route. **A missing `owner-checked:` clause on an absence claim is a blocker, not a note:**
+re-diagnose before implementing, because the empty tools the spec named prove something about
+those tools and nothing about the negative. Two instances in one session, both from the same
+mechanism — a real tool, real parameters, a real empty result, an honest date, and the wrong
+tool asked. The first shipped as INV-208 plus a guard banning the correct value; the second
+(`pattern-gallery-asks-for-more-than-mcp-can-supply`) was caught at exactly this step, and its
+whole diagnosis inverted — the server covered the material all along, reachable by a different
+vocabulary. That is this check paying for itself, and it is why the clause is enforced
+(INV-194) rather than left to attention.
+
 ## Invocation modes
 
 - **No argument** → discovery mode. List every spec that has **not** yet been
