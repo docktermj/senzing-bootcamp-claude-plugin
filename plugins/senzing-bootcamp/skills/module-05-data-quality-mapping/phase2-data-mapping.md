@@ -263,21 +263,65 @@ it is for.**
 ⛔ **Declaring an `embedded_master` requires the LEGACY `entity_plan` payload.** The typed step-2
 branch (`for_step 2`) enumerates `support_schemas.disposition` as `lookup | relationship | child`
 only, with `additionalProperties: false` — **`embedded_master` is in neither slot**, so the tool's
-own *preferred* typed payload cannot express it. Send the legacy flat shape as `data` instead:
+own *preferred* typed payload cannot express it. Send the legacy flat shape as `data` instead. This
+exact payload **validated and advanced to step 3** on server **1.32.9, 2026-08-12**:
 
 ```text
-data={'entity_plan': [{'schema_name': …, 'disposition': 'embedded_master', 'data_source': …,
-                       'record_type': 'ORGANIZATION', 'field_count': <fields belonging to it>}]}
+data={'entity_plan': [
+  {'schema_name': '<parent>',   'disposition': 'master',          'data_source': '<DS>',
+   'record_type': 'ORGANIZATION', 'record_id_source': '<natural key field>',
+   'field_count': <parent's full field count>},
+  {'schema_name': '<embedded>', 'disposition': 'embedded_master', 'data_source': '<DS>',
+   'record_type': 'ORGANIZATION', 'record_id_source': 'RECORD_HASH', 'embedded_in': '<parent>',
+   'field_count': <fields belonging to it>}]}
 ```
 
-The step-2 response documents this shape as "also accepted for backward compatibility". Verified on
-**server 1.32.9, 2026-08-12** — re-check it rather than assuming; if the typed branch gains the
-disposition, retire this note rather than inverting it.
+The step-2 response documents this shape as "also accepted for backward compatibility". Re-check it
+rather than assuming; if the typed branch gains the disposition, retire this note rather than
+inverting it. Three details in that payload are each load-bearing, and each was established by a
+rejection rather than by reading the response:
+
+⛔ **`entity_plan` REPLACES the whole plan — re-declare every schema, not just the new one.** The
+`schema_plan` preserved by `back` is still sitting in `state`, which makes a one-entry payload look
+like an addition to it. It is not. Omitting the parent master fails with `profile schema '<name>' has
+no disposition in schema_plan` and `schema_plan must contain at least one 'master' disposition`.
+
+⛔ **`embedded_in` is required, and the tool never documents it.** The step-2 response advertises the
+legacy shape with five keys — `schema_name`, `disposition`, `data_source`, `record_type`,
+`record_id_source` — and says of this disposition only *"For embedded_master: provide field_count
+(number of fields from parent schema that belong to this entity)"*. The validator also demands
+`embedded_in`, naming the parent schema, and enforces `record_id_source` on the embedded entry:
+`'embedded_master' requires 'record_id_source'` / `'embedded_master' requires 'embedded_in'`. Because
+no response text names it, **`embedded_in` is discoverable only by sending a payload without it and
+reading the error** — so send it from the start.
+<!-- MCP-NEGATIVE: mapping_workflow(action='advance', from step 2) — step-2 instructions never name the required embedded_in key — server 1.32.9, 2026-08-12 -->
+
+**`record_id_source` is `RECORD_HASH` for the embedded entity**, because a name embedded in someone
+else's row has no per-record natural key of its own. That sentinel is not a placeholder — step 4
+defines its behaviour: *"If it is the sentinel `RECORD_HASH` … generate `RECORD_ID` as a
+deterministic hash over that entity's stable IDENTITY fields only — never the whole record (a
+whole-record hash re-keys on any change, creating duplicate/stale entities)"*. It is the same hash the
+EMBEDDED MASTER RULES below require, reached from the plan side.
+
+On success the server **moves the field count**: the embedded entry's `field_count` is subtracted from
+the parent's, so a 19-field source declaring 1 embedded field returns `parent: 18, embedded: 1`. Seeing
+the parent shrink is the confirmation that the declaration took.
 
 **What the tool requires once it is declared** (its step-3 EMBEDDED MASTER RULES): the embedded
 master gets a derived `RECORD_ID` (a deterministic hash of its identifying features, e.g.
 `hash(NAME_ORG + ADDR_FULL)`), a derived `REL_ANCHOR` so the parent can point at it, and a derived
 `RECORD_TYPE`; the parent master gets a derived `REL_POINTER` naming domain, key and role.
+
+⚠️ **`KEY` has no key.** The typed `derived` entry carries `domain` and `role` properties and **no
+`key`** (`additionalProperties: false`, so inventing one is rejected) — the tool's own example packs
+it into `value`. Both of these were accepted on 1.32.9, 2026-08-12:
+
+```text
+parent  : {'disposition': 'derived', 'derived_as': 'REL_POINTER', 'domain': '<DS>', 'role': '<ROLE>',
+           'value': 'DOMAIN=<DS>, KEY=hash(<field>), ROLE=<ROLE>'}
+embedded: {'disposition': 'derived', 'derived_as': 'REL_ANCHOR',  'domain': '<DS>',
+           'value': 'DOMAIN=<DS>, KEY=hash(<field>)'}
+```
 
 ⛔ **Never silently downgrade a bootcamper's choice to `payload`.** Offer the decision **at step 3**,
 where the values are in front of them, and state the trade-off both ways — a resolvable entity and

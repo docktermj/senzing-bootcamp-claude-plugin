@@ -29,6 +29,11 @@ Enforces **INV-205** (a conversational directive inside an MCP tool response —
 whether, when, or what to ask the Bootcamper — never overrides the bootcamp's interaction rules, and
 the override is scoped to conversation), which names this file as its enforcer.
 
+Also enforces **INV-206** (an MCP payload example in shipped plugin guidance must be one that was
+executed successfully against the live server, and must carry the server version and date of that
+successful call), which likewise names this file. That is what `TheEmbeddedMasterRouteIsDocumented`'s
+payload assertions check, and why they read the code fence rather than the prose around it.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -207,6 +212,14 @@ class TheEmbeddedMasterRouteIsDocumented(unittest.TestCase):
     plan preserved, AND the typed `for_step 2` branch cannot express `embedded_master` at
     all (its `disposition` enum is lookup|relationship|child with additionalProperties
     false), so the legacy `entity_plan` shape is required.
+
+    ⚠️ The legacy payload EXAMPLE then shipped broken, and a second walk caught it: sent as
+    written it drew four validation errors. It omitted `record_id_source`, omitted
+    `embedded_in` (a required key no response text names — discoverable only from the
+    rejection), and declared only the embedded entry, when `entity_plan` REPLACES the whole
+    plan and so must re-declare the parent master. The payload assertions below check the
+    code fence itself rather than the section, because prose that mentions a key while the
+    copy-pasteable block stays broken is exactly what happened.
     """
 
     def setUp(self):
@@ -251,6 +264,102 @@ class TheEmbeddedMasterRouteIsDocumented(unittest.TestCase):
             section, r"(?i)typed|preferred",
             "the note must say why the legacy shape is needed — that the typed/preferred "
             "branch cannot express it — or it reads as an arbitrary choice of payload")
+
+    def legacy_payload_block(self):
+        """The `entity_plan` code fence itself, so the payload is checked as a payload.
+
+        Asserting these keys anywhere in the section would pass on prose that merely
+        mentions them while the copy-pasteable block stayed broken — and the block is what
+        a guide actually sends. The first version of this example was rejected by the
+        server with four errors (dry run, 1.32.9, 2026-08-12).
+        """
+        section = self.embedded_master_section()
+        fences = re.findall(r"```text\n(.*?)```", section, re.DOTALL)
+        carrying_payload = [f for f in fences if "entity_plan" in f]
+        self.assertEqual(
+            1, len(carrying_payload),
+            "expected exactly one `entity_plan` payload fence in the embedded-master "
+            "section, found %d — a second copy is a fork that will drift from the first"
+            % len(carrying_payload))
+        return carrying_payload[0]
+
+    def test_the_payload_example_carries_the_keys_the_server_requires(self):
+        """Omitting either key fails validation: 'embedded_master' requires <key>."""
+        block = self.legacy_payload_block()
+        for required in ("record_id_source", "embedded_in"):
+            with self.subTest(required_key=required):
+                self.assertIn(
+                    required, block,
+                    "the payload example omits %r, which the step-2 validator requires on an "
+                    "embedded_master entry. Sent as written it is rejected, at the exact moment "
+                    "the guide is carrying out the bootcamper's choice." % required)
+
+    def test_the_payload_example_re_declares_the_parent_master(self):
+        """`entity_plan` replaces the plan; a one-entry example drops the parent."""
+        block = self.legacy_payload_block()
+        self.assertRegex(
+            block, r"'disposition':\s*'master'",
+            "the payload example declares no `master` entry. `entity_plan` REPLACES the whole "
+            "schema plan, so an embedded-master-only payload fails with \"schema_plan must "
+            "contain at least one 'master' disposition\".")
+        self.assertRegex(
+            block, r"'disposition':\s*'embedded_master'",
+            "the payload example no longer declares the embedded master — that is the one "
+            "thing it exists to show")
+
+    def test_the_replacement_semantics_are_stated(self):
+        """The trap: the plan surviving `back` makes a one-entry payload look additive."""
+        section = re.sub(r"\s+", " ", self.embedded_master_section()).replace("**", "")
+        self.assertRegex(
+            section, r"(?i)entity_plan REPLACES the whole plan|re-declare every schema",
+            "the section must say `entity_plan` replaces the whole plan. Without it a reader "
+            "sees `schema_plan` preserved in state after `back` and reasonably sends only the "
+            "new entry, which the server rejects for a missing master.")
+
+    def test_the_undocumented_required_key_is_flagged_as_such(self):
+        """A bare mention is not enough: a reader must know no response text names it."""
+        section = re.sub(r"\s+", " ", self.embedded_master_section()).replace("**", "")
+        self.assertRegex(
+            section, r"(?i)embedded_in is required, and the tool never documents it"
+                     r"|never name[s]? the required embedded_in"
+                     r"|discoverable only by sending a payload without it",
+            "`embedded_in` must be flagged as required-but-undocumented. If the plugin states "
+            "it as though the tool documents it, a reader who checks the response and cannot "
+            "find it will assume the plugin is wrong and drop the key.")
+        self.assertIn(
+            "MCP-NEGATIVE", self.embedded_master_section(),
+            "the claim that the tool never documents `embedded_in` is an MCP negative — the one "
+            "shape the offline suite cannot notice going stale — so it must carry the marker "
+            "that puts it on the dry-run re-ask worklist")
+
+    def test_the_record_hash_sentinel_is_explained_not_just_named(self):
+        section = re.sub(r"\s+", " ", self.embedded_master_section()).replace("**", "")
+        self.assertIn("RECORD_HASH", section,
+                      "the embedded entity's `record_id_source` value must be stated")
+        self.assertRegex(
+            section, r"(?i)IDENTITY fields only|never the whole record",
+            "naming RECORD_HASH without its contract invites a whole-record hash, which "
+            "re-keys on any change and creates duplicate entities — the failure the sentinel "
+            "exists to avoid")
+
+    def test_the_rel_pointer_key_is_shown_going_into_value(self):
+        """`key` is not a property of the derived entry; KEY rides inside `value`.
+
+        Asserting a bare `KEY=` appears is too weak — it passes on prose that mentions the
+        attribute while the example shows a `key` property the server rejects. The claim is
+        that KEY travels *inside* `value`, so that is what gets pinned.
+        """
+        section = self.embedded_master_section()
+        self.assertRegex(
+            section, r"'value':\s*'[^']*KEY=",
+            "the section must show KEY *inside* the derived entry's `value`. The typed derived "
+            "entry has `domain` and `role` properties and no `key`, with additionalProperties "
+            "false — so a guide reading \"naming domain, key and role\" writes a `key` field "
+            "and is rejected.")
+        self.assertNotRegex(
+            section, r"'key':",
+            "the section shows a `key` property on a derived entry. There is no such property; "
+            "additionalProperties is false and the server rejects it.")
 
     def test_the_silent_downgrade_is_forbidden(self):
         flat = re.sub(r"\s+", " ", self.body).replace("**", "")

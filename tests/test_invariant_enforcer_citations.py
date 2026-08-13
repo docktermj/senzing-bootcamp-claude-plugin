@@ -51,7 +51,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: running the extractor, not incremented to make the assertion pass -- and the same session
 #: that added INV-205 was caught by this guard for omitting the back-citation, which is the
 #: whole reason the pair count is pinned rather than computed.
-EXPECTED_PAIRS = 23
+#:
+#: 23 -> 24 later the same day: INV-206 (an MCP payload example must be one that was executed
+#: successfully) names the SAME file, so one test file now serves two invariants -- the case
+#: the "counts PAIRS, not invariants" note above exists for. Re-derived by running the
+#: extractor. This guard fired again, on the same omission as last time: INV-206 was recorded
+#: before its enforcer cited it back. Twice in one day is the argument for the pin.
+EXPECTED_PAIRS = 24
 
 
 def pairs():
