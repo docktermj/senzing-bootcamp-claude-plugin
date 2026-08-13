@@ -93,7 +93,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: the owning route) names tests/test_spec_absence_claims_name_their_owner.py, which cites
 #: INV-213 back. Re-derived by running the extractor. INV-209 and INV-213 are one rule at two
 #: altitudes -- shipped prose, and the spec that is the input to implementation.
-EXPECTED_PAIRS = 31
+#:
+#: 31 -> 32 on 2026-08-13 (dry run, final spec): INV-214 (a verbosity preset governs form as
+#: well as kind) names tests/test_minimal_verbosity_scope.py, which cites INV-214 back.
+#: Re-derived by running the extractor.
+EXPECTED_PAIRS = 32
 
 
 def pairs():

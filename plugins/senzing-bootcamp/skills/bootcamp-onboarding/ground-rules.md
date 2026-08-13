@@ -456,6 +456,16 @@ How to file it: `feedback.md` → "Silent in-run append", with
   and NEVER suppresses required output — 👉 questions, gates, module banners, end-of-module
   summaries, and the recap always appear. (The full five-category verbosity system is
   condensed here; expand it when `verbosity-control` is ported.)
+- ⛔ **Where output has a prescribed SHAPE and the preset budgets fewer lines, required elements
+  MERGE onto the permitted lines — they are never dropped to fit.** Join them with `; ` and keep
+  every one. The explanatory/required split above decides *what* survives; it says nothing about
+  *form*, so a template with fixed lines and a one-line budget would otherwise be resolved by
+  guesswork. Any per-line annotation — the setup recap's ` — from your saved preferences` marker,
+  for instance — attaches **inline to the value it qualifies** rather than to a line, so collapsing
+  lines never costs a marker. A list of names may compress to a count when the names were already
+  given in the same session; a count is not a module number, so INV-079 is unaffected.
+  Worked example: `../bootcamp-preparation/SKILL.md` → Step 7, whose six-line recap collapses to one
+  under `minimal` while still marking all three honored preferences.
 
 ## Any-time bootcamper controls
 

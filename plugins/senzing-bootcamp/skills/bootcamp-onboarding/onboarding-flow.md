@@ -106,7 +106,23 @@ so the line is simply shown, and that is correct rather than an oversight. The s
 reachable only on a resumed run, or when the bootcamper pre-seeded the file (INV-133). Do not stall
 trying to honor a preference that cannot exist yet, and do not ask for verbosity here.
 
-Then give the overview (cover naturally, do not ask a question yet):
+Then give the overview (cover naturally, do not ask a question yet).
+
+⛔ **Every bullet below has a verbosity treatment — none is unconditional.** Two carry their own
+(the version line above and the feedback-trigger bullet below); the rest are governed as a group,
+so there is no bullet whose behaviour under a preset is left to guesswork:
+
+| Preset | The overview is |
+|---|---|
+| `minimal` | the **module list** plus the **how-long-it-takes** bullet, and nothing else — orientation only |
+| `concise` | all bullets except *guided discovery* and *unfamiliar terms*, each trimmed to one line |
+| `standard` / `detailed` | all ten, as written |
+
+The split is orientation versus encouragement: the module list and the resume-and-time facts are
+what a bootcamper needs to navigate, and the rest is framing an expert moving fast does not. On a
+**fresh** bootcamp no preset exists yet, so all ten are shown and that is correct rather than an
+oversight (INV-075/INV-133) — the reduced forms are reachable only on a resumed run or a pre-seeded
+file.
 
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.

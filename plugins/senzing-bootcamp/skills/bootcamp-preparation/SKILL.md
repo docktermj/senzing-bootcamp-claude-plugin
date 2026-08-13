@@ -393,6 +393,21 @@ suppressed, so an honored preference is visible rather than looking like a quest
 - **The label is "Programming language", never the bare "Language"** — the rule stated in Step 4
   above, and it applies to every bootcamper-facing line, not only to the question.
 
+⛔ **Under `minimal`, the six lines COLLAPSE to one — they are not dropped.** The one-line budget and
+the per-line provenance marker collide exactly when they matter most: a returning bootcamper who
+pre-seeded `path`, `verbosity` and `programming_language` needs all three marked, and has one line to
+put them on. Merge with `; ` and attach each marker **inline to its value**, per
+`../bootcamp-onboarding/ground-rules.md` → Verbosity. The module list compresses to a count, since
+the names were just given in the preface; a count is not a module number, so INV-079 is unaffected.
+This exact shape:
+
+```text
+✅ Bootcamp preparation complete — Path: Core (all 11 modules) — from your saved preferences; Detail level: minimal — from your saved preferences; Programming language: Java — from your saved preferences; Version control: git initialized. → Next: Entity Resolution Concepts
+```
+
+Nothing here is optional under `minimal`: the values in force, their provenance markers, and the
+next-module pointer are all required output, and `minimal` reduces only *explanatory* output.
+
 When Step 0 honored anything, close the recap with one line telling them how to change it: "Edit
 `config/bootcamp_preferences.yaml` to change any saved choice, or just tell me."
 
