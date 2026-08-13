@@ -84,3 +84,26 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
   changes: pointing a blocked bootcamper at a documented route becomes a small documentation change
   rather than an architectural one, and this should be reopened. The spec's own re-verification
   clause already requires that check at implementation time.
+- **Revisit check, 2026-08-13 (server 1.32.9, docs index 2026-08-11, 14,240 docs): condition NOT met,
+  and it has moved further away.** Decision unchanged — this note records evidence, not a reversal.
+  - The corpus still documents neither route. Re-ran the spec's keyword query (same result as
+    2026-07-31), and additionally asked the document that *owns* the subject:
+    `search_docs(query='Agentic Entity Resolution MCP server configuration setup connect assistant')`
+    reaches `senzing.com/docs/agentic`, the MCP server's own page, which returns an overview and
+    carries no setup or self-hosting content. So "named but undocumented" is now established via the
+    owning route rather than by a query that merely missed.
+  - ⚠️ **One of the two routes lost its citation.** At 1.32.3 `sdk_guide`'s description named a
+    **stdio mode** whose package URL was a local `sz-mcp-coworker extract` command. At 1.32.9 neither
+    "stdio" nor `sz-mcp-coworker` appears in that description or anywhere in the `get_capabilities`
+    manifest. Whether the mode was retired or the text trimmed cannot be told from here.
+  - The **private deployment** is still named, though on a different surface than the spec cited:
+    `get_capabilities`' tool manifest, in its `get_sample_data` entry — not that tool's own schema
+    description.
+  - Net effect on the revisit test: the upstream `feature` request has not been actioned in the
+    corpus, and the evidence base for the spec's routes has **narrowed from two to one**. Anyone
+    reopening this should re-run the check above rather than trusting the spec's 1.32.3 citations.
+  - ⚠️ **Recorded because this entry was briefly implemented in error on 2026-08-13** (reverted in
+    `f12de7d`). The cause was a candidate-listing that compared only against `IMPLEMENTED.md` and did
+    not subtract `DECLINED.md`, as `implement-spec` Step 3 requires; `tests/test_declined_ledger.py`
+    caught it. Noted here so the next reader knows this entry has been tested against the guard and
+    survived, rather than wondering why the git history touches it.
