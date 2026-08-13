@@ -103,13 +103,50 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
             "which case the worklist is silently empty",
         )
 
-    def test_each_marker_parses_into_all_four_fields(self):
-        for key, version, date, claim, relpath, lineno in reports.find_negatives(str(REPO_ROOT)):
+    def test_each_marker_parses_into_all_five_fields(self):
+        for row in reports.find_negatives(str(REPO_ROOT)):
+            key, version, date, claim, owner, relpath, lineno = row
             with self.subTest(where="%s:%d" % (relpath, lineno)):
                 self.assertTrue(key, "version did not parse into sortable parts")
                 self.assertRegex(version, r"^\d+\.\d+")
                 self.assertRegex(date, r"^\d{4}-\d{2}-\d{2}$")
                 self.assertIn("—", claim, "a claim names the tool and what is absent")
+                self.assertTrue(owner, "the owner clause parsed empty")
+
+    def test_every_marker_names_the_route_that_owns_the_fact(self):
+        """INV-209. The empty call proves a fact about that call, not the negative.
+
+        A negative recorded from a tool that never carried the fact looks identical in the
+        file to a verified one: real tool, real parameters, real empty result, honest date.
+        The `owner:` clause is what distinguishes them, so it must name a route — a tool call
+        or an equivalently concrete source such as a validator's rejection — and not merely
+        restate the absence.
+
+        The regex makes a marker without the clause fail to parse at all, so this test also
+        depends on `test_the_scan_is_not_vacuous`: were the clause dropped everywhere, the
+        worklist would empty rather than fail here, and that test is what catches it.
+        """
+        found = reports.find_negatives(str(REPO_ROOT))
+        self.assertGreaterEqual(len(found), 1, "no markers to check — see the vacuity test")
+        for row in found:
+            _key, _version, _date, _claim, owner, relpath, lineno = row
+            with self.subTest(where="%s:%d" % (relpath, lineno)):
+                names_a_route = (
+                    TOOL_RE.search(owner)
+                    or re.search(r"(?i)validator|rejection|error|response", owner)
+                )
+                self.assertTrue(
+                    names_a_route,
+                    "the owner clause must name the route that would CARRY this fact — an "
+                    "MCP tool, or a concrete source such as a validator's rejection. Got: "
+                    "%r. Without it the marker records only that some call came back empty, "
+                    "which is how a wrong-route negative reaches an invariant looking "
+                    "reviewed (INV-194)." % owner,
+                )
+                self.assertNotEqual(
+                    owner.strip().rstrip("."), "",
+                    "owner clause is present but empty",
+                )
 
     def test_markers_are_ordered_oldest_server_first(self):
         """The oldest is the one most likely to have moved — it must lead the worklist."""
@@ -123,8 +160,13 @@ class TheReportFindsTheLiveMarkers(unittest.TestCase):
         out = buf.getvalue()
         self.assertIn("oldest server version first", out)
         self.assertIn("INV-108", out)
-        for _k, _v, _d, _c, relpath, _l in reports.find_negatives(str(REPO_ROOT)):
+        # The report must also tell the reader to re-ask the OWNER, not just the empty route.
+        self.assertIn("owner", out.lower())
+        self.assertIn("INV-194", out)
+        for row in reports.find_negatives(str(REPO_ROOT)):
+            relpath, owner = row[5], row[4]
             self.assertIn(Path(relpath).name, out)
+            self.assertIn(owner, out, "each marker's owner clause must be printed")
 
     def test_the_cli_accepts_the_new_report(self):
         buf = io.StringIO()

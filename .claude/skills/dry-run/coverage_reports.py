@@ -62,12 +62,22 @@ LEDGER_HEAD = re.compile(r"^## (\S+)$", re.M)
 FILES_CHANGED = re.compile(r"^- \*\*Files changed:\*\*(.*)$", re.M)
 PATH_IN_TICKS = re.compile(r"`([A-Za-z0-9_./{}*-]+\.(?:md|py|sh|json|yaml|yml|js|png|pdf))`")
 
-#: `MCP-NEGATIVE: <tool(params)> — <what is absent> — server <version>, <YYYY-MM-DD>`
+#: `MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact
+#:  + outcome> — server <version>, <YYYY-MM-DD>`
 #: The em dash is what the plugin's prose uses; a plain `--` is accepted so the marker can
 #: be written in a context where an em dash is awkward.
+#:
+#: ⛔ `owner:` is REQUIRED, and a marker without it deliberately does not match — it must
+#: surface as a missing marker rather than as a well-formed one. Absence evidence and
+#: ownership evidence are different claims, and only the second one supports a negative:
+#: "`configure` returns no license variable" is a true fact about `configure` and worthless
+#: as support for "no license variable exists". The route that would CARRY the fact is what
+#: has to be asked (INV-194) and what a re-check must re-ask. Recording only the empty call
+#: is what made a wrong-route conclusion look reviewed, twice over — see
+#: `specs/mcp-negative-markers-must-name-the-owning-route.md`.
 MCP_NEGATIVE = re.compile(
-    r"MCP-NEGATIVE:\s*(?P<claim>.+?)\s*(?:—|--)\s*server\s*(?P<version>[0-9][0-9.]*)\s*,\s*"
-    r"(?P<date>\d{4}-\d{2}-\d{2})"
+    r"MCP-NEGATIVE:\s*(?P<claim>.+?)\s*(?:—|--)\s*owner:\s*(?P<owner>.+?)\s*(?:—|--)\s*"
+    r"server\s*(?P<version>[0-9][0-9.]*)\s*,\s*(?P<date>\d{4}-\d{2}-\d{2})"
 )
 #: A file that legitimately contains the marker text without making a claim (this script,
 #: its test, the spec that defines the format) opts out with this line.
@@ -168,7 +178,7 @@ def _scan_files(repo):
 
 
 def find_negatives(repo):
-    """[(version_key, version, date, claim, relpath, lineno)] for every marker found."""
+    """[(version_key, version, date, claim, owner, relpath, lineno)] for every marker found."""
     found = []
     for path in _scan_files(repo):
         text = _read(path)
@@ -181,7 +191,7 @@ def find_negatives(repo):
             version = m.group("version")
             key = tuple(int(p) for p in version.split(".") if p.isdigit())
             found.append((key, version, m.group("date"), m.group("claim").strip(),
-                          os.path.relpath(path, repo), lineno))
+                          m.group("owner").strip(), os.path.relpath(path, repo), lineno))
     found.sort(key=lambda r: (r[0], r[2]))
     return found
 
@@ -192,18 +202,28 @@ def report_negatives(repo):
     print("== Dated MCP negatives, oldest server version first ==")
     print("A negative about a tool's content cannot go stale detectably: the suite is")
     print("offline (INV-108), so nothing notices when the server gains the coverage the")
-    print("plugin routed around. Re-ask the tool for each of these; the oldest is the")
-    print("most likely to have moved. When one no longer holds, correct the claim AND")
-    print("invert or rescope the guard that pins it — do not delete the guard.")
+    print("plugin routed around. Re-ask for each of these; the oldest is the most likely")
+    print("to have moved. When one no longer holds, correct the claim AND invert or")
+    print("rescope the guard that pins it — do not delete the guard.")
+    print()
+    print("⛔ Re-ask the OWNER, not just the route that came back empty. An empty result")
+    print("from a tool that never carried the fact is a true statement about that tool and")
+    print("no evidence at all for the negative — which is how a wrong-route conclusion")
+    print("reaches an invariant looking reviewed (INV-194). The `owner:` line below is the")
+    print("route the claim actually rests on; if it is where the fact lives, the negative")
+    print("is about ROUTING and the reader should be sent there instead.")
     print()
     if not found:
         print("  (none found — if that is a surprise, the markers are missing, not the claims)")
+        print("  A marker with no `owner:` clause does NOT parse, by design: it is reported")
+        print("  as absent rather than as well-formed.")
         return found
     print("markers: %d" % len(found))
     print()
-    for _key, version, date, claim, relpath, lineno in found:
+    for _key, version, date, claim, owner, relpath, lineno in found:
         print("  server %-8s %s  %s:%d" % (version, date, relpath, lineno))
         print("      %s" % claim)
+        print("      owner: %s" % owner)
     return found
 
 

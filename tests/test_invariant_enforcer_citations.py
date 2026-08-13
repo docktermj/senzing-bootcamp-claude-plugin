@@ -68,7 +68,14 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: cites INV-208 back. Re-derived by running the extractor. Fourth consecutive new invariant;
 #: this time the guard DID fire -- the pair was complete but the pin was not moved, which is
 #: the arithmetic half of the check rather than the missing-back-citation half.
-EXPECTED_PAIRS = 26
+#:
+#: 26 -> 27 on 2026-08-13 (dry run, follow-up): INV-209 (an MCP-NEGATIVE marker names the
+#: route that OWNS the fact) names tests/test_dated_negatives_are_marked.py, which cites
+#: INV-209 back in `test_every_marker_names_the_route_that_owns_the_fact`. Re-derived by
+#: running the extractor. Note INV-208 and INV-209 are the same defect at two altitudes --
+#: the wrong claim, and the convention that let it look reviewed -- so the pair count grew
+#: twice for one root cause.
+EXPECTED_PAIRS = 27
 
 
 def pairs():

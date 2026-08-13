@@ -164,7 +164,7 @@ Work one spec at a time. For each:
    carries an `MCP-NEGATIVE` marker**, so it lands on the worklist a dry run re-asks:
 
    ```text
-   MCP-NEGATIVE: <tool(params)> — <what is absent> — server <version>, <YYYY-MM-DD>
+   MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact + outcome> — server <version>, <YYYY-MM-DD>
    ```
 
    A negative is the one claim shape that cannot go stale detectably. The suite is offline
@@ -173,6 +173,24 @@ Work one spec at a time. For each:
    so correcting the prose failed the suite. `coverage_reports.py negatives` lists every
    marker oldest-first; a negative with no marker is invisible to it. Prefer asserting what
    **is** true over what must not be said: the latter is the form that expires.
+
+   ⛔ **`owner:` is required, and it is the field that makes the negative worth anything.**
+   Name the route that would **carry** this fact and say what it returned. The empty call in
+   the claim slot proves a fact about *that call*; it is not evidence for the negative.
+   "`sdk_guide(topic='configure')` returns no license variable" is true and irrelevant —
+   the variable lives in `sdk_guide(topic='load', record_count=<above the limit>)`. Two shapes,
+   both needing the clause:
+
+   - **Routing negative** — the fact exists elsewhere. The owner is where the reader must go
+     instead of concluding absence.
+   - **Absence negative** — the fact is served nowhere. The owner is the route you asked and
+     found empty, and naming it is the only thing separating this from a wrong-route error.
+
+   A marker with no `owner:` clause **does not parse** and is reported as missing rather than
+   well-formed, deliberately. This exists because a wrong-route negative reached a registered
+   invariant and a guard that enforced it, with dated evidence throughout, and read as
+   reviewed the whole way (INV-194; `specs/mcp-negative-markers-must-name-the-owning-route.md`).
+
 5. **Verify against the acceptance criteria.** Walk each checkbox and confirm it
    holds — run the relevant script/hook/command or exercise the flow where
    possible (consider the `/verify` skill). If a criterion cannot be satisfied,
