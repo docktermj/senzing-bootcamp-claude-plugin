@@ -35,6 +35,9 @@ recap PDF you can keep and share, and a production starter. See
   and provides working examples.
 - Minimum of a [Claude Max 5x] plan.
   - *Note:* Multiple 5-hour windows of a [Claude Pro] plan will work, but you will not be able to complete the bootcamp in one session.
+- *Recommended, but not mandatory:*
+  A business problem requiring Entity Resolution
+  and 5,000 to 20,000 records that illustrate the problem.
 
 ## Install and start
 
