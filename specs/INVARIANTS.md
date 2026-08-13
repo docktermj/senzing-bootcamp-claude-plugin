@@ -305,7 +305,7 @@ need them.
   *Fully superseded — skip these; each names its replacement:* INV-068, INV-072, INV-088
   *Partly superseded — still binding; read the invariant:* INV-086 (its **recording-location framing** only → INV-087; the first-class-module, full-apparatus and not-apparatus-exempt guarantee otherwise stands), INV-101 (its **Docker-only scope** only → INV-195, which dispatches on the recorded container runtime; the progress-file recording requirement and the warn-and-continue contract otherwise stand)
 - **Platform, shell, encoding and file placement** — cross-platform behaviour and where files go.  
-  INV-052, INV-061, INV-066, INV-108, INV-166, INV-167, INV-168, INV-175, INV-185, INV-188, INV-189, INV-199, INV-200, INV-218
+  INV-052, INV-061, INV-066, INV-166, INV-167, INV-168, INV-175, INV-185, INV-188, INV-189, INV-199, INV-200, INV-218
 - **Security and privacy** — the one consented PII path, and what must never be written.  
   INV-109, INV-135
 - **Feedback capture** — how bootcamper feedback is recorded so it can be triaged later.  
@@ -317,8 +317,14 @@ need them.
   (INV-201, INV-209 and INV-213 were re-filed here from *MCP sourcing and tool contracts* on
   2026-08-13: each governs a **test**, a **marker convention**, or a **spec's** own text rather
   than anything the Bootcamper's guide reads, so scoring them against shipped citations was
-  measuring the wrong thing. No invariant's meaning changed; only its index group.)  
-  INV-182, INV-191, INV-201, INV-202, INV-207, INV-209, INV-213, INV-216, INV-217, INV-219
+  measuring the wrong thing. No invariant's meaning changed; only its index group.
+  **INV-108** followed on the same date from *Platform, shell, encoding and file placement*, and
+  the report itself is what found it: it governs where the repo's own dev-only tests live and
+  what they may import, so no shipped file should ever cite it — it surfaced only because its
+  text names `plugins/` in a **prohibition**, telling tests to stay out. The propagate step is
+  its reason, not its subject. Filter phrasing was deliberately **not** special-cased to hide it,
+  which would only make the next genuine hit worded that way invisible.)  
+  INV-108, INV-182, INV-191, INV-201, INV-202, INV-207, INV-209, INV-213, INV-216, INV-217, INV-219
 
 <!-- New invariants go directly below this line. Format:
 

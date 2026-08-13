@@ -145,9 +145,15 @@ applied. The second filter is what makes it a report rather than a backlog.
 - ⚠️ **The report surfaced a re-filing candidate on its first live run: INV-108** ("dev-only tests
   MUST live in the repo top-level `tests/`"). It is a development rule filed under *Platform,
   shell, encoding and file placement*, and it matches the artifact filter because its text names
-  `plugins/`. **Deliberately not re-filed** — the maintainer approved three specific IDs, and
-  quietly extending that list is how a data-driven exemption becomes a hardcoded one. It stands as
-  the report's first genuine finding about itself.
+  `plugins/`. **Deliberately not re-filed at implementation time** — the maintainer approved three
+  specific IDs, and quietly extending that list is how a data-driven exemption becomes a hardcoded
+  one. It stood as the report's first genuine finding about itself.
+  **Resolved later the same day (2026-08-13): the maintainer ruled it a development rule and it was
+  re-filed** into *The development record itself*. It governs where the repo's own dev-only tests
+  live and what they may import, so no shipped file should ever cite it; it surfaced only because
+  its text names `plugins/` in a **prohibition**. The report is now at **13** hits. The artifact
+  filter was deliberately **not** special-cased to hide the phrasing, which would have made the
+  next genuine hit worded that way invisible.
 - **Five bugs were found by *running* the report, none by reading it.** `INV_REF` captures the
   three digits rather than the whole ID, so both the citation set and — worse — the **exemption
   set** compared against `INV-NNN` and matched nothing, silently disabling the exemption
