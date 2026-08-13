@@ -156,6 +156,41 @@ class ThePolicyBranchGivesARealRouteAndAContact(unittest.TestCase):
             "that does not start, and the branch must say so",
         )
 
+    def test_no_wording_actually_offers_a_degraded_bootcamp(self):
+        """Presence of the prohibition is not absence of the offer.
+
+        Caught by negative control: inserting "We can continue in a limited mode." passed, because
+        the prohibition's other phrasing ("no offline mode") still satisfied the alternation above.
+        A branch whose purpose is honesty needs the forbidden-claim assertion as well as the
+        required-text one.
+        """
+        for offer in (r"we can continue", r"limited mode", r"reduced mode", r"proceed without",
+                      r"partial bootcamp", r"continue anyway"):
+            with self.subTest(offer=offer):
+                self.assertNotRegex(
+                    self.body, r"(?i)" + offer,
+                    "the policy branch must not offer a degraded bootcamp. There is no offline "
+                    "mode: every Senzing fact comes from the server (INV-080), so continuing "
+                    "means answering from training data.",
+                )
+
+    def test_no_wording_claims_the_setup_is_documented_or_easy(self):
+        """The honest limit is 'named but undocumented'; overclaiming is the failure mode.
+
+        Also caught by negative control: replacing the corpus finding with "Setup is
+        straightforward once approved" passed, because "does not currently cover" survived
+        elsewhere in the branch and satisfied the alternation.
+        """
+        for claim in (r"straightforward", r"easy to set up", r"setup is documented",
+                      r"simply follow", r"here is how to obtain"):
+            with self.subTest(claim=claim):
+                self.assertNotRegex(
+                    self.body, r"(?i)" + claim,
+                    "the branch must not imply it knows how to obtain or configure a private "
+                    "deployment. The corpus does not document it, so anything written would be "
+                    "from outside MCP — exactly what INV-080 forbids.",
+                )
+
     def test_it_does_not_claim_the_route_satisfies_any_policy(self):
         self.assertRegex(
             self.body, r"(?i)not present a private deployment as verified|their organisation's decision",
