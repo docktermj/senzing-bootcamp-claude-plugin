@@ -94,17 +94,65 @@ class TheConfabulatedSpellingIsNeverUsedAsAVariable(unittest.TestCase):
             )
 
 
+def env_example_key_list(text):
+    """The `.env.example` bullet's own text: the bullet line plus its wrapped continuations.
+
+    Anchored to the bullet rather than to a character window from the first occurrence of
+    ".env.example". A window is too weak: `.env.example` is mentioned again further down, and a
+    window wide enough to reach the bullet also swallows the surrounding ⛔ prose -- which itself
+    mentions the variable, so removing the key from the LIST still left the assertion satisfied.
+    That miss was found by negative control, not review.
+    """
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if re.match(r"^- \*\*`\.env\.example`", line):
+            block = [line]
+            for nxt in lines[i + 1 :]:
+                # A wrapped continuation is indented and does not start a new bullet.
+                if nxt.startswith("- ") or not nxt.strip():
+                    break
+                block.append(nxt)
+            joined = "\n".join(block)
+            # ⛔ Truncate at the explanatory prose. The bullet WRAPS into a ⛔ note that also names
+            # the variable, so testing the whole bullet still passed when the key was deleted from
+            # the list -- the second time this same "satisfied by adjacent text" shape defeated a
+            # negative control in this file. Only the key list is the generated artifact's content.
+            for boundary in ("⛔", "with safe example"):
+                cut = joined.find(boundary)
+                if cut != -1:
+                    joined = joined[:cut]
+            return joined
+    return None
+
+
+def module_02_license_note(text):
+    """Step 5's license blockquote: from the check-order line to the EULA-contrast note.
+
+    Anchored for the same reason as above -- "not evidence" and similar phrases occur elsewhere in
+    this 1000+ line file, so a whole-file regex can pass on unrelated text.
+    """
+    start = text.find("**License check order:**")
+    if start == -1:
+        return None
+    end = text.find('**"Senzing License Key" vs. the EULA:**', start)
+    return text[start : end if end != -1 else start + 4000]
+
+
 class TheCorrectSpellingAndItsRouteAreRecorded(unittest.TestCase):
     def test_graduation_env_example_uses_the_correct_spelling(self):
         text = GRADUATION.read_text(encoding="utf-8")
-        self.assertIn(".env.example", text, "retarget this test: graduation no longer describes it.")
-        start = text.index(".env.example")
-        block = text[start : start + 1400]
+        block = env_example_key_list(text)
+        self.assertIsNotNone(
+            block,
+            "could not locate graduation's `.env.example` bullet -- retarget this test rather than "
+            "letting it pass vacuously.",
+        )
         self.assertIn(
             GOOD_SPELLING,
             block,
-            f"graduation's .env.example must name {GOOD_SPELLING} -- the spelling the MCP server "
-            "actually returns -- rather than omitting the variable or inventing one.",
+            f"graduation's .env.example KEY LIST must name {GOOD_SPELLING} -- the spelling the MCP "
+            "server actually returns. Mentioning it only in the surrounding prose is not enough: "
+            f"the generated file is what the bootcamper gets.\nBullet was:\n{block}",
         )
         self.assertNotRegex(
             block,
@@ -141,13 +189,24 @@ class TheOwningToolMustBeAskedBeforeRecordingAnAbsence(unittest.TestCase):
 
     def test_module_02_records_why_the_absence_conclusion_was_wrong(self):
         text = MODULE_02.read_text(encoding="utf-8")
+        note = module_02_license_note(text)
+        self.assertIsNotNone(note, "could not locate module-02's license note -- retarget this test.")
+        # Scoped to the note. "not evidence" also appears at two unrelated places in this file
+        # (INV-129 exit codes, and an engine-init caution), so a whole-file regex passes on text
+        # that has nothing to do with licensing -- caught by negative control.
         self.assertRegex(
-            text,
-            r"(?i)do not conclude|not evidence|silence",
-            "module-02's license note must keep the warning that the topics which omit "
+            note,
+            r"(?i)do not conclude|not evidence",
+            "module-02's LICENSE NOTE must keep the warning that the topics which omit "
             f"{GOOD_SPELLING} (configure, install, search_docs) are not evidence it does not "
-            "exist. That inference is what produced a false invariant and a guard that banned the "
-            "correct name.",
+            "exist. That inference produced a false invariant and a guard that banned the correct "
+            f"name.\nNote was:\n{note[:600]}",
+        )
+        self.assertRegex(
+            note,
+            r"INV-194",
+            "the note must cite INV-194 by ID, so the rule it violated is traceable from the place "
+            "it was violated.",
         )
 
 
