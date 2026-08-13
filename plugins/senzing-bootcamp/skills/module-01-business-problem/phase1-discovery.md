@@ -19,9 +19,52 @@ for testing. We'll set up proper security measures as we go."
 
 ## 3. If they want patterns
 
-Present an entity-resolution design-pattern gallery (recognized use-case categories below;
-pull real-world examples via `search_docs`: the full pattern gallery is a later porting
-phase). For each: the problem it solves, the goal, typical data sources, business value.
+Present an entity-resolution design-pattern gallery over the recognized use-case categories, giving
+for each: the problem it solves, the goal, typical data sources, business value. Fill those four from
+**`search_docs` content returned this session** — never from memory. (The full pattern gallery is a
+later porting phase; that is why this step retrieves rather than reads from a shipped catalogue.)
+
+⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one
+generic query is not it: the documentation's own words are industry terms, so "entity resolution use
+cases" reaches about four categories and leaves the rest looking uncovered when they are not. Two
+routes carry most of the material:
+
+- **Business value, for nearly every category** — `search_docs(query='total economic cost mismatched
+  identity data by sector …')` returns `economic-cost-mismatched-identity-data.md`, whose
+  *"Estimated Annual Cost of Mismatched Identity Records"* table quantifies ten sectors, including
+  Marketing/Sales/CRM, **Supply Chain & Procurement**, **Insurance**, **Healthcare**, Government,
+  Financial Services, Retail, Telecommunications, and a sanctions & trade-compliance line. Its
+  appendix breaks several sectors into ER-attributable typologies. Cite the figures as returned.
+- **Problem, goal and typical sources** — the Senzing use-cases page (Customer 360, Fraud
+  Detection), the USCIS fraud case study, the MDM integration FAQ (Vendor MDM: free resolution vs
+  forced separation via a Trusted ID), and the non-person-entity-types FAQ (asset, claim and
+  vehicle linking).
+
+⛔ **Two category names are homonym traps that return confidently WRONG content, not nothing** —
+which is worse, because a wrong-looking result invites a re-query and a plausible one does not:
+
+- **Supply Chain** — BM25 matches "chains" and the software sense; see the measured example at
+  `phase2-document-confirm.md` → Step 14. Query the sector line instead.
+- **Data Migration** — returns the **V3→V4 SDK migration** (`sz_dbupgrade`, `sz_configupgrade`,
+  the Java/Python migration guides), which has nothing to do with a business use case. This is the
+  one recognized category with no business-use-case material; treat it as unreached below rather
+  than presenting SDK-upgrade steps as a pattern.
+
+**When a query misses, re-query with the documentation's own vocabulary before concluding the
+material is uncovered.** The rule and the reason it matters are stated in full at
+[`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+→ "Hard rule: facts come from MCP, not memory". Do not restate that reasoning here — follow it.
+
+⛔ **A bare link stub is not content.** The use-cases page returns several categories as nothing but
+`[Read More](/risk-fraud-detection)`. A stub is the shape most likely to be mistaken for coverage;
+it supplies none of the four attributes.
+
+⛔ **Never fill a category's detail from training data (INV-080).** For any category the searches do
+not reach, name it as available and say you can look it up on request — do not invent its problem,
+goal, sources or value. The gallery presents the categories the searches actually reached; it does
+not promise all ten, and a short sourced gallery plus an honest offer is the correct outcome, not a
+failure of this step. Fabricated detail here is especially costly because the attribution line below
+then presents it as Senzing-sourced.
 
 Because this content is MCP-sourced, make that visible so the bootcamper can trust it is real,
 not fabricated: add a brief inline attribution to the gallery — e.g. a one-line "*Sourced from
