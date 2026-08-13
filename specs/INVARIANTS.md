@@ -280,7 +280,7 @@ silently and were wrong when this was found (2026-07-31). Derive them from the f
 need them.
 
 - **MCP sourcing and tool contracts** — where Senzing facts come from, and what a tool response means.  
-  INV-080, INV-125, INV-136, INV-149, INV-150, INV-160, INV-165, INV-169, INV-181, INV-190, INV-192, INV-194, INV-201, INV-204, INV-205, INV-206
+  INV-080, INV-125, INV-136, INV-149, INV-150, INV-160, INV-165, INV-169, INV-181, INV-190, INV-192, INV-194, INV-201, INV-204, INV-205, INV-206, INV-208
 - **SDK usage: methods, flags and responses** — confirming a call's shape before writing it, and reading what comes back.  
   INV-089, INV-115, INV-132, INV-145, INV-148, INV-151, INV-152, INV-164, INV-179, INV-180
 - **Data quality, mapping and validation gates** — measuring a source honestly, and what a gate's finding may be used for.  

@@ -118,12 +118,36 @@ class LicenseEnvVarIsNeverNamed(unittest.TestCase):
             "module-02 must not name a SENZING_LICENSE_* variable, including as the value it "
             "claims sdk_guide returns.",
         )
-        self.assertRegex(
+        # Ban the unsatisfiable instruction by its own wording. Asserting only that the
+        # positive statement appears somewhere is too weak: this file also carries an
+        # MCP-NEGATIVE source comment containing the same phrase, so a bare presence check
+        # passed while the ⛔ note had been reverted to "confirm the name from MCP". Caught
+        # by negative control, not by review.
+        self.assertNotRegex(
             text,
-            r"no license-path environment variable",
-            "module-02's Step 5 must state outright that no license-path environment variable "
-            "exists, so a guide reading it has an answer rather than a lookup that cannot "
-            "succeed.",
+            r"[Cc]onfirm the environment variable'?s exact name",
+            "module-02 must not instruct the guide to confirm a license variable name from "
+            "MCP -- MCP has no name to return, so the instruction cannot be satisfied and the "
+            "note gives no fallback for that outcome.",
+        )
+        # And require the positive statement in a ⛔ directive line the guide reads, not in a
+        # source comment. Directive lines start with '>' + optional bold and carry the ⛔.
+        directive_lines = [
+            line
+            for line in text.splitlines()
+            if "no license-path environment variable" in line and "<!--" not in line
+        ]
+        self.assertTrue(
+            directive_lines,
+            "module-02's Step 5 must state outright, in prose the guide reads (not only in an "
+            "MCP-NEGATIVE comment), that no license-path environment variable exists -- so a "
+            "guide has an answer rather than a lookup that cannot succeed.",
+        )
+        self.assertTrue(
+            any("⛔" in line for line in directive_lines),
+            "the absence must be stated as a ⛔ directive, matching how the plugin marks rules "
+            "a guide must not improvise around; found only non-directive mentions: "
+            f"{directive_lines}",
         )
         self.assertTrue(
             any(key in text for key in PIPELINE_KEYS),
