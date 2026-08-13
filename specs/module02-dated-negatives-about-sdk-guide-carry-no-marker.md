@@ -121,3 +121,43 @@ called — copying the stamp from the Windows call is precisely the laundering I
   this must be settled before any new upstream report is filed**, or the same gap is filed twice.
 - Related: INV-209 (marker form and `owner:` requirement), INV-217 (the same hole closed for
   `DECLINED.md`), `specs/mcp-negative-markers-must-name-the-owning-route.md`.
+
+## Deviations from this spec, and why (2026-08-13)
+
+The markers landed as specified. Three things differ, and the first is a criterion this spec set
+and the server then overruled.
+
+1. **Criterion 5 is NOT met: two fence comments were reworded.** The criterion said "no command,
+   label, or warning in the affected region is removed or reworded — `git diff` shows only added
+   marker lines". Calling `sdk_guide(topic='install', platform='macos_arm')` at implementation time
+   — the call this spec insisted on — showed the claims' word **"only"** is wrong at 1.32.9:
+   - `:185` said `sdk_guide` "documents brew tap / trust / install --cask **only**". The response
+     also documents `brew uninstall --cask`, `brew untap`, `brew install libpq`, `brew link libpq`
+     and `brew --prefix`.
+   - `:209` said "scoop bucket add / scoop install **only**". The response also documents
+     `scoop config SENZING_ACCEPT_EULA …` in its non-interactive EULA note.
+
+   The part that matters — no `brew outdated|info|upgrade`, no `scoop status|info|update` anywhere
+   in either response — is **confirmed**. So both comments were narrowed to the version-management
+   scope they were actually making ("documents no brew version-management command"), and re-dated
+   to the call that established it. Marking an imprecise claim would have been worse than leaving it
+   unmarked: the marker certifies the claim as reviewed.
+2. **`tests/test_sdk_update_offer.py` changed, and it is not in this spec's Affected files.** Its
+   `test_the_labels_are_inside_the_command_blocks_not_only_the_preamble` pinned both fence comments
+   **in full**, so correcting the prose failed the suite with a message asserting the opposite of
+   what the server returns — the exact failure mode `tests/test_dated_negatives_are_marked.py` was
+   written to prevent, arriving from the direction that file does not police (plugin prose, not test
+   assertions). The guard was **rescoped, not deleted**: it now pins the ownership label
+   (`# ALL plugin-owned — sdk_guide documents no brew`), which is what a skimming reader needs and
+   what stays true when the server moves, with the history recorded in its docstring.
+   Negative-controlled: removing the brew label from the fence fails it.
+3. **The marker count is 9, not the "7" this spec guessed.** The criterion said to recount at
+   implementation time, which is what 9 is: 3 pre-existing `plugins/` markers + 2 in
+   `specs/DECLINED.md` + the 4 added here. Nothing reported malformed. Second negative control:
+   stripping one `owner:` clause drops the worklist to 8, prints `MALFORMED markers: 1`, and fails
+   `tests/test_dated_negatives_are_marked.py`.
+
+⚠️ **Also left alone deliberately.** `test_sdk_update_offer.py:179` still pins
+`"never \`brew upgrade --cask\` or \`scoop update\`"` — the same pin-the-claim pattern, on a claim
+that **is** currently true and was re-confirmed today on both platforms. Rescoping every such guard
+is outside this spec; it is named here so the next reader finds it rather than rediscovering it.

@@ -154,11 +154,14 @@ MCP server. `get_capabilities` reports `senzing_version` as the string `"current
 
 ⚠️ **On macOS and Windows the update command is plugin-owned too.** The server documents
 `brew install --cask` and `scoop install`, never `brew upgrade --cask` or `scoop update` (checked
-across `install_commands`, `gotchas` and `post_install` for both, 2026-07-31). Only on apt and yum
-is the update command the same server-documented `install` command. That asymmetry is the same
-coverage gap reported upstream on 2026-07-31 — the server documents installing, not updating.
+across `install_commands`, `gotchas` and `post_install` for both, re-confirmed 2026-08-13). Only on
+apt and yum is the update command the same server-documented `install` command. That asymmetry is the
+same coverage gap reported upstream on 2026-07-31 — the server documents installing, not updating.
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.32.9, 2026-08-13 -->
 
 **Linux, apt (`linux_apt`):**
+
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.32.9, 2026-08-13 -->
 
 ```bash
 # plugin-owned — sdk_guide documents neither of these
@@ -181,9 +184,11 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 
 **macOS, Homebrew cask (`macos_arm`):**
 
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+
 ```bash
-# ALL plugin-owned — sdk_guide documents brew tap / trust / install --cask only,
-# never outdated, info or upgrade (checked across its whole response, 2026-07-31)
+# ALL plugin-owned — sdk_guide documents no brew version-management command:
+# never outdated, info or upgrade (checked across its whole response, 2026-08-13)
 brew outdated --cask senzingsdk    # nothing printed = up to date
 brew info --cask senzingsdk        # installed and latest versions
 brew upgrade --cask senzingsdk     # takes the newest available
@@ -205,9 +210,11 @@ paths still resolve.
 
 **Windows, Scoop (`windows`):**
 
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+
 ```powershell
-# plugin-owned — sdk_guide documents scoop bucket add / scoop install only,
-# never status, info or update (checked across its whole response, 2026-07-31)
+# plugin-owned — sdk_guide documents no scoop version-management command:
+# never status, info or update (checked across its whole response, 2026-08-13)
 scoop status                          # lists packages with updates available
 scoop info senzingsdk/senzingsdk      # installed and latest versions
 scoop update senzingsdk/senzingsdk    # takes the newest available

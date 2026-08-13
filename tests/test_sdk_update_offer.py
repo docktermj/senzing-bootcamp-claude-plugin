@@ -184,12 +184,25 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         )
 
     def test_the_labels_are_inside_the_command_blocks_not_only_the_preamble(self):
-        """A reader who skims to the code fence must still see which kind it is."""
+        """A reader who skims to the code fence must still see which kind it is.
+
+        ⚠️ **Pins the ownership LABEL, not the absence claim beside it.** Two of these markers
+        used to be pinned in full — "documents brew tap / trust / install --cask only" and
+        "documents scoop bucket add / scoop install only" — which made this guard enforce the
+        wording of a claim about `sdk_guide`'s content. On 2026-08-13 that claim was found
+        imprecise (server 1.32.9 also documents `brew uninstall --cask`, `untap`, `install`/`link
+        libpq` and `--prefix`, and `scoop config`), and correcting it failed this test with a
+        message telling the fixer the opposite of what the server says. That is the failure mode
+        `tests/test_dated_negatives_are_marked.py` exists to prevent: a guard that pins a
+        retraction outlives the retraction, and is consulted precisely by the person trying to
+        fix it. Rescoped, not deleted — the label is what a skimming reader needs, and it is what
+        stays true when the server moves.
+        """
         for fence_marker in (
             "# plugin-owned — sdk_guide documents neither of these",
             "# server-documented — re-read from sdk_guide",
-            "# ALL plugin-owned — sdk_guide documents brew tap / trust / install --cask only",
-            "# plugin-owned — sdk_guide documents scoop bucket add / scoop install only",
+            "# ALL plugin-owned — sdk_guide documents no brew",
+            "# plugin-owned — sdk_guide documents no scoop",
         ):
             with self.subTest(marker=fence_marker[:46]):
                 self.assertIn(fence_marker, self.section)
