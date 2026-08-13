@@ -485,7 +485,8 @@ at step 9 already holds the evidence: scan its `Unique`, `Unique %` and frequenc
 columns for a populated text field carrying many repeating real-world names. If there is one, declare
 it as an `embedded_master` in this step's payload. See **"A second entity hiding in a column:
 `embedded_master`, and when to go `back`"** above for the three signals, the payload it requires, and
-the recovery route if this check is missed — do not restate them here.
+the recovery route if this check is missed — do not restate them here (INV-183: the rule is named and
+linked at the step that needs it, never forked into a second copy).
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >
@@ -1059,7 +1060,8 @@ Each source gets its own transformation program and its own `mapping_workflow` r
 `profile_report.md`, `schema_hints.md` and `JOURNAL.md` have already been relocated to
 `docs/mapping/` under their source-qualified names** (`{source_name}_profile_report.md`,
 `{source_name}_schema_hints.md`, `{source_name}_JOURNAL.md` — see "File placement during the
-workflow"). Every source shares one `workspace_dir`, and the next run rewrites those three fixed
+workflow"). This is INV-177: relocation under a source-qualified name happens **before** the next
+source's run begins. Every source shares one `workspace_dir`, and the next run rewrites those three fixed
 workspace filenames for its own profiling, so anything still sitting there under an unqualified
 name is lost — silently, with no error.
 

@@ -290,11 +290,11 @@ need them.
 - **Generator behaviour: rendering, encoding, reporting** — how a bundled generator must behave when something goes wrong.  
   INV-110, INV-111, INV-121, INV-129, INV-142, INV-143, INV-159, INV-161, INV-162, INV-163, INV-172, INV-178, INV-183, INV-184, INV-186, INV-193, INV-210
 - **Visualization and screenshots** — the app, its offline guarantee, and capturing it faithfully.  
-  INV-070, INV-077, INV-081, INV-087, INV-090, INV-091, INV-106, INV-107, INV-122, INV-123, INV-124, INV-127, INV-130, INV-146, INV-147, INV-153, INV-154, INV-155, INV-171
+  INV-070, INV-077, INV-081, INV-087, INV-090, INV-091, INV-106, INV-107, INV-122, INV-123, INV-124, INV-127, INV-130, INV-146, INV-147, INV-153, INV-154, INV-155, INV-171, INV-221
   *Fully superseded — skip these; each names its replacement:* INV-071
   *Partly superseded — still binding; read the invariant:* INV-104 (its **tab enumeration** only → INV-155; every other guarantee stands)
 - **Questions, gates and bootcamper-facing conversation** — how the Bootcamper is addressed and what is pinned verbatim.  
-  INV-051, INV-054, INV-055, INV-056, INV-057, INV-074, INV-096, INV-099, INV-102, INV-112, INV-158, INV-211, INV-214
+  INV-051, INV-054, INV-055, INV-056, INV-057, INV-074, INV-096, INV-099, INV-102, INV-112, INV-158, INV-211, INV-214, INV-220
   *Partly superseded — still binding; read the invariant:* INV-079 (its recap `## Module N:` **heading clause** only → INV-085; it remains the only statement of the `MODULE: [NAME IN CAPS]` banner, the transition-question form and the `✅ Module complete` line)
 - **Model and effort guidance** — what is recommended, when it is surfaced, and what is never configurable.  
   INV-098, INV-114, INV-138, INV-139, INV-140, INV-141
@@ -319,6 +319,8 @@ need them.
 
 -->
 
+- **INV-221** — Where a bootcamper-facing surface offers an action that opens a piece of content, that surface MUST NOT also render the same content inline. (Source: `triage-the-twelve-uncited-hard-rules`, 2026-08-13.)
+- **INV-220** — Where a step branches on material the bootcamp may have authored itself, the branch MUST be taken from the **provenance already recorded earlier in the run** — never from a second mechanism introduced at that step, and never from a question to the Bootcamper, since a question about a scenario the bootcamp invented has no true answer. (Source: `triage-the-twelve-uncited-hard-rules`, 2026-08-13.)
 - **INV-219** — A test MUST NOT pin the **verbatim wording** of a claim about an MCP tool's content or about an upstream submission. It asserts the **structural property** the text must carry instead — that a citation names the governing invariant, that a fence carries its ownership label, that a path resolves through a prefix variable — so that correcting the claim when the server moves does not fail the guard. Where such a claim is pinned and must change, the guard is **rescoped, never deleted**, and the reason recorded in its docstring. ⛔ **The failure is asymmetric and lands on the wrong person:** the guard passes on the day it is written and fails only whoever later corrects the claim, with a message asserting the opposite of what the server now says. (Four instances, 2026-08-13: `:195` pinned "documents brew tap / trust / install --cask only" and failed the correction of "only"; `:349` pinned INV-129 where INV-218 governs, which is what kept that wrong citation alive; a new guard banned the string `/opt/homebrew` on a line naming it in order to forbid it; and `:239` pinned "same coverage gap reported upstream" — the phrase but not the date — surviving a false-provenance correction only by how narrowly it was written.) (Source: `a-guard-must-not-pin-the-wording-of-a-claim-about-an-mcp-tool`, 2026-08-13.)
 
 - **INV-218** — A step that **installs or updates software** MUST verify the installed **artifact on the filesystem** rather than the installer's exit status: a zero exit, printed install paths, or a "success" line are necessary and insufficient, because a package manager can purge a download and still print its caveats block listing paths it never wrote. The artifact probed MUST be named for the Bootcamper's platform, and where it cannot be probed the outcome is reported as **undetermined** (INV-163), never as installed. ⛔ INV-129 governs the parallel rule for rendered **deliverables** (PDF, PNG, HTML) and does not reach an install; the two are siblings, not one rule. (Source: `install-verification-has-no-invariant-so-inv129-is-borrowed`, 2026-08-13.)

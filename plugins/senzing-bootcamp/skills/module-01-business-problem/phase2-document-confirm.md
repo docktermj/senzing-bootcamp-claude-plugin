@@ -7,7 +7,7 @@ Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal direc
 ⛔ **Branch on scenario provenance first — never ask a bootcamper for diagrams of a scenario the
 bootcamp invented.** The provenance is the Phase 1 Step 4a outcome: whether the Business Case Offer
 was accepted. That is the same decision Step 11's generated-scenario branch acts on; do not
-introduce a second mechanism. (Step 11 persists it as the `> 🤖 Bootcamp-generated business case`
+introduce a second mechanism (INV-220). (Step 11 persists it as the `> 🤖 Bootcamp-generated business case`
 marker in `docs/business_problem.md`, but that file does not exist yet at this step — on a resumed
 session where it does, the marker is the authoritative form of the same signal.)
 

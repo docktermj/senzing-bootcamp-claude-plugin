@@ -716,7 +716,7 @@ shape, so one drill-down renderer serves all three. An aggregate that shows a co
 opened is a dead end and is not acceptable.
 
 **No redundant inline record listings.** Where an entity list offers the Records action, it MUST
-NOT also print the constituent records inline. The "Show all merged entities" cards on Search /
+NOT also print the constituent records inline (INV-221). The "Show all merged entities" cards on Search /
 Probe show entity name, record count,
 and match key plus the actions — nothing more. Showing the same records twice is clutter, and it
 reads as unfinished once "click Records to see records" is the established pattern everywhere else.
@@ -826,12 +826,15 @@ Applies to **Entity Graph** in both of its modes.
   so a bootcamper can declutter for an overview pass or drill into detail without switching tabs.
 - **Scale-dependent defaults.** Label visibility defaults by graph size, not to a fixed value: both
   label sets default **off above ~150 nodes** and on below it. State the threshold in the
-  implementation so every language build behaves the same.
+  implementation so every language build behaves the same (INV-154 — a legibility default is a
+  function of the rendered data's scale, and its threshold is stated as a number in this contract).
 - **Say why they started off.** When labels default off, show a short inline note ("Labels hidden —
   3,986 entities; use the toggles above to show them"). Without it, a label-less graph reads as
   broken rather than as a deliberate default.
 - **Legible labels when shown.** On-canvas node labels MUST avoid unreadable overlap — a
-  collision/overlap-avoidance pass, truncation, or zoom-gated labels. A hover-only tooltip does
+  collision/overlap-avoidance pass, truncation, or zoom-gated labels (INV-153 governs what any
+  truncation you choose must preserve: no two rendered labels may be identical unless their values
+  are, checked on the **fitted** strings). A hover-only tooltip does
   **not** satisfy this: the complaint it addresses is being unable to tell which records matched
   without hovering every node in turn.
 - **Legends are generated FROM the data, and filter it.** Build each legend from the values actually

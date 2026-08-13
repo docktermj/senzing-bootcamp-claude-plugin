@@ -263,7 +263,9 @@ record does not present features where the analyzer looks for them.
 
 ⛔ **Before fixing anything, sort the findings the way `phase2-data-mapping.md` requires** — the
 analyzer reports conformance to the *recommended* schema, which is a different question from
-whether the data loads:
+whether the data loads. This split is INV-144 (only structural invalidity may block; a conformance
+finding must not trigger remapping) and INV-145 (every shape the Entity Specification supports is
+accepted, not only the recommended one):
 
 - **Genuinely structural** (malformed JSON, missing `DATA_SOURCE`, unparseable record): the data
   cannot load. Fix it in the transformation program, then re-validate.

@@ -27,7 +27,9 @@ Suggested queries:
 - "entity resolution pipeline standardization blocking scoring clustering"
 
 ⛔ **Prefer these queries, and when a query returns nothing relevant, RE-QUERY with the
-documentation's own phrasing before concluding the material is not covered.** The list above is not
+documentation's own phrasing before concluding the material is not covered.** (INV-212 — the
+retrieval strategy belongs at the step, not just the tool's name; INV-194 — one tool's silence is
+not evidence the server lacks the fact.) The list above is not
 decoration: `search_docs` is BM25, so phrasing decides what comes back, and these are phrased the
 way the indexed documentation is. A query you compose yourself can miss completely — one invented as
 *"principles versus rules brittle maintenance ingest new data sources without experts"* latched onto

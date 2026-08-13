@@ -12,7 +12,9 @@ Read `docs/business_problem.md` for the **why**: the business context that motiv
 which is what makes the recap worth reading.
 
 ⛔ **Do not take the source list from `docs/business_problem.md`.** That file records what was
-*discussed* in Discover the Business Problem, before Data collection ran. The two routinely differ —
+*discussed* in Discover the Business Problem, before Data collection ran. `config/data_sources.yaml`
+is the registry INV-203 gates: a source is recorded there only after its fetch returned 2xx **and**
+its measured record count matched, so it is the only list that says what was actually collected. The two routinely differ —
 Data collection is exactly where a bootcamper substitutes a CORD dataset for data they cannot share
 — and this module processes what is in `data/raw/`, not what was once intended. Where the two lists
 differ, say so in one line rather than silently preferring either: "we talked about X; what you

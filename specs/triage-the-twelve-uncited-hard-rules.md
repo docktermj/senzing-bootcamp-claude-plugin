@@ -115,3 +115,43 @@ removed half the backlog, and the ledger says which half.
 - Related specs: `install-verification-has-no-invariant-so-inv129-is-borrowed` (the one line already
   triaged, and the wrong-citation case the scan cannot see), INV-183 (name the governing rule at the
   step), INV-182 (per-criterion evidence in the ledger).
+
+## Invariants introduced
+
+- `INV-220` — Where a step branches on material the bootcamp may have authored itself, the branch
+  MUST be taken from the **provenance already recorded earlier in the run** — never from a second
+  mechanism introduced at that step, and never from a question to the Bootcamper, since a question
+  about a scenario the bootcamp invented has no true answer (recorded in `specs/INVARIANTS.md`,
+  indexed under *Questions, gates and bootcamper-facing conversation*).
+- `INV-221` — Where a bootcamper-facing surface offers an action that opens a piece of content, that
+  surface MUST NOT also render the same content inline (recorded in `specs/INVARIANTS.md`, indexed
+  under *Visualization and screenshots*).
+
+Both were approved by the maintainer on 2026-08-13, each on its own decision rather than as a batch,
+per this spec's ⛔ on batch registration. The maintainer chose the **generalized** wording for
+INV-221 over the narrow entity-lists-only form that matched the shipped text exactly.
+
+## Deviations from this spec, and why (2026-08-13)
+
+- **The engine-configuration line's fix changed, and the change came from the MCP re-check the spec
+  itself demanded.** The spec listed `module-02-sdk-setup/SKILL.md:1178` (now `:1210`) as a
+  citation-only edit and flagged that it *contains* a Senzing fact to re-ask. Re-asked on server
+  **1.32.9, 2026-08-13:** `sdk_guide(topic='configure', language='python')` returns the
+  config-bootstrap code (`init_default_config.py`) and **no `engine_config` block at all**;
+  `sdk_guide(topic='configure')` with no language returns the language decision tree; only
+  `sdk_guide(topic='configure', platform='linux_apt', language='python')` returns
+  `environment.engine_config` carrying CONFIGPATH, RESOURCEPATH and SUPPORTPATH. The bullet named the
+  route **without `platform`**, so the call as written returns nothing to use — while Step 8's
+  canonical statement at `:965` has always passed `platform` and is correct. The edit therefore added
+  the citation **and** corrected the call, with the dated evidence inline. This exceeds
+  "citation-only edits" in `## Affected files`; it does not weaken the rule (criterion 5) — the rule
+  gained a ⛔ and lost nothing.
+- **No line was judged `not a durable rule`,** so criterion 4's arithmetic does not hold as written:
+  it predicted a reduced count with "the remainder accounted for by the recorded not-a-durable-rule
+  verdicts", and the remainder is **zero** — 12 citations plus 2 registered invariants closed all 14.
+  The hard-rule **total** rose 213 → 214 because the correction above added a new ⛔ line, which sits
+  in a section that now cites INV-080.
+- **A guard shipped beyond the acceptance criteria.** `tests/test_hard_rule_citations.py` (6 tests,
+  5 mutations, all caught) asserts both new citations and both new invariant texts. No criterion asked
+  for it; INV-220 and INV-221 were scored uncited by `coverage_reports.py invariants` the moment they
+  were appended, which is precisely the blind spot this spec's `## Root cause` is about.

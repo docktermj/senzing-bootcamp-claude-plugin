@@ -1208,7 +1208,13 @@ call succeeds** (not merely a version query).
 - Use the `sdk_guide` MCP tool for current platform-specific instructions.
 - Use `search_docs` with `category='anti_patterns'` before recommending approaches.
 - **NEVER construct engine configuration JSON manually:** always use the exact JSON from
-  `sdk_guide(topic='configure')`. Do not guess CONFIGPATH, RESOURCEPATH, or SUPPORTPATH.
+  `sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>')` — Step 8
+  states the call and its failure modes; do not guess CONFIGPATH, RESOURCEPATH, or SUPPORTPATH
+  (INV-080: config options come from the MCP tools, never from speculation). ⛔ **`platform` is not
+  optional here.** Omitting it returns the config-bootstrap *code* only, with no `engine_config`
+  block at all — verified on server 1.32.9, 2026-08-13: `topic='configure', language='python'`
+  returned `init_default_config.py` and nothing else, while adding `platform='linux_apt'` returned
+  `environment.engine_config` carrying CONFIGPATH, RESOURCEPATH and SUPPORTPATH.
 - Recommend SQLite for evaluation, PostgreSQL for production.
 - Always use `database/G2C.db` for SQLite (never `/tmp/sqlite`).
 - Verify installation before proceeding to the next module.

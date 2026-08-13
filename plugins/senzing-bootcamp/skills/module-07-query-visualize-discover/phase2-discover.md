@@ -46,7 +46,10 @@ bootcamper is *walked through* why/how/networks interactively. The data-discover
 (`docs/bootcamp_data_discoveries.md` + `.pdf`) is produced on **every** path — including this
 decline and both early exits below — at the convergence point in `phase1-query-visualize.md` →
 "Data-discoveries deliverable". Do not present declining as giving up the findings, and do not
-offer the deliverable as a consolation question; it is generated and announced either way.
+offer the deliverable as a consolation question; it is generated and announced either way. The two
+halves have separate authorities: the interactive walkthrough is **offered** (INV-046 — a decline is
+a requested skip), while `docs/bootcamp_data_discoveries.md`/`.pdf` is an **always-produced**
+deliverable in INV-050's layout tree.
 
 ### Step 4a: Data pattern analysis
 

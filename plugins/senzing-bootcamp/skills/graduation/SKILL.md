@@ -920,7 +920,8 @@ Back up the resolved repository so it can be restored later. Read **`database_ty
 ⛔ When `database_type` is indeterminate, **do not guess a branch** — determine the engine from
 `config/engine_config.json`'s connection string instead (and note the missing key per pre-check 3).
 Picking the wrong branch here means either no backup or `pg_dump` against a SQLite file, and the
-backup is the whole point of the bundle.
+backup is the whole point of the bundle — INV-094 requires exactly one of the two branches below to
+have run.
 
 - **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
   `cp database/G2C.db backups/revisit/database/G2C.db`).

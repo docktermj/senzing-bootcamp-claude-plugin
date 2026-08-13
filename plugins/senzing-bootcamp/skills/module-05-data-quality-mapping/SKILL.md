@@ -41,7 +41,8 @@ transformation programs tested + output validated with quality >70%.
   the **presence test defined in Phase 1 step 6** rather than writing one from scratch. Two traps
   it exists to close: never use a truthiness test (`if value:`) — `false` and `0` are present
   values — and never use key presence as coverage, which reports 100% for a field that is an
-  empty array in every record. When the guide is ported, implement presence exactly as Phase 1
+  empty array in every record. Both are INV-128, which is the statement of record for what counts
+  as present and what counts as absent. When the guide is ported, implement presence exactly as Phase 1
   defines it and carry the caution into the ported methodology.
 - **Multi-language data:** If a source contains non-Latin characters (Chinese, Arabic,
   Cyrillic, etc.), call `search_docs(query="globalization")` for current guidance on UTF-8

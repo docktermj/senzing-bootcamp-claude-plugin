@@ -346,7 +346,8 @@ Entity Graph (per `visualization-api-reference.md` → "De-duplication").
 
 ⛔ **If the visualization's code changes for any reason after 2.2 — a bootcamper request, a bug fix,
 a styling tweak — re-run the build-only snapshot step (2.2) and re-verify it. Do not stop at
-re-verifying the live server.**
+re-verifying the live server.** (INV-130 — the retained snapshot MUST be rebuilt after **any**
+post-build change, and re-verifying the live server is explicitly not a substitute.)
 
 This is a numbered step, not a note, because the failure is silent and permanent. The snapshot is
 the artifact the bootcamper keeps and the one embedded in the recap; the live server is torn down at
