@@ -138,8 +138,12 @@ the note satisfies the ⛔, which is the binding half. INV-205's first sentence 
 saying to read the list as *whether, when, what, or in what form*. That is the same shape every
 other in-place clarification in the file uses (INV-002, INV-017, INV-048, INV-110, INV-123, INV-163).
 
-**No new ID, and the index entry is unchanged** — verified: `INV-206` appears zero times, and the
-**MCP sourcing and tool contracts** group still reads `… INV-201, INV-204, INV-205`.
+**No new ID, and the index entry is unchanged** — verified: no ID above INV-205 was defined or cited
+when this landed, and the **MCP sourcing and tool contracts** group ended at `… INV-201, INV-204,
+INV-205`. (Reworded 2026-08-13: this sentence originally evidenced the claim by writing the next ID
+out, which cited an undefined invariant and put `citations.py verify` — and the whole suite — into
+failure. See `proving-an-id-is-unused-by-writing-it-cites-it`. The group has since legitimately grown
+past INV-205.)
 
 **No other deviation.** All eight criteria hold. The recommendation-is-welcome clause was asserted
 separately because over-correcting is the likelier failure than under-correcting: a reader told the

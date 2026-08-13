@@ -371,6 +371,77 @@ class TheEmbeddedMasterRouteIsDocumented(unittest.TestCase):
                       "the prohibition must cite INV-007 — assuming an answer the bootcamper "
                       "gave differently is what it forbids")
 
+    def step_ten_section(self):
+        """Just module step 10 (Plan), so reachability is checked where it is needed.
+
+        The section explaining `embedded_master` sits ABOVE `## Workflow (per data source)`,
+        and for one commit no numbered step referenced it: `embedded` appeared nowhere in
+        the file after the section ended. A guide working the steps in order reached the
+        plan advance with the profile in hand and was told to identify "relationships" and
+        nothing else. Asserting the token appears somewhere in the file cannot see that.
+        """
+        start = self.body.index("### 10. Plan")
+        end = self.body.index("### 11. Map", start)
+        return self.body[start:end]
+
+    def test_step_ten_carries_the_plan_time_check(self):
+        section = re.sub(r"\s+", " ", self.step_ten_section()).replace("**", "")
+        self.assertIn(
+            "embedded_master", section,
+            "module step 10 (Plan) never mentions embedded_master. Step 2 is the only place "
+            "it can be declared, and step 10 is the module step that advances step 2 — a "
+            "guide following the numbered steps has no reason to look for one.")
+        # NOT `A second entity hiding in a column` -- that phrase also occurs in step 10's
+        # own instruction sentence ("check the profile for a second entity hiding in a
+        # column"), so matching it passed with the cross-reference deleted outright. Match
+        # the heading's distinctive tail instead, which appears nowhere else in the file.
+        self.assertRegex(
+            section, r"(?i)and when to go `?back",
+            "step 10 must point at the embedded-master section by its heading, so the "
+            "signals, the payload and the recovery route stay reachable from the step that "
+            "needs them (INV-183). A pointer is required, not a paraphrase of the check.")
+
+    def test_step_ten_points_at_the_section_instead_of_forking_it(self):
+        """One statement of record: the cross-reference must not become a second copy."""
+        section = self.step_ten_section()
+        for forked in ("entity_plan", "embedded_in", "RECORD_HASH"):
+            with self.subTest(must_not_restate=forked):
+                self.assertNotIn(
+                    forked, section,
+                    "step 10 restates %r, which belongs to the embedded-master section. Two "
+                    "copies of a payload contract drift, and the section is where the dated "
+                    "provenance lives." % forked)
+
+    def test_the_signals_are_located_in_the_step_one_profile(self):
+        """The plan-time check is only actionable if it says which columns carry the signal."""
+        section = re.sub(r"\s+", " ", self.embedded_master_section()).replace("**", "")
+        for column in ("Unique", "Sample"):
+            with self.subTest(profile_column=column):
+                self.assertIn(
+                    column, section,
+                    "the section must name the profiler's %r column. The three signals are "
+                    "readable at step 1; without naming where, 'check the values' is not an "
+                    "instruction a guide can act on before advancing the plan." % column)
+        self.assertNotRegex(
+            section, r"(?i)only\s+\*{0,2}discoverable at step 3",
+            "the section still claims the discovery is only possible at step 3. It is not — "
+            "the step-1 profile report carries all three signals, and the tool asks for "
+            "embedded masters at step 2. That premise is what made `back` the only "
+            "documented route.")
+
+    def test_the_back_route_survives_the_reframing(self):
+        """Demoting `back` to the fallback must not delete it — a miss still needs it."""
+        section = re.sub(r"\s+", " ", self.embedded_master_section()).replace("**", "")
+        self.assertRegex(
+            section, r"mapping_workflow\(action='back'\)",
+            "the `back` recovery call was removed. Catching the entity at plan time is "
+            "cheaper but not guaranteed; when step 3 reveals a missed one, `back` is still "
+            "the only route, and the plugin is the only place it is written down.")
+        self.assertRegex(
+            section, r"(?i)schema_plan.{0,40}preserved|preserved.{0,40}schema_plan",
+            "the note that `back` preserves the existing plan must survive — without it a "
+            "guide expects to lose the plan and avoids the route")
+
     def test_the_five_action_rule_was_not_restated(self):
         """This adds a trigger; it must not fork the action list (one statement of record)."""
         self.assertEqual(

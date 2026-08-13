@@ -57,7 +57,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: the "counts PAIRS, not invariants" note above exists for. Re-derived by running the
 #: extractor. This guard fired again, on the same omission as last time: INV-206 was recorded
 #: before its enforcer cited it back. Twice in one day is the argument for the pin.
-EXPECTED_PAIRS = 24
+#:
+#: 24 -> 25 on 2026-08-13: INV-207 (a claim about the repo's own reference graph is verified
+#: AFTER it is recorded) names tests/test_spec_ledger_invariants.py. Re-derived by running
+#: the extractor. Third consecutive new invariant, and the first where the back-citation was
+#: written before this guard had to ask for it.
+EXPECTED_PAIRS = 25
 
 
 def pairs():

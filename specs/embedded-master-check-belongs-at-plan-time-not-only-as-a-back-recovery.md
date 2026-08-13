@@ -134,6 +134,45 @@ needs it — and the same concern `inv205-covers-whether-to-ask-but-not-how` cit
   its route is correct, its premise about *when* is not), INV-183 (reachable at the step that needs
   it), INV-136 (the `back` action), INV-007 (the bootcamper's choice is theirs).
 
+## Deviations from this spec, and why (2026-08-13)
+
+**⚠️ One of the new assertions was vacuous when written, and its own negative control caught it.**
+`test_step_ten_carries_the_plan_time_check` originally asserted that step 10 matches
+`(?i)A second entity hiding in a column` — intended to prove step 10 *points at* the section. But that
+phrase also occurs in step 10's own new instruction sentence ("check the profile for a second entity
+hiding in a column"), so **deleting the cross-reference outright still passed.** Rewritten to match the
+heading's distinctive tail (`and when to go \`back\``), which appears nowhere else in the file.
+
+This is the **fifth** instance in two days of the same error — asserting a token appears *somewhere*
+rather than that the claim holds *where it is made* — and the first where the vacuous assertion was in
+brand-new code written by an author who had just documented the pattern twice. Care is not the control;
+the mutation is.
+
+**Two mutations were themselves defective before they proved anything.** One replaced only one of two
+statements of the same claim (`back` preserves the plan), so the surviving copy correctly kept the
+guard green; one used stale text ("sits in `state`" where the file says "is still sitting in `state`")
+and silently matched nothing of the second occurrence. Both replaced with definitive whole-claim
+mutations. Recorded because a mutation that fails to mutate reads exactly like a guard that works.
+
+**A guard shipped beyond the criteria:** `test_step_ten_points_at_the_section_instead_of_forking_it`
+asserts step 10 does **not** restate `entity_plan`, `embedded_in` or `RECORD_HASH`. The spec asked for a
+cross-reference "rather than restating it"; nothing would have caught a later edit that helpfully
+inlined the payload contract, creating the second statement of record this file warns about elsewhere.
+
+**The spec's line references are pre-`INV-206` positions.** `:249-251` and `:413-430` shifted when
+`embedded-master-legacy-payload-example-is-not-runnable` landed earlier the same session; the section is
+now at `:249` and step 10 at `:457`. Content unchanged, addresses moved.
+
+**Baseline:** the spec predicted "full suite passes (baseline 1792 passed, 3 skipped)". Actual before
+this change was **1795 passed, 3 skipped**; after, **1799 passed, 3 skipped** (+4, exactly the tests
+added). The 1792 figure is the stale one recorded in
+`proving-an-id-is-unused-by-writing-it-cites-it`, not a regression here.
+
+**No other deviation.** All four proposed changes shipped, and the protected content is untouched:
+`git diff` shows seven removed lines, all of them the reframed ⛔ header and its old premise. The
+three-step `back` sequence, the step-3 offer, the both-directions trade-off and the silent-downgrade ⛔
+appear in no removed line.
+
 ## Invariants introduced
 
 **None proposed.** INV-183 already covers reachability; this is an unapplied instance of it. A rule

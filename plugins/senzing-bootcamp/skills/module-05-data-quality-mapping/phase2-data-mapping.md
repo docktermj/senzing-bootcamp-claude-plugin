@@ -246,19 +246,36 @@ lender on a loan record, a parent company on a subsidiary. `mapping_workflow` mo
 it. As an `embedded_master`, every record naming the same organisation resolves to one entity, and a
 later source naming it resolves against that. That difference *is* entity resolution.
 
-⛔ **The timing is a trap, and going `back` is the sanctioned fix.** An embedded master is
-**declared at step 2** (`plan_entity_structure`) but is usually only **discoverable at step 3**,
-when you finally look at the values. Step 3 cannot introduce a new schema — its `schema_mappings`
-are keyed to the step-2 plan and the server validates `FIELD INTEGRITY` against it. So when step 3
-reveals one:
+⛔ **Look for it at step 1, declare it at step 2 — the profile already tells you.** An embedded
+master can only be **declared at step 2** (`plan_entity_structure`), and everything you need to
+discover one is in the step-1 profile report, before that declaration is due. Read three columns of
+the profiler's field table:
+
+- **`Unique`** — a high distinct count on a 100%-populated text field is signal one;
+- **`Unique %`** — low (a few percent) means the values *repeat*, which is signal two;
+- the **`Sample`** columns, which are frequency-annotated (`Zions Bank, A Division of (527)`), so you
+  can see at a glance whether they are real-world names or categories. Verified against
+  `sz_schema_generator.py` on server 1.32.9, 2026-08-13.
+
+**The tool asks you for this at step 2 too**, in its own words: *"Step 1 — IDENTIFY MASTERS: … **Also
+identify embedded masters** — fields within another schema that represent a distinct secondary entity
+(e.g., employer name/address on employee records)"*, and it lists `embedded_master` second in its
+`SCHEMA DISPOSITIONS`, ahead of `child` and `relationship` (verbatim, server 1.32.9, 2026-08-13). So
+module step 10 is where this belongs, and doing it there costs one extra entry in the step-2 payload.
+
+⛔ **If it was missed at plan time, going `back` is the sanctioned fix — not a failure.** Being
+**declared at step 2** while the values are what discover it means step 3 is where a missed one
+surfaces, and step 3 cannot introduce a new schema: its `schema_mappings` are keyed to the step-2
+plan and the server validates `FIELD INTEGRITY` against it. So when step 3 reveals one:
 
 1. call **`mapping_workflow(action='back')`** — it returns to step 2 with the existing `schema_plan`
    preserved (verified on server 1.32.9, 2026-08-12);
 2. re-plan with the embedded master declared;
 3. re-advance to step 3 and map it.
 
-This is the documented route, not a failure. `back` is one of the five valid actions; **this is what
-it is for.**
+`back` is one of the five valid actions and **this is what it is for.** Prefer catching it at step 10:
+this route costs a round trip *and* the legacy-payload drop documented next, which is why the profile
+columns above are worth reading before you advance the plan.
 
 ⛔ **Declaring an `embedded_master` requires the LEGACY `entity_plan` payload.** The typed step-2
 branch (`for_step 2`) enumerates `support_schemas.disposition` as `lookup | relationship | child`
@@ -461,6 +478,14 @@ step 2 with `action='advance'`, carrying `master_schemas` (at least one, each wi
 `data_source` in UPPERCASE, `record_type`, `record_id_source`) and `support_schemas` (lookups,
 relationships, children) in `data`. Tell the user: explain the entity type decision, which fields
 map vs. skip and why.
+
+⛔ **Before you advance, check the profile for a second entity hiding in a column.** This is the
+one structural thing step 2 commits to that step 3 cannot add later, and the profile report you read
+at step 9 already holds the evidence: scan its `Unique`, `Unique %` and frequency-annotated `Sample`
+columns for a populated text field carrying many repeating real-world names. If there is one, declare
+it as an `embedded_master` in this step's payload. See **"A second entity hiding in a column:
+`embedded_master`, and when to go `back`"** above for the three signals, the payload it requires, and
+the recovery route if this check is missed — do not restate them here.
 
 > **Presentation (conditional on `mapping_verbosity`):**
 >

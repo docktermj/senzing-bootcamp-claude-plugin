@@ -261,6 +261,25 @@ hash in on the next `implement-spec` run**: before writing a new entry, scan the
 how 66 entries went stale at once, leaving the field unable to answer the one question it
 exists for.
 
+⛔ **Re-run `citations.py verify` AFTER the entry is written — it is the last action of this
+step, not part of the criterion walk.**
+
+```bash
+python3 .claude/skills/compact-dev-environment/citations.py verify
+```
+
+The ledger is **inside** the corpus that scan reads, so a clean result recorded before the
+entry exists measured a different repo than the one that ships. This is not hypothetical:
+an entry whose evidence sentence wrote out an unminted `INV-NNN` created two citations of an
+undefined invariant, turning the whole suite red — *after* the same run had recorded
+`citations.py verify` as clean. The check was run before the artifact that broke it existed.
+Same rule for the full suite when an entry's text could affect it.
+
+⚠️ **And read the runner's verdict line, not just its count.** That run recorded
+"1792 passed, 3 skipped" from a `Ran 1792 tests` line while `FAILED (failures=1, skipped=3)`
+sat immediately beneath it — so 1792 was the total *run*, the suite was already red, and the
+ledger said otherwise. A count is not a result.
+
 If the maintainer chose to re-implement an already-recorded spec, update that
 spec's existing entry rather than adding a duplicate.
 

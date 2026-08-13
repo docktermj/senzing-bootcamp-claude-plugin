@@ -148,7 +148,57 @@ recorded **in** the reference graph has to be re-verified after recording, and n
 - Related: `harden-write-gate` (the prior self-invalidating-verification instance, caught in flight),
   INV-108 (offline suite), and the ledger discipline in `implement-spec` Step 4.
 
+## Deviations from this spec, and why (2026-08-13)
+
+**✅ The "three unexplained tests" are explained — the number was right and the label was wrong.**
+The Problem section says `main` is "four passing tests short" and that "the other three are
+unexplained". Established by measurement rather than left open, per this spec's own ⛔. At `498a0be`,
+in a clean worktree, under `unittest discover`:
+
+```text
+Ran 1792 tests in 84.038s
+FAILED (failures=1, skipped=3)
+```
+
+**1792 was the total tests *run*** — 1788 passed + 1 failed + 3 skipped — recorded in the ledger as
+"1792 passed, 3 skipped". Nothing was missing and no test disappeared: the figure was taken off the
+`Ran 1792 tests` line, and the `FAILED (failures=1, skipped=3)` line **directly beneath it was not
+read.** That is also, precisely, how a red suite came to be recorded as green — one cause, not two.
+
+⚠️ **The mislabelled figures are still in the ledger, deliberately.** Two entries state "1792 passed,
+3 skipped". Correcting them means editing prose across entries this spec's criteria bound to
+byte-identical, and the spec's ⛔ says the number is *evidence of what was measured* — so the label is
+now diagnosed and the repair is left as the maintainer's call rather than taken unilaterally. Both
+subsequent entries record actual measured breakdowns, so nothing new inherits the error.
+
+**A guard shipped beyond the criteria.** The criteria asked for no test. `TestTheLedgerIsVerifiedAfterItIsWritten`
+(3 tests in `tests/test_spec_ledger_invariants.py`) pins the ordering instruction, its *reason*, and
+the count-is-not-a-result warning — negative-controlled with four mutations, all caught. Without it the
+instruction is prose in a skill file that a later tidy-up removes as ceremony, which is the failure mode
+the reason-clause exists to prevent.
+
+**Proposed change 3 deliberately not implemented.** Teaching `citations.py` to ignore a negated citation
+("appears zero times", "is unused") was recommended against in the spec itself: it makes the scanner
+parse intent, and the prose fix costs one sentence. Left as recorded-and-declined-in-place, not built.
+
+⚠️ **This implementation edited another spec's content, which `implement-spec` normally forbids.**
+`specs/inv205-covers-whether-to-ask-but-not-how.md:141` was reworded. That is the instructed work here
+(Proposed change §1), not a convenience — recorded explicitly because the guardrail exists to stop
+exactly this move when it is *not* instructed.
+
+**Criteria 1 and 2 were already satisfied before implementation started**, incidentally, because INV-206
+became a real invariant for unrelated reasons earlier in the same session. They are ticked with that
+cause named, and the spec's status note says plainly that neither tick means the defect was fixed.
+
 ## Invariants introduced
+
+- `INV-207` — A claim about **this repo's own reference graph** MUST be verified **after** it is
+  recorded, never before; and evidence for "identifier X is unused" MUST NOT quote X (recorded in
+  `specs/INVARIANTS.md`, 2026-08-13, indexed under **The development record itself**, enforced by
+  `tests/test_spec_ledger_invariants.py`).
+
+**Approved by the maintainer on 2026-08-13**, at instance 3. The candidate was recorded below as a
+stop-marker and is kept verbatim as the argument that produced it:
 
 **One candidate, at instance 3, deliberately not registered.** The rule would be: *a claim about the
 repo's own reference graph MUST be verified after it is recorded, never before* — or more narrowly,
