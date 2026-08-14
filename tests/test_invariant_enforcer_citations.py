@@ -115,7 +115,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-228 -> test_truthset_download_is_the_dataset.py          (verify the written count)
 #:   INV-229 -> test_results_validation_is_diagnostic.py          (diagnose, do not grade)
 #:   INV-230 -> test_truth_set_spelling.py                        (prose vs identifier)
-EXPECTED_PAIRS = 42
+#:   INV-231 -> test_internal_connection_string_rejected.py       (no in-memory CONNECTION)
+EXPECTED_PAIRS = 43
 
 
 def pairs():

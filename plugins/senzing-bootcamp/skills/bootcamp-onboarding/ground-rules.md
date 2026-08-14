@@ -297,6 +297,16 @@ steering files.)
   Write a project-local environment script instead. MCP install guidance legitimately tells a
   *human* to persist variables to a shell profile; the bootcamp relays that without acting on it,
   and says so.
+- ⛔ **Never use `internal://` as the datastore `CONNECTION` (INV-231).** `sdk_guide` recommends
+  it for "quick single-process dev/test on v4.3+", and this bootcamp is not single-process: the
+  visualization server builds its own engine in its own process against the same datastore, so
+  the datastore must be both persistent and shareable. The same `engine_config_notes` entry that
+  recommends `internal://` also disqualifies it here — *"it cannot be shared across processes,
+  persisted, or used with external tools"* — so this rule applies the server's own limitation
+  rather than overriding its advice. Adopting it is silent: every load reports success, and the
+  visualization then renders an empty graph three modules later with nothing naming the cause
+  (the blank-render failure INV-077 exists to prevent). Use the persistent absolute SQLite path
+  instead. This is INV-200's override rule applied to a connection string rather than a path.
 - Layout: source -> `src/`; scripts -> `src/scripts/`; docs and all `*.md` (except
   `README.md` and the generated `production/` project's own `.md` files) -> `docs/`; data -> `data/`; SQLite DB -> `database/G2C.db`; config ->
   `config/`; temp -> `data/temp/`; downloaded Senzing resources -> `src/resources/`; mapping
