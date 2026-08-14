@@ -123,3 +123,34 @@ conflict.
   instructions".
 - MCP re-check: n/a (a Java language rule, not a Senzing fact). Server version this session is
   **1.32.9** (`get_capabilities`, 2026-08-14).
+
+## Invariants introduced
+
+- `INV-237` — Where the plugin prescribes a `snake_case` filename that a chosen language couples to
+  a type name, the reconciliation MUST be stated centrally and pointed at from every prescribing
+  site, and MUST NOT be resolved by renaming the file or the type (recorded in
+  `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Both language claims were verified empirically rather than taken from this spec**, since the
+  whole fix rests on them. On **javac/java 21.0.11**: `public class MeridianCrmMapper` in
+  `meridian_crm_mapper.java` reproduces the reported error verbatim; the package-private form
+  compiles clean under `javac -Xlint:all`; and `java -cp build MeridianCrmMapper` runs. On
+  **.NET 8**: `public class MeridianCrmMapper` in `meridian_crm_mapper.cs` builds with 0 warnings
+  and 0 errors, confirming the file/type correspondence is conventional rather than enforced. Option
+  3 is therefore confirmed, and so is the C# clause the spec asked for in one sentence.
+- **Instance 2's site is not where the spec says it is.** The spec attributes
+  `data/mapping/<name>_mapper.<ext>` to "Module 5 Phase 2, step 4 Phase B" — but that path is
+  prescribed by **`mapping_workflow`'s own step-4 instructions**, which the guide follows at that
+  point; the plugin's own prescription in that module is step 13's
+  `src/transform/transform_[name].[ext]`. The pointer was therefore placed at **step 13**, and it
+  says explicitly that the rule "applies equally to the `<name>_mapper.<ext>` the workflow's own
+  step 4 asks for", so both the plugin-prescribed and the tool-prescribed filename are covered.
+  Nothing was invented to make the spec's description true.
+- **Two mutations escaped on the first attempt because the mutation was partial, not because the
+  guard was weak.** Replacing only the bold lead of each ⛔ left the pointer prose (and, in
+  `ground-rules.md`, the second phrasing of the rule) in place, so the assertions still matched.
+  Re-run as whole-statement deletions, both are caught — the central-statement control by three
+  tests and the mapping pointer by two. Recorded because a mutation that does not actually remove
+  the behaviour proves nothing, and reporting it as an escape would have been the wrong conclusion.

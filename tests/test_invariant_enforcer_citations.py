@@ -121,7 +121,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-234 -> test_download_resource_is_a_listing.py            (a listing, not content)
 #:   INV-235 -> test_capture_single_page.py                       (label what you captured)
 #:   INV-236 -> test_post_yes_switch_reads_the_dial.py            (read the dial, then reply)
-EXPECTED_PAIRS = 48
+#:   INV-237 -> test_java_filename_class_reconciliation.py        (package-private, not renamed)
+EXPECTED_PAIRS = 49
 
 
 def pairs():

@@ -338,6 +338,31 @@ steering files.)
   `.md` (except README), `.jsonl`, `.csv`, or non-config `.json` in the root.
 - The plugin's PreToolUse write-gate enforces the temp-path and secret rules; file-type
   placement is your responsibility.
+- ⛔ **On Java, a prescribed `snake_case` filename collides with the class name — declare the class
+  package-private rather than renaming either (INV-237).** Every `.[ext]` filename in this bootcamp
+  is written in a `snake_case` idiom that is correct for Python and has no class/file coupling.
+  Java does: **only a `public` top-level class is filename-bound**, so `public class
+  MeridianCrmMapper` inside `meridian_crm_mapper.java` fails to compile —
+  *"class MeridianCrmMapper is public, should be declared in a file named MeridianCrmMapper.java"*.
+  **Drop `public` from the top-level class.** A package-private top-level class may live in any
+  filename, so the prescribed path and the idiomatic class name both survive, and
+  `java -cp <dir> <ClassName>` still launches it unchanged — `main` stays `public static`. Verified
+  on **javac/java 21.0.11, 2026-08-14**: the public form reproduces the error above, the
+  package-private form compiles clean under `javac -Xlint:all`, and the launcher runs.
+  - **Do not rename the file, and do not rename the class.** The prescribed filenames are read by
+    other machinery (graduation maps artifacts by base name; Module 5 source-qualifies exactly three
+    Markdown names; Module 3's build table is pinned by its own tests), and renaming the class to
+    `class meridian_crm_mapper` satisfies the compiler while violating the same instruction's
+    "idiomatic style for the chosen language".
+  - **C# is the quiet version of the same thing, and needs the opposite advice.** There the
+    file/type correspondence is **conventional, not enforced**: `public class MeridianCrmMapper` in
+    `meridian_crm_mapper.cs` builds with **0 warnings, 0 errors** (verified on .NET 8, 2026-08-14).
+    So there is nothing to reconcile and no reason to drop `public` — keep the prescribed filename
+    and name the type idiomatically.
+  - **Python, Rust and TypeScript have no such coupling**, so nothing changes for them. This is why
+    a Python-centric reading of these filenames looks correct: the defect is invisible until the
+    bootcamper's first `javac`, where the error names class *visibility* while the cause is a
+    filename convention two documents away.
 
 ## Windows and PowerShell
 

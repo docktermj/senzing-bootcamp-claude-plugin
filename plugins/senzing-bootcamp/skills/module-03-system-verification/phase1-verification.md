@@ -356,6 +356,12 @@ all build commands.
 | Rust | `cargo build --manifest-path src/system_verification/Cargo.toml` |
 | TypeScript | `tsc src/system_verification/verify_pipeline.ts --noEmit` |
 
+⛔ **On Java, keep `verify_pipeline.java` and declare the top-level class package-private** — the
+filename is `snake_case` and the idiomatic class name is not, and only a `public` top-level class is
+filename-bound. The rule, its reason and the C# difference are in `../bootcamp-onboarding/ground-rules.md`
+→ "File placement" (INV-237); do not restate them here and do not rename the file, which this table's
+own tests pin.
+
 1. Execute the build command for the chosen language.
 2. **If the build exits with code 0:** report pass.
 3. **If the build fails** (non-zero exit code): report fail including the first 50 lines of

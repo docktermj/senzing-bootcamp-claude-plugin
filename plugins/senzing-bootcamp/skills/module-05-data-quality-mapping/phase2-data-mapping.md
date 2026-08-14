@@ -977,6 +977,12 @@ reading, field mapping, type conversion, cleansing, `DATA_SOURCE`/`RECORD_ID`, a
 handling. Save to `src/transform/transform_[name].[ext]`. Tell the user: the file path, what it
 reads/writes, and what it handles.
 
+⛔ **On Java, that `snake_case` filename and an idiomatic class name cannot both be `public`** —
+declare the top-level class package-private and keep the prescribed path. Applies equally to the
+`<name>_mapper.<ext>` the workflow's own step 4 asks for. The rule, its reason and the C# difference
+are in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237); do not restate them
+here.
+
 **Keep JSON handling dependency-free.** This is usually the first Java the bootcamp generates, and
 the bootcamp compiles with plain `javac` and never sets up Maven or Gradle — so the mapper must not
 depend on an external JSON library (a scaffold importing `javax.json` will not compile as written).
