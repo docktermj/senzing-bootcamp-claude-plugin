@@ -91,21 +91,22 @@ transitions"). Bootcamp graduation shares its recommendation with Query, Visuali
 bootcamper arriving on Opus 5 at high effort is **already there**: give them the one-line statement
 and go straight into Step 1. Do not assume graduation is always a step up — it is not, and asking a
 bootcamper to switch to the model they are already running is the pointless question INV-006 and
-INV-012 forbid. Name only the dial that differs, and when the recommendation sits *below* their
-current setting, say so in the question itself.
+INV-012 forbid. Name only the dial that differs — **including in the answer hint**, where `{dial}`
+resolves to "model", "effort", or "model and effort" to match the stem — and when the recommendation
+sits *below* their current setting, say so in the question itself.
 
 When it **does** differ, end this turn with a single 👉 yes/no question — its own turn, not combined
 with another 👉:
 
 On the **Claude Code CLI**, pin the switch question verbatim:
 
-> 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current model.)
+> 👉 **Would you like to switch to `/model opus` + `/effort high` for graduation?** (Recommended for best value; reply no to keep your current {dial}.)
 
 In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface), pin
 the intent-based equivalent (INV-098), naming the one interface the bootcamper is on — "in your
 Claude interface" only when it cannot be determined (INV-158):
 
-> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
+> 👉 **Would you like to switch to Opus 5 at high reasoning effort for graduation?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)
 
 The switch question ends this turn. On **yes**, preface the reply turn with a one-line statement
 telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude Code

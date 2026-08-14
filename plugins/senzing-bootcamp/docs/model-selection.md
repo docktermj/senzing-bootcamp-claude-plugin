@@ -116,12 +116,19 @@ and the guide never changes it — only the bootcamper can.
 from **what the bootcamper is currently running** — not from the previous stage's recommendation.
 That distinction is the whole point: a bootcamper who runs Opus 5 / high throughout (a supported
 choice, see below) was previously asked to "switch to Opus 5 / high" three times while already on
-it. Where the current setting cannot be determined, fall back to the previous stage's value.
+it. Where the current setting cannot be determined, fall back to the previous stage's value — **per
+dial**, and only while it really cannot be read. Reasoning effort is not exposed by default, which is
+not the same as unreadable: on the Claude Code CLI an `/effort` invocation reports the resulting level
+in the transcript, and the nudge's own switch flow asks the bootcamper to run exactly that command. So
+once an `/effort` result is in the conversation the effort dial is determinable and the fallback must
+not be used for it. (On Claude Desktop, the web app and IDE extensions there is no such command, so
+the dial may genuinely stay undeterminable; both paths are live.)
 
 | At a module or graduation start | Behavior | Extra turns |
 |---|---|---|
-| The recommendation **differs** from the current setting — in **either** direction | A single 👉 switch question, its own turn, naming only the dial that differs; on **yes**, a one-line run-commands statement then the pinned "Are you done modifying the model and effort?" gate before the first step; on **no**, the first step lands the same turn. A recommendation *below* the current setting is flagged as a step down **in the question**, stating it is a cost saving rather than a capability the module needs. | up to 2 |
+| The recommendation **differs** from the current setting — in **either** direction | A single 👉 switch question, its own turn, naming only the dial that differs — **in the answer hint too**, which resolves to "model", "effort", or "model and effort" rather than always saying "model"; on **yes**, a one-line run-commands statement then the pinned "Are you done modifying the model and effort?" gate before the first step; on **no**, the first step lands the same turn. A recommendation *below* the current setting is flagged as a step down **in the question**, stating it is a cost saving rather than a capability the module needs. | up to 2 |
 | The recommendation **matches** what they are already running | A concise one-line statement — model and effort named as separate dials, either changeable at any time from the next message, and a recommendation *below* the current setting flagged explicitly so it never reads as advice to downgrade. | 0 |
+| Effort is **above every row** in the table (`xhigh`, `max`) | Treated as satisfied: the one-line statement, naming the stage's recommendation and saying that running higher is fine. No question — the step-down clause would otherwise fire at every remaining module, and answering it cannot make it stop. Model has no equivalent case today only because Opus 5 is the top row. | 0 |
 
 The pause is **symmetric**: downgrades ask exactly as upgrades do (maintainer decision, 2026-07-26).
 Making a step down a statement instead of a question was considered — running heavier than
@@ -154,6 +161,13 @@ the retired "the Claude app" did not say which controls were meant (INV-158).
 be read off directly, and so no stage is ever missing a value to compare against. Each row names
 exactly one model and one effort: a conditional cell cannot be pinned into a verbatim question
 (INV-056) and gives the comparison two answers.
+
+⚠️ **The effort values are a recommended floor for value, not a ceiling.** The table stops at `high`;
+the dial continues to `xhigh` and `max`. Running above the table is in policy and simply costs more.
+That matters to the nudge: an effort above **every** row is exempt from the comparison and produces a
+statement rather than a question, because otherwise the step-down clause fires at every remaining
+module and cannot be resolved by answering it. The exemption is confined to *above the whole table* —
+step downs **within** it stay symmetric with step-ups, per the 2026-07-26 decision below.
 
 | Stage | Recommended | CLI commands |
 |---|---|---|

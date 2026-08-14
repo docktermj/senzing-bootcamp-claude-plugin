@@ -563,10 +563,25 @@ never count against the one-question-per-turn rule and must not be treated as ga
   model side from that; for effort, use the value in force when you can determine it. **Resolve
   "cannot be determined" PER DIAL, not for the setting as a whole** — model and effort are separate
   dials (INV-137), and in a live session they routinely sit in different epistemic states at the
-  same moment: the model is knowable to the assistant, while the reasoning effort is exposed nowhere
-  and typically cannot be read at all. So compare each dial on its own evidence: a determinable
+  same moment: the model is knowable to the assistant, while the reasoning effort is **not exposed
+  by default**. So compare each dial on its own evidence: a determinable
   model is compared **directly** even when effort is not, and vice versa. **Only for a dial whose
   current value cannot be determined**, fall back to that dial's value in the stage just completed.
+
+  ⛔ **"Effort is not exposed by default" is not "effort can never be read" — and the switch flow
+  below manufactures the evidence.** On the **Claude Code CLI** an `/effort` invocation reports the
+  resulting level in the transcript, and the flow below asks the bootcamper to run exactly that
+  command and then gates on "👉 Are you done modifying the model and effort?". So the moment an
+  `/effort` result is in this conversation, the effort dial **is** determinable, and the
+  previous-stage fallback MUST NOT be used for it — treating it as unreadable anyway is the same
+  failure this clause already forbids for the model. Read the most recent such value, not the
+  earliest — and compare it against the stage's recommendation, never against the previous stage's
+  recommendation. Observed on a dry run, 2026-08-13: the bootcamper ran `/effort` at the SDK setup
+  nudge and the transcript reported `xhigh`, which made the dial determinable from that point on;
+  every later stage nevertheless fell back as though it were unreadable.
+  On **Claude Desktop, the Claude web app or an IDE extension** there is no such
+  command, so the dial may genuinely stay undeterminable there — both paths are live, and which one
+  applies depends on the interface and on whether the bootcamper has used it.
   ⛔ Applying the previous-stage row to a dial that *was* determinable is the failure this clause
   exists to prevent: a bootcamper demonstrably on Opus 5 would be compared against the previous
   stage's recommended Sonnet 5, found "unchanged", and never offered the switch — silently defeating
@@ -575,6 +590,28 @@ never count against the one-question-per-turn rule and must not be treated as ga
   a question whose answer changes nothing, which is exactly what INV-006 and INV-012 forbid. Running
   one model for the whole bootcamp is a supported choice, so this is the common case, not an edge
   case.
+
+  ⛔ **One dial is exempt from the comparison before it starts: an effort setting ABOVE everything
+  the table ever recommends.** The table's highest effort is `high`; the CLI dial also offers `xhigh`
+  and `max`. A bootcamper who has chosen one of those sits above **every remaining row**, so the
+  step-down clause below would fire at every module for the rest of the bootcamp — twelve questions
+  proposing a change they already made deliberately, none of which they can make stop except by
+  downgrading. Treat the recommendation as **satisfied**: give the one-line statement (the "matches"
+  case below), name the stage's recommended effort, and say plainly that running higher is fine. Ask
+  **nothing**. A deliberate over-provision is not a mismatch to correct, and re-offering it every
+  module is the "pointless switch? every module" outcome INV-006 and INV-012 forbid.
+
+  ⚠️ **This is narrower than it may look, and deliberately so.** It applies only *above the whole
+  table*, never to a step down **within** it — a bootcamper on Opus 5 / high entering a Sonnet 5 /
+  medium stage is still asked, both dials, exactly as today. Step-down questions inside the table
+  remain symmetric with step-ups by maintainer decision (2026-07-26, recorded in
+  `../../docs/model-selection.md`); what this carve-out removes is only the case that **cannot be
+  resolved by answering it**.
+
+  The **model** dial has no equivalent case today, for one reason only: Opus 5 is the table's top row,
+  so nothing a bootcamper can select sits above it. If a stronger model ships and this table lags it,
+  the same shape recurs on the model side and the exemption applies there in the same terms —
+  above-the-table is satisfied, not mismatched.
 
   Two cases, decided only by that comparison:
 
@@ -587,16 +624,24 @@ never count against the one-question-per-turn rule and must not be treated as ga
     Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
     the effort only, never told to re-set the model they are already on.
 
-    On the **Claude Code CLI**, pin the switch question verbatim, substituting only the bracketed
-    values — the stage's commands, and just the one dial when only one differs:
+    ⛔ **That rule covers the whole sentence, including the answer hint** — `{dial}` below resolves
+    to "model", "effort", or "model and effort", matching whatever the stem names. An effort-only
+    question that ends "reply no to keep your current **model**" tells the bootcamper what declining
+    does to a dial it is not touching, and the pinning rule (INV-056) means the guide cannot quietly
+    correct it at runtime. This is the common case, not an edge one: a bootcamper who stays on Opus 5
+    through the conversational stages meets an **effort-only** step-up at SDK setup, the first time
+    the nudge has anything to say to them at all.
 
-    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current model.)
+    On the **Claude Code CLI**, pin the switch question verbatim, substituting only the bracketed
+    values — the stage's commands, just the one dial when only one differs, and `{dial}` to match:
+
+    > 👉 **Would you like to switch to `/model {model}` + `/effort {effort}` for this module?** (Recommended for best value; reply no to keep your current {dial}.)
 
     In **Claude Desktop, the Claude web app, or a Claude IDE extension** (or an unknown interface),
     pin the intent-based equivalent — name the stage's recommended model and effort, and do NOT
     present CLI commands as the only instruction:
 
-    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current model.)
+    > 👉 **Would you like to switch to {Model} at {effort} reasoning effort for this module?** (Recommended for best value; set it with the model and effort controls in {Claude Desktop | the Claude web app | your Claude IDE extension}; reply no to keep your current {dial}.)
 
     Substitute the one interface the bootcamper is actually on. When the interface cannot be
     determined, say "in your Claude interface" — vague only where the plugin genuinely does not
@@ -607,7 +652,8 @@ never count against the one-question-per-turn rule and must not be treated as ga
     than capability and that staying put costs them nothing — e.g. "this is a step down from your
     current {current}; it is a cost saving, not a capability the module needs, so staying put is
     fine." Without it the bootcamper is being asked to accept a worse experience for no stated
-    reason. It never reads as advice to downgrade.
+    reason. It never reads as advice to downgrade. (An effort above the whole table never reaches
+    this clause — see the exemption above; it is a statement, not a question.)
 
     This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
     telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude
@@ -664,6 +710,13 @@ never count against the one-question-per-turn rule and must not be treated as ga
   The **Recommended** column is interface-neutral. In Claude Desktop, the Claude web app, or a Claude
   IDE extension, set the same model and reasoning effort using that interface's model/effort controls;
   the **CLI commands** column is the Claude Code CLI equivalent (INV-098).
+
+  ⚠️ **These effort values are a recommended floor for value, not a ceiling.** The table never goes
+  above `high`, and the dial goes further (`xhigh`, `max`). Running above the table is **in policy**
+  and simply costs more — it is not an over-setting to be corrected, which is why an effort above
+  every row is exempt from the comparison above. `high` was chosen as the top row because there is no
+  evidence the modules need more, not because more is disallowed (see
+  `../../docs/model-selection.md` → considered and rejected).
 
   From Data Quality, Mapping, and Transformation onward the recommendation is **flat** — a
   bootcamper who switches there is asked nothing further for the rest of the bootcamp.
