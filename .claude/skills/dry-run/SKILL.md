@@ -41,6 +41,16 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    numbered list (1, 2, 3, or all three); do not assume. Phase 3 costs the
    maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run
    the plugin".
+
+   ⛔ **If phase 3 is among them, ask a second question before anything else runs:
+   which module the analysis starts at.** List the eleven modules in order, numbered,
+   and mark which ones this environment can actually reach (step 3 below is that
+   check). Everything before the chosen module is walked as a Bootcamper sees it with
+   the analysis off; the analysis begins when that module does. This is not a
+   refinement — a walk that analyses from the top runs out of context around Module 1
+   every time, which is why no phase-3 run has ever reached the later modules. Full
+   rules, including what the fast-forward may and may not do, in
+   [phase3-conversational.md](phase3-conversational.md).
 2. **Work outside the repo.** Phase 2 and 3 create a bootcamp project. Put it in
    `$HOME/senzing-bootcamp-dryrun` (or `-phase3`), never inside the repo and never
    under `/tmp` — a maintainer hook blocks system-temp writes, and the plugin's own
