@@ -84,3 +84,22 @@ than just the stem.
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Two more files were fixed than the spec lists.** `plugins/senzing-bootcamp/skills/graduation/SKILL.md`
+  pins the same two switch questions (`:102`, `:108`) with the same hardcoded "reply no to
+  keep your current model", and the spec's Affected-files section named only
+  `ground-rules.md`. Fixing the ground rules alone would have left the identical defect at
+  the final stage of the bootcamp — the second-consumer omission `implement-spec` Step 4
+  exists to catch. `plugins/senzing-bootcamp/docs/model-selection.md`'s nudge-behaviour
+  table was updated for the same reason: it describes the question's shape and would
+  otherwise have described the pre-fix hint.
+- **Option 1 was taken, not option 2.** The spec ranked substitution first and
+  dial-neutral "settings" second; substitution keeps the hint as specific as the stem, and
+  the risk option 2 guards against (the same drift recurring) is covered instead by
+  `tests/test_model_effort_nudge_edges.py`, which forbids the literal and requires the
+  bracket to be defined in every file that uses it.
+- **No pinned-wording literal needed relaxing.** The criterion anticipated that
+  `tests/test_model_guidance_sync.py` might pin a fixed hint string; it does not — it pins
+  the two tables' agreement — so nothing there changed.

@@ -110,3 +110,34 @@ at Truth Set visualization and at every module after it.
 - Upstream: not applicable
 - Related specs: `specs/effort-only-switch-question-says-keep-your-current-model.md`
   (the other defect in the same pinned question, found on the same walk)
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **⛔ The exemption narrows a recorded maintainer decision, and that is flagged rather
+  than absorbed.** `plugins/senzing-bootcamp/docs/model-selection.md` records, from
+  2026-07-26: "The pause is **symmetric**: downgrades ask exactly as upgrades do … Making a
+  step down a statement instead of a question was considered … and rejected: the choice is
+  the bootcamper's in both directions." Proposed change 1 makes a step down a statement for
+  one case. It was implemented **confined to above the whole table** — the single case a
+  bootcamper cannot resolve by answering, since no available setting stops the question
+  short of downgrading — stated as such in both files with the 2026-07-26 decision cited
+  beside it, and revertible by deleting one clause. Step downs *within* the table are
+  unchanged. Implemented rather than held because the spec is unambiguous about the remedy;
+  recorded here because narrowing someone else's decision is not the implementer's call to
+  make silently.
+- **The `/effort`-prints-its-level claim is shipped as a condition, not as an assertion.**
+  The spec states that a `/effort` invocation prints the resulting level. That is a Claude
+  Code CLI fact, not a Senzing one, so there is no MCP route to re-verify it, and this
+  session could confirm only the five level names (from its own tool contracts) — not the
+  output format. The plugin text therefore says the dial is determinable *once an `/effort`
+  result is in this conversation*, which holds however the CLI words it, and the 2026-08-13
+  observation is cited as the observation it is.
+- **Proposed change 4 is answered in place rather than deferred.** The model dial needs no
+  equivalent case today because Opus 5 is the table's top row; `ground-rules.md` now says
+  exactly that, and says the exemption applies on the model side in the same terms if a
+  stronger model ships and the table lags it. A test pins the answer, so the question is
+  not re-derived later.
+- **An existing guard corrected the first draft.** `tests/test_model_nudge_trigger_direction.py`
+  rejected the sentence describing the observed defect, because it named the previous-stage
+  comparison with no adjacent prohibition — a description of a wrong behaviour reads as a
+  description of the behaviour. Reworded to state the ban explicitly.
