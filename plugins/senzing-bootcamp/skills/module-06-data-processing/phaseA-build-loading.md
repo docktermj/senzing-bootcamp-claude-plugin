@@ -17,8 +17,12 @@ Read `config/data_sources.yaml` and check `test_load_status` per source:
   production-quality loading, error handling, progress tracking, throughput optimization, redo
   processing, and incremental strategies." Skip the basic test-load step and go straight to the
   production loading workflow.
-- **`skipped` or missing**, include a brief test-load step: run a quick load of 10–100 records
-  to verify the data loads before production concerns, then set `test_load_status: complete`.
+- **`skipped` or missing**, note that a brief test load is **owed** for that source, and say so:
+  "You skipped the sandbox test load in Data Quality, Mapping, and Transformation, so we'll do a
+  quick one before the full load." ⛔ **Do not run it here.** Phase B step 5 runs it, and it
+  cannot run any earlier: it needs the loading program, which step 3 builds from the volume tier
+  captured at step 1, and the registered `DATA_SOURCE` codes, which step 4a creates — without
+  which the load fails with `SENZ2207`, the exact error step 4a exists to prevent.
 
 **Phase 3 results integration:** if `test_load_status` is `complete` for multiple sources, use
 `test_entity_count` to estimate total volume and plan resource allocation, use Phase 3 quality
