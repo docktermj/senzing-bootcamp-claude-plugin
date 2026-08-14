@@ -405,11 +405,50 @@ weight.
 
 - **completeness (0-100)** — the mean, across records, of the share of **applicable** fields that
   are present in that record, using the presence test defined below and per-`RECORD_TYPE`
-  applicability (INV-174). **Which fields count:** every field that resolves to an Entity
-  Specification attribute or a structural key, **plus** any source field already dispositioned in
-  mapping. A raw source column the bootcamper has not yet been asked about does **not** count —
-  scoring a source down for work this module has not done yet is the false-alarm shape INV-174
-  records. (On a real source this mattered: `PPP_LOANS` scored 100% on its 8 resolving fields and
+  applicability (INV-174).
+
+  **Which fields count — stated positively, because a raw source is this module's central case.** A
+  source field enters the denominator when **any** of these is true:
+
+  - **Step 4 identified an Entity Specification counterpart for it.** Step 4 runs immediately before
+    this one and does exactly that comparison, so the set is read off its output rather than
+    re-derived here. On a raw source this is where the whole denominator comes from.
+  - it is already **dispositioned in mapping** (`feature`, `payload`, `extract`); or
+  - it is a **structural key** — `DATA_SOURCE`, `RECORD_ID`.
+
+  ⚠️ **Step 5a uses "resolves to" in a narrower sense, and reading that sense here breaks the
+  score.** Step 5a asks whether the **key itself** is a catalog attribute, allowing for a leading
+  label (`BUSINESS_NAME_ORG` → `NAME_ORG`) — a question about an already-Senzing-ready source. This
+  step asks whether a field **has a counterpart** — a question about a raw source, where no key is a
+  catalog attribute yet. Same words, two different questions. Read Step 5a's sense here and a fully
+  raw source has **zero** countable fields, so the number that gates this module is undefined on the
+  module's most common input. Do not change Step 5a: it is correct for what it asks.
+
+  **The exclusion stands, narrowed to what it is for.** A source column with **no** counterpart
+  **and** no disposition stays out of the denominator — scoring a source down for work this module
+  has not done yet is the false-alarm shape INV-174 records. What must **not** be excluded is a
+  column whose counterpart Step 4 has just identified.
+
+  **Worked example — a fully raw source, nothing dispositioned yet:**
+
+  ```text
+  full_name     -> NAME_FULL       counterpart identified at Step 4  -> counts
+  phone         -> PHONE_NUMBER    counterpart identified at Step 4  -> counts
+  created_date  -> (none)          no counterpart, no disposition    -> does NOT count
+
+  denominator = 2 applicable fields per record (plus structural keys) — not 3, and not 0
+  ```
+
+  ⛔ **An empty denominator means completeness is UNDEFINED. Never report 0/0 as 0% (INV-238).** A
+  source where no column has any counterpart and nothing is dispositioned yields 0/0. Say completeness
+  is undefined, give the one-line reason, and route that source to **"Needs enrichment"** (Step 5's
+  third category) instead of emitting a score. Reporting 0% instead computes
+  `0.25 × format_consistency + 0.05 × (100 − duplicate_rate)`, which lands under 70 and routes the
+  gate to "Recommend fixing before mapping" on **arithmetic rather than evidence** — a source with
+  nothing to measure is not a source measured as bad, and the bootcamper would be sent to remediate a
+  quality problem the number does not demonstrate.
+
+  (On a real source this mattered: `PPP_LOANS` scored 100% on its 8 resolving fields and
   94.4% averaged over all 19 root keys.)
 - **format_consistency (0-100)** — the share of populated values that match their field's dominant
   observed pattern (date shape, postal-code shape, casing of a coded value). Report the fields that

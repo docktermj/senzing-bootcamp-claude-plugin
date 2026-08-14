@@ -142,3 +142,38 @@ bullet:
   walk. If that one lands first, generated sources will carry real gaps and the denominator question
   becomes *more* visible, not less — a partially populated raw source is where the two readings
   diverge in the reported percentage rather than only in definedness.
+
+## Invariants introduced
+
+- `INV-238` — A computed metric whose denominator can be empty MUST define that case explicitly and
+  report it as **undefined**, never as zero; and where a gate's stated purpose is reproducibility
+  between two guides, the metric's membership rule MUST be stated positively and MUST NOT rest on a
+  verb the same document uses in a narrower sense elsewhere (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Reading B was adopted as the spec presumed, and the ambiguity resolved by stating the rule
+  positively rather than by re-defining "resolves to".** Step 5a is untouched and asserted unchanged;
+  step 6 now names the difference between the two questions, which is what the spec asked for and is
+  cheaper than renaming either use.
+- **The spec's quotation of Step 5a adds emphasis the file does not carry.** Step 5a reads "keys that
+  resolve to an attribute in the Entity Specification", unbolded; the spec renders it "keys that
+  **resolve to** an attribute". The assertion pins the file's actual text. Nothing was changed in
+  Step 5a to match the quotation.
+- ⚠️ **Criterion 5's sweep took four formulations, and the three discarded ones are recorded in the
+  test because each looked correct.** (a) Detecting a *zero* claim with `\b` after `0%` can never
+  match — `%` and the following comma are both non-word characters, so the pattern matched nothing
+  while appearing to work. (b) Segmenting text by `[^.]*\.` is unusable on this page: a fenced
+  example contains no period, so one "sentence" spanned hundreds of characters and absorbed an
+  unrelated negation. (c) Requiring a negation near the claim fails on this very page, whose worked
+  example legitimately ends "not 3, and not 0". The shipped form states the requirement positively —
+  wherever an empty denominator is named, "undefined" must be named with it.
+- ⚠️ **The sweep's control is an insertion, not an edit**, and getting that wrong is what hid its
+  emptiness for three attempts: for a "no instruction permits X" sweep, deleting every mention passes
+  *correctly*, so editing the block under test can never demonstrate the sweep works. Verified by
+  inserting "If the completeness denominator is empty, report 0/0 as 0% and continue." into
+  `phase2-data-mapping.md`, which the sweep catches. The handling's existence is pinned by three
+  separate tests, each verified to fail when the block is removed.
+- **Two earlier mutations also escaped for the same reason and are not counted as guard weaknesses:**
+  replacing only a bold lead sentence left the following sentence stating the same rule, so the
+  assertion still matched. A mutation that does not remove the behaviour proves nothing.
