@@ -466,7 +466,7 @@ Once the bootcamper responds, act on their answer:
    (Maven/Gradle), C# (NuGet) and TypeScript, and NOT from a package manager at all for Python.**
 
    ⛔ **Python: there is nothing to install here, and `pip install senzing` is an error-severity
-   anti-pattern.** The `senzing` and `senzing_core` packages **ship inside `senzingsdk-runtime`**,
+   anti-pattern.** (INV-222 — INV-066's pip rules govern the plugin's own tooling only.) The `senzing` and `senzing_core` packages **ship inside `senzingsdk-runtime`**,
    which the earlier phase already installed, so Python's Step 3 work is to make them importable —
    not to fetch them. Take the paths from the server, never from this file (INV-080):
    `sdk_guide(topic='install', platform='<platform>', language='python')` returns them in

@@ -280,7 +280,7 @@ questions.
   question, as part of it** — the same shape Steps 1–3 use, and required by
   `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol. These options cannot be pinned,
   because they come from the server at runtime; that changes whether the text is fixed, never where
-  it goes. The question says "reply with a number", so the numbers must follow it.
+  it goes. The question says "reply with a number", so the numbers must follow it (INV-224).
 
   ⛔ **Sort the two kinds of prose in this step by where they belong, because it mixes them.**
   - **Platform-wide statements are informational → BEFORE the 👉**, with the detected-platform

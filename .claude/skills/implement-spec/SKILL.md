@@ -284,9 +284,16 @@ audit workflows ask, or when a spec touches the ledger
 
 ```bash
 python3 .claude/skills/dry-run/coverage_reports.py invariants   # invariants no test cites
+python3 .claude/skills/dry-run/coverage_reports.py shipped      # invariants no SHIPPED file cites
 python3 .claude/skills/dry-run/coverage_reports.py affected     # predicted-but-unrecorded files
 python3 .claude/skills/dry-run/coverage_reports.py negatives    # dated "tool lacks X" claims
 ```
+
+⛔ **`shipped` is the one that catches an invariant this skill just minted.** It was missing from
+this list until 2026-08-14, so the skill checked whether a *test* cited a new rule and never whether
+the *plugin* did — and on 2026-08-14 all eight newly registered invariants (INV-222–INV-229) were
+cited by no file under `plugins/`, one day after `aa013dc` had fixed thirteen of the same by hand.
+A rule with no ID beside it is one a later editor cannot look up and will "tidy" away.
 
 Only after the change is made **and** its acceptance criteria are met, prepend an
 entry to `specs/IMPLEMENTED.md` under the header (newest first). Get the date
@@ -448,6 +455,19 @@ otherwise draft it. For each new invariant:
 
    - `INV-NNN` — <statement> (recorded in `specs/INVARIANTS.md`).
    ```
+
+5. ⛔ **Cite the new ID in the shipped text that states its rule, before recording the spec as
+   implemented.** The prose is already there — what is missing is the `INV-NNN` beside it, and
+   INV-183 requires a rule binding a step to be reachable **at** that step. Add it at every site
+   the rule governs, then re-run `coverage_reports.py shipped` and confirm the new ID is gone from
+   its output.
+
+   ⚠️ **This matters most when the invariant is QUEUED for approval**, because then the citation
+   is *un-writable* at the moment the prose is written — the ID does not exist yet. That is exactly
+   what happened on 2026-08-14: eight implementations shipped with their rules stated and no IDs,
+   the eight IDs were minted later in one commit, and nothing sent anyone back to the prose. A
+   citation that cannot be written when the prose is written will not be written at all unless a
+   step asks for it. So: **minting the ID is not the last action — citing it is.**
 
 If one implementation establishes several invariants, add one entry per
 invariant using consecutive IDs.

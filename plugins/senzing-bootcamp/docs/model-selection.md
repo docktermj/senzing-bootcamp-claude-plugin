@@ -169,6 +169,10 @@ statement rather than a question, because otherwise the step-down clause fires a
 module and cannot be resolved by answering it. The exemption is confined to *above the whole table* —
 step downs **within** it stay symmetric with step-ups, per the 2026-07-26 decision below.
 
+Every stage the bootcamp can run has **exactly one** row here, including the apparatus-exempt setup
+stages that present no nudge themselves — INV-140, so the INV-138 comparison always has a defined
+value to compare against.
+
 | Stage | Recommended | CLI commands |
 |---|---|---|
 | Onboarding | Sonnet 5, medium effort | `/model sonnet` · `/effort medium` |

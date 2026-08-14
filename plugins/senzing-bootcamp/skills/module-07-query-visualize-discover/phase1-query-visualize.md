@@ -497,7 +497,8 @@ and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper
 restart for a server they never agreed to stop. If the module ends with the server still up, say
 plainly that it is still running and how to stop it, rather than stopping it unasked.
 
-⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** Capture the
+⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** (INV-223.)
+Capture the
 handle at launch (`$!` in a POSIX shell, `$proc.Id` from PowerShell's `Start-Process … -PassThru`)
 and record it in the `m7_visualizations` checkpoint below, with the port it bound; on teardown,
 signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own

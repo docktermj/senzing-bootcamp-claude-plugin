@@ -34,7 +34,9 @@ bootcamper through setup and into the numbered module skills, one guided step at
      resume from the last recorded module/step. (Full session-resume behavior is a later porting
      phase; for now, read `current_module`/`current_step` and continue from there.)
 
-   ⛔ **Never announce a resume you cannot perform.** Testing only for the file's existence is
+   ⛔ **Never announce a resume you cannot perform.** (INV-227 — the decision is made on whether
+   the progress file *records a module*, never on whether it exists.) Testing only for the file's
+   existence is
    what produced "offer to resume from the last recorded module" on a project with no recorded
    module — an instruction the guide cannot follow, on a project whose correct behaviour was to
    start over. `recap_checkpoint.bootcamp_active()` now encodes this same three-way rule, so the

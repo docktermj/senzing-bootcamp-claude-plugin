@@ -135,7 +135,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
       `--fail-with-body`, or fetch in a language whose client raises. Retrying with backoff recovers
       all three sources.
    4. ⛔ **Compare the written line count against the per-source `record_count` values from the
-      `source='list'` call, and STOP on a mismatch.** Expect exactly `record_count` from
+      `source='list'` call, and STOP on a mismatch.** (INV-228.) Expect exactly `record_count` from
       `source_download_url`, and `min(record_count, download_url_max_records)` from `download_url`
       (the same rule Module 4 states). This one check is what turns the whole class of under-fetch —
       preview-only, rate-limited, truncated — into a visible error instead of a sparse graph. Do not

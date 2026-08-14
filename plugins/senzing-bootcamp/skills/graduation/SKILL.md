@@ -217,7 +217,8 @@ Gather context before any step. Do this silently.
       asks again (INV-006). The generator reads this **first** for the certificate — it is the
       Bootcamper's answer, and it outranks anything detected earlier (INV-170).
    2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, written by
-      **module-completion Step 2a, at the first module that appends a recap section** — Entity
+      **module-completion Step 2a, at the first module that appends a recap section** (INV-226 —
+      a citation naming substeps MUST NOT omit the one that creates the artifact) — Entity
       Resolution Concepts when it is selected, otherwise Discover the Business Problem — from the
       `name` detected during Bootcamp preparation. (⚠️ Bootcamp preparation itself writes **no**
       recap: it is apparatus-exempt (INV-092) and writes only the two `config/` files. It detects

@@ -980,6 +980,10 @@ teardown.** Agent-side verification — API probes, endpoint checks, screenshot 
 interaction, and it MUST NOT stop the server. The bootcamper explores *after* the agent verifies,
 not instead of it.
 
+INV-131 governs the ordering half: irreversible teardown is the module's **last** action, after
+every step that needs the running service — endpoint verification and live-server screenshot
+capture are named in it. The explicit-approval half is the teardown gate below, pinned per INV-056.
+
 The sequence in every module that starts a server is therefore:
 
 1. Start the server and verify it (agent-side; server stays up).
@@ -988,9 +992,9 @@ The sequence in every module that starts a server is therefore:
 
 ### Identifying the server process (required)
 
-⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.** A
-server that can be started but not *named* can only be stopped by guessing, and every guess
-available is worse than the handle you threw away. Recording it costs one variable at launch:
+⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.**
+(INV-223.) A server that can be started but not *named* can only be stopped by guessing, and every
+guess available is worse than the handle you threw away. Recording it costs one variable at launch:
 
 | Shell | Handle |
 |---|---|

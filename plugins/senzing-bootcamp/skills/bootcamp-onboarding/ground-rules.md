@@ -116,7 +116,8 @@ steering files.)
 - Steps marked `⛔` are mandatory gates. NEVER skip a ⛔ gate or a numbered 👉 step - no context
   or token-budget reasoning justifies it. Advance exactly one step at a time — which for a
   **non-yielding** step (no 👉 question) means executing it in order inside the turn that ends on
-  the next step's 👉, not giving it a turn that ends on nothing. See the 👉 protocol above.
+  the next step's 👉, not giving it a turn that ends on nothing (INV-225). See the 👉 protocol
+  above.
 - Only the bootcamper may attempt to skip a step; the skip protocol still refuses ⛔ gates.
   Never offer to skip a ⛔ gate - announce that you are proceeding and execute it.
 
@@ -514,7 +515,8 @@ How to file it: `feedback.md` → "Silent in-run append", with
   summaries, and the recap always appear. (The full five-category verbosity system is
   condensed here; expand it when `verbosity-control` is ported.)
 - ⛔ **Where output has a prescribed SHAPE and the preset budgets fewer lines, required elements
-  MERGE onto the permitted lines — they are never dropped to fit.** Join them with `; ` and keep
+  MERGE onto the permitted lines — they are never dropped to fit.** (INV-214 — a preset governs
+  form as well as kind.) Join them with `; ` and keep
   every one. The explanatory/required split above decides *what* survives; it says nothing about
   *form*, so a template with fixed lines and a one-line budget would otherwise be resolved by
   guesswork. Any per-line annotation — the setup recap's ` — from your saved preferences` marker,
