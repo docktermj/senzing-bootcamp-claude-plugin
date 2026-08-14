@@ -107,3 +107,36 @@ every site use the defined term:
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Twelve sites were rewritten, not nine.** The spec's inventory missed three:
+  `module-06-data-processing/phaseA-build-loading.md:136`,
+  `module-02-sdk-setup/SKILL.md:631`, and `graduation/SKILL.md:756`. Acceptance criterion 3
+  is absolute — *no* file under `plugins/` may use "this session" as a freshness claim — so
+  the criterion governed rather than the list.
+- **A fourth category turned up that the spec's two-way split does not cover.** Four sites
+  were neither presentation-freshness claims nor sourcing floors, but **provenance claims
+  about a fact already written into the file** ("Verified this session: `search_docs`
+  returns …"). In a shipped file, "this session" there names *the authoring* session, which
+  tells the reader nothing and cannot be checked. Those were given a server version and date
+  instead of the sourcing-floor term:
+  `module-05-data-quality-mapping/phase1-quality-assessment.md:122`,
+  `module-02-sdk-setup/SKILL.md:615` and `:1247`, and
+  `module-06-data-processing/phaseA-build-loading.md:138`.
+- **One of those four had no provenance stamp at all, so it was re-verified live rather than
+  re-worded.** The claim that CORD ships both record shapes now reads from a real call:
+  `get_sample_data(dataset='london', source='GLOBALDATA')` returns a `FEATURES` array (with
+  the raw source columns alongside it at the record root) and
+  `get_sample_data(dataset='las-vegas', source='PPP_LOANS')` returns flat root attributes
+  and no `FEATURES` array (MCP server 1.32.9, 2026-08-14). The claim holds; only its
+  citation was missing.
+- **The change spans two commits.** `ground-rules.md`'s half landed in `129b8ce` (the
+  sibling `language-gate-does-not-say-where-its-options-render` spec edits the same file and
+  was staged first); the rest is `516344f`.
+- **An existing test pinned the retired wording.**
+  `tests/test_sdk_parameter_shapes.py::test_it_marks_itself_as_needing_per_session_confirmation`
+  asserted the literal "Re-confirm both names via MCP this session". Its subject — that the
+  worked example must not substitute for the MCP lookup — is unchanged, so it was re-pointed
+  at the new phrasing, renamed to drop the retired vocabulary, and additionally asserts the
+  old phrasing has not come back.
