@@ -128,3 +128,29 @@ behaviour followable from inside the module.
   ending a turn on Step 3 with zero 👉.
 - MCP re-check: n/a (no Senzing fact). Server version this session is **1.32.9**
   (`get_capabilities`, 2026-08-14).
+
+## Invariants introduced
+
+**None.** INV-225 already requires the behaviour, the single write and the partial-turn fallback;
+what was missing was the local marking, which is documentation rather than a new rule.
+
+⚠️ **Candidate recorded as a stop-marker, deliberately not registered.** The rule *"a module whose
+steps are non-yielding MUST carry a local marking naming its single 👉, in addition to the general
+rule"* is now at **instance 2** — System verification (which had it) and Data collection (which
+did not). Following the threshold discipline this repo already uses for a widening rule, it is
+recorded here rather than minted, so a later run finds the count instead of re-deriving the
+argument. **Register it at instance 3**, or sooner if a maintainer decides the marking is a
+requirement rather than a courtesy.
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **One clause was added beyond the spec's list:** an explicit instruction to *check the provenance*
+  before assuming which shape the module is in. The spec asks that the path-dependence be stated,
+  and stating it without saying how to tell the two paths apart leaves the reader knowing a
+  distinction exists but not which side of it they are on — which is the same gap one level down.
+- **Criterion 2's "does not restate INV-225" is asserted negatively**, by checking the module header
+  does not contain INV-225's own MUST phrases (`MUST NOT end a turn`, `MUST NOT be given a turn of
+  its own`, `MUST be presented in the same turn`). Asserting only that the pointer is present would
+  pass a header that both points *and* restates, which is the drift the criterion exists to prevent.
+- **The guard scopes its assertions to the module header**, not the whole file, so prose buried at
+  step 8 cannot satisfy a marking a guide is supposed to meet before step 1.

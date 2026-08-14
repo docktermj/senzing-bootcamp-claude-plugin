@@ -23,6 +23,31 @@ MCP-first, file placement, checkpointing). Execute every numbered step one at a 
 order. Never skip, combine, or abbreviate a step containing a 👉 question: this has the same
 absolute precedence as a mandatory gate.
 
+⚠️ **On the generated-scenario path this module has exactly one 👉 question** — Step 9's module
+transition. Steps 1-8b are all **non-yielding** there, so they run in order inside the turn that ends
+on that question: "one at a time" is a rule about order and completeness, not about turns. Three
+branches produce the run, and each is correct in its own right:
+
+- **Step 2's marker/provenance guard** skips the provision question entirely and generates the files
+  — the Bootcamper already chose this in Discover the Business Problem, so asking again re-litigates
+  a settled decision.
+- **Step 8a's volume-skip** passes without a question when the collected total is inside the licence
+  limit, which that step calls the common case.
+- **Step 8b** says nothing when the loadable total is below its threshold.
+
+⛔ **This is path-dependent, not fixed — and that is the half most likely to catch you out.** On the
+**bring-your-own-data** path, Step 2 *does* ask (the pinned "How would you like to provide the data
+for this source?" question), so a guide who learned this module there will meet the run of nine
+unexpectedly on a generated scenario. Check the provenance before assuming which shape you are in.
+
+**Checkpoint consequence:** the non-yielding steps' checkpoints collapse into **one** write at the end
+of the shared turn, carrying the **last completed step** — not nine writes inside it. If the turn stops
+early, write what actually completed, so a resume lands on the right step rather than replaying work
+or skipping it.
+
+See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the non-yielding step
+and the single-write checkpoint that follows from it; it is stated once, there, and not restated here.
+
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
 resume at the right step.
