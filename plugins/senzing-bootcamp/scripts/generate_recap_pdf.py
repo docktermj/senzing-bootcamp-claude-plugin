@@ -123,7 +123,16 @@ RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 
 # Recap image references: `![alt](path)` on a line of its own.
-IMAGE_LINE_RE = re.compile(r"^!\[(.*?)\]\((.+?)\)$")
+# An embedded screenshot: ``![alt](path)`` alone on its line.
+#
+# The list marker is optional because `module-completion.md` tells the guide to add
+# screenshots *to* **Actions Taken**, which is a bulleted list — so following that
+# instruction literally yields ``- ![alt](path)``. Anchored matching then saw none of
+# them, and a recap of 8 captured screenshots embedded 0 at exit 0, with `--check`
+# reporting "captured 8, referenced 0" — which reads as *the guide forgot to embed
+# them*, the one thing that had not happened (measured 2026-08-14). Accepting the
+# marker is what makes recaps already written this way render.
+IMAGE_LINE_RE = re.compile(r"^(?:[-*+]\s+)?!\[(.*?)\]\((.+?)\)$")
 
 # A URL rather than a local file. Remote images are NEVER fetched (offline, INV-081).
 IMAGE_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*://")
@@ -2549,7 +2558,12 @@ def _render_line(pdf, epw, line: str) -> None:
     if _is_empty_takeaway(stripped):
         return
     # Embedded visualization screenshot: ![alt](path) on its own line.
-    img = re.match(r"^!\[(.*?)\]\((.+?)\)$", stripped)
+    #
+    # Uses IMAGE_LINE_RE rather than a second copy of the pattern: the counter
+    # (`recap_image_targets`) and this renderer decide the same question, and when they
+    # were written separately they could disagree about what an image line is. Checked
+    # before the bullet branch below, so a bulleted image renders AS an image.
+    img = IMAGE_LINE_RE.match(stripped)
     if img:
         _render_image(pdf, epw, img.group(2).strip(), img.group(1).strip())
         return

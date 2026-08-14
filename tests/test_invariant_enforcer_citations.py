@@ -131,7 +131,7 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: extractor, not by adding two.
 #:   INV-240 -> test_download_resource_is_a_listing.py            (state the rule, not the token)
 #:   INV-241 -> test_capture_single_page.py                       (assert content, not a proxy)
-EXPECTED_PAIRS = 53
+EXPECTED_PAIRS = 54
 
 
 def pairs():
