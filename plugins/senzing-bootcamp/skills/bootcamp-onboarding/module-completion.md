@@ -166,9 +166,24 @@ graceful degradation** — never a 👉 question, and never a reason to stall.
 **The per-tab procedure below is for the tabbed visualization app** — the Truth Set app and the
 Module 7 results app, which share the six-tab contract. A **single-page** HTML deliverable (Data
 Quality, Mapping, and Transformation's quality and mapping pages) has no tabs: capture it as **one
-image**, with no `--tabs` argument, and embed that one image. Passing `--tabs` at a page that has
-none makes the helper skip every requested tab and report on stderr (INV-122) — correct behaviour,
-but it captures nothing, so the page silently misses the recap.
+image** with `--single`, and embed that one image. It writes `{name}.png` — no tab slug — so the
+embed target is predictable:
+
+```bash
+python3 <helper> --html docs/visualizations/{name}.html --out-dir docs/visualizations \
+    --name {name} --single
+```
+
+⛔ **`--single`, not "no `--tabs`".** An omitted `--tabs` does not mean "no tabs", it means **all
+six** — so the helper requests six tabs the page does not have, skips each one and reports it
+(INV-122, correct behaviour), and writes nothing. That is how every single-page deliverable used to
+miss the recap silently. `--single` and `--tabs` cannot be combined; the helper refuses both together
+rather than guessing.
+
+⚠️ If a page with no tab controls is captured **without** `--single`, the helper now detects that and
+captures it as one image anyway, telling you to pass `--single` next time. Do not rely on that: a
+tabbed app whose tab ids are merely misspelled still reports and skips, exactly as before, because
+capturing the whole page there would name a file for a tab it does not show.
 
 For the tabbed app, it is a **tabbed** artifact, so capture is **one image per tab** — never several
 shots of one tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and

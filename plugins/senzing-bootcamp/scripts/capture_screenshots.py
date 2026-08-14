@@ -119,6 +119,39 @@ DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
 # `--help` was being shown eight capturable tabs for a six-tab app (INV-155).
 RESERVED_TABS = tuple(t for t in TABS if t not in DEFAULT_TABS)
 
+# ⛔ Not a tab: the internal id for capturing a page that HAS no tabs, as one image.
+# It is deliberately absent from TABS, so `--tabs page` is an unknown id and the only
+# way to reach this mode is `--single` (or the auto-detect safety net). A single-page
+# deliverable — the quality and mapping pages — has no tab controls at all, so asking
+# for "all tabs" against it requested six that do not exist and wrote **nothing**: an
+# omitted `--tabs` never meant "no tabs", it meant DEFAULT_TABS. The concept was
+# missing from this helper, not merely mis-invoked by its caller.
+SINGLE_PAGE_ID = "page"
+SINGLE_PAGE_LABEL = "Full page"
+
+
+def _tab_label(tab: str) -> str:
+    """Human label for a tab id, or for the single-page pseudo-id."""
+    if tab == SINGLE_PAGE_ID:
+        return SINGLE_PAGE_LABEL
+    return TABS.get(tab, (tab, tab))[1]
+
+
+def _has_tab_controls(source: str) -> bool:
+    """Does this page have a tab bar at all?
+
+    Used only to tell "a tabbed app whose tabs were misnamed" (report and skip — INV-122)
+    from "a document that has no tabs by design" (capture it whole). An unreadable page
+    returns False for both halves of the check, so the caller keeps its normal reporting
+    path rather than guessing.
+    """
+    if not source:
+        return False
+    return bool(
+        re.search(r'id\s*=\s*["\']navbtn-', source)
+        or re.search(r'id\s*=\s*["\']tab-', source)
+    )
+
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
 _CHROME_VIRTUAL_TIME_MS = 15000
@@ -194,6 +227,10 @@ def _to_url(target: str) -> str:
 
 
 def _out_path(out_dir: Path, name: str, tab: str) -> Path:
+    if tab == SINGLE_PAGE_ID:
+        # No slug suffix: a single-page deliverable has one image, so `{name}.png` is
+        # the predictable embed target beside the tabbed `{name}-<slug>.png` convention.
+        return out_dir / f"{name}.png"
     slug = TABS.get(tab, (tab, tab))[0]
     return out_dir / f"{name}-{slug}.png"
 
@@ -522,7 +559,9 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
 
 def resolve_tabs(spec: str) -> list:
     """Parse a --tabs value into known tab ids, preserving the given order."""
-    if not spec:
+    if not spec or spec.strip().lower() == "all":
+        # `all` is an explicit spelling of the default, so a caller can state intent
+        # rather than relying on an omission that reads like "none".
         return list(DEFAULT_TABS)
     wanted, unknown = [], []
     for raw in re.split(r"[,\s]+", spec.strip()):
@@ -563,7 +602,10 @@ def write_manifest(out_dir: Path, name: str, requested, absent, written, missed)
     is reported, because a silently absent manifest downgrades the coverage check to
     "skipped" much later, in graduation, where the cause is no longer visible.
     """
-    slug_of = {tab: TABS.get(tab, (tab, tab))[0] for tab in requested}
+    slug_of = {
+        tab: (SINGLE_PAGE_ID if tab == SINGLE_PAGE_ID else TABS.get(tab, (tab, tab))[0])
+        for tab in requested
+    }
     captured_tabs = [
         tab
         for tab in requested
@@ -579,7 +621,7 @@ def write_manifest(out_dir: Path, name: str, requested, absent, written, missed)
                 "tab": tab,
                 "slug": slug_of.get(tab, tab),
                 "file": _out_path(Path(out_dir), name, tab).name,
-                "label": TABS.get(tab, (tab, tab))[1],
+                "label": _tab_label(tab),
             }
             for tab in captured_tabs
         ],
@@ -630,7 +672,12 @@ def capture(
         out = _out_path(out_dir, name, tab)
         temp = None
         try:
-            if is_url:
+            if tab == SINGLE_PAGE_ID:
+                # The page as it loads: no ?tab= deep link, and no activation copy —
+                # there is nothing to activate, and injecting one would only add a
+                # script that finds no tab and exhausts its retries.
+                url = target if is_url else _to_url(str(html))
+            elif is_url:
                 url = _tab_url(target, tab, query)
             else:
                 temp = _snapshot_copy(html, tab)
@@ -638,7 +685,7 @@ def capture(
             winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner
-                written.append((out, TABS[tab][1]))
+                written.append((out, _tab_label(tab)))
             elif working_backend is None:
                 # Nothing worked for the first tab: no headless capability at all,
                 # so stop rather than failing identically for every remaining tab.
@@ -674,8 +721,15 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--tabs",
         default="",
-        help=f"Comma-separated tab ids (default, and the app's full tab set: "
-        f"{','.join(DEFAULT_TABS)}).",
+        help=f"Comma-separated tab ids, or 'all' (default, and the app's full tab set: "
+        f"{','.join(DEFAULT_TABS)}). An omitted --tabs means ALL tabs, not none — for a "
+        f"page with no tabs use --single.",
+    )
+    ap.add_argument(
+        "--single",
+        action="store_true",
+        help="Capture the whole page as ONE image, for a single-page deliverable with no "
+        "tabs (writes {name}.png). Cannot be combined with --tabs.",
     )
     ap.add_argument(
         "--query",
@@ -685,11 +739,21 @@ def main(argv=None) -> int:
     )
     args = ap.parse_args(argv)
 
-    try:
-        tabs = resolve_tabs(args.tabs)
-    except ValueError as exc:
-        print(str(exc), file=sys.stderr)
+    if args.single and args.tabs:
+        print(
+            "--single captures the page as one image and --tabs names tabs to capture; "
+            "pass one or the other.",
+            file=sys.stderr,
+        )
         return 1
+    if args.single:
+        tabs = [SINGLE_PAGE_ID]
+    else:
+        try:
+            tabs = resolve_tabs(args.tabs)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     if not tabs:
         print("no tabs to capture", file=sys.stderr)
         return 1
@@ -714,14 +778,32 @@ def main(argv=None) -> int:
         return 1
 
     # Pre-flight: never capture a tab the page does not have (see _tabs_present).
-    tabs, absent = _tabs_present(_page_source(target, is_url), tabs)
-    for tab in absent:
+    source = _page_source(target, is_url)
+    absent = []
+    if tabs != [SINGLE_PAGE_ID]:
+        tabs, absent = _tabs_present(source, tabs)
+        for tab in absent:
+            print(
+                f"tab {tab!r} is not present in this visualization; skipping it rather than "
+                "capturing the default tab under its name.",
+                file=sys.stderr,
+            )
+    if not tabs and not _has_tab_controls(source):
+        # Safety net: the page has no tab bar at all, so this is a single-page document
+        # rather than a tabbed app whose tabs were misnamed. Capture it whole instead of
+        # exiting empty — exiting was the behaviour that silently cost every single-page
+        # deliverable its recap image.
         print(
-            f"tab {tab!r} is not present in this visualization; skipping it rather than "
-            "capturing the default tab under its name.",
+            "This page has no tab controls, so none of the requested tabs could exist; "
+            "capturing it as a single page instead. Pass --single to say so explicitly. "
+            f"Requested: {', '.join(absent)}.",
             file=sys.stderr,
         )
-    if not tabs:
+        tabs, absent = [SINGLE_PAGE_ID], []
+    elif not tabs:
+        # A tabbed app whose requested tabs are all misnamed. Report and skip (INV-122) —
+        # capturing the whole page here would put the default tab in a file named for a
+        # tab it does not show, which is the defect tab-naming exists to prevent.
         # Distinct from "no headless backend" — saying the wrong reason here would be
         # the same class of defect this script exists to stop.
         print(
