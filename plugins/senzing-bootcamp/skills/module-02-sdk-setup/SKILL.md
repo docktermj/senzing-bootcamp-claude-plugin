@@ -754,17 +754,50 @@ Non-JVM languages need none of the JVM-specific items above.
 
 ## Step 4: Verify Installation
 
-The script should initialize the Senzing engine **and** print the version to confirm the SDK is
-working. Those are two different `generate_scaffold` workflows, so it takes **two** calls:
+⛔ **This step verifies the BINDING, not the engine.** What it can prove here is that the language
+binding loads, the native library is found, and the SDK answers: the factory constructs and
+`SzProduct.get_version()` returns a version. **Do not create an engine at this step.** An
+engine-class call needs an engine configuration (Step 8) and a datastore holding a registered
+default config (Steps 7 and 8a) — three to four steps away — so a script that initializes the engine
+here **cannot succeed even on a perfectly healthy, current install**.
 
-- `generate_scaffold(language='<chosen_language>', workflow='initialize', version='current')` —
-  the **engine** half. Its snippets are factory/engine **lifecycle** only.
+This module already says so at its own success indicator: *"an engine-class call
+(`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (**Step 9**)"*. That is
+**Step 9**'s bar, after the database and the seeded config exist. Step 4 must not duplicate it early.
+
+⚠️ **What it looks like when the engine is attempted here** (measured live on a healthy install,
+Senzing 4.3.4 build 4.3.4.26210, 2026-08-14): `SzProduct.get_version()` returns `4.3.4` **and** the
+engine call fails with
+
+```text
+SzBadInputError - SENZ7426|Transliteration failed: No transliteration rules found!
+Transliteration requires at least one module.
+```
+
+⛔ **`SENZ7426` and `SENZ7220` before Step 7 mean "not configured yet" — they are the EXPECTED
+result, not a defect.** Do **not** send them through this module's `explain_error_code` → pitfalls
+path here. Both that tool and `sdk_guide(topic='install', platform='macos_arm' | 'windows')` document
+a **real** `SENZ7426` cause — a wrong `SUPPORTPATH` on those platforms — and Step 8 covers it
+properly, with its conditions and its provenance. That is the right diagnosis *after* the
+configuration steps have run, and the wrong one here: at Step 4 there is no engine configuration yet
+by design, so the same code means only that Steps 7–8a are still ahead. Reading it as a path fault
+sends a bootcamper with a healthy install hunting something that does not exist. If you see either
+code before Step 7, continue to Step 5.
+
+So Step 4 needs **one** `generate_scaffold` call:
+
 - `generate_scaffold(language='<chosen_language>', workflow='information', version='current')` —
-  the **version-print** half. This is where the version snippet lives (for Python,
-  `information/get_version.py`, which calls `SzProduct.get_version()`).
+  the **version-print** half, which is what this step runs. This is where the version snippet lives
+  (for Python, `information/get_version.py`, which calls `SzProduct.get_version()`).
 
-⛔ **`workflow='initialize'` alone cannot satisfy this step.** Verified live on server 1.32.9,
-2026-08-12, for **Python and Java**: its snippets are factory/engine **lifecycle** plus
+The `workflow='initialize'` call is still needed — at **Step 8a** (its `configuration/` snippets seed
+the default config) and **Step 9** (its factory-lifecycle snippets make the engine call), which is
+where both already cite it. Nothing is lost by dropping it here; it was simply four steps early. The
+two-workflow fact below is why it cannot be the source for a version check, and it stays recorded at
+this step because this is where a reader would otherwise reach for it.
+
+⛔ **`workflow='initialize'` alone cannot satisfy a version check.** Verified live on server 1.32.9,
+2026-08-12 (re-confirmed 2026-08-14), for **Python and Java**: its snippets are factory/engine **lifecycle** plus
 configuration helpers — abstract-factory / environment variants, engine priming, repository purge,
 factory destroy, signal handling, and the `configuration/` entries that seed a default config and
 register data sources — and **none of them prints the version**. That **absence** is the
@@ -1070,12 +1103,35 @@ name is the same failure as no key at all.
 
 ## Step 8: Create Engine Configuration
 
-**🚨 NEVER construct `SENZING_ENGINE_CONFIGURATION_JSON` manually.** Always use the exact JSON
-returned by
-`sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>', version='current')`.
-Do not guess paths for CONFIGPATH, RESOURCEPATH, or SUPPORTPATH based on directory patterns: the
-correct paths vary by platform and installation method, and guessing causes engine
+**🚨 NEVER guess the engine-configuration VALUES.** `CONFIGPATH`, `RESOURCEPATH`, `SUPPORTPATH` and
+the connection-string form all come from
+`sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>', version='current')`
+— never from directory patterns or memory (INV-080). The correct paths vary by platform and
+installation method, and guessing causes engine
 initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong).
+
+**Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
+carries both. `default_paths` gives plain, correct strings — `config_path`, `support_path`,
+`resource_path` — and assembling the document from them yields valid JSON on the first try.
+
+⛔ **The response's `engine_config` field must NOT be written to disk as-is. It needs two corrections,
+not one:**
+
+1. **It is not valid JSON.** Every brace in it is doubled (`{{` … `}}`), which is `str.format`'s
+   escape for a literal brace — the server appears to return the template rather than the rendered
+   result. `json.loads` on it raises `JSONDecodeError: Expecting property name enclosed in double
+   quotes: line 1 column 2`. Observed on **MCP server 1.32.9, 2026-08-14** (both `topic='configure'`
+   and `topic='install'` return the same doubled form), so a future reader can check whether it is
+   still true. If it has been fixed upstream, the `default_paths` route above is still the more
+   robust source and needs no change.
+2. **Its `SQL.CONNECTION` is `/tmp/sqlite/G2C.db`**, which INV-200 forbids — override it to the
+   absolute resolution of the project's `database/G2C.db` (see Step 7's SQLite branch).
+
+⚠️ Fixing those two things is **not** the manual construction the 🚨 forbids. What is forbidden is
+inventing the *values*; deriving the document from the values the server returned is exactly what
+this step asks for. The distinction matters because the old wording ("use the exact JSON") could not
+be obeyed at all: pasting it produced a config the SDK cannot parse, and repairing it looked like a
+violation of the same sentence.
 
 **What `SENZ2027` is actually telling you: the support data is not where the configuration points.**
 Call `explain_error_code('SENZ2027')` first as always (INV-080) — it returns
@@ -1322,9 +1378,12 @@ call succeeds** (not merely a version query).
   require it).
 - Use the `sdk_guide` MCP tool for current platform-specific instructions.
 - Use `search_docs` with `category='anti_patterns'` before recommending approaches.
-- **NEVER construct engine configuration JSON manually:** always use the exact JSON from
-  `sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>')` — Step 8
-  states the call and its failure modes; do not guess CONFIGPATH, RESOURCEPATH, or SUPPORTPATH
+- **NEVER guess engine configuration values:** take `CONFIGPATH`, `RESOURCEPATH`, `SUPPORTPATH` and
+  the connection-string form from
+  `sdk_guide(topic='configure', platform='<user_platform>', language='<chosen_language>')`, and build
+  the document from that response's `environment.default_paths` — **not** by pasting its
+  `engine_config` field, whose braces are doubled and which does not parse (Step 8 states both
+  corrections it needs, and its failure modes). Do not guess the paths
   (INV-080: config options come from the MCP tools, never from speculation). ⛔ **`platform` is not
   optional here.** Omitting it returns the config-bootstrap *code* only, with no `engine_config`
   block at all — verified on server 1.32.9, 2026-08-13: `topic='configure', language='python'`
