@@ -445,14 +445,57 @@ Once the bootcamper responds, act on their answer:
 
 **Phase 3: Install language bindings (only after EULA acceptance):**
 
-3. Install the language-specific SDK bindings. For Python, never use a bare `pip` (a stale shim on
-   PATH may point at a deleted interpreter): use `python3 -m pip install senzing`, and if an
-   externally-managed environment (PEP 668, common on macOS/Homebrew and many Linux distros)
-   rejects it, install into a project-local virtualenv (`python3 -m venv <project-relative dir>`
-   then `<dir>/bin/python -m pip install senzing`; on Windows `<dir>\Scripts\python -m pip install
-   senzing`) and use that interpreter for the bootcamp's Python code. Never modify the global/system
-   Python. For other languages, use that ecosystem's package manager (Maven/Gradle for Java, NuGet
-   for C#, etc.).
+3. Install the language-specific SDK bindings — **from that ecosystem's package manager for Java
+   (Maven/Gradle), C# (NuGet) and TypeScript, and NOT from a package manager at all for Python.**
+
+   ⛔ **Python: there is nothing to install here, and `pip install senzing` is an error-severity
+   anti-pattern.** The `senzing` and `senzing_core` packages **ship inside `senzingsdk-runtime`**,
+   which the earlier phase already installed, so Python's Step 3 work is to make them importable —
+   not to fetch them. Take the paths from the server, never from this file (INV-080):
+   `sdk_guide(topic='install', platform='<platform>', language='python')` returns them in
+   `install.platform.env_vars` (`PYTHONPATH`, and `LD_LIBRARY_PATH` for when the native library is
+   not found automatically) and repeats the rule verbatim in `install.platform.gotchas[]`.
+   `generate_scaffold(language='python', workflow=<any>)` carries the same rule as an
+   `anti_patterns[]` entry at **`severity: error`**, for **every** workflow it scaffolds — quoted
+   below because the wording is the argument (re-verified live, MCP server 1.32.9, 2026-08-14):
+
+   > "The senzing and senzing-core Python packages ship with senzingsdk-runtime at
+   > /opt/senzing/er/sdk/python. Set PYTHONPATH=/opt/senzing/er/sdk/python:$PYTHONPATH — do NOT pip
+   > install them. The PyPI packages are for unsupported community projects only."
+
+   ⛔ **Why this matters more than most wrong commands: it succeeds.** `pip install senzing` exits 0,
+   so this module reports a clean install — and the PyPI packages then **shadow** the SDK-shipped
+   ones on `sys.path`. The damage surfaces a module later, as System verification's SDK
+   initialization failing with `libSz.so: cannot open shared object file`, which reads as an
+   environment fault rather than as the install instruction that caused it. It is also a **version
+   skew**: this module's version check reads the *engine's* version through the native library, so
+   it reports a current install while the bindings actually imported are older. The plugin's own
+   shipped example recap records this happening on a real run
+   (`../../docs/examples/bootcamp_recap.example.md`).
+
+   **Detection — run it, do not assume:**
+
+   ```bash
+   python3 -c "import senzing, sys; print(senzing.__file__)"
+   ```
+
+   If the path is **not** under the SDK's Python directory (`PYTHONPATH` as the server returned it),
+   PyPI packages are shadowing the real ones. Remedy: uninstall them
+   (`python3 -m pip uninstall -y senzing senzing_core`) **or** prepend the SDK path to `PYTHONPATH`
+   so the shipped bindings win. Report which was done; do not leave both installed silently.
+
+   ⚠️ **Platform asymmetry, stated deliberately.** The server's `platform_note` on
+   `generate_scaffold(language='python', …)` is explicit (same server and date): the Python SDK is
+   **only** supported on Linux, and "even if pip install appears to succeed, it is unsupported and
+   may produce runtime errors" on macOS or Windows. So there is no macOS/Windows Python install to
+   perform: the routes are another language (Java and C# official; Rust and TypeScript
+   community-supported) or Docker/WSL2, which this module's platform routing already covers.
+
+   For **Java, C# and TypeScript**, use that ecosystem's package manager as normal. ⚠️ The
+   bare-`pip` prohibition still applies to the plugin's **own** tooling installs (`fpdf2`,
+   Playwright — INV-066): always an explicit `python3 -m pip`, never a bare `pip`, and PEP 668
+   handled with a project-local virtualenv. That rule is about *how* to run pip for the plugin's
+   helpers; it never authorises pip for the Senzing SDK, which is not a pip package at all.
 
 **TypeScript/Node.js warning:** The TypeScript SDK (`sz-napi`) may require building from source
 if prebuilt binaries are not available for the user's platform. This involves installing the
