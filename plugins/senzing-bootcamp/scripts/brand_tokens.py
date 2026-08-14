@@ -22,6 +22,7 @@ Style-guide key rules encoded here:
 - Light sections are warm off-white, never cold grey.
 - Body text is softer than headline ink; headlines are strongest.
 """
+import warnings
 
 # --- Core dark palette ----------------------------------------------------- #
 OBSIDIAN = "#0F0D0C"          # global dark background
@@ -78,9 +79,46 @@ SOURCE_COLORS = {
 }
 FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
 
-# Second visual channel for a source beyond the first palette cycle, so a model with
-# more sources than colors stays readable instead of silently reusing one.
+# Additional visual channels for a source beyond the first palette cycle, so a model with
+# more sources than colors stays readable instead of silently reusing one (INV-127).
+#
+# ⛔ The channels are counted as RENDERED, not as returned. A stroke is drawn only when a
+# stroke width is set, so "no stroke" is one state and the three stroke colors are three
+# more — 4 rendered states, never 3. Counting the returned `stroke` string instead is how
+# the capacity was overstated: 3 strokes x 6 fills reads as 18 combinations, the renderer
+# drew 24, and the 25th source came out identical to the 7th while the returned dict still
+# looked collision-free (every entry carried a distinct `cycle`, which never reaches the
+# canvas as anything a reader can see).
 SOURCE_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
+SOURCE_STROKE_WIDTHS = [1.5, 3.0]
+#: Lightness perturbation applied once the stroke states are exhausted: positive blends the
+#: fill toward white, negative toward the deep ink. Index 0 is identity, so nothing changes
+#: for a model small enough not to need it.
+SOURCE_FILL_SHADES = [0.0, 0.30, -0.30, 0.55, -0.55]
+
+#: Distinct rendered stroke states per fill: bare, plus every (stroke colour, width) pair.
+SOURCE_STROKE_STATES = 1 + len(SOURCE_STROKES) * len(SOURCE_STROKE_WIDTHS)
+#: How many sources can be encoded distinctly. Stated so it can be asserted and reported
+#: rather than discovered as a collision.
+SOURCE_ENCODING_CAPACITY = (
+    len(FALLBACK_COLORS) * SOURCE_STROKE_STATES * len(SOURCE_FILL_SHADES)
+)
+
+
+def shade_fill(fill, factor):
+    """Blend `fill` toward white (factor > 0) or the deep ink (factor < 0).
+
+    Deterministic and pure: the same fill and factor always give the same hex, so a
+    re-rendered snapshot matches the screenshot the recap already describes.
+    """
+    if not factor:
+        return fill
+    target = WHITE if factor > 0 else DARK_INK
+    weight = abs(factor)
+    return "#%02X%02X%02X" % tuple(
+        round(a + (b - a) * weight)
+        for a, b in zip(hex_to_rgb(fill), hex_to_rgb(target))
+    )
 
 
 def color_for_sources(sources):
@@ -91,16 +129,38 @@ def color_for_sources(sources):
     sources can never collide on the first cycle. `SIGNAL_GREEN` is never assigned — it is
     reserved for live/resolved states and is explicitly not a categorical color.
 
+    Past the first cycle the encoding widens along three further channels, in order:
+    stroke colour, stroke width, then a lightness perturbation of the fill itself. That
+    gives `SOURCE_ENCODING_CAPACITY` distinct **rendered** appearances — the key the
+    browser actually draws being ``(fill, stroke when a width is set, width)``. Up to 24
+    sources the rendered result is identical to the pre-widening behaviour, which was
+    correct at that scale; the widening only adds states past the point it stopped being.
+
+    Beyond capacity a warning is issued rather than colliding silently: an acknowledged
+    limit is defensible, an invisible one is not.
+
     Ordering is deterministic (sorted), so the same model yields the same legend on every
     rebuild — otherwise a re-rendered snapshot or a re-captured screenshot disagrees with
     the recap prose describing it.
 
-    Returns ``{source_code: {"fill": "#RRGGBB", "stroke": "#RRGGBB", "cycle": int}}``.
+    Returns ``{source_code: {"fill": "#RRGGBB", "stroke": "#RRGGBB",
+    "stroke_width": float|None, "cycle": int}}``. `stroke_width` is None when no stroke is
+    drawn, and it is what a renderer must key on — `cycle` says which wrap a source landed
+    in, not whether anything is visible.
     """
     codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
     preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
     claimed = set(preferred.values())
     available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+
+    fallback_count = len(codes) - len(preferred)
+    if fallback_count > SOURCE_ENCODING_CAPACITY:
+        warnings.warn(
+            "color_for_sources: %d sources exceed the %d distinct encodings available; "
+            "sources past that point repeat an earlier appearance"
+            % (fallback_count, SOURCE_ENCODING_CAPACITY),
+            stacklevel=2,
+        )
 
     assigned = {}
     nth = 0
@@ -110,10 +170,25 @@ def color_for_sources(sources):
         else:
             fill = available[nth % len(available)]
             cycle = nth // len(available)
+            shade = SOURCE_FILL_SHADES[
+                (cycle // SOURCE_STROKE_STATES) % len(SOURCE_FILL_SHADES)
+            ]
+            fill = shade_fill(fill, shade)
             nth += 1
+        slot = cycle % SOURCE_STROKE_STATES
+        if slot == 0:
+            # No stroke drawn. The colour is still reported, so the returned shape is
+            # unchanged for the common case, but `stroke_width` is None and that is what
+            # decides whether anything appears.
+            stroke, width = SOURCE_STROKES[0], None
+        else:
+            k = slot - 1
+            stroke = SOURCE_STROKES[(k + 1) % len(SOURCE_STROKES)]
+            width = SOURCE_STROKE_WIDTHS[k // len(SOURCE_STROKES)]
         assigned[code] = {
             "fill": fill,
-            "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+            "stroke": stroke,
+            "stroke_width": width,
             "cycle": cycle,
         }
     return assigned

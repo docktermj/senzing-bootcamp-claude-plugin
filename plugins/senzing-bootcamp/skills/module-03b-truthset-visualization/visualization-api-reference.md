@@ -860,6 +860,30 @@ Applies to **Entity Graph** in both of its modes.
   entries, vary a second visual channel (e.g. node stroke) rather than silently reusing a color; and
   the reserved signal green is never assigned as a categorical color. The Python reference implements
   this as `brand_tokens.color_for_sources()`.
+
+  ⛔ **Count the channels as RENDERED, not as assigned — the distinctness requirement (INV-127) is
+  about what the browser draws.** Every draw site must key on a property that reaches the canvas. A
+  wrap counter does not: it decides *whether* a second channel appears and *which* value it takes,
+  and two sources with different counters can still be drawn identically. That is what happened in
+  the Python reference — six fills × three stroke colours read as more than enough, the renderer
+  applied a stroke only when the counter was non-zero, and the actual space was 6 × 4 = **24**
+  rendered appearances. The returned map stayed collision-free at any size because each entry
+  carried a distinct counter, so nothing looked wrong; the 25th source simply came out identical to
+  the 7th, in the graph *and* in the legend.
+
+  So, whatever channels you choose:
+
+  - **Define the rendered key** — for a node that is `(fill, stroke when a stroke is actually drawn,
+    stroke width, dash)` — and make it unique per present source. Test it at a size past your
+    capacity, not just past the palette: a check at "palette + 3" passes on an encoding that
+    collides at 25.
+  - **The legend swatch and the mark MUST derive from the same expression**, so they cannot disagree
+    about a source. Deriving them separately is how a legend ends up describing an appearance the
+    graph does not have.
+  - **State the capacity and do not exceed it silently.** An acknowledged ceiling with a warning is
+    defensible; a silent collision is not. The Python reference reports its capacity as
+    `brand_tokens.SOURCE_ENCODING_CAPACITY` (currently 210: six fills × seven rendered stroke states
+    × five fill-lightness steps) and warns past it.
 - **Init-state note.** An unchecked toggle fires no change event, so apply its render state
   explicitly at load — do not rely on the event handler to establish the initial view.
 

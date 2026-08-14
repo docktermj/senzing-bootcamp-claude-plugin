@@ -109,6 +109,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 _FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
 _FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
 _FALLBACK_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
+_FALLBACK_STROKE_WIDTHS = [1.5, 3.0]
+_FALLBACK_FILL_SHADES = [0.0, 0.30, -0.30, 0.55, -0.55]
 _FALLBACK_BRAND = {
     "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
     "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
@@ -123,6 +125,8 @@ try:
     SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
     FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
     SOURCE_STROKES = list(_bt.SOURCE_STROKES)
+    SOURCE_STROKE_WIDTHS = list(_bt.SOURCE_STROKE_WIDTHS)
+    SOURCE_FILL_SHADES = list(_bt.SOURCE_FILL_SHADES)
     color_for_sources = _bt.color_for_sources
     _BRAND = {
         "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
@@ -135,13 +139,32 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
     FALLBACK_COLORS = list(_FALLBACK_COLORS)
     SOURCE_STROKES = list(_FALLBACK_STROKES)
+    SOURCE_STROKE_WIDTHS = list(_FALLBACK_STROKE_WIDTHS)
+    SOURCE_FILL_SHADES = list(_FALLBACK_FILL_SHADES)
 
     def color_for_sources(sources):
-        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract)."""
+        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract).
+
+        Kept behaviourally identical, not merely similar: tests/test_brand_sync.py asserts
+        this returns the same dict as the helper, so the channel widening has to be here
+        too or the import-failure path silently reverts to a 24-source ceiling.
+        """
+        states = 1 + len(SOURCE_STROKES) * len(SOURCE_STROKE_WIDTHS)
         codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
         preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
         claimed = set(preferred.values())
         available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+
+        def shade(fill, factor):
+            if not factor:
+                return fill
+            target = "#FFFFFF" if factor > 0 else "#18160F"
+            weight = abs(factor)
+            rgb = lambda v: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16))  # noqa: E731
+            return "#%02X%02X%02X" % tuple(
+                round(a + (b - a) * weight) for a, b in zip(rgb(fill), rgb(target))
+            )
+
         assigned, nth = {}, 0
         for code in codes:
             if code in preferred:
@@ -149,10 +172,20 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
             else:
                 fill = available[nth % len(available)]
                 cycle = nth // len(available)
+                fill = shade(fill, SOURCE_FILL_SHADES[
+                    (cycle // states) % len(SOURCE_FILL_SHADES)])
                 nth += 1
+            slot = cycle % states
+            if slot == 0:
+                stroke, width = SOURCE_STROKES[0], None
+            else:
+                k = slot - 1
+                stroke = SOURCE_STROKES[(k + 1) % len(SOURCE_STROKES)]
+                width = SOURCE_STROKE_WIDTHS[k // len(SOURCE_STROKES)]
             assigned[code] = {
                 "fill": fill,
-                "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+                "stroke": stroke,
+                "stroke_width": width,
                 "cycle": cycle,
             }
         return assigned
@@ -760,10 +793,14 @@ const ALL_TABS=[["graph","Entity Graph"],["stats","Merge Statistics"],["matchkey
 // "unassigned" never masquerades as a real category.
 const SRC_COLORS=__SRC_COLORS__;
 const UNKNOWN_SRC="#9aa0a6";
-function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",cycle:0};}
+function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",stroke_width:null,cycle:0};}
 function color(src){return srcStyle(src).fill;}
 function srcStroke(src){return srcStyle(src).stroke;}
-function srcCycle(src){return srcStyle(src).cycle||0;}
+// The stroke WIDTH decides whether a stroke is drawn at all, and every draw site must key
+// on it -- not on `cycle`. `cycle` says which palette wrap a source landed in; it does not
+// reach the canvas, and keying on it capped the rendered encoding space at 24 sources while
+// the assigned map went on looking collision-free past that.
+function srcStrokeW(src){return srcStyle(src).stroke_width||0;}
 const CSSV=getComputedStyle(document.documentElement);
 function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
@@ -882,8 +919,8 @@ async function drawGraph(){
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
   node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
-    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
-    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
+    .attr("stroke",function(d){return srcStrokeW(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
+    .attr("stroke-width",function(d){return srcStrokeW(d.data_sources[0])||null;});
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
   // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
@@ -996,7 +1033,10 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const l=d3.select("#graph-container").append("div").attr("class","legend");
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");
     r.append("span").attr("class","dot").style("background",color(s))
-      .style("box-shadow",srcCycle(s)?("inset 0 0 0 1.5px "+srcStroke(s)):null);
+      // Same expression as the node's stroke, so the swatch and the node cannot disagree
+      // about a source's encoding -- including its WIDTH, which is a channel above 24
+      // sources.
+      .style("box-shadow",srcStrokeW(s)?("inset 0 0 0 "+srcStrokeW(s)+"px "+srcStroke(s)):null);
     r.append("span").text(s);
     r.append("span").attr("class","cnt").text(counts[s]);
     r.attr("title","Show only "+s+" (click again to restore)");
