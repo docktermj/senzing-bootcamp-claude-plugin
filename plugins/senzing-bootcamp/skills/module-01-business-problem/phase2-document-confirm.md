@@ -191,8 +191,17 @@ bootcamper the generated data is unavailable and let them supply real data.
 
 ## 12. Update README.md
 
-Fill the Overview and Business Problem sections with what was gathered; mention the design
-pattern if one was selected. **Checkpoint:** write step 12.
+Fill the `## Overview` and `## Business Problem` sections **created at project setup**
+(`../bootcamp-onboarding/onboarding-flow.md` → "1. Project setup") with what was gathered;
+mention the design pattern if one was selected.
+
+**If `README.md` is absent, create it first** with those two headings and then fill them — a
+resumed project whose setup predates this step, or one the bootcamper started by hand, will not
+have it. Do not stall on the missing file, and do not report the step complete without writing it.
+
+⛔ **Those two sections are the whole of this step.** Add no other sections here: the root
+`README.md` is the only `.md` permitted at the project root (INV-017), so it is not a place to
+park content that has a home under `docs/`. **Checkpoint:** write step 12.
 
 ## 13. Propose the solution approach
 

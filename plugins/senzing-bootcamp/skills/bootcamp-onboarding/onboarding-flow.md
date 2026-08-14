@@ -74,6 +74,27 @@ Do this silently:
    (and subfolders as modules need them - see file placement in `ground-rules.md`).
 2. Create `config/bootcamp_progress.json` and `config/bootcamp_preferences.yaml` if they do not
    exist.
+3. Create the project `README.md` if it does not exist, with the two headings Module 1 Step 12
+   fills in and a placeholder line under each. It is the **only** `.md` permitted at the project
+   root besides the generated `production/` deliverable (INV-017, and the root whitelist in
+   `ground-rules.md`) — do not add others.
+
+   ```markdown
+   # <project name>
+
+   ## Overview
+
+   _To be completed during the bootcamp._
+
+   ## Business Problem
+
+   _To be completed during the bootcamp._
+   ```
+
+   Nothing else belongs in this file: Module 1 Step 12 fills these two sections and adds nothing
+   further, and every other artifact has its own home under `docs/` (INV-017). Creating it here
+   is what makes Step 12 an **update** rather than an instruction to edit a file that does not
+   exist — the file is written silently, like the rest of this step (INV-012).
 
 (The Kiro Power installed Agent Hooks here via `createHook`. In the Claude plugin, hooks ship
 with the plugin in `hooks/hooks.json` and are already active - there is no hook-install step.)
