@@ -80,6 +80,7 @@ the repo root, or pass ``--repo``:
 Exit status is 0 whatever the findings — these inform an audit, they do not gate one.
 """
 import argparse
+import collections
 import os
 import re
 import sys
@@ -205,15 +206,65 @@ def report_invariants(repo):
     print(" comment or docstring counts as cited here, so this UNDER-reports. A hit is")
     print(" therefore strong evidence of a gap; a miss is weak evidence of coverage.)")
     print()
+
+    retired = fully_superseded(inv_txt)
+    dropped = sorted(n for n in uncited if n in retired)
+    outcome = [n for n in uncited if n <= OUTCOME_MAX and n not in retired]
+    residue = [n for n in uncited if n > OUTCOME_MAX and n not in retired]
+
+    if dropped:
+        print("  filtered: %d fully superseded — a retired rule needs no test; its"
+              % len(dropped))
+        print("  replacement does. Sourced from the index's own \"Fully superseded\" lists,")
+        print("  NOT from a grep: a partly-superseded invariant still binds and is kept.")
+        print("    " + "  ".join("INV-%03d" % n for n in dropped))
+        print()
+    if outcome:
+        # ⚠️ No literal `INV-NNN` in this heading. `test_every_reported_invariant_is_real_and
+        # _genuinely_uncited` scans everything after "uncited:" for that token and treats each
+        # hit as an ID the report LISTED, so a range in a label reads as two false listings.
+        print("  bootcamp OUTCOME invariants (the first %d ids): %d — these are the flow's"
+              % (OUTCOME_MAX, len(outcome)))
+        print("  own outcomes (banners, questions, \"the SDK is installed\"). An offline suite")
+        print("  cannot assert a live turn, so they are `dry-run` phase 3, not test debt.")
+        _columns(outcome)
+        print()
+    print("  development rules with no citing test: %d" % len(residue))
+    _columns(residue)
+    return uncited
+
+
+def _columns(numbers, per_row=10):
     line = []
-    for n in uncited:
+    for n in numbers:
         line.append("INV-%03d" % n)
-        if len(line) == 10:
-            print("  " + "  ".join(line))
+        if len(line) == per_row:
+            print("    " + "  ".join(line))
             line = []
     if line:
-        print("  " + "  ".join(line))
-    return uncited
+        print("    " + "  ".join(line))
+
+
+#: INV-001..INV-050 are the bootcamp's own OUTCOMES, which `INVARIANTS.md` states are
+#: deliberately not indexed ("everything below is a development rule"). They are honoured by
+#: the flow existing rather than by a test, so they are reported apart from test debt.
+OUTCOME_MAX = 50
+
+#: A line in the subject index listing invariants whose WHOLE text is retired.
+#: ⛔ Parsed from the index rather than grepped out of each invariant's prose, because the
+#: naive test is wrong: `INVARIANTS.md` draws a two-way distinction on purpose — "Fully
+#: superseded: … Skip it" versus "Partly superseded … **Read it**". INV-040 is the
+#: counter-example (its CORD parenthetical is superseded by INV-198 while its main clause is
+#: what INV-198 strengthens), so a grep for "superseded by INV" would hide a live rule.
+FULLY_SUPERSEDED_LINE = re.compile(r"\*Fully superseded[^*]*\*(?P<ids>.*)")
+
+
+def fully_superseded(inv_txt):
+    """{int} for invariants the index lists as fully superseded — safe to skip."""
+    out = set()
+    for m in FULLY_SUPERSEDED_LINE.finditer(inv_txt):
+        out |= {int(n) for n in INV_REF.findall(m.group("ids"))}
+    return out
 
 
 #: The index group whose members bind the DEVELOPMENT environment, not the shipped plugin.
@@ -348,6 +399,39 @@ def report_shipped(repo):
     return hits
 
 
+#: Gap classes, most actionable first. Only `real` can hide a missed change; the other three
+#: are predictions the scan structurally cannot match, and reporting them undifferentiated is
+#: what kept this report's floor high enough that nobody re-read it.
+GAP_CLASS_ORDER = ("real", "moved", "bare", "glob")
+GAP_CLASS_LABEL = {
+    "real": "names a real current file",
+    "moved": "path no longer exists (moved/renamed)",
+    "bare": "bare filename — an artifact, not a repo path",
+    "glob": "glob — the scan cannot match a wildcard",
+}
+
+
+def classify_gap(repo, path):
+    """Which class a predicted-but-unrecorded path falls into."""
+    if "*" in path:
+        return "glob"
+    if "/" not in path:
+        return "bare"
+    return "real" if os.path.isfile(os.path.join(repo, path)) else "moved"
+
+
+def criteria_name_the_file(repo, spec_name, path):
+    """True when the spec's `## Acceptance criteria` names this file.
+
+    The discriminator the INV-097 defect actually had: a criterion *promised* a second
+    consumer and only the first was built. A path appearing solely under `## Affected files`
+    is a prediction, which the report already says may legitimately go unfulfilled.
+    """
+    txt = _read(os.path.join(repo, "specs", "%s.md" % spec_name))
+    m = re.search(r"^## Acceptance criteria\s*$(.*?)(^## |\Z)", txt, re.M | re.S)
+    return bool(m) and os.path.basename(path) in m.group(1)
+
+
 def report_affected(repo):
     """Ledgered specs whose predicted Affected files never reached Files changed."""
     entries = _ledger_entries(repo)
@@ -373,10 +457,29 @@ def report_affected(repo):
             gaps[name] = missing
     print("ledgered specs examined: %d   with a gap: %d" % (len(entries), len(gaps)))
     print()
-    for name, missing in gaps.items():
-        print("  %s" % name)
-        for p in missing:
-            print("      %s" % p)
+
+    rows = [(name, p) for name, missing in gaps.items() for p in missing]
+    by_class = collections.OrderedDict((k, []) for k in GAP_CLASS_ORDER)
+    for name, path in rows:
+        by_class[classify_gap(repo, path)].append((name, path))
+
+    print("  %d gap row(s), classified — only the first class can hide a real miss:"
+          % len(rows))
+    for cls in GAP_CLASS_ORDER:
+        print("    %-46s %d" % (GAP_CLASS_LABEL[cls], len(by_class[cls])))
+    print()
+    for cls in GAP_CLASS_ORDER:
+        if not by_class[cls]:
+            continue
+        print("  == %s ==" % GAP_CLASS_LABEL[cls])
+        if cls == "real":
+            print("  ★ = the spec's `## Acceptance criteria` NAME this file, which is what the")
+            print("      INV-097 defect looked like. An `## Affected files` entry alone is only")
+            print("      a prediction, and the report's own preamble says so.")
+        for name, path in by_class[cls]:
+            star = "★" if (cls == "real" and criteria_name_the_file(repo, name, path)) else " "
+            print("  %s %-46s %s" % (star, name[:46], path))
+        print()
     return gaps
 
 

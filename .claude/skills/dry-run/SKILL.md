@@ -60,7 +60,13 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    ```
 
    `invariants` lists invariants no test mentions by ID — INV-060 and INV-097 both sat
-   there while standing unimplemented for weeks. `shipped` is its mirror on the other side of
+   there while standing unimplemented for weeks. It splits its hits three ways so the
+   actionable number is visible: **fully superseded** (filtered — a retired rule needs no
+   test, and the list comes from the index's own "Fully superseded" entries, **not** a grep,
+   because a *partly* superseded invariant such as INV-040 still binds), **bootcamp outcome
+   invariants** (the first 50 ids — banners, questions, "the SDK is installed", which no
+   offline suite can assert, so they are phase 3's business rather than test debt), and the
+   **development rules** that remain. `shipped` is its mirror on the other side of
    the contract: invariants that **name a shipped artifact** (a path, module, step or bundled
    script) and that no file under `plugins/` cites, so the rule binds a step the guide cannot
    look it up from (INV-183). It is the question `conformance.py rules` cannot ask — that scan
@@ -70,7 +76,12 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    invariants stating a general property with no artifact are not reported at all — both filters
    exist so the output stays short enough to read. `affected` lists ledgered specs whose
    `## Affected files` predicted a path the entry's `Files changed:` never recorded —
-   which is how the graduation half of INV-097 went missing. `negatives` lists every dated
+   which is how the graduation half of INV-097 went missing. Its rows are classified, most
+   actionable first: **names a real current file**, then **path no longer exists**, **bare
+   filename** (an artifact, not a repo path) and **glob**, the last three being predictions
+   the scan structurally cannot match. Within the first class, **★ marks the rows whose spec's
+   `## Acceptance criteria` name the file** — the discriminator INV-097's defect actually had,
+   since an `## Affected files` entry alone is only a prediction. `negatives` lists every dated
    "this MCP tool does **not** contain X" claim, oldest server version first — that one is
    **phase 1's worklist**, not just a report, because a negative is the single claim shape
    the offline suite can never notice going stale. Read-only, stdlib-only, exit 0

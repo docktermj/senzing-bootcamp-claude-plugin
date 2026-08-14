@@ -336,6 +336,94 @@ class TestShippedReport(unittest.TestCase):
                 self.assertIn(heading, out)
 
 
+class TestSupersededFilter(unittest.TestCase):
+    """`invariants` filters FULLY superseded entries — and only those.
+
+    ⛔ The naive implementation greps each invariant for "superseded by INV" and is wrong.
+    `INVARIANTS.md` draws a two-way distinction on purpose: "**Fully superseded:** the whole
+    invariant is retired… Skip it" versus "**Partly superseded, or superseded then restored:**
+    one clause was replaced while the rest still binds. **Read it**". Dropping a partly
+    superseded invariant hides a live rule, which is the one way this filter can do harm.
+    """
+
+    def test_it_reads_the_index_lists_not_each_invariants_prose(self):
+        body = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
+        retired = reports.fully_superseded(body)
+        self.assertTrue(retired, "no fully-superseded ids parsed — the index format moved")
+        # Every id claimed retired must actually sit on a "Fully superseded" index line.
+        for line in body.split("\n"):
+            if "Partly superseded" in line or "since restored" in line:
+                for n in re.findall(r"INV-(\d{3})", line):
+                    with self.subTest(inv="INV-" + n):
+                        self.assertNotIn(
+                            int(n), retired,
+                            "INV-%s is listed as PARTLY superseded and must not be filtered; "
+                            "it still binds and dropping it hides a live rule" % n,
+                        )
+
+    def test_a_partly_superseded_invariant_survives_the_filter(self):
+        """INV-040 is the live counter-example, not a hypothetical.
+
+        Its CORD parenthetical is superseded by INV-198 while its main clause is what INV-198
+        *strengthens*. A grep-based filter drops it; the index-based one keeps it.
+        """
+        body = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
+        inv040 = next(l for l in body.split("\n") if l.startswith("- **INV-040**"))
+        self.assertIn("superseded", inv040.lower(),
+                      "INV-040 no longer reads as superseded; pick another counter-example")
+        self.assertNotIn(40, reports.fully_superseded(body),
+                         "INV-040 is only PARTLY superseded and must survive the filter")
+
+    def test_the_report_separates_filtered_outcome_and_residue(self):
+        _code, out, _err = run("invariants", REPO_ROOT)
+        for marker in ("fully superseded", "OUTCOME invariants",
+                       "development rules with no citing test"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, out)
+
+    def test_the_three_sections_account_for_every_uncited_invariant(self):
+        _code, out, _err = run("invariants", REPO_ROOT)
+        total = int(re.search(r"uncited: (\d+)", out).group(1))
+        got = (int(re.search(r"filtered: (\d+)", out).group(1))
+               + int(re.search(r"OUTCOME invariants \([^)]*\): (\d+)", out).group(1))
+               + int(re.search(r"development rules with no citing test: (\d+)", out).group(1)))
+        self.assertEqual(total, got,
+                         "the sections must partition the uncited set, or one is being lost")
+
+
+class TestAffectedClassification(unittest.TestCase):
+    """`affected` classifies each gap row instead of printing 53 undifferentiated paths."""
+
+    def test_classify_gap_sorts_each_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "plugins").mkdir()
+            (root / "plugins" / "real.md").write_text("x", encoding="utf-8")
+            self.assertEqual("glob", reports.classify_gap(str(root), "plugins/*.py"))
+            self.assertEqual("bare", reports.classify_gap(str(root), "brand_tokens.py"))
+            self.assertEqual("real", reports.classify_gap(str(root), "plugins/real.md"))
+            self.assertEqual("moved", reports.classify_gap(str(root), "plugins/gone.md"))
+
+    def test_criteria_named_files_are_distinguished_from_predictions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "specs").mkdir()
+            (root / "specs" / "s.md").write_text(
+                "## Acceptance criteria\n\n- [ ] `a.md` is updated.\n\n"
+                "## Affected files\n\n- `b.md` — maybe.\n", encoding="utf-8")
+            self.assertTrue(reports.criteria_name_the_file(str(root), "s", "x/a.md"),
+                            "a file named in the criteria is the INV-097 shape")
+            self.assertFalse(reports.criteria_name_the_file(str(root), "s", "x/b.md"),
+                             "an Affected-files entry alone is only a prediction")
+
+    def test_the_report_prints_the_classes_and_the_marker(self):
+        _code, out, _err = run("affected", REPO_ROOT)
+        for marker in ("names a real current file", "bare filename",
+                       "glob — the scan cannot match", "★"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, out)
+
+
 class TestNegativesScanSurface(unittest.TestCase):
     """`specs/DECLINED.md` is in the negatives scan; the rest of `specs/` stays out.
 
