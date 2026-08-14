@@ -126,3 +126,22 @@ everything it needs to write the script.
   `specs/sdk-setup-step-4-requires-an-engine-before-the-datastore-exists.md` and
   `specs/sqlite-branch-says-no-additional-setup-but-the-schema-is-required.md`
   (same module)
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Proposal 1's renumbering was not done; the env script is a named required stop instead.**
+  The spec suggested making the environment work "its own step (or an explicitly named
+  sub-step, e.g. Step 3b)". Step numbers in this module are addresses: Step 1's routing, the
+  required-stops list, the checkpoint vocabulary (`write step 3`), Step 8's troubleshooting and
+  two sibling specs all cite them. Renumbering to express a rule that can be expressed directly
+  would have been a wider change than the defect needs. Instead Step 1's skip instruction now
+  names **installation only** and positively directs the environment work, and the
+  required-stops list carries "Step 3's environment script" with its rationale. Every acceptance
+  criterion is satisfied by that shape — criterion 3 asks only that the skip instruction name
+  installation rather than "Steps 2 and 3 entirely".
+- **Criterion 1 is not runtime-verified.** Whether the script *exists at the end of the module*
+  depends on a conversational walk that this environment cannot run. The instruction that
+  produces it is asserted instead. ⚠️ The variable **values** were confirmed on this machine
+  while verifying the sibling SQLite spec: with `PYTHONPATH=/opt/senzing/er/sdk/python`,
+  `senzing.__file__` resolved under the SDK rather than the PyPI packages also present here, and
+  the engine then reached `SENZ7220` — so the script's contents do the job.
