@@ -211,7 +211,18 @@ source='GLEIF', limit=1)`, MCP server 1.32.9, 2026-08-12):
 
 - **`download_url`** serves at most `download_url_max_records` records per request — **10,000** —
   and needs only `mcp.senzing.com` reachable.
-- **`source_download_url`** is the complete uncapped file, and needs egress to `senzing.com`.
+- **`source_download_url`** is the complete uncapped file, and needs egress to **whatever host that
+  URL actually names — read it from the response.** For the CORD collections that is `senzing.com`
+  (`las-vegas/GLEIF` → `https://senzing.com/datasets/gleif-lasvegas.jsonl`, verified as above), but it
+  is **not** a general rule: the Truth Set's `source_download_url` is on
+  **`raw.githubusercontent.com`** (`.../Senzing/truth-sets/main/truthsets/demo/watchlist.jsonl`,
+  verified on server 1.32.9, 2026-08-14). The MCP server's own instructions warn that allowing
+  `mcp.senzing.com` does not cover GitHub content, so telling a firewalled Bootcamper to allow
+  `senzing.com` would strand them on the Truth Set. Name the host from the URL in hand, per dataset.
+  ⚠️ **And mind which `download_url` you are holding:** a `source='list'` response returns
+  `available_sources[].download_url` pointing at the **origin** host, while a per-source response
+  returns `citation.download_url` pointing at **`mcp.senzing.com`**. Same field name, different hosts
+  (same server and date).
 
 So `download_url` is **not** "the full file" for any source larger than the cap: of the 11
 `las-vegas` sources **6 exceed it**, `EQUIFAX` alone having 72,799 records. Verified live —

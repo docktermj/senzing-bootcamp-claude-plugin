@@ -97,9 +97,52 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
    > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than
    > trusting this note: the server ships independently of the plugin.
-2. **Available (primary path):** save the MCP records to
-   `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
-   provenance `mcp_primary` (30-second timeout).
+2. **Available (primary path):** ⛔ **`get_sample_data(dataset='truthset', source='<CODE>')` returns
+   a PREVIEW plus URLs — not the
+   dataset.** Its `records` array is a sample (the response's `citation.note` says how many of how
+   many), and saving it produces a file with a handful of records instead of the Truth Set's 159.
+   That failure is silent: the graph renders, looks plausible, and misrepresents what Senzing did on
+   the module the bootcamp treats as its showpiece. Verified on **MCP server 1.32.9, 2026-08-14**:
+   `dataset='truthset', source='list'` returns `records: []` with `total_available: 159` and three
+   sources; a per-source call returns a preview with `citation.note` reading *"Showing N of 17
+   records (preview). To get more: download_url serves up to 10000 records per request and needs only
+   mcp.senzing.com allowed; source_download_url is the complete uncapped file but requires egress to
+   raw.githubusercontent.com."*
+
+   So **download the records**, then verify the count:
+
+   1. **Fetch each source from a URL in the response, never a hardcoded one.** Prefer
+      `citation.download_url` (MCP-hosted; every Truth Set source is far below its
+      `download_url_max_records` cap) and fall back to `citation.source_download_url`.
+      ⚠️ **The two responses use the name `download_url` for different hosts** — a real trap:
+      `source='list'` returns `available_sources[].download_url` pointing at
+      **raw.githubusercontent.com**, while a per-source call returns `citation.download_url` pointing
+      at **mcp.senzing.com**. Read the URL you actually intend to use rather than the field name
+      (same server and date).
+   2. ⛔ **Name the egress host from the URL you chose, per dataset.** `mcp.senzing.com` for the
+      MCP-hosted download; for `source_download_url`, whatever host it carries — for the Truth Set
+      that is **`raw.githubusercontent.com`**, *not* `senzing.com`. The MCP server's own instructions
+      warn that allowing `mcp.senzing.com` does not cover GitHub content, so a firewalled bootcamper
+      told to allow `senzing.com` would still fail here. (Module 4's sentence is CORD-specific; see
+      `../module-04-data-collection/SKILL.md` → the download contract, which this step needs first
+      because it runs before Module 4.)
+   3. ⛔ **Retry with backoff on HTTP 429, and never write a non-JSON body into the file.** The
+      MCP download endpoint is rate-limited, and back-to-back source fetches are exactly what trips
+      it: the response is a 43-byte `Rate limit exceeded. Try again in 1 second.` served with **429**.
+      `curl -sS -o file` writes that sentence **into `truthset_data.jsonl`** — `-sS` only silences the
+      progress meter, and without `-f` a 4xx body is saved like any other — leaving one line of
+      English prose in the middle of the dataset. Check the status before writing, or use `-f`/
+      `--fail-with-body`, or fetch in a language whose client raises. Retrying with backoff recovers
+      all three sources.
+   4. ⛔ **Compare the written line count against the per-source `record_count` values from the
+      `source='list'` call, and STOP on a mismatch.** Expect exactly `record_count` from
+      `source_download_url`, and `min(record_count, download_url_max_records)` from `download_url`
+      (the same rule Module 4 states). This one check is what turns the whole class of under-fetch —
+      preview-only, rate-limited, truncated — into a visible error instead of a sparse graph. Do not
+      proceed to 1.2 on a mismatch: report the expected and actual counts per source and retry.
+
+   Then save to `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
+   provenance `mcp_primary` (30-second timeout per fetch).
 3. **Unavailable (fallback path):** fetch the demo Truth Set **DATA only** from the sanctioned
    fallback source — resolve source id `senzing_truthset_demo` from `config/fallback_sources.yaml`,
    never a raw URL — write `truthset_data.jsonl`, provenance `github_fallback`. (If the registry
