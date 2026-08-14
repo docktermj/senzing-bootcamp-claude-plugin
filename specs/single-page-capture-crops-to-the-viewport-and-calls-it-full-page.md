@@ -190,3 +190,37 @@ Split into two, so a code rule and a test rule do not share one ID:
 dated forward pointer to INV-241 for any other artifact. Rules 1 and 2 forbid removing it, and it earns
 its place: this is the clause that stops the next person writing a height-only assertion that passes a
 broken build.
+
+## Follow-up: the two unverified backends were verified, and Selenium was broken (2026-08-14)
+
+The deviation note above recorded Playwright and Selenium as implemented-but-not-runtime-verified,
+and argued that an unrecorded outcome degrades to the viewport-only label — "the safe direction for
+an unverified path". **Both the claim and the reasoning were wrong.**
+
+- **The claim.** "Only a different machine can close this" was never checked. `pip` has network in
+  this environment, so both libraries were installed into a throwaway venv and both code paths run.
+- **The reasoning.** Selenium *did* record an outcome — it recorded `full` for a capture that had
+  lost the bottom **139px** of a 2704px page, footer included, and printed `Full page` for it. The
+  safe-direction argument only protects a path that records *nothing*.
+
+Measured against one fixture (2704px, dark footer, 80 footer rows expected):
+
+| Backend | Height | Footer rows | Verdict |
+|---|---|---|---|
+| Chrome CLI | 2791 | 80 | pass |
+| Playwright | 2704 | 80 | pass — sets the viewport directly, native `full_page=True` |
+| Selenium (before) | 2565 | **0** | **fail — INV-235 breach** |
+| Selenium (after) | 2704 | 80 | pass |
+
+Cause: `set_window_size` sizes the **outer window**, so the viewport is shorter by the window
+chrome — the identical trap fixed for the CLI path and left in Selenium on the assumption the two
+"agree closely enough" under `--headless=new`. Fixed by measuring `window.innerHeight` after sizing
+and adding the difference back. The clamp and short-page branches were then exercised on all three
+backends. `wkhtmltoimage` is still absent and unverified.
+
+⚠️ **The suite could not have caught this, and that is the durable lesson.** INV-108 keeps the tests
+stdlib-only, so no test may import `selenium` or `playwright` — the two paths were structurally
+unguardable by execution. The new guard therefore asserts the **mechanism in the source**: each
+window-sizing backend must measure the offset and add it back. A source-level guard is weaker than
+an executed one, and it is what was available; saying so is better than implying the paths are now
+covered the way the CLI path is.

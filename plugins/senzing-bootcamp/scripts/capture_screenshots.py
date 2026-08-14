@@ -496,8 +496,16 @@ def _capture_selenium(url: str, out: Path) -> bool:
         time.sleep(2.5)
         if _single_page_mode():
             # Selenium has no full-page screenshot, so grow the window to the content and
-            # re-shoot. Headless Chrome's window carries no browser chrome, so window
-            # height and viewport height agree closely enough for this purpose.
+            # re-shoot.
+            #
+            # ⛔ `set_window_size` sets the OUTER window, and the viewport is shorter by the
+            # window chrome — the same trap as the Chrome CLI's `--window-size`, and it is
+            # NOT negligible under `--headless=new`. Measured 2026-08-14: sizing the window
+            # to a 2704px page rendered a 2565px viewport, so the capture lost the bottom
+            # 139px — the whole footer — while this function still reported a FULL capture
+            # and the label still read "Full page". That is an INV-235 breach produced by
+            # assuming the two agree, so the offset is now measured from `innerHeight` and
+            # added back, exactly as `_measure_chrome_cli` does for the CLI path.
             height = None
             try:
                 height = int(driver.execute_script(
@@ -510,6 +518,15 @@ def _capture_selenium(url: str, out: Path) -> bool:
                 captured = min(height, _MAX_FULL_PAGE_PX)
                 driver.set_window_size(_WINDOW[0], captured)
                 time.sleep(0.75)
+                # One correction pass: the chrome offset is a constant for the session, so
+                # measuring it once and adding it back is enough — no need to iterate.
+                try:
+                    inner = int(driver.execute_script("return window.innerHeight;"))
+                except Exception:
+                    inner = 0
+                if inner and inner < captured:
+                    driver.set_window_size(_WINDOW[0], captured + (captured - inner))
+                    time.sleep(0.75)
                 _record_full_page(
                     FULL_PAGE_CLAMPED if height > _MAX_FULL_PAGE_PX else FULL_PAGE_FULL,
                     height,

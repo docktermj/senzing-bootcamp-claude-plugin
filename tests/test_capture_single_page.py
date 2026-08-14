@@ -555,6 +555,67 @@ class TheLabelDescribesWhatHappened(unittest.TestCase):
         self.assertEqual("", buffer.getvalue(), "a successful capture must not warn")
 
 
+class EveryWindowSizingBackendCorrectsForWindowChrome(unittest.TestCase):
+    """A window-sized backend must add the chrome offset back, or it crops silently.
+
+    ⛔ Asserted against the SOURCE, not by running the backend, because this suite is
+    stdlib-only (INV-108) and may not import `selenium` or `playwright`. That is a real
+    limitation and it hid a real bug: `_capture_selenium` assumed a headless window and its
+    viewport "agree closely enough", and on 2026-08-14 a live run measured a **139px**
+    difference — a 2704px page captured at 2565px, the whole footer missing, while the
+    function reported a FULL capture and the label read "Full page". An INV-235 breach in the
+    one path no test could execute.
+
+    So the guard pins the *mechanism* each window-sizing backend must carry. `_capture_
+    playwright` is exempt by construction: it sets the **viewport** directly and uses
+    Playwright's native `full_page=True`, so no window chrome is involved — verified the same
+    day at exactly the page height (2704px, footer present).
+    """
+
+    def setUp(self):
+        self.source = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "scripts"
+                       / "capture_screenshots.py").read_text(encoding="utf-8")
+
+    def _body(self, name):
+        start = self.source.index("def %s(" % name)
+        end = self.source.index("\ndef ", start + 1)
+        return self.source[start:end]
+
+    def test_the_chrome_cli_path_measures_the_offset(self):
+        body = self._body("_measure_chrome_cli")
+        self.assertIn("data-sz-inner-height", self.source)
+        self.assertRegex(body, r"_WINDOW\[1\] - int\(inner\.group\(1\)\)",
+                         "the CLI path no longer derives the offset from innerHeight")
+
+    def test_the_chrome_cli_path_adds_the_offset_back(self):
+        self.assertRegex(
+            self._body("_capture_chrome_cli"), r"height = covered \+ chrome_px",
+            "the measured offset is not added to the requested window height, so the bottom "
+            "of every tall page is cropped",
+        )
+
+    def test_the_selenium_path_measures_inner_height_and_corrects(self):
+        body = self._body("_capture_selenium")
+        self.assertIn("window.innerHeight", body)
+        self.assertRegex(
+            body, r"captured \+ \(captured - inner\)",
+            "the Selenium path sizes the window without correcting for window chrome, which "
+            "crops the bottom of the page while still reporting a full capture (INV-235)",
+        )
+
+    def test_the_selenium_path_records_why(self):
+        self.assertRegex(
+            self._body("_capture_selenium"), r"(?i)INV-235",
+            "the reason the correction exists is unrecorded, so it reads as removable",
+        )
+
+    def test_the_playwright_path_sets_the_viewport_not_a_window(self):
+        body = self._body("_capture_playwright")
+        self.assertIn("full_page=True", body)
+        self.assertIn("set_viewport_size", body)
+        self.assertNotIn("window-size", body)
+
+
 class TheTabbedPathKeepsTheFixedViewport(unittest.TestCase):
     """Criterion 3 — this change is scoped to `--single`; a tab's premise is different."""
 
