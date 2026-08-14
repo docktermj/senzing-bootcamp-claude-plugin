@@ -276,17 +276,32 @@ questions.
   below and in Module 2's routing, which is where it belongs.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned options as a **numbered list**. Annotate an option **only where the
-  Module 2 routing rules actually distinguish it** — that is, where the platform forces a language
-  into a container — so the trade-off is visible at the decision point:
-  - **macOS Apple Silicon:** "Python — runs via Docker (the SDK is Linux-only); Java / C# —
-    native." (routing rules 1 and 3)
-  - **macOS Intel:** every language runs via Docker; there is no native Intel-Mac install. (rule 2)
-  - **Windows:** Python runs via Docker; other languages need Scoop, else Docker. (rules 1 and 4)
-  - **Linux:** the rules distinguish nothing per language — all supported languages install
-    natively via the platform's package manager (rule 5). Say that once rather than annotating
-    each option with the same thing, and do **not** invent per-language install detail to fill the
-    space.
+- Present the MCP-returned options as a **numbered list**, rendered **directly beneath the 👉
+  question, as part of it** — the same shape Steps 1–3 use, and required by
+  `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol. These options cannot be pinned,
+  because they come from the server at runtime; that changes whether the text is fixed, never where
+  it goes. The question says "reply with a number", so the numbers must follow it.
+
+  ⛔ **Sort the two kinds of prose in this step by where they belong, because it mixes them.**
+  - **Platform-wide statements are informational → BEFORE the 👉**, with the detected-platform
+    line. The Linux sentence is one: it says the same thing about every option, so it is a fact
+    about the platform, not an annotation on a choice.
+  - **Per-option annotations belong ON their option**, inside the numbered list — never hoisted
+    above the question, where they separate the numbers from the instruction to use them.
+
+  Annotate an option **only where the Module 2 routing rules actually distinguish it** — that is,
+  where the platform forces a language into a container — so the trade-off is visible at the
+  decision point. All four platform cases:
+  - **macOS Apple Silicon:** per-option — "Python — runs via Docker (the SDK is Linux-only);
+    Java / C# — native." (routing rules 1 and 3)
+  - **macOS Intel:** platform-wide — every language runs via Docker; there is no native Intel-Mac
+    install. (rule 2) Say it once, above the 👉.
+  - **Windows:** per-option — Python runs via Docker; other languages need Scoop, else Docker.
+    (rules 1 and 4)
+  - **Linux:** platform-wide — the rules distinguish nothing per language, so all supported
+    languages install natively via the platform's package manager (rule 5). Say that once above the
+    👉 rather than annotating each option with the same thing, and do **not** invent per-language
+    install detail to fill the space.
 
   ⛔ **Do not manufacture an annotation the routing rules do not support.** Those rules
   (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") resolve a *platform*, not per-language
@@ -294,6 +309,24 @@ questions.
   commands come from `sdk_guide(topic='install', platform=…, language=…)` in Module 2, at the point
   they are needed — not from memory here (INV-080). If the MCP server flags a language as
   discouraged or unsupported on the platform, relay that and suggest alternatives.
+
+  The resulting shape (Linux, where the platform statement is platform-wide). The question line is
+  written once, below — this is its position, not a second copy of it:
+
+  ```text
+  Detected platform: Linux (apt). All supported programming languages install natively
+  via the platform's package manager.
+
+  <the pinned 👉 question below, verbatim>
+
+  1. Python — official SDK
+  2. Java — official SDK
+  … (one line per language `get_capabilities` returned, in its order)
+  ```
+
+  On macOS Apple Silicon and Windows the same shape holds, with the routing note on the option it
+  applies to — `1. Python — runs via Docker (the SDK is Linux-only)` — and nothing platform-wide
+  hoisted above except the detected-platform line.
 
   👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 

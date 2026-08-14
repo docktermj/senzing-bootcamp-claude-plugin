@@ -48,6 +48,15 @@ steering files.)
   read as belonging before it. The numbered choices that are part of the question, and
   internal directives such as `*(Internal: end the turn and wait.)*`, are not "after" — they
   belong to the question. Answer-*handling* instructions ("on yes, …") correctly sit after.
+- ⛔ **A 👉 question's answer options render DIRECTLY BENEATH it — pinned or generated at
+  runtime, no exception.** The rule above permits the options to follow the question; this one
+  requires it, so two readers cannot render the same gate two ways. A question that says "reply
+  with a number" above a list the bootcamper has already scrolled past is asking them to answer
+  upwards. Only *informational* prose goes before the 👉: a detected-platform line, a caveat, a
+  statement that applies to every option. **A per-option annotation is not informational — it
+  belongs on its option**, inside the list. A runtime-generated list (the programming-language
+  gate builds its options from `get_capabilities`) is still the question's options, and being
+  unpinnable changes only whether the text is fixed, never where it sits.
 - Each 👉 question has exactly one meaning for "yes" and one for "no". For two or more
   alternatives, use a neutral lead question plus a numbered list. Confirm first; ask for
   corrections only if the answer is no.
@@ -96,6 +105,21 @@ steering files.)
 - **Pre-response checklist:** if your response contains Senzing SDK method names, attribute
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
+- ⛔ **Two rules, two names, and they are not the same rule.** Both appear throughout the plugin,
+  and left undefined they read as one requirement stated inconsistently — so a guide cannot tell
+  whether a result fetched earlier may be presented now. Use these terms:
+  - **Presentation freshness — "this turn".** The pre-response checklist above, unchanged: a reply
+    that contains a Senzing specific requires an MCP call **on the turn that reply is sent**. This
+    is what makes the turn's attribution line truthful — the plugin may credit the MCP server only
+    for what a tool actually produced this turn (see "Attribution" below), so a turn with no call
+    has nothing to attribute and must not present Senzing specifics at all.
+  - **Sourcing floor — "from the server, not from this file".** Wherever a step says a value must
+    come from an MCP tool rather than from the literal written in the plugin file, it is setting a
+    **floor on provenance**, not a ceiling on caching: the shipped number may be stale, so go ask.
+  ⛔ **A sourcing floor never relaxes presentation freshness.** Satisfying the floor once does not
+  license presenting the value on a later turn without a call; the floor says *where the value comes
+  from*, the freshness rule says *when you may say it*. When they seem to conflict, both apply and
+  the stricter one governs — call the tool.
 - **Tool routing:** attribute names / JSON mappings -> `mapping_workflow`; SDK code ->
   `generate_scaffold` or `sdk_guide`; **method signatures and parameter types** ->
   `get_sdk_reference` topic `methods` (aliases `functions` / `classes` / `api`), which searches the
@@ -222,7 +246,10 @@ steering files.)
   Senzing docs" or a one-line "Sourced from Senzing docs via the MCP server." This is a trust
   signal, not a replacement for MCP sourcing; keep it lightweight and honor verbosity
   (INV-011/INV-012) — suppress it at the `minimal` preset. Attribute to the MCP server only what
-  an MCP tool actually produced this turn (attribution must be truthful).
+  an MCP tool actually produced this turn (attribution must be truthful). This is the same
+  **presentation freshness** rule defined in "MCP-first invariant" above, seen from the other side:
+  the attribution is what a fresh call buys, so a turn that cannot attribute is a turn that should
+  not have presented the fact.
 
 ## No direct SQL against the Senzing database
 
