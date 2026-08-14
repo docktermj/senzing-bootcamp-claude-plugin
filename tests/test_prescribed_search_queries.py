@@ -71,6 +71,16 @@ VERIFIED_QUERIES = {
     "temporary evaluation license for a dataset larger than the default limit":
         "ON TARGET: End User License Agreement (EULA) -> 'Senzing Non-Production License' "
         "(relevance 171, the highest in this set)",
+    # Executed against server 1.32.9, docs indexed 2026-08-11 20:52 UTC, on 2026-08-14, for
+    # module-04 Step 8b's load-time estimate.
+    "hardware sizing capacity planning":
+        "ON TARGET: Hardware Sizing FAQ -> 'Full Article' (relevance 113.4), carrying "
+        "throughput per engine core (~5-10 rec/sec steady state), the three load phases "
+        "(Phase 1 is 10-100x faster than Phase 3) and worked load-time examples (1,000 "
+        "records ~2 min; 100,000 ~55 min). ⚠️ The phrasing is load-bearing: adding the "
+        "obvious extra terms — 'hardware sizing capacity planning records per second load "
+        "time' — drops the FAQ entirely and returns add_record flag docs and loading code "
+        "snippets instead. Step 8b says so at the call site",
     # ⚠️ The three below are NOT queries a step tells the guide to RUN. Each is the evidence slot
     # of an `MCP-NEGATIVE` marker — a query that was executed and came back without the fact. The
     # guard cannot tell the two apart (both are `search_docs(query='…')` literals in shipped

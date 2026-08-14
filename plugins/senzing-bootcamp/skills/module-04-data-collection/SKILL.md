@@ -139,16 +139,38 @@ complete list.
 ### 2. For each data source, collect the data
 
 ⛔ **First check whether Module 1 already answered this for this source — and if so, do NOT ask.**
-Read the source's entry in `config/data_sources.yaml`. If it already records a provenance the
-Bootcamper chose earlier — `provenance: cord` is the case the Business Case Offer produces
-(`../module-01-business-problem/phase1-discovery.md` Step 4, option 3: *"I don't have my own data —
-generate a scenario for me"*), and `docs/business_problem.md` carries a
-`🤖 Bootcamp-generated business case` marker for the same run — then the provision decision is
-**already made** for every source in that scenario. Skip the question below and go straight to
-downloading/collecting that source, saying which source you are fetching and where it came from.
-A generated scenario is the multi-source case, so fetch under
-[CORD fetch integrity](#cord-fetch-integrity) — back-to-back source fetches are exactly what the
-download endpoint throttles, and a throttled response arrives looking like a very small file.
+
+**The signal is the MARKER; the provenance selects the ACTION.** Those are two different questions
+and conflating them is what broke this guard. Read `docs/business_problem.md` for the
+`🤖 Bootcamp-generated business case` marker: if it is present for this run, the Business Case Offer
+generated the scenario (`../module-01-business-problem/phase1-discovery.md` Step 4, option 3: *"I
+don't have my own data — generate a scenario for me"*) and the provision decision is **already
+made** for every source in it. Then read the source's entry in `config/data_sources.yaml` for its
+`provenance`, which decides only *what you do next*:
+
+- **`provenance: cord`** → go straight to downloading that source, saying which source you are
+  fetching and where it came from. A generated scenario is the multi-source case, so fetch under
+  [CORD fetch integrity](#cord-fetch-integrity) — back-to-back source fetches are exactly what the
+  download endpoint throttles, and a throttled response arrives looking like a very small file.
+- **`provenance: synthesized`** → **generate the source files.** There is nothing to download: the
+  Business Case Offer reaches this provenance precisely when **no CORD collection fits the chosen
+  category**, which for the customer-facing categories is the normal outcome rather than the rare
+  one. Write one file per source into `data/raw/` from the scenario already recorded in
+  `docs/business_problem.md` and `config/data_sources.yaml` — the record counts, entity types and
+  per-source quirks are all written there — and record the actual counts back into the registry.
+  ⛔ **Ask nothing, recommend no CORD alternative, and do not enter the free-data hierarchy.** That
+  hierarchy is for a Bootcamper who has *not* already decided; recommending CORD here recommends the
+  option Module 1 evaluated and rejected for this category.
+  ⛔ **Generate the mapping complexity the scenario promised** — Module 1 Step 4a's invariant
+  required it, so the files must actually carry it: names split into components in one source and
+  joined in another, addresses as free text where the scenario says so, per-campaign duplicates, and
+  the deliberate inconsistencies across sources. Data Quality, Mapping, and Transformation has to
+  have the work this scenario advertised; a clean, uniform generation makes the next module vacuous.
+
+⚠️ **Both are bootcamp-generated, so both skip the question.** Reading `cord` as the only generated
+provenance is what produced a provision question per source on a synthetic scenario — four
+repetitions, on this walk, of a decision made in Module 1 — and then routed the answer into an
+option that recommends CORD, which cannot resolve.
 
 Asking anyway re-litigates a decision the Bootcamper already made, once per source: with a
 six-source generated scenario that is six questions whose honest answer is *"you already told me
@@ -710,16 +732,31 @@ a key is pending). Once resolved — or when the volume was within the limit —
 
 This is a _time/performance_ heads-up, deliberately **distinct** from the license-capacity
 sampling framing at the top of this module: it judges the Module 6 SQLite load time from the
-actual collected dataset and fires even when the effective license imposes no record cap. It is
+**loadable** dataset and fires even when the effective license imposes no record cap. It is
 **not a mandatory gate**: the bootcamper may always proceed on SQLite with the full dataset.
 Run this once at the end of collection, immediately before the Step 9 transition. Every part is
 non-blocking: any failure or indeterminate input continues the Module 4 flow.
+
+⛔ **Judge the time from what will actually be LOADED, not from what was collected — the two differ
+whenever Step 8a capped it, which is one step earlier in this same flow.** The "fires even when the
+license imposes no cap" clause above is correct and stays: time is a separate concern from capacity.
+Its mirror is what was missing — **when the licence caps below the collected total, the collected
+total is not what will be loaded, and a warning built from it describes work that cannot happen.**
+On the walk that found this: 19,500 collected against a 500-record evaluation cap produced a warning
+about a roughly half-hour load, for a load of about two minutes.
 
 1. **Read the persisted inputs.** Read the registry from `config/data_sources.yaml` and
    `database_type` from `config/bootcamp_preferences.yaml` — the key Module 2 Step 7 writes when
    the engine is chosen, with the value `sqlite` or `postgresql`. Compute the collected total
    record count from the registry. If the registry cannot be read or parsed, treat the total as
    indeterminate: do not fail.
+   - ⛔ **Also read Step 8a's outcome, which this step ran seconds after:** `license` in
+     `config/bootcamp_preferences.yaml` and `license_record_limit` in
+     `config/bootcamp_progress.json`. Then compute
+     **`loadable = min(collected_total, effective_limit)`**, where the effective limit is
+     `license_record_limit` when set, the built-in evaluation limit when `license: evaluation`, and
+     **unbounded** when the limit is `0`. Treat an unreadable licence state as unbounded — that
+     reproduces today's behaviour rather than inventing a cap.
    - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
      missing key means Module 2 Step 7 did not record the choice, not that the engine is
      non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
@@ -728,15 +765,30 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
      fall back to the engine recorded by Module 2 in `config/bootcamp_progress.json` before giving
      up on the check.
 
-2. **Decide whether to warn.** Warn only when the database is SQLite **and** the collected total
-   is above the load-time threshold. Otherwise (total at or below the threshold, any non-SQLite
+2. **Decide whether to warn.** Warn only when the database is SQLite **and the LOADABLE total** is
+   above the load-time threshold. Otherwise (loadable at or below the threshold, any non-SQLite
    engine, or indeterminate inputs) say nothing about load time and continue to the Step 9
-   transition.
+   transition. A 19,500-record collection under a 500-record cap therefore says **nothing**, which
+   is correct: 500 records is not a long load.
    - **Warn:** consult the **Senzing MCP server** at request time for the timing figures
      (expected throughput, throughput degradation, expected load duration, redo-phase
      duration). Any figure the server does not return, or that errors, stays unavailable: never
      substitute a remembered number. Present a load-time warning built from what the server
      returned, then end the turn on the question below and wait for the bootcamper's choice.
+   - ⛔ **Ask `search_docs(query='hardware sizing capacity planning')` — the wording matters.**
+     That query returns the **Hardware Sizing FAQ**, which is where the timing material lives:
+     throughput per engine core, the three load phases (Phase 1 runs 10-100x faster than Phase 3,
+     so a Phase-3 estimate is conservative), and worked load-time examples. `sdk_guide(topic='load',
+     record_count=…)` returns the licence note and the record-count threshold but **no timing
+     figures at all**, so it is the wrong route for this. ⚠️ Nearby wordings do **not** find the FAQ
+     — "hardware sizing capacity planning records per second load time" returns flag docs and code
+     snippets instead — so use the query as written rather than paraphrasing it (verified on MCP
+     server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-14).
+     <!-- MCP-NEGATIVE: sdk_guide(topic='load', language='python', record_count=19500) — returns no load-duration or throughput figures — owner: search_docs(query='hardware sizing capacity planning') carries them, in the Hardware Sizing FAQ (routing negative — the fact exists, go there) — server 1.32.9, 2026-08-14 -->
+   - ⛔ **State both numbers whenever they differ**, so the estimate is legible rather than
+     mysterious: "19,500 collected, 500 loadable under the evaluation licence — the load will take
+     about N minutes." Suppressing the collected figure would be worse than the old behaviour, not
+     better.
 
    👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
 
@@ -745,6 +797,12 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
    3. Switch to an alternative database like PostgreSQL.
 
    _(Internal: end the turn on this question and wait.)_
+
+   ⛔ **Omit option 2 when the licence already caps the load below the collected total.** "Sample
+   down to a smaller record count" is the decision Step 8a just made — offering it again one step
+   later is the INV-006 shape, and both remedies are the same action. Renumber the two remaining
+   options (load it, or switch database) and say plainly that sampling is already in force under the
+   licence. When the licence imposes no cap, present all three unchanged.
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.
@@ -800,13 +858,20 @@ if it's already in the right format for Senzing."
 - Remind about data privacy and security.
 - Verify files are accessible before proceeding.
 - Document everything in `docs/data_source_locations.md`.
-- **If the bootcamper doesn't have data or asks about free data sources**, follow the data
+- **If the bootcamper doesn't have data or asks about free data sources** — and has **no
+  bootcamp-generated scenario** (see the marker check in Step 2) — follow the data
   recommendation hierarchy: (1) recommend CORD data first via the `get_sample_data` MCP tool
   (Las Vegas, London, Moscow datasets) with reference to
   <https://senzing.com/senzing-ready-data-collections-cord/>; (2) if CORD is declined, recommend
   <https://github.com/docktermj/senzing-bootcamp-free-data> for raw samples and additional
   sources; (3) offer synthesized test data generation only as a last resort after CORD and
   free-data options are declined.
+
+  ⚠️ **"Last resort" is scoped to that Bootcamper — the one arriving with no data and no scenario.**
+  It is **not** a judgement on `provenance: synthesized`, which the Business Case Offer produces by
+  design whenever no CORD collection fits the chosen category, and which Step 2 handles by generating
+  the files without asking. Applying "last resort" there would re-open a settled decision and push
+  CORD at a category Module 1 already ruled it out for.
 - **If they pick ICIJ Offshore Leaks from the free-data catalog, give the dated caveat** stated in
   full at the secondary-options step above: as of **2026-08-11** its four sample files do not join —
   not one of the 10 rows in `relationships-sample.csv` has an endpoint present in the node files —
