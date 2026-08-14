@@ -111,6 +111,39 @@ Must handle: ordered loading with dependency enforcement, parallel execution if 
 per-source progress/error tracking with error isolation, statistics aggregation, and a
 completion summary.
 
+⛔ **The loading scaffold's counters are process-global, so per-source tracking is not free — you
+have to build it.** The loader `sdk_guide(topic='load')` returns is written as a standalone
+`main()`, and its counters are process-wide state: in Java, `LoadViaFutures.java` declares
+`private static int errorCount / successCount / retryCount` (and a `static` retry file besides);
+the equivalent in other bindings is module-level or global state. That is correct for a program
+that runs once and exits, and wrong the moment the orchestrator calls it once per source in the
+same process — which is exactly what "the Module 6 loading program works as a template" (step 16)
+invites. The counts then **accumulate**: each source reports every record loaded so far.
+(`sdk_guide(topic='load', language='java', record_count=1000)`, server 1.32.9, 2026-08-14.)
+
+⚠️ **This failure looks like data, not like a bug.** Observed on three sources of 10 / 10 / 8
+records, the summary read 10, then 20, then 28 — plausible, monotonic, and summing to the correct
+total, with the load itself entirely correct. A bootcamper reads it as "Summit Billing has 28
+records". The same arithmetic conceals a real per-source failure: a source that loaded **0 of 8**
+still shows a rising success count inherited from its predecessors. This is the silent-wrong-value
+class `ground-rules.md` → "Defensive parsing" covers (INV-115), except that a wrong number is
+worse than a blank, because nothing about it invites a second look.
+
+Resolve it one of two ways, whichever suits the bootcamper's language (INV-002):
+
+- **Scope the counters per source** — make them state the orchestrator owns, reset at each
+  source's boundary, so the loader reports into a fresh tally each time; or
+- **Run each source's load in its own process**, so the process-global state starts clean by
+  construction. This also isolates a crash in one source's load, which the error-isolation
+  requirement above already asks for.
+
+⛔ **Reconcile the per-source figures before showing them.** (INV-243) Each source's reported count MUST
+match that source's own input record count, and the per-source counts MUST sum to the aggregate.
+Report the comparison, not just the totals; if they disagree, say so and stop rather than printing
+a number that cannot be traced to an input file. A summary that cannot be reconciled against the
+inputs is not a summary — and the accumulating-counter defect above passes every check that looks
+only at the total.
+
 **Production orchestration patterns to include:**
 
 - **Retry with exponential backoff:** when a source fails to load, retry with increasing delays
