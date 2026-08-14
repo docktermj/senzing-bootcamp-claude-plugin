@@ -175,13 +175,28 @@ class TestTheUnconditionalFlowIsIntact(unittest.TestCase):
         )
 
     def test_the_gate_follows_a_yes_and_nothing_else(self):
+        """The gate follows a yes that still needs one, and nothing else (INV-137/INV-236).
+
+        The wording narrowed on 2026-08-14: INV-236 added two post-yes shapes in which the
+        Bootcamper has *already* set the dial, and gating those asks what the transcript has
+        answered. So "follows a **yes** to the switch and nothing else" became "a **yes that
+        still needs one**". The guarantee this test exists for is unchanged and is now pinned
+        in **both** halves rather than one — the gate never follows a decline, and never
+        follows a yes whose dial is already set.
+        """
         for path in (GROUND_RULES, GRADUATION):
             with self.subTest(path=os.path.basename(path)):
+                text = read(path)
                 self.assertRegex(
-                    read(path),
-                    r"follows a \*\*yes\*\* to the switch and nothing else",
-                    "each nudge reader must state that the confirmation gate follows a "
-                    "yes to the switch only — never a decline (INV-137)",
+                    text,
+                    r"follows a \*\*yes that still needs one\*\*",
+                    "each nudge reader must state which yes the confirmation gate follows "
+                    "(INV-137/INV-236)",
+                )
+                self.assertRegex(
+                    text,
+                    r"(?i)never after a\s+decline",
+                    "the gate must never follow a decline (INV-137)",
                 )
 
     def test_ground_rules_states_it_is_unconditional(self):

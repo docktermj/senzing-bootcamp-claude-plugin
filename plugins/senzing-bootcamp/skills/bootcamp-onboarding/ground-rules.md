@@ -757,18 +757,50 @@ never count against the one-question-per-turn rule and must not be treated as ga
     reason. It never reads as advice to downgrade. (An effort above the whole table never reaches
     this clause — see the exemption above; it is a statement, not a question.)
 
-    This switch turn ends at the 👉. On **yes**, open the reply turn with a one-line statement
-    telling the bootcamper how to make the change (run the `/model`/`/effort` commands in the Claude
-    Code CLI, or use the model and reasoning-effort controls in Claude Desktop / the Claude web app /
-    their Claude IDE extension — naming only the dial that is moving), then end the turn on this
-    pinned confirmation gate (its question verbatim, INV-056/INV-069 — only the answer hint adapts to
-    the interface) — do NOT show Step 1 yet:
+    This switch turn ends at the 👉. **On yes, read what the dial is actually set to before you
+    compose the reply** (INV-236). The question just handed the bootcamper a command, so many will
+    run it in the same turn as their yes — that is the natural response to being shown a command,
+    not an edge case. Three shapes, decided by the live setting rather than by the yes alone:
 
-    > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
+    1. **The dial is not yet set** — the ordinary case, unchanged. Open the reply turn with a
+       one-line statement telling the bootcamper how to make the change (run the `/model`/`/effort`
+       commands in the Claude Code CLI, or use the model and reasoning-effort controls in Claude
+       Desktop / the Claude web app / their Claude IDE extension — naming only the dial that is
+       moving), then end the turn on this pinned confirmation gate (its question verbatim,
+       INV-056/INV-069 — only the answer hint adapts to the interface) — do NOT show Step 1 yet:
 
-    Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
-    acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
-    (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
+       > 👉 **Are you done modifying the model and effort?** (Reply yes once you've set your model and effort; reply no if you need more time.)
+
+       Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
+       acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
+       (ask-once, INV-006).
+
+    2. **The dial is already at the recommended value** — they ran it themselves.
+       **Acknowledge it instead of instructing it** — "You're on `/effort medium` already: that's
+       this module's recommendation." — and present Step 1 **in the same turn**, with **no**
+       confirmation gate. Nothing is left to confirm, so asking is the pointless question INV-006
+       and INV-012 forbid, and this is the case where INV-064's single-turn continuation is
+       genuinely correct.
+
+    3. **The dial is already at a different value** — state what is in force and leave it there:
+       "You're on `/effort xhigh`; this module recommends `medium`, and running higher is fine — it
+       simply costs more, nothing else." Then present Step 1 in the same turn, no gate. ⛔ **Never
+       re-instruct the recommended command once the bootcamper has set a different value.** They
+       answered the question with an action, and the table is a recommended floor for value, not a
+       ceiling — repeating it names a value they just deliberately rejected. This reuses the
+       above-the-table wording on purpose ("running higher is fine", "simply costs more"), so the
+       two statements of the same idea cannot drift apart.
+
+    ⛔ **Shapes 2 and 3 skip the confirmation gate; shape 1 keeps it.** The gate exists to give the
+    bootcamper a window in which to run the commands — a bootcamper who has already run them does
+    not need one, and gating anyway asks a question the transcript has answered.
+
+    ⚠️ **Interface-aware, like the question itself.** In Claude Desktop, the Claude web app or a
+    Claude IDE extension, shapes 2 and 3 name the **setting** rather than a command — "you're
+    already on {Model} at {effort} reasoning effort" — since those bootcampers can change it before
+    replying just as readily (INV-158).
+
+    On **no** to the switch, acknowledge and present Step 1 the same reply
     turn, ending on **the next single 👉 question**. That is Step 1's own 👉 when it has one — and
     when Step 1 is **non-yielding**, it is the 👉 of the next step that asks, with the intervening
     steps executed in the same turn (see the 👉 protocol). Module 1's Step 1 is exactly this case:
@@ -782,8 +814,9 @@ never count against the one-question-per-turn rule and must not be treated as ga
 
   ⛔ **You never change the session yourself — only the bootcamper can.** That is why the switch is
   offered as a question rather than performed. The "Are you done modifying the model and effort?"
-  gate follows a **yes** to the switch and nothing else: never after a decline, and never when the
-  recommendation already matched.
+  gate follows a **yes that still needs one** — shape 1 above — and nothing else: never after a
+  decline, never when the recommendation already matched, and never in shapes 2 and 3, where the dial
+  is already set and the gate would ask what the transcript has answered.
 
   Switching is always optional — running one model for everything (Opus 5) stays valid. Per-stage
   recommendation — **this table is the authoritative copy** (the one in

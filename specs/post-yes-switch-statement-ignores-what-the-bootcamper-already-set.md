@@ -129,3 +129,35 @@ unchanged.
   own wording encourages. An instruction that visibly contradicts what the Bootcamper just did
   teaches them the surrounding guidance is approximate.
 - MCP re-check: n/a (no Senzing fact).
+
+## Invariants introduced
+
+- `INV-236` — Where a pinned question hands the Bootcamper a command or a control they can operate
+  themselves, the reply turn after a yes MUST be composed from what the setting is actually set to
+  now, never from the yes alone, and MUST NOT re-instruct a value the Bootcamper has already moved
+  past (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **One file beyond the spec's `## Affected files` was changed, for coherence:**
+  `plugins/senzing-bootcamp/docs/model-selection.md`. Its "recommendation differs" row is derived
+  from `ground-rules.md` and described the old single-shape post-yes flow, so leaving it would have
+  re-taught the defect from the document the plugin treats as the readable summary. The row now
+  describes reading the dial first, and a test asserts it.
+- **A nearby ⛔ in both files had to be corrected, not merely added to.** Both said the confirmation
+  gate "follows a **yes** to the switch and nothing else" — true before this change and false after,
+  since shapes 2 and 3 are a yes that gets no gate. Both now read "a **yes that still needs one** —
+  shape 1 above", and a test pins that wording in each copy.
+- **The spec's claim that `ground-rules.md` carries INV-138 is not accurate**, so criterion 5's
+  per-dial assertion is anchored to the rule's own wording in that file ("Name only the dial that
+  differs") instead. INV-138 is cited in `docs/model-selection.md` and
+  `module-03b-truthset-visualization/phase1-visualization.md`, not here. Nothing was added to make
+  the citation true — the invariant's substance is what the criterion is about, and it is asserted.
+- ⚠️ **One guard escaped its mutation twice, and the fix is worth recording.** Criterion 3 requires
+  shape 3 to reuse the above-the-table vocabulary. Asserting "running higher is fine" / "simply costs
+  more" across the whole file passed with shape 3's sentence deleted, because `ground-rules.md`
+  already carries both phrases in the above-the-table exemption. Narrowing to shape 3's block still
+  passed — the block *quotes* both phrases in a note explaining that the wording is shared. The
+  assertion now extracts the sentence shape 3 puts in the guide's mouth and checks that. This is the
+  same assert-a-token-appears-somewhere failure recorded against the Module 5 cluster earlier the
+  same day, and in both cases the escape is what found the weak guard.
