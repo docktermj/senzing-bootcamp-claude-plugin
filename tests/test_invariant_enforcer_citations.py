@@ -114,7 +114,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-227 -> test_resume_requires_a_recorded_module.py         (resume on content)
 #:   INV-228 -> test_truthset_download_is_the_dataset.py          (verify the written count)
 #:   INV-229 -> test_results_validation_is_diagnostic.py          (diagnose, do not grade)
-EXPECTED_PAIRS = 41
+#:   INV-230 -> test_truth_set_spelling.py                        (prose vs identifier)
+EXPECTED_PAIRS = 42
 
 
 def pairs():

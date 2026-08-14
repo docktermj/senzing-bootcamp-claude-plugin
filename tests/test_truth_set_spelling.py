@@ -24,9 +24,14 @@ identifiers keep whatever they are.** That is why the module directory
 `truthset_data.jsonl` are all untouched and must stay that way — renaming a skill directory would
 break every relative cross-reference pointing at it.
 
-Establishes no invariant: INV-079 governs **module names** ("Truth Set visualization" is correct
-everywhere the module is named, so INV-079 was never violated), and reading a dataset spelling into
-it would widen an invariant's meaning in place, which `INVARIANTS.md` rule 2 forbids.
+Enforces **INV-230** — a Senzing dataset name in shipped prose uses the spelling Senzing's own
+documentation uses, confirmed against the MCP server rather than chosen; the closed-up form is
+reserved for identifiers, and an identifier is never rewritten to match prose.
+
+⚠️ INV-230 is **not** INV-079, which governs **module names**: "Truth Set visualization" was correct
+everywhere the module is named, so INV-079 was never violated here, and reading a dataset spelling
+into it would have widened an invariant's meaning in place (`INVARIANTS.md` rule 2). INV-230 was
+registered on 2026-08-14 with the maintainer's sign-off, after this guard already held the rule.
 
 Source spec: `specs/truth-set-is-spelled-two-ways-in-shipped-prose.md`.
 

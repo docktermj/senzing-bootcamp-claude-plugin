@@ -382,6 +382,22 @@ the platform's **default** shell — not only in bash. On macOS that shell is **
   `## {Module name}` heading and the four required subsections (see `module-completion.md`), and
   the placement rules above are unchanged.
 
+## Naming Senzing datasets (INV-230)
+
+Write a Senzing dataset the way **Senzing's own documentation** writes it, and confirm the spelling
+against the MCP server rather than choosing one (INV-080). The **Truth Set** is two words in prose;
+`search_docs` returns the documentation page titled "Truth Set Setup", whose text reads "the Senzing
+truth set demo data" (server 1.32.9, 2026-08-14).
+
+⛔ **The closed-up form belongs to identifiers only** — `truthset_visualization`,
+`truthset_data.jsonl`, the `module-03b-truthset-visualization` directory, and
+`get_sample_data`'s dataset key `truthset`. Never rewrite one of those to match prose: an identifier
+is an **address**, and other files resolve against it. A half-applied rename is worse than either
+spelling, because the progress file then gets written under one and read under the other.
+
+This is not INV-079, which governs module **names** — "Truth Set visualization" is the module, and
+it is spelled correctly wherever the module is named.
+
 ## Naming the Claude interface (INV-158)
 
 Whenever output, a question, or a doc tells the bootcamper to do something **in their Claude

@@ -94,3 +94,10 @@ sweeping shipped text for terminology retired by later work.
 - **A not-vacuous guard was added** (`test_the_two_word_form_is_actually_present`): the primary
   assertion is an absence, and an absence test passes trivially if the term is ever removed
   wholesale.
+
+## Invariants introduced
+
+- `INV-230` — A Senzing **dataset name** in shipped prose MUST use the spelling Senzing's own
+  documentation uses, confirmed against the MCP server rather than chosen (INV-080); the closed-up
+  form is reserved for identifiers, and an identifier MUST NOT be rewritten to match prose
+  (recorded in `specs/INVARIANTS.md`, maintainer-approved 2026-08-14).
