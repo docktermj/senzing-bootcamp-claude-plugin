@@ -511,6 +511,22 @@ are in this module's `SKILL.md` → "Multi-language data" (INV-212); do not re-d
 Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
+> ⛔ **Heads-up before you map anything with `disposition: extract` — read this now, not after the
+> gate fails.** `extract` is for pulling a value out of a prose field, and **every correct
+> multi-word extraction is rejected by step 4's verbatim gate**, by construction: the gate compares
+> whole values, `|`/`;` segments and single whitespace tokens by equality, never substrings
+> (confirmed on server 1.32.9, 2026-08-14 — see "Three further limitations" below for the mechanism
+> and the evidence). `extract` is not exotic: any prose field with an embedded address, date of birth
+> or identifier reaches it.
+>
+> So when that gate fires on an extraction you know is faithful: **do not iterate on the mapper.**
+> The gate's own wording ("a code bug: fix the mapper … Do NOT proceed until it passes") points you
+> at your own correct code. Confirm the value is faithful to the source, **record the exemption and
+> its reason** in the source's mapping notes, and **proceed** — a checker limitation must not become
+> an iterate-forever loop or a blocked module (INV-048/INV-173). The four numbered steps under
+> "Three further limitations" are the full procedure; this pointer exists because that block sits
+> below the step where the collision happens.
+
 > **Heads-up before you map a dynamic-key field.** When a value is derived from the source **field
 > name** rather than a field value — the mapping reference's own
 > `"Digital Currency Address - <CODE>"` → `ACCOUNT_DOMAIN` pattern is the common case — the verbatim
@@ -634,23 +650,40 @@ no MCP server version, so every bootcamper is on the current server and this is 
    would not even work — the allowed set was built without it, under either emission — and distorting
    data to turn a gate green is the one outcome worse than the gate being wrong.
 
-⛔ **Three further limitations, where the harvester works and something else does not.** These are
-**field observations from 2026-07-27** on SDK 4.3.3.26191, across four sources mapped end to end
-(`OPENSANCTIONS_PEP`, `OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`). They were **not** re-run against the
-current server, so treat them as "expect this, and check" rather than as current behaviour — exactly
-as the numeric-value entry above was retired once the server fixed it. All three were reported
-upstream on 2026-07-27.
+⛔ **Three further limitations, where the harvester works and something else does not.** First
+observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`OPENSANCTIONS_PEP`,
+`OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`); all three reported upstream the same day.
 
-1. **Any correct `extract` output is rejected.** The workflow documents `extract` for prose fields
+⚠️ **Freshness, per limitation — 1 and 3 are CURRENT behaviour; only 2 is still un-re-run.**
+Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
+the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
+'sz_routing_report.py'])` — and the live `mapping_workflow` step-3 schema. That is a check of the
+**mechanism**, which is what these entries assert, and it does not depend on re-running a mapping.
+Limitation **2** is the only one still carrying the old "expect this, and check" caveat: verifying it
+needs a source with **disclosed relationships**, which the re-check did not have. If you are mapping
+one, that is the entry to confirm and report on.
+
+1. **Any correct `extract` output is rejected. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.** The
+   workflow documents `extract` for prose fields
    and names OFAC SDN `REMARKS` as its canonical example — the live `mapping_workflow` schema still
-   declares `extract` as a disposition with a required `expected_features` (server **1.32.3**,
-   verified **2026-07-31**). The gate's `allowed_values()` accepts only a whole value, a `|`/`;`
-   segment, or a whitespace token. Observed: `Remarks = "a.k.a. 'BNC'."` → a correct extraction emits
+   declares `extract` as a disposition whose branch **requires** `expected_features` (re-read from the
+   tool's own step-3 payload schema, same server and date). The gate's `allowed_values()` accepts only
+   a whole value, a `|`/`;`
+   segment, or a whitespace token — re-read from the delivered script: `check_verbatim()` tests
+   `if v.strip() not in allowed`, and the script's own docstring says the set is compared by
+   "**Equality against this set (not substring)**". So the workflow offers a disposition its own
+   step-4 gate rejects **by construction**, and a *multi-word* extraction is unreachable: it is
+   neither a whole value, nor a `|`/`;` segment, nor a single whitespace token. Observed: `Remarks = "a.k.a. 'BNC'."` → a correct extraction emits
    `NAME_ORG="BNC"` → reported as a violation, because the whitespace tokens are `a.k.a.` and
    `'BNC'.`. **Any** substring pulled from prose fails the same way. Emitting `'BNC'.` to satisfy it
    would write quotes and a period into a name field; dropping the alias loses real data. Take the
    exemption path instead.
-2. **`REL_ANCHOR_DOMAIN`, `REL_POINTER_DOMAIN` and `REL_POINTER_ROLE` are rejected.** These are
+2. **`REL_ANCHOR_DOMAIN`, `REL_POINTER_DOMAIN` and `REL_POINTER_ROLE` are rejected.**
+   ⚠️ **This is the one entry still NOT re-run** — "expect this, and check". Confirming it needs a
+   source carrying disclosed relationships. (The waiver mechanism it turns on *was* re-read on
+   1.32.9, 2026-08-14: `is_exempt()` is still `attr in {"DATA_SOURCE", "RECORD_ID"} or
+   attr.endswith("_TYPE")`, so these three are still outside it — but whether the rejection still
+   fires end to end is unverified.) These are
    structural constants that by definition have no source value, so the harvester cannot see them and
    `is_exempt()`'s waiver — `DATA_SOURCE`, `RECORD_ID`, and any attribute ending `_TYPE` — does not
    cover them. `REL_ANCHOR_KEY` and `REL_POINTER_KEY` **pass**, because those do carry source values,
@@ -659,10 +692,17 @@ upstream on 2026-07-27.
    *Feature: REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and
    `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with rules and worked examples (`search_docs`, server 1.32.3,
    docs index 2026-07-31 20:21 UTC) — so the gate rejects scaffolding the specification prescribes.
-3. **Neither script runs on a CSV source.** `sz_verbatim_check.py` and `sz_routing_report.py` both
-   call `load_jsonl(source_path)` and are documented `<source.jsonl> <output.jsonl>`, while
-   `mapping_workflow` accepts CSV inputs. Observed on CSV: both crash with
-   `json.decoder.JSONDecodeError: Extra data: line 1 column 5 (char 4)`. A crash here is a **tool
+3. **Neither script runs on a CSV source. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.**
+   `sz_verbatim_check.py` and `sz_routing_report.py` both
+   define `load_jsonl(path)` as `json.loads(ln)` over the file's non-blank lines, with **no** CSV
+   branch and **no** `try` around the parse, and both are documented `<source.jsonl> <output.jsonl>`
+   — re-read from the scripts the server delivers, same date — while
+   `mapping_workflow` accepts CSV inputs and its own step-4 PATHS block names the CSV as
+   `<input_file>`. On CSV both therefore die with an **unhandled
+   `json.decoder.JSONDecodeError`, exit 1 — and its message text depends on the CSV's first line**,
+   so do not match on the wording: `Extra data: line 1 column 5 (char 4)` and
+   `Expecting value: line 1 column 1 (char 0)` are the same crash from the same cause on different
+   headers. A crash here is a **tool
    limitation, not an environment problem** — see the gate presentation at step 4, which says so
    where you will meet it.
 

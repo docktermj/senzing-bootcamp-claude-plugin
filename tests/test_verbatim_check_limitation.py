@@ -265,12 +265,36 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
                       "the CSV crash is documented only in the limitations block, not at the gate")
         self.assertRegex(gate, r"(?i)tool limitation, not an environment problem")
 
-    def test_all_three_are_dated_field_observations_not_current_mcp_claims(self):
-        """INV-080/INV-169: the rejection half was never re-run against the current server."""
-        self.assertRegex(self.text, r"(?i)field observations from 2026-07-27")
+    def test_all_three_are_dated_and_their_freshness_is_stated_per_limitation(self):
+        """INV-080/INV-169: every entry carries a date, and none claims to be current
+        behaviour without saying how that was checked.
+
+        ⚠️ **Rescoped 2026-08-14.** Until then this asserted the blanket caveat — that *none*
+        of the three had been re-run — which made the guard hold the old freshness state in
+        place after it expired: limitations 1 and 3 have since been re-confirmed against
+        server 1.32.9 by reading the scripts the server delivers, so requiring the plugin to
+        say they were never re-run would have required it to be wrong. That is the same
+        failure this repo already recorded once, in
+        `tests/test_engine_verification_and_senz2027.py`: a guard written to pin a caveat
+        will pin it after the caveat stops being true, because nothing dates the premise.
+
+        What remains required is the part that does not expire: the original observation
+        date and SDK, and an explicit per-limitation freshness statement rather than a
+        silent claim of currency.
+        """
+        self.assertRegex(self.text, r"(?i)First observed 2026-07-27",
+                         "the original observation date must survive")
         self.assertRegex(self.text, r"(?i)4\.3\.3\.26191")
-        self.assertRegex(self.text, r"(?i)not.{0,20}re-run",
-                         "the text must say the observations were not re-verified")
+        self.assertRegex(
+            self.text, r"(?i)Freshness, per limitation",
+            "freshness must be stated per limitation, not as one blanket caveat")
+        self.assertRegex(
+            self.text, r"(?i)only 2 is still un-re-run",
+            "the entry that is still unverified must be named")
+        self.assertRegex(
+            self.text, r"(?i)does not depend on re-running a mapping",
+            "a re-check must disclose what kind of check it was, or 'CONFIRMED CURRENT' "
+            "overstates it")
 
     def test_the_prescriptions_carry_current_mcp_provenance(self):
         """What *was* re-verified: that the server still prescribes both mechanisms."""
