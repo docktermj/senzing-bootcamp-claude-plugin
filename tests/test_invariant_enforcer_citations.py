@@ -116,7 +116,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-229 -> test_results_validation_is_diagnostic.py          (diagnose, do not grade)
 #:   INV-230 -> test_truth_set_spelling.py                        (prose vs identifier)
 #:   INV-231 -> test_internal_connection_string_rejected.py       (no in-memory CONNECTION)
-EXPECTED_PAIRS = 43
+#:   INV-232 -> test_capture_suppressed_tabs.py                   (suppressed tab, no shot)
+EXPECTED_PAIRS = 44
 
 
 def pairs():

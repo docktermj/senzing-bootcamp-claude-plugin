@@ -474,7 +474,10 @@ none of these are covered by it:
    Get the captured count from an external source, never from the recap:
    - **Preferred — the capture manifest.** `capture_screenshots.py` writes
      `docs/visualizations/<name>-tabs.json` recording `captured` (one entry per PNG written),
-     `not_present` and `failed`. `generate_recap_pdf.py --check` already reads it and fails on a
+     `not_present`, `not_applicable` and `failed`. A `not_applicable` tab is **not** a shortfall:
+     the app suppresses a tab whose data does not exist (Cross-Source with one data source,
+     Match Keys and Feature Scores with no multi-record entities), so it was never on screen and
+     is correctly absent from the recap. `generate_recap_pdf.py --check` already reads it and fails on a
      shortfall, naming the missing tab slugs; if `--check` reported
      `SKIPPED: tab-coverage check`, no manifest was found and this check has **not** run — say so
      rather than treating it as passed (INV-163).
