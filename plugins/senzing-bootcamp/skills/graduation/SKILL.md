@@ -753,7 +753,7 @@ pre-checks. Use placeholder values only, never real secrets:
   `SENZING_LICENSE_FILE`, never `SENZING_LICENSE_PATH`** (INV-208) — the latter is a confabulation that shipped
   here for a time and no MCP tool returns it. The correct spelling comes from
   `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, whose
-  `compatibility_notes` name it; confirm it there this session rather than from memory (INV-080),
+  `compatibility_notes` name it; confirm it there rather than from memory (INV-080; a sourcing floor),
   since wrong environment-variable names are on the server's own confabulation list and this file is
   one the bootcamper carries into production, where an unread variable fails as a capacity error far
   from its cause. Also show the `PIPELINE` alternative as a comment — `LICENSEFILE` (a `.lic` path) or

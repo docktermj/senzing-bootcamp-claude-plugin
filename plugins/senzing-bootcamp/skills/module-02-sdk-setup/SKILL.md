@@ -612,7 +612,7 @@ Three things in that block are the point, not decoration:
 - **Refuse to export an empty value rather than exporting one.** Senzing's own official code snippets
   guard initialization with `if (settings == null)` — they test for **unset**, not empty — so an
   `export SENZING_ENGINE_CONFIGURATION_JSON=""` sails straight past that check and fails later,
-  deeper, and less legibly than no export at all. (Verified this session: `search_docs` returns
+  deeper, and less legibly than no export at all. (Verified against the MCP server: `search_docs` returns
   `senzing/code-snippets-v4` `java/snippets/information/GetVersion.java` and the C# equivalents doing
   exactly this; MCP server 1.32.1, 2026-07-28.)
 
@@ -628,7 +628,8 @@ bootcamper does not go hunting through their engine config for a fault that is n
 presents as an error far from its cause.
 
 ⛔ **Confirm the specifics for the bootcamper's platform via
-`sdk_guide(topic='install', platform='<platform>', language='<language>')` this session** — the
+`sdk_guide(topic='install', platform='<platform>', language='<language>')` — from the server,
+not from this file** (a sourcing floor) — the
 library path, the jar path, and the platform gotchas come from MCP, never from memory or from this
 file (INV-080). What follows is the shape of the problem, not a substitute for that lookup.
 
@@ -1244,7 +1245,7 @@ call succeeds** (not merely a version query).
   `senzing-env.sh` was **sourced** (not executed) in this shell, and that it resolved its own path
   under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
   zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
-  (Snippet guard verified this session via `search_docs`; MCP server 1.32.1, 2026-07-28.)
+  (Snippet guard verified via `search_docs`; MCP server 1.32.1, 2026-07-28.)
 - Platform not supported? Use `search_docs` for alternative installation methods.
 - Database errors? Confirm path requirements against the file placement rules in ground-rules
   (the Kiro `FILE_STORAGE_POLICY.md` reference is a later porting phase).

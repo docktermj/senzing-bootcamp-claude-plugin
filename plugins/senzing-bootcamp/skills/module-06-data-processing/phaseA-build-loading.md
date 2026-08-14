@@ -94,8 +94,8 @@ licensing as a default the bootcamper already has, never as a hard cap:
   (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server —
   before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
   among these, not the only path.
-- Source the record capacity and validity period from a Senzing MCP tool this session and
-  present exactly what it returns. If a value is unavailable or the MCP server can't be reached,
+- Source the record capacity and validity period from a Senzing MCP tool — **from the server,
+  not from this file** (a sourcing floor) — and present exactly what it returns. If a value is unavailable or the MCP server can't be reached,
   omit the figure and say it is currently unavailable, never substitute a remembered figure.
 - Gate the in-flow path as Module 1 does: check `submit_feedback` availability via
   `get_capabilities` (wait up to 30s), and omit the in-flow path when it is unavailable, errors,
@@ -133,9 +133,10 @@ the language for now.)
 tool that *selects* the threaded or single-threaded template from the record count; passing
 `record_count` to `generate_scaffold` does nothing, because that tool takes only `language`,
 `workflow`, and `version` and returns the whole snippet list. Verify both signatures via
-`get_capabilities` this session rather than trusting this note.
+`get_capabilities` rather than trusting this note (a sourcing floor).
 
-**The cutover is 500 records, sourced from the Senzing MCP server this session** — `sdk_guide`'s own
+**The cutover is 500 records, from `sdk_guide`'s own `record_count` contract** (re-read on MCP
+server 1.32.9, 2026-08-14) — `sdk_guide`'s own
 contract for `record_count` states that at or below 500 it returns the single-threaded demo, and
 above 500 (or when the count is omitted) it returns the threaded production pattern. A call at a
 few thousand records returns the thread-pool template and labels the single-threaded alternative
@@ -290,7 +291,8 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
    not already decided AND the volume is production-scale for SQLite — that is, the tier is
    `medium` or `large`, **or** the tier is `small` with a `raw_value` above the SQLite guidance
-   threshold. Source that threshold from MCP this session; `search_docs(query="loading",
+   threshold. Source that threshold from MCP rather than from this file (a sourcing
+   floor); `search_docs(query="loading",
    category="anti_patterns")` → "Do Not Use SQLite in Production" gives it as roughly 100,000
    records ("use SQLite only for quick local testing with small datasets"), well inside the
    `small` tier's span (above 500, up to 500,000), which is why the tier alone is not a sufficient

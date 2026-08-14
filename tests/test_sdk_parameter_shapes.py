@@ -146,10 +146,20 @@ class PhaseDCarriesAWorkedExportExpression(unittest.TestCase):
         self.assertIn("SZ_EXPORT_DEFAULT_FLAGS", self.text)
         self.assertRegex(self.text, r"(?s)```python.{0,900}export_json_entity_report")
 
-    def test_it_marks_itself_as_needing_per_session_confirmation(self):
-        """A worked example must not become a substitute for the MCP lookup (INV-080)."""
+    def test_it_marks_itself_as_needing_an_mcp_lookup(self):
+        """A worked example must not become a substitute for the MCP lookup (INV-080).
+
+        The requirement is unchanged; the vocabulary is. "This session" was retired as a
+        freshness claim because it read as permission to present an earlier turn's result
+        (`specs/mcp-freshness-contract-says-this-turn-and-this-session.md`), so a
+        sourcing floor now says what it actually means: from the server, not from this file.
+        """
         squashed = squash(self.text)
-        self.assertIn("Re-confirm both names via MCP this session", squashed)
+        self.assertIn(
+            "Re-confirm both names via MCP rather than from this file "
+            "(INV-080; a sourcing floor)", squashed)
+        self.assertNotIn("via MCP this session", squashed,
+                         "the retired freshness phrasing came back")
         self.assertIn("INV-080", self.text)
 
     def test_it_uses_the_correct_close_call(self):

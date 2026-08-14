@@ -119,9 +119,12 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      `ADDRESSES`, `IDENTIFIERS`) wherever a feature repeats. A source with no repeating feature is
      in this shape with no sub-list at all — flat root attributes only.
 
-   **CORD ships both, so neither may be assumed.** Verified against the MCP server this session:
-   London/`GLOBALDATA` returns a `FEATURES` array, while Las Vegas/`PPP_LOANS` returns flat root
-   attributes. Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
+   **CORD ships both, so neither may be assumed.** Verified live —
+   `get_sample_data(dataset='london', source='GLOBALDATA')` returns a `FEATURES` array (with the
+   raw source columns alongside it at the record root), while
+   `get_sample_data(dataset='las-vegas', source='PPP_LOANS')` returns flat root attributes
+   (`BUSINESS_NAME_ORG`, `RECORD_TYPE`, `BUSINESS_ADDR_*`) and no `FEATURES` array at all
+   (MCP server 1.32.9, re-verified 2026-08-14). Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
    sends data that already loads and resolves through a mapping phase it does not need. Sample the
    actual records rather than assuming a dataset's shape, and confirm the still-supported statement
    from the specification you retrieved (INV-080), not from this file.

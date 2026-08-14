@@ -202,7 +202,8 @@ which is exactly the gap the UAT percentages below leave open.
 
 1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
    against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')` there are
-   **two reads, and they need two different methods** — confirm both via MCP this session:
+   **two reads, and they need two different methods** — confirm both via MCP rather than from
+   this file (a sourcing floor):
 
    | What | Where | How to obtain it |
    |---|---|---|
@@ -264,7 +265,7 @@ which is exactly the gap the UAT percentages below leave open.
    from senzing import SzEngineFlags
 
    # SZ_EXPORT_DEFAULT_FLAGS carries the per-entity detail; add row filters only to widen
-   # WHICH entities appear. Re-confirm both names via MCP this session (INV-080) — this is a
+   # WHICH entities appear. Re-confirm both names via MCP rather than from this file (INV-080; a sourcing floor) — this is a
    # worked example, not a substitute for the lookup.
    flags = (
        SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS

@@ -21,7 +21,11 @@ for testing. We'll set up proper security measures as we go."
 
 Present an entity-resolution design-pattern gallery over the recognized use-case categories, giving
 for each: the problem it solves, the goal, typical data sources, business value. Fill those four from
-**`search_docs` content returned this session** — never from memory. (The full pattern gallery is a
+**`search_docs` content returned on the turn the gallery is presented** — never from memory, and
+never from an earlier turn's results. This is **presentation freshness**
+(`../bootcamp-onboarding/ground-rules.md` → "MCP-first invariant"): the gallery carries an MCP
+attribution line, and the attribution is only truthful for what a tool produced this turn. "Already
+retrieved a few turns ago" does not satisfy it. (The full pattern gallery is a
 later porting phase; that is why this step retrieves rather than reads from a shipped catalogue.)
 
 ⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one

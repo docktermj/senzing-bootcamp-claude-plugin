@@ -746,7 +746,7 @@ in as many words:
 > that had multiple values. **While we still support that**, we now recommend the following JSON
 > schema that has just one list for all features."
 
-Re-confirm that statement from the MCP server this session rather than trusting this file
+Re-confirm that statement from the MCP server rather than trusting this file (a sourcing floor)
 (`search_docs(category='data_mapping')`, or `download_resource(filename='senzing_entity_specification.md')`) —
 INV-080 applies to this claim as much as to any attribute name.
 
