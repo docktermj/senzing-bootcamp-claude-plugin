@@ -63,10 +63,18 @@ hardcoded figure:
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
   License Key gate (Module 4, Step 8a) already offered to expand capacity — restate that a larger
   license lets the full load proceed, as a choice, not a wall; do not force downsizing.
-- **Absent or null** (no custom license detected), warn that the evaluation license halts the
-  load at its cap, confirming the current capacity figure and the exact over-limit error code and
-  behavior from the Senzing MCP server at request time. If no figure is returned, say it is
-  currently unavailable rather than restating a remembered one.
+- **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
+  is the same branch, and the same trap, as Phase A's — `license_record_limit` is written only by
+  Module 4's volume-gated Step 8a, so its absence says nothing about the installed license. Measure
+  it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
+  `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter
+  these three branches with the measured value — a license reporting `recordLimit: 0` then lands on
+  the first branch and the warning is correctly omitted. If Phase A already measured and persisted
+  it, this branch is not reached.
+  - **Only if the measurement fails** does the evaluation-capacity warning apply. Say it is an
+    assumption, and confirm the current capacity figure and the exact over-limit error code and
+    behavior from the Senzing MCP server at request time. If no figure is returned, say it is
+    currently unavailable rather than restating a remembered one.
 
 **Data source registry.** On success, update `load_status` to `loaded` and `record_count` to the
 actual loaded count in `config/data_sources.yaml`. On failure, set `load_status` to `failed` and

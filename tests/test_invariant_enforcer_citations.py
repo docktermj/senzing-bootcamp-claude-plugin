@@ -131,7 +131,16 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: extractor, not by adding two.
 #:   INV-240 -> test_download_resource_is_a_listing.py            (state the rule, not the token)
 #:   INV-241 -> test_capture_single_page.py                       (assert content, not a proxy)
-EXPECTED_PAIRS = 55
+#:
+#: 53 -> 56 on 2026-08-14, across an unattended /implement-spec run of six specs. Three new
+#: invariants, each naming the guard written with it and cited back by that guard. Re-derived
+#: by running the extractor at each step, not incremented -- and this guard fired on the first
+#: two of the three, both times because the pin was not moved rather than because a
+#: back-citation was missing, which is the arithmetic half of the check.
+#:   INV-242 -> test_recap_pdf_bulleted_images.py                 (state the shape a script parses)
+#:   INV-243 -> test_module06_orchestrator_guidance.py            (reconcile a per-source figure)
+#:   INV-244 -> test_module06_license_reconciliation.py           (absence is not a measurement)
+EXPECTED_PAIRS = 56
 
 
 def pairs():

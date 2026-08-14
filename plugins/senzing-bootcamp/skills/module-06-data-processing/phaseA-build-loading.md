@@ -166,8 +166,29 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   warning the bootcamper cannot act on is noise (INV-012).
 - **Positive and below the dataset size** — the note applies. The single License Key gate (Module 4,
   Step 8a) already offered to expand capacity; restate that as a choice, never force downsizing.
-- **Absent or null** — no custom license was detected, so the default-limit note is the right
-  assumption. Relay it.
+- **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
+  assume it.** (INV-244) The only writer of `license_record_limit` is Module 4's Step 8a gate, which is
+  volume-gated by design: a bootcamper with a small dataset never triggers it, so the field is
+  absent no matter what license is installed. Assuming the default here relays a 500-record note —
+  and `sdk_guide`'s sampling prescription with it — to someone whose license may have no cap at
+  all, which is the same harm named just above, reached through the branch that is taken far more
+  often. It also contradicts a higher-precedence rule: a value you measured on this machine governs
+  over generic guidance about that same value, and `ground-rules.md` names the license record limit
+  explicitly (INV-012). It is one SDK call away.
+  - **Measure it** by the procedure Module 4 Step 8a already defines — generate a scaffold calling
+    `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
+    (INV-115), and parse `recordLimit`. Follow that step rather than re-deriving it; the module
+    already builds and runs SDK programs in the bootcamper's language, so this needs no new
+    machinery. (`get_sdk_reference(topic='response_schemas', filter='getLicense')`, server 1.32.9,
+    2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
+    `get_license() -> str`.)
+  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so later steps,
+    Phase B and graduation see a detected value instead of the same absence.
+  - **Then re-enter these three branches** with the measured value. `recordLimit: 0` lands on the
+    first branch and correctly suppresses the note.
+  - **Only if the call fails** (no engine yet, SDK error) does the default-limit note apply — and
+    say plainly that it is an assumption, naming what could not be measured, rather than presenting
+    it as the detected limit.
 
 Acting on the unreconciled note is not harmless: it sends a bootcamper with an unlimited license to
 sample down to 500 records, and the shrunken dataset then under-demonstrates the cross-source
