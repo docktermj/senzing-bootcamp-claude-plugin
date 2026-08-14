@@ -27,7 +27,19 @@ when the outcome differs.
 
 Enforces **INV-229** — a guide-made prediction's mismatch is diagnosed against the engine's own explanation before it is reported as an install failure.
 
-Source spec: `specs/verification-grades-the-engine-against-the-guides-own-prediction.md`.
+⛔ **The report that GRADES the check is in a third file, and the first version of this guard could
+not see it.** Step 7 diagnosing correctly buys nothing while `phase2-report-close.md` Step 9 records
+"Pass or fail status" and branches on "If ANY checks failed" — that path printed
+`SYSTEM VERIFICATION: FAILURES DETECTED … re-run system verification`, skipped Step 10's `VERIFY`
+purge (leaving the synthetic records in the database), and told the recap to capture "all 8 checks
+passed". So the failure INV-229 forbids survived one step later for a day, under 24 green
+assertions, two of them named `test_a_coherent_explanation_does_not_fail_the_system` and
+`test_it_forbids_the_false_report_here_too`. A guard that reads only the files the implementer
+edited certifies the one place a regression will not come from.
+
+Source specs: `specs/verification-grades-the-engine-against-the-guides-own-prediction.md` (Step 7,
+SKILL.md) and `specs/verification-report-cannot-express-an-expectation-mismatch.md` (Step 9, the
+schemas, the cleanup gate, the recap line).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -38,7 +50,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 M3 = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-03-system-verification"
 PHASE1 = M3 / "phase1-verification.md"
+PHASE2 = M3 / "phase2-report-close.md"
 SKILL = M3 / "SKILL.md"
+
+#: The third outcome: counts differed and the engine's own explanation accounts for it, so the
+#: install is working and the prediction was wrong. Recording it as `failed` is the false report;
+#: recording it as `passed` hides a result worth telling the bootcamper about.
+THIRD_STATUS = "expectation_mismatch"
 
 
 def squash(text):
@@ -245,6 +263,110 @@ class TheSuccessIndicatorDistinguishesTheChecks(unittest.TestCase):
             r"(?i)is an expectation mismatch, \*\*not\*\* a failed verification",
             "the rule is stated only in phase 1; the success indicator is where a reader "
             "decides what to tell the bootcamper")
+
+
+class TheReportCanExpressTheThirdOutcome(unittest.TestCase):
+    """Step 9 grades the module. A binary report undoes Step 7's diagnosis one step later."""
+
+    def setUp(self):
+        self.raw = PHASE2.read_text(encoding="utf-8")
+        self.flat = squash(self.raw)
+
+    def test_the_file_exists(self):
+        self.assertTrue(PHASE2.is_file(), "%s is missing" % PHASE2)
+
+    def test_the_check_status_admits_a_third_value(self):
+        self.assertRegex(
+            self.raw,
+            r'"results_validation":\s*\{"status":\s*"passed\|%s\|failed"' % THIRD_STATUS,
+            "Step 9's persisted schema still offers only passed|failed, so the outcome "
+            "Step 7 defines cannot be recorded — and graduation reads this file, not the prose")
+
+    def test_phase1_checkpoint_admits_it_too(self):
+        self.assertRegex(
+            PHASE1.read_text(encoding="utf-8"),
+            r'"results_validation":\s*\{"status":\s*"passed\|%s\|failed"' % THIRD_STATUS,
+            "Step 7 defines a third outcome in prose and writes a two-valued checkpoint "
+            "eight lines below it")
+
+    def test_the_engine_explanation_is_carried_into_state(self):
+        self.assertIn(
+            "engine_explanation", self.raw,
+            "the why_* match key and feature scores are computed in Step 7 and dropped "
+            "before Step 9 can report them")
+
+    def test_the_success_branch_is_scoped_to_the_install_checks(self):
+        # ⚠️ Anchored to "display a success banner". The bare phrase also appears at item 6
+        # (proceed to Step 10), so an unanchored regex passed on the WRONG site while the
+        # banner branch read "If ALL checks passed" — caught by its own negative control.
+        self.assertRegex(
+            self.flat,
+            r"(?i)If all seven installation checks passed:\*\* display a success banner",
+            "the success banner still branches on ALL checks, so an explained mismatch "
+            "cannot reach it")
+        self.assertNotRegex(
+            self.flat, r"(?i)\*\*If ALL checks passed:\*\* display",
+            "the ALL-checks wording is still on the banner branch")
+
+    def test_the_failure_branch_is_scoped_to_the_install_checks(self):
+        self.assertNotRegex(
+            self.flat, r"(?i)\*\*If ANY checks failed:\*\*",
+            "the failure summary still fires on any check, which is the FAILURES DETECTED "
+            "banner on a healthy install")
+        self.assertRegex(
+            self.flat, r"(?i)If ANY of the seven installation checks failed",
+            "the failure branch does not say which checks it reads")
+
+    def test_the_banner_does_not_claim_all_checks_passed(self):
+        self.assertNotIn(
+            "All checks passed.", self.raw,
+            "the banner is displayed on an expectation_mismatch, so this wording is false "
+            "there — and it is bootcamper-facing")
+
+    def test_the_mismatch_is_kept_out_of_the_failure_summary(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)An `%s` MUST NOT appear here" % THIRD_STATUS,
+            "nothing forbids listing an explained mismatch as a failed check")
+
+    def test_the_mismatch_is_reported_beneath_the_banner(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)Report `results_validation` beneath the banner",
+            "the banner speaks only for the install checks, so nothing tells the "
+            "bootcamper what results validation returned")
+
+    def test_cleanup_is_not_gated_on_the_mismatch(self):
+        self.assertNotRegex(
+            self.flat, r"(?i)\*\*If all checks passed:\*\* proceed to Step 10",
+            "cleanup is still gated on every check, so an explained mismatch skips the "
+            "VERIFY purge and strands the synthetic records")
+        self.assertRegex(
+            self.flat, r"(?i)Cleanup MUST NOT be gated on an `%s`" % THIRD_STATUS,
+            "the reason cleanup must still run is unstated, so a later edit re-gates it")
+
+    def test_the_module_status_comes_from_the_install_checks(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)module-level `status` is set from the seven installation checks only",
+            "a healthy install can still be recorded as a failed module, and graduation "
+            "reads that value")
+
+    def test_the_recap_line_is_not_an_unconditional_claim(self):
+        self.assertNotRegex(
+            self.flat, r"(?i)capture that all 8 checks passed",
+            "the recap — the keepsake — is still told to assert something that is false "
+            "on the expectation_mismatch path")
+        self.assertRegex(
+            self.flat, r'(?i)Never write "all 8 checks passed" unconditionally',
+            "nothing stops the unconditional claim being restored for tidiness")
+
+    def test_the_fix_instructions_exclude_the_mismatch(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)An `%s` contributes NO entry" % THIRD_STATUS,
+            "an explained mismatch can still generate remediation text for something "
+            "that needs no remediation")
 
 
 if __name__ == "__main__":

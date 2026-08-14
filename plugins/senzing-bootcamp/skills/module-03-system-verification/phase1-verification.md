@@ -43,7 +43,7 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
 > the guaranteed Truth Set web-app "wow moment" is delivered by the selectable **Truth Set
 > visualization** module (`truthset_visualization`), a separate, standalone module run **next**
 > whenever selected (always in Core; in Customized only if chosen). Skipping System Verification
-> does NOT skip that module, and System Verification does not offer a standalone TruthSet demo of
+> does NOT skip that module, and System Verification does not offer a standalone Truth Set demo of
 > its own.
 
 **If NOT triggered:** proceed with Module 3 normally (default path).
@@ -54,8 +54,8 @@ The following rules are mandatory for the agent executing this module:
 
 1. **Synthetic verification data only:** verify with a small set of **synthetic records** you
    generate in Step 2 — designed to resolve deterministically into a known number of entities.
-   System Verification MUST NOT acquire, load, or visualize the Senzing TruthSet, nor use CORD,
-   Las Vegas, London, or Moscow. (The TruthSet belongs exclusively to the separate, standalone
+   System Verification MUST NOT acquire, load, or visualize the Senzing Truth Set, nor use CORD,
+   Las Vegas, London, or Moscow. (The Truth Set belongs exclusively to the separate, standalone
    **Truth Set visualization** module.) Offer no dataset choice to the bootcamper.
 2. **Database path:** the Senzing database is at `database/G2C.db`. All SDK initialization and
    database operations MUST reference this path.
@@ -178,7 +178,7 @@ This is a check, not a 👉 question — run it silently and report only on fail
 
 Generate a small set of **synthetic** records designed to resolve deterministically into a known
 number of entities, so verification proves entity resolution works **without touching the Senzing
-TruthSet**. The records are the agent's own composition — no MCP TruthSet fetch, no sanctioned
+Truth Set**. The records are the agent's own composition — no MCP Truth Set fetch, no sanctioned
 fallback source, no CORD substitute. Keep them obviously synthetic and PII-free (invented
 names/addresses).
 
@@ -528,11 +528,20 @@ Each validation check has a 30-second timeout.
 {
   "module_3_verification": {
     "checks": {
-      "results_validation": {"status": "passed|failed", "entities": <count>, "matches_verified": <count>}
+      "results_validation": {"status": "passed|expectation_mismatch|failed", "entities": <count>, "matches_verified": <count>, "engine_explanation": "<the why_* match key and feature scores, on a mismatch>"}
     }
   }
 }
 ```
+
+⛔ **This check has THREE outcomes, and `expectation_mismatch` is the one the prose above
+defines** (INV-229): the counts differed and the engine's own `why_*` output accounts for it, so
+**the install is working and the prediction was wrong**. Recording that as `failed` is the false
+report this step exists to prevent, and recording it as `passed` hides a mismatch worth telling the
+bootcamper about — so neither of the two other values is available for it. Carry the engine's
+explanation into `engine_explanation`: Step 9 reports it, and it is the most interesting thing the
+module produces. `failed` is reserved for the case where the explanation does **not** account for
+the difference, or `why_*` itself errored.
 
 ### Step 8: Database Operations
 
@@ -593,5 +602,5 @@ System Verification is successfully complete when ALL of the following are true:
   section's `### End-of-Module Summary` subsection).
 
 (The Truth Set visualization module — run next when selected — owns its own `web_service`/`web_page`
-checks, standalone snapshot, web-service termination, TruthSet purge, and `## Truth Set
+checks, standalone snapshot, web-service termination, Truth Set purge, and `## Truth Set
 visualization` recap section; see `../module-03b-truthset-visualization/`.)
