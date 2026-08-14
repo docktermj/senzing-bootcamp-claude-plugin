@@ -79,7 +79,7 @@ When the bootcamper hits an error during this module:
 
 System Verification uses **synthetic records** and never touches the Truth Set. The Truth Set is
 acquired, loaded, and visualized exclusively by the separate, standalone **Truth Set visualization**
-module (`../module-03b-truthset-visualization/`), which documents its own TruthSet source and
+module (`../module-03b-truthset-visualization/`), which documents its own Truth Set source and
 fallback.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
