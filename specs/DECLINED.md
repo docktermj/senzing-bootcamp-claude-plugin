@@ -41,6 +41,37 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
 
 -->
 
+## anti-rationalization-clause-lives-in-four-modules-and-no-contract
+
+- **Declined:** 2026-08-13
+- **Decided by:** maintainer ("decline it", 2026-08-13), after the implementing run reported the premise as false rather than building it.
+- **Reason:** **Its problem statement is false, and what survives is a pattern INV-183 explicitly
+  sanctions.** The spec claims the 👉-precedence / no-internal-reasoning clause is "absent from
+  `bootcamp-onboarding/ground-rules.md`" and that five modules "never see the rule at all".
+  `ground-rules.md:87-88` states it — *"NEVER skip a ⛔ gate or a numbered 👉 step - no context or
+  token-budget reasoning justifies it"* — and all five of those modules load `ground-rules.md`
+  (2–3 references each), so every one inherits it. The error was concluding absence from two
+  vocabulary probes (`internal reasoning`, `absolute precedence`) when the central statement uses a
+  fifth wording matching neither — the wrong-route reasoning **INV-194** forbids, applied to this
+  repo's own prose instead of an MCP tool. What survives is that the rule is stated in five
+  phrasings across five sites (`ground-rules.md:87`, `module-02/SKILL.md:24`,
+  `module-03-system-verification/SKILL.md:19`, `module-03b-truthset-visualization/SKILL.md:19`,
+  `module-05-data-quality-mapping/SKILL.md:19`), which is **restatement at the step that needs it —
+  INV-183 — not drift**, since each module copy names a real local hazard (token budget, session
+  length, tool-returned directives). Correct, and deliberately not being built.
+- ⚠️ **Same scope-widening as the entry below, and for the same reason.** This file's header says
+  declined is "only for specs that are *correct* and deliberately not being built", and a spec with
+  a false premise belongs to `feedback-to-specs`. The retraction was applied first — the spec
+  carries a `⛔ NOT IMPLEMENTED — this spec's premise is false` section with the evidence — but
+  retraction is **not** a terminal state `implement-spec` Step 1 subtracts, so the spec would keep
+  being offered with its false Problem section as the summary. Recorded here because it is the only
+  terminal state available. The precedent and its reasoning are
+  `inv050-layout-tree-names-three-artifacts-nothing-produces`, immediately below.
+- **Revisit if:** a `dry-run` phase 3 walk shows a guide actually skipping or combining a 👉 step in
+  one of the modules that relies on the central statement rather than its own copy — that would be
+  evidence the inherited rule is not enough in practice, which is the only thing this spec's
+  surviving half could still be right about. Nothing in the retracted half would reopen it.
+
 ## inv050-layout-tree-names-three-artifacts-nothing-produces
 
 - **Declined:** 2026-08-11

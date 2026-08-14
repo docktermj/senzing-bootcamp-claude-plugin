@@ -92,3 +92,44 @@ behavioural half must be disclosed as untested until a dry run covers it.
 - MCP re-check: **n/a (no Senzing fact).** The clause concerns the guide's own interaction discipline; no Senzing claim is involved and no MCP tool was called for this finding.
 - Upstream: not applicable.
 - Related specs: `tool-directives-do-not-override-interaction` territory (INV-205 governs the *tool-returned* directive case, which is Module 5's local hazard and is **not** what this spec changes), `triage-the-twelve-uncited-hard-rules` (the same reverse-contract shape, resolved for hard rules).
+
+## ⛔ NOT IMPLEMENTED — this spec's premise is false (2026-08-13, same day it was written)
+
+**Do not implement it as written.** `implement-spec` Step 3.2 requires the root cause to be
+confirmed in the code before anything changes, and it does not survive that check.
+
+**The claim:** *"absent from `bootcamp-onboarding/ground-rules.md`"*, and therefore that
+`module-00`, `module-01`, `module-04`, `module-06` and `module-07` *"never see the rule at all"*.
+
+**What the code says.** `ground-rules.md:87-88`, under "Mandatory gates and step order", already
+states it:
+
+> Steps marked `⛔` are mandatory gates. NEVER skip a ⛔ gate or a numbered 👉 step - **no context
+> or token-budget reasoning justifies it.** Advance exactly one step at a time.
+
+And every one of the five "silent" modules loads `ground-rules.md` (2–3 references each), so all
+of them inherit it. **Neither half of the problem statement is true.**
+
+**How the error was made.** The finding came from grepping for `internal reasoning` and
+`absolute precedence`. `ground-rules.md` phrases the same rule as *"no context or token-budget
+reasoning justifies it"* — a fifth wording that matches neither probe. Absence was concluded from
+two vocabulary misses, which is the same wrong-route reasoning **INV-194** exists to forbid, applied
+to this repo's own prose instead of an MCP tool.
+
+**What survives, much weaker.** The rule is stated in **five** places in **five** phrasings —
+`ground-rules.md:87`, `module-02/SKILL.md:24`, `module-03-system-verification/SKILL.md:19`,
+`module-03b-truthset-visualization/SKILL.md:19`, `module-05-data-quality-mapping/SKILL.md:19`. That
+is drifted *restatement*, not a coverage gap, and **INV-183 explicitly sanctions restating a rule at
+the step that needs it** — each module copy names a real local hazard (token budget, session length,
+tool-returned directives). Whether four differently-worded copies of a rule that is also stated
+centrally is a defect at all is a judgement call, and a much smaller one than this spec claims.
+
+**Status: open, premise retracted.** Correcting the spec's body is `feedback-to-specs`' job, not
+this skill's; this note is the permitted Step 3.6 append. A future run should re-scope or decline it
+rather than implement it.
+
+⚠️ **Process note.** This was the **fourth** wrong table produced from a hasty grep on 2026-08-13 —
+and the only one to reach a spec. The other three (INV-149's staleness, INV-200's resolver, the
+per-module precedence table itself) were caught by re-reading before they were written down. The
+lesson this repo keeps re-teaching: a grep against this corpus is a lead, never a result, because
+the same rule is deliberately phrased differently at each site it binds.
