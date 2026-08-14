@@ -933,6 +933,41 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+### Identifying the server process (required)
+
+⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.** A
+server that can be started but not *named* can only be stopped by guessing, and every guess
+available is worse than the handle you threw away. Recording it costs one variable at launch:
+
+| Shell | Handle |
+|---|---|
+| POSIX shells (Linux, macOS, Git Bash, WSL) | `$!` immediately after backgrounding with `&` |
+| PowerShell (Windows) | `$proc = Start-Process … -PassThru`, then `$proc.Id` |
+
+The port is already recorded (INV-172) — record the pid in the same checkpoint object, so a resumed
+session can still stop what a previous one started.
+
+⛔ **Never identify the server by matching its command line — `pkill -f <script name>` and its
+equivalents are unsafe here.** The pattern you match on appears in the *matching command's own*
+command line, so the kill signals the shell that issued it. Observed on a dry run 2026-08-13: `pkill
+-f senzing_viz_server.py` terminated the invoking shell with exit code 144 part-way through
+teardown, leaving the records still loaded and the purge unrun — and the failure presented as the
+purge crashing, not as the kill hitting the wrong target. A name-based match is also wrong in
+principle for this bootcamp: the server is written in the Bootcamper's chosen language (INV-090), so
+there is no script name to match on in general, and a second bootcamp running in another directory
+would match too.
+
+**Terminate by pid; fall back to the port, never to the name.** When the recorded pid is missing —
+a session resumed across the change, or a server someone else started — look the listener up by the
+port that *is* recorded: `lsof -ti:<port>` (Linux/macOS) or `Get-NetTCPConnection -LocalPort <port> |
+Select-Object -ExpandProperty OwningProcess` (PowerShell). The port is bound by exactly the process
+serving it, which is the property the command line lacks.
+
+**Confirm the port is free before continuing, rather than waiting a fixed interval.** Poll the port
+until nothing is listening, up to 5 seconds; then force-stop and re-check. Treat *the port being
+free* as the exit condition — a sleep asserts nothing, and any step that follows teardown (a data
+purge above all) then runs on an assumption instead of an observation.
+
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is
 about to happen in that module and nothing more, because the consequences differ.

@@ -497,9 +497,20 @@ and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper
 restart for a server they never agreed to stop. If the module ends with the server still up, say
 plainly that it is still running and how to stop it, rather than stopping it unasked.
 
+⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** Capture the
+handle at launch (`$!` in a POSIX shell, `$proc.Id` from PowerShell's `Start-Process … -PassThru`)
+and record it in the `m7_visualizations` checkpoint below, with the port it bound; on teardown,
+signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own
+command line and signals the caller, and this module's server is generated in the bootcamper's
+chosen language (INV-090), so there is no script name to match on anyway. When the pid is missing,
+find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). Full rule:
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
+"Identifying the server process".
+
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
-(offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
-"docs/visualizations/results_visualization.html"}`). The former per-visualization checkpoints
+(offered/accepted, the artifact path, and — while the server is up — the port and pid it was started
+on, e.g. `{"offered": true, "accepted": true, "artifact":
+"docs/visualizations/results_visualization.html", "port": <port>, "pid": <pid>}`). The former per-visualization checkpoints
 `m7_exploratory_queries` (entity graph) and `m7_findings_documented` (dashboard) are subsumed here.
 
 ## Next: Discover phase (step 4)

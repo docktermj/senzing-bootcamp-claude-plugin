@@ -243,7 +243,10 @@ class PurgeIsTheLastAction(unittest.TestCase):
         order = [
             "1. **Rebuild the snapshot if it is stale.**",
             "2. **Capture any missing screenshots from the live server.**",
-            "3. **Terminate the web service:**",
+            # Anchored without its trailing punctuation: this guard pins the ORDER of the
+            # teardown steps, and the heading now continues "— by process id, per …"
+            # (`specs/visualization-server-teardown-does-not-record-a-pid.md`).
+            "3. **Terminate the web service",
             "4. **Purge the Truth Set data from the database**",
         ]
         positions = []

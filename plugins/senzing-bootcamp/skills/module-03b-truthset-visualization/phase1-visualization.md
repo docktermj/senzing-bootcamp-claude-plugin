@@ -262,12 +262,20 @@ python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
   --title "Senzing Truth Set" \
   --dataset "the Senzing Truth Set" \
-  --port 8080
+  --port 8080 &
+VIZ_PID=$!
 ```
 
 For any other language, start your server's equivalent. It should report a URL like
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the
 chosen URL.
+
+⛔ **Record the process id along with the port** — `$!` in a POSIX shell as above,
+`$proc.Id` from `Start-Process … -PassThru` in PowerShell. It is the only unambiguous handle on the
+server, and Step 4 has no other way to name what it must stop: the server may be written in any of
+the five languages (INV-090), so there is no script name to match on, and matching one anyway
+signals the shell doing the matching. The full rule, including the port-based fallback, is in
+`visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".
 
 ### 2.4 Verify the endpoints
 
@@ -421,7 +429,7 @@ Never treat a yes here as consent to stop the server.
 {
   "truthset_visualization": {
     "checks": {
-      "web_service": {"status": "passed|failed", "port": <port>},
+      "web_service": {"status": "passed|failed", "port": <port>, "pid": <pid>},
       "web_page": {"status": "passed|failed", "url": "http://localhost:<port>/",
                    "snapshot": "docs/visualizations/truthset_verification.html"}
     }
