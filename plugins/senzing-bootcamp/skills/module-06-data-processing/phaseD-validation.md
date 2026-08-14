@@ -93,6 +93,11 @@ matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 **Checkpoint:** write step 24.
 
+⛔ **Steps 21–24 ask nothing, so this turn does not end here** — validation results and evidence
+tables are the output most likely to be mistaken for a turn ending, because they conclude something
+(`ground-rules.md` → "A results presentation is not a turn ending"). Continue in the same turn to
+the next step that actually asks.
+
 ## 25. Execute UAT with business users
 
 **First, check whether there are real stakeholders.** Read `docs/business_problem.md`. If it carries

@@ -51,6 +51,16 @@ steering files.)
     one is path-dependent: the bring-your-own-data path does ask, at Step 2). A faithful turn there
     generates code, runs it, and loads data before it may legally end. That is correct: the turn ends
     where the bootcamper is actually asked something.
+  - ⛔ **A results presentation is not a turn ending.** A non-yielding step that produces a summary,
+    an evidence table, or a set of answers still does not end the turn — and it is the step most
+    likely to be mistaken for one, because its output *concludes* something and so has the shape of
+    an ending. The examples above are all low-output steps (a reminder, a set of checks, a scenario
+    generation), which is exactly why this case needs saying: the rule is a property of the **step**
+    (does it ask?), never of the **output** (does it look finished?). Before ending any turn, confirm
+    the turn carries exactly one 👉 (INV-005); if the step just presented has none, continue to the
+    next asking step in the same turn. Observed three times in one walk (2026-08-14), each time
+    ending a turn with **zero** questions and each time in this shape — Phase C's orchestration
+    summary, Phase D's validation evidence, Module 7's five business answers.
   - ⛔ **Checkpoint boundaries are step boundaries, not turn boundaries.** Each step still records
     its own progress entry (see "Progress and state"), so a turn covering several non-yielding steps
     carries several checkpoints. Collapse them into **one write at the end of the turn** carrying

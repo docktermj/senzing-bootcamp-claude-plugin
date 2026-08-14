@@ -278,6 +278,11 @@ additional detail would be available with feature-score and match-key-detail fla
 
 **Checkpoint:** write step 3a.
 
+⛔ **Steps 2–3a ask nothing, so this turn does not end here** — the business answers this step
+presents are a results presentation, which reads as an ending and is not one (`ground-rules.md` →
+"A results presentation is not a turn ending"). Continue into 3b/3c in the same turn, up to the
+next 👉.
+
 ### 3b. Quality evaluation
 
 Call **both** `reporting_guide` topics — they carry different halves and this step needs both
