@@ -123,7 +123,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-236 -> test_post_yes_switch_reads_the_dial.py            (read the dial, then reply)
 #:   INV-237 -> test_java_filename_class_reconciliation.py        (package-private, not renamed)
 #:   INV-238 -> test_completeness_denominator.py                  (0/0 is undefined, not 0)
-EXPECTED_PAIRS = 50
+#:   INV-239 -> test_synthesized_scenario_has_quality_gaps.py     (generated data can fail)
+EXPECTED_PAIRS = 51
 
 
 def pairs():

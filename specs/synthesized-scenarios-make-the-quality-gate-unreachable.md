@@ -145,3 +145,27 @@ module that must present measured ones.
   customer-facing category), plus any live exercise of two gate branches.
 - MCP re-check: n/a (no Senzing fact — the scoring formula and thresholds are the plugin's own).
   Server version this session is **1.32.9** (`get_capabilities`, 2026-08-14).
+
+## Invariants introduced
+
+- `INV-239` — Bootcamp-generated source data MUST carry the flaws the module it feeds exists to teach,
+  MUST span the quality bands, MUST record its intended band per source as `quality_intent`, and MUST
+  NEVER place a gap in a record key (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Implemented after `completeness-denominator-has-two-readings-on-a-raw-source`, which this spec's
+  own note anticipated.** That note observed the two interact: gappy generated sources make the
+  denominator question *more* visible, not less. Landing the denominator clarification first means the
+  partially populated sources this spec now requires are scored under one unambiguous reading, so the
+  two changes compose rather than compound.
+- **One requirement was added beyond the spec's list:** the two kinds of complexity are stated as
+  **additive, not alternatives**. Without it a generator can satisfy the new quality requirement by
+  relaxing the structural one, which would trade the mapping half of the module for the quality half —
+  the mirror of the defect being fixed. It is asserted by its own test.
+- **Two mutations escaped on the first attempt because the mutation was partial**, not because the
+  guard was weak: removing the `quality_intent` lead sentence left its YAML fence and trailing
+  rationale in place, and removing the intent statement's lead left the following sentence carrying
+  the same reason. Re-run as whole-block deletions, both are caught — by three tests and one
+  respectively. This is the third instance of the same mutation-design error in this session, all
+  recorded rather than reported as escapes.

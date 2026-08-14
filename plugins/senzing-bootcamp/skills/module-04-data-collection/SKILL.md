@@ -167,6 +167,51 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   the deliberate inconsistencies across sources. Data Quality, Mapping, and Transformation has to
   have the work this scenario advertised; a clean, uniform generation makes the next module vacuous.
 
+  ⛔ **Generate realistic quality gaps too, not only structural complexity (INV-239).** Everything in
+  the list above is about **shape** — how a value is structured across sources. None of it is about
+  **quality**, so a faithful generation produces files in which every field is populated and every
+  value is uniformly formatted, which scores **100.0** and lands every source in the ≥80% band. That
+  makes two of the three gating branches in Data Quality, Mapping, and Transformation unreachable on
+  this path, and a Bootcamper who sees `100% ✅` three times reasonably concludes the quality step is
+  a formality — in the module whose first phase is *Quality Assessment*. So the generated data must
+  also carry:
+
+  - **missing values in non-key fields**, at a rate that puts **at least one source in the 70-79%
+    band** — a phone absent on roughly a third of its records, an address missing on a handful. That
+    band is the one that opens the remediation conversation, so it has to be reachable.
+  - **off-pattern values in at least one field per source** — a date in a second format among
+    ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
+    `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
+    instruction has something to report.
+  - **at least one source at ≥80%**, so the Bootcamper sees the **contrast** between a strong source
+    and a weak one rather than a uniformly gappy dataset. The comparison is the teaching.
+  - the structural complexity above, unchanged — the two are additive, not alternatives.
+
+  **State the intent when you generate, not just the mechanics:** the gaps are there so the quality
+  assessment has something to find. A generator that "helpfully" produces clean data defeats the
+  module it is feeding.
+
+  ⚠️ **Never put a gap in a record key.** `DATA_SOURCE` and `RECORD_ID` stay present and unique on
+  every record: a missing key is a **load failure**, not a quality gap, and `duplicate_rate` is
+  computed on that pair (INV-180), so a blank key would corrupt the measurement rather than lower it.
+  The per-campaign duplicate pair required above keeps its **distinct** keys, exactly as today — the
+  duplication is in the entity, never in the key.
+
+  **Record the intended band per source** in `config/data_sources.yaml`, as `quality_intent` beside
+  the source's other fields:
+
+  ```yaml
+  - name: MERIDIAN_CRM
+    provenance: synthesized
+    quality_intent:
+      target_band: "70-79"        # one of: ">=80", "70-79", "<70"
+      gaps: ["phone missing ~30% of records", "created_date in two formats"]
+  ```
+
+  This is what lets the next module state the contrast it is teaching, and it is what lets a later run
+  tell a **generation** fault from a **scoring** fault — without it, a source that scores 100 is
+  indistinguishable from a source that was meant to.
+
 ⚠️ **Both are bootcamp-generated, so both skip the question.** Reading `cord` as the only generated
 provenance is what produced a provision question per source on a synthetic scenario — four
 repetitions, on this walk, of a decision made in Module 1 — and then routed the answer into an

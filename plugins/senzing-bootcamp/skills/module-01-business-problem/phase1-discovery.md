@@ -144,7 +144,10 @@ bootcamper explicitly accepts option 3.)*
   it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
   least two distinctly named data sources, each with ≥1 record; the data is
   mapping-complexity-rich (needs at least one transformation when mapped to the Senzing Entity
-  Specification); category is in the recognized set; problem and success are non-empty. On
+  Specification); the scenario is **quality-varied** — it promises missing and off-pattern values,
+  spanning bands rather than being uniformly clean, which is what Data collection then generates and
+  what makes the quality gate reachable (INV-239); category is in the recognized set; problem and
+  success are non-empty. On
   success, record artifacts in Phase 2 Step 11 (write `docs/business_problem.md` with the
   generated marker, and each source into `config/data_sources.yaml`), then continue at Step 5.
 - **Declined:** continue with their own description (Path 1/2); do not generate a scenario.
