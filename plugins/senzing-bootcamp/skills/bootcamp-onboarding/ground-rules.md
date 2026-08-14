@@ -37,6 +37,26 @@ steering files.)
 - **Prefix** every input-requiring question with `👉` at the start of the line, and wrap the
   question text in `**bold**`.
 - **Exactly one** 👉 question ends each yielding turn (zero or two-or-more is a violation).
+- ⛔ **A step with no 👉 question is NON-YIELDING: it does not end a turn, and it does not get a
+  turn of its own.** Present it in the same turn as the next step that *does* ask, and let that
+  step's single 👉 end the turn for both. This is not a licence to run ahead — every step is still
+  executed in order and in full — it is what "advance exactly one step at a time" means for a step
+  that has nothing to wait for. Without it the rules collide with no legal move: a statement-only
+  step presented alone ends a turn with **zero** 👉, and folded in it looks like advancing two
+  steps, so the guide must break one rule or the other and learns to read ⛔ as advisory.
+  - **A run of them is the same case, not a worse one.** Non-yielding steps often come several in a
+    row — Module 1 Phase 1's 4a/4b/5/5a, SDK setup's 1b/4/5/6 on an existing install, and
+    **the whole of System verification**, which contains exactly one 👉 (its module-transition
+    question). A faithful turn there generates code, runs it, and loads data before it may legally
+    end. That is correct: the turn ends where the bootcamper is actually asked something.
+  - ⛔ **Checkpoint boundaries are step boundaries, not turn boundaries.** Each step still records
+    its own progress entry (see "Progress and state"), so a turn covering several non-yielding steps
+    carries several checkpoints. Collapse them into **one write at the end of the turn** carrying
+    the last completed step — that satisfies both the per-step rule and the write-noise rule
+    (INV-012); do not drop the intermediate steps from `step_history`, and do not write once per
+    step inside a single turn.
+  - **Report what happened, not each step.** A long non-yielding run still obeys INV-012: summarise
+    the outcome the bootcamper cares about rather than narrating eleven steps.
 - ⛔ **Anything meant to inform the answer goes BEFORE the 👉.** A reassurance, caveat,
   recommendation, framing statement, or consent disclosure MUST be presented ahead of the
   question, never after it. Two reasons, and the first is mechanical: nothing may follow the
@@ -94,7 +114,9 @@ steering files.)
 ## Mandatory gates and step order
 
 - Steps marked `⛔` are mandatory gates. NEVER skip a ⛔ gate or a numbered 👉 step - no context
-  or token-budget reasoning justifies it. Advance exactly one step at a time.
+  or token-budget reasoning justifies it. Advance exactly one step at a time — which for a
+  **non-yielding** step (no 👉 question) means executing it in order inside the turn that ends on
+  the next step's 👉, not giving it a turn that ends on nothing. See the 👉 protocol above.
 - Only the bootcamper may attempt to skip a step; the skip protocol still refuses ⛔ gates.
   Never offer to skip a ⛔ gate - announce that you are proceeding and execute it.
 
@@ -425,6 +447,9 @@ which interface. The bootcamp runs in more than one, and the names are not inter
   `{ "last_completed_step": <step>, "updated_at": "<ISO 8601>" }`. On module completion set
   `current_step` to `null`. Writing at step boundaries (rather than every sub-step) keeps
   cross-session resume accurate at step granularity while avoiding a diff on every sub-step.
+  **A step boundary is not a turn boundary:** where several **non-yielding** steps share one turn
+  (see the 👉 protocol above), make one write at the end of that turn carrying the last completed
+  step, rather than one write per step inside it.
 - Setup preferences (`path` core/customized, `selected_modules`, verbosity, programming language)
   are asked in the **Bootcamp preparation** module and persisted in **one** consolidated write at
   the end of that module — not one write per gate (see `../bootcamp-preparation/SKILL.md`). In that
@@ -694,7 +719,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
     Step 1 comes on the turn **after** the bootcamper confirms. If they reply no / "not yet",
     acknowledge and wait for their go-ahead, then present Step 1 — do not re-ask this gate
     (ask-once, INV-006). On **no** to the switch, acknowledge and present Step 1 the same reply
-    turn, ending on Step 1's single 👉 question.
+    turn, ending on **the next single 👉 question**. That is Step 1's own 👉 when it has one — and
+    when Step 1 is **non-yielding**, it is the 👉 of the next step that asks, with the intervening
+    steps executed in the same turn (see the 👉 protocol). Module 1's Step 1 is exactly this case:
+    a privacy reminder that asks nothing, so the turn ends on Step 2's question.
   - **The recommendation matches what they are already running** → a brief one-line statement; no
     question, so the bootcamp never asks a pointless "switch?" every module (INV-012). The statement
     names the recommended model and effort as **separate dials**, notes either can be
@@ -769,8 +797,10 @@ never count against the one-question-per-turn rule and must not be treated as ga
   **no** produces Step 1 the same (reply) turn; **yes** produces the one-line run-commands
   statement and ends on the pinned "👉 Are you done modifying the model and effort?" gate, with
   Step 1 on the turn after the bootcamper confirms. When the recommendation already matches (no
-  switch question), continue straight into Step 1 the same turn. Never reply with just "." or
-  fewer than 50 characters.
+  switch question), continue straight into Step 1 the same turn. In every one of those cases the
+  turn ends on **the next single 👉 question** — Step 1's own if it has one, otherwise the next
+  asking step's, with the non-yielding steps in between executed in that same turn. Never reply
+  with just "." or fewer than 50 characters.
 
 ## Closing questions
 

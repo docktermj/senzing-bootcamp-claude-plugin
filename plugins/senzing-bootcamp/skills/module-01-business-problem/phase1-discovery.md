@@ -3,13 +3,21 @@
 Discovery and gap-filling. Follow the ground rules. `🛑`/`⛔` are internal directives: do not
 render them; signal a stop by ending the turn on the single 👉 question and waiting.
 
-## 1. Data privacy reminder (statement, no question)
+## 1. Data privacy reminder (statement, no question — NON-YIELDING)
 
 "Before we proceed, a quick reminder about data privacy. We'll be working with potentially
 sensitive data. Please ensure you have permission to use it, and consider anonymizing any PII
 for testing. We'll set up proper security measures as we go."
 
-**Checkpoint:** write step 1.
+⛔ **This step is non-yielding: it does not get a turn of its own.** Present it in the same turn as
+Step 2 and let Step 2's 👉 end that turn — a turn ending here would end with **zero** 👉, which
+INV-005 forbids, and presenting it alone is not what "advance exactly one step at a time" asks for
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol). This is also the step the post-nudge
+sequence lands on: on **no** to the model/effort switch, the reply turn carries this reminder and
+ends on Step 2's question.
+
+**Checkpoint:** write step 1 — but as one write with Step 2's at the end of the shared turn, not two
+writes inside it.
 
 ## 2. Offer the design pattern gallery (separate question)
 

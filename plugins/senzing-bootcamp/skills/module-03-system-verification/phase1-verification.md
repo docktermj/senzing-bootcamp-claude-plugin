@@ -6,6 +6,15 @@ directives, never rendered; signal a stop by ending the turn on the single 👉 
 waiting. This sequential rule has the same precedence as a mandatory gate; no internal reasoning
 overrides it.
 
+⛔ **Every step in this phase is NON-YIELDING** — this module's only 👉 is the module-transition
+question at the end of `phase2-report-close.md`. So "one at a time" here means *in order and in
+full*, inside the turn that ends on that question; it does **not** mean one turn per step, because a
+turn ending on a step that asks nothing would end with zero 👉 (INV-005). A faithful walk therefore
+generates code, runs it, registers a data source and loads records before the turn legally ends,
+and that is correct — the turn ends where the bootcamper is actually asked something. The concept
+and the checkpoint consequence are defined once in
+`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol.
+
 ## Opt-Out Gate
 
 Before starting Module 3 steps, check whether the bootcamper has explicitly requested to skip.
@@ -71,8 +80,13 @@ The following rules are mandatory for the agent executing this module:
    (INV-087). The database cleanup ensures a clean slate for the synthetic records.
 9. **No orphaned processes:** System Verification starts no web service; the separate Truth Set
    visualization module starts and terminates its own web service within its own phases.
-10. **Progress persistence:** every step MUST write its checkpoint to
-    `config/bootcamp_progress.json` immediately upon completion, before proceeding.
+10. **Progress persistence:** every step MUST record its checkpoint in
+    `config/bootcamp_progress.json`. Because this phase's steps are non-yielding and share one
+    turn, make **one write at the end of that turn** carrying the last completed step rather than
+    eleven writes inside it — the per-step record is still complete, and eleven writes in a single
+    turn is the noise INV-012 exists to reduce (`../bootcamp-onboarding/ground-rules.md` →
+    "Progress and state"). If the turn cannot complete, write what did complete before stopping,
+    so resume lands on the right step.
 
 ### Step 1: MCP Connectivity Check
 

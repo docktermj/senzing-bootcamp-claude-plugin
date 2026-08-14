@@ -19,6 +19,12 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question. Thi
 absolute precedence as a mandatory gate, and no internal reasoning (session length, context
 or token budget) can override it.
 
+⚠️ **This module has exactly one 👉 question** — the module-transition question at the end of
+`phase2-report-close.md`. Every other step is **non-yielding**, so "one at a time" is a rule about
+order and completeness, not about turns: the steps run in order inside the turn that ends on that
+question. See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the
+non-yielding step and the single-write checkpoint that follows from it.
+
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 
