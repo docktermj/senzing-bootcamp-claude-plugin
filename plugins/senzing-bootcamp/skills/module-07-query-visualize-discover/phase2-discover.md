@@ -110,17 +110,40 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      together. Use when you know exactly which two records to compare.
    - `why_entities`: compares two resolved entities and explains why they are (or are not) the
      same. Use when investigating whether two entities should merge, or auditing a split.
-3. **SDK flags and response shape:** generate the `why_records` (or `why_entities`) call with
-   BOTH flags (confirm their exact names via `get_sdk_reference(topic='flags',
-   filter='why_records')`), and look up the response structure via
-   `get_sdk_reference(topic='response_schemas', filter='why_records')` before writing anything
-   that parses it (INV-115):
+3. **SDK flags and response shape:** generate the `why_records` (or `why_entities`) call,
+   confirming flag names via `get_sdk_reference(topic='flags', filter='why_records')` and the
+   response structure via `get_sdk_reference(topic='response_schemas', filter='why_records')`
+   before writing anything that parses it (INV-115):
    - `SZ_INCLUDE_FEATURE_SCORES`: explain: "I'm using SZ_INCLUDE_FEATURE_SCORES so we can see
      the numeric similarity scores for each feature comparison. This tells us how closely each
-     attribute matched between the two records."
-   - `SZ_INCLUDE_MATCH_KEY_DETAILS`: explain: "I'm using SZ_INCLUDE_MATCH_KEY_DETAILS so we can
-     see exactly which feature combinations triggered the resolution. This is the match key
-     Senzing used to decide these records belong together."
+     attribute matched between the two records." It is also what the method already defaults to:
+     the server documents `SZ_WHY_RECORDS_DEFAULT_FLAGS` as equivalent to this flag alone
+     (`get_sdk_reference(topic='flags', filter='why_records')`, server 1.32.9, 2026-08-14).
+   - **The why-key breakdown is `WHY_KEY_DETAILS`.** It sits at
+     `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` — an object whose `CONFIRMATIONS[]` entries each
+     name the feature that contributed (`FTYPE_CODE`, `TOKEN`, `SOURCE`) with its `SCORE` and
+     `SCORE_BUCKET`. That is the path to parse for step 5
+     (`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
+     2026-08-14).
+   - ⛔ **Do not reach for `SZ_INCLUDE_MATCH_KEY_DETAILS` here.** The why methods accept it, but
+     what it populates is a `MATCH_KEY_DETAILS` object on **each related entity**
+     (`response_paths: RELATED_ENTITIES[]`), and it `depends_on` one of the relations flags — so
+     it belongs to relationship inspection in step 4d, not to a why demonstration comparing two
+     records. A parser written for `MATCH_KEY_DETAILS` in a why response finds nothing and
+     renders blank, with no error: exactly the failure "Defensive parsing" in `ground-rules.md`
+     exists for. This is INV-179's second cause of a blank field — a correct field name the
+     flags in force do not populate — so confirm the flag that populates the field you intend
+     to read, not merely that the name is spelled right.
+     (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`,
+     server 1.32.9, 2026-08-14.)
+   - ⚠️ **Confirm each flag's type, not only its name.** Where a binding takes a *collection* of
+     flags, a composite constant may not belong to that collection's element type, and must then
+     be passed as its members instead — `get_sdk_reference` lists those under `composite_members`
+     (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` is the four relation flags; server 1.32.9, 2026-08-14).
+     Confirm the argument type with `get_sdk_reference(topic='parameters', filter='why_records',
+     language='<chosen_language>')` alongside the names (INV-002, INV-132). Observed 2026-08-14
+     on Senzing SDK 4.3.4 (Java): `whyRecords` takes `Set<SzFlag>` while the composite is a
+     `long` bitmask, which will not compile into that argument.
 4. **Plain-language explanation of the output:** after receiving the response, explain it
    covering three aspects:
    - **Features that matched:** list which features (NAME, ADDRESS, DOB, PHONE, etc.) were
@@ -134,8 +157,9 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      (identical values), close match (very similar, like name variants), or likely match
      (similar enough to contribute). "The name matched on a 'close match' principle because
      'Robert' and 'Bob' are recognized name variants."
-5. **Match-key breakdown:** present the match-key string (e.g. `+NAME+ADDRESS`) and break it
-   down:
+5. **Match-key breakdown:** present the why-key string from
+   `WHY_RESULTS[].MATCH_INFO.WHY_KEY` (e.g. `+NAME+ADDRESS`) and break it down, using the
+   `WHY_KEY_DETAILS` confirmations from step 3 to say which feature produced each component:
    - Each `+FEATURE` component is a feature type that contributed positively to the resolution.
    - Explain each in context: "The `+NAME` means the name features matched strongly enough to
      contribute. The `+ADDRESS` means the address features also matched. Together these two
