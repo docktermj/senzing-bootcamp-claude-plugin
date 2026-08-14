@@ -145,3 +145,33 @@ Two causes, and the second is the one worth fixing structurally:
   `mode: "url"`; the declared schema carries `filename`, `filenames`, `inline` and `version`, so
   `inline` is a declared parameter for this tool (contrast `generate_scaffold`, whose schema carries
   only `language`, `version` and `workflow`).
+
+## Invariants introduced
+
+- `INV-234` — Where an MCP tool answers a content request with a **listing** (metadata plus a URL
+  rather than the bytes), every shipped call site MUST either state that shape or cite the single
+  central statement of it, and a per-tool prohibition that follows from a general rule MUST state
+  the general rule and the property that triggers it rather than only the forbidden token
+  (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Every Senzing fact was re-confirmed this session rather than copied from this file.** The spec's
+  citations all held on server 1.32.9, 2026-08-14: `download_resource(filename=…)` returns
+  `mode: "url"` with `size_bytes: 73051` and no content, and the three declared schemas are
+  `download_resource` → `filename`/`filenames`/`inline`/`version`, `generate_scaffold` →
+  `language`/`version`/`workflow`, `find_examples` →
+  `query`/`repo`/`file_path`/`list_files`/`language`/`max_lines`. The sibling schemas were read
+  directly rather than relayed, because the shipped bullet asserts a negative about them.
+- **Criterion 6's "chosen-language rule" is cited as INV-002 (language-agnostic) with INV-001
+  (platforms).** The spec named the rule without an ID; those are the two that carry it.
+- **The criterion-4 sweep is per-call-site, not per-file, because the first version escaped its own
+  mutation.** Stripping both accountability clauses from `phase2-data-mapping.md` left the guard
+  green: a bare case-insensitive `listing` matched an unrelated OFAC field name ("Listing Date (EO
+  14024 Directive N)") elsewhere in the file. The rewritten sweep examines a window around each
+  `download_resource(` call and requires both halves — the shape *and* what it means for the caller —
+  or a citation of the central statement. This is the assert-a-token-appears-somewhere failure the
+  ledger already records repeatedly; the escape is what found it.
+- **Step 3 was rewritten once, jointly with
+  `step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it`**, which targets
+  the same step and asked that the second-landing spec reconcile the duplicate-copy question.

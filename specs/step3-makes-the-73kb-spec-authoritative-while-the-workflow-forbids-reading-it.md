@@ -121,3 +121,19 @@ file from step 2 onward, so a guide holding both has no basis for preferring eit
 - MCP re-check: **confirmed, server 1.32.9, 2026-08-14.** `download_resource(filename=
   'senzing_entity_specification.md')` reports `size_bytes: 73051`; `mapping_workflow` step 2 and
   step 3 both carry the do-not-read-in-full instruction quoted above.
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Implemented rather than closed, with the confidence note's question left open for the
+  maintainer.** The spec says that if a reviewer judges the literal reading uncharitable, the right
+  outcome is to close this instead of implementing it. That is a decision only the maintainer may
+  make (`implement-spec` forbids declining a spec on the implementer's initiative), and they were
+  away for this run. It was implemented because the fix is one paragraph, changes no Senzing fact,
+  and the failure mode it removes is the one the `dry-run` skill is built around; the judgement call
+  is flagged in the run report so it can still be settled rather than re-asked.
+- **Step 3 was rewritten once, for this spec and
+  `download-resource-returns-a-url-not-the-specification` together.** Both target the same step, and
+  this spec asked that whichever landed second reconcile the two-path situation — so they were
+  implemented as a single coherent edit rather than sequentially. The two-copy reconciliation
+  (criterion 4) is live-verified: `mapping_workflow` step 1's own `resources` list writes
+  `senzing_entity_specification.md` into `workspace_dir`, confirmed on server 1.32.9, 2026-08-14.

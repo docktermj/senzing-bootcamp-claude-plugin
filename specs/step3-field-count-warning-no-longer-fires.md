@@ -118,3 +118,21 @@ counter's two-directional error was real and specifically measured (12 reported 
 - MCP re-check: **confirmed, server 1.32.9, 2026-08-14.** `mapping_workflow(action='advance')` from
   step 3 with `derived` `DATA_SOURCE`, `RECORD_ID` and `RECORD_TYPE` returned `status: ok` to step 4
   with no warning, and the returned `state` carried server-computed disposition counts.
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **The `MCP re-check` line carried no `owner-checked:` clause, which `implement-spec` treats as a
+  blocker on an absence claim (INV-194).** Re-diagnosed rather than implemented on trust: the
+  owning route was re-asked directly — `mapping_workflow(action='advance')` from step 3 with three
+  `derived` entries (`DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`) on a 6-field master schema — and it
+  returned `{"status":"ok","step":4,…}` with no field-count warning, on server 1.32.9, 2026-08-14.
+  The spec had named the right route; what was missing was the clause saying so, since the step-3
+  advance response is the only route that could carry the warning. The shipped block now carries a
+  well-formed `MCP-NEGATIVE` marker with that `owner:` clause.
+- **One fact the spec's rewrite did not mention keeping had to be kept.** The proposed change said
+  to retain the diagnosis and the measured evidence; implementing it literally dropped the sentence
+  naming the `derived_as` enum and `type_discriminator.field_overrides` as live schema features, and
+  an existing guard (`tests/test_verbatim_check_limitation.py::test_the_prescriptions_carry_current_mcp_provenance`)
+  correctly failed on it. Both mechanisms were re-read on server 1.32.9, 2026-08-14 — still declared —
+  and the block now states that explicitly, which also strengthens the spec's own argument for not
+  deleting it: the shapes that produced the miscount remain, only the warning is gone.

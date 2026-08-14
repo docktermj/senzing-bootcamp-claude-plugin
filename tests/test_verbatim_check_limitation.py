@@ -396,6 +396,39 @@ class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
         self.assertRegex(self.mapping, r"(?i)1\.32\.3")
         self.assertRegex(self.mapping, r"(?i)derived_as")
 
+    def test_the_field_count_block_leads_with_the_negative_re_check(self):
+        """Re-checked 2026-08-14 on server 1.32.9: the warning did not fire.
+
+        The block must lead with that rather than still promising the warning, and must not
+        re-assert the universal quantifier its own re-check falsified — a ⛔ whose stated
+        trigger demonstrably does not occur erodes the load-bearing ⛔s around it.
+        """
+        self.assertRegex(self.mapping, r"(?i)field-count warning no longer fires")
+        self.assertRegex(self.mapping, r"(?i)1\.32\.9, 2026-08-14")
+        self.assertNotRegex(
+            self.mapping,
+            r"(?i)on \*\*every\*\* mapping that uses `derived` entries",
+            "the falsified universal quantifier is back",
+        )
+
+    def test_the_type_discriminator_half_is_marked_not_re_run(self):
+        """One re-check retires one half. The walk had no per-record type field."""
+        self.assertRegex(self.mapping, r"(?i)Only the `derived` half was re-run")
+        self.assertRegex(self.mapping, r"(?i)field_overrides` declare at least one source field")
+
+    def test_the_disposition_counts_are_marked_server_derived(self):
+        """So a later reader does not 'fix' the plugin by sending them."""
+        self.assertRegex(
+            self.mapping,
+            r"(?i)Do not send `feature_count`, `payload_count` or `ignored_count`",
+        )
+        self.assertRegex(self.mapping, r"(?i)the server derives them")
+
+    def test_the_negative_carries_an_owned_mcp_marker(self):
+        """An absence claim needs the route that owns it named (INV-194)."""
+        self.assertIn("MCP-NEGATIVE:", self.mapping)
+        self.assertRegex(self.mapping, r"owner: the step-3 advance response is the only route")
+
     def test_it_forbids_forking_the_profiler(self):
         self.assertRegex(self.profile, r"(?i)do not ship a patched profiler")
         self.assertIn("INV-173", self.profile)

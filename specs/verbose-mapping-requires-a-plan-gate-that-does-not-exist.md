@@ -152,3 +152,25 @@ next reader does not find this same hole.
   the step-2 `advance_schema` still enumerates `support_schemas.disposition` as
   `lookup | relationship | child` with `additionalProperties: false` — so the existing
   `embedded_master`-needs-the-legacy-payload note remains accurate and is untouched by this spec.
+
+## Invariants introduced
+
+- `INV-233` — Wherever shipped guidance instructs the guide to **end the turn on** a question, a
+  pinned 👉 question MUST exist in the section that owns it: the same section, or — when the
+  instruction names another step — that step's section (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Criterion 4 resolved by stating the advance is unconditional, not by pinning two more gates.**
+  The spec permitted either. Step 11's questions are *conditional* and each is already pinned or
+  specified where it triggers (a sub-0.80-confidence field via the reshaped `QUESTION FORMAT`, the
+  shared-feature collision, the twice-rejecting validator), so a general gate there would duplicate
+  them. Step 15's `verdict` is a QA judgement that follows from the analyzer's own output rather than
+  a preference the bootcamper holds, and that step already ends on pinned questions (the
+  visualization offer, the quality-gate branches). Both now say so explicitly, with the reason, so
+  the absence reads as intended rather than as the same hole step 10 had.
+- **The guard shipped broader than the criterion asked.** Criterion 5 asks that every "end the turn
+  on" instruction resolve to a pinned question *in the same skill*; the implemented sweep resolves
+  cross-references to the named step's section and runs over **every** shipped `.md` under
+  `plugins/`, which was verified clean plugin-wide before being pinned. That is what INV-233
+  registers.

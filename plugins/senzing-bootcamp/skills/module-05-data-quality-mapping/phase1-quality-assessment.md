@@ -55,11 +55,62 @@ In either case, ask for what is missing in a single 👉 question, naming the fo
 
 ## 3. Understand the Senzing Generic Entity Specification
 
-Call `download_resource(filename="senzing_entity_specification.md")` to retrieve the current
-Senzing Generic Entity Specification. Use this as the authoritative reference for all attribute
-names, types, and structures in this step and every subsequent step. Save the downloaded
-specification to the single canonical copy at `docs/reference/senzing_entity_specification.md`
-(do not create duplicate copies elsewhere).
+Call `download_resource(filename="senzing_entity_specification.md")` to **locate** the current
+Senzing Generic Entity Specification.
+
+⛔ **The response is a listing, not the document.** Verified on server **1.32.9, 2026-08-14**: the
+call returns `mode: "url"` and a `resources` array whose entry carries `filename`, `size_bytes` and
+a `url` — and **no content**. There is nothing in the response to "save", so a guide that writes the
+response itself to the canonical path leaves Steps 4, 5, 5a and 6 reading attribute names out of a
+file that has none — and because a file still exists at the expected path, the failure is silent.
+`download_resource` is the third MCP tool with this shape; `ground-rules.md` → "Working examples"
+states the rule once for all three (INV-234).
+
+**Retrieve it in two steps:**
+
+1. **Fetch the `url`** the response gave you, using the HTTP client idiomatic to this bootcamp's
+   chosen language (INV-002) — not a hard-coded `curl`, which is not present on every supported
+   platform (INV-001).
+2. **Save the body** to the single canonical copy at
+   `docs/reference/senzing_entity_specification.md` (do not create duplicate copies elsewhere), then
+   **check the saved file's size against the response's `size_bytes`** before using it. On
+   2026-08-14 that was **73,051 bytes**, and a fetched-then-saved copy matched it exactly. A
+   truncated fetch, or a saved error page, is caught here in one comparison instead of surfacing in
+   Step 4 as attribute names that are merely absent. (INV-228's count-check discipline, applied to a
+   resource fetch rather than a dataset.)
+
+⚠️ **If the URL fetch fails, `inline=true` is the sanctioned fallback for this tool — and for this
+tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline` and
+`version`, so INV-136 permits `inline` here, and the resource's own `on_failure` names it: *"Fallback:
+call download_resource with this filename and inline=true."* Use it only **after** the URL fetch
+fails — the parameter's own description says to try the default `inline=false` first — and expect it
+to cost context, since the full 73 KB then arrives inside the response. This is the **opposite** of
+the rule for `generate_scaffold` and `find_examples`, whose schemas do not declare `inline` at all,
+so passing it there is a call that cannot work. The difference is not about the word `inline`; it is
+about what each tool's schema declares (INV-136).
+
+**How to consult it: targeted lookup, never end to end.** The file is **73 KB**. Look up the
+specific feature or attribute in question — grep for the attribute code, or open the single section
+that covers it. Do **not** read it front to back. `mapping_workflow` says so itself, at both its
+step 2 and step 3 (verbatim, server 1.32.9, 2026-08-14): *"Do NOT attempt to read it end-to-end —
+that is unnecessary and will overflow limited context windows."* That overflow costs the Bootcamper
+the rest of their session, not merely some tokens.
+
+**The scope of its authority is this phase.** Within Phase 1 the specification is the reference for
+attribute names, types and structures — Steps 4, 5, 5a and 6 all compare against it. From
+`mapping_workflow` step 2 onward the workflow delivers its own **distilled inline mapping
+reference** (the feature catalog, the identifier-classification workflow, and the exact attribute
+keys), and *that* is the working reference for the mapping phase; the tool states the 73 KB file "is
+available only as an optional deep-dive" for an edge case the inline reference does not cover. Phase
+2 already cites the inline reference — relay this rather than leaving a guide holding two references
+with no basis for preferring either.
+
+⚠️ **Two copies on disk is expected, and is not a breach of the rule above.** `mapping_workflow`
+step 1's own `resources` list writes `senzing_entity_specification.md` into the workflow's
+`workspace_dir` — `data/mapping/`, per INV-136 — verified on server 1.32.9, 2026-08-14. That is the
+tool's copy for the mapping phase; `docs/reference/senzing_entity_specification.md` is this phase's
+canonical copy. The no-duplicates rule governs copies **the guide** makes; it is not violated by the
+tool populating its own workspace. Do not delete either, and do not re-fetch to reconcile them.
 
 **Checkpoint:** write step 3.
 

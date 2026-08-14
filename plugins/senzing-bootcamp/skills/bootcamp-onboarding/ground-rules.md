@@ -191,6 +191,28 @@ steering files.)
   arrived with no `content_elided` signal, so it was indistinguishable from a broken retrieval and
   was treated as one. The behaviour was documented rather than reverted, so the guidance above is
   permanent, not a temporary mitigation waiting on a fix.)
+- **Three tools answer with a listing instead of content, and exactly one of them accepts `inline`
+  (INV-136, INV-234).** `find_examples` file retrieval, `generate_scaffold` and `download_resource` all return
+  metadata plus a URL rather than the bytes asked for, so in every case the content is a **second
+  fetch** — and in every case a guide that saves the response saves a URL. What differs between them
+  is the escape hatch, and the rule that decides it is **only parameters the live schema declares may
+  be passed**:
+  - `find_examples` and `generate_scaffold` — `inline` is **not** declared by either, so passing it
+    is a call that cannot work, whatever the response prose advertises. Follow `access_steps`:
+    `raw_url`, then clone.
+  - `download_resource` — `inline` **is** declared, alongside `filename`, `filenames` and `version`,
+    and each resource's own `on_failure` names it as the remedy when the URL fetch fails. It is
+    therefore permitted here — after the fetch fails, not instead of it — and it costs context,
+    because the whole resource then arrives inside the response.
+
+  <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.32.9, 2026-08-14 -->
+
+  ⛔ **Read this as a consequence of the schema, never as a ban on the word `inline`.** Stated as
+  "never pass `inline`" the rule generalises wrongly, and a guide that internalised it that way will
+  refuse the one call where `inline` is the documented remedy — stranding a firewalled bootcamper on
+  the very step its `on_failure` text exists to serve. INV-234 is the standing form of this rule: a
+  prohibition derived from a general rule states the general rule and what triggers it, never only
+  the forbidden token.
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP
