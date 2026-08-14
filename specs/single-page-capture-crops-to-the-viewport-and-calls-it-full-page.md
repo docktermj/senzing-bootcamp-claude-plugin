@@ -138,3 +138,38 @@ height against the page's. So the gap was not a regression; it was never in scop
   normal case.
 - MCP re-check: n/a (no Senzing fact — this is the plugin's own capture helper). Server version this
   session is **1.32.9** (`get_capabilities`, 2026-08-14).
+
+## Invariants introduced
+
+- `INV-235` — A capture helper's printed label MUST describe what the capture **achieved**,
+  never what its mode intended; a shortfall MUST be reported on stderr with both heights, and
+  the "full page" wording MUST be unreachable except on an actual full-page capture, including
+  by silence (recorded in `specs/INVARIANTS.md`).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **The root cause was deeper than the spec's diagnosis, and the spec's own verification
+  recipe would have missed it.** Criterion 4 says to "verify by height, not by existence".
+  Implementing exactly that — measure `scrollHeight`, screenshot at that height — produced a
+  **2671px PNG of a 2671px page with the footer still missing**, and a height assertion passes
+  that build. Cause: under `--headless=new`, `--window-size` includes window chrome, so the
+  rendered viewport was 813px for a requested 900 and the last ~87px of the page never
+  rendered into the image. Found by decoding the PNG's bottom rows and finding zero footer
+  pixels, then probing the live layout (`footerTop: 2613, footerBottom: 2671, innerHeight:
+  813`). The offset is now measured at runtime and added to the requested window height, and
+  the guard asserts the footer's **pixels**, not the image's dimensions. Both facts are
+  recorded in INV-235, because "verify by height" is the intuitive check and it is insufficient.
+- **Two of the four backends are implemented but not runtime-verified**, and this environment
+  cannot verify them: Playwright and Selenium are not installed (`wkhtmltoimage` is absent
+  too). Verified live on the **Chrome CLI** backend, which is the one needing the two-pass
+  measurement and therefore the riskiest: a 2671px page captured whole with its footer present
+  (58 footer rows at y=2613-2670), a 14428px page clamped to 12000 with the stderr warning and
+  the `Full page (clamped at 12000px)` label, and a short page still labelled `Full page`.
+  Playwright uses its native `full_page=True` (no offset applies, since its `viewport` sets the
+  viewport directly); Selenium grows the window to the measured height. Both record their
+  outcome, and any backend that records nothing defaults to the viewport-only label rather than
+  inheriting the full-page claim — which is the safe direction for an unverified path.
+- **`wkhtmltoimage` is exempt from the clamp, and says so inline.** `--width` with no
+  `--height` renders the full content height by design, so it needs no measurement pass; the
+  clamp is not enforced there. Stated rather than implied, since a reader would otherwise
+  expect all four backends to clamp.

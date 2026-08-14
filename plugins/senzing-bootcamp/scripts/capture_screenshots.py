@@ -129,11 +129,49 @@ RESERVED_TABS = tuple(t for t in TABS if t not in DEFAULT_TABS)
 SINGLE_PAGE_ID = "page"
 SINGLE_PAGE_LABEL = "Full page"
 
+# ⛔ The label must describe what the capture DID, not what the mode intended (INV-235).
+#
+# `--single` inherited the tabbed path's fixed viewport, where the premise does not hold: a
+# tab's content is designed to fit a screen, but a single-page deliverable is a *document*
+# and is as tall as its content. So the mode cropped to 1440×900 and printed "Full page"
+# regardless — and INV-123 names that printed label as the designated input to the caption a
+# caller writes, so obeying INV-123 exactly produced "Full page" over the top third of a
+# page. Only measuring the page's height against the PNG's revealed it, which nothing asked
+# for. (Observed 2026-08-14: a three-source quality page ~2100px tall captured at 900px, two
+# of three sources absent, exit 0, real 84 KB PNG, manifest entry, label "Full page".)
+SINGLE_PAGE_LABEL_VIEWPORT = "Top of page (viewport only)"
+FULL_PAGE_FULL = "full"
+FULL_PAGE_CLAMPED = "clamped"
+FULL_PAGE_VIEWPORT = "viewport"
+
+# A pathological page must not produce a 30,000px PNG. When the clamp bites, the label and
+# stderr both say so rather than truncating silently — the skip-and-report discipline
+# INV-122 already requires of this script, applied to height.
+_MAX_FULL_PAGE_PX = 12000
+
+
+def _single_page_label(outcome: str, page_height=None, captured_height=None) -> str:
+    """Label for a single-page capture, derived from what the backend actually did."""
+    if outcome == FULL_PAGE_FULL:
+        return SINGLE_PAGE_LABEL
+    if outcome == FULL_PAGE_CLAMPED:
+        return f"{SINGLE_PAGE_LABEL} (clamped at {_MAX_FULL_PAGE_PX}px)"
+    return SINGLE_PAGE_LABEL_VIEWPORT
+
 
 def _tab_label(tab: str) -> str:
-    """Human label for a tab id, or for the single-page pseudo-id."""
+    """Human label for a tab id, or for the single-page pseudo-id.
+
+    For the single-page id the label depends on the capture's OUTCOME, which the backend
+    records in `_FULL_PAGE_OUTCOME` — read here rather than threaded through, for the same
+    reason `_CURRENT_TAB` is a global: `_BACKENDS` is called uniformly and tests substitute
+    two-argument callables. See the note on `_CURRENT_TAB` for why serial capture makes that
+    safe, and what to do if capture is ever parallelised.
+    """
     if tab == SINGLE_PAGE_ID:
-        return SINGLE_PAGE_LABEL
+        return _single_page_label(
+            _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+        )
     return TABS.get(tab, (tab, tab))[1]
 
 
@@ -407,7 +445,29 @@ def _capture_playwright(url: str, out: Path) -> bool:
             # and give the D3 force layout a bounded moment to settle.
             page.goto(url, wait_until="load")
             page.wait_for_timeout(2500)
-            page.screenshot(path=str(out))
+            if _single_page_mode():
+                height = None
+                try:
+                    height = int(page.evaluate(
+                        "Math.max(document.documentElement.scrollHeight,"
+                        " document.body ? document.body.scrollHeight : 0)"
+                    ))
+                except Exception:
+                    height = None
+                if height and height > _MAX_FULL_PAGE_PX:
+                    # Clamp by shrinking the viewport and taking a viewport shot: a
+                    # full_page shot would ignore the clamp entirely.
+                    page.set_viewport_size(
+                        {"width": _WINDOW[0], "height": _MAX_FULL_PAGE_PX}
+                    )
+                    page.wait_for_timeout(400)
+                    page.screenshot(path=str(out))
+                    _record_full_page(FULL_PAGE_CLAMPED, height, _MAX_FULL_PAGE_PX)
+                else:
+                    page.screenshot(path=str(out), full_page=True)
+                    _record_full_page(FULL_PAGE_FULL, height, height)
+            else:
+                page.screenshot(path=str(out))
             page.close()
             browser.close()
         return out.is_file() and out.stat().st_size > 0
@@ -434,6 +494,30 @@ def _capture_selenium(url: str, out: Path) -> bool:
         import time
 
         time.sleep(2.5)
+        if _single_page_mode():
+            # Selenium has no full-page screenshot, so grow the window to the content and
+            # re-shoot. Headless Chrome's window carries no browser chrome, so window
+            # height and viewport height agree closely enough for this purpose.
+            height = None
+            try:
+                height = int(driver.execute_script(
+                    "return Math.max(document.documentElement.scrollHeight,"
+                    " document.body ? document.body.scrollHeight : 0);"
+                ))
+            except Exception:
+                height = None
+            if height:
+                captured = min(height, _MAX_FULL_PAGE_PX)
+                driver.set_window_size(_WINDOW[0], captured)
+                time.sleep(0.75)
+                _record_full_page(
+                    FULL_PAGE_CLAMPED if height > _MAX_FULL_PAGE_PX else FULL_PAGE_FULL,
+                    height,
+                    captured,
+                )
+            else:
+                # Measurement failed: capture what we can and say it is the viewport.
+                _record_full_page(FULL_PAGE_VIEWPORT, None, _WINDOW[1])
         return bool(driver.save_screenshot(str(out)))
     except Exception:
         return False
@@ -534,10 +618,104 @@ def _chrome_exe():
     return None
 
 
+def _measure_chrome_cli(exe: str, url: str):
+    """``(page_height, window_chrome_px)`` for a ``file://`` url, or ``(None, 0)``.
+
+    Chrome's CLI cannot evaluate an expression for us and has no full-page screenshot
+    flag, so the height is read the only way available: stamp it into an attribute from
+    injected JS and serialize the DOM. This works for the `file://` pages the bootcamp
+    captures; a remote URL cannot be patched, so it returns None and the caller degrades
+    to a viewport capture with an honest label rather than guessing a height.
+
+    ⛔ **`--window-size` is not the viewport, and the difference silently crops.** Under
+    `--headless=new` Chrome reserves window chrome, so a requested 1440×900 window renders
+    an 813px viewport while the screenshot comes out 900px tall — the extra being blank
+    padding. Screenshotting at exactly `scrollHeight` therefore loses the last ~87px of a
+    tall page: measured live 2026-08-14 on a 2671px page whose footer occupied 2613-2671,
+    it produced a 2671px PNG with white where the footer should be. So the offset is
+    measured here (requested window height minus the `innerHeight` actually rendered) and
+    added back by the caller, rather than hard-coded — it varies with Chrome version and
+    platform, and a stale constant would crop exactly this quietly again.
+    """
+    if not url.startswith("file://"):
+        return None, 0
+    try:
+        # url2pathname, not a manual strip: it decodes %20 and gets the Windows
+        # /C:/... form right, both of which a hand-rolled slice gets wrong (INV-001).
+        from urllib.request import url2pathname
+
+        source_path = Path(url2pathname(urlparse(url).path))
+        if not source_path.is_file():
+            return None, 0
+        source = source_path.read_text(encoding="utf-8", errors="surrogateescape")
+        if "</body>" in source:
+            patched = source.replace("</body>", _MEASURE_JS + "</body>", 1)
+        else:
+            patched = source + _MEASURE_JS
+        handle, path = tempfile.mkstemp(
+            prefix=f".{source_path.stem}-measure-",
+            suffix=".html",
+            dir=str(source_path.parent),
+        )
+        os.close(handle)
+        temp = Path(path)
+    except Exception:
+        return None, 0
+    try:
+        temp.write_text(patched, encoding="utf-8", errors="surrogateescape")
+        done = subprocess.run(
+            [
+                exe,
+                "--headless=new",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--hide-scrollbars",
+                f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
+                f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
+                "--dump-dom",
+                _to_url(str(temp)),
+            ],
+            check=False,
+            capture_output=True,
+            timeout=90,
+        )
+        dom = done.stdout.decode("utf-8", "replace")
+        found = _MEASURED_HEIGHT_RE.search(dom)
+        if not found:
+            return None, 0
+        inner = _MEASURED_INNER_RE.search(dom)
+        # Positive offset only: if innerHeight somehow exceeds the request, adding a
+        # negative would crop rather than pad.
+        chrome_px = max(0, _WINDOW[1] - int(inner.group(1))) if inner else 0
+        return int(found.group(1)), chrome_px
+    except Exception:
+        return None, 0
+    finally:
+        try:
+            temp.unlink()
+        except OSError:
+            pass
+
+
 def _capture_chrome_cli(url: str, out: Path) -> bool:
     exe = _chrome_exe()
     if exe is None:
         return False
+    height = _WINDOW[1]
+    if _single_page_mode():
+        measured, chrome_px = _measure_chrome_cli(exe, url)
+        if measured:
+            covered = min(measured, _MAX_FULL_PAGE_PX)
+            # Request viewport-worth PLUS the window chrome, so `covered` px of PAGE is
+            # what actually renders. Without this the last `chrome_px` of the page is cut.
+            height = covered + chrome_px
+            _record_full_page(
+                FULL_PAGE_CLAMPED if measured > _MAX_FULL_PAGE_PX else FULL_PAGE_FULL,
+                measured,
+                covered,
+            )
+        else:
+            _record_full_page(FULL_PAGE_VIEWPORT, None, _WINDOW[1])
     try:
         subprocess.run(
             [
@@ -546,7 +724,7 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
                 "--no-sandbox",
                 "--disable-gpu",
                 "--hide-scrollbars",
-                f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
+                f"--window-size={_WINDOW[0]},{height}",
                 f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
                 f"--screenshot={out}",
                 url,
@@ -580,7 +758,14 @@ def _capture_wkhtmltoimage(url: str, out: Path) -> bool:
         )
     except Exception:
         return False
-    return out.is_file() and out.stat().st_size > 0
+    ok = out.is_file() and out.stat().st_size > 0
+    if ok and _single_page_mode():
+        # `--width` with no `--height` renders the full content height by design, so this
+        # backend is already whole-document and needs no measurement pass. The clamp
+        # therefore does not apply here; it is the last-resort backend, and stating the
+        # exemption is better than implying a clamp that is not enforced.
+        _record_full_page(FULL_PAGE_FULL, None, None)
+    return ok
 
 
 _BACKENDS = (
@@ -607,6 +792,71 @@ _BACKENDS = (
 _CURRENT_TAB = ""
 _CAPTURE_IN_FLIGHT = False
 
+# What the single-page capture actually achieved, and the two heights that decided it.
+# Reset per capture by `_capture_one`, set by whichever backend won, read by `_tab_label`.
+# Defaults to VIEWPORT so a backend that never records an outcome cannot inherit the
+# "Full page" claim by silence — the failure mode this whole change is about.
+_FULL_PAGE_OUTCOME = FULL_PAGE_VIEWPORT
+_FULL_PAGE_HEIGHT = None
+_FULL_PAGE_CAPTURED = None
+
+
+def _single_page_mode() -> bool:
+    """True when the capture in flight is the whole-document mode, not a tab."""
+    return _CURRENT_TAB == SINGLE_PAGE_ID
+
+
+def _record_full_page(outcome: str, page_height=None, captured_height=None) -> None:
+    """Record what a single-page capture achieved, and warn when it fell short."""
+    global _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+    _FULL_PAGE_OUTCOME = outcome
+    _FULL_PAGE_HEIGHT = page_height
+    _FULL_PAGE_CAPTURED = captured_height
+    if outcome == FULL_PAGE_FULL:
+        return
+    if outcome == FULL_PAGE_CLAMPED:
+        sys.stderr.write(
+            "capture_screenshots: page is %spx tall, above the %dpx clamp — captured the "
+            "top %dpx and labelled it as clamped, not as the full page.\n"
+            % (page_height, _MAX_FULL_PAGE_PX, _MAX_FULL_PAGE_PX)
+        )
+        return
+    sys.stderr.write(
+        "capture_screenshots: could not capture the full page; captured the viewport only "
+        "(%spx of a %spx page). The label says so — do NOT caption this as the full page "
+        "(INV-123).\n"
+        % (
+            captured_height if captured_height is not None else _WINDOW[1],
+            page_height if page_height is not None else "unknown",
+        )
+    )
+
+
+# Injected into a temp copy for the Chrome-CLI measurement pass. Chrome's `--dump-dom`
+# serializes the DOM *after* scripts run, so an attribute this sets is visible in that
+# output — which is the only way to read a computed layout height from a CLI that cannot
+# evaluate an expression for us. Stamped on a delay for the same reason captures settle:
+# the page's own layout has to finish first.
+_MEASURE_JS = """
+<script>
+(function(){
+  function stamp(){
+    try {
+      var d = document.documentElement, b = document.body;
+      var h = Math.max(d.scrollHeight, d.offsetHeight,
+                       b ? b.scrollHeight : 0, b ? b.offsetHeight : 0);
+      d.setAttribute("data-sz-scroll-height", String(h));
+      d.setAttribute("data-sz-inner-height", String(window.innerHeight));
+    } catch (e) {}
+  }
+  if (document.readyState === "complete") { setTimeout(stamp, 1500); }
+  else { window.addEventListener("load", function(){ setTimeout(stamp, 1500); }); }
+})();
+</script>
+"""
+_MEASURED_HEIGHT_RE = re.compile(r'data-sz-scroll-height="(\d+)"')
+_MEASURED_INNER_RE = re.compile(r'data-sz-inner-height="(\d+)"')
+
 
 def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     """Capture ``url`` to ``out``; return the backend that worked, else None.
@@ -616,6 +866,11 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     the number of tabs.
     """
     global _CURRENT_TAB, _CAPTURE_IN_FLIGHT
+    global _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+    # Reset before every capture, so one page's outcome can never label the next one.
+    _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED = (
+        FULL_PAGE_VIEWPORT, None, None,
+    )
     if _CAPTURE_IN_FLIGHT:
         # Warn, never raise: a capture step must not block the module (INV-052/INV-048).
         sys.stderr.write(

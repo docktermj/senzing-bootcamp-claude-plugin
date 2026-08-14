@@ -119,7 +119,8 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-232 -> test_capture_suppressed_tabs.py                   (suppressed tab, no shot)
 #:   INV-233 -> test_end_the_turn_questions_exist.py              (the 👉 must exist)
 #:   INV-234 -> test_download_resource_is_a_listing.py            (a listing, not content)
-EXPECTED_PAIRS = 46
+#:   INV-235 -> test_capture_single_page.py                       (label what you captured)
+EXPECTED_PAIRS = 47
 
 
 def pairs():

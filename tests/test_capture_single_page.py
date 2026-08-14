@@ -21,6 +21,11 @@ path-naming assertions do not.
 
 Source spec: `specs/single-page-capture-instruction-produces-zero-images.md`.
 
+A later spec — `single-page-capture-crops-to-the-viewport-and-calls-it-full-page` — found the
+mode producing one image that was only the *top* of the page while printing the label
+"Full page". Enforces **INV-235**: the printed label must describe what the capture achieved,
+never what the mode intended, because INV-123 makes that label the caption's input.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
@@ -321,6 +326,250 @@ class TheInstructionMatchesTheHelper(unittest.TestCase):
             self.flat, r"(?i)Do not rely on that",
             "the safety net is described without saying it is a net, which invites "
             "dropping the flag")
+
+
+#: A document taller than the 1440x900 viewport, ending in a distinctively DARK footer.
+#: The footer is the assertion target on purpose: it is the last thing on the page, so it is
+#: the first thing a crop loses. (The real defect lost an entire data source and the offline
+#: footer from a three-source quality page.)
+TALL_PAGE_FOOTER_RGB = (17, 17, 17)
+TALL_PAGE_HTML = (
+    "<!doctype html><html><head><title>Tall</title></head>"
+    "<body style='margin:0'><h1>Data Quality Assessment</h1>"
+    + "".join(
+        "<section style='height:380px;background:#eeeeff;margin:12px;padding:16px'>"
+        "<h2>SOURCE_%d</h2><p>completeness 87%%</p></section>" % i
+        for i in range(1, 7)
+    )
+    + "<footer style='height:80px;background:#111111'></footer></body></html>"
+)
+
+
+def png_size(path):
+    """(width, height) from the IHDR — no third-party image library (INV-108)."""
+    import struct
+
+    data = Path(path).read_bytes()
+    if data[:8] != b"\x89PNG\r\n\x1a\n":
+        raise ValueError("not a PNG")
+    return struct.unpack(">II", data[16:24])
+
+
+def png_rows(path):
+    """(width, height, channels, [row bytes]) for an 8-bit PNG, using zlib only.
+
+    ⛔ The pixels are decoded, not just the header, because **height alone does not prove
+    the page is in the image** — and that is not a hypothetical. The first fix measured
+    `scrollHeight` and screenshotted at exactly that height, producing a PNG whose height
+    equalled the page height while the footer was still missing: under `--headless=new`
+    Chrome's `--window-size` includes window chrome, so the viewport was ~87px shorter than
+    the image and the bottom of the page was never rendered into it. A height-only
+    assertion passes that build. Looking at the bottom pixels is what fails it.
+    """
+    import struct
+    import zlib
+
+    data = Path(path).read_bytes()
+    pos, idat, width, height, ctype = 8, b"", None, None, None
+    while pos < len(data):
+        length = struct.unpack(">I", data[pos:pos + 4])[0]
+        kind = data[pos + 4:pos + 8]
+        chunk = data[pos + 8:pos + 8 + length]
+        if kind == b"IHDR":
+            width, height, depth, ctype = struct.unpack(">IIBB", chunk[:10])
+            if depth != 8:
+                raise ValueError("expected an 8-bit PNG, got %d-bit" % depth)
+        elif kind == b"IDAT":
+            idat += chunk
+        elif kind == b"IEND":
+            break
+        pos += 12 + length
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[ctype]
+    raw = zlib.decompress(idat)
+    stride = width * channels
+    rows, prev, i = [], bytearray(stride), 0
+    for _ in range(height):
+        filt = raw[i]
+        i += 1
+        line = bytearray(raw[i:i + stride])
+        i += stride
+        if filt == 1:
+            for x in range(channels, stride):
+                line[x] = (line[x] + line[x - channels]) & 255
+        elif filt == 2:
+            for x in range(stride):
+                line[x] = (line[x] + prev[x]) & 255
+        elif filt == 3:
+            for x in range(stride):
+                left = line[x - channels] if x >= channels else 0
+                line[x] = (line[x] + ((left + prev[x]) >> 1)) & 255
+        elif filt == 4:
+            for x in range(stride):
+                a = line[x - channels] if x >= channels else 0
+                b = prev[x]
+                c = prev[x - channels] if x >= channels else 0
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                pred = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                line[x] = (line[x] + pred) & 255
+        rows.append(bytes(line))
+        prev = line
+    return width, height, channels, rows
+
+
+def count_footer_rows(path, rgb=TALL_PAGE_FOOTER_RGB, tolerance=24):
+    """How many rows contain the footer's colour at mid-width."""
+    width, height, channels, rows = png_rows(path)
+    x = (width // 2) * channels
+    found = 0
+    for row in rows:
+        pixel = tuple(row[x:x + 3])
+        if all(abs(pixel[i] - rgb[i]) <= tolerance for i in range(3)):
+            found += 1
+    return found
+
+
+@unittest.skipUnless(find_chrome(), "headless Chrome is required to capture")
+class SinglePageCapturesTheWholeDocument(unittest.TestCase):
+    """`--single` captures a DOCUMENT, whose height is its content's, not the viewport's."""
+
+    def setUp(self):
+        self.helper = load_helper()
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.out = Path(self.tmp.name) / "out"
+        self.page = Path(self.tmp.name) / "tall.html"
+        self.page.write_text(TALL_PAGE_HTML, encoding="utf-8")
+
+    def capture(self, name="tall", extra=()):
+        code = self.helper.main(
+            ["--html", str(self.page), "--out-dir", str(self.out), "--name", name,
+             "--single", *extra]
+        )
+        png = self.out / f"{name}.png"
+        if not png.is_file():
+            self.skipTest("no headless backend produced a capture in this environment")
+        return code, png
+
+    def test_the_capture_is_taller_than_the_viewport(self):
+        _, png = self.capture()
+        _, height = png_size(png)
+        self.assertGreater(
+            height, self.helper._WINDOW[1],
+            "the capture is still viewport-height, so a document taller than 900px is "
+            "cropped and labelled as if it were not",
+        )
+
+    def test_the_bottom_of_the_page_is_actually_in_the_image(self):
+        """The assertion that catches a crop a height check cannot — see `png_rows`."""
+        _, png = self.capture()
+        self.assertGreaterEqual(
+            count_footer_rows(png), 40,
+            "the page's footer is missing from the capture, so content below the "
+            "rendered viewport was lost even though the PNG is tall enough to hold it",
+        )
+
+    def test_the_label_says_full_page_when_it_is(self):
+        self.capture(name="dq")
+        with open(self.out / "dq-tabs.json", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        self.assertEqual("Full page", manifest["captured"][0]["label"])
+
+    def test_a_short_page_is_still_a_full_page(self):
+        short = Path(self.tmp.name) / "short.html"
+        short.write_text(SINGLE_PAGE_HTML, encoding="utf-8")
+        self.helper.main(["--html", str(short), "--out-dir", str(self.out),
+                          "--name", "short", "--single"])
+        png = self.out / "short.png"
+        if not png.is_file():
+            self.skipTest("no headless backend produced a capture in this environment")
+        with open(self.out / "short-tabs.json", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        self.assertEqual("Full page", manifest["captured"][0]["label"])
+
+
+class TheLabelDescribesWhatHappened(unittest.TestCase):
+    """Criterion 2 — "Full page" only when a full-page capture actually succeeded."""
+
+    def setUp(self):
+        self.helper = load_helper()
+
+    def test_the_three_outcomes_have_distinct_labels(self):
+        full = self.helper._single_page_label(self.helper.FULL_PAGE_FULL)
+        clamped = self.helper._single_page_label(self.helper.FULL_PAGE_CLAMPED, 30000, 12000)
+        viewport = self.helper._single_page_label(self.helper.FULL_PAGE_VIEWPORT, 2100, 900)
+        self.assertEqual("Full page", full)
+        self.assertEqual(3, len({full, clamped, viewport}), "two outcomes share a label")
+        for label in (clamped, viewport):
+            with self.subTest(label=label):
+                self.assertNotEqual("Full page", label)
+
+    def test_a_viewport_fallback_cannot_be_mistaken_for_the_full_page(self):
+        label = self.helper._single_page_label(self.helper.FULL_PAGE_VIEWPORT, 2100, 900)
+        self.assertNotIn("Full page", label)
+        self.assertRegex(label, r"(?i)viewport")
+
+    def test_the_default_outcome_is_not_full_page(self):
+        """A backend that records nothing must not inherit the "Full page" claim."""
+        self.assertEqual(self.helper.FULL_PAGE_VIEWPORT, self.helper._FULL_PAGE_OUTCOME)
+
+    def test_the_clamp_is_named_in_its_label_and_documented(self):
+        self.assertIn("12000", str(self.helper._MAX_FULL_PAGE_PX))
+        label = self.helper._single_page_label(self.helper.FULL_PAGE_CLAMPED, 30000, 12000)
+        self.assertIn(str(self.helper._MAX_FULL_PAGE_PX), label)
+        self.assertRegex(label, r"(?i)clamp")
+
+    def test_a_shortfall_warns_on_stderr_with_both_heights(self):
+        import io
+        import contextlib
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stderr(buffer):
+            self.helper._record_full_page(self.helper.FULL_PAGE_VIEWPORT, 2100, 900)
+        warning = buffer.getvalue()
+        self.assertIn("2100", warning)
+        self.assertIn("900", warning)
+        self.assertIn("INV-123", warning, "the caption rule this misleads is not named")
+
+    def test_a_clamp_warns_on_stderr(self):
+        import io
+        import contextlib
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stderr(buffer):
+            self.helper._record_full_page(self.helper.FULL_PAGE_CLAMPED, 30000, 12000)
+        warning = buffer.getvalue()
+        self.assertIn("30000", warning)
+        self.assertIn(str(self.helper._MAX_FULL_PAGE_PX), warning)
+
+    def test_a_full_capture_is_silent(self):
+        import io
+        import contextlib
+
+        buffer = io.StringIO()
+        with contextlib.redirect_stderr(buffer):
+            self.helper._record_full_page(self.helper.FULL_PAGE_FULL, 1200, 1200)
+        self.assertEqual("", buffer.getvalue(), "a successful capture must not warn")
+
+
+class TheTabbedPathKeepsTheFixedViewport(unittest.TestCase):
+    """Criterion 3 — this change is scoped to `--single`; a tab's premise is different."""
+
+    def setUp(self):
+        self.helper = load_helper()
+
+    def test_the_viewport_is_still_the_documented_fixed_size(self):
+        self.assertEqual((1440, 900), self.helper._WINDOW)
+
+    def test_a_tab_capture_is_not_in_single_page_mode(self):
+        self.helper._CURRENT_TAB = "graph"
+        self.assertFalse(self.helper._single_page_mode())
+        self.helper._CURRENT_TAB = self.helper.SINGLE_PAGE_ID
+        self.assertTrue(self.helper._single_page_mode())
+
+    def test_a_tab_label_is_unaffected_by_the_single_page_outcome(self):
+        self.helper._FULL_PAGE_OUTCOME = self.helper.FULL_PAGE_VIEWPORT
+        self.assertEqual("Entity Graph", self.helper._tab_label("graph"))
 
 
 if __name__ == "__main__":
