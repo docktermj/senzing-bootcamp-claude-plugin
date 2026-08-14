@@ -212,9 +212,10 @@ steering files.)
   ⛔ **Read this as a consequence of the schema, never as a ban on the word `inline`.** Stated as
   "never pass `inline`" the rule generalises wrongly, and a guide that internalised it that way will
   refuse the one call where `inline` is the documented remedy — stranding a firewalled bootcamper on
-  the very step its `on_failure` text exists to serve. INV-234 is the standing form of this rule: a
-  prohibition derived from a general rule states the general rule and what triggers it, never only
-  the forbidden token.
+  the very step its `on_failure` text exists to serve. **INV-240** is the standing form of this rule:
+  a prohibition derived from a general rule states the general rule and the property that triggers
+  it, never only the forbidden token — so a reader can tell where it applies and where it does not.
+  INV-234 is this tool family's case of it.
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP

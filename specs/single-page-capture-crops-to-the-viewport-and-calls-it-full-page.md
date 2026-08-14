@@ -173,3 +173,20 @@ height against the page's. So the gap was not a regression; it was never in scop
   `--height` renders the full content height by design, so it needs no measurement pass; the
   clamp is not enforced there. Stated rather than implied, since a reader would otherwise
   expect all four backends to clamp.
+
+## Invariants introduced — updated 2026-08-14 on maintainer review
+
+Split into two, so a code rule and a test rule do not share one ID:
+
+- `INV-235` — the **label-honesty rule**: a capture helper's printed label describes what the capture
+  achieved, never what its mode intended.
+- `INV-241` — the **verification rule** extracted from it: a guard for a rule about an artifact's
+  content asserts that content, never a proxy for it (a dimension, a byte count, an exit status, a
+  file's existence). Filed under *The development record itself*, which is where this repo files rules
+  governing its own tests — and which is also the group exempt from shipped-citation scoring, correctly,
+  since no file under `plugins/` should cite it.
+
+⚠️ **The ⛔ stays in INV-235 as the concrete case**, where it is unmissable at the point of use, with a
+dated forward pointer to INV-241 for any other artifact. Rules 1 and 2 forbid removing it, and it earns
+its place: this is the clause that stops the next person writing a height-only assertion that passes a
+broken build.

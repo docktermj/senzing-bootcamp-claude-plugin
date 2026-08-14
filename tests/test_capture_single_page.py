@@ -25,6 +25,9 @@ A later spec — `single-page-capture-crops-to-the-viewport-and-calls-it-full-pa
 mode producing one image that was only the *top* of the page while printing the label
 "Full page". Enforces **INV-235**: the printed label must describe what the capture achieved,
 never what the mode intended, because INV-123 makes that label the caption's input.
+Enforces **INV-241** too: a guard for a rule about an artifact's content asserts that
+content, not a proxy — see `png_rows` for why the height is a proxy that passes a
+broken build.
 
 Run:  python3 -m unittest discover -s tests
 """

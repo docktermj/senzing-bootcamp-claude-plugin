@@ -22,9 +22,14 @@ These tests pin three things: that every `download_resource` call site accounts 
 listing shape, that the permission is scoped to `download_resource` alone, and that the
 two sibling prohibitions are untouched.
 
-Enforces **INV-234** — the listing shape must be stated at every call site or cite the one
-central statement, and a prohibition derived from a general rule must state the general rule
-and what triggers it rather than only the forbidden token.
+Enforces **INV-234** — the listing shape must be stated at every call site, or cite the one
+central statement of it.
+
+Enforces **INV-240** too — a prohibition derived from a general rule must state the general
+rule and the property that triggers it, never only the forbidden token. That clause began
+inside INV-234 and was split out on maintainer review, because it governs any derived
+prohibition rather than this tool family; `ThePermissionIsScopedToOneTool` is the part of
+this file that holds the line.
 
 Run:  python3 -m unittest discover -s tests
 """

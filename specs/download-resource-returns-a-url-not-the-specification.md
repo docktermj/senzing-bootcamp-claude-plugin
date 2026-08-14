@@ -175,3 +175,21 @@ Two causes, and the second is the one worth fixing structurally:
 - **Step 3 was rewritten once, jointly with
   `step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it`**, which targets
   the same step and asked that the second-landing spec reconcile the duplicate-copy question.
+
+## Invariants introduced — updated 2026-08-14 on maintainer review
+
+The single invariant first recorded here was **split into two**, so each states one condition
+(`INVARIANTS.md` rule 4):
+
+- `INV-234` — the **MCP-listing case**: where a tool answers a content request with metadata plus a
+  URL, every shipped call site states that shape or cites the single central statement of it.
+- `INV-240` — the **general rule** extracted from it: a prohibition that follows from a general rule
+  states that rule and the property which triggers it, never only the forbidden token. Filed beside
+  INV-183 rather than under MCP sourcing, because it governs any derived prohibition anywhere in the
+  plugin — a reader looking for it would not have found it under a tool-contract heading.
+
+⚠️ **The original text was not cut down.** `INVARIANTS.md` rule 1 forbids deleting an invariant's
+text and rule 2 allows editing only for wording that does not change meaning, so removing the clause
+would itself have been a violation. INV-234 keeps it and carries a dated forward pointer naming
+INV-240 as the general statement and the one to cite outside this tool family — the annotate-forward
+mechanic INV-107→INV-184 and INV-050→INV-202 already established here.

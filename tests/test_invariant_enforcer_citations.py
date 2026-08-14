@@ -124,7 +124,14 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-237 -> test_java_filename_class_reconciliation.py        (package-private, not renamed)
 #:   INV-238 -> test_completeness_denominator.py                  (0/0 is undefined, not 0)
 #:   INV-239 -> test_synthesized_scenario_has_quality_gaps.py     (generated data can fail)
-EXPECTED_PAIRS = 51
+#:
+#: 51 -> 53 on 2026-08-14, on maintainer review of the same batch: two invariants were split
+#: so each states one condition, and both share the enforcer of the invariant they came from --
+#: the "one test may be named by several invariants" case again. Re-derived by running the
+#: extractor, not by adding two.
+#:   INV-240 -> test_download_resource_is_a_listing.py            (state the rule, not the token)
+#:   INV-241 -> test_capture_single_page.py                       (assert content, not a proxy)
+EXPECTED_PAIRS = 53
 
 
 def pairs():
