@@ -112,3 +112,52 @@ cannot drift again.
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Deviations from this spec, and why (2026-08-14)
+
+⚠️ **The fix went the OTHER way than "Preferred", and the reason is a false premise in the
+proposal.** Proposal 1 says: *"The reference server already holds the record payloads it built
+the entity model from, so populating them is local work."* It does not. Measured two ways on
+2026-08-14:
+
+- The model is built with `SZ_ENTITY_DEFAULT_FLAGS`, and reading the SDK's own flag constants
+  (Senzing 4.3.4, `senzing.SzEngineFlags`) shows that composite **excludes**
+  `SZ_ENTITY_INCLUDE_RECORD_FEATURES` and `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA`. It includes
+  `SZ_ENTITY_INCLUDE_RECORD_DATA` and `SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO` — which is
+  precisely `data_source`, `record_id` and the matching info the server does return.
+- `get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` (MCP server
+  1.32.9, same date) confirms that per-record `name`/`address`/`phone` live under
+  `RESOLVED_ENTITY.RECORDS[].FEATURES.*` and `…JSON_DATA.*` — the branches those two excluded
+  flags populate.
+
+So the server was returning exactly what its flags yield, and the contract was describing data
+that was never in the response. Criterion 1 permits this direction in terms
+(*"or the contract no longer claims they do"*), and criteria 2–5 are direction-independent, so
+all six are satisfied.
+
+**Two things were done to avoid losing the spec's actual point.** Its argument for enriching the
+Records panel is sound as UX — a panel showing only a source code and a record id shows nothing
+the graph did not. So the contract now documents the **enrichment route** explicitly (add the two
+flags; take the values from `FEATURES[].FEAT_DESC` or `JSON_DATA`, confirmed against the server
+rather than from the contract), marked optional, with the reason it is not the default: this
+payload is embedded in the standalone snapshot (INV-070) and Query, Visualize and Discover points
+the same app at the Bootcamper's whole dataset, so per-record features multiply the keepsake by
+the record count. Keeping the composite is also consistent with the repo's existing position that
+DEFAULT composites are correct for exploration and that rewriting a learning example into
+production shape is the INV-169 error (`tests/test_default_flags_production_caution.py`).
+
+**`match_key` was placed on the record, not the entity** — proposal 3 asked for a decision, and
+per-record is both what the server returns and, as the spec notes, the more informative
+placement: it is the key that pulled *that* record in. Its empty value is documented as the seed
+record.
+
+**The contract test does not start the server.** Criterion 5 asks for a test that "starts the
+reference server against a small fixture". Starting it requires a live engine and a loaded Truth
+Set, neither of which exists in this environment, so the payload **constructors** are exercised
+directly against a hand-built `Model` — they are pure functions of the model, and the assertion is
+the same one a client would make. ⚠️ That substitution has a hole, and it was found by a mutation
+rather than by reasoning: with a hand-built fixture, a key **added** inside `Model.build` is
+invisible. `tests/test_visualization_api_contract.py` therefore also parses `build`'s entity and
+record dict literals and asserts their exact key sets, which is the only route to them without an
+engine. Recorded here because a future reader with a live engine should replace that source-text
+check with a real request.
