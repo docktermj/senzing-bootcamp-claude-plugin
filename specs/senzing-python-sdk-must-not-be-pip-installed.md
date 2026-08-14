@@ -185,3 +185,60 @@ regardless.
 - Upstream: not applicable — the plugin is wrong here, not the server.
 - Related specs: none. Interacts with **INV-066** (`robust-fpdf2-install`), which
   remains correct for the plugin's own tooling installs.
+
+## Deviations from this spec, and why (2026-08-14)
+
+⛔ **This spec is deliberately NOT recorded in `specs/IMPLEMENTED.md`.** Five of its six
+acceptance criteria hold and shipped in `acfb056`; **criterion 4 does not**, and it cannot be
+satisfied without the maintainer:
+
+> - [ ] INV-066 and the new SDK carve-out invariant each name the other, so a future reader of
+>   INV-066 cannot conclude that `python3 -m pip install senzing` is compliant.
+
+Registering an invariant requires the maintainer's sign-off on its wording (`implement-spec`
+Step 5), and the standing instruction for this unattended batch (2026-08-14) was to **queue**
+invariants rather than write them. Marking the spec done with an unmet criterion is what the
+skill's first guardrail forbids, so the ledger is left without an entry and this note records
+the state instead.
+
+**What shipped** (criteria 1, 2, 3, 5, 6):
+
+- No file under `plugins/` instructs a pip install of the SDK, in any spelling. The remaining
+  occurrences are the prohibition itself and the example recap's record of the defect hitting a
+  real run.
+- Module 2 Phase 3 Step 3's Python branch makes the shipped packages importable instead of
+  fetching them, with `PYTHONPATH` and `LD_LIBRARY_PATH` taken from
+  `sdk_guide(topic='install', platform=…, language='python')` at run time rather than hardcoded.
+- The shadowing hazard is stated with **why it is dangerous rather than merely wrong** (it exits
+  0, so the module reports success and the damage appears a module later as
+  `libSz.so: cannot open shared object file`), plus the `senzing.__file__` detection check and
+  both remedies.
+- `tests/test_no_pip_install_senzing.py` — 13 tests, **11 mutations all caught**, including the
+  reported instruction restored verbatim.
+- Java, C#, TypeScript unchanged; the Linux-only asymmetry relayed from the server's own
+  `platform_note`.
+- INV-066's scope is stated **in Module 2's prose**, which is the mitigation available without
+  minting an invariant: it governs the plugin's own tooling installs (`fpdf2`, Playwright) and
+  never authorises pip for the Senzing SDK. That is weaker than criterion 4 asks for — the
+  cross-reference lives in one shipped file rather than in `specs/INVARIANTS.md` — and is why the
+  criterion is reported unmet rather than reinterpreted as met.
+
+**MCP re-check, server 1.32.9, 2026-08-14 — confirmed, unchanged from the spec's 2026-08-13
+reading.** `sdk_guide(topic='install', platform='linux_apt', language='python')` still returns
+the `PYTHONPATH` env var with its "ship with senzingsdk-runtime here" note and the verbatim
+"Do NOT pip install them" gotcha; `generate_scaffold(language='python',
+workflow='full_pipeline')` still returns the `pip install senzing` anti-pattern at
+`severity: error` with all ten workflows listed, and the Linux-only `platform_note`. One small
+correction to the spec's phrasing: that `anti_patterns[]` entry keys its scope as `workflows`
+(plural), and the `platform_note` is on the **`generate_scaffold`** response — the `sdk_guide`
+response carries no `platform_note` field at all.
+
+**To finish this spec**, the maintainer needs to approve wording for the carve-out. Proposed:
+
+> **INV-NNN** — The Senzing SDK's language packages MUST NOT be installed from a language
+> package manager; they ship with the Senzing SDK runtime and are made available by path.
+> INV-066's explicit-interpreter and PEP 668 rules govern the plugin's own tooling installs
+> only.
+
+and INV-066 needs a pointer back to it. `tests/test_no_pip_install_senzing.py` enforces the rule
+in the meantime, so the defect cannot silently return while the wording is pending.
