@@ -1,5 +1,10 @@
 """The verbatim check cannot express a non-string source value, and the plugin must say so.
 
+MCP-NEGATIVE-SCAN: ignore-file — this file asserts *about* the markers in
+`phase2-data-mapping.md` (that the field-count negative carries one, and that it names the
+owning route), so the token appears here as an assertion string rather than as a claim of
+its own. The claims themselves live in the shipped file, where the scanner reads them.
+
 `sz_verbatim_check.py` is delivered by the MCP server as a workflow resource. Verified
 against the current resource (server 1.32.1, 2026-07-28):
 
