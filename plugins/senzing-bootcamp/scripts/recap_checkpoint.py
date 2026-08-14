@@ -52,8 +52,26 @@ _GUIDANCE = re.compile(
 
 
 def bootcamp_active():
-    """True during an active bootcamp (a progress file exists in the project)."""
-    return os.path.isfile(PROGRESS)
+    """True during an active bootcamp — one whose progress file RECORDS A MODULE.
+
+    ⛔ Existence of the file is not enough, and testing it was a real defect. The
+    onboarding preface creates `config/bootcamp_progress.json` **empty** during its silent
+    project setup, and nothing writes a `current_module` until Bootcamp preparation's final
+    consolidated write. That window spans the whole preface plus all of Bootcamp
+    preparation — the Core/Customized gate, module selection, verbosity and the
+    programming-language gate — so on the next session the `SessionStart` hook announced
+    "a bootcamp is in progress … offer to resume from the last recorded module" on a
+    project with no recorded module, telling the guide to do something impossible where
+    the correct behaviour was to run onboarding from the top.
+
+    An empty progress file is therefore the **normal** state for that window, not a
+    corruption: this returns False and every caller stays silent, which is what a fresh
+    start looks like.
+
+    Never raises — `current_module()` absorbs a missing, empty, malformed or
+    non-object file (INV-048), and a hook must not break on one.
+    """
+    return current_module() is not None
 
 
 def _report(message):
