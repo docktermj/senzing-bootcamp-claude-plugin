@@ -113,3 +113,7 @@ to remove.
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Invariants introduced
+
+- `INV-227` — Whether a bootcamp is in progress MUST be decided by whether the progress file records a module, never by whether the file exists; a contentless file is a fresh start, silently, and the predicate MUST NOT raise. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

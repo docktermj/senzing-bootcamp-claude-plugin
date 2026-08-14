@@ -19,6 +19,8 @@ So this file asserts the contract states the rule as **behaviour** (not as a Pyt
 that both modules that start a server carry it, and that no shipped instruction teaches the
 command-line match except to forbid it.
 
+Enforces **INV-223** — a module starting a background server records its pid beside its port and terminates by pid, never by a command-line match.
+
 Source spec: `specs/visualization-server-teardown-does-not-record-a-pid.md`.
 
 Run:  python3 -m unittest discover -s tests

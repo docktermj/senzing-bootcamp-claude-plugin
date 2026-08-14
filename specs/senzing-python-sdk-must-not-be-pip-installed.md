@@ -242,3 +242,7 @@ response carries no `platform_note` field at all.
 
 and INV-066 needs a pointer back to it. `tests/test_no_pip_install_senzing.py` enforces the rule
 in the meantime, so the defect cannot silently return while the wording is pending.
+
+## Invariants introduced
+
+- `INV-222` — The Senzing SDK's language packages MUST NOT be installed from a language package manager; they ship inside the Senzing SDK runtime and are made available by path. INV-066's explicit-interpreter and PEP 668 rules govern the plugin's own tooling installs only, and the two invariants name each other. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

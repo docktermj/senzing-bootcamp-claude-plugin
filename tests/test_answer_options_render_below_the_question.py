@@ -14,6 +14,8 @@ question … are not 'after'" the 👉, which *permits* the options to follow bu
 *require* it, while the same paragraph's main rule pulls the other way for a reader who
 treats a generated list as informational.
 
+Enforces **INV-224** — a 👉 question's answer options render directly beneath it, pinned or generated at runtime.
+
 Source spec: `specs/language-gate-does-not-say-where-its-options-render.md`.
 
 Run:  python3 -m unittest discover -s tests

@@ -25,6 +25,8 @@ class of claim INV-080 exists to prevent. The remedy is not to fetch the predict
 (there is nowhere) but to make the construction unambiguous and then let the engine explain itself
 when the outcome differs.
 
+Enforces **INV-229** — a guide-made prediction's mismatch is diagnosed against the engine's own explanation before it is reported as an install failure.
+
 Source spec: `specs/verification-grades-the-engine-against-the-guides-own-prediction.md`.
 
 Run:  python3 -m unittest discover -s tests

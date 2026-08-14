@@ -28,6 +28,8 @@ different hosts** in the two responses. `source='list'` returns
 `available_sources[].download_url` on the origin host; a per-source call returns
 `citation.download_url` on `mcp.senzing.com`.
 
+Enforces **INV-228** — a step writing a server-obtained dataset verifies the written count against the reported count and stops on a mismatch.
+
 Source spec: `specs/truthset-step-saves-a-five-record-preview-not-the-truth-set.md`.
 
 Run:  python3 -m unittest discover -s tests

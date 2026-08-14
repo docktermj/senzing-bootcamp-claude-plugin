@@ -91,3 +91,7 @@ at the bootcamper's own data.
 - Upstream: not applicable
 - Related specs: `specs/visualization-contract-and-reference-server-disagree-on-record-fields.md`
   (same module)
+
+## Invariants introduced
+
+- `INV-223` — A module that starts a background server MUST record its process id beside its port, MUST terminate by that pid (or by a port lookup), and MUST confirm the port is free before any subsequent step; identifying the server by a command-line match is forbidden. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

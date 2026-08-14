@@ -139,3 +139,7 @@ still fail here.
   not read it.
 - Related specs: `specs/truthset-cannot-satisfy-the-generated-scenario-invariants.md`
   (the other place a Truth Set property is not accounted for)
+
+## Invariants introduced
+
+- `INV-228` — A step that writes a dataset obtained from the MCP server MUST verify the written record count against the count the server reported, per source, and MUST stop on a mismatch; egress hosts are named per URL from the response. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

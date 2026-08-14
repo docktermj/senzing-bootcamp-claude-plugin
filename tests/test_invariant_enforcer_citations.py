@@ -102,7 +102,19 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: names tests/test_list_specs.py, which cites INV-216 back. Re-derived by running the
 #: extractor. Arose from a process failure rather than a spec: a hand-computed listing
 #: re-offered a declined spec.
-EXPECTED_PAIRS = 33
+#:
+#: 33 -> 41 on 2026-08-14: eight invariants recorded in one batch, each naming the guard
+#: written with it and cited back by that guard. Re-derived by running the extractor, not
+#: by adding eight to the previous figure.
+#:   INV-222 -> test_no_pip_install_senzing.py                    (SDK is not a pip package)
+#:   INV-223 -> test_viz_server_process_handle.py                 (stop a server by pid)
+#:   INV-224 -> test_answer_options_render_below_the_question.py  (options beneath the 👉)
+#:   INV-225 -> test_non_yielding_steps.py                        (a step with no 👉)
+#:   INV-226 -> test_recap_header_is_owned.py                     (update needs a creator)
+#:   INV-227 -> test_resume_requires_a_recorded_module.py         (resume on content)
+#:   INV-228 -> test_truthset_download_is_the_dataset.py          (verify the written count)
+#:   INV-229 -> test_results_validation_is_diagnostic.py          (diagnose, do not grade)
+EXPECTED_PAIRS = 41
 
 
 def pairs():

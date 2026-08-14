@@ -118,3 +118,7 @@ n/a — no Senzing fact is involved.
 - Upstream: not applicable
 - Related specs: `specs/empty-progress-file-makes-resume-unsatisfiable.md` (both are
   state files whose creation is assumed rather than owned)
+
+## Invariants introduced
+
+- `INV-226` — A step that updates a shared artifact MUST be reachable only through a citation that also covers the substep which creates it, or MUST name the step that owns creation; a citation naming specific substeps MUST NOT omit the creating one. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

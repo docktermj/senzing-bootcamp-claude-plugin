@@ -16,6 +16,8 @@ provides.
 The fix names the concept once in the ground rules and decouples checkpoint boundaries from
 turn boundaries. This file pins that, and pins the module that made it urgent.
 
+Enforces **INV-225** — a step with no 👉 is non-yielding: it shares the next asking step's turn and never ends one.
+
 Source spec: `specs/statement-only-step-cannot-satisfy-one-question-per-turn.md`.
 
 Run:  python3 -m unittest discover -s tests

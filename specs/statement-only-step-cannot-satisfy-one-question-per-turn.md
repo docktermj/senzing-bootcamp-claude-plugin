@@ -161,3 +161,7 @@ Name the concept once, in `ground-rules.md`, rather than patching Module 1:
   privacy reminder and exactly one 👉"). No live bootcamp runs in this environment, so what is
   asserted is that every instruction the walk follows now composes to that outcome. Recorded as
   implemented-but-not-runtime-verified rather than ticked.
+
+## Invariants introduced
+
+- `INV-225` — A step with no 👉 question is non-yielding: it MUST share the turn of the next step that asks, MUST NOT end a turn, and its checkpoint MUST collapse into one write at the end of that shared turn. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

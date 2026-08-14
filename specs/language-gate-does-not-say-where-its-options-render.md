@@ -101,3 +101,7 @@ re-open this.
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Invariants introduced
+
+- `INV-224` — A 👉 question's answer options MUST render directly beneath the question, pinned or generated at runtime; a per-option annotation belongs on its option, not above the question. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

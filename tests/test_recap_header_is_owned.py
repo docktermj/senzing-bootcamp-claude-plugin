@@ -20,6 +20,8 @@ The remedy removes the class rather than patching two sites — a citation namin
 substeps is the hazard — so this file scans **every** skill file for a narrowed Step 2 citation,
 not just the one that regressed.
 
+Enforces **INV-226** — a step that updates a shared artifact is reached only through a citation covering the substep that creates it.
+
 Source spec: `specs/nothing-owns-creating-the-recap-header.md`.
 
 Run:  python3 -m unittest discover -s tests

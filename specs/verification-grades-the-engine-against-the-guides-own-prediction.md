@@ -129,3 +129,7 @@ engine fault, so every failure of this check reads as the latter.
 - Upstream: not applicable — the engine behaved correctly in both runs.
 - Related specs: `specs/statement-only-step-cannot-satisfy-one-question-per-turn.md`
   (same module, the whole-module non-yielding run)
+
+## Invariants introduced
+
+- `INV-229` — A check comparing the engine against an outcome the guide itself predicted MUST NOT report a mismatch as an installation failure until the engine's own explanation has been obtained and found not to account for it, and MUST be reported separately from the install checks. (recorded in `specs/INVARIANTS.md`, 2026-08-14; approved by the maintainer.)

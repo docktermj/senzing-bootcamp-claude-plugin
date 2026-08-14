@@ -25,6 +25,8 @@ it already skips.
 ⛔ The hooks are run as **subprocesses** with real stdin and a real working directory, because
 they act at import time.
 
+Enforces **INV-227** — a resume decision is made on recorded progress content, never on the progress file's existence.
+
 Source spec: `specs/empty-progress-file-makes-resume-unsatisfiable.md`.
 
 Run:  python3 -m unittest discover -s tests
