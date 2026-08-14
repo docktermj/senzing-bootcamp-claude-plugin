@@ -51,6 +51,20 @@ def squash(text):
     return re.sub(r"\s+", " ", text)
 
 
+def enclosing_block(text, offset):
+    """The paragraph or list item containing ``offset``.
+
+    Bounded by a blank line either side rather than by a fixed window: the prose that
+    qualifies a flag mention sits at the head of its own block, and a fixed window is
+    the wrong length by construction — too short and it misses a qualifier three
+    sentences up (which produced a false positive here), too long and it borrows a
+    qualifier from an unrelated neighbouring block.
+    """
+    start = text.rfind("\n\n", 0, offset)
+    end = text.find("\n\n", offset)
+    return text[(0 if start < 0 else start): (len(text) if end < 0 else end)]
+
+
 def step_4b3(text):
     """The body of step 4b.3, where the flag guidance lives."""
     start = text.index("3. **SDK flags and response shape:**")
@@ -129,6 +143,51 @@ class MatchKeyDetailsIsNotPrescribedForAWhyCall(unittest.TestCase):
     def test_the_ban_names_where_the_flag_does_belong(self):
         """Routing the reader onward is what stops the ban reading as 'never use this flag'."""
         self.assertIn("step 4d", squash(prohibition_bullet(read())))
+
+
+class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
+    """The criterion named one file; the defect was in two.
+
+    `phase1-query-visualize.md` step 3a carried the same instruction — "ensure the query
+    was called with SZ_INCLUDE_FEATURE_SCORES and/or SZ_INCLUDE_MATCH_KEY_DETAILS" for
+    the why_* methods — and was invisible to a guard scoped to `phase2-discover.md`.
+    So this sweeps the module: a fix applied to one file is not a fix.
+    """
+
+    def test_the_flag_is_never_mentioned_without_its_dependency_or_its_ban(self):
+        """Every mention carries what makes it checkable, in one of two shapes.
+
+        The flag is legitimate for the methods that return related entities — a network
+        visualization renders exactly the `RELATED_ENTITIES[]` it populates — so a blanket
+        ban would be wrong and would have to be worked around. What is never optional is
+        the reason it can silently do nothing: on a why call it has no surface (the ban),
+        and anywhere else it needs a relations flag (`depends_on`). A mention carrying
+        neither is the shape that produced this defect twice in one module.
+        """
+        for path in sorted(PHASE2.parent.glob("*.md")):
+            text = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"SZ_INCLUDE_MATCH_KEY_DETAILS", text):
+                with self.subTest(file=path.name, offset=match.start()):
+                    block = squash(enclosing_block(text, match.start()))
+                    self.assertTrue(
+                        "Do not reach for" in block
+                        or "not from a `MATCH_KEY_DETAILS`" in block
+                        or "depends_on" in block,
+                        "%s mentions SZ_INCLUDE_MATCH_KEY_DETAILS at offset %d with "
+                        "neither its relations dependency nor the why-call prohibition"
+                        % (path.name, match.start()),
+                    )
+
+    def test_phase1_names_the_why_key_details_path(self):
+        """The reader of step 3a needs the right field, not merely the ban."""
+        phase1 = squash((PHASE2.parent / "phase1-query-visualize.md").read_text(encoding="utf-8"))
+        self.assertIn("WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS", phase1)
+        self.assertIn("INV-179", phase1)
+
+    def test_phase1_still_prescribes_feature_scores(self):
+        """The correct half of the original instruction must survive the correction."""
+        phase1 = squash((PHASE2.parent / "phase1-query-visualize.md").read_text(encoding="utf-8"))
+        self.assertIn("SZ_INCLUDE_FEATURE_SCORES", phase1)
 
 
 class FlagTypesAreConfirmedNotOnlyNames(unittest.TestCase):

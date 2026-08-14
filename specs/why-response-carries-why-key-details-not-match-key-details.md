@@ -119,3 +119,45 @@ was the citation at the step (INV-183), now added; the ⚠️ type bullet likewi
 unnamed "match-key string". It now reads the key from `WHY_RESULTS[].MATCH_INFO.WHY_KEY` and
 uses the step-3 `WHY_KEY_DETAILS` confirmations for the per-component explanation, so the
 presentation and the parse agree on one documented path.
+
+## Follow-up: the same defect was in a second file (2026-08-14)
+
+This spec's criterion 4 names `phase2-discover.md` and only that file, and the first
+implementation (`d880b63`) honoured it literally. Working an unrelated spec in the same module
+surfaced **three more sites in `phase1-query-visualize.md`**, all reachable by the same guide on
+the same walk. A guard scoped to one filename could not see any of them.
+
+1. **Step 3a, presenting results** — "ensure the query was called with `SZ_INCLUDE_FEATURE_SCORES`
+   and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`" for `how_entity` and the `why_*` methods, closing with
+   "note what additional detail would be available with feature-score and match-key-detail flags".
+   The same defect verbatim: a flag that adds nothing to a why response, recommended for one.
+   Corrected to prescribe `SZ_INCLUDE_FEATURE_SCORES` (which the server confirms applies to all
+   four methods) and to read the breakdown from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`.
+
+2. **The general flag-selection step** — "For visualization-bound queries, include
+   `SZ_INCLUDE_FEATURE_SCORES` and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`." This one is **not** a
+   defect and was deliberately not banned: the flag is legitimate for the methods that return
+   related entities, and `RELATED_ENTITIES[]` is exactly what a network visualization renders.
+   What was missing is that it `depends_on` a relations flag — passed alone it is accepted and
+   adds nothing, which reads as "no relationships in this data" rather than as a missing flag.
+   The dependency is now stated with its provenance.
+
+3. **The `ENTITY_NAME: null` passage (dated 2026-07-31, from the INV-194 work)** — recommended
+   `SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME | SZ_INCLUDE_MATCH_KEY_DETAILS`
+   for a why call. The passage's own finding is correct and untouched: the entity-name flag is
+   what fixes the null. The third term was removed, because it changes nothing on a why call —
+   and the CONFIRMATIONS and DENIALS that passage cites as rendering correctly are part of
+   `WHY_KEY_DETAILS`, which is present without it. **Adding a flag that changes nothing is how a
+   wrong field name survives review**: the expression looked like it was doing the work.
+
+**The guard was rewritten to sweep the module** rather than the file, and to assert the right
+thing. A blanket ban would have been wrong — site 2 is a legitimate use that a ban would force
+someone to work around. What is never optional is the reason the flag can silently do nothing:
+on a why call it has no surface (the prohibition), and anywhere else it needs a relations flag
+(`depends_on`). Every mention in the module must now carry one or the other.
+
+⚠️ **A first version of that sweep used a fixed ±400-character window and produced a false
+positive** on this spec's own prohibition bullet — the citation sits far enough below the ⛔ that
+the window missed it. Replaced with blank-line-bounded block detection: a fixed window is the
+wrong length by construction, too short to reach a qualifier three sentences up and long enough
+to borrow one from an unrelated neighbour.

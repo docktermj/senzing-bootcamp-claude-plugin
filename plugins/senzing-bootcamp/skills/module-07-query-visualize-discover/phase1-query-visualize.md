@@ -61,7 +61,12 @@ language='<lang>', version='current')`.
 `get_sdk_reference(topic='flags', filter='<method>')` and select the flags matching the
 bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag] so we can see
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
-and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
+and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` `depends_on` a relations
+flag and writes into `RELATED_ENTITIES[]`, so pass it only alongside one** — `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+or one of its four members — and only for the methods that return related entities. Passed on its own
+it is accepted and adds nothing, which reads as "no relationships in this data" rather than as a
+missing flag (INV-179). It is **not** how a why response explains its match: see step 3a.
+(`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`, server 1.32.9, 2026-08-14.)
 
 ⚠️ **The server cautions that DEFAULT composites are not for production code — relay this when you
 teach them.** Returned verbatim as the top-level `caution` field of
@@ -110,9 +115,14 @@ renders correctly**: match level, why key, ER rule, feature scores and buckets, 
 and DENIALS. That is the deceptive form of the half-populated row (INV-148) — the analysis is
 complete and only the human-readable labels are missing, so it reads as unnamed data rather
 than as a flags problem. OR the flag in explicitly:
-`SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME | SZ_INCLUDE_MATCH_KEY_DETAILS`
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
 (`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
-`why_record_in_entity` — verified 2026-07-31). The same holds for
+`why_record_in_entity` — verified 2026-07-31). ⛔ **`SZ_INCLUDE_MATCH_KEY_DETAILS` was in this
+expression and has been removed: it `depends_on` a relations flag and writes into
+`RELATED_ENTITIES[]`, so on a why call it adds nothing.** The CONFIRMATIONS and DENIALS named
+above are already there without it — they are part of `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`
+(`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
+2026-08-14). Adding a flag that changes nothing is how a wrong field name survives review. The same holds for
 `SZ_WHY_RECORDS_DEFAULT_FLAGS` and `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS`, both documented
 as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not inferred from
 its sibling — INV-169).
@@ -272,9 +282,14 @@ cross-source connections, just ask and I'll walk through it again."
 
 When presenting results from `how_entity` or the `why_*` methods (`why_entities`,
 `why_records`, `why_record_in_entity`), ensure the query was called with
-`SZ_INCLUDE_FEATURE_SCORES` and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. These flags provide the
-scoring detail needed for informative output. If the query used default flags, note what
-additional detail would be available with feature-score and match-key-detail flags.
+`SZ_INCLUDE_FEATURE_SCORES` — the flag that carries the per-feature scoring detail these
+presentations are built from (it applies to all four methods; `get_sdk_reference(topic='flags',
+filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default flags, note what
+additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
+read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, not from a `MATCH_KEY_DETAILS` field and
+not by adding `SZ_INCLUDE_MATCH_KEY_DETAILS`** — that flag targets `RELATED_ENTITIES[]` and needs
+a relations flag, so on a why call it has nothing to attach to and a parser written for it renders
+blank with no error (INV-179; see `phase2-discover.md` step 4b.3, which states this once).
 
 **Checkpoint:** write step 3a.
 
