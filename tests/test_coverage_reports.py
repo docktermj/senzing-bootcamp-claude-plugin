@@ -158,11 +158,29 @@ class TestShippedReport(unittest.TestCase):
     the exemption comes from the data.
     """
 
+    #: The module table the artifact filter composes display names from. Two rows are enough
+    #: to prove the property, and keeping it here rather than in the live file is what lets a
+    #: scratch tree exercise the display-name case at all.
+    MODULE_TABLE = "\n".join((
+        "| # | Module | Rule | State token | Maps to |",
+        "|---|---|---|---|---|",
+        "| 1 | Bootcamp preparation | Required | `bootcamp_preparation` | this module |",
+        "| 2 | System verification | Optional — Requires \"SDK setup\" | `system_verification` "
+        "| `module-03-system-verification` |",
+        "| 3 | Truth Set visualization | Optional | `truthset_visualization` | `module-03b` |",
+    )) + "\n"
+
     def _tree(self, root, invariants_md, plugin_files=(), test_files=()):
         (root / "specs").mkdir(exist_ok=True)
         (root / "plugins").mkdir(exist_ok=True)
         (root / "tests").mkdir(exist_ok=True)
         (root / "specs" / "INVARIANTS.md").write_text(invariants_md, encoding="utf-8")
+        # The filter reads its display names from the shipped module table, so a tree without
+        # one is not a valid repo — `module_display_names` raises rather than narrowing itself
+        # in silence, which is the behaviour `test_a_tree_with_no_module_table_raises` pins.
+        prep = root / "plugins" / "senzing-bootcamp" / "skills" / "bootcamp-preparation"
+        prep.mkdir(parents=True, exist_ok=True)
+        (prep / "SKILL.md").write_text(self.MODULE_TABLE, encoding="utf-8")
         for name, body in plugin_files:
             (root / "plugins" / name).write_text(body, encoding="utf-8")
         for name, body in test_files:
@@ -252,6 +270,102 @@ class TestShippedReport(unittest.TestCase):
             self.assertEqual([], hits,
                              "a general property with no artifact is honoured by behaviour; "
                              "reporting it is the noise that gets a report ignored")
+
+    def test_an_invariant_naming_a_module_by_its_DISPLAY_name_is_reported(self):
+        """The 2026-08-14 blind spot: seven of eight new invariants were invisible here.
+
+        The filter matched paths, `module-NN` directories and `Module N` catalog labels — the
+        spellings the plugin is told NOT to render — and no display name. So INV-223 ("Truth
+        Set visualization"), INV-225 ("System verification"), INV-227 ("Bootcamp preparation")
+        and INV-229 ("System-verification checks") all passed straight through, and only
+        INV-226 surfaced, because its text happens to say "Module 0". INV-079 requires the very
+        vocabulary this report could not read.
+        """
+        cases = (
+            ("Truth Set visualization", "the spaced display name"),
+            ("System verification", "a second spaced display name"),
+            ("System-verification", "the hyphenated adjectival form"),
+            ("Bootcamp preparation", "a skill named in prose, not as a directory"),
+        )
+        for name, why in cases:
+            with self.subTest(name=name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    self._tree(root, self._invariants(
+                        (FIX_A, "%s's close MUST record the module." % name),
+                    ))
+                    hits, _ = reports.find_uncited_in_shipped(str(root))
+                    self.assertEqual(
+                        [FIX_A], [h[0] for h in hits],
+                        "%s (%s) is not recognised as naming a shipped artifact, so an "
+                        "uncited invariant about it is invisible" % (name, why))
+
+    def test_a_skill_named_in_prose_with_a_space_is_reported(self):
+        """Onboarding is the case the module table cannot cover — it is not a module row.
+
+        ⚠️ Written after a negative control escaped: the "Bootcamp preparation" case above
+        passes on the table-derived name alone, so it proved nothing about the spaced form in
+        `STATIC_ARTIFACT`. Onboarding is the only skill named in invariant prose that the table
+        does not supply, which makes it the one case that actually pins that half.
+
+        ⛔ The fixture text must name NOTHING else the filter matches. The first attempt said
+        "MUST create the progress file" and passed on `the progress file` alone — a fixture that
+        defeats its own assertion, which the negative control caught by escaping twice.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Bootcamp onboarding's preface MUST run silently."),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_A], [h[0] for h in hits],
+                             "a skill named in prose with a space is unmatched, so the "
+                             "hyphenated directory spelling is the only one that counts")
+
+    def test_the_display_names_come_from_the_module_table_not_a_second_list(self):
+        """Rename a module in the table and the filter follows — no hand-listed copy to drift."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._tree(root, self._invariants(
+                (FIX_A, "Wildly Renamed Module's close MUST record the module."),
+            ))
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([], hits, "a name absent from the table must not match")
+
+            prep = root / "plugins" / "senzing-bootcamp" / "skills" / "bootcamp-preparation"
+            (prep / "SKILL.md").write_text(
+                self.MODULE_TABLE
+                + "| 4 | Wildly Renamed Module | Required | `wrm` | `module-99` |\n",
+                encoding="utf-8")
+            hits, _ = reports.find_uncited_in_shipped(str(root))
+            self.assertEqual([FIX_A], [h[0] for h in hits],
+                             "adding the row to the module table did not widen the filter, so "
+                             "the names are hand-listed somewhere and will drift")
+
+    def test_a_tree_with_no_module_table_raises(self):
+        """⛔ A silent fallback here re-creates the blind spot, invisibly and totally.
+
+        An empty display-name list makes the report keep printing and keep looking
+        authoritative while it stops seeing every display-name invariant — which is exactly
+        the failure mode that let eight of them through. So this raises instead.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "specs").mkdir()
+            (root / "specs" / "INVARIANTS.md").write_text("# Invariants\n", encoding="utf-8")
+            with self.assertRaises(Exception):
+                reports.module_display_names(str(root))
+
+    def test_the_live_module_table_parses_to_every_module(self):
+        """The one live-repo assertion: the real table must actually yield its rows."""
+        names = reports.module_display_names(str(REPO_ROOT))
+        self.assertGreaterEqual(len(names), 11,
+                                "the live module table parsed to %d rows; the filter's "
+                                "display-name half is nearly empty" % len(names))
+        for expected in ("Bootcamp preparation", "System verification",
+                         "Truth Set visualization", "Bootcamp graduation"):
+            with self.subTest(module=expected):
+                self.assertIn(expected, names, "a known module is missing from the parse")
 
     def test_a_superseded_invariant_is_quiet(self):
         with tempfile.TemporaryDirectory() as tmp:

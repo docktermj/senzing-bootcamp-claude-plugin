@@ -279,13 +279,57 @@ DEV_GROUP = "development record itself"
 #: stating a general property with no artifact ("a value the Bootcamper was asked for MUST
 #: outrank...") is honoured by behaviour and is not expected to be cited anywhere in
 #: particular — reporting it is the noise that gets a report ignored.
-SHIPPED_ARTIFACT = re.compile(
+#:
+#: ⛔ **Repo-internal vocabulary is not enough, and getting this wrong is silent.** These
+#: alternatives are all paths, `module-NN` directories and `Module N` catalog labels — the
+#: spellings INV-079 and `bootcamp-preparation/SKILL.md` tell the plugin NOT to render. An
+#: invariant names a module by its **display name**, so on 2026-08-14 seven of the eight newly
+#: registered invariants were invisible here and only INV-226 surfaced, because its text happens
+#: to say "Module 0". The better an invariant's prose, the less this filter could see it. The
+#: display names are therefore composed from the shipped module table at run time
+#: (`module_display_names`) rather than hand-listed a second time where they can drift.
+STATIC_ARTIFACT = (
     r"plugins/|"
     r"\bmodule-\d\d|\bModule \d|"
-    r"SKILL\.md|phase[0-9A-Za-z-]*\.md|ground-rules\.md|"
+    r"SKILL\.md|phase[0-9A-Za-z-]*\.md|ground-rules\.md|module-completion\.md|"
     r"scripts/[\w-]+\.py|hooks/[\w-]+\.py|"
-    r"\bgraduation\b|\bbootcamp-onboarding\b|\bbootcamp-preparation\b"
+    r"bootcamp_progress\.json|bootcamp_preferences\.yaml|bootcamp_recap\.md|"
+    r"\bthe progress file\b|"
+    r"\bgraduation\b|bootcamp[- ]onboarding|bootcamp[- ]preparation"
 )
+
+#: `| 5 | System verification | Optional — Requires … |` — the module table in
+#: `bootcamp-preparation/SKILL.md`, which is what INV-079 means by a module's name.
+MODULE_TABLE_ROW = re.compile(r"(?m)^\|\s*\d+\s*\|\s*([^|]+?)\s*\|\s*(?:Required|Optional)")
+
+MODULE_TABLE = os.path.join(
+    "plugins", "senzing-bootcamp", "skills", "bootcamp-preparation", "SKILL.md")
+
+
+def module_display_names(repo):
+    """Module display names, read from the shipped module table.
+
+    ⛔ Raises rather than returning an empty list. A silent fallback here re-creates exactly
+    the blind spot this function exists to close: the report would keep printing, keep looking
+    authoritative, and quietly stop seeing every display-name invariant.
+    """
+    names = MODULE_TABLE_ROW.findall(_read(os.path.join(repo, MODULE_TABLE)))
+    if not names:
+        raise RuntimeError(
+            "no module rows parsed from %s — the display-name half of SHIPPED_ARTIFACT "
+            "would be empty, so this report would under-report silently" % MODULE_TABLE)
+    return names
+
+
+def shipped_artifact_re(repo):
+    """The artifact filter, with the module display names of THIS repo folded in.
+
+    Each name also matches its hyphenated adjectival form, because an invariant writes
+    "System-verification checks" as readily as "System verification".
+    """
+    alts = ["[ -]".join(re.escape(w) for w in name.split(" "))
+            for name in module_display_names(repo)]
+    return re.compile(STATIC_ARTIFACT + "|" + "|".join(alts), re.IGNORECASE)
 
 INDEX_GROUP = re.compile(r"(?m)^- \*\*(?P<name>[^*]+)\*\* — .*?(?=^- \*\*|\Z)", re.DOTALL)
 
@@ -319,12 +363,15 @@ def find_uncited_in_shipped(repo):
     2. Not in the `INVARIANTS.md` index group that binds the development environment — those
        are *supposed* to be absent from shipped text, and flagging them trains the reader to
        skip the whole report.
-    3. Its own text names a shipped artifact (a path, module, step or bundled script). That is
-       the class INV-183 governs: a rule binding a step must be reachable AT that step.
+    3. Its own text names a shipped artifact (a path, module, step or bundled script) — by
+       repo-internal spelling **or** by the module's display name, which is how an invariant
+       actually refers to a module. That is the class INV-183 governs: a rule binding a step
+       must be reachable AT that step.
 
     An invariant in **no** group is returned separately rather than silently exempted — a
     missing index entry must not become a way to disappear from this report.
     """
+    artifact_re = shipped_artifact_re(repo)
     inv_txt = _read(os.path.join(repo, "specs", "INVARIANTS.md"))
     entries = re.findall(r"(?m)^- \*\*(INV-\d{3})\*\* — (.+)$", inv_txt)
     groups = _index_groups(inv_txt)
@@ -363,7 +410,7 @@ def find_uncited_in_shipped(repo):
         # which silently let every superseded invariant through on the first run.
         if "superseded by inv" in text.lower():
             continue
-        if not SHIPPED_ARTIFACT.search(text):
+        if not artifact_re.search(text):
             continue
         hits.append((inv_id, text))
     hits.sort(reverse=True)                       # newest ID first: most likely an oversight
