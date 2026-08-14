@@ -256,8 +256,16 @@ Verify the MCP server can generate a full pipeline script in the chosen language
 
 1. Call `generate_scaffold(workflow='full_pipeline')` in the bootcamper's chosen language.
 2. ⛔ **This returns MANY files, and which one you save decides whether Step 6 can run at all.**
-   The response is a **listing** of snippets across initialization, loading and searching — 18 of
-   them for Python on server 1.32.2 (verified 2026-07-29) — not "the" generated script. So:
+   The response is a **listing** of snippets across four groups — `initialization`,
+   `configuration`, `loading` and `searching` — not "the" generated script. For Python that was
+   **22** snippets (10 / 4 / 6 / 2) on server 1.32.9, verified 2026-08-14.
+
+   ⚠️ **That figure is illustration, never a check to perform** — and its own history is the
+   argument for the rule below. It was 18 across three groups on server 1.32.2 (2026-07-29): the
+   count moved and a whole group (`configuration`) appeared, while the two loading snippets named
+   below stayed exactly where they were. So a count or a position is precisely what selection must
+   **not** depend on. If your live response returns a different number, that is the server indexing
+   more snippets, not a problem to report. So:
    - **Pick the loading snippet that READS AN INPUT FILE line by line**, not the self-contained
      demo whose records are hardcoded in the source. For Python those are
      `loading/add_records_loop.py` (reads `INPUT_FILE`) versus `loading/add_records.py`

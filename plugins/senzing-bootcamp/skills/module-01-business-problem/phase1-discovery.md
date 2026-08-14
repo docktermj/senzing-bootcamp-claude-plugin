@@ -145,8 +145,45 @@ Treat the Senzing MCP server as the ONLY source of CORD facts: never training da
 for entity resolution scenarios')` to learn which datasets exist and what they contain. Present
 values exactly as returned. Wait up to 30s; retry once.
 
-- **Fitting CORD dataset returned:** back the scenario with it, provenance `cord`.
-- **None fit:** synthetic data, provenance `synthesized`.
+⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**
+It is the most inviting choice — smallest, already used elsewhere in the bootcamp, and its
+description says it is for quickstarts — so rule it out explicitly rather than leaving it to
+judgement:
+
+1. **It is pre-mapped**, so it can never satisfy Step 4a's mapping-complexity invariant. The
+   disqualifying word is the server's own: `get_capabilities` describes it as *"the Senzing demo
+   truth set: CUSTOMERS, REFERENCE, WATCHLIST — small, **pre-mapped**, used in quickstarts"*
+   (server 1.32.9, re-verified 2026-08-14). A scenario built on it passes every other check in
+   this step and leaves Data Quality, Mapping, and Transformation with nothing to transform.
+2. **Truth Set visualization already runs on it**, so a scenario backed by it collapses two
+   modules onto one dataset.
+
+**The eligible collections and what they are shaped like** — take the dataset names, source lists
+and counts from `get_sample_data` at runtime, never from here (INV-080); this is a note about
+*domain fit*, which the response does not judge for you (all four confirmed present on server
+1.32.9, 2026-08-14):
+
+| Dataset | Shaped like | Fit |
+|---|---|---|
+| `las-vegas` | risk, ownership and licensing data (the widest source set) | eligible |
+| `london` | sanctions and corporate-registry data | eligible |
+| `moscow` | sanctions and ownership data, non-Roman script | eligible |
+| `truthset` | the pre-mapped demo truth set | **ineligible — see above** |
+
+⚠️ **For the customer-facing categories, `synthesized` is the EXPECTED outcome, not a failure.**
+The recognized set in Step 4a includes Customer 360, Marketing and Vendor MDM, and all three
+eligible collections are risk / sanctions / ownership data — so for those categories no CORD
+dataset fits, and synthesizing is the correct answer rather than giving up. Customer 360 is the
+most likely pick of all, being the pattern gallery's most relatable entry. Say so to the
+bootcamper in those terms; do not present it as a fallback, and do not stretch a sanctions
+collection to cover a customer-360 problem in order to reach the `cord` branch.
+
+- **Fitting CORD dataset returned** (one of the three eligible collections, matching the
+  category's domain): back the scenario with it, provenance `cord`.
+- **None fit** — including every case where the only apparent fit was `truthset`: synthetic data,
+  provenance `synthesized`. Data collection generates the files for this provenance without asking
+  again (`../module-04-data-collection/SKILL.md` → Step 2), so this branch is complete, not
+  deferred.
 - **Timeout/unreachable after one retry:** omit CORD facts, tell the bootcamper they're
   unavailable, use synthetic data (`synthesized`).
 
