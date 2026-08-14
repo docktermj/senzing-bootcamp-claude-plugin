@@ -114,8 +114,11 @@ straight to configuration verification."
 Then run **Step 1b** below to see whether a newer release is available, and offer it. A working
 install is never replaced without the bootcamper saying so.
 
-- Skip Steps 2 and 3 entirely.
-- Jump to Step 4 (verify installation) to confirm it works with the chosen language.
+- **Skip the *installation* — Step 2, and Step 3's install commands.** Not Step 3 entirely: see the
+  required stop below. What is redundant on an existing install is fetching and installing the SDK;
+  nothing else in Step 3 is.
+- **Still do Step 3's environment-script work** ("Create the project-local environment script"), then
+  jump to Step 4 (verify installation) to confirm it works with the chosen language.
 - If Step 4 passes, proceed to Step 5 (License), which confirms the built-in evaluation license
   without prompting (the License Key gate is in Module 4, per INV-093). After Step 5, proceed to
   Step 6 (create the project directory structure), then Step 7 (database).
@@ -123,6 +126,20 @@ install is never replaced without the bootcamper saying so.
 
 > **Required stops:** These steps are NEVER skipped, even when the SDK is already installed:
 >
+> - **Step 3's environment script** (`src/scripts/senzing-env.sh`, or `senzing-env.bat` on Windows):
+>   ⛔ **the single most likely thing an existing install is missing.** Step 3 is titled "Install
+>   Senzing SDK" and does **two** jobs — it installs the SDK *and* it writes the project-local script
+>   that exports the library and Python paths. Only the first is redundant here. Skipping both leaves
+>   the bootcamper with a healthy install and no environment, and every later module then fails at
+>   import with `libSz.so: cannot open shared object file` — which reads as a broken install, in a
+>   *later* module, far from this decision. Step 1's own fallback predicts exactly this state (it
+>   exists because the import check can fail with `PYTHONPATH` unset on a working install), so
+>   routing past the step that fixes it is the specific trap.
+>   **Take the variable values from `sdk_guide(topic='install', platform=…, language=…)`** —
+>   `install.platform.env_vars` carries them — rather than from an install transcript, because no
+>   install ran (INV-080). Write the script with the **same** implementation the install path uses:
+>   the zsh/bash path-resolution idiom, the fail-loudly root check, and the empty-value guard (see
+>   "The env script MUST resolve its own path…" in Step 3). One implementation, not two.
 > - **Step 4** (Verify Installation): confirms the SDK works with the chosen language.
 > - **Step 5** (License): a brief, no-prompt confirmation that the built-in evaluation license is
 >   active (the volume-gated License Key gate itself lives in Module 4, per INV-093).
@@ -898,12 +915,59 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 
 **For SQLite** (recommended for bootcamp):
 
-- Create the database directory: `mkdir -p database` (Linux/macOS) or
-  `New-Item -ItemType Directory -Force -Path database` (PowerShell).
-- Database path: `database/G2C.db`.
-- No additional setup needed: SQLite is built in.
-- **IMPORTANT:** Never use `/tmp/` or in-memory databases. If `generate_scaffold` or
-  `ExampleEnvironment` defaults to `/tmp/`, override the path to `database/G2C.db`.
+⛔ **SQLite is not "no setup". The database file is not auto-created and its schema is not
+auto-applied** — the same as PostgreSQL, and for the same reason. Skipping the schema does not fail
+here; it fails at Step 9 with `SENZ1001|Critical Database Error '(14:unable to open database file)'`,
+which reads as a path or permissions fault. There are **three rungs**, and only the third is
+Step 8a's:
+
+1. **Create the database directory:** `mkdir -p database` (Linux/macOS) or
+   `New-Item -ItemType Directory -Force -Path database` (PowerShell).
+2. **Apply the Senzing schema** to `database/G2C.db`. Get the schema file's path from
+   `sdk_guide(topic='install', platform='<platform>')` rather than hardcoding it (INV-080) — it is
+   returned in `install.platform.post_install[]`, and `install.engine_config_notes[]` states the
+   requirement in words: the DB file is **not** auto-created, and the schema step is **required**
+   when using `senzingsdk-setup`, which is what this module installs. (Re-verified live, MCP server
+   1.32.9, 2026-08-14. The `senzingsdk-poc` package's `sz_create_project` would do all three rungs
+   automatically — that is not what the bootcamp installs.)
+
+   ⛔ **Apply it with Python, not the `sqlite3` CLI.** Windows is a supported platform (INV-001) and
+   ships no `sqlite3` binary; Python 3 is already a hard bootcamp prerequisite, and its stdlib
+   `sqlite3` module runs the same DDL identically on all three platforms:
+
+   ```bash
+   python3 -c "import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.executescript(open(sys.argv[2]).read()); c.commit(); c.close()" \
+     database/G2C.db "<schema path from sdk_guide>"
+   ```
+
+   The server returns the CLI form (`sqlite3 <db> < <schema>.sql`) — treat that as the illustration
+   of *what* to apply, not as the command to run.
+3. **Seed the Senzing configuration** — that is Step 8a, below. Do not attempt it here.
+
+⛔ **The `SQL.CONNECTION` path must be ABSOLUTE.** Written relative, the engine cannot open the
+database **from any working directory, including the project root** — it fails with the same
+`SENZ1001 (14: unable to open database file)`, so this is not something a `cd` fixes. The reason is
+visible in the engine's own SQLite log: given `sqlite3://na:na@database/G2C.db` it tries to open
+**`/G2C.db`** — the relative prefix is not resolved against the working directory, it is discarded
+(observed on Senzing 4.3.4, 2026-08-14). Use the
+absolute resolution of the project's `database/G2C.db`, with the `/` immediately after `@`:
+
+```text
+sqlite3://na:na@/absolute/path/to/<project>/database/G2C.db
+```
+
+This is INV-200-compatible, not in tension with it: the file still lives **inside the project** at
+`database/G2C.db`; it is the connection *string* that carries that path's absolute form.
+
+- **IMPORTANT:** Never use `/tmp/` or in-memory databases. If `generate_scaffold`,
+  `ExampleEnvironment` or `sdk_guide` defaults to `/tmp/` (the server's own example path is
+  `/tmp/sqlite/G2C.db`), override the path to `database/G2C.db` — **including in the schema command
+  above**, not only in the connection string.
+
+**How to tell where you are:** after rung 2, `create_engine()` still fails — with
+`SENZ7220|No engine configuration registered in datastore`. That is the expected state and exactly
+what Step 8a closes. `SENZ1001 (14: unable to open database file)` means rung 2 has **not** been
+done; do not diagnose it as a permissions or path problem.
 
 **For PostgreSQL** (production): first choose HOW to run it. Detect Docker availability
 (`docker version`); when Docker is present, offer the container option **first and recommended** —
@@ -1136,6 +1200,13 @@ Linux install ever produces `SENZ7426`, ask `sdk_guide(topic='install', platform
 data-source registration snippet assumes one exists.** Do this before Step 9 and before any
 data-source registration.
 
+⚠️ **"Schema-created" is true of BOTH database branches.** PostgreSQL applies
+`szcore-schema-postgresql-create.sql` in Step 7; SQLite applies
+`szcore-schema-sqlite-create.sql` there too (rung 2 of its three rungs). If you arrived here on the
+SQLite branch without having applied the schema, this step cannot help — go back and apply it, or
+`create_engine()` fails with `SENZ1001 (14: unable to open database file)` rather than the
+`SENZ7220`/`SENZ7221` this step exists to fix.
+
 `sdk_guide(topic='configure')`'s primary `RegisterDataSources` snippet opens by reading the default
 config id and building a config **from** it. On an unseeded datastore there is nothing to read, and
 the attempt fails with
@@ -1284,8 +1355,13 @@ call succeeds** (not merely a version query).
   engine error: it is the null-check in Senzing's own official snippets, which print
   `Unable to get settings.` and throw `IllegalArgumentException` / `ArgumentException` when
   `SENZING_ENGINE_CONFIGURATION_JSON` is unset. So do not send it through `explain_error_code` — there
-  is no code to explain, and hunting through the engine config wastes the time. Check instead that
-  `senzing-env.sh` was **sourced** (not executed) in this shell, and that it resolved its own path
+  is no code to explain, and hunting through the engine config wastes the time. **First check whether
+  the script exists at all** — on the existing-install path it is the artifact most likely to be
+  missing, and asking whether an absent file was sourced sends the reader looking for the wrong
+  fault. If `src/scripts/senzing-env.sh` (or `senzing-env.bat`) is not there, that **is** the
+  finding: write it now per Step 3's environment-script work, with the values from
+  `sdk_guide(topic='install', platform=…, language=…)`. Only if it does exist, check that it was
+  **sourced** (not executed) in this shell, and that it resolved its own path
   under the shell in use — see [the env script's path resolution](#env-script-path-resolution). Under
   zsh, a `${BASH_SOURCE[0]}`-based script computes the wrong root and exports nothing.
   (Snippet guard verified via `search_docs`; MCP server 1.32.1, 2026-07-28.)
