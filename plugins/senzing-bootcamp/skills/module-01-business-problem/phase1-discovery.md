@@ -45,10 +45,28 @@ return confidently wrong content, and what to do with a topic the searches do no
 
 - **Business value, for nearly every category** — `search_docs(query='total economic cost mismatched
   identity data by sector …')` returns `economic-cost-mismatched-identity-data.md`, whose
-  *"Estimated Annual Cost of Mismatched Identity Records"* table quantifies ten sectors, including
-  Marketing/Sales/CRM, **Supply Chain & Procurement**, **Insurance**, **Healthcare**, Government,
-  Financial Services, Retail, Telecommunications, and a sanctions & trade-compliance line. Its
-  appendix breaks several sectors into ER-attributable typologies. Cite the figures as returned.
+  *"Estimated Annual Cost of Mismatched Identity Records"* table quantifies ten sectors. Its
+  appendix breaks several sectors into ER-attributable typologies. **Cite the figures as returned by
+  `search_docs`, never from this file** — the numbers live in the document, so a revision changes
+  them in one place.
+
+  ⚠️ **Two of the ten rows are "All Sectors" rows, and one of them is the row most bootcamper
+  scenarios actually need.** Lead with **`All Sectors: Cross-Industry Data Quality`** whenever the
+  scenario has **no clear industry vertical** — generic duplication across internal systems, which is
+  the common case — because it is the table's largest domain and was previously unnamed here, so the
+  gallery's most reusable figure went unreached. The other is
+  **`All Sectors: Marketing, Sales & CRM`**. The remaining eight rows are Government, Financial
+  Services, Supply Chain & Procurement, Insurance, Rest of Economy *(indicative)*, Healthcare,
+  Retail & E-Commerce, and Telecommunications. (Non-exhaustive as a guide to *which row to read* —
+  the table is the authority on its own contents.)
+
+  ⛔ **Sanctions & trade compliance is NOT a row — do not look for one.** It is a sub-line inside
+  **Rest of Economy**, described in the document's *"Remaining Sectors"* section alongside state &
+  local government and residual sectors, with full derivations in the appendix. Looking for it among
+  the rows sends the guide hunting something that does not exist. (Row list, the two "All Sectors"
+  rows and the Remaining-Sectors placement all re-verified live: `search_docs` on MCP server
+  **1.32.9**, docs indexed 2026-08-11 20:52 UTC, **2026-08-14**. The document's own totals line reads
+  "Expanded Estimate (all 10 sectors)", so "ten sectors" is right.)
 - **Problem, goal and typical sources** — the Senzing use-cases page (Customer 360, Fraud
   Detection), the USCIS fraud case study, the MDM integration FAQ (Vendor MDM: free resolution vs
   forced separation via a Trusted ID), and the non-person-entity-types FAQ (asset, claim and

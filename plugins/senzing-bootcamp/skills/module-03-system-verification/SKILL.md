@@ -39,11 +39,21 @@ system is verified against **synthetic records**: SDK initialization, code gener
 compilation, data loading, entity resolution, and database operations all confirmed working. (The
 interactive Truth Set web-app visualization is a separate, standalone module, run next when selected.)
 
-**Success indicator:** ✅ All 8 System Verification checks report "passed" (against synthetic data);
-the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic `VERIFY` data
+**Success indicator:** ✅ The **7 installation checks** report "passed" — MCP connectivity, engine
+initialization, SDK initialization, code generation, build, data-source registration, loading — plus
+**results validation**, which is reported separately and is the only one that is not a statement about
+the install; the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic
+`VERIFY` data
 is purged from the database; and gate 3→4 is marked completed (full criteria in
 `phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
 own `web_service`/`web_page` checks, snapshot, and cleanup.)
+
+⛔ **Results validation is kept separate on purpose: it compares the engine against a prediction the
+guide made, so a mismatch has two candidate causes and only one of them is an install fault.** The
+other seven are unambiguous. A results mismatch that the engine coherently explains — via `why_records`
+/ `why_entities` — is an expectation mismatch, **not** a failed verification, and must not be reported
+as the bootcamper's system failing. Step 7 in `phase1-verification.md` states the procedure for
+telling the two apart.
 
 > **User reference:** detailed background on this module lives in the walkthrough above; a
 > standalone `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference is a later porting phase and

@@ -187,9 +187,38 @@ names/addresses).
    existing file), using **Senzing Entity Specification** attribute names. If unsure of the exact
    attribute names, confirm them via the MCP server (`search_docs` / `mapping_workflow`) — never
    guess (INV-080). Design them so resolution is deterministic and known in advance:
-   - **A merge cluster:** 2–3 records for the **same** synthetic person, sharing enough features
-     (matching full name + date of birth + address, with only trivial variation) that Senzing
-     resolves them into **one** entity.
+   - **A merge cluster:** 2–3 records for the **same** synthetic person, designed to resolve into
+     **one** entity. ⛔ **Make this unambiguous by construction, not by judgement** — "enough
+     features, with only trivial variation" is exactly the phrase that produced a false verification
+     failure, because two reasonable readings of it give opposite verdicts.
+
+     **Identical across every record in the cluster:**
+
+     - `NAME_FIRST`, `NAME_LAST`, and `NAME_MIDDLE` wherever present — the same strings, not
+       equivalents.
+     - `DATE_OF_BIRTH`.
+     - The address **content** (same street, city, state, postal code).
+     - The same feature *set*: if one record carries a phone, they all do.
+
+     **May vary — formatting only:**
+
+     - Punctuation and spacing (`123 Main St` vs `123 Main Street`, `#4` vs `Apt 4`).
+     - Phone-number formatting (`702-555-0100` vs `(702) 555-0100`).
+     - A middle name abbreviated to its initial where the full form appears elsewhere.
+
+     ⛔ **These are NOT trivial variation, and must not appear in the cluster:** a **nickname**
+     (`Mari` for `Marisol`), an **initial in place of a first name**, and an **omitted feature** in
+     one record but not the others. Each *reduces corroboration*, and the engine may then correctly
+     decline to merge — that is a defensible resolution decision, not a fault, and building it into a
+     cluster you have predicted will merge sets the module up to report a healthy install as broken.
+
+     ⚠️ **Worked counter-example, observed on a real walk (Senzing 4.3.4, 2026-08-13):** three
+     records for one person with the first name varied `Marisol` / `Mari` / `Marisol` and one record
+     missing its phone number resolved to **3 entities** — the `Mari` record stayed a singleton — and
+     Step 7 reported FAILED. The same three records with the first name identical throughout and only
+     phone/address *formatting* varied resolved to **2 entities** with a 3-record cluster, and passed.
+     The engine was right both times; only the prediction changed. (This is an observation of this
+     install's behaviour, not an MCP claim — INV-080/INV-149.)
    - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
      **singleton** (its own entity).
    - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a
@@ -445,22 +474,53 @@ Each validation check has a 30-second timeout.
    validation checks. Execute ALL checks regardless of whether earlier checks pass or fail:
 
    **a) Entity count:**
+
    - Verify the total number of resolved entities equals the expected entity count from Step 2.
 
    **b) Merge cluster resolves to one entity:**
+
    - Verify the 2–3 records designed to match resolve to the **same** single entity ID.
 
    **c) Cross-record resolution:**
+
    - Verify the resolved entity count is strictly less than the total record count loaded,
      confirming that the merge cluster collapsed rather than every record loading as a singleton.
 
    **d) Distractor stays a singleton:**
+
    - Verify the distractor record(s) resolve to their own entity, separate from the merge cluster.
 
 3. **If all checks pass:** report pass with the entity count and confirmation of the merge.
-4. **If any check fails:** report fail listing each failed check with expected versus actual
-   values. Suggest re-running data loading or checking that the synthetic data file was loaded
-   completely.
+4. ⛔ **If a check fails, this is a DIAGNOSTIC, not a verdict on the install — there are two
+   candidate explanations and you must tell them apart before reporting either.** Every other check
+   in this module is an unambiguous statement about the installation; this one alone compares the
+   engine against **a prediction the guide made**, so a mismatch means *either* the engine is wrong
+   *or* the expectation was. Reporting the second as the first tells a bootcamper their working
+   system failed, at the end of the module whose entire purpose is to tell them it works.
+
+   **Ask the engine why, before concluding anything:**
+
+   - For a cluster that did **not** merge, call `why_records` on the pair that stayed apart (or
+     `why_entities` on the two entities), generating the call via `get_sdk_reference` +
+     `sdk_guide` — never from memory. Report the **match key** and the **feature scores** it returns.
+   - For an unexpected merge, do the same on the pair that joined.
+
+   **Then decide, and say which you decided:**
+
+   - **The engine explains its decision coherently** — e.g. a name variant scored below the
+     threshold, or a record carried one fewer corroborating feature. Then **the expectation was
+     wrong, and the install is fine.** Report it as an expectation mismatch: state the expected and
+     actual counts, quote the engine's explanation, and say plainly that entity resolution behaved
+     correctly. ⛔ **Do not report the system as having failed verification**, and do not tell the
+     bootcamper to re-run the load — nothing is wrong with it. Fix the records per Step 2's
+     constraints (the usual cause is a nickname, an initial, or an omitted feature that Step 2
+     forbids) and re-run this step if the module's other checks all passed.
+   - **The engine's explanation does not account for the difference**, or `why_*` itself errors —
+     then this is a real finding. Report fail with expected versus actual, include the `why_*` output,
+     and suggest re-running the load or confirming the synthetic data file loaded completely.
+
+   ⚠️ **This check is reported separately from the other seven**, which are install checks. A
+   mismatch the engine explains must not turn the module's overall result into a failure.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
 
