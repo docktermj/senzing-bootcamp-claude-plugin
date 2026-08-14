@@ -84,7 +84,7 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
    the omission silent. This mirrors how the Truth Set visualization module re-checks its artifact
    exists before marking itself complete (INV-077).
 2. Append a name-based recap section to `docs/bootcamp_recap.md` per
-   `../bootcamp-onboarding/module-completion.md` Step 2 (2b/2c): `## Entity Resolution Concepts —
+   `../bootcamp-onboarding/module-completion.md` **Step 2 in full**: `## Entity Resolution Concepts —
    {ISO 8601 timestamp}` with the four subsections — **Information Shared** (the entity-resolution
    concepts taught, MCP-sourced), **Questions & Responses** (the "any questions?" gate, the
    knowledge-check offer **and** the bootcamper's answer to it — the offer is always listed because
@@ -92,8 +92,17 @@ in the recap** (INV-092), quietly — no bootcamper-facing end-of-module summary
    gate, each with the bootcamper's answer — or `- {none this module}`), **Actions Taken** (that
    the primer and optional knowledge check were presented; this preamble creates no project files),
    and **End-of-Module Summary**. Re-read to confirm the section landed
-   (2c). This is the ONLY module-completion step Module 0 runs; it does **not** present the
-   bootcamper-facing end-of-module summary (Step 3).
+   (2c). This is the ONLY module-completion **Step** Module 0 skips out of — it runs Step 2 whole
+   and does **not** present the bootcamper-facing end-of-module summary (Step 3).
+
+   ⛔ **On a Core run this is the FIRST module to append a recap section, so 2a applies and creates
+   the header.** Bootcamp preparation is recap-exempt (INV-092) and the onboarding preface writes no
+   recap, so `docs/bootcamp_recap.md` does not exist yet when this step runs — 2a is the substep
+   that creates it, with the five preamble lines (`**Bootcamper:**`, `**Started:**`,
+   `**Programming language:**`, `**Path:**`, `**Plugin version:**`). Appending a `## ` section
+   without it produces a recap with no preamble, and the failure surfaces only at graduation, on the
+   certificate. Run **2d** as well (finalize the in-progress checkpoint) — it applies here exactly
+   as it does to any other module; nothing about this module exempts it.
 
 Then invoke the `module-01-business-problem` skill to begin Module 1 — **Discover the Business
 Problem** (name the module to the bootcamper, never "Module 1") — applying the module-start banner

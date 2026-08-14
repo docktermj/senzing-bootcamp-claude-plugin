@@ -31,6 +31,17 @@ sections: append only.
 
 ### 2a. Create the recap on first module completion
 
+⛔ **This substep is UNCONDITIONAL at any module whose append finds no file — every module runs it,
+no module is exempt from it, and no citation elsewhere may narrow Step 2 in a way that omits it.**
+Nothing else creates the recap header: not the onboarding preface, not Bootcamp preparation (which
+is recap-exempt by INV-092 and writes only the two `config/` files). So whichever module happens to
+append first owns the creation, and which module that is depends on the path — Entity Resolution
+Concepts on a Core run, Discover the Business Problem on a Customized run that drops it. A module
+that cites "Step 2 (2b/2c)" and skips 2a appends a `## ` section to a file with no preamble, and the
+missing header is not discovered until graduation, on the keepsake: the certificate prints a
+placeholder name, and graduation's completion-date insertion and `**Plugin version:**` amendment
+have no line to anchor to.
+
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
 the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"; and

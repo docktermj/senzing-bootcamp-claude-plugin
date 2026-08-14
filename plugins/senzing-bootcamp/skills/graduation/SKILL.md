@@ -216,11 +216,23 @@ Gather context before any step. Do this silently.
    1. As `name` in `config/bootcamp_preferences.yaml`, so a re-render or a resumed session never
       asks again (INV-006). The generator reads this **first** for the certificate — it is the
       Bootcamper's answer, and it outranks anything detected earlier (INV-170).
-   2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, which Bootcamp
-      preparation wrote at the **start** of the run from the auto-detected value. Leaving it means
+   2. As the recap's `**Bootcamper:**` preamble line in `docs/bootcamp_recap.md`, written by
+      **module-completion Step 2a, at the first module that appends a recap section** — Entity
+      Resolution Concepts when it is selected, otherwise Discover the Business Problem — from the
+      `name` detected during Bootcamp preparation. (⚠️ Bootcamp preparation itself writes **no**
+      recap: it is apparatus-exempt (INV-092) and writes only the two `config/` files. It detects
+      the name; it does not put it in the recap.) Leaving the line unamended means
       the recap a reader opens still shows the rejected handle, and any re-render driven from the
       recap alone reproduces it. Amending a preamble meta line is not a rewrite of a completed
       module section, so the append-only rule (INV-085) does not forbid it.
+
+      ⛔ **If the `**Bootcamper:**` line is absent, WRITE it — do not assume an edit target.** A
+      recap whose header was never created has no line to amend, and passing over the amend without
+      saying so is how the certificate ends up printing a placeholder. Write the full preamble if
+      none exists,
+      per `../bootcamp-onboarding/module-completion.md` Step 2a, above the first `## ` section; and
+      note the recovery, because a header written at graduation means some module skipped 2a and
+      that is worth knowing.
 
    ⛔ **Both, not either.** Preferences alone once printed `docktermj` on a signed certificate at
    exit 0 with 99% content retention and no warning, because the generator read only the recap line
