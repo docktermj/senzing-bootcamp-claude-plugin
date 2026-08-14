@@ -139,3 +139,25 @@ Name the concept once, in `ground-rules.md`, rather than patching Module 1:
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **`module-03-system-verification` was fixed in place, which the Proposed change did not
+  ask for.** The spec's Root cause devotes most of its length to that module — one 👉 in the
+  whole of it, and three of its own instructions describing a mechanism it never provides —
+  and then concludes that naming the concept centrally *is* the fix. It is not quite: a file
+  that says "signal a stop by ending the turn on the single 👉 question" is still
+  self-contradictory after the ground rules define the term, because the reader of that file
+  has to infer the connection. So all three named instructions were repaired:
+  `SKILL.md` (the module has one 👉; "one at a time" is about order, not turns),
+  `phase1-verification.md`'s header (every step in the phase is non-yielding), and agent
+  rule 10 (one write at the end of the turn instead of eleven inside it).
+- **A partial-turn fallback was added that the spec does not mention.** Collapsing eleven
+  checkpoint writes to the end of a turn means a turn that dies mid-run records nothing, which
+  is worse for resume than the noise it replaced. Agent rule 10 now requires writing whatever
+  completed before stopping.
+- **Criterion 4 is not runtime-verified.** It describes a live walk ("a walk that answers no to
+  the model/effort switch at Discover the Business Problem produces one turn containing the
+  privacy reminder and exactly one 👉"). No live bootcamp runs in this environment, so what is
+  asserted is that every instruction the walk follows now composes to that outcome. Recorded as
+  implemented-but-not-runtime-verified rather than ticked.
