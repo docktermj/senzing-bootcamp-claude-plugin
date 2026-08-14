@@ -142,3 +142,38 @@ never tested.
 - Upstream: not applicable.
 - Related specs: `source-colors-from-discovered-data-sources` (the spec that
   established INV-127).
+
+## Deviations from this spec, and why (2026-08-14)
+
+- **Option 1 was taken in a specific form, and option 4 was deliberately not.** The spec
+  offered a capacity ceiling as an acceptable outcome provided it is "sa[id] so in INV-127
+  with the number". That would be a **meaning change to a registered invariant**, which
+  needs the maintainer's sign-off (`implement-spec` Step 5) — and this was implemented
+  during an unattended batch on 2026-08-14 where the maintainer's standing instruction was
+  to queue invariant changes, not make them. So the encoding space was widened instead:
+  stroke width as a third channel, then a deterministic lightness perturbation of the fill,
+  giving 210 distinct rendered appearances. No invariant text changed.
+- **The limit is stated in code rather than in INV-127.** `brand_tokens.SOURCE_ENCODING_CAPACITY`
+  names it, `color_for_sources` warns past it, and the contract states both requirements for
+  any-language servers. This satisfies option 4's actual purpose — "an acknowledged limit is
+  defensible, a silent one is not" — without editing an invariant.
+- **A dash pattern was considered as the third channel and rejected.** CSS `box-shadow`, which
+  draws the legend swatch, cannot express a dash, so a dash channel would have had to be
+  rendered one way on the node and another (or not at all) in the legend — breaking the
+  spec's own acceptance criterion that the two agree. Stroke width is expressible in both,
+  identically.
+- **`cycle` is retained in the returned dict** rather than replaced. It still records which
+  wrap a source landed in, and removing it would have been a gratuitous contract change; the
+  fix is that no draw site keys on it. `stroke_width` is the new field renderers must use, and
+  it is `None` exactly when no stroke is drawn.
+- **Two extra files changed** beyond the spec's Affected-files list, both required by its own
+  criteria: `visualization-api-reference.md` (criterion 6 — the contract, not the Python
+  implementation, must state the rule) and a new `tests/test_source_encoding_renders_distinctly.py`
+  (criterion 1 and 5 asserted against what the browser draws).
+- **An unrelated vacuity was fixed in `tests/test_brand_sync.py`.**
+  `test_viz_server_inline_fallback_matches_the_token_helper` was comparing
+  `brand_tokens.color_for_sources` to itself, because the inline fallback is bound only when
+  the import fails and it never fails under test. It was demonstrated vacuous — a mutation
+  gutting the inline copy escaped — and now loads the server with the import blocked. This is
+  outside the spec's scope but inside the file it names, and leaving it would have meant the
+  inline copy's half of this fix was unguarded.
