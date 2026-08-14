@@ -27,13 +27,67 @@ except (ValueError, AttributeError):
     prompt = raw
 lower = prompt.lower()
 
+# ⛔ THE TWO HALVES OF THIS VOCABULARY ARE NOT SYMMETRIC, AND THAT IS DELIBERATE.
+#
+# Widening this pattern looks like a free win and is not. Modules 5-7 have the bootcamper
+# writing and debugging *their own* loader, mapper and query code, so in this bootcamp
+# "I found a bug", "something is broken" and "this is wrong" overwhelmingly mean THEIR
+# code, not the plugin. Injecting the feedback workflow there is not a harmless false
+# positive: it prepends an instruction to open a feedback entry, present a banner and
+# gather structured feedback on top of a turn where the bootcamper wants their traceback
+# explained. A missed capture is far cheaper than a spurious one (INV-054's reasoning by
+# analogy), because the workflow is still reachable by `/bootcamp-feedback` and by
+# feedback.md, while a derailed debugging turn is not recoverable.
+#
+# So:
+#   * UNAMBIGUOUS - the word "feedback" in any construction, or bug/issue/problem/broken
+#     language that NAMES the bootcamp, plugin, module or tutorial. Widen aggressively.
+#   * AMBIGUOUS - bare bug/broken/wrong/problem with no such referent. Must NOT trigger.
+#
+# ⛔ Do not "fix" a miss by deleting that distinction. The regex will be edited again; the
+# reasoning above is the part that will not be rediscovered.
+
+#: Verbs that make "feedback" a request to give it rather than a mention of the word.
+_GIVE = r"(?:give|giving|gave|have|having|has|got|send|sending|submit|submitting|share|sharing|" \
+        r"provide|providing|offer|offering|leave|leaving|report|reporting|pass|passing|add|adding)"
+#: A short qualifier window, so an interposed word does not defeat the match. This is the
+#: one-word gap that made `I have feedback` hit and `I have some feedback about module 5`
+#: miss: the old pattern required the pair to be adjacent.
+_GAP = r"(?:\W+\w+){0,3}?\W+"
+#: Words that attribute a fault to the bootcamp rather than to the bootcamper's own code.
+#: ⛔ Deliberately does NOT include "this step", "these instructions" or "this skill". In
+#: Modules 5-7 "this step is wrong" is far more often the bootcamper's own work in
+#: progress than a defect in the plugin, so those phrasings stay in the ambiguous half.
+#: The referents here are the four the plugin can actually be blamed by name for.
+_OURS = r"(?:bootcamp|plugin|senzing bootcamp|this tutorial|tutorial|module \d+)"
+
 FEEDBACK = re.compile(
-    r"bootcamp feedback|plugin feedback|power feedback|submit feedback|"
-    r"provide feedback|i have feedback|report an issue|report a bug"
+    # The noun, in any construction: "bootcamp feedback", "I have some feedback about
+    # module 5", "I'd like to give feedback", "can I give you some feedback", "sharing
+    # feedback". Either order, since both "give feedback" and "feedback to give" occur.
+    r"(?:bootcamp|plugin|power) feedback"
+    r"|feedback (?:on|about|for|regarding) (?:the )?" + _OURS +
+    r"|" + _GIVE + _GAP + r"feedback"
+    r"|feedback" + _GAP + _GIVE +
+    # An explicit report, already framed as one by the user.
+    r"|report (?:an? )?(?:issue|bug|problem|defect)"
+    # Fault language WITH a bootcamp/plugin referent - the attributed half. Kept narrow:
+    # the referent must appear near the fault word, not merely somewhere in the prompt.
+    r"|(?:bug|issue|problem|defect|broken|wrong|error)(?:\W+\w+){0,6}?\W+" + _OURS +
+    r"|" + _OURS + r"(?:\W+\w+){0,6}?\W+(?:is |are |seems? )?(?:bug|issue|problem|defect|"
+    r"broken|wrong)"
 )
+
 VERBOSITY = re.compile(
+    # Same qualifier tolerance, lower stakes: verbosity is re-adjustable at any time and
+    # carries no consent or durability guarantee, so a false positive is self-correcting.
     r"change verbosity|more detail|less detail|more code walkthrough|"
-    r"be more concise|be more detailed|too verbose|too terse|more verbose|less verbose"
+    r"too verbose|too terse|more verbose|less verbose|"
+    r"(?:be|answer|reply|respond|make it|keep it)" + _GAP +
+    r"(?:more |less |)(?:concise|verbose|detailed|wordy|brief|terse|short|shorter|"
+    r"longer|succinct)|"
+    r"(?:shorter|longer|briefer|more concise|less wordy|more wordy)\W+"
+    r"(?:answers?|replies|responses?|explanations?)"
 )
 
 ctx = ""
