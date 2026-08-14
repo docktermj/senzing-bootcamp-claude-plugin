@@ -157,19 +157,46 @@ entities that both appear in the node set above.
 **`GET /api/merges`:** Multi-record entities with constituent records
 
 ```json
-[
-  {
-    "entity_id": 1, "entity_name": "Robert Smith", "match_key": "+NAME+ADDRESS",
-    "records": [
-      {"data_source": "CUSTOMERS", "record_id": "1001", "name": "Robert Smith", "address": "123 Main St", "phone": "555-0100", "identifiers": {"SSN": "123-45-6789"}}
-    ]
-  }
-]
+{
+  "entities": [
+    {
+      "entity_id": 1, "entity_name": "Robert Smith", "record_count": 2,
+      "data_sources": ["CUSTOMERS", "REFERENCE"],
+      "records": [
+        {"data_source": "CUSTOMERS", "record_id": "1001", "match_key": ""},
+        {"data_source": "REFERENCE", "record_id": "2001", "match_key": "+NAME+ADDRESS"}
+      ]
+    }
+  ]
+}
 ```
 
-Each entity: `entity_id`, `entity_name`, `match_key`, `records`. Each record: `data_source`,
-`record_id`, `name`, `address`, `phone`, `identifiers`. Only entities with 2+ records are
-returned.
+Each entity: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`. Each record:
+`data_source`, `record_id`, `match_key`. Only entities with 2+ records are returned.
+
+⛔ **`match_key` lives on the RECORD, not on the entity — one home, and this is it.** It is the key
+that pulled *that* record into the entity, which is the more informative placement and the one the
+Match Keys tab reads. **An empty string is normal, not missing data:** the entity's seed record
+joined nothing, so it has no key. Render an empty value as "seed record" or omit the chip — never as
+a blank field, which reads as a defect (INV-115).
+
+⚠️ **Record fields are `data_source`, `record_id`, `match_key` — and no more, by design.** The
+entity model is built with `SZ_ENTITY_DEFAULT_FLAGS`, and that composite **excludes**
+`SZ_ENTITY_INCLUDE_RECORD_FEATURES` and `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` (measured against the
+SDK's own flag constants, Senzing 4.3.4, 2026-08-14). So a record's name, address and phone are
+**not in the response** at these flags — they are entity-level features, not record-level ones. A
+server that reports per-record names without adding those flags is inventing them.
+
+**To enrich the Records panel (optional, and not required by this contract):** add
+`SZ_ENTITY_INCLUDE_RECORD_FEATURES` — then each record carries `FEATURES.NAME[].FEAT_DESC`,
+`FEATURES.ADDRESS[].FEAT_DESC` and `FEATURES.PHONE[].FEAT_DESC` — and/or
+`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` for the record as it was mapped. Confirm the paths against
+`get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` rather than from
+here (INV-080). ⚠️ Weigh it at scale first: this payload is **embedded in the standalone snapshot**
+(INV-070), and Query, Visualize and Discover points the same app at the Bootcamper's full dataset,
+so per-record features multiply the keepsake's size by the record count. Defaults stay lean for that
+reason, and the composite is the right choice for exploration (the server's own production caution
+notwithstanding — see Module 7).
 
 **`GET /api/search`:** Search entities with enriched resolution reasoning
 
@@ -443,8 +470,10 @@ unique content. Do NOT implement it, and do not add a separate "Results Dashboar
 
 Backs the **Records** action everywhere an entity is shown (see "Per-entity actions" below),
 including single-record entities — unlike `/api/merges`, which returns only multi-record entities.
-Each record carries the same fields `/api/merges` uses: `data_source`, `record_id`, `name`,
-`address`, `phone`, `identifiers`. On failure return `{"entity_id": <id>, "error": "<type>: <message>"}`
+Each record carries the same fields `/api/merges` uses — `data_source`, `record_id`, `match_key` —
+and the two endpoints MUST return **the same record objects**, not merely the same field names: they
+read one model, so a divergence between them is a bug in the server rather than a choice. On failure
+return `{"entity_id": <id>, "error": "<type>: <message>"}`
 with HTTP 200, so one entity's failure never breaks the tab.
 
 Unlike `why`/`how`, this endpoint's data MUST also be **embedded in the standalone snapshot**, so
