@@ -109,7 +109,7 @@ class FreshNoLongerOverClaims(unittest.TestCase):
         "docs/bootcamp_recap.md",
         "docs/progress/recap_checkpoint.md",
         "docs/loading_strategy.md",
-        "src/system_verification/records.jsonl",
+        "src/system_verification/verification_data.jsonl",
     )
 
     def setUp(self):
@@ -176,7 +176,7 @@ class MidBootcampOutputIsUnchanged(unittest.TestCase):
             "docs/progress/recap_checkpoint.md",
             "docs/feedback/...FEEDBACK.md",
             "docs/loading_strategy.md",
-            "src/system_verification/records.jsonl",
+            "src/system_verification/verification_data.jsonl",
             "config/engine_config.json",
         ):
             with self.subTest(display=display):
