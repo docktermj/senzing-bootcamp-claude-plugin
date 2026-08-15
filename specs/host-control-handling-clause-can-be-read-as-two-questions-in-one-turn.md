@@ -102,3 +102,26 @@ question — rather than reading as a blanket exemption from INV-005's count.
 - Related specs: `a-question-with-no-origin-in-a-skill-file-reached-the-bootcamper` (introduced the
   clause), `results-presentation-turns-end-with-zero-questions` (the sibling INV-005 turn-boundary
   defect), and INV-005, INV-010, INV-011, INV-247.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The fix is a two-branch sub-list, not the single reworded clause this spec drafts.** The drafted
+  replacement kept both turn shapes in one paragraph; splitting them into an explicit two-item list
+  under "The turn then ends one of **two** ways, never both" makes the alternation structural rather
+  than something a reader must infer from the adjective in "that turn's single 👉".
+- **A CommonMark hook caught a rendering bug that would have reintroduced the defect.** The ⛔
+  consequence line initially followed the nested sub-list with no blank line, making it a lazy
+  continuation of the **second** sub-item — so "doing both ends the turn on two 👉" would have
+  rendered as applying only to the counter-question branch, which is precisely the misreading this
+  spec exists to remove. A blank line separates it, and it now attaches to the parent bullet and
+  governs both branches.
+- **The any-time-controls preamble was rewritten further than "clarified".** This spec proposed it
+  "should say what it means"; the shipped text splits the claim in two — *invoking* a control is not
+  a bootcamp question and consumes no step, and INV-005 still binds unconditionally — because the
+  original single sentence ("never count against the one-question-per-turn rule") is the half a
+  guide would cite to justify a second 👉.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`.
+- ⛔ **The runtime half remains unverified, exactly as this spec's own criterion states.** Whether a
+  guide ends such a turn on one question is a live-turn property; the five mutations prove the text
+  says the right thing, never that the behaviour follows. `dry-run` phase 3 is still owed.

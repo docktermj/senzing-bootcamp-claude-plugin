@@ -114,10 +114,16 @@ steering files.)
   "Module start banners and transitions"), which is the only Claude-interface control the bootcamp
   asks the bootcamper to operate.
   - **Answering a question the bootcamper asks is not originating one.** They may raise anything at
-    any time; handle a host-control question under "Any-time bootcamper controls" below, then
-    re-present the pending 👉 question verbatim. A clarifying counter-question inside that answer is
-    that turn's single 👉 under INV-005 — it is still not a gate, and it does not replace the pending
-    question.
+    any time; handle a host-control question under "Any-time bootcamper controls" below. The turn
+    then ends one of **two** ways, never both:
+    - **Normally** — answer, then re-present the pending 👉 question verbatim. That re-presented
+      question is the turn's single 👉.
+    - **If the answer needs a clarification from them** — the clarifying counter-question is the
+      turn's single 👉, and the pending question waits for the turn **after** it.
+
+    ⛔ **Doing both ends the turn on two 👉, which INV-005 forbids** — the violation this file calls
+    the #1 bootcamper complaint. A counter-question is still not a gate, and it never replaces the
+    pending question; it only defers it by one turn.
   - ⚠️ **Why this is a rule and not an assumption.** Observed 2026-08-15: a bootcamper was asked
     about "auto-mode for the bootcamp" during the onboarding preface, with `👉 Do you have any
     questions before we get started?` pending and unanswered. No file in this plugin asks that. It
@@ -635,8 +641,14 @@ How to file it: `feedback.md` → "Silent in-run append", with
 
 ## Any-time bootcamper controls
 
-These are available at every point in the bootcamp: onboarding, any module, and graduation. They
-never count against the one-question-per-turn rule and must not be treated as gates.
+These are available at every point in the bootcamp: onboarding, any module, and graduation. The
+bootcamper **invoking** one is not a bootcamp question and must not be treated as a gate — it does
+not consume a step, and it never counts as the turn's 👉.
+
+⛔ **That is not licence to end the turn on two 👉.** INV-005 governs how many questions *you* ask,
+and it is unconditional: whatever the bootcamper raised, the turn still ends on **exactly one** 👉 —
+either the re-presented pending question or a single clarifying counter-question, never both (see
+the 👉 protocol above).
 
 - **Bootcamp feedback:** whenever the bootcamper says "bootcamp feedback", "I have feedback",
   "report an issue", or similar, run the feedback workflow in `feedback.md` and append the entry

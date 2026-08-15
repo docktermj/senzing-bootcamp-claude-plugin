@@ -178,6 +178,39 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
             "the rule reads as forbidding the guide to respond when a bootcamper raises a "
             "host control, which would strand them at a pending gate")
 
+    def test_the_two_turn_shapes_are_stated_as_alternatives(self):
+        """One sentence said re-present, the next called a counter-question the turn's single 👉.
+
+        Nothing said they were alternatives, so following both ends the turn on TWO 👉 — the
+        violation this file itself calls the #1 bootcamper complaint, fourteen lines above.
+        """
+        protocol = section(self.text, "## Conversation protocol (the 👉 rules)")
+        self.assertRegex(
+            protocol, r"(?i)ends one of \*\*two\*\* ways, never both",
+            "the host-control handling clause does not state that re-presenting the pending "
+            "question and asking a clarifying counter-question are alternatives, so a guide "
+            "following both ends the turn on two 👉 (INV-005)")
+        self.assertRegex(
+            protocol, r"(?i)doing both ends the turn on two .{0,4}, which INV-005 forbids",
+            "the clause does not name the consequence of doing both, so the alternation reads "
+            "as a stylistic preference rather than a rule")
+        self.assertRegex(
+            protocol, r"(?i)the pending question waits for the turn \*\*after\*\* it",
+            "nothing says where the pending question goes when a counter-question takes the "
+            "turn's 👉 — a deferral with no destination is a deletion (INV-007)")
+
+    def test_the_any_time_controls_preamble_does_not_read_as_an_INV_005_exemption(self):
+        """"Never count against the one-question-per-turn rule" compounded the ambiguity."""
+        controls = section(self.text, "## Any-time bootcamper controls")
+        self.assertRegex(
+            controls, r"(?i)invoking\*\* one is not a bootcamp question",
+            "the preamble does not distinguish the bootcamper INVOKING a control from the "
+            "turn's 👉 budget, so it reads as a blanket exemption from INV-005's count")
+        self.assertRegex(
+            controls, r"(?i)the turn still ends on \*\*exactly one\*\*",
+            "the preamble does not restate that INV-005 still binds, which is the reading that "
+            "let a host-control detour carry a second 👉")
+
     def test_the_sole_exception_is_stated_where_the_precedent_is_set(self):
         """A limit stated only in the protocol is read by nobody writing a new nudge."""
         banners = section(self.text, "## Module start banners and transitions")
