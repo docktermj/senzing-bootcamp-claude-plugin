@@ -109,8 +109,7 @@ Licence JSON measured live on the walk's own install (Senzing SDK 4.3.4, Java bi
   indexed under *Module flow, selection and progress*; enforced by
   `tests/test_module06_license_reconciliation.py`). Sibling to INV-194, which forbids the same
   inference on the other surface — concluding the *server* lacks a fact from one tool's empty
-  response. ⚠️ **Minted under the maintainer's standing authorization of 2026-08-14** (given before
-  an unattended run), not case-by-case — flagged for review.
+  response. ✅ **Approved by the maintainer on 2026-08-14**, on review of the wording as registered. Originally minted under the standing authorization given before that unattended run.
 
 ## Deviations from this spec, and why (2026-08-14)
 

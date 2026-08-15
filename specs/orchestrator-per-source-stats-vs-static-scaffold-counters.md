@@ -92,8 +92,7 @@ describes from the MCP-supplied `LoadViaFutures.java`. Senzing MCP server 1.32.9
   validation gates*; enforced by `tests/test_module06_orchestrator_guidance.py`). It **generalises
   INV-228**, which requires the same per-source count check and stop-on-mismatch for a dataset
   *written* from the MCP server; a dated forward pointer was added to INV-228 accordingly.
-  ⚠️ **Minted under the maintainer's standing authorization of 2026-08-14** (given before an
-  unattended run), not case-by-case — flagged for review.
+  ✅ **Approved by the maintainer on 2026-08-14**, on review of the wording as registered. Originally minted under the standing authorization given before that unattended run.
 
 ## Deviations from this spec, and why (2026-08-14)
 

@@ -105,8 +105,7 @@ nothing else. `fpdf2` renderer.
   must parse**, that instruction MUST state the shape the script accepts (recorded in
   `specs/INVARIANTS.md`, indexed under *Generator behaviour: rendering, encoding, reporting*
   beside its sibling INV-161; enforced by `tests/test_recap_pdf_bulleted_images.py`).
-  ⚠️ **Minted under the maintainer's standing authorization of 2026-08-14** (given before an
-  unattended run), not under case-by-case sign-off — flagged for review.
+  ✅ **Approved by the maintainer on 2026-08-14**, on review of the wording as registered. Originally minted under the standing authorization given before that unattended run.
 
 ## Deviations from this spec, and why (2026-08-14)
 
