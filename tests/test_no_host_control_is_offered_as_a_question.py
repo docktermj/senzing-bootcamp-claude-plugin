@@ -19,13 +19,25 @@ Enforces **INV-247** — every 👉 question traces to a step in a shipped skill
 session- or host-level control other than the model/effort switch is presented as a bootcamp
 question.
 
-⛔ **THIS GUARD CANNOT DETECT THE REPORTED SYMPTOM, AND A CLEAN RUN IS NOT EVIDENCE IT IS
-GONE.** The defect was a question improvised at runtime that exists in **no file**; this test
-reads files. What it does cover is the other direction, which is real but narrower: it keeps
-the rule shipped in `ground-rules.md`, and it fails if a future module adds a second
-interface question by accident. Do not read a green run as "the bootcamp can no longer ask
-about auto mode" — that half is unreachable from a static check, and claiming otherwise is
-the pattern `specs/coverage-reports-count-known-non-defects-as-hits.md` exists to stop.
+⛔ **THIS GUARD HAS TWO LIMITS. BOTH ARE STATED HERE BECAUSE ONE DISCLOSURE READS AS ALL OF
+THEM**, and a guard whose caveat looks complete is the pattern
+`specs/coverage-reports-count-known-non-defects-as-hits.md` exists to stop.
+
+1. **It cannot detect a runtime-improvised question.** The reported defect was a question that
+   exists in **no file**; this test reads files. A clean run is not evidence the bootcamp can
+   no longer ask about auto mode — that half is unreachable from a static check and belongs to
+   `dry-run` phase 3.
+2. **Its vocabulary check is a closed, dated list.** ``HOST_CONTROL`` matches eight literals
+   naming the Claude Code CLI's affordances **as of 2026-08-15**. A control phrased in words
+   absent from that list passes it. The CLI ships independently of this plugin and an offline
+   suite (INV-108) cannot notice a new one, so the list is a snapshot to extend, never a
+   guarantee.
+
+``test_no_pinned_question_offers_an_unsanctioned_slash_command`` exists because of limit 2 and
+does not share it: it matches slash commands **structurally** and allows only ``/model`` and
+``/effort``, so a future ``/thinking`` or ``/verbose`` offered in a pinned question fails
+without anyone having added it to a list. It is the assertion to prefer; the vocabulary check
+survives only to catch non-slash phrasings ("auto mode", "permission mode").
 
 Per **INV-246** the site set is derived by scanning every shipped Markdown file under
 `plugins/senzing-bootcamp/`, never from a hardcoded list — a listed guard would certify the
@@ -49,8 +61,22 @@ GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
 # pointer sits inside a sentence rather than ahead of a bolded question.
 PINNED_QUESTION = re.compile("\U0001F449" + r"\s*\*\*")
 
+# A slash command offered inside a pinned question. Structural, so it needs no vocabulary and
+# does not expire: any new host command the CLI ships is caught the day it appears in a
+# question. This is the assertion that actually enforces INV-247's class.
+SLASH_COMMAND = re.compile(r"(?<![\w/])/([a-z][a-z0-9-]{1,20})\b")
+
+#: The only Claude-interface controls the bootcamp asks the bootcamper to operate (INV-247,
+#: via INV-063/INV-098/INV-158/INV-236).
+SANCTIONED_SLASH = frozenset({"model", "effort"})
+
 # Session- or host-level controls: the bootcamper's Claude interface, not the bootcamp's to
 # offer. `/model` and `/effort` are deliberately absent — they are the sole exception.
+#
+# ⚠️ SNAPSHOT, NOT A CLOSED SET — dated 2026-08-15, the Claude Code CLI's affordances at that
+# date. The CLI ships independently of this plugin, so this list expires silently and an
+# offline suite cannot notice. EXTEND it when a new control appears, and do not read a pass
+# here as "no host control is offered" — SLASH_COMMAND above is the check that generalises.
 HOST_CONTROL = re.compile(
     r"(?i)auto[-\s]?mode"
     r"|auto[-\s]?accept"
@@ -127,6 +153,33 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
             "Claude-interface control the bootcamp asks them to operate:\n  "
             + "\n  ".join(offenders))
 
+    def test_no_pinned_question_offers_an_unsanctioned_slash_command(self):
+        """The open-ended half of INV-247 — no vocabulary list, so it does not expire.
+
+        INV-247 governs a CLASS ("a session- or host-level control"); a literal list can only
+        ever be a snapshot of a CLI that ships separately from this plugin. Slash commands are
+        that class's structural signature, so allow the two sanctioned dials and reject the
+        rest — a control this repo has never heard of fails the day it appears in a question.
+        """
+        offenders = []
+        for path in shipped_markdown():
+            for n, line in enumerate(read(path).splitlines(), 1):
+                m = PINNED_QUESTION.search(line)
+                if not m:
+                    continue
+                question = line[m.start():]
+                for cmd in SLASH_COMMAND.findall(question):
+                    if cmd not in SANCTIONED_SLASH:
+                        offenders.append(
+                            "%s:%d: /%s — %s"
+                            % (path.relative_to(REPO_ROOT), n, cmd, line.strip()[:110]))
+        self.assertEqual(
+            [], offenders,
+            "a 👉 question offers a slash command that is not `/model` or `/effort`. Those two "
+            "are the only Claude-interface controls the bootcamp asks the bootcamper to "
+            "operate (INV-247); everything else belongs to their session:\n  "
+            + "\n  ".join(offenders))
+
     def test_the_model_effort_switch_is_still_asked_as_a_question(self):
         """The exception must survive — otherwise this guard passes by deleting the rule's subject."""
         asked = [line
@@ -151,6 +204,54 @@ class NoShippedQuestionOffersAHostControl(unittest.TestCase):
             "ships skills, hooks and commands, none of which reach the host's own "
             "affordances — and the claim would hide the scope this spec had to narrow to:\n  "
             + "\n  ".join(offenders))
+
+
+class ThisGuardDisclosesWhatItCannotSee(unittest.TestCase):
+    """A guard that over-claims certifies what it never tested.
+
+    Both limits are asserted because the file previously stated one of them emphatically and
+    was silent on the other, which reads as completeness — the reader meets a ⛔ caveat and
+    reasonably concludes it is *the* caveat.
+    """
+
+    #: ⛔ Assert against the module DOCSTRING, never this file's source text.
+    #:
+    #: An earlier version read `Path(__file__)` and three mutations ESCAPED: each assertion's
+    #: own regex literal lives in that source, so every check matched its own pattern string
+    #: and passed with the docstring gutted. A guard that greps the file it is written in
+    #: certifies itself. `__doc__` contains the prose and not the patterns, so the needle can
+    #: only come from the disclosure. The snapshot-date check below still reads source — it
+    #: must, since that marker is a `#` comment — but its pattern uses `\d{4}` escapes and so
+    #: cannot match itself.
+    def setUp(self):
+        self.doc = __doc__ or ""
+
+    def test_the_runtime_limit_is_disclosed(self):
+        self.assertRegex(
+            self.doc, r"(?i)cannot detect a runtime-improvised question",
+            "the docstring no longer says this guard cannot see a question improvised at "
+            "runtime — the reported defect existed in no file, so a clean run would read as "
+            "proof of something never tested")
+
+    def test_the_vocabulary_limit_is_disclosed(self):
+        self.assertRegex(
+            self.doc, r"(?i)vocabulary check is a closed, dated list",
+            "the docstring no longer says the HOST_CONTROL match is a closed list, so a "
+            "control phrased outside it passes while the guard reads as enforcing the class "
+            "INV-247 actually governs")
+
+    def test_the_snapshot_list_carries_its_date(self):
+        self.assertRegex(
+            read(Path(__file__)), r"SNAPSHOT, NOT A CLOSED SET — dated \d{4}-\d{2}-\d{2}",
+            "HOST_CONTROL lost its dated snapshot marker; an undated list of a third party's "
+            "vocabulary cannot be told from a complete one")
+
+    def test_the_open_ended_check_is_named_as_the_one_to_prefer(self):
+        self.assertRegex(
+            self.doc, r"(?i)It is the assertion to prefer",
+            "the docstring no longer points the reader from the expiring vocabulary check to "
+            "the structural one, so a maintainer extending the list would not learn there is "
+            "a check that needs no extending")
 
 
 class TheRuleShipsWhereItBinds(unittest.TestCase):

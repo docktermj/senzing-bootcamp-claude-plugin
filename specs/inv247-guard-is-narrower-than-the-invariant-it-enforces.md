@@ -100,3 +100,32 @@ vocabulary it uses. That is the stronger fix and is the one to prefer if only on
 - Related specs: `a-question-with-no-origin-in-a-skill-file-reached-the-bootcamper` (the
   implementation this critiques), `coverage-reports-count-known-non-defects-as-hits` (the
   over-claiming-guard pattern), and INV-247, INV-108, INV-246.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **Both fixes were taken, not one.** This spec offered the exact-set check as "the stronger fix …
+  if only one is taken". The structural check and the disclosures are complementary — the first
+  removes the expiry, the second stops the remaining vocabulary check reading as complete — so both
+  shipped.
+- **The open-ended check is on slash commands, not on an enumerated question set.** Pinning "the
+  only interface questions are the four model/effort forms" would have been another closed list, one
+  file-edit away from stale. `SLASH_COMMAND` matches `/<command>` **structurally** and allows only
+  `model` and `effort`, so a control this repo has never heard of fails the day it appears in a
+  pinned question. Verified: a planted `👉 **Would you like to enable /thinking …**` — a name in no
+  vocabulary list, which the pre-fix guard passed — now fails.
+- ⛔ **THREE MUTATIONS ESCAPED FIRST TIME, AND THE CAUSE WAS THE DEFECT THIS SPEC IS ABOUT.** The
+  disclosure assertions originally read `Path(__file__)` — the test file's own source — so each
+  assertion's regex literal was itself part of the text being searched. Gutting the docstring left
+  the pattern strings behind, every check matched its own literal, and the guard certified itself.
+  A guard that greps the file it is written in cannot fail. Repointed to the module `__doc__`, which
+  holds the prose and not the patterns; the snapshot-date check still reads source, because that
+  marker is a `#` comment, but its pattern uses `\d{4}` escapes and so cannot match itself. All five
+  mutations were re-run against the corrected guard and all five are caught.
+- ⚠️ **One escape is inherent and is recorded rather than fixed.** Widening `SANCTIONED_SLASH` to
+  include a new command defeats the structural check, exactly as widening any allowlist would. There
+  is no way to close it from inside the guard; what limits it is that the widening is a visible,
+  reviewable one-line edit next to a comment saying what the set is for — unlike the silent expiry
+  of the vocabulary list, which needed no edit at all to go wrong.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`. INV-247 is
+  unchanged, as this spec requires — the invariant was correct; only the guard moved.
