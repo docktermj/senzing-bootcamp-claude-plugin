@@ -87,6 +87,14 @@ def verdict_set_sites():
     Local-only subset lines are a **different** claim and are checked separately by
     ``LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated`` — requiring all five there would fail
     correct content.
+
+    ⛔ **What this scan CANNOT see, stated because INV-248 says "every shipped site".** It
+    recognises the pipe-separated series and nothing else. A site that enumerated the taxonomy as
+    a bulleted list, a comma series, or prose would escape it entirely — so a clean run means "no
+    *pipe-separated* site has drifted", never "the taxonomy is stated identically everywhere". The
+    shape is checked rather than the meaning because "is this line enumerating the taxonomy?" is a
+    semantic judgement, and the two looser rules tried first both failed (above). If a third shape
+    ever ships, extend this — do not read a green run as proof it did not.
     """
     hits = []
     for path in sorted(PLUGIN.rglob("*.md")):
