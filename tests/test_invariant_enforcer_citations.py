@@ -160,7 +160,15 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: now serves two invariants. Re-derived by running the extractor. The rule exists because a
 #: hardcoded two-path list in that very file certified two sites and was blind to the third.
 #:   INV-246 -> test_module06_license_reconciliation.py            (derive the site set)
-EXPECTED_PAIRS = 59
+#:
+#: 59 -> 60 on 2026-08-15: INV-247 (every 👉 question traces to a step in a shipped skill file;
+#: no session- or host-level control is offered as a bootcamp question) names its new guard,
+#: tests/test_no_host_control_is_offered_as_a_question.py. Re-derived by running the extractor.
+#: Note what that guard's own docstring says: it covers the shipped half only. The reported
+#: defect was a question improvised at runtime that exists in no file, so the pair records an
+#: enforcer of the rule, not a detector of the symptom.
+#:   INV-247 -> test_no_host_control_is_offered_as_a_question.py   (close the question set)
+EXPECTED_PAIRS = 60
 
 
 def pairs():

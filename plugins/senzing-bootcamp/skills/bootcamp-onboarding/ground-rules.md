@@ -103,6 +103,27 @@ steering files.)
   `Reply with the numbers …, comma-separated — reply "none" for just the required modules.`
 - **Never fabricate or simulate the bootcamper's response.** Never emit text starting with
   "Human:" or "User:". Stop and wait at every 👉 question and every gate.
+- ⛔ **Every 👉 question traces to a step in a shipped skill file — never originate one (INV-247).**
+  The rules above govern a question's count, shape and placement; this one governs where it came
+  from. If you cannot point to the step in a skill file that specifies a question, it is not a
+  bootcamp question and must not be asked. In particular, **never present a session- or host-level
+  control as a bootcamp question** — auto mode, auto-accept edits, permission mode, plan mode, fast
+  mode, background tasks, `/compact`, `/loop`. Those belong to the bootcamper's Claude session, not
+  to the bootcamp, and asking about one is not made legitimate by the host surfacing that control
+  alongside the bootcamp. **The single exception is the module-start model/effort switch** (see
+  "Module start banners and transitions"), which is the only Claude-interface control the bootcamp
+  asks the bootcamper to operate.
+  - **Answering a question the bootcamper asks is not originating one.** They may raise anything at
+    any time; handle a host-control question under "Any-time bootcamper controls" below, then
+    re-present the pending 👉 question verbatim. A clarifying counter-question inside that answer is
+    that turn's single 👉 under INV-005 — it is still not a gate, and it does not replace the pending
+    question.
+  - ⚠️ **Why this is a rule and not an assumption.** Observed 2026-08-15: a bootcamper was asked
+    about "auto-mode for the bootcamp" during the onboarding preface, with `👉 Do you have any
+    questions before we get started?` pending and unanswered. No file in this plugin asks that. It
+    cost the run its pending question and it was the bootcamper's first impression of whether the
+    guided flow knows what it is doing — arriving *before* any sanctioned interface question, so the
+    frame they formed for every later one came from a question the bootcamp never wrote.
 - `🛑 STOP` and `⛔ MANDATORY GATE` are INTERNAL control directives - never render them to the
   bootcamper. Signal the stop by ending the turn after the single 👉 question.
 - **Acknowledge** the bootcamper's answer before proceeding: at most 2 sentences and 50 words,
@@ -630,6 +651,15 @@ never count against the one-question-per-turn rule and must not be treated as ga
 - **Repeat the question:** if they ask to hear the current question again ("repeat that", "what
   was the question"), re-present the current pending 👉 question verbatim. Do not invent a new
   one, and do not advance.
+- **A question about a host control:** if the bootcamper asks about auto mode, auto-accept edits,
+  permission mode, plan mode, fast mode, background tasks, `/compact`, `/loop`, or any other setting
+  belonging to their Claude session rather than to the bootcamp, answer in **one sentence** — it is
+  their session setting, the bootcamp neither needs nor recommends a value — and then re-present the
+  pending 👉 question verbatim (see below). Do not turn it into a gate, do not offer to change it for
+  them, and do **not** claim the bootcamp can suppress or override a host control: the plugin ships
+  skills, hooks and commands, none of which reach their interface. The bootcamp asks them to operate
+  exactly one Claude-interface control, the module-start model/effort switch, and never this one
+  (INV-247).
 - **Ask-once:** ask each question only once. Do not re-ask a question the bootcamper already
   answered unless they request the repeat.
   - **A pending, *unanswered* question is different — re-present it verbatim.** After any
@@ -680,7 +710,18 @@ never count against the one-question-per-turn rule and must not be treated as ga
   applies only to the numbered content modules that run this apparatus — the apparatus-exempt setup
   modules (Bootcamp preparation, Module 0) show no estimate.
 - **Best-value model/effort prompt.** After the step overview, surface this stage's recommended
-  model + effort. Like the step overview and the time estimate, this is module-start apparatus, so
+  model + effort.
+
+  ⛔ **This is the ONLY Claude-interface control the bootcamp asks the bootcamper to operate
+  (INV-247).** It is an exception, not a precedent: no other session- or host-level setting — auto
+  mode, auto-accept edits, permission mode, plan mode, fast mode, background tasks, `/compact`,
+  `/loop` — is ever offered as a bootcamp question, and a new nudge in that shape must not be added
+  here or anywhere else. Read the closed-question-set rule in the 👉 protocol before adding one. This
+  limit is stated here because *this* section is what creates the expectation: a bootcamper who has
+  just been asked to set `/model` and `/effort` for this module has no way to tell an unsanctioned
+  interface question from bootcamp content.
+
+  Like the step overview and the time estimate, this is module-start apparatus, so
   the apparatus-exempt setup modules (Bootcamp preparation, Module 0) do not present it (INV-063
   clarification). **Adapt the wording to the Claude interface in use** (INV-098): on the **Claude
   Code CLI** present the exact `/model` and `/effort` commands; in **Claude Desktop, the Claude web
