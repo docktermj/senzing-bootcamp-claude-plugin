@@ -135,3 +135,37 @@ not built.
    the day it shipped. The rule now stands on the form itself, and names the leniency as a
    rescue for recaps already written as bullets rather than as a second supported style — which
    is the ⚠️ clause carried into INV-242.
+
+## INV-242's guard widened on review — and it found a second breach (2026-08-14)
+
+The review noted that INV-242 binds all shipped prose while the guard written with it checked one
+site (the recap's image line). `tests/test_authored_shapes_are_stated.py` now sweeps every
+**Markdown** surface a bundled generator parses, and reads each generator's `_NEW_LINE_LABELS`
+**from the generator itself** rather than restating it — so adding an allowlisted label without
+telling the guide how to write it fails that file.
+
+⛔ **Scope is Markdown for a mechanical reason, not for convenience.** The same scripts parse
+`bootcamp_progress.json`, `bootcamp_preferences.yaml` and `data_sources.yaml`, and a shape mismatch
+there is **loud**: the stdlib parser raises and the step fails visibly. INV-242 exists for the
+silent case, and silence is a Markdown property — the document still renders, still reads correctly
+to a human, and only the treatment is lost.
+
+**The widened guard found a real breach immediately.** The discoveries generator gives own-line,
+indented layout to exactly two labels, keyed on the label text through `_normalize`:
+`**Near-miss (the one that teaches more):**` and `**Measurement:**`. Its authoring instruction
+(`phase1-query-visualize.md` → "Data-discoveries deliverable") said to include "at least one
+**near-miss**" and to "State the measurement" — accurate prose, and neither the `**Label:**` shape
+the generator keys on. A guide following it wrote "One near-miss: …" and silently got inline
+rendering. Both labels are now stated in their exact form.
+
+⚠️ **`**Near-miss:**` alone does not match** — `_normalize` maps it to `near miss` against an
+allowlist entry of `near miss the one that teaches more`, so the parenthetical is load-bearing. The
+instruction says so, and a test pins that warning: stating a form is not enough when a shorter form
+looks equally correct. The forms were derived by running the generator's own normalizer, not
+guessed.
+
+The recap side was **already compliant** (`module-completion.md` states `**Why it matters:**` four
+times), which is what made the asymmetry visible. Mutation-tested with 6 mutations, all caught:
+reverting either instruction to its pre-fix state fails, and so does adding a third label to the
+generator's allowlist — the control proving the guard is derived rather than hardcoded. Pair count
+re-derived 57 → 58, INV-242 now naming two enforcers.

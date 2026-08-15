@@ -121,3 +121,30 @@ Implemented as proposed; all three criteria hold. Both Senzing facts re-verified
    catches the defect at runtime and the half most likely to be trimmed as verbose: every check
    that looks only at the aggregate **passes**, since the accumulating counters sum to the correct
    total. A test asserts that sentence is present for exactly that reason.
+
+## INV-243 split on review (2026-08-14)
+
+On maintainer review, INV-243 was found to state **two** conditions where the file's convention is
+one — *reconcile the per-source figure before showing it*, and *do not print an unreconciled or
+mismatching figure*. The second was extracted to **INV-245**:
+
+> A value that failed its own verification check MUST NOT be presented to the Bootcamper as a
+> result; the discrepancy is reported in its place.
+
+The two are genuinely different subjects: INV-243 governs whether the check happens, INV-245
+governs what happens after it disagrees. A step can reconcile diligently and still print the number
+it just disproved — the worst of both, since the artifact then carries a figure the run itself knows
+to be wrong while looking verified.
+
+**INV-243's text was not cut down.** `INVARIANTS.md` rule 1 forbids deleting an invariant's text and
+rule 2 permits editing only for meaning-preserving wording, so the clause stays in place under a
+dated forward pointer naming INV-245 as canonical for it — the same shape as the INV-234 → INV-240
+split. INV-245 is indexed beside INV-243 under *Data quality, mapping and validation gates*, cited
+at the stop-on-mismatch rule in `phaseC-multi-source.md` step 17, and shares INV-243's enforcer
+(`tests/test_module06_orchestrator_guidance.py`), which already asserted both halves — the "one test
+named by several invariants" case the pinned pair count exists for. Pair count re-derived 56 → 57.
+
+INV-245 is deliberately broader than the per-source-count case that produced it: it is the
+positive-value counterpart of the ground rules' *"Never present a blank value as a real result"*
+under INV-115 — that governs a value that never arrived, this one governs a value that arrived and
+failed its check.

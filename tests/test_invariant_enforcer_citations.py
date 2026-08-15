@@ -140,7 +140,20 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-242 -> test_recap_pdf_bulleted_images.py                 (state the shape a script parses)
 #:   INV-243 -> test_module06_orchestrator_guidance.py            (reconcile a per-source figure)
 #:   INV-244 -> test_module06_license_reconciliation.py           (absence is not a measurement)
-EXPECTED_PAIRS = 56
+#:
+#: 56 -> 57 on 2026-08-14, on maintainer review of that run: INV-243 was split so each entry
+#: states one condition, and the extracted half shares the enforcer of the invariant it came
+#: from -- the "one test may be named by several invariants" case again, and the same split
+#: shape as INV-234 -> INV-240. Re-derived by running the extractor, not by adding one.
+#:   INV-245 -> test_module06_orchestrator_guidance.py            (do not print a disproved figure)
+#:
+#: 57 -> 58 on 2026-08-14, on the same review: INV-242's guard was widened from one site to every
+#: Markdown surface a bundled generator parses, so the invariant now names a SECOND enforcer --
+#: one invariant naming several tests, the other half of the "counts PAIRS" note above. The
+#: widened guard found a real breach the narrow one could not see. Re-derived by running the
+#: extractor.
+#:   INV-242 -> test_authored_shapes_are_stated.py                 (state every parsed shape)
+EXPECTED_PAIRS = 58
 
 
 def pairs():

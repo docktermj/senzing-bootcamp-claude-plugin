@@ -139,8 +139,9 @@ Resolve it one of two ways, whichever suits the bootcamper's language (INV-002):
 
 ⛔ **Reconcile the per-source figures before showing them.** (INV-243) Each source's reported count MUST
 match that source's own input record count, and the per-source counts MUST sum to the aggregate.
-Report the comparison, not just the totals; if they disagree, say so and stop rather than printing
-a number that cannot be traced to an input file. A summary that cannot be reconciled against the
+Report the comparison, not just the totals; if they disagree, say so and stop rather than
+printing a number that cannot be traced to an input file (INV-245) — a figure the run has
+itself disproved must not appear as a result. A summary that cannot be reconciled against the
 inputs is not a summary — and the accumulating-counter defect above passes every check that looks
 only at the total.
 

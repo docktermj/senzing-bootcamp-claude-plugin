@@ -582,11 +582,16 @@ Source every figure through generated SDK code and `reporting_guide` — never d
 3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
    the most business value: each row is one human decision away from being acted on.
 4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
-   **near-miss**. Why something did *not* merge teaches more than why something did.
+   **near-miss**. Why something did *not* merge teaches more than why something did. Label that
+   example exactly `**Near-miss (the one that teaches more):**` — the generator gives this label its
+   own line and an indented body, and keys on the label text, so the parenthetical is load-bearing:
+   `**Near-miss:**` alone renders inline like any other label (INV-242).
 5. **`## Relationship networks`** — multi-hop paths no single record states.
 6. **`## What was not found, and why`** — ⛔ the section most likely to be dropped, and the one that
-   changes how the whole document reads. State the measurement (e.g. how many names or identifiers
-   the sources actually share) and say explicitly which case applies: **the data had little overlap
+   changes how the whole document reads. State the measurement under the exact label
+   `**Measurement:**` (e.g. how many names or identifiers the sources actually share) — the
+   generator gives this label its own line and an indented body, and keys on the label text
+   (INV-242) — and say explicitly which case applies: **the data had little overlap
    to find**, or **the pipeline underperformed**. Without it, a correct result on a
    low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
    suppressor findings belong here.

@@ -28,6 +28,8 @@ only at the aggregate passes.
 
 Enforces **INV-243** — a per-source figure reported to the Bootcamper is reconciled against that source's own input count before it is shown.
 
+Enforces **INV-245** — a value that failed its own verification check is not presented as a result; the discrepancy is reported in its place. (Split out of INV-243 on maintainer review, 2026-08-14, so each states one condition; both are enforced here, which is the "one test named by several invariants" case `test_invariant_enforcer_citations.py` counts pairs for.)
+
 Source spec: `specs/orchestrator-per-source-stats-vs-static-scaffold-counters.md`.
 
 Run:  python3 -m unittest discover -s tests
