@@ -153,7 +153,14 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: widened guard found a real breach the narrow one could not see. Re-derived by running the
 #: extractor.
 #:   INV-242 -> test_authored_shapes_are_stated.py                 (state every parsed shape)
-EXPECTED_PAIRS = 58
+#:
+#: 58 -> 59 on 2026-08-14, implementing the audit's own findings: INV-246 (a multi-site guard
+#: derives its site set by scanning, never by hardcoding paths) names
+#: tests/test_module06_license_reconciliation.py, which already enforced INV-244 -- so that file
+#: now serves two invariants. Re-derived by running the extractor. The rule exists because a
+#: hardcoded two-path list in that very file certified two sites and was blind to the third.
+#:   INV-246 -> test_module06_license_reconciliation.py            (derive the site set)
+EXPECTED_PAIRS = 59
 
 
 def pairs():

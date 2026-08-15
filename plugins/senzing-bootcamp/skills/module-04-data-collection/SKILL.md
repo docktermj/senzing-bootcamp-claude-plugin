@@ -84,16 +84,36 @@ When the bootcamper hits an error during this module:
 By default, the bootcamper already has Senzing's **built-in evaluation license**: the capacity
 that applies when no custom license is configured. Treat it as the default the session already
 has, presented as a choice rather than a wall. Before any license-based capacity or sampling
-decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (the Module 4 license
-gate at Step 8a writes it after a custom license is configured) and drive the decision from that effective limit: never from a remembered or hardcoded figure:
+decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (Step 8a writes it
+after a custom license is configured — but that gate is **volume-gated**, so an absent value means
+it has not run, never that no custom license exists) and drive the decision from that effective
+limit: never from a remembered or hardcoded figure:
 
 - **Present and greater than 0** (custom license with a finite record cap): the effective limit
   is that value. Recommend sampling for license reasons only when the dataset total genuinely
   exceeds it.
 - **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
-- **Absent or null** (no custom license detected yet): fall back to the **built-in evaluation
-  license** the bootcamper already has by default, whose capacity is confirmed via the Senzing
-  MCP server at request time (never a hardcoded or remembered figure).
+- **Absent or null** — ⛔ **this means "never measured", not "no custom license": measure it before
+  deciding anything about capacity.** (INV-244) The field's only writer is Step 8a below, which is
+  **volume-gated by design** — it fires only when the collected volume approaches the limit — so on
+  a small dataset it never runs and the field is absent no matter which license is installed.
+  Treating that silence as "no custom license" is what steers a bootcamper whose license has **no
+  cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
+  - **Measure it** by Step 8a's own procedure (sub-step 7 below): generate a scaffold calling
+    `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
+    (INV-115), and parse `recordLimit`. Follow that step rather than restating it.
+    (`get_sdk_reference(topic='response_schemas', filter='get_license')`, server 1.32.9,
+    2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
+    `get_license() -> str`.)
+  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so this module's
+    later steps, Module 6 and graduation all see a detected value instead of the same absence.
+  - **Then re-enter the two branches above** with the measured value. `recordLimit: 0` lands on the
+    no-cap branch and no sampling is recommended for license reasons.
+  - **Only if the measurement fails** (no engine yet, SDK error) fall back to the **built-in
+    evaluation license** the bootcamper already has by default, whose capacity is confirmed via the
+    Senzing MCP server at request time (never a hardcoded or remembered figure) — and say plainly
+    that it is an assumption, naming what could not be measured, rather than presenting it as the
+    detected limit.
 
 Whenever a dataset is: or might be: larger than the effective limit allows, present that as a
 choice, not a wall. The bootcamper can keep their full dataset and expand capacity, or work

@@ -278,6 +278,15 @@ Both were invisible to the whole suite, because neither INV-060 nor INV-097 is c
 test. So: **a criterion that names a file, a module, or a second consumer is checked
 against that file** — open it and look — not against the change you remember making.
 
+⛔ **And the spec's list of sites is not the set of sites — sweep for the rest (INV-246).** A
+spec enumerates where its author *noticed* the defect, which is precisely what is wrong when a
+rule is applied incompletely. On 2026-08-14 a spec closed with a section titled *"The same branch
+exists twice"*, naming two files; the branch existed **three** times, and the third was upstream of
+both, in the module where the decision it governed was actually made. It shipped unfixed, guarded
+by a test that named the same two paths. So: **the guard you write derives its site set by
+scanning, never by hardcoding paths** — a listed guard certifies the sites you already thought of
+and is blind to the one you missed, which is the only site that matters.
+
 Two supporting reports exist for the gaps this cannot catch by hand; run them when the
 audit workflows ask, or when a spec touches the ledger
 (`.claude/skills/dry-run/coverage_reports.py`, both stdlib-only):

@@ -92,3 +92,51 @@ and Step 8a's own procedure for measuring it lives in the same file.
 - Upstream: not applicable
 - Related specs: `specs/license-limit-assumed-when-it-could-be-measured.md` (the implementation this
   completes; its "The same branch exists twice" section is the stale enumeration)
+
+## Invariants introduced
+
+- `INV-246` — A guard that enforces a rule across **multiple shipped sites** MUST derive its site
+  set by scanning the corpus, never by hardcoding a list of paths (recorded in
+  `specs/INVARIANTS.md`, indexed under *The development record itself*; enforced by
+  `tests/test_module06_license_reconciliation.py`, whose `discover_branches()` is that derivation).
+  Cited in `.claude/skills/implement-spec/SKILL.md` at the criterion-walk discipline it belongs to.
+  ⚠️ **Minted under the maintainer's standing authorization of 2026-08-14**, carried over to this
+  unattended run — flagged for review.
+
+## Deviations from this spec, and why (2026-08-14)
+
+Implemented as proposed; all five criteria hold. Four things to record.
+
+1. **Senzing facts re-asked rather than carried, as this spec required.**
+   `get_sdk_reference(topic='response_schemas', filter='get_license')` on server **1.32.9**,
+   2026-08-14, returns `SzProduct` `get_license()` for all five bindings (`getLicense() -> String`,
+   `get_license() -> str`, `GetLicense() -> string`, `SzResult<JsonString>`, `string`) with an
+   **empty** `data` array — the server documents the method, not the licence payload. That matches
+   what `module-04-data-collection/SKILL.md:800` already states, so `recordLimit` remains
+   observation-only and **no second dated absence claim was added** (INV-080/INV-149/INV-194).
+
+2. **The preamble was corrected too, not just the branch.** `:87-88` read *"the Module 4 license
+   gate at Step 8a writes it after a custom license is configured"* — true, and it is the sentence
+   that makes the wrong inference feel warranted, since it describes the writer without saying the
+   gate is volume-gated. It now says so explicitly. Fixing the branch while leaving the premise
+   above it would have left the next editor the same trap.
+
+3. **Module 4 keeps its own vocabulary, and one guard was scoped rather than swept.** Module 4
+   states the three-way decision as "Present and greater than 0" / "Present and equal to 0", where
+   Module 6 says "`0` (no cap), or ≥ the dataset size". Both are correct in place. The
+   surviving-branches assertion is therefore scoped to the Module 6 pair **with its reason stated**,
+   and a sibling asserts Module 4's own two branches — because sweeping a *wording* check across
+   sites that legitimately word it differently is how a guard starts failing on correct content.
+   That caveat is carried into INV-246.
+
+4. ⚠️ **One mutation escaped and closed a real gap.** Removing the persist instruction from Module 4
+   passed, because the persist assertion was scoped to Phase A alone — so criterion 2 was untested
+   at the very site this spec exists for. It is now swept across every discovered branch, after
+   which the mutation fails. This is the same shape as the defect being fixed, one level down: an
+   assertion written for the site where the rule was first noticed.
+
+**Mutation-tested: 5 mutations, all caught after the fix above.** The control that matters is
+`M1-revert-module-4-verbatim`, which restores the pre-fix text **byte for byte** and fails **7**
+tests — evidence the guard would have caught the original finding rather than merely describing it.
+`M5-hardcode-discovery` replaces `discover_branches()` with the original two-path list and fails,
+which is what proves the derivation is real and not decorative.

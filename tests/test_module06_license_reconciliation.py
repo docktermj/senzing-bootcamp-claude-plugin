@@ -29,6 +29,8 @@ still warns just moves the defect one phase later.
 
 Enforces **INV-244** — where a bootcamp state field is written only conditionally, a step branching on it does not read that field's absence as a measured finding.
 
+Enforces **INV-246** — a guard enforcing a rule across multiple shipped sites derives its site set by scanning, never by hardcoding paths. `discover_branches()` is that derivation, and the mutation that replaces it with the original two-path list fails this file.
+
 Source spec: `specs/license-limit-assumed-when-it-could-be-measured.md`.
 
 Run:  python3 -m unittest discover -s tests
@@ -38,7 +40,8 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-M6 = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-06-data-processing"
+SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+M6 = SKILLS / "module-06-data-processing"
 PHASE_A = M6 / "phaseA-build-loading.md"
 PHASE_B = M6 / "phaseB-load-first-source.md"
 
@@ -60,7 +63,41 @@ def absent_branch(path):
     return squash(rest[: match.start()] if match else rest)
 
 
-BRANCHES = [("phaseA-build-loading.md", PHASE_A), ("phaseB-load-first-source.md", PHASE_B)]
+def discover_branches():
+    """Every shipped file that branches on an absent `license_record_limit`.
+
+    ⛔ **Derived, never listed.** The first version of this guard hardcoded Phase A and
+    Phase B, because the spec that produced it closed with a section titled "The same
+    branch exists twice". It existed three times: `module-04-data-collection/SKILL.md`
+    carried the identical branch, upstream of both, governing the paragraph where the
+    sampling decision is actually made — and a guard naming two paths could not see it.
+
+    A spec's enumeration of its own sites is a claim like any other. Discovering the set
+    is what makes this test able to fail on a site nobody thought of, including a fourth.
+    """
+    found = []
+    for path in sorted(SKILLS.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        if "license_record_limit" in text and "- **Absent or null**" in text:
+            found.append((path.name, path))
+    return found
+
+
+BRANCHES = discover_branches()
+
+
+class TheDiscoveredSetIsNotVacuous(unittest.TestCase):
+    """A derived sweep that finds nothing passes every other test in this file."""
+
+    def test_every_known_branch_site_is_discovered(self):
+        names = {name for name, _ in BRANCHES}
+        for expected in (
+            "phaseA-build-loading.md",
+            "phaseB-load-first-source.md",
+            "SKILL.md",  # module-04-data-collection, the site a hardcoded pair missed
+        ):
+            self.assertIn(expected, names, "discovery missed %s" % expected)
+        self.assertGreaterEqual(len(BRANCHES), 3, BRANCHES)
 
 
 class TheBranchMeasuresRatherThanAssumes(unittest.TestCase):
@@ -110,13 +147,27 @@ class TheBranchMeasuresRatherThanAssumes(unittest.TestCase):
                 branch = absent_branch(path)
                 self.assertRegex(
                     branch,
-                    r"(absent no matter what license is installed"
+                    r"(absent no matter (what|which) license is installed"
                     r"|absence says nothing about the installed license)",
                 )
 
 
 class TheMeasuredValueIsPersistedAndReapplied(unittest.TestCase):
     """Criterion 2 — measuring without persisting re-measures on every later step."""
+
+    def test_every_branch_persists_the_measured_value(self):
+        """Swept, not scoped to one file.
+
+        An earlier version asserted this of Phase A alone, and a mutation removing the
+        persist instruction from Module 4 escaped. Measuring without persisting is not a
+        half-fix — it re-measures at every later step and leaves the field absent for
+        graduation, so the branch that reads it never settles.
+        """
+        for name, path in BRANCHES:
+            with self.subTest(name):
+                branch = absent_branch(path)
+                self.assertRegex(branch, r"[Pp]ersist", "%s measures without persisting" % name)
+                self.assertIn("license_record_limit", branch)
 
     def test_phase_a_persists_the_measured_limit(self):
         branch = absent_branch(PHASE_A)
@@ -169,13 +220,27 @@ class TheProcedureIsCitedNotRestated(unittest.TestCase):
         self.assertIn("1.32.9", branch)
         self.assertIn("get_sdk_reference(topic='response_schemas'", branch)
 
-    def test_the_unchanged_branches_are_intact(self):
-        """The two correct branches must survive the rewrite of the third."""
-        for name, path in BRANCHES:
-            with self.subTest(name):
+    def test_the_unchanged_module_6_branches_are_intact(self):
+        """The two correct branches must survive the rewrite of the third.
+
+        Scoped to the Module 6 pair rather than the discovered set: Module 4 states the
+        same three-way decision in its own vocabulary ("Present and greater than 0" /
+        "Present and equal to 0"), which is correct there and is not this assertion's
+        subject. Sweeping a wording check across sites that legitimately word it
+        differently is how a guard starts failing on correct content.
+        """
+        for path in (PHASE_A, PHASE_B):
+            with self.subTest(path.name):
                 text = squash(path.read_text(encoding="utf-8"))
                 self.assertIn("**`0` (no cap), or ≥ the dataset size**", text)
                 self.assertIn("Positive and below the dataset size", text)
+
+    def test_module_4_keeps_its_own_two_present_branches(self):
+        """The same requirement at the third site, in that site's own vocabulary."""
+        text = squash((SKILLS / "module-04-data-collection" / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertIn("Present and greater than 0", text)
+        self.assertIn("Present and equal to 0", text)
+        self.assertIn("confirmed via the Senzing MCP server at request time", text)
 
 
 class TheInvariantScopeNoteSurvives(unittest.TestCase):
