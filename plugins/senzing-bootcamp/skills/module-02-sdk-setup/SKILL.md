@@ -295,7 +295,7 @@ one outcome worse than not checking.
 
 ### The offer
 
-Only when a newer version is genuinely available. **One 👉 question, its own turn** (INV-005), and
+Only when a newer version is genuinely available. **One 👉 question, its own turn** (INV-251), and
 it ends the turn:
 
 > 👉 **Senzing [available] is available and you have [installed] installed — would you like to

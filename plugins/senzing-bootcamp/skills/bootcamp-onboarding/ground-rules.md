@@ -36,7 +36,8 @@ steering files.)
   zero tolerance.
 - **Prefix** every input-requiring question with `👉` at the start of the line, and wrap the
   question text in `**bold**`.
-- **Exactly one** 👉 question ends each yielding turn (zero or two-or-more is a violation).
+- **Exactly one** 👉 question ends each yielding turn — two-or-more breaches **INV-251**,
+  zero breaches **INV-225**.
 - ⛔ **A step with no 👉 question is NON-YIELDING: it does not end a turn, and it does not get a
   turn of its own.** Present it in the same turn as the next step that *does* ask, and let that
   step's single 👉 end the turn for both. This is not a licence to run ahead — every step is still

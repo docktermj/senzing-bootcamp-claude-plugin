@@ -292,7 +292,7 @@ class TheOfferIsOneQuestionAndDecliningIsSafe(unittest.TestCase):
         self.flat = re.sub(r"\s+", " ", step_1b())
 
     def test_exactly_one_pinned_question_in_the_step(self):
-        """INV-005: one 👉 ends the turn. More than one asked here would break it.
+        """INV-251: a turn carries no more than one 👉. More than one asked here would break it.
 
         Counts 👉 at the start of a line (optionally inside a blockquote), which is the
         form an *asked* question takes. A bare `👉` mid-sentence is prose describing the

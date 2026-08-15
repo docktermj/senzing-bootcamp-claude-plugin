@@ -168,8 +168,10 @@ holding four findings in conversation alone is why this paragraph exists.
 
 Interaction invariants, in rough order of how often they break:
 
-- **INV-005 / one 👉 per turn.** Exactly one, ending the turn. Zero or two is a
-  violation — including a stray question inside an acknowledgment.
+- **INV-251 / one 👉 per turn.** Exactly one, ending the turn. **Two or more breaches
+  INV-251; zero breaches INV-225** — including a stray question inside an
+  acknowledgment. (Not INV-005, which is the 👉 *marker* rule and says nothing about
+  count; relabelled 2026-08-15.)
 - **INV-133 / saved preferences.** A preference already in
   `config/bootcamp_preferences.yaml` must be honored and its question **not asked**.
   Pre-seed one (e.g. `verbosity: minimal`) on a second run and see whether it is

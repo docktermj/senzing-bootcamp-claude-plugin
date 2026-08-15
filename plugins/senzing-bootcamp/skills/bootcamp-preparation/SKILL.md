@@ -171,7 +171,7 @@ write in Step 6. Keep the list in module order so the journey map and transition
 ⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
 
 **Before asking, tell them the choice is not permanent** — that they can change it any time
-("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-005 requires the
+("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-251 requires the
 👉 question to end the turn, so nothing can follow it, and a reassurance delivered after the answer
 cannot inform the choice it was meant to inform.
 
@@ -253,7 +253,7 @@ questions.
   4. macOS (Intel)
   5. Windows (x86-64)
 
-  *(Internal: end the turn on this single 👉 question and wait — INV-005.)*
+  *(Internal: end the turn on this single 👉 question and wait — INV-251.)*
 
 - **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6

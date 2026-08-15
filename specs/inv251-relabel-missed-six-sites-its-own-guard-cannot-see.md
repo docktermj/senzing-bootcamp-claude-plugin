@@ -135,3 +135,42 @@ INV-246's reasoning applied to phrasing rather than to paths.
   undercounting-sweep root cause), `guards-enforce-class-scoped-rules-from-hardcoded-site-sets`
   and `any-language-contract-guard-checks-a-hardcoded-requirement-set` (the INV-246 family this
   extends from paths to phrasings), and INV-005, INV-051, INV-225, INV-246, INV-251.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- ⛔ **The spec said six sites. There were TWELVE.** Widening the guard found six more that no
+  sweep in this session had reached, and each was found only after a further widening:
+  - `tests/test_sdk_update_offer.py:295` and `.claude/skills/dry-run/phase3-conversational.md:171`
+    — found by extending the scan **beyond `plugins/`**. The second matters most: it is `dry-run`
+    **phase 3's own interaction checklist**, so a live-turn breach would have been reported against
+    INV-005.
+  - `ground-rules.md:39` — *"**Exactly one** 👉 question ends each yielding turn (zero or
+    two-or-more is a violation)"*, a canonical statement of **both** halves carrying **no citation
+    at all**. The guard could not see it because it flags *wrong* citations, not missing ones.
+  - `tests/test_non_yielding_steps.py:52`, and `tests/test_phase3_interaction_prose.py:18` and
+    `:221` — found only after the detector stopped requiring a quantity word.
+- ⛔ **The guard's matching unit was wrong TWICE, and site-by-site negative control is the only
+  reason that surfaced.** The spec's criterion — *"negative-controlled site by site, not by one
+  representative mutation"* — earned itself immediately:
+  - **Per line** (as shipped in `993df3a`): 3 of 8 mutations **escaped**. The corpus wraps prose,
+    so a citation and the 👉 it refers to sit on different physical lines.
+  - **Per paragraph**: fixed those three and produced **4 false positives** — consecutive
+    non-blank lines merge a whole bullet list, pairing a correct INV-251 bullet with an unrelated
+    INV-008 citation three bullets away.
+  - **Per window around the citation** (±140 chars of the joined paragraph): correct on both
+    counts, and what shipped.
+  A single representative mutation would have printed `LANDED` at every stage.
+- **The detector's third conjunct was still too narrow after all that.** It required a quantity
+  word, so *"INV-005 requires the 👉 question to **end the turn**, so nothing can follow it"* — a
+  turn-shape claim with no number in it — escaped. Widened to *quantity **or** ends-the-turn*,
+  which immediately surfaced the two `test_phase3_interaction_prose.py` sites.
+- **An `EXEMPT` clause was needed for correct text that names the wrong invariant deliberately.**
+  A passage saying *"interprets INV-251 … **not INV-005**"* states the distinction rather than
+  breaching it; without the carve-out the guard fails on its own corrections.
+- **One existing guard moved with the fix** — `test_non_yielding_steps.py` pinned
+  *"which INV-005 forbids"* for the zero case, which is INV-225. That failure was the guard working.
+- **Establishes no invariant.** This corrects labels and widens a guard; INV-251 and INV-225 were
+  already registered and their conditions are untouched.
+- ⛔ **Not runtime-verified.** Whether a guide ends a turn on one question remains a live-turn
+  property — INV-251's own disclosure. This work fixed *labels* and the guard's reach, nothing
+  about behaviour.

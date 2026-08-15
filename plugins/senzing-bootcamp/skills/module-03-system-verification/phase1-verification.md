@@ -9,7 +9,7 @@ overrides it.
 ⛔ **Every step in this phase is NON-YIELDING** — this module's only 👉 is the module-transition
 question at the end of `phase2-report-close.md`. So "one at a time" here means *in order and in
 full*, inside the turn that ends on that question; it does **not** mean one turn per step, because a
-turn ending on a step that asks nothing would end with zero 👉 (INV-005). A faithful walk therefore
+turn ending on a step that asks nothing would end with zero 👉 (INV-225). A faithful walk therefore
 generates code, runs it, registers a data source and loads records before the turn legally ends,
 and that is correct — the turn ends where the bootcamper is actually asked something. The concept
 and the checkpoint consequence are defined once in

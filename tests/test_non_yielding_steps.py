@@ -49,7 +49,7 @@ class TheScanIsNotVacuous(unittest.TestCase):
                 self.assertTrue(path.is_file(), "%s moved" % path)
 
     def test_the_one_question_rule_is_still_there(self):
-        """The new rule is an interpretation of INV-005, not a replacement for it."""
+        """The new rule interprets INV-251 (two-or-more) and INV-225 (zero), not INV-005."""
         self.assertIn(
             "**Exactly one** 👉 question ends each yielding turn", read(GROUND_RULES),
             "the rule the non-yielding step reconciles with is gone")
@@ -159,7 +159,7 @@ class ModuleOneStepOneIsMarkedNonYielding(unittest.TestCase):
             self.flat, r"(?i)does not get a turn of its own",
             "step 1 does not say it shares a turn")
         self.assertRegex(
-            self.flat, r"(?i)would end with \*?\*?zero\*?\*? 👉, which\s*INV-005 forbids",
+            self.flat, r"(?i)would end with \*?\*?zero\*?\*? 👉, which\s*INV-225 forbids",
             "the reason is not given, so the marking reads as a style note")
 
     def test_its_checkpoint_is_written_at_the_shared_boundary(self):

@@ -15,7 +15,7 @@ the situation it governs:
   moment with "other questions"; Module 0 could not, without paraphrasing a pinned string.
 * **Order (item 4).** Step 3 said "wait for the answer, then … tell them they can change it any
   time" — a reassurance that cannot inform the choice once the choice is made, and that cannot
-  follow the 👉 either, because INV-005 requires the question to end the turn.
+  follow the 👉 either, because INV-251 requires the question to end the turn.
 * **The knowledge check (items 5, 6).** The rules specified difficulty, sourcing, count and the
   exit path, and
   said only "evaluating the bootcamper's answer" — nothing about what to do when it is **wrong**,
@@ -218,7 +218,7 @@ class TheChangeabilityNotePrecedesItsQuestion(unittest.TestCase):
             reassure,
             question,
             "the can-change-it-any-time reassurance still follows the question, where it cannot "
-            "inform the choice and cannot legally follow the 👉 either (INV-005)",
+            "inform the choice and cannot legally follow the 👉 either (INV-251)",
         )
 
     def test_it_says_why_the_order_matters(self):

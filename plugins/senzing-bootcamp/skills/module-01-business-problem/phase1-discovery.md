@@ -11,7 +11,7 @@ for testing. We'll set up proper security measures as we go."
 
 ⛔ **This step is non-yielding: it does not get a turn of its own.** Present it in the same turn as
 Step 2 and let Step 2's 👉 end that turn — a turn ending here would end with **zero** 👉, which
-INV-005 forbids, and presenting it alone is not what "advance exactly one step at a time" asks for
+INV-225 forbids, and presenting it alone is not what "advance exactly one step at a time" asks for
 (`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol). This is also the step the post-nudge
 sequence lands on: on **no** to the model/effort switch, the reply turn carries this reminder and
 ends on Step 2's question.
