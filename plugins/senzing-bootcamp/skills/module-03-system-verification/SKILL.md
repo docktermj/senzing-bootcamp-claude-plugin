@@ -89,8 +89,9 @@ fallback.
   `get_sdk_reference` + `sdk_guide` and run it. Never generate SQL against `database/G2C.db`.
 - Counts and statistics come from `reporting_guide` and from the generated SDK export code, never
   from direct SQL.
-- System Verification starts **no** web service (Agent Rule 9). Any web service belongs to the
-  separate Truth Set visualization module, which starts and stops it within its own phases.
+- System Verification starts **no** web service (INV-087; `phase1-verification.md` → Agent Rules,
+  *No orphaned processes*). Any web service belongs to the separate Truth Set visualization module,
+  which starts and stops it within its own phases.
 - Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`) are
   later porting phases; where referenced, perform the described action directly (write markers to
   `config/bootcamp_progress.json`, fetch/build inline, etc.).

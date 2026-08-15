@@ -291,7 +291,9 @@ questions.
 
   Annotate an option **only where the Module 2 routing rules actually distinguish it** — that is,
   where the platform forces a language into a container — so the trade-off is visible at the
-  decision point. All four platform cases:
+  decision point. The rules are the numbered list under "Routing rules (apply in order)" in
+  `../module-02-sdk-setup/SKILL.md`; the ordinals below index that list, so re-check them there
+  rather than trusting the numbers if that list is ever edited. All four platform cases:
   - **macOS Apple Silicon:** per-option — "Python — runs via Docker (the SDK is Linux-only);
     Java / C# — native." (routing rules 1 and 3)
   - **macOS Intel:** platform-wide — every language runs via Docker; there is no native Intel-Mac

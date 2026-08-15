@@ -172,8 +172,12 @@ expected record count for the report.
    pipeline pattern; never direct SQL). Registering **before** the load upholds the "register
    before load" guarantee so the load never fails with `SENZ2207`.
 
-Save the load artifacts under `src/system_verification/` (Agent Rule 5). Once the Truth Set is
-loaded, continue to Step 2 below to visualize it.
+Save the load artifacts under `src/system_verification/` — that is where INV-050's project layout
+places them, and they are **this** module's artifacts even though they sit in a directory named for
+another (INV-087 keeps the two modules separate). System Verification's own re-run cleanup is
+required to leave them untouched, so nothing here is lost if that module runs again
+(`../module-03-system-verification/phase1-verification.md` → Agent Rules, *Overwrite on re-run*).
+Once the Truth Set is loaded, continue to Step 2 below to visualize it.
 
 ## Step 2: Build and run the visualization server in your chosen programming language
 

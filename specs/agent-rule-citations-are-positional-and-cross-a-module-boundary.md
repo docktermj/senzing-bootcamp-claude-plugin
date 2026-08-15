@@ -106,3 +106,27 @@ Two structural properties make this worse than a one-off mis-citation:
 - Related specs: `module3-synthetic-verification-data` (rewrote the Agent Rules list without
   re-checking its external citations), `final-review-doc-coherence` (the prior stale-citation
   sweep, which looked at `INV-NNN` references only), and INV-050, INV-087, INV-183, INV-246.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The class is THREE cross-file citation sites, not the two this spec enumerates.** Deriving the
+  guard's site set by scanning (INV-246) rather than from this spec's `## Affected files` found
+  `bootcamp-preparation/SKILL.md:294-303`, which indexes Module 2's **"Routing rules (apply in
+  order)"** list (`module-02-sdk-setup/SKILL.md:384-396`) by four separate ordinals — "(rule 2)",
+  "(rule 5)", "(routing rules 1 and 3)", "(rules 1 and 4)" — naming the *set* but never the *file*.
+  All four were re-checked against that list and **resolve correctly today**, which is the same
+  correct-by-luck state the two named sites were in. It received a pointer naming the defining file
+  and the list's own heading.
+- **One flagged site was left alone, deliberately.** `phase1-verification.md:419` ("Per Agent Rule
+  4") is **intra-file** — the Agent Rules list is defined at `:51` of that same file, so a reader
+  has it in front of them. The guard permits intra-file ordinals and targets the cross-file case,
+  which is the one a reader cannot resolve.
+- **A mutation ESCAPED on the first run and the guard was strengthened.** `M2-drop-INV-087-from-viz`
+  removed the INV-087 citation from the artifact-placement sentence and passed, because the original
+  assertion was `"INV-087" in text` **file-wide** and the ID appears elsewhere in that file. Asserting
+  a token appears *somewhere* rather than that the claim holds *where it is made* is this repo's
+  recurring escape. The assertion is now bounded to the passage, after which M2 fails as intended;
+  all four mutations were then re-run against the scoped guard and all four are caught.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`. The claims
+  are about the plugin's own cross-references and were re-read directly.
