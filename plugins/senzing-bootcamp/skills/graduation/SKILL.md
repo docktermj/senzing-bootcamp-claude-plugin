@@ -317,7 +317,7 @@ For each finding, append a `## Improvement:` entry to
 - **`Source:` `self-observed (assistant retrospective)`** — not `bootcamper-reported` (INV-116).
   A maintainer must be able to tell the two apart; they deserve different weight.
 - **`Module:`** the module where the friction occurred, even though you are filing at graduation.
-- **`Routing:`** the Step 2b triage verdict (`plugin` | `mcp-server` | `both` | `unclear`) with its
+- **`Routing:`** the Step 2b triage verdict (`plugin` | `mcp-server` | `both` | `host` | `unclear`, INV-248) with its
   one-line reason. Retrospective findings skew toward MCP-server issues — a tool behaving differently
   than documented is exactly the defect class a bootcamper cannot report — so triage each one rather
   than defaulting it to `plugin`.

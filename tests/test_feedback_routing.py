@@ -1,5 +1,18 @@
-"""Feedback is triaged plugin-vs-MCP-server, recorded locally either way, and only
-forwarded upstream on an explicit yes.
+"""Feedback is triaged to the component that OWNS it, recorded locally either way, and
+only forwarded upstream on an explicit yes.
+
+⚠️ **Not "plugin-vs-MCP-server" -- that framing was the defect.** Until 2026-08-15 both this
+docstring and the shipped taxonomy assumed a two-component world, so a defect in the Claude
+Code harness had nowhere to go: it survives a perfect plugin AND a perfect server, which the
+two-question test mapped to `both` ("the plugin repeated or failed to guard an **upstream**
+defect") when no upstream Senzing defect exists. Two bootcamper reports on 2026-08-15 hit it,
+and each wrote in its own `Routing:` field that the option set could not express the case. The
+`host` verdict exists for that class (`specs/feedback-routing-has-no-verdict-for-a-defect-
+neither-component-owns.md`).
+
+Enforces **INV-248** (the closed five-verdict set, stated identically at every site) and
+**INV-249** (only `mcp-server`/`both` may be offered upstream, and the shipped rule says why
+`host` cannot be -- `submit_feedback` reaches Senzing, which does not ship the harness).
 
 A bootcamper reports a symptom; identifying which component owns it is the plugin's job.
 Two of the defects filed during development were upstream — `mapping_workflow` returning a
@@ -39,7 +52,29 @@ GRADUATION = PLUGIN / "skills" / "graduation" / "SKILL.md"
 ONBOARDING = PLUGIN / "skills" / "bootcamp-onboarding" / "onboarding-flow.md"
 
 FEEDBACK_PATH = "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"
-VERDICTS = ("plugin", "mcp-server", "both", "unclear")
+#: The closed verdict set. `host` was added 2026-08-15; see the module docstring.
+VERDICTS = ("plugin", "mcp-server", "both", "host", "unclear")
+
+#: Verdicts whose entries may be OFFERED for upstream submission. `submit_feedback` reaches
+#: Senzing, so this set is exactly the ones Senzing owns -- `host` is excluded by definition,
+#: not by preference: Senzing does not ship the Claude Code harness.
+UPSTREAM_ELIGIBLE = ("mcp-server", "both")
+
+
+def verdict_set_sites():
+    """Every shipped file stating the verdict set, DERIVED not listed (INV-246).
+
+    A hardcoded list certifies the sites the author already thought of; the site added later
+    is the only one that matters. Membership floor below keeps the scan honest.
+    """
+    hits = []
+    for path in sorted(PLUGIN.rglob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        # A verdict-set site names `plugin` and `mcp-server` within one Routing line.
+        for line in text.splitlines():
+            if "Routing:" in line and "mcp-server" in line and "plugin" in line:
+                hits.append((path, line))
+    return hits
 
 
 def read(path):
@@ -165,7 +200,7 @@ class TriageStepExists(unittest.TestCase):
     def test_workflow_has_a_triage_step(self):
         self.assertIn("## Step 2b: Triage", read(FEEDBACK))
 
-    def test_all_four_verdicts_are_defined(self):
+    def test_every_verdict_is_defined(self):
         step = triage_step()
         for verdict in VERDICTS:
             with self.subTest(verdict=verdict):
@@ -182,6 +217,105 @@ class TriageStepExists(unittest.TestCase):
         squashed = plain(triage_step())
         self.assertIn("Would this still happen if the bootcamp plugin were perfect?", squashed)
         self.assertIn("Would this still happen if the Senzing MCP server were perfect?", squashed)
+
+    def test_the_test_asks_about_the_host_too(self):
+        """Two questions alone route a harness defect to `both`, which is wrong.
+
+        A Claude Code harness defect survives a perfect plugin AND a perfect server. Without a
+        third question the stated rule yields `both` — "the plugin repeated or failed to guard
+        an upstream defect" — and `both` is upstream-eligible, so the wrong verdict would offer
+        to send a harness report to Senzing.
+        """
+        squashed = plain(triage_step())
+        self.assertIn(
+            "Would this still happen with a perfect bootcamp plugin and a perfect Senzing MCP "
+            "server?", squashed,
+            "the triage test no longer asks whether NEITHER component owns the defect, so a "
+            "harness report falls through to `both` or `unclear`")
+
+    def test_host_is_defined_as_owned_by_the_claude_interface(self):
+        #: ⛔ Anchored to the TABLE ROW, not to tokens anywhere in the step. A mutation escaped
+        #: during negative-control: deleting the `host` row still passed, because both "`host`"
+        #: and "Claude interface" also appear in the discriminating question above the table.
+        #: Every verdict needs a row — the table is where a triaging guide actually looks.
+        rows = [l for l in triage_step().splitlines()
+                if l.startswith("| `host`")]
+        self.assertEqual(
+            1, len(rows),
+            "the verdict table has no `host` row; the discriminating question can name a "
+            "verdict the table never defines, which is how a guide ends up guessing")
+        self.assertRegex(
+            rows[0], r"(?i)Claude interface",
+            "the host row does not name the Claude interface as the owner, leaving it "
+            "indistinguishable from `unclear`")
+        self.assertRegex(
+            rows[0], r"(?i)neither the bootcamp nor Senzing",
+            "the host row does not say that NEITHER component ships it — the fact that "
+            "decides it is not forwarded upstream")
+
+
+class HostIsNeverForwardedUpstream(unittest.TestCase):
+    """`submit_feedback` reaches Senzing, which does not ship the Claude Code harness.
+
+    This is the sharp end of the taxonomy: a verdict that is upstream-eligible by accident
+    misroutes a bootcamper's report to a party that cannot act on it, anonymously, with no
+    reply channel. `host` must be excluded by rule, and the rule must say why.
+    """
+
+    def test_the_forward_step_excludes_host(self):
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"For `plugin`, `host` or `unclear`, skip this step entirely",
+            "Step 3c no longer skips the forward for a `host` verdict")
+
+    def test_only_the_eligible_verdicts_trigger_the_offer(self):
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"Only when Step 2b's verdict is .{0,6}`mcp-server`.{0,6} or .{0,6}`both`",
+            "the forward step's eligibility clause changed; verify `host` is still excluded")
+        for verdict in VERDICTS:
+            if verdict not in UPSTREAM_ELIGIBLE:
+                with self.subTest(verdict=verdict):
+                    self.assertNotRegex(
+                        step, r"verdict is \*\*`%s`\*\*" % re.escape(verdict),
+                        "%r is not upstream-eligible but the forward step names it as a "
+                        "trigger" % verdict)
+
+    def test_the_reason_host_cannot_be_forwarded_is_stated(self):
+        """A rule with no reason gets 'helpfully' relaxed by the next editor."""
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"(?i)submit_feedback.{0,40}reaches \*\*Senzing\*\*|reaches Senzing",
+            "Step 3c no longer says WHERE submit_feedback goes, which is the whole reason a "
+            "harness report must not be sent through it")
+
+
+class EverySiteStatesTheSameVerdictSet(unittest.TestCase):
+    """One taxonomy, stated in several places — they must not drift apart (INV-246).
+
+    Sites are DERIVED by scanning shipped Markdown for a `Routing:` line naming the verdicts,
+    never from a hardcoded path list: a listed guard certifies the files already thought of and
+    is blind to a module added later.
+    """
+
+    def test_the_scan_finds_the_sites_known_today(self):
+        """Membership floor — stronger than a count, which survives one site swapping for another."""
+        found = {p.name for p, _ in verdict_set_sites()}
+        for expected in ("feedback.md", "SKILL.md"):
+            with self.subTest(site=expected):
+                self.assertIn(expected, found,
+                              "the verdict-set scan no longer reaches %s" % expected)
+
+    def test_every_site_lists_every_verdict(self):
+        sites = verdict_set_sites()
+        self.assertGreaterEqual(len(sites), 2, "the scan matched too few sites to be meaningful")
+        for path, line in sites:
+            for verdict in VERDICTS:
+                with self.subTest(site=path.name, verdict=verdict):
+                    self.assertIn(
+                        verdict, line,
+                        "%s states the verdict set without %r — the taxonomy has drifted "
+                        "between its sites (INV-246)" % (path.name, verdict))
 
     def test_each_verdict_carries_concrete_examples(self):
         """Criteria without examples get applied inconsistently."""
@@ -238,7 +372,18 @@ class NothingLeavesWithoutConsent(unittest.TestCase):
     def test_offer_is_gated_on_the_verdict(self):
         squashed = plain(self.step)
         self.assertIn("Only when Step 2b's verdict is", squashed)
-        self.assertIn("For `plugin` or `unclear`, skip this step entirely", squashed)
+        # Derived from UPSTREAM_ELIGIBLE rather than pinned as a sentence, so adding a sixth
+        # verdict cannot pass by leaving this assertion's literal untouched. Each non-eligible
+        # verdict must appear in the skip clause; the clause's prose shape is not pinned here.
+        clause = squashed[squashed.index("skip this step entirely") - 120:
+                          squashed.index("skip this step entirely")]
+        for verdict in VERDICTS:
+            if verdict not in UPSTREAM_ELIGIBLE:
+                with self.subTest(verdict=verdict):
+                    self.assertIn(
+                        "`%s`" % verdict, clause,
+                        "%r is not upstream-eligible but the skip clause does not name it, so "
+                        "the forward step may be offered for it" % verdict)
 
     def test_the_question_is_pinned_and_numbered(self):
         self.assertIn(

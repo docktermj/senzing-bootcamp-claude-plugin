@@ -77,24 +77,33 @@ context so you do not ask the bootcamper to repeat it):
 If the bootcamper gives everything in one message, do not re-ask: confirm what you
 captured and proceed.
 
-## Step 2b: Triage — plugin issue, or Senzing MCP server issue?
+## Step 2b: Triage — plugin issue, Senzing MCP server issue, or neither?
 
 Decide, silently (no 👉 question), which component the report is actually about. This is an
 assessment you make from the captured context, not something to ask the bootcamper — they reported a
 symptom; identifying the component is the plugin's job.
 
-**The discriminating test — ask it both ways:**
+**The discriminating test — ask the third question first, because a yes there settles it:**
 
+- *Would this still happen with a perfect bootcamp plugin **and** a perfect Senzing MCP server?*
+  If yes → **host** (the bootcamper's Claude interface owns it; neither component ships it).
 - *Would this still happen if the bootcamp plugin were perfect?* If yes → **MCP server**.
 - *Would this still happen if the Senzing MCP server were perfect?* If yes → **plugin**.
-- Yes to both → **both** (the plugin repeated or failed to guard an upstream defect).
-- Neither answer is clear → **unclear**.
+- Yes to the middle two → **both** (the plugin repeated or failed to guard an upstream defect).
+- Nothing above is clear → **unclear**.
+
+⚠️ **`host` exists because the first two questions alone give the wrong answer (INV-248).** A defect in the
+Claude Code harness survives a perfect plugin *and* a perfect server, so a two-question test lands
+it on `both` — "the plugin repeated or failed to guard an **upstream** defect" — when there is no
+upstream Senzing defect at all. `unclear` is wrong for it too: that verdict means the component
+*cannot be identified*, and here it can be, exactly.
 
 | Verdict | Looks like | Examples seen in the field |
 |---|---|---|
 | `plugin` | The bootcamp's own skills, hooks, bundled scripts, questions, gates, banners, ordering, module content or generated deliverables | A question asked twice; a stale instruction; a PDF generator dropping a table off the page; a screenshot helper capturing the wrong tab; a module omitted from the Core path |
 | `mcp-server` | A Senzing MCP **tool** returned wrong, incomplete, truncated or unusable output, or its reference data does not match the installed SDK | `mapping_workflow` step-3 validation rejecting a payload with the reason truncated away; `get_sdk_reference` not covering parameter shapes; a flag documented for one language binding but absent from another; a tool unreachable or erroring |
 | `both` | The plugin's guidance propagated or failed to guard an upstream defect | The plugin's own docs repeated an incorrect flag claim that came from a tool |
+| `host` | The bootcamper's **Claude interface** owns it — a harness prompt, dialog, toggle or session control that neither the bootcamp nor Senzing ships, and neither can fix | The Claude Code "Set up auto mode for your environment?" prompt appearing over a pending 👉 question during the onboarding preface (reported twice on 2026-08-15) |
 | `unclear` | The symptom is real but the component cannot be identified from the evidence | Wrong entity-resolution results with no way to tell whether the mapping, the SDK, or the guidance caused it |
 
 ⛔ **The verdict never changes whether the entry is recorded locally.** Every submitted entry is
@@ -118,7 +127,7 @@ rewrite the file, so earlier entries are preserved.
 **Module:** [module name or "General"]
 **Priority:** [High/Medium/Low]
 **Source:** bootcamper-reported
-**Routing:** [plugin | mcp-server | both | unclear] — [one-line reason, per Step 2b]
+**Routing:** [plugin | mcp-server | both | host | unclear] — [one-line reason, per Step 2b]
 **Upstream:** [not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason]
 
 ### What happened
@@ -167,8 +176,14 @@ never silently lost (INV-015).
 ## Step 3c: Offer to forward an MCP-server issue upstream
 
 Only when Step 2b's verdict is **`mcp-server`** or **`both`**, and only after Step 3b has confirmed
-the local entry is on disk. For `plugin` or `unclear`, skip this step entirely — set
+the local entry is on disk. For `plugin`, `host` or `unclear`, skip this step entirely — set
 `**Upstream:** not applicable` and go to Step 4.
+
+⛔ **`host` is never forwarded, and the reason is not that it is unimportant (INV-249).** `submit_feedback`
+reaches **Senzing**. A report about the Claude Code harness sent there arrives at a party that does
+not ship it and cannot fix it — a misrouted report, which the bootcamper cannot follow up because
+submissions are anonymous. There is no upstream channel for this class from inside the bootcamp;
+the local entry is the whole record.
 
 The Senzing MCP server accepts reports through its own `submit_feedback` tool, and an upstream defect
 can only be fixed upstream — recording it here alone means the bootcamper hits it again next time,
@@ -231,7 +246,7 @@ never automatic.
   ```
 
   Then, in one line: "Saved to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. You can add more anytime by saying \"bootcamp feedback\"."
-- Do NOT submit feedback anywhere external on your own initiative. The **only** sanctioned external path is Step 3c: an `mcp-server`/`both` verdict, the local entry already saved, the exact message shown, and the bootcamper answering yes to the pinned question. Everything else — `plugin` and `unclear` verdicts, and any other destination — stays local.
+- Do NOT submit feedback anywhere external on your own initiative. The **only** sanctioned external path is Step 3c: an `mcp-server`/`both` verdict, the local entry already saved, the exact message shown, and the bootcamper answering yes to the pinned question. Everything else — `plugin`, `host` and `unclear` verdicts, and any other destination — stays local.
 - The exit banner and confirmation are statements, not questions. Immediately after them, return the bootcamper to exactly where they left off by **re-presenting the exact pending 👉 bootcamp question** they were on, verbatim (INV-006 ask-once), so that exactly one 👉 ends the turn (INV-005). Do not make them re-navigate, and do not merge the feedback questions with the resumed bootcamp question into one turn.
 
 ## Silent in-run append (no bootcamper involvement)
