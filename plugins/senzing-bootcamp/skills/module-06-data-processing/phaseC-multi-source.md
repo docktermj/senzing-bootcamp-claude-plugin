@@ -15,6 +15,14 @@ source. Enumerate every data source. For each: source name / DATA_SOURCE identif
 count, quality score, mapping status, loaded status. Present a summary table so the bootcamper
 can review and confirm the list is complete.
 
+⛔ **The `record_count` shown here is a figure presented to the bootcamper, so it carries the
+reconciliation requirement with it.** (INV-243) Phase B reconciles each count against that
+source's own input before writing it; a source whose count was never reconciled — one loaded
+outside this bootcamp, or carried in from an earlier session — MUST be shown as unverified rather
+than as a plain number (INV-245). A table is where an unchecked figure acquires the look of a
+result, which is exactly the shape this rule exists for: the numbers are plausible, they sum, and
+nothing about them invites a second look.
+
 **Checkpoint:** write step 12.
 
 ## 13. Analyze dependencies

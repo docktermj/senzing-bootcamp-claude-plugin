@@ -136,6 +136,12 @@ validation baseline before Module 7.
 Update `docs/loading_strategy.md` with: final load order and rationale, per-source statistics,
 cross-source match summary, issues and resolutions, recommendations for future loads.
 
+⛔ **The per-source statistics written here are reconciled figures or they are labelled as
+unreconciled — never bare numbers.** (INV-243/INV-245) This document outlives the session and is
+read as the record of what was loaded, so an unchecked count written into it is the hardest of all
+these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it
+the load is long finished.
+
 **Checkpoint:** write step 27.
 
 ## Document results and complete (always)
@@ -296,6 +302,7 @@ which is exactly the gap the UAT percentages below leave open.
    print("top-level keys:", sorted(first))
    print("carries RELATED_ENTITIES:", "RELATED_ENTITIES" in first)
    ```
+
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked

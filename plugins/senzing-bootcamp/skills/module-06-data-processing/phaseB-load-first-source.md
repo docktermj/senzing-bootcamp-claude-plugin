@@ -80,6 +80,26 @@ hardcoded figure:
 actual loaded count in `config/data_sources.yaml`. On failure, set `load_status` to `failed` and
 add an `issues` entry describing the error. Update `updated_at` either way.
 
+⛔ **Reconcile the loaded count against this source's own input *before* writing it — the value you
+are about to overwrite is the baseline.** (INV-243) `record_count` already holds the count Data
+collection **measured in the collected file**, alongside `expected_record_count` (what the provider
+stated), recorded there precisely "so the two can be compared here and re-checked later". Compare
+the loader's success count against that existing `record_count` first, and record the outcome under
+`validation_checks` as `load_count_matches_source` — the same auditable idiom Data collection
+already uses for `record_count_matches_expected`, so the comparison lives in the registry rather
+than only in the turn that ran it.
+
+⛔ **If the two disagree, write the discrepancy rather than the count** (INV-245): leave the
+existing `record_count` in place, set `load_status` to `failed`, record **both** figures in the
+`issues` entry, and do not present the loaded count as a result. Overwriting on a mismatch is the
+worst outcome available — it destroys the input baseline and files a partial load as a complete
+one, after which nothing downstream can tell the difference. This is the point where the figure
+enters durable state: `phaseC` step 12 reads it straight back out and presents it to the
+bootcamper, and Phase D writes it into `docs/loading_strategy.md`, so a number that was never
+checked here is never checked at all — it simply acquires the authority of having been written
+down. Reporting the aggregate alone does not discharge this: the failure mode this exists for
+produces figures that are plausible and sum correctly.
+
 **⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with
 single-threaded loading, entity resolution gets progressively slower as the database grows.
 

@@ -373,7 +373,10 @@ elsewhere.**
 Record **both** counts in the source's `config/data_sources.yaml` entry — `record_count` (what you
 counted) and `expected_record_count` (what the server stated) — and both checks under
 `validation_checks` (`http_status_ok`, `record_count_matches_expected`), so the comparison stays
-auditable instead of living only in the turn that ran it.
+auditable instead of living only in the turn that ran it. (INV-243: a per-source figure is
+reconciled against that source's own input before it is shown, and this registry entry is where
+that reconciliation stays checkable — Module 6 Phase B compares its loaded count against the
+`record_count` written here.)
 
 **If the bootcamper declines CORD data** or needs something different, offer secondary options:
 
@@ -476,7 +479,7 @@ Module 5 can evaluate.
 > it with `version: "1"` and an empty `sources:` mapping first. For each source set: `name`,
 > `file_path`, `format`, `record_count` (the count you **measured** in the collected file; null only
 > when no file was collected, e.g. a documented-location-only source), `expected_record_count` (the
-> count the provider stated, so the two can be compared here and re-checked later — for CORD this is
+> count the provider stated, so the two can be compared here and re-checked later (INV-243) — for CORD this is
 > the MCP `record_count`, capped as [CORD fetch integrity](#cord-fetch-integrity) describes; null
 > when no independent figure exists), `file_size_bytes`,
 > `quality_score: null`, `mapping_status: pending`, `load_status: not_loaded`,

@@ -90,3 +90,50 @@ forward sweep exists to ask by hand.
 - Upstream: not applicable
 - Related specs: `specs/orchestrator-per-source-stats-vs-static-scaffold-counters.md` (registered
   INV-243 and, on review, INV-245)
+
+## Deviations from this spec, and why (2026-08-14)
+
+Implemented as proposed, all five criteria. Four things differed, and two of them made the fix
+better than the spec described.
+
+1. **A fourth site exists and was already compliant.** The derived sweep found
+   `module-04-data-collection/SKILL.md` writing `record_count` into the registry — twice, in the
+   registry *schema* block and in the CORD fetch instruction — and both already implement INV-243's
+   discipline: they record `record_count` (measured), `expected_record_count` (provider-stated) and
+   `record_count_matches_expected` under `validation_checks`, "so the comparison stays auditable
+   instead of living only in the turn that ran it." That predates INV-243 and states it exactly.
+   Nothing was changed there but the citation (INV-183): the rule was reachable in prose and not by
+   ID. **The pattern already existed in the plugin, so Phase B was pointed at it rather than
+   inventing a parallel one** (INV-003).
+
+2. **Phase B was destroying the baseline it needed to reconcile against — the spec did not see
+   this.** The spec says to compare the loaded count "against that source's input count". Phase B
+   writes the loaded count into **`record_count`**, which is the *same field* Data collection used
+   for the count it measured in the collected file. So the reconciliation's baseline is the value
+   the write overwrites. The shipped fix therefore compares **first**, records the outcome as
+   `load_count_matches_source` in the registry's own `validation_checks` idiom, and on a mismatch
+   **leaves the existing `record_count` in place** rather than overwriting — because overwriting on
+   a mismatch destroys the input figure *and* files a partial load as a complete one, after which
+   nothing downstream can tell the difference. Reusing the registry's recorded count also keeps one
+   source of truth instead of re-counting the input file at load time.
+
+3. **The guard needed two derived signals, not one.** A per-source figure becomes durable in two
+   places: the registry (`record_count` + `data_sources.yaml` + a write verb) and a deliverable
+   (`per-source statistics` → `docs/loading_strategy.md`). ⚠️ The first version had only the
+   registry signal, and the mutation reverting Phase D **escaped** — Phase D was outside the derived
+   set entirely, so criterion 3 was unguarded. Two destinations, two signals, and the second is
+   the one with the worse failure mode: nothing re-derives a number written into a document.
+
+4. **The detector was deliberately narrowed after a false-positive pass.** A first version keyed on
+   `record count` in prose and flagged seven blocks that are not INV-243 sites at all —
+   `phase2-discover.md` uses "record count" for an *entity's* record count, Module 4 for a licence
+   limit, and `phase1-quality-assessment.md` in a source-list warning. A guard that fails on correct
+   content is worse than one that misses, so the trigger is the **action** (writing the registry
+   field, or writing per-source statistics to a document), not the vocabulary. That narrowing is the
+   caveat INV-246 already carries, applied here.
+
+**Mutation-tested: 7 mutations, 1 escaped and was closed, all 7 caught after.** `M1-revert-phaseB`
+restores the pre-fix registry write and fails **7** tests; `M7-hardcode-sites` replaces the
+derivation with a fixed list and errors, which is what proves the sweep is real (INV-246);
+`M2-overwrite-on-mismatch` and `M3-drop-validation-check` pin the two halves the spec did not ask
+for; `M6-drop-module4-citation` pins the fourth site.
