@@ -372,7 +372,8 @@ steering files.)
   persisted, or used with external tools"* — so this rule applies the server's own limitation
   rather than overriding its advice. Adopting it is silent: every load reports success, and the
   visualization then renders an empty graph three modules later with nothing naming the cause
-  (the blank-render failure INV-077 exists to prevent). Use the persistent absolute SQLite path
+  (the blank-render failure INV-250 makes a reported failure rather than a passing step; INV-077
+  governs *which* module produces that visualization, not what it must contain). Use the persistent absolute SQLite path
   instead. This is INV-200's override rule applied to a connection string rather than a path.
 - Layout: source -> `src/`; scripts -> `src/scripts/`; docs and all `*.md` (except
   `README.md` and the generated `production/` project's own `.md` files) -> `docs/`; data -> `data/`; SQLite DB -> `database/G2C.db`; config ->

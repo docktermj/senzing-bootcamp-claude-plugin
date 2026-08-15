@@ -157,3 +157,43 @@ missing is the *rule* the guidance cites as its authority.
   `generalized-invariants-leave-no-pointer-on-the-narrower-rule` and
   `invariants-index-flattens-partial-supersession` (the same supersession-bookkeeping class), and
   INV-038, INV-070, INV-077, INV-091, INV-246.
+
+## Invariants introduced
+
+- `INV-250` — The Truth Set visualization step MUST NOT present an **empty** visualization as the
+  workstation-verification step passing; where the visualization renders no entities, the step
+  reports that as a failure and names the likely cause. (Recorded in `specs/INVARIANTS.md`,
+  indexed under *Visualization and screenshots*.)
+
+## Deviations from this spec, and why (2026-08-15)
+
+- ⚠️ **The maintainer chose the report-only wording over the two alternatives this spec drafted**,
+  2026-08-15. INV-250 binds the **step's reporting** and deliberately does **not** mandate a
+  detection mechanism: a detect-and-confirm form cannot be verified offline (INV-108), and a
+  criterion nobody can run is worse than a narrower rule that holds. The rejected third option —
+  re-registering INV-038's clause verbatim — was a purpose rather than a testable MUST, which is
+  the shape that let it be dropped unnoticed in the first place.
+- ⛔ **The class is THREE live sites, not the one this spec claimed.** `## Proposed change` item 4
+  reported the sweep as finding a single instance — but that sweep scanned `plugins/` only, and
+  saying so in the spec did not make the scope correct. Re-run across `tests/` and `specs/`, the
+  same misattribution also sat in **`tests/test_internal_connection_string_rejected.py:33`**
+  (*"the outcome INV-077 forbids"*) and its assertion message at `:131`. Both corrected here, the
+  docstring carrying a dated note saying what it previously read. A fourth instance lives in
+  `specs/internal-connection-string-breaks-the-viz-server.md:43` and was **left alone**: it is an
+  implemented spec's historical record, and correcting spec content is `feedback-to-specs`' job.
+- **The step names the cause without writing `internal://`.** The drafted text used the literal,
+  which reddened `test_no_file_offers_internal_connection_string` — an existing guard that permits
+  **exactly one** mention of the scheme, in `ground-rules.md`, because forbidding it requires
+  naming it. That design is deliberate and older than this spec, so the step describes the cause
+  by its property and cites **INV-231** instead, pointing at the ground rules for the scheme
+  itself. The guard's assertion was re-scoped to match.
+- **`tests/test_invariant_enforcer_citations.py` needed `EXPECTED_PAIRS` 62 → 63**, because
+  INV-250 names its enforcing test and that file counts invariant→test pairs deliberately.
+- ⛔ **A guard assertion failed for the wrong reason and was made non-vacuous.** The index check
+  first sliced `INVARIANTS.md` between literal boundaries that do not exist — the index is an
+  `###` under a `##`, so the slice came out **empty** and the assertion failed as if INV-250 were
+  missing. It now slices to the append marker and asserts the slice is non-trivial first, so a
+  collapsed slice can never read as a passing or failing verdict about the index.
+- **Not runtime-verified, exactly as the spec's criterion states.** Whether a live render is
+  non-empty needs `libSz.so` and loaded data, absent here. Seven mutations prove the rule ships and
+  is cited where it binds; none proves a bootcamper saw a populated graph. `dry-run` is owed.

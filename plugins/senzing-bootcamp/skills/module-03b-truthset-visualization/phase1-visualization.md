@@ -341,6 +341,16 @@ The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeo
 | `GET /api/matchkeys` | HTTP 200; `match_keys` (most-frequent first) + `distinct` + `capped` |
 | `GET /api/features` | HTTP 200; `features` (per-feature score-bucket counts), `sampled`, `multi_record_total`, `capped` |
 
+⛔ **An empty visualization is a FAILED verification, never a passing one (INV-250).** This step
+exists to show the bootcamper that Senzing works on their workstation, so a page that renders with
+`entities_total` at zero has demonstrated the opposite. If `/api/stats` reports no entities — or the
+graph opens empty — say so plainly, name the likely cause, and do **not** move on as though the
+step passed. **The most common cause is a datastore connection that is not persistent and shareable
+across processes (INV-231):** the loader writes to one place and this server reads another, so every
+load reports success and nothing fails until this page comes up blank three modules later. The
+connection-string rule and the scheme it forbids are in `ground-rules.md` → "Mandatory gates and
+step order". Re-check the datastore before rebuilding the server.
+
 The live page is a **single consolidated, tabbed app** — the one visualization artifact (no
 separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
 shown:

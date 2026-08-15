@@ -30,7 +30,11 @@ Both halves matter and they fail differently:
   on the advice.
 
 The failure INV-231 prevents is silent and late: both processes exit 0, every load reports
-success, and the blank render surfaces three modules later — the outcome INV-077 forbids.
+success, and the blank render surfaces three modules later — which **INV-250** makes a
+reported failure rather than a passing step. (Corrected 2026-08-15: this read "the outcome
+INV-077 forbids". It does not — INV-077 governs which module produces the visualization
+and when, and an empty graph satisfies it. See
+`specs/inv077-supersession-dropped-the-visualization-verification-guarantee.md`.)
 
 Enforces **INV-231**. Source spec: `specs/internal-connection-string-breaks-the-viz-server.md`.
 
@@ -128,7 +132,7 @@ class InternalConnectionStringRejected(unittest.TestCase):
             "`internal://` is a single-process in-memory datastore and the bootcamp runs "
             "the visualization server in a separate process against the same CONNECTION, "
             "so it renders an empty graph while every load reports success (INV-231, "
-            "INV-077). sdk_guide recommends it; the bootcamp must not. Offenders:\n"
+            "INV-231). sdk_guide recommends it; the bootcamp must not. Offenders:\n"
             + "\n".join(offenders),
         )
 
