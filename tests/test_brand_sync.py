@@ -15,8 +15,10 @@ proves the fallbacks are in sync with the source of truth.
 
 Run:  python3 -m unittest discover -s tests
 """
+import glob
 import importlib.util
 import os
+import re
 import sys
 import types
 import unittest
@@ -24,6 +26,26 @@ import unittest
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPTS = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "scripts")
 sys.path.insert(0, SCRIPTS)
+
+#: A module-level inlined fallback copy of the brand palette. INV-184 binds "every shipped
+#: generator" that has one, so the set is DISCOVERED here rather than listed (INV-246).
+FALLBACK_CONSTANT = re.compile(r"^_?FALLBACK_[A-Z_]+\s*=", re.M)
+
+#: Carriers known to be covered when this sweep was written. A floor, not the site set:
+#: the scan decides what must be covered, this only stops the scan degrading to silence.
+KNOWN_CARRIERS = frozenset({
+    "brand_tokens", "senzing_viz_server", "generate_recap_pdf", "generate_discoveries_pdf",
+})
+
+
+def fallback_carriers():
+    """Every shipped script inlining a brand-palette fallback, by module name."""
+    found = set()
+    for path in sorted(glob.glob(os.path.join(SCRIPTS, "*.py"))):
+        with open(path, encoding="utf-8") as fh:
+            if FALLBACK_CONSTANT.search(fh.read()):
+                found.add(os.path.splitext(os.path.basename(path))[0])
+    return found
 
 
 def load_viz_with_brand_tokens_unavailable():
@@ -57,6 +79,40 @@ def load_viz_with_brand_tokens_unavailable():
             del sys.modules["brand_tokens"]
         else:
             sys.modules["brand_tokens"] = saved
+
+
+class TheCarrierSetIsDerived(unittest.TestCase):
+    """INV-246: the set of generators this file must cover is scanned, never listed.
+
+    INV-184 exists *because* this exact guard once enumerated its sites. INV-107 named two
+    generators; `generate_discoveries_pdf.py` drifted out of scope unnoticed while its own
+    comment claimed a test asserted it, and the remedy then was to add the third BY HAND.
+    A hardcoded list would repeat that history the day a fourth generator ships, so the
+    carrier set is discovered from the corpus and a carrier this file does not exercise is
+    a failure rather than a silence.
+
+    ⛔ This sweep proves a carrier is EXERCISED here, not that its assertions are adequate.
+    It catches a generator nobody added; only reading catches a generator added weakly.
+    """
+
+    def test_the_scan_is_not_vacuous(self):
+        found = fallback_carriers()
+        self.assertGreaterEqual(
+            len(found), len(KNOWN_CARRIERS),
+            "the fallback-constant scan found fewer carriers than were known to exist "
+            "(%s vs %s) — the constant naming convention changed and this sweep is now "
+            "inspecting a set it cannot see" % (sorted(found), sorted(KNOWN_CARRIERS)))
+
+    def test_every_discovered_carrier_is_exercised_by_this_file(self):
+        source = open(os.path.abspath(__file__), encoding="utf-8").read()
+        uncovered = sorted(m for m in fallback_carriers()
+                           if not re.search(r"\b%s\b" % re.escape(m), source))
+        self.assertEqual(
+            [], uncovered,
+            "a shipped script inlines a brand-palette fallback and this file never "
+            "mentions it, so its copy can drift from brand_tokens.py undetected — the "
+            "failure INV-184 was written from. Add its sync assertions here: %s"
+            % uncovered)
 
 
 class BrandTokenSync(unittest.TestCase):

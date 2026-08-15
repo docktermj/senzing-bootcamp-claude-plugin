@@ -38,7 +38,26 @@ CONTRACT = os.path.join(
 EXAMPLE_RECAP = os.path.join(PLUGIN, "docs", "examples", "bootcamp_recap.example.md")
 
 # The two files that decide which screenshots reach the recap and in what order.
-CALL_SITES = (MODULE_COMPLETION, GRADUATION)
+#: Non-vacuity FLOOR, not the site set (INV-246).
+KNOWN_CALL_SITES = (MODULE_COMPLETION, GRADUATION)
+
+
+def call_sites():
+    """Every shipped file invoking capture_screenshots — discovered, never listed.
+
+    INV-246: the constant this replaces named two files under a comment claiming "both
+    call sites", so a third would have left this guard green.
+    """
+    found = []
+    for root, _dirs, files in os.walk(PLUGIN):
+        for name in sorted(files):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(root, name)
+            with open(path, encoding="utf-8") as fh:
+                if "capture_screenshots" in fh.read():
+                    found.append(path)
+    return tuple(sorted(found))
 
 
 def read(path):
@@ -58,6 +77,19 @@ def shipped_markdown():
         for name in filenames:
             if name.endswith(".md"):
                 yield os.path.join(dirpath, name)
+
+
+class TheDerivedCallSiteSetIsNotVacuous(unittest.TestCase):
+    """INV-246: the call-site set is scanned, so a third invoker is covered on sight."""
+
+    def test_the_known_call_sites_are_still_found(self):
+        found = call_sites()
+        for known in KNOWN_CALL_SITES:
+            with self.subTest(file=os.path.basename(known)):
+                self.assertIn(known, found,
+                              "%s no longer invokes capture_screenshots, so this scan is "
+                              "inspecting a smaller set than it believes"
+                              % os.path.basename(known))
 
 
 class NoCountCapSurvives(unittest.TestCase):
@@ -163,7 +195,7 @@ class OmittingAnInertCaptureIsNotAnOption(unittest.TestCase):
 
     def test_neither_call_site_offers_a_bare_omission(self):
         offenders = []
-        for path in CALL_SITES:
+        for path in call_sites():
             for match in self.BARE_OMISSION_OFFER.finditer(flat(path)):
                 offenders.append("%s: %r" % (os.path.basename(path), match.group(0)))
         self.assertEqual([], offenders, "\n  ".join(offenders))
@@ -222,7 +254,7 @@ class OmittingAnInertCaptureIsNotAnOption(unittest.TestCase):
                          "the backfill must be told to disclose it, not merely told it exists")
 
     def test_both_sites_still_forbid_implying_an_uncaptured_result_set(self):
-        for path in CALL_SITES:
+        for path in call_sites():
             with self.subTest(site=os.path.basename(path)):
                 self.assertRegex(
                     flat(path), r"(?i)(never|not) imply a result set|implies a result set",
@@ -241,7 +273,7 @@ class TabOrderIsSpecifiedAndSourcedFromTheContract(unittest.TestCase):
         )
 
     def test_both_call_sites_require_tab_order(self):
-        for path in CALL_SITES:
+        for path in call_sites():
             with self.subTest(file=os.path.basename(path)):
                 self.assertRegex(
                     flat(path),
@@ -251,7 +283,7 @@ class TabOrderIsSpecifiedAndSourcedFromTheContract(unittest.TestCase):
                 )
 
     def test_both_call_sites_forbid_append_or_discovery_order(self):
-        for path in CALL_SITES:
+        for path in call_sites():
             with self.subTest(file=os.path.basename(path)):
                 self.assertRegex(
                     flat(path),
@@ -261,7 +293,7 @@ class TabOrderIsSpecifiedAndSourcedFromTheContract(unittest.TestCase):
 
     def test_neither_call_site_restates_the_tab_list(self):
         """Restating it forks the order; both must cite the table instead."""
-        for path in CALL_SITES:
+        for path in call_sites():
             with self.subTest(file=os.path.basename(path)):
                 text = flat(path)
                 self.assertIn("visualization-api-reference.md", text)

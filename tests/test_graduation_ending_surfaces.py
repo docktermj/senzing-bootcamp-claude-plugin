@@ -36,11 +36,34 @@ MODULE_07_PHASE1 = (
 
 TERMINAL_BANNER = "END OF SENZING BOOTCAMP"
 
-# Surfaces that tell the reader how graduation finishes.
-ENDING_SURFACES = (GRADUATION_SKILL, GRADUATE_COMMAND)
-
 # The graduation offer, which must be worded identically wherever it is presented.
 OFFER = re.compile(r"👉 \*\*Would you like to graduate now[^*]*\*\*")
+
+#: Non-vacuity FLOORS, not site sets. The scans below decide what is checked (INV-246);
+#: these only stop a broken pattern degrading a guard to silence.
+KNOWN_ENDING_SURFACES = (GRADUATION_SKILL, GRADUATE_COMMAND)
+KNOWN_OFFER_SITES = (MODULE_COMPLETION, MODULE_07_PHASE1)
+
+
+def shipped_markdown():
+    return sorted(PLUGIN.rglob("*.md"))
+
+
+def ending_surfaces():
+    """Every surface telling the reader how graduation finishes — discovered, not listed."""
+    return tuple(p for p in shipped_markdown()
+                 if TERMINAL_BANNER in p.read_text(encoding="utf-8"))
+
+
+def offer_sites():
+    """Every surface presenting the graduation offer — discovered, not listed.
+
+    INV-246: the constants these replace encoded where the author noticed each pattern,
+    under comments claiming "wherever it is presented". A third surface gaining either
+    would have left this guard green.
+    """
+    return tuple(p for p in shipped_markdown()
+                 if OFFER.search(p.read_text(encoding="utf-8")))
 
 # Ordering language: the banner follows the Bootcamper declining, it is not the reply to
 # the closing question itself.
@@ -56,12 +79,32 @@ def read(path):
     return path.read_text(encoding="utf-8")
 
 
+class TheDerivedSiteSetsAreNotVacuous(unittest.TestCase):
+    """INV-246: both sets are scanned, so a third surface is covered on sight."""
+
+    def test_the_known_ending_surfaces_are_still_found(self):
+        found = ending_surfaces()
+        for known in KNOWN_ENDING_SURFACES:
+            with self.subTest(file=known.name):
+                self.assertIn(known, found,
+                              "%s no longer carries the terminal banner, so the ending-surface "
+                              "scan is inspecting a smaller set than it believes" % known.name)
+
+    def test_the_known_offer_sites_are_still_found(self):
+        found = offer_sites()
+        for known in KNOWN_OFFER_SITES:
+            with self.subTest(file=known.name):
+                self.assertIn(known, found,
+                              "%s no longer matches the graduation offer, so the offer scan is "
+                              "inspecting a smaller set than it believes" % known.name)
+
+
 class TestEndingSurfacesAgree(unittest.TestCase):
 
     def test_every_ending_surface_names_the_terminal_banner(self):
         missing = [
             str(p.relative_to(REPO_ROOT))
-            for p in ENDING_SURFACES
+            for p in ending_surfaces()
             if TERMINAL_BANNER not in read(p)
         ]
         self.assertEqual(
@@ -78,7 +121,7 @@ class TestEndingSurfacesAgree(unittest.TestCase):
         legitimately foreshadow the banner in their opening prose before specifying it.
         """
         offenders = []
-        for path in ENDING_SURFACES:
+        for path in ending_surfaces():
             text = read(path)
             conditioned = False
             for m in re.finditer(re.escape(TERMINAL_BANNER), text):
@@ -108,7 +151,7 @@ class TestEndingSurfacesAgree(unittest.TestCase):
         Anchored on the LAST banner mention — its render site. Both surfaces foreshadow
         the banner in their opening prose, so the first mention says nothing about order.
         """
-        for path in ENDING_SURFACES:
+        for path in ending_surfaces():
             with self.subTest(path=path.name):
                 text = read(path)
                 question = text.find("anything else you would like to explore")
@@ -127,7 +170,7 @@ class TestGraduationOfferIsWordedOnce(unittest.TestCase):
     """module-completion.md asks Module 7 to keep this wording identical to its own."""
 
     def test_the_offer_appears_in_both_surfaces(self):
-        for path in (MODULE_COMPLETION, MODULE_07_PHASE1):
+        for path in offer_sites():
             with self.subTest(path=path.name):
                 self.assertTrue(
                     OFFER.search(read(path)),
@@ -136,7 +179,7 @@ class TestGraduationOfferIsWordedOnce(unittest.TestCase):
                 )
 
     def test_the_offer_is_identical_in_both_surfaces(self):
-        found = {p.name: OFFER.findall(read(p)) for p in (MODULE_COMPLETION, MODULE_07_PHASE1)}
+        found = {p.name: OFFER.findall(read(p)) for p in offer_sites()}
         wordings = {w for hits in found.values() for w in hits}
         self.assertEqual(
             1,

@@ -31,8 +31,26 @@ GROUND_RULES = PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md"
 GRADUATION = PLUGIN / "skills" / "graduation" / "SKILL.md"
 MODEL_SELECTION = PLUGIN / "docs" / "model-selection.md"
 
-#: Every file that pins a switch question the bootcamper reads.
-PINNING_FILES = (GROUND_RULES, GRADUATION)
+#: A pinned switch question: the 👉 form the bootcamper is asked, not a recap transcript
+#: entry (`- **Q:** Would you like to switch to …` under "Questions & Responses" in the
+#: example recap) and not prose describing one.
+PINNED_SWITCH = re.compile("\U0001F449" + r"\s*\*\*Would you like to switch to")
+
+#: Known pinning files when this derivation was written — a non-vacuity FLOOR, not the site
+#: set. The scan below decides what is checked (INV-246); this only stops a broken pattern
+#: degrading the guard to silence.
+KNOWN_PINNING_FILES = (GROUND_RULES, GRADUATION)
+
+
+def pinning_files():
+    """Every shipped file that pins a switch question — discovered, never listed.
+
+    INV-246: the previous constant `(GROUND_RULES, GRADUATION)` encoded where the author
+    noticed the pattern, under a comment claiming "**Every** file that pins a switch
+    question". A third module gaining one would have left this guard green.
+    """
+    return tuple(p for p in sorted(PLUGIN.rglob("*.md"))
+                 if PINNED_SWITCH.search(p.read_text(encoding="utf-8")))
 
 
 def read(path):
@@ -51,13 +69,24 @@ def switch_questions(text):
 
 class TheScanIsNotVacuous(unittest.TestCase):
     def test_the_files_exist(self):
-        for path in PINNING_FILES + (MODEL_SELECTION,):
+        for path in pinning_files() + (MODEL_SELECTION,):
             with self.subTest(file=path.name):
                 self.assertTrue(path.is_file(), "%s moved" % path)
 
+    def test_the_pinning_file_set_is_derived_and_not_vacuous(self):
+        """INV-246: the site set is scanned, so a third pinning file is covered on sight."""
+        found = pinning_files()
+        for known in KNOWN_PINNING_FILES:
+            with self.subTest(file=known.name):
+                self.assertIn(
+                    known, found,
+                    "%s pins a switch question but the derivation no longer finds it — the "
+                    "pinned-question form changed and this guard is inspecting a smaller set "
+                    "than it believes" % known.name)
+
     def test_both_pinned_switch_questions_are_found_in_each_file(self):
         """A pass that found no questions would prove nothing about their hints."""
-        for path in PINNING_FILES:
+        for path in pinning_files():
             with self.subTest(file=path.name):
                 self.assertGreaterEqual(
                     len(switch_questions(read(path))), 2,
@@ -66,7 +95,7 @@ class TheScanIsNotVacuous(unittest.TestCase):
 
 class TheAnswerHintNamesTheDialTheQuestionAsksAbout(unittest.TestCase):
     def test_no_pinned_question_hardcodes_the_model_in_its_hint(self):
-        for path in PINNING_FILES:
+        for path in pinning_files():
             for line in switch_questions(read(path)):
                 with self.subTest(file=path.name, line=line[:60]):
                     self.assertNotIn(
@@ -76,7 +105,7 @@ class TheAnswerHintNamesTheDialTheQuestionAsksAbout(unittest.TestCase):
                         "to a dial the question is not touching")
 
     def test_every_pinned_question_uses_the_substitutable_dial(self):
-        for path in PINNING_FILES:
+        for path in pinning_files():
             for line in switch_questions(read(path)):
                 with self.subTest(file=path.name, line=line[:60]):
                     self.assertIn("keep your current {dial}", line,
@@ -84,7 +113,7 @@ class TheAnswerHintNamesTheDialTheQuestionAsksAbout(unittest.TestCase):
 
     def test_the_dial_placeholder_is_defined_where_it_is_used(self):
         """A bracket nothing resolves is worse than a wrong literal: it ships as-is."""
-        for path in PINNING_FILES:
+        for path in pinning_files():
             flat = squash(read(path))
             with self.subTest(file=path.name):
                 self.assertRegex(
@@ -101,7 +130,7 @@ class TheAnswerHintNamesTheDialTheQuestionAsksAbout(unittest.TestCase):
 
     def test_the_confirmation_gate_is_left_alone(self):
         """It says 'your model and effort', which is accurate for either dial."""
-        for path in PINNING_FILES:
+        for path in pinning_files():
             with self.subTest(file=path.name):
                 self.assertIn("👉 **Are you done modifying the model and effort?**",
                               read(path), "the confirmation gate's wording moved")

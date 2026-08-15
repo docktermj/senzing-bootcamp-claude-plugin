@@ -1,0 +1,146 @@
+"""A shipped comment naming a guarding test points at a file that exists and is plausible.
+
+`capture_screenshots.py` carried a ⛔ comment above `_APPLICABILITY`, the Python mirror of the
+app's `tabApplicable()`, saying "`tests/test_capture_tabs.py` asserts the two agree". It does
+not. That file asserts the tab *inventory* against the contract's table and that the page
+guards on applicability and presence; nothing in it compares the two rules.
+
+The assertion the comment promised was real and strong, and lived in a **different** file:
+`tests/test_capture_suppressed_tabs.py` → `test_python_rule_matches_the_apps_javascript_rule`,
+which parses `tabApplicable()` out of the server and compares the gated tab set, the stats
+field each gates on, and the literal thresholds.
+
+A maintainer following the comment opened the named file, found only inventory assertions, and
+would reasonably conclude the mirror was unguarded — then either duplicate the guard or edit
+`_APPLICABILITY` believing nothing checked it, which is the "silent divergence" the comment
+exists to prevent.
+
+This is the mechanism **INV-184** was written from, one step milder. INV-184 records
+`generate_discoveries_pdf.py` drifting *"while its own comment claimed a test asserted it"* —
+there the coverage did not exist; here it does and only the pointer misdirects. A comment is
+the reader's index into the suite, and a misdirecting index is trusted exactly as much as a
+lying one.
+
+Nothing detected it: `citations.py verify` resolves `INV-NNN` IDs, not test filenames, and a
+plain existence check passes because `test_capture_tabs.py` does exist.
+
+⛔ **WHAT THIS GUARD CANNOT DO.** It checks that a named test file exists and that it
+*mentions* the symbol the comment is about. That a file references a symbol is **not** proof
+it asserts the claimed property — a weak or vacuous assertion passes here. This catches a
+pointer aimed at the wrong file; only reading catches a pointer aimed at a bad test.
+
+Per **INV-246** the (source file → named test) pairs are derived by scanning shipped source,
+never from a list — the defect was an author's belief about where an assertion lived, which is
+the belief a hardcoded pair set would re-encode.
+
+Source spec: `specs/mirror-comment-names-the-wrong-guarding-test.md`.
+
+Run:  python3 -m unittest discover -s tests
+"""
+import re
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
+TESTS = REPO_ROOT / "tests"
+
+#: A reference to a repo test file from shipped source.
+TEST_REFERENCE = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
+
+#: Symbols a mirror comment is about. If the comment names one AND names a test file, that
+#: test file must mention the symbol — otherwise the pointer sends the reader nowhere useful.
+MIRROR_SYMBOLS = ("_APPLICABILITY", "tabApplicable", "_FALLBACK", "brand_tokens")
+
+#: Non-vacuity floor: shipped source known to reference a test when this guard was written.
+KNOWN_REFERRERS = ("capture_screenshots.py",)
+
+
+def shipped_source():
+    """Every shipped script and Markdown file, discovered rather than listed (INV-246)."""
+    return sorted(list(PLUGIN.rglob("*.py")) + list(PLUGIN.rglob("*.md")))
+
+
+def read(path):
+    return path.read_text(encoding="utf-8")
+
+
+def references():
+    """[(shipped_path, referenced_test_name, the line)] across the whole shipped corpus."""
+    out = []
+    for path in shipped_source():
+        if "__pycache__" in str(path):
+            continue
+        for n, line in enumerate(read(path).splitlines(), 1):
+            for name in TEST_REFERENCE.findall(line):
+                out.append((path, name, line, n))
+    return out
+
+
+class TheScanIsNotVacuous(unittest.TestCase):
+    def test_shipped_source_is_actually_scanned(self):
+        self.assertGreater(
+            len(shipped_source()), 40,
+            "the shipped-source sweep found almost nothing — this guard is inspecting an "
+            "empty set and would pass forever")
+
+    def test_the_known_referrer_is_still_found(self):
+        referrers = {p.name for p, _n, _l, _i in references()}
+        for known in KNOWN_REFERRERS:
+            with self.subTest(file=known):
+                self.assertIn(
+                    known, referrers,
+                    "%s no longer references a repo test, so this guard is inspecting a "
+                    "smaller set than it believes" % known)
+
+
+class EveryNamedTestResolves(unittest.TestCase):
+    def test_every_referenced_test_file_exists(self):
+        missing = []
+        for path, name, _line, n in references():
+            if not (TESTS / name).is_file():
+                missing.append("%s:%d names tests/%s, which does not exist"
+                               % (path.relative_to(REPO_ROOT), n, name))
+        self.assertEqual(
+            [], missing,
+            "shipped source names a repo test that is not there — the reader is sent to a "
+            "guard that does not exist (the INV-184 mechanism):\n  " + "\n  ".join(missing))
+
+    def test_a_mirror_pointer_names_a_test_that_mentions_the_symbol(self):
+        """The half that caught the real defect: right file, wrong file, or padding."""
+        wrong = []
+        for path, name, line, n in references():
+            target = TESTS / name
+            if not target.is_file():
+                continue  # covered by the test above
+            symbols = [s for s in MIRROR_SYMBOLS if s in line]
+            if not symbols:
+                continue
+            body = read(target)
+            for symbol in symbols:
+                if symbol not in body:
+                    wrong.append(
+                        "%s:%d claims tests/%s guards %s, but that file never mentions it"
+                        % (path.relative_to(REPO_ROOT), n, name, symbol))
+        self.assertEqual(
+            [], wrong,
+            "a comment points the reader at a test that does not touch the symbol the "
+            "comment is about. The reader concludes the code is unguarded and either "
+            "duplicates the guard or edits freely:\n  " + "\n  ".join(wrong))
+
+
+class TheRepairedPointerStaysSpecific(unittest.TestCase):
+    def test_the_mirror_comment_names_the_asserting_file_and_method(self):
+        text = re.sub(r"\s+", " ", read(PLUGIN / "scripts" / "capture_screenshots.py"))
+        self.assertIn(
+            "tests/test_capture_suppressed_tabs.py", text,
+            "the _APPLICABILITY mirror comment no longer names the file that actually "
+            "asserts the two rules agree")
+        self.assertIn(
+            "test_python_rule_matches_the_apps_javascript_rule", text,
+            "the comment names the file but not the method, so the claim cannot be checked "
+            "at a glance — which is what let the wrong file stand")
+
+
+if __name__ == "__main__":
+    unittest.main()

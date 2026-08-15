@@ -346,8 +346,12 @@ def _page_stats(source: str, target: str, is_url: bool) -> dict:
 
 
 # ⛔ MIRRORS `tabApplicable()` IN `senzing_viz_server.py` — the app is the authority, and
-# `tests/test_capture_tabs.py` asserts the two agree, because a silent divergence here is
-# the whole defect this function exists to fix. If you change one, change both.
+# `tests/test_capture_suppressed_tabs.py` → `test_python_rule_matches_the_apps_javascript_rule`
+# asserts the two agree (it parses `tabApplicable()` out of the server and compares the gated
+# tab set, the stats field each gates on, and the literal thresholds), because a silent
+# divergence here is the whole defect this function exists to fix. If you change one, change
+# both. (`tests/test_capture_tabs.py` is a different guard: tab *inventory* against the
+# contract's table, not these applicability rules.)
 #
 # The app hides a tab whose data does not exist rather than showing an empty one, so a tab
 # that is suppressed was never on screen for the bootcamper. Capturing it anyway produced a

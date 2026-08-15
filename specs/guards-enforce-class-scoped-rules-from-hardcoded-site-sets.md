@@ -113,3 +113,30 @@ rather than trusting these four.
 - Related specs: `inv244-absent-license-branch-exists-in-module-4-too` (the spec that established
   INV-246), `deep-dive-audit-2026-07-30` (established INV-184 after the same failure), and INV-246,
   INV-184, INV-107, INV-108.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **`test_brand_sync.py` got a derived coverage SWEEP, not a derived comparison.** Each carrier
+  exposes differently-named constants (`_FALLBACK_BRAND`, `_FALLBACK_RGB`, `_FALLBACK_STROKES` …),
+  so a single generic equality check would have been weaker than the per-generator assertions it
+  replaced. Instead `TheCarrierSetIsDerived` scans `scripts/*.py` for a module-level
+  `_?FALLBACK_[A-Z_]+` constant and fails if a discovered carrier is not exercised anywhere in the
+  file — the *site set* is derived, and a new generator forces someone to add its assertions.
+  Verified by planting `generate_zzz_pdf.py` carrying a fallback: the sweep fails.
+- **`test_screenshot_retention_and_order.py` uses `os.path`, not `pathlib`.** Its `PLUGIN` is a
+  string, so the derivation is written with `os.walk` to match the file's conventions rather than
+  converting it. A first attempt used `PLUGIN.rglob` and raised `AttributeError` on five tests.
+- **Each derivation carries a *membership* floor, not a count floor.** Asserting "the scan still
+  finds the files known to match" is stronger than asserting a number: a count floor passes when one
+  known site drops out and an unrelated new one appears.
+- **All four negative controls plant a NEW site rather than mutating an existing one**, because that
+  is the property under test — a hardcoded list passes every one of these, and each derivation
+  fails: a new fallback carrier, a new file pinning a switch question with a wrong hint, a new
+  graduation-offer surface, a new `capture_screenshots` call site.
+- ⚠️ **An insertion error, caught and fixed.** The new class was first inserted between
+  `BrandTokenSync`'s first and second methods, silently re-parenting five existing tests into it.
+  The suite still passed — 30 tests either way — so nothing failed; it was caught by an AST check of
+  class/method counts, not by the run. Worth recording because a test-count-only check would have
+  missed it entirely.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`.

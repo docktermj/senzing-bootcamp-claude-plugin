@@ -87,3 +87,22 @@ existing test-file-existence check is satisfied because `test_capture_tabs.py` d
 - Related specs: `deep-dive-audit-2026-07-30` (INV-184, established after a comment claimed a test
   asserted something it did not), `guards-enforce-class-scoped-rules-from-hardcoded-site-sets` (the
   sibling INV-246 finding from the same run), and INV-184, INV-246, INV-155, INV-232.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The corrected comment names the method AND says what the other file actually guards.** Naming
+  only the right file would have left the next reader to rediscover that `test_capture_tabs.py` is
+  about tab *inventory*; the comment now says so in one clause, so the wrong pointer cannot be
+  re-derived from the same confusion.
+- **The guard covers two claims, not one.** Beyond the symbol-plausibility check this spec asks for,
+  it also asserts that **every** `tests/test_*.py` name referenced anywhere in shipped source exists
+  — the cheaper half, which catches the pure INV-184 shape (a comment naming a guard that was never
+  written) across the whole corpus rather than only at mirror comments.
+- ⛔ **Its stated limit is real and load-bearing:** it checks that a named test *mentions* the symbol,
+  never that it *asserts* the property. A weak or vacuous assertion in a correctly-named file passes.
+  That is disclosed in a ⛔ block in the docstring rather than left for a reader to discover, per
+  `coverage-reports-count-known-non-defects-as-hits`.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`. The claim that
+  the two rules agree today was re-checked by reading both: gated set, stats fields and thresholds
+  all match.
