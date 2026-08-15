@@ -215,7 +215,7 @@ Without it, some matches between your sources would be incomplete."
 
 ⛔ **Steps 17–20 ask nothing, so this turn does not end here** — the orchestration summary and its
 record counts conclude something and read like an ending, which is precisely the trap
-(`ground-rules.md` → "A results presentation is not a turn ending"). Continue into Phase D in the
+(`ground-rules.md` → "A results presentation is not a turn ending", INV-225). Continue into Phase D in the
 same turn, up to its first 👉.
 
 Proceed to Phase D (`phaseD-validation.md`).

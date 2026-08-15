@@ -140,13 +140,38 @@ class EachSiteCarriesAPointer(unittest.TestCase):
             with self.subTest(path.name):
                 self.assertIn("this turn does not end here", squash(path))
 
-    def test_no_pointer_restates_the_rule_instead_of_citing_it(self):
-        """Restating drifts. The spec asks for a one-line cross-reference, not a copy."""
+    def test_no_pointer_restates_the_rule(self):
+        """Restating drifts. The spec asks for a one-line cross-reference, not a copy.
+
+        ⛔ **This forbids the reasoning, not the ID.** An earlier version of this test also
+        asserted `assertNotIn("INV-225", text)`, file-wide, on the theory that a pointer
+        should cite `ground-rules.md` and nothing else. That collapsed two separable
+        things: copying the *rule's reasoning* into three files, which does drift and is
+        what this assertion is for, and naming the *invariant that governs*, which is three
+        characters and a number, cannot drift, and is required by INV-183 — a rule binding
+        a step must be reachable at that step. The result was a guard that enforced the
+        spec while contradicting an invariant, and that actively blocked its own fix; the
+        `production-readiness-audit` of 2026-08-14b found it that way.
+        """
         for path, _ in SITES:
             with self.subTest(path.name):
-                text = squash(path)
-                self.assertNotIn("property of the **step**", text)
-                self.assertNotIn("INV-225", text)
+                self.assertNotIn("property of the **step**", squash(path))
+
+    def test_every_pointer_cites_the_invariant_that_governs_it(self):
+        """The other half: reachable at the step, by ID (INV-183)."""
+        for path, _ in SITES:
+            with self.subTest(path.name):
+                self.assertIn(
+                    "INV-225", squash(path),
+                    "%s states a ⛔ rule governed by INV-225 and never names it, so a "
+                    "later editor cannot look it up" % path.name,
+                )
+
+    def test_the_pointers_keep_the_prose_cross_reference_too(self):
+        """Title and ID do different jobs: what the rule says, and where to find it."""
+        for path, _ in SITES:
+            with self.subTest(path.name):
+                self.assertIn("A results presentation is not a turn ending", squash(path))
 
 
 if __name__ == "__main__":

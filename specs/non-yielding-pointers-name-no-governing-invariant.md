@@ -91,3 +91,31 @@ but a guard that **contradicts a different invariant** while looking like it enf
 - Upstream: not applicable
 - Related specs: `specs/results-presentation-turns-end-with-zero-questions.md` (the implementation
   that introduced both the pointers and the assertion forbidding their citation)
+
+## Deviations from this spec, and why (2026-08-14)
+
+Implemented as proposed; all five criteria hold. Two notes.
+
+1. **The assertion was split, not deleted.** The spec asks to "replace the over-broad assertion with
+   one that forbids the **restatement** and requires the **citation**". Both now exist as separate
+   tests — `test_no_pointer_restates_the_rule` (the real anti-drift check, unchanged in substance)
+   and `test_every_pointer_cites_the_invariant_that_governs_it` — plus a third,
+   `test_the_pointers_keep_the_prose_cross_reference_too`, because the title and the ID do different
+   jobs: the title tells the reader *what* the rule says, the ID lets them look it up. A fix that
+   swapped one for the other would have satisfied INV-183 and lost the readable half. The mutation
+   that removes the prose title fails **2** tests, which is what pins that.
+
+2. **The docstring records why the two were ever conflated**, since the next editor's most likely
+   move is to re-collapse them. The original assertion read as a faithful reading of the spec's
+   "cross-reference rather than restate" — it is only wrong once you notice that an invariant ID
+   cannot drift, which is precisely the property that makes INV-183 cheap to satisfy.
+
+**Verified against the detector that found it:** `conformance.py rules` reported
+`phaseD-validation.md:96` as one of two hard-rule lines plugin-wide whose section cited no
+invariant. It now reports **1**, and the remaining hit (`phaseB-load-first-source.md:23`) is the
+local-instruction case this spec's own audit classified as out of scope, whose durable candidate is
+recorded as a stop-marker in `specs/phase-a-preload-test-load-precedes-its-prerequisites.md`.
+
+**Mutation-tested: 4 mutations, all caught** — dropping the ID from either of two pointers, adding
+the rule's reasoning back into a third, and replacing the prose cross-reference with the bare ID.
+Files restored from in-script copies and verified equal.

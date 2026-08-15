@@ -295,7 +295,7 @@ blank with no error (INV-179; see `phase2-discover.md` step 4b.3, which states t
 
 ⛔ **Steps 2–3a ask nothing, so this turn does not end here** — the business answers this step
 presents are a results presentation, which reads as an ending and is not one (`ground-rules.md` →
-"A results presentation is not a turn ending"). Continue into 3b/3c in the same turn, up to the
+"A results presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to the
 next 👉.
 
 ### 3b. Quality evaluation
