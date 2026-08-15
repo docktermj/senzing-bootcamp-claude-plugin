@@ -172,7 +172,13 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
         )
 
     def test_the_macos_and_windows_update_command_is_plugin_owned(self):
-        """Corrects the spec's own table, which listed brew upgrade as documented.
+        r"""Corrects the spec's own table, which listed brew upgrade as documented.
+
+        (Raw docstring, deliberately: it quotes shipped prose containing backslash-escaped
+        backticks, which are not valid Python escapes. An r-prefix preserves the quoted claim
+        byte-for-byte rather than rewording a deliberate record of a pin that was removed --
+        see INV-219. Without it this file emitted a SyntaxWarning that bytecode caching then
+        hid from every subsequent run.)
 
         ⚠️ **Asserts the ownership distinction, not the sentence that carries it (INV-219).**
         This used to also pin `never \`brew upgrade --cask\` or \`scoop update\`` — the verbatim

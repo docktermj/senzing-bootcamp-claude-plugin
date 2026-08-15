@@ -102,3 +102,34 @@ instance:
 - Related specs: `env-script-must-be-shell-portable` and `windows-powershell-encoding-and-syntax`
   (the same "correct-looking text that a runtime rejects" class on other interpreters), and
   INV-004, INV-052, INV-108, INV-246.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The fix is a raw docstring, and the quoted claim was verified byte-identical rather than
+  eyeballed.** `r"""` preserves the backslash-escaped backticks exactly, so the record of the
+  removed pin (INV-219) is unchanged. Confirmed by `md5sum` of that line against `d35046d`:
+  identical before and after.
+- ⛔ **My first attempt broke the file, and compiling from source caught it in seconds.** The
+  explanatory note I added inside the docstring contained a literal `"""`, which **closed the
+  docstring early** and turned the following prose into code (`SyntaxError: invalid character
+  '—'`). Reworded to say "an r-prefix" instead. Recorded because it is the same class the spec
+  is about — a source-level defect invisible to every text-based check — and because the guard
+  being built is what surfaced it immediately.
+- **The per-root floor initially asserted something false.** It required every scanned root to
+  contain Python; the repo-root `scripts/` holds only `sync-check.sh`. Corrected to floor the
+  three roots that actually bear Python, with `scripts/` kept in `ROOTS` (so a `.py` added there
+  is scanned) and its current emptiness recorded by its own test — because a guard that asserts a
+  falsehood gets "fixed" by deleting the assertion rather than by understanding it.
+- **Negative control is per-root, as the criterion required, and checks the message too.** A
+  defect was planted in each of `tests/`, `plugins/`, `.claude/` and `scripts/` separately; all
+  four reddened **and named the offending file**, which is what makes the failure actionable. The
+  two docstring disclosures were mutated independently. All plants removed, tree verified clean.
+- **Establishes no invariant, and that is a judgement worth stating.** "Python must compile
+  cleanly" is a standing rule, but it is **INV-004 (production-ready)** applied rather than a new
+  guarantee, and the guard carries it with its own reasoning. Registering an invariant for it
+  would add an ID without adding a constraint. ⚠️ Raise it with the maintainer if a future run
+  finds the rule being argued about — that is the signal it needs its own ID.
+- ⛔ **Not runtime-verified, and the guard says so.** This proves the files *compile* under the
+  Python running the suite. It does not prove they run correctly, and it cannot prove behaviour
+  under a future Python that has promoted the warning to an error — it only ensures the repo is
+  already clean when that lands.
