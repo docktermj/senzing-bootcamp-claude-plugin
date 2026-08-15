@@ -1,13 +1,25 @@
 """No 👉 question offers a session- or host-level control, and the rule that says so ships.
 
-A bootcamper on plugin 0.5.0 was asked about "auto-mode for the bootcamp" during the
-onboarding preface, with `👉 Do you have any questions before we get started?` pending and
-unanswered. No file in the plugin asks that — a repo-wide search for `auto-mode`, `auto mode`,
-`auto-accept`, `permission mode`, `plan mode`, `fast mode` and `bypass permissions` across
-`plugins/`, `.claude/` and `tests/` returned zero matches. The question came from outside the
-bootcamp's scripted flow, and nothing on the books forbade it: the 👉 protocol governed a
-question's count (INV-005), shape (INV-008/INV-009/INV-051), placement (INV-211/INV-224) and,
-for pinned gates, verbatim wording (INV-056) — never its provenance.
+Twice on 2026-08-15, a bootcamper on plugin 0.5.0 was interrupted during the onboarding
+preface -- with `👉 Do you have any questions before we get started?` pending and unanswered --
+by the Claude Code host prompt "Set up auto mode for your environment?", the harness's own
+dialog offering "Set it up" / "Not now" / "Don't show again".
+
+⚠️ **That prompt is HOST-RENDERED, and this docstring said otherwise until 2026-08-15.** It
+read "a bootcamper was asked about auto-mode", which frames it as the guide putting a question
+to them. The second report quoted the dialog with its three native options -- UI chrome a model
+cannot emit -- establishing that the guide originated nothing. No run has yet shown a guide
+improvising a host-control question. INV-247 is prophylaxis against a hazard the reports
+demonstrate (a bootcamper cannot tell an interface question from bootcamp content), not a
+repair of an observed guide defect, and this file must not imply otherwise
+(`specs/host-rendered-control-prompt-interrupts-a-pending-question.md`).
+
+The rule is still worth having, and nothing on the books forbade the improvised case: the 👉
+protocol governed a question's count (INV-005), shape (INV-008/INV-009/INV-051), placement
+(INV-211/INV-224) and, for pinned gates, verbatim wording (INV-056) -- never its provenance. A
+repo-wide search for `auto-mode`, `auto mode`, `auto-accept`, `permission mode`, `plan mode`,
+`fast mode` and `bypass permissions` across `plugins/`, `.claude/` and `tests/` still returns
+matches only in the rule text and this guard.
 
 One thing also made such a question look native. The bootcamp already asks the bootcamper to
 operate `/model` and `/effort` at module start (INV-063/INV-098/INV-158/INV-236) and named no
@@ -327,8 +339,8 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
     def test_a_bootcamper_question_about_a_host_control_has_a_stated_answer(self):
         controls = section(self.text, "## Any-time bootcamper controls")
         self.assertRegex(
-            controls, r"(?i)a question about a host control",
-            "the any-time controls have no entry for a bootcamper asking about a host "
+            controls, r"(?i)a host control the bootcamper raises",
+            "the any-time controls have no entry for a bootcamper raising a host "
             "control, which is what happened here — at a pending gate (INV-247)")
         self.assertRegex(
             controls, r"(?i)one sentence",
@@ -338,6 +350,98 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
             controls, r"(?i)re-present the pending .{0,4} question verbatim",
             "the handling line does not return the bootcamper to the pending question, which "
             "is the half the reported run actually lost")
+
+    def test_the_entry_fires_when_a_host_prompt_merely_APPEARS(self):
+        """The reported runs were not a bootcamper ASKING — a dialog appeared at them.
+
+        Scoped `if the bootcamper asks`, the entry misses the case that actually happened
+        twice on 2026-08-15: the host drew its own prompt over a pending 👉 and nobody asked
+        anything (`specs/host-rendered-control-prompt-interrupts-a-pending-question.md`).
+        """
+        controls = section(self.text, "## Any-time bootcamper controls")
+        self.assertRegex(
+            controls, r"(?i)prompt for one appeared over the bootcamp",
+            "the host-control entry still fires only when the bootcamper ASKS about a "
+            "control; a host-rendered prompt appearing unbidden — the observed case — "
+            "reaches no branch (INV-247)")
+
+    def test_the_answer_does_not_name_a_dismissal_affordance(self):
+        """Maintainer decision, 2026-08-15: the answer stays silent on how to dismiss.
+
+        The dialog offers "Don't show again". Naming it would direct the bootcamper to
+        operate a SECOND Claude-interface control, and the model/effort switch is the only
+        one INV-247 allows. The prohibition must ship, not merely be honoured today.
+        """
+        controls = section(self.text, "## Any-time bootcamper controls")
+        self.assertRegex(
+            controls, r"(?i)do not name a dismissal affordance",
+            "the handling line no longer forbids naming a dismissal control, so a guide may "
+            "point the bootcamper at “Don't show again” — a second interface control "
+            "the bootcamp is not permitted to direct (INV-247)")
+
+    def test_the_interruption_list_names_a_host_rendered_prompt(self):
+        """A four-item list of conversational interruptions is read as the set.
+
+        The recovery rule says "any interruption", then enumerates a compaction, a session
+        boundary, the feedback detour and a tangent — all conversational, all visible to the
+        guide. A host dialog is neither, and INV-205's own maintenance note records what
+        happens to an enumeration generalised from the instances its author had seen.
+        """
+        controls = section(self.text, "## Any-time bootcamper controls")
+        self.assertRegex(
+            controls, r"(?i)host-rendered prompt from their Claude interface",
+            "the interruption list does not name a host-rendered prompt, leaving the observed "
+            "case to a reader's generalisation from four conversational examples (INV-007)")
+
+    def test_no_shipped_text_claims_the_GUIDE_asked_about_auto_mode(self):
+        """No run has shown that. INV-247 is prophylaxis, not a repair of an observed defect.
+
+        Both 2026-08-15 reports describe a host-rendered dialog; the second quoted its three
+        native options, which a model cannot emit. Text implying the guide asked overstates
+        the evidence for a rule that stands perfectly well without it.
+        """
+        self.assertNotRegex(
+            squash(self.text), r"(?i)bootcamper was asked about .{0,4}auto.?mode",
+            "ground-rules.md again states that a bootcamper WAS ASKED about auto mode, "
+            "implying the guide originated it — the prompt is host-rendered "
+            "(`specs/host-rendered-control-prompt-interrupts-a-pending-question.md`)")
+        self.assertRegex(
+            squash(self.text), r"(?i)that prompt is host-rendered",
+            "ground-rules.md no longer records that the observed prompt was host-rendered, "
+            "so the next editor re-derives it as a guide defect")
+
+
+class TheCorrectedAttributionIsDisclosed(unittest.TestCase):
+    """This guard asserted the wrong attribution for hours; the correction must stick.
+
+    Asserted against the module ``__doc__`` for the reason the sibling disclosure class
+    documents at length: this file's own regex literals live in its source, so a check that
+    read ``Path(__file__)`` would match its own pattern and pass with the prose gutted.
+    """
+
+    #: Squashed, unlike the sibling class: these needles are phrases rather than single
+    #: tokens, so a rewrap of the docstring would otherwise break the assertion without
+    #: the disclosure having changed at all.
+    def setUp(self):
+        self.doc = squash(__doc__ or "")
+
+    def test_the_docstring_records_the_prompt_as_host_rendered(self):
+        #: ⛔ Anchored to the CLAIM ("that prompt is host-rendered"), not the bare token.
+        #: A mutation escaped this assertion during negative-control: the docstring also
+        #: cites `specs/host-rendered-control-prompt-…md`, so `host-rendered` alone still
+        #: matched with the claim gutted — the filename certified the sentence.
+        self.assertRegex(
+            self.doc, r"(?i)that prompt is host-rendered",
+            "the docstring no longer says the observed prompt was host-rendered — it "
+            "previously read “a bootcamper was asked”, which frames a harness dialog "
+            "as a question the guide put to them")
+
+    def test_the_docstring_says_no_guide_defect_has_been_OBSERVED(self):
+        self.assertRegex(
+            self.doc, r"(?i)no run has yet shown a guide improvising",
+            "the docstring no longer distinguishes the rule (prophylaxis against a real "
+            "hazard) from an observed guide defect (none recorded), which is the "
+            "over-claim `coverage-reports-count-known-non-defects-as-hits` exists to stop")
 
 
 if __name__ == "__main__":

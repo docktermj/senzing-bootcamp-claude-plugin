@@ -124,12 +124,17 @@ steering files.)
     ⛔ **Doing both ends the turn on two 👉, which INV-005 forbids** — the violation this file calls
     the #1 bootcamper complaint. A counter-question is still not a gate, and it never replaces the
     pending question; it only defers it by one turn.
-  - ⚠️ **Why this is a rule and not an assumption.** Observed 2026-08-15: a bootcamper was asked
-    about "auto-mode for the bootcamp" during the onboarding preface, with `👉 Do you have any
-    questions before we get started?` pending and unanswered. No file in this plugin asks that. It
-    cost the run its pending question and it was the bootcamper's first impression of whether the
-    guided flow knows what it is doing — arriving *before* any sanctioned interface question, so the
-    frame they formed for every later one came from a question the bootcamp never wrote.
+  - ⚠️ **Why this is a rule and not an assumption.** Observed twice on 2026-08-15: the Claude Code
+    host prompt *"Set up auto mode for your environment?"* — the harness's own dialog, offering
+    "Set it up" / "Not now" / "Don't show again" — appeared during the onboarding preface with
+    `👉 Do you have any questions before we get started?` pending and unanswered. **That prompt is
+    host-rendered: no file in this plugin asks it, and on both runs the guide originated nothing.**
+    What it demonstrates is the hazard this rule exists for. It cost each run its pending question,
+    and the bootcamper could not tell it from bootcamp content — arriving *before* any sanctioned
+    interface question, so the frame they formed for every later one came from something the
+    bootcamp never wrote. A question the guide improvised would be indistinguishable to them in
+    exactly that way, which is why the rule binds you even though the observed prompt did not come
+    from you.
 - `🛑 STOP` and `⛔ MANDATORY GATE` are INTERNAL control directives - never render them to the
   bootcamper. Signal the stop by ending the turn after the single 👉 question.
 - **Acknowledge** the bootcamper's answer before proceeding: at most 2 sentences and 50 words,
@@ -663,25 +668,35 @@ the 👉 protocol above).
 - **Repeat the question:** if they ask to hear the current question again ("repeat that", "what
   was the question"), re-present the current pending 👉 question verbatim. Do not invent a new
   one, and do not advance.
-- **A question about a host control:** if the bootcamper asks about auto mode, auto-accept edits,
-  permission mode, plan mode, fast mode, background tasks, `/compact`, `/loop`, or any other setting
-  belonging to their Claude session rather than to the bootcamp, answer in **one sentence** — it is
-  their session setting, the bootcamp neither needs nor recommends a value — and then re-present the
+- **A host control the bootcamper raises — in any form:** whether they **ask about** auto mode,
+  auto-accept edits, permission mode, plan mode, fast mode, background tasks, `/compact`, `/loop` or
+  any other setting belonging to their Claude session rather than to the bootcamp, **or tell you
+  that a prompt for one appeared over the bootcamp**, answer in **one sentence** — it is their
+  session setting, the bootcamp neither needs nor recommends a value — and then re-present the
   pending 👉 question verbatim (see below). Do not turn it into a gate, do not offer to change it for
   them, and do **not** claim the bootcamp can suppress or override a host control: the plugin ships
-  skills, hooks and commands, none of which reach their interface. The bootcamp asks them to operate
-  exactly one Claude-interface control, the module-start model/effort switch, and never this one
-  (INV-247).
+  skills, hooks and commands, none of which reach their interface. **Do not name a dismissal
+  affordance either** — not "Don't show again", not any other — because directing them to a control
+  that silences a host prompt is directing them to operate a second Claude-interface control. The
+  bootcamp asks them to operate exactly one, the module-start model/effort switch, and never this
+  one (INV-247).
 - **Ask-once:** ask each question only once. Do not re-ask a question the bootcamper already
   answered unless they request the repeat.
   - **A pending, *unanswered* question is different — re-present it verbatim.** After any
     interruption that left a 👉 question hanging — a compaction, a session boundary, the feedback
-    detour, or the bootcamper going off on a tangent and coming back — re-present that exact
-    question rather than skipping it or inventing a new one. This is **not** a re-ask: ask-once
-    protects the bootcamper from answering the same thing twice, and an unanswered question has no
-    answer to protect. Skipping it is the real violation, because it advances on an answer nobody
-    gave (INV-007). `feedback.md` Step 4 mandates this for the feedback detour specifically; the
-    same rule applies to every other interruption.
+    detour, a host-rendered prompt from their Claude interface appearing over the bootcamp, or the
+    bootcamper going off on a tangent and coming back — re-present that exact question rather than
+    skipping it or inventing a new one. This is **not** a re-ask: ask-once protects the bootcamper
+    from answering the same thing twice, and an unanswered question has no answer to protect.
+    Skipping it is the real violation, because it advances on an answer nobody gave (INV-007).
+    `feedback.md` Step 4 mandates this for the feedback detour specifically; the same rule applies
+    to every other interruption.
+
+    ⚠️ **The host-rendered case is the one you may never see.** A prompt the bootcamper's Claude
+    interface draws over the bootcamp is its UI, not a turn in this conversation — if they dismiss
+    it, nothing about it reaches you. So this recovery fires on the evidence you actually get: they
+    mention it, or they answer something that does not fit the pending question. Treat either as an
+    interruption and re-present, rather than reading the mismatch as their answer.
 
 ## Module start banners and transitions
 

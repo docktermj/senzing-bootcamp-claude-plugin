@@ -196,3 +196,45 @@ satisfying one.
   boundary), `inv247-guard-is-narrower-than-the-invariant-it-enforces` (the guard's two disclosed
   limits), `newly-minted-invariants-carry-no-shipped-citation`,
   `coverage-reports-count-known-non-defects-as-hits`, and INV-005, INV-007, INV-183, INV-247.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- ⚠️ **The two new requirements ship under INV-247 rather than as new IDs — this is the one
+  judgment call worth reviewing.** `INVARIANTS.md` rule 4 asks for one ID per testable condition,
+  and this implementation registered two ("the entry fires when the bootcamper **raises** a host
+  control in any form" and "the answer MUST NOT name a dismissal affordance") inside INV-247's
+  dated clarification instead of minting the next two unused IDs. (Those IDs are deliberately
+  *not* written out here: spelling an unminted `INV-NNN` in prose creates a citation of an
+  undefined invariant, which `citations.py verify` correctly reddened on the first run of this
+  implementation — the exact trap `implement-spec` Step 4 documents.) The reasoning: both are
+  entailed by
+  INV-247's existing closing condition — the model/effort switch is the **only** Claude-interface
+  control the bootcamp directs — rather than adding meaning to it. Naming "Don't show again" would
+  make a second one; a handling branch that fires only on "asks" leaves the same control
+  unhandled when it arrives unasked. Recorded here because the alternative reading is defensible
+  and the maintainer was away when the call was made.
+- **The MUST condition of INV-247 was not edited**, and this was verified mechanically rather than
+  by eye: the 586-byte condition sentence was extracted from `git show HEAD:specs/INVARIANTS.md`
+  and from the working copy and compared — identical. Only the observation and the appended
+  clarification changed.
+- **The spec's `## Affected files` list proved complete, and this was checked rather than
+  assumed (INV-246).** A repo-wide sweep for the "was asked" claim and for the auto-mode
+  vocabulary found five files; two of them — `specs/IMPLEMENTED.md` and
+  `specs/a-question-with-no-origin-in-a-skill-file-reached-the-bootcamper.md` — are historical
+  records the guardrails forbid rewriting, leaving exactly the three live sites the spec named.
+- **The `## Open question for the maintainer` section was resolved to a decision before
+  implementation began**, and an acceptance criterion was added for it. That edit was made in the
+  authoring phase and committed separately (`8477b31`), not by this skill — but it is recorded
+  here because it changed the criteria set this implementation was verified against.
+- **A mutation escaped negative-control and the assertion was tightened.**
+  `test_the_docstring_records_the_prompt_as_host_rendered` originally matched the bare token
+  `host-rendered`, which also occurs in this spec's own filename as cited in that docstring — so
+  gutting the claim still passed, the filename certifying the sentence. Anchored to "that prompt
+  is host-rendered"; all six mutations then landed and reverted cleanly.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`.
+- ⛔ **The runtime half remains unverified, exactly as the spec's own criterion states.** Whether a
+  guide re-presents the pending 👉 after a host dialog interrupts is a live-turn property, and the
+  guide may never observe the dialog at all. The six mutations prove the text says the right
+  thing, never that the behaviour follows. `dry-run` phase 3 is owed, and even there the case is
+  reachable only by simulating the bootcamper mentioning it.
