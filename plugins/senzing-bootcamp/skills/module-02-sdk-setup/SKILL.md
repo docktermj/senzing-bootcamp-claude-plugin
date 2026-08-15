@@ -1110,9 +1110,20 @@ the connection-string form all come from
 installation method, and guessing causes engine
 initialization failures (e.g., SENZ2027 when SUPPORTPATH is wrong).
 
+⛔ **`platform` is not optional here, even though the schema says it is.** `sdk_guide` declares
+`platform` with `"default": null` ("Omit to get the platform decision tree"), so a call without it
+**succeeds** — and returns no `environment` block at all: no `engine_config`, and no
+`default_paths` either. Every value this step needs lives in that block, so the omission does not
+raise an error, it just leaves you with the bootstrap code and nothing to configure. Pass the
+bootcamper's platform. If the response has no `environment` key, that is what happened — re-issue
+the call with `platform` rather than reconstructing the paths by hand.
+
+MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.32.9, 2026-08-15
+
 **Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
-carries both. `default_paths` gives plain, correct strings — `config_path`, `support_path`,
-`resource_path` — and assembling the document from them yields valid JSON on the first try.
+carries both — **provided `platform` was passed** (above). `default_paths` gives plain, correct
+strings — `config_path`, `support_path`, `resource_path` — and assembling the document from them
+yields valid JSON on the first try.
 
 ⛔ **The response's `engine_config` field must NOT be written to disk as-is. It needs two corrections,
 not one:**
@@ -1385,10 +1396,8 @@ call succeeds** (not merely a version query).
   `engine_config` field, whose braces are doubled and which does not parse (Step 8 states both
   corrections it needs, and its failure modes). Do not guess the paths
   (INV-080: config options come from the MCP tools, never from speculation). ⛔ **`platform` is not
-  optional here.** Omitting it returns the config-bootstrap *code* only, with no `engine_config`
-  block at all — verified on server 1.32.9, 2026-08-13: `topic='configure', language='python'`
-  returned `init_default_config.py` and nothing else, while adding `platform='linux_apt'` returned
-  `environment.engine_config` carrying CONFIGPATH, RESOURCEPATH and SUPPORTPATH.
+  optional here** — Step 8 states this rule and what a platform-less response looks like, at the
+  step that makes the call (INV-183).
 - Recommend SQLite for evaluation, PostgreSQL for production.
 - Always use `database/G2C.db` for SQLite (never `/tmp/sqlite`).
 - Verify installation before proceeding to the next module.

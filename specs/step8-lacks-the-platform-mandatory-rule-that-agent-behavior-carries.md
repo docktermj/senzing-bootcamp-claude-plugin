@@ -122,3 +122,42 @@ ones). Both call forms are correct. **Only the missing ⛔ rule is the finding.*
   `engine-config-returned-by-sdk-guide-is-not-valid-json` (the other half of this step's contract,
   which correctly lives *at* Step 8), `module02-dated-negatives-about-sdk-guide-carry-no-marker`,
   and INV-080, INV-136, INV-183, INV-246.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The re-check made the claim STRONGER than the spec states, and the shipped wording follows
+  the server, not the spec.** The spec says a platform-less call returns "no `engine_config`
+  block". Both calls were re-made this session (server **1.32.9**, 2026-08-15):
+  `sdk_guide(topic='configure', language='python')` returns **no `environment` key at all** — so
+  `default_paths` is missing too, not just `engine_config`. That is the sharper fact, because
+  `default_paths` is precisely what Step 8's next sentence tells the guide to build from, and it
+  is what shipped.
+- **The rule ships with a nuance the spec did not name: the schema declares `platform`
+  optional.** `"default": null`, *"Omit to get the platform decision tree"*. Step 8 now says so
+  explicitly — "not optional here, **even though the schema says it is**" — because without it the
+  rule reads as a mistake against the schema, and the next editor who checks would be right to
+  "correct" it. Guarded by `test_step_8_says_the_schema_calls_it_optional`.
+- **The claim ships with an `MCP-NEGATIVE` marker, which the spec did not call for.** It is a
+  dated tool-absence claim, so Step 3.4 requires one; it is a **routing negative** (the fact
+  exists on the platform-ful route) and names that route as `owner:`. `coverage_reports.py
+  negatives` now lists 21 markers, up from 20, and `unmarked` stays clean.
+- **The Agent Behavior bullet was shortened, not merely back-pointed.** The spec proposed adding
+  a pointer and leaving the text. Once Step 8 carries the rule and its evidence, keeping the full
+  dated verification in both places is the duplication that drifts — which is how this defect
+  arose. The bullet now states the rule in one clause and points to Step 8 (INV-183); the evidence
+  lives once, at the step.
+- ⛔ **Two mutations ESCAPED on the first negative-control pass, and both assertions were
+  rewritten.** (1) `test_step_8_names_what_a_platform_less_response_looks_like` matched
+  "no `environment` block" anywhere in the span — but the `MCP-NEGATIVE` marker restates that
+  phrase, so deleting the *prose* still passed: **the marker was certifying the sentence it
+  documents.** (2) The `owner:` check ran against the whole span rather than the marker line.
+  `setUp` now separates prose from marker and each assertion runs against the half it is about.
+  All six mutations then landed and reverted cleanly. This is the same shape as the
+  filename-certifies-its-claim escape recorded on
+  `host-rendered-control-prompt-interrupts-a-pending-question` — third instance of it this session.
+- **A literal `MCP-NEGATIVE:` in the guard's own source turned the suite red**, because the marker
+  scanner reads `tests/` too and saw an unparseable marker of the test file's own. The needle is
+  assembled from two fragments instead, with the reason in the docstring; an `ignore-file`
+  exemption was rejected as too broad for a guard file that may later carry a genuine negative.
+- **Establishes no invariant.** The rule it enforces is INV-183, already registered; this is an
+  application of it, not a new guarantee.

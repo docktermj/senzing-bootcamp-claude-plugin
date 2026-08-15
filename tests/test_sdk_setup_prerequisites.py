@@ -319,6 +319,93 @@ class StepFourVerifiesTheBindingNotTheEngine(unittest.TestCase):
                                  "a downstream initialize citation was lost")
 
 
+class StepEightStatesThatPlatformIsMandatory(unittest.TestCase):
+    """The rule governing the call must be AT the step that makes it (INV-183).
+
+    `sdk_guide` declares `platform` with ``"default": null`` ("Omit to get the platform decision
+    tree"), so a call without it **succeeds** and returns no ``environment`` block — no
+    ``engine_config`` and no ``default_paths``. Step 8's next instruction is *"Build the JSON
+    from `environment.default_paths` … That response carries both"*, which is false against such
+    a response, and the step offered no diagnosis: the ⛔ rule lived only in ``## Agent Behavior``,
+    **269 lines later**, under a heading a guide executing Step 8 has no reason to have read.
+    (`specs/step8-lacks-the-platform-mandatory-rule-that-agent-behavior-carries.md`)
+
+    Re-verified on server **1.32.9, 2026-08-15** by making both calls:
+    ``sdk_guide(topic='configure', language='python')`` returned ``code``/``anti_patterns``/
+    ``next_steps`` and **no** ``environment`` key; adding ``platform='linux_apt'`` returned
+    ``environment.default_paths`` and ``environment.engine_config``.
+
+    ⛔ **Scoped to the Step 8 span, derived from its headings (INV-246).** A file-wide assertion
+    would pass with the rule deleted from Step 8 and left in Agent Behavior — which is precisely
+    the state this guard exists to forbid.
+    """
+
+    #: ⛔ Prose and marker are separated, and negative control is why. Asserting a phrase
+    #: against the whole span passed with the PROSE deleted, because the dated negative-marker
+    #: line restates the same words — the marker was certifying the sentence it documents, the
+    #: same shape as a filename certifying the claim that cites it. Each assertion below now
+    #: runs against the half it is actually about.
+    #:
+    #: The marker prefix is assembled from fragments throughout this class rather than written
+    #: out: the marker scanner reads `tests/` too, and a literal here is picked up as an
+    #: unparseable marker of this file's own (it turned the suite red twice).
+    def setUp(self):
+        raw = section(read(), "## Step 8: Create Engine Configuration", "## Step 8a:")
+        marker_lines = [l for l in raw.splitlines() if l.lstrip().startswith("MCP-" + "NEGATIVE:")]
+        prose_lines = [l for l in raw.splitlines() if not l.lstrip().startswith("MCP-" + "NEGATIVE:")]
+        self.step8 = squash(raw)
+        self.prose = squash("\n".join(prose_lines))
+        self.marker = squash("\n".join(marker_lines))
+
+    def test_the_span_is_really_step_8(self):
+        """A mis-derived span would make every assertion below vacuous."""
+        self.assertIn("Create Engine Configuration", self.step8)
+        self.assertNotIn("Seed the default configuration", self.step8,
+                         "the span ran past Step 8 into Step 8a")
+
+    def test_step_8_says_platform_is_not_optional(self):
+        self.assertRegex(
+            self.prose, r"(?i)`platform` is not optional here",
+            "Step 8 does not state that `platform` is mandatory, so the rule is reachable only "
+            "from `## Agent Behavior` 269 lines later (INV-183)")
+
+    def test_step_8_says_the_schema_calls_it_optional(self):
+        """Without this, a future editor 'corrects' the rule against the schema and is right."""
+        self.assertRegex(
+            self.prose, r"(?i)even though the schema says it is",
+            "Step 8 does not record that the schema declares `platform` optional — the nuance "
+            "that stops the rule being read as a mistake and removed")
+
+    def test_step_8_names_what_a_platform_less_response_looks_like(self):
+        self.assertRegex(
+            self.prose, r"(?i)no `environment` block",
+            "Step 8 does not say what comes back when `platform` is omitted, so a guide that "
+            "hits it has no local diagnosis — the half that only existed in Agent Behavior")
+
+    def test_the_default_paths_instruction_is_conditioned_on_it(self):
+        """The sentence that is FALSE against a platform-less response must carry the proviso."""
+        self.assertRegex(
+            self.prose, r"(?i)carries both — \*\*provided `platform` was passed\*\*",
+            "the `environment.default_paths` instruction no longer states its precondition, so "
+            "it again reads as unconditionally true")
+
+    def test_the_absence_claim_carries_its_negative_marker(self):
+        """A dated 'the tool does not return X' claim expires undetectably without one.
+
+        ⛔ **The needle is assembled rather than written out**, and not for style: the marker
+        scanner reads `tests/` too, so a literal here is picked up as a marker of this file's
+        own — one that cannot parse, because a test assertion is not a dated claim. That
+        failure is real (hit on first run). The alternative, an `ignore-file` exemption, would
+        blind the scanner to this whole guard file if it ever gains a genuine negative.
+        """
+        marker = "MCP-" + "NEGATIVE:"
+        self.assertIn(marker, self.step8,
+                      "the platform-less-response claim is a dated tool-absence claim and needs "
+                      "a negative marker so `coverage_reports.py negatives` re-asks it")
+        self.assertIn("owner:", self.marker,
+                      "the marker has no `owner:` clause, so it does not parse (INV-194)")
+
+
 class StepEightBuildsValidJson(unittest.TestCase):
     """`engine_config` is not valid JSON — every brace in it is doubled.
 
