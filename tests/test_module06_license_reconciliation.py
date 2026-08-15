@@ -178,5 +178,37 @@ class TheProcedureIsCitedNotRestated(unittest.TestCase):
                 self.assertIn("Positive and below the dataset size", text)
 
 
+class TheInvariantScopeNoteSurvives(unittest.TestCase):
+    """INV-244's carve-out is load-bearing: without it the rule reads too wide.
+
+    `test_load_status` is also written only conditionally, and Phase A correctly reads its
+    absence as "a test load is owed" — legal, because the writer of that field *is* the
+    test load. Read literally and without the scope note, INV-244 forbids that too, and a
+    later audit "fixing" it would restore the defect `de73e72` removed. Both branches were
+    authored in the same session, which is exactly when the distinction is easiest to lose.
+    """
+
+    def setUp(self):
+        text = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
+        start = text.index("- **INV-244**")
+        end = text.index("\n- **INV-", start + 10)
+        self.entry = squash(text[start:end])
+
+    def test_the_scope_note_names_the_permitted_case(self):
+        self.assertIn("test_load_status", self.entry)
+
+    def test_the_scope_note_states_the_distinguishing_test(self):
+        """Not 'is the write conditional' but 'what is the writer gated on'."""
+        self.assertIn("same question", self.entry)
+        self.assertIn("what the writer is gated on", self.entry)
+
+    def test_the_binding_condition_is_unchanged(self):
+        """The carve-out is additive; the approved sentence must remain verbatim."""
+        self.assertIn(
+            "a step branching on it MUST NOT read that field's absence as a measured finding",
+            self.entry,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

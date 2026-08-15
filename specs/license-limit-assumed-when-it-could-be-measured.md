@@ -151,3 +151,33 @@ Implemented as proposed, both locations, all four criteria. Four notes.
 record `license_record_limit` unconditionally rather than only when its volume gate fires, which
 would fix this at the source. That is a Module 4 change with its own consequences and is noted
 here, not built. INV-244 makes the downstream branches safe either way.
+
+## Scope note added to INV-244 on review (2026-08-14)
+
+On maintainer review the same day, INV-244's binding sentence was found to reach further than
+its intent. It forbids reading absence as a finding "where a bootcamp state field is written only
+**conditionally**" — and `test_load_status` is also written only conditionally
+(`module-05-data-quality-mapping/phase3-test-load.md` writes `skipped`;
+`module-06-data-processing/phaseB-load-first-source.md` writes `complete`). Phase A's pre-load
+check reads its absence as "a brief test load is owed", which is **correct** and was authored in
+the same session, in `de73e72`.
+
+The distinction the invariant's body already made, and its binding sentence did not, is **what the
+writer is gated on**:
+
+- `test_load_status`'s writer **is** the test load, so nothing having written it means no test
+  load ran — absence is sound evidence, and that branch is legal.
+- `license_record_limit`'s writer is a **volume gate**, not a licence check, so its silence
+  carries no information about the licence.
+
+**Maintainer decision: add a scope carve-out rather than rewrite the condition.** The approved
+sentence is kept verbatim — `INVARIANTS.md` permits in-place edits only where meaning is
+preserved, and narrowing the condition would have been a meaning change to a rule already
+approved. The note is additive and states which cases the condition reaches. Guarded by
+`TheInvariantScopeNoteSurvives` in `tests/test_module06_license_reconciliation.py`, which pins the
+permitted example, the distinguishing test, and that the binding sentence is unchanged; removing
+the note fails two of its three assertions.
+
+⚠️ Recorded because the failure mode is specific: read literally and without the note, INV-244
+would send a later audit to "fix" the Phase A branch back into the defect `de73e72` had just
+removed — the invariant undoing its own session's work.
