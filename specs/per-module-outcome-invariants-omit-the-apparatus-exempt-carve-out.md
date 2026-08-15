@@ -106,3 +106,26 @@ ruleset is what overstates.
 - Upstream: not applicable — not a Senzing MCP server defect.
 - Related specs: `final-review-doc-coherence` (fixed the neighbouring stale citations and touched
   the same two modules without annotating these four), and INV-075, INV-078, INV-092.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- **The site set is FIVE invariants, not the four this spec enumerates — and the fifth needed the
+  opposite note.** Writing the guard to derive its sites by scanning `INVARIANTS.md` for the
+  "At the beginning/end of each module" phrasing (INV-246, rather than hardcoding the four IDs this
+  spec lists) immediately matched **INV-028** as well. INV-028 is genuinely *not* exempt: Bootcamp
+  preparation "presents its own banner" (`bootcamp-preparation/SKILL.md:24`) and Module 0 presents
+  "its ENTITY RESOLUTION CONCEPTS banner" (`module-00/SKILL.md:26`). So it received a note saying the
+  setup modules are **NOT** exempt from it — the inverse of what this spec prescribes for its four.
+  Had the guard hardcoded the spec's list, INV-028 would have stayed silent directly above four
+  carved-out neighbours, where silence reads as the same carve-out. This is the failure INV-246
+  exists for, caught by the mechanism INV-246 requires, on the first spec implemented after it.
+- **The guard therefore asserts a *disposition*, not an exemption.** Each member of the phrasing
+  class must state which side it is on — carved out, or explicitly not — because a guard demanding
+  only the exemption note would have forced a false one onto INV-028.
+- **No `Enforced by` clause was added to the five invariants**, deliberately: it would add five
+  entries to `tests/test_invariant_enforcer_citations.py`'s pinned pair count for no discoverability
+  gain the test docstring does not already provide, in a file this skill's own guidance flags for
+  bulk.
+- **No Senzing fact required re-verification.** `get_capabilities` was called this session to date
+  the run (server **1.32.9**, 2026-08-15), confirming the spec's `MCP re-check: n/a`. The spec's
+  factual claims are about this repo's own files and were re-read directly rather than trusted.

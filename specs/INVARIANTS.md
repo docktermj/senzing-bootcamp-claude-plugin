@@ -96,11 +96,11 @@ at INV-022 and presents INV-022–INV-027 in order.
 
 These hold at the boundaries of every module.
 
-- **INV-028** — At the beginning of each module, a banner is presented "MODULE n: [title]". (Superseded by INV-079: the banner is "MODULE: [title]", name only, no number.)
-- **INV-029** — At the beginning of each module, show modules completed, the current module, and upcoming modules.
-- **INV-030** — At the beginning of each module, explain what is true before the module and what will be true after completing the module.
-- **INV-031** — At the beginning of each module, enumerate the steps that will be taken in the module.
-- **INV-032** — At the end of each module, give the Bootcamper a list of what was accomplished, what files were produced, why it matters, and what's next.
+- **INV-028** — At the beginning of each module, a banner is presented "MODULE n: [title]". (Superseded by INV-079: the banner is "MODULE: [title]", name only, no number.) (⚠️ **The apparatus-exempt setup modules are NOT exempt from this one** — each presents its own banner: Bootcamp preparation, INV-075; Module 0's ENTITY RESOLUTION CONCEPTS banner, INV-078. Stated because the four invariants below it *are* carved out for those modules, so silence here reads as the same exemption. Clarified 2026-08-15, no meaning change.)
+- **INV-029** — At the beginning of each module, show modules completed, the current module, and upcoming modules. (The apparatus-exempt setup modules present no journey map — Bootcamp preparation, INV-075, which cannot show one because it is the module that *produces* the selection driving it; Module 0, INV-078. Clarified 2026-08-15, no meaning change.)
+- **INV-030** — At the beginning of each module, explain what is true before the module and what will be true after completing the module. (The apparatus-exempt setup modules present no before/after framing — Bootcamp preparation, INV-075; Module 0, INV-078. Clarified 2026-08-15, no meaning change.)
+- **INV-031** — At the beginning of each module, enumerate the steps that will be taken in the module. (The apparatus-exempt setup modules present no step overview — Bootcamp preparation, INV-075; Module 0, INV-078. Clarified 2026-08-15, no meaning change.)
+- **INV-032** — At the end of each module, give the Bootcamper a list of what was accomplished, what files were produced, why it matters, and what's next. (The apparatus-exempt setup modules present no bootcamper-facing end-of-module summary in this form. Bootcamp preparation closes with the setup recap INV-099 requires instead, INV-075; Module 0 presents no such summary but is **not** exempt from the recap itself — INV-092 requires it to append its own name-based section to `docs/bootcamp_recap.md` and add `entity_resolution_concepts` to `modules_completed`, INV-078. Clarified 2026-08-15, no meaning change.)
 
 ## INV-033 – INV-046: Module-specific outcomes
 
