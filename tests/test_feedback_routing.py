@@ -62,17 +62,54 @@ UPSTREAM_ELIGIBLE = ("mcp-server", "both")
 
 
 def verdict_set_sites():
-    """Every shipped file stating the verdict set, DERIVED not listed (INV-246).
+    """Every shipped line stating the verdict set, DERIVED not listed (INV-246).
 
     A hardcoded list certifies the sites the author already thought of; the site added later
     is the only one that matters. Membership floor below keeps the scan honest.
+
+    ⚠️ **An enumeration site is a pipe-separated series naming `mcp-server`** — the two shapes
+    the plugin actually uses, ``[plugin | mcp-server | …]`` and ``` `plugin` | `mcp-server` | … ```.
+    Markdown table rows are excluded (they start with a pipe and define one verdict per row, not
+    the series).
+
+    Three earlier versions of this scan were wrong, all caught self-auditing the commits that
+    introduced them — recorded because the sequence is the point, not the destination:
+
+    * Keying on ``Routing:`` reached the entry template and graduation's copy but missed
+      `feedback.md`'s sanctioned-external-path rule — a narrower site set than the rule's reach,
+      the exact INV-246 defect this guard enforces against.
+    * Keying on "three or more backticked verdicts" over-reached onto local-only subset lines
+      **and** still missed the entry template, which uses no backticks.
+    * Keying on "names an eligible verdict and a non-eligible one" matched ordinary prose:
+      ``both``, ``plugin`` and ``host`` are common English words, so *"Yes to the middle two →
+      **both** (the plugin repeated…)"* scored as an enumeration.
+
+    Local-only subset lines are a **different** claim and are checked separately by
+    ``LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated`` — requiring all five there would fail
+    correct content.
     """
     hits = []
     for path in sorted(PLUGIN.rglob("*.md")):
-        text = path.read_text(encoding="utf-8")
-        # A verdict-set site names `plugin` and `mcp-server` within one Routing line.
-        for line in text.splitlines():
-            if "Routing:" in line and "mcp-server" in line and "plugin" in line:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.lstrip().startswith("|"):
+                continue                      # a table row defines one verdict, not the series
+            if "mcp-server" in line and line.count("|") >= 3:
+                hits.append((path, line))
+    return hits
+
+
+def local_only_rule_lines():
+    """Lines stating which verdicts stay on the machine, DERIVED not listed (INV-246).
+
+    Separate from the enumeration sites because the claim is different: these name a *subset*
+    deliberately. They matter most, though — each one is a place a verdict could silently become
+    upstream-eligible by omission.
+    """
+    markers = ("skip this step entirely", "stays local")
+    hits = []
+    for path in sorted(PLUGIN.rglob("*.md")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if any(m in line for m in markers):
                 hits.append((path, line))
     return hits
 
@@ -316,6 +353,34 @@ class EverySiteStatesTheSameVerdictSet(unittest.TestCase):
                         verdict, line,
                         "%s states the verdict set without %r — the taxonomy has drifted "
                         "between its sites (INV-246)" % (path.name, verdict))
+
+
+class LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated(unittest.TestCase):
+    """Every place saying what stays local must name every non-eligible verdict (INV-249).
+
+    These lines are where a verdict becomes upstream-eligible **by omission** — leave one out
+    and the rule silently permits forwarding it. They are checked apart from the enumeration
+    sites because naming a subset is correct here, so the all-five assertion would reject them.
+    """
+
+    def test_the_rule_is_stated_in_more_than_one_place(self):
+        lines = local_only_rule_lines()
+        self.assertGreaterEqual(
+            len(lines), 2,
+            "the local-only rule is stated in fewer places than expected — either it was "
+            "removed, or the marker phrases this scan derives from were reworded")
+
+    def test_each_names_every_non_eligible_verdict(self):
+        for path, line in local_only_rule_lines():
+            for verdict in VERDICTS:
+                if verdict in UPSTREAM_ELIGIBLE:
+                    continue
+                with self.subTest(site=path.name, verdict=verdict):
+                    self.assertIn(
+                        "`%s`" % verdict, line,
+                        "%s states which verdicts stay local without naming %r, so that "
+                        "verdict is upstream-eligible by omission (INV-249): %s"
+                        % (path.name, verdict, line.strip()[:80]))
 
     def test_each_verdict_carries_concrete_examples(self):
         """Criteria without examples get applied inconsistently."""
