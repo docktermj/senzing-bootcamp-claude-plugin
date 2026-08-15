@@ -655,7 +655,8 @@ Tab ids are **contract**, not an implementation detail: the recap screenshot hel
 id, so a server in any language (INV-090) must use these exact ids and expose the two hooks below.
 
 **The row order below is also the order the app presents its tabs, left to right, and therefore the
-order screenshots are embedded in the recap** — by `module-completion.md`'s capture step and by
+order screenshots are embedded in the recap** (INV-155 fixes the six-tab set and this order;
+INV-147 binds the recap's embedding to it) — by `module-completion.md`'s capture step and by
 graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
 list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
 app; images in capture or append order cannot be lined up against the interface.
@@ -683,7 +684,7 @@ The app MUST provide:
   `#navbtn-<id>`), which is how a tab is captured with no browser-automation dependency.
 
   ⛔ **`activate()` MUST be idempotent: called for the tab that is already active, it MUST
-  return without redrawing.** Redrawing rebuilds the tab, and for a tab whose layout
+  return without redrawing (INV-171).** Redrawing rebuilds the tab, and for a tab whose layout
   *animates* — the Entity Graph's force simulation — that restarts the animation from
   scratch. Mid-capture that yields a screenshot of every node collapsed in a corner: a
   valid PNG, at exit 0, of a graph that looks like it found nothing (47 KB where 227 KB

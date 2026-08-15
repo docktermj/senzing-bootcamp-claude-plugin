@@ -110,3 +110,40 @@ guards already tried.
 - Related specs: `guards-enforce-class-scoped-rules-from-hardcoded-site-sets` (the same class, four
   instances, implemented 2026-08-15 — this is the fifth, and that spec predicted it), and INV-002,
   INV-090, INV-106, INV-246.
+
+## Deviations from this spec, and why (2026-08-15)
+
+- ⚠️ **Criterion 6 ("no `plugins/` behaviour changes") is NOT met as written — two shipped
+  citations were added.** `INV-155` (the six-tab set and its row order) and `INV-171` (`activate()`
+  must be idempotent) bind the app the Bootcamper builds and were **stated in full** in the contract
+  with no ID beside them. The spec offered "by ID **or** by an explicitly registered content
+  phrase"; registering a content phrase would have encoded the wording as a second place to keep in
+  sync, while adding the two IDs satisfies **INV-183** at the point the rule binds and makes the
+  derived check trivially true. `INV-147` was cited in the same clause, since it is the rule that
+  makes the tab table the recap's ordering authority. No behaviour changed — these are citations.
+- **The derived check runs against `build_guidance()`, not `visualization-api-reference.md` alone.**
+  That helper already existed in the file and is defined as contract **+** `phase1-visualization.md`,
+  which together are what an any-language implementer reads. Checking the contract alone would have
+  reported invariants stated in phase 1 as missing.
+- **The spec says the dict holds five requirements; it holds ten.** Five carry `INV-NNN` IDs and the
+  other five name unattributed requirements (legends from data, de-duplication, per-entity actions,
+  server lifetime, scale principle). Nothing turns on the count — the defect is that the set is
+  written rather than derived — so it is recorded rather than corrected here.
+- **A fourth assertion was added beyond the spec: `test_no_exemption_is_stale`.** An `APPARATUS_EXEMPT`
+  entry for an invariant that has left the visualization group is a judgement carried about a rule
+  that moved, and it would silently keep excusing something nobody re-checked.
+- ⚠️ **The first attempt broke an existing guard, which caught it.** Rewording the tab-table intro to
+  lead with "The tab set below is exactly six" displaced a phrase
+  `tests/test_screenshot_retention_and_order.py:268` pins verbatim (*"row order below is also the
+  order the app presents its tabs"*). The pinned wording was restored and the citations attached
+  after it instead. Recorded because it is the same class this spec is about — an assertion existing
+  somewhere other than where the editor was looking.
+- **No Senzing fact required re-verification.** `get_capabilities` established server **1.32.9** this
+  session; the spec asserts no Senzing claim, and this change touches only the plugin's own contract,
+  its ruleset and its test suite.
+- ⚠️ **The ledger entry itself broke `citations.py verify` on its first run.** The sentence
+  describing the negative control spelled out a synthetic invariant id, which the census read as a
+  citation of an undefined invariant — turning the whole suite red *after* the criterion walk had
+  passed. It is verbatim the failure `implement-spec` Step 4 warns about, and the reason that check
+  is mandated as the **last** action rather than part of the walk. The sentence was reworded to
+  describe the control without spelling an id.

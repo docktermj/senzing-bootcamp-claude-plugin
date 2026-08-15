@@ -51,6 +51,106 @@ def plain(text):
     return re.sub(r"\s+", " ", text.replace("**", ""))
 
 
+INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
+
+#: The declared index group in INVARIANTS.md. Its membership is DATA, not judgement, so the
+#: candidate set is derived from it (INV-246 in spirit: the requirement set below was a list
+#: of what its author knew about, and a sixth requirement would have passed silently — the
+#: failure this file's own docstring records having happened once, to INV-106's escaping).
+VISUALIZATION_GROUP = re.compile(
+    r"- \*\*Visualization and screenshots\*\*.*?\n((?:  INV-[^\n]*\n))", re.S)
+
+#: Invariants in that group the Bootcamper does NOT build, so INV-002/INV-090 do not require
+#: them in the any-language contract. ⛔ THIS SET IS THE JUDGEMENT HALF AND MUST STAY SMALL
+#: AND REASONED: an entry added without a reason is how this rule quietly stops binding.
+#: Each value says why the Bootcamper never implements it.
+APPARATUS_EXEMPT = {
+    "INV-107": "inlined fallback constants in the plugin's OWN Python scripts "
+               "(senzing_viz_server.py, generate_recap_pdf.py) — the reference "
+               "implementation's internals, generalised by INV-184; not a server behaviour",
+    "INV-122": "screenshot file naming and per-tab capture — capture_screenshots.py, "
+               "plugin-side apparatus the Bootcamper never writes",
+    "INV-123": "recap screenshot captions — the recap generator, plugin-side",
+    "INV-147": "screenshot embedding order in the recap — the recap generator. It CITES the "
+               "contract's tab table as the ordering authority, which is why that table "
+               "declares itself as such, but the rule binds the generator",
+    "INV-232": "suppressed tabs excluded from the capture manifest — capture_screenshots.py. "
+               "Its app-side premise (a tab whose data is absent is hidden) IS stated in the "
+               "contract's per-tab 'Shown when' column",
+    "INV-235": "a capture helper's printed label — capture_screenshots.py, plugin-side",
+}
+
+
+def visualization_invariants():
+    """Every invariant in the declared visualization index group, minus fully superseded."""
+    text = INVARIANTS.read_text(encoding="utf-8")
+    m = VISUALIZATION_GROUP.search(text)
+    if not m:
+        raise AssertionError(
+            "the 'Visualization and screenshots' index group is no longer parseable; this "
+            "guard's candidate set is derived from it and is now empty")
+    ids = re.findall(r"INV-\d{3}", m.group(1))
+    tail = text[m.end():m.end() + 400]
+    superseded = set()
+    fully = re.search(r"\*Fully superseded[^\n]*\n", tail)
+    if fully:
+        superseded = set(re.findall(r"INV-\d{3}", fully.group(0)))
+    return [i for i in ids if i not in superseded]
+
+
+class EveryServerBindingInvariantReachesTheContract(unittest.TestCase):
+    """The derived half: a NEW visualization invariant cannot be silently absent.
+
+    The `REQUIREMENTS` dict below carries phrase-level precision a scan cannot reproduce and
+    is kept. What it could not do is notice a requirement nobody added to it. This class
+    derives the candidate set from the index group instead, so adding a visualization
+    invariant forces a deliberate choice: state it in the any-language build guidance, or
+    record in APPARATUS_EXEMPT why the Bootcamper does not build it.
+
+    ⛔ It checks the invariant is REACHABLE from the guidance, not that the guidance is
+    adequate. A one-line mention passes. Only reading tells you the requirement is stated
+    well enough to build from.
+    """
+
+    def setUp(self):
+        self.candidates = visualization_invariants()
+        self.guidance = build_guidance()
+
+    def test_the_group_is_parseable_and_not_vacuous(self):
+        self.assertGreaterEqual(
+            len(self.candidates), 20,
+            "the visualization index group yielded %d invariants — far fewer than it "
+            "carries, so the group heading or its ID-list format changed and this guard is "
+            "inspecting a set it cannot see" % len(self.candidates))
+
+    def test_every_candidate_is_stated_or_reasonably_exempt(self):
+        unaccounted = [i for i in self.candidates
+                       if i not in self.guidance and i not in APPARATUS_EXEMPT]
+        self.assertEqual(
+            [], unaccounted,
+            "a visualization invariant is cited nowhere in the any-language build guidance "
+            "and is not recorded as apparatus the Bootcamper does not build. If it binds the "
+            "server they build, state it in the contract (INV-002/INV-090); if it does not, "
+            "add it to APPARATUS_EXEMPT with the reason: %s" % unaccounted)
+
+    def test_every_exemption_carries_a_reason(self):
+        for ident, reason in APPARATUS_EXEMPT.items():
+            with self.subTest(invariant=ident):
+                self.assertGreater(
+                    len(reason.split()), 6,
+                    "%s is exempted without a stated reason. An unreasoned exemption is "
+                    "indistinguishable from nobody having looked" % ident)
+
+    def test_no_exemption_is_stale(self):
+        """An exemption for an invariant that left the group hides a rule nobody re-checked."""
+        stale = sorted(set(APPARATUS_EXEMPT) - set(self.candidates))
+        self.assertEqual(
+            [], stale,
+            "APPARATUS_EXEMPT names invariants that are no longer in the visualization "
+            "group, so the exemption is carrying a judgement about a rule that moved: %s"
+            % stale)
+
+
 class ContractCarriesEveryBuildRequirement(unittest.TestCase):
     """Each entry: (requirement, phrases that would evidence it). A builder reading only
     the guidance must be able to satisfy every one."""
