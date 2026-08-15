@@ -146,7 +146,7 @@ exploration gate below.
 
 On **accept** ("yes", "sure", "let's try"), run the knowledge check under these rules:
 
-- Ask a **short** series (about 3-5) of entity-resolution questions, **one 👉 question per turn**
+- Ask a **short** series (about 3-5) of entity-resolution questions, **one 👉 question per turn** (INV-251)
   (INV-005), evaluating the bootcamper's answer each turn before asking the next.
 - **Start at moderate difficulty** — not the easiest tier — and keep it conceptual (matching vs.
   relating, false positives/negatives, why principle-based beats hand-written rules, disclosed vs.

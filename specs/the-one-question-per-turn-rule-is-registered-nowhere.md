@@ -202,3 +202,48 @@ conclude the count applies only where an invariant says so — which is precisel
   and `results-presentation-turns-end-with-zero-questions` (both argue from "INV-005 forbids two 👉"),
   `statement-only-step-cannot-satisfy-one-question-per-turn`, and INV-005, INV-006, INV-008, INV-009,
   INV-014, INV-063, INV-064, INV-135, INV-183, INV-225, INV-246.
+
+## Invariants introduced
+
+- `INV-251` — A turn presented to the Bootcamper MUST NOT contain **two or more** 👉 questions:
+  the guide asks exactly one per yielding turn and ends the turn on it. Questions the Bootcamper
+  raises, and any-time controls they invoke, do not count against this. (Recorded in
+  `specs/INVARIANTS.md`, indexed under *Questions, gates and bootcamper-facing conversation*.)
+
+## Deviations from this spec, and why (2026-08-15)
+
+- ⛔ **The spec proposed a two-part invariant; only ONE part was missing, and the maintainer chose
+  the narrower wording.** This spec's draft said *"MUST end on exactly one 👉 … and a yielding turn
+  MUST NOT end on none."* The second half is **already registered**: **INV-225** states that a step
+  with no 👉 *"MUST NOT end a turn"*, and both zero-case specs
+  (`results-presentation-turns-end-with-zero-questions`,
+  `statement-only-step-cannot-satisfy-one-question-per-turn`) resolve to INV-225. So INV-251 states
+  only the two-or-more prohibition and points at INV-225 for the rest — maintainer decision,
+  2026-08-15, on the ground that duplicating a clause across two IDs is how they drift apart.
+- **The exemption clause survived into the invariant**, rather than being demoted to prose: the
+  any-time-controls path in `ground-rules.md` relies on it, and a reader meeting an unqualified
+  "never two 👉" would have no basis for the bootcamper-raised case.
+- ⛔ **The guard caught a site I had listed in the spec and then failed to fix.**
+  `feedback.md:250` — *"so that exactly one 👉 ends the turn (INV-005)"* — was named in the spec's
+  own site table and missed during implementation. `test_no_count_line_cites_a_question_invariant_that_is_not_the_count`
+  reddened on it. This is the case for deriving a guard's site set by scanning rather than working
+  from a list, including the spec's own list (INV-246).
+- **Three existing guards pinned the old citations and had to move with them** —
+  `test_ground_rules_nonyielding_presentation.py:89` asserted `INV-005` in the non-yielding
+  section, `test_no_host_control_is_offered_as_a_question.py` pinned *"which INV-005 forbids"* in
+  the two-turn-shapes clause, and `EXPECTED_PAIRS` went 63 → 64. All three failures were the guards
+  working, not collateral damage.
+- **`transcript_lint.py` was RELABELLED, never rewritten.** Its finding code moved
+  `INV-005-multi-question` → `INV-251-multi-question` at **two** sites — the emitter and the
+  self-test's expected-code set — which an `assert count == 1` caught before writing. The counting
+  logic is untouched, `test_the_counting_logic_is_unchanged` guards that, and the linter's own
+  `--selftest` still reports *"all 9 checks behave"*.
+- **Three sites state a FACT, not the rule, and deliberately carry no citation:**
+  `module-03-system-verification/SKILL.md:22`, `module-04-data-collection/SKILL.md:26` and
+  `module-05-data-quality-mapping/phase1-quality-assessment.md:678` say how many 👉 a given module
+  or gate contains. That is an observation about content, not a statement of the rule, and citing
+  INV-251 there would imply the rule is what makes it true.
+- ⛔ **Not runtime-verified, and the guard says so.** Whether a guide ends a turn on one question is
+  a live-turn property. The only behavioural check is `auto-test`'s transcript linter, against real
+  transcripts; `dry-run` phase 3 judges a live turn. Seven mutations prove the rule is registered
+  and correctly cited — nothing proves it is obeyed.

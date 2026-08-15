@@ -1045,7 +1045,7 @@ Example (list only what exists):
 
 > 🎓 **Here's your bootcamp recap.** Your complete recap is at `docs/bootcamp_recap.pdf`: a shareable PDF that opens with a summary and then walks through every module you completed, capturing the Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary for each. Your production project is ready in `production/`: start with `production/GRADUATION_REPORT.md` and work through `production/MIGRATION_CHECKLIST.md`. Two more keepsakes are alongside the recap: `docs/business_problem.pdf`, the problem you set out to solve, and `docs/data_source_evaluation.pdf`, how ready your sources were and what was left unmapped.
 
-3. **End on the single closing question.** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
+3. **End on the single closing question (INV-251).** The announcement carries no 👉. After it, end the graduation turn with exactly one 👉 question:
 
 > 👉 **Is there anything else you would like to explore?**
 

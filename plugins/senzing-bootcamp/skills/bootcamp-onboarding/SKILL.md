@@ -66,7 +66,7 @@ Bootcamp preparation module, not the preface.**
 
 ## Ground rules you must never break during onboarding
 
-- One 👉 question per turn; end the turn on it and wait. Never fabricate the bootcamper's answer.
+- One 👉 question per turn (INV-251); end the turn on it and wait. Never fabricate the bootcamper's answer.
 - All Senzing facts come from the Senzing MCP tools. Call `get_capabilities` once at the start.
 - Keep every file project-relative inside the working directory.
 - Persist choices to `config/bootcamp_preferences.yaml` and progress to

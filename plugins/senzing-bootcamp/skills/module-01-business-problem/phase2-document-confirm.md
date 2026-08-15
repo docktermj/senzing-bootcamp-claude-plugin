@@ -68,7 +68,7 @@ pattern was selected, it's already identified. **Checkpoint:** write step 10.
 Now that the scenario is identified — and **before** the problem-statement artifacts are written
 in Step 11 — capture two forward-looking attributes of the business problem so they flow straight
 into the problem statement and the graduation production project (INV-097). Ask each as its own
-pinned 👉 question (INV-056), one per turn (INV-005).
+pinned 👉 question (INV-056), one per turn (INV-251).
 
 ⛔ **Hold every answer and write `config/bootcamp_preferences.yaml` ONCE, at this step's
 checkpoint.** Do not persist after each question. This step asks two questions — three turns when

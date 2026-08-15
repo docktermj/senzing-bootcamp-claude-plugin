@@ -68,7 +68,7 @@ being thorough here is what makes `dry-run`'s time worth spending on the things 
 execution can reach.
 
 ⛔ **The conversational invariants are out of scope and MUST be reported as such.**
-INV-005–INV-009 (one 👉 question, asked once, no unrequested skips) and every gate
+INV-251 (one 👉 question per turn), INV-006 (asked once), INV-014 (no unrequested skips), INV-005/INV-008/INV-009 (the 👉 marker, and each question's clarity) and every gate
 ordering rule govern what the model *does in a live turn*. Reading cannot establish
 them, and an assistant grading its own 👉 discipline proves nothing. Say they are
 untested and route them to `dry-run` phase 3. A report that lets them pass silently is

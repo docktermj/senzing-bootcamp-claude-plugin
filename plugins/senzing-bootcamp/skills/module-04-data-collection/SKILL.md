@@ -797,7 +797,7 @@ training data.
 
    1. **Confirm the current requirements from the tool itself** before asking for anything, so you
       request exactly the fields it needs and no more. Never collect a field "in case".
-   2. **Ask for the values, one 👉 question per turn**, saying plainly that a work email is required
+   2. **Ask for the values, one 👉 question per turn (INV-251)**, saying plainly that a work email is required
       and that a personal address will be rejected. Never put them in a config file, the recap, or
       the feedback file (INV-065) — hold them for the call alone.
    3. **Show the exact request, then ask permission**, pinned verbatim (INV-056), ending the turn on

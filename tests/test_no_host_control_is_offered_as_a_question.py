@@ -15,7 +15,7 @@ repair of an observed guide defect, and this file must not imply otherwise
 (`specs/host-rendered-control-prompt-interrupts-a-pending-question.md`).
 
 The rule is still worth having, and nothing on the books forbade the improvised case: the 👉
-protocol governed a question's count (INV-005), shape (INV-008/INV-009/INV-051), placement
+protocol governed a question's count (INV-251 since 2026-08-15; INV-005 at the time), shape (INV-008/INV-009/INV-051), placement
 (INV-211/INV-224) and, for pinned gates, verbatim wording (INV-056) -- never its provenance. A
 repo-wide search for `auto-mode`, `auto mode`, `auto-accept`, `permission mode`, `plan mode`,
 `fast mode` and `bypass permissions` across `plugins/`, `.claude/` and `tests/` still returns
@@ -302,9 +302,9 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
             protocol, r"(?i)ends one of \*\*two\*\* ways, never both",
             "the host-control handling clause does not state that re-presenting the pending "
             "question and asking a clarifying counter-question are alternatives, so a guide "
-            "following both ends the turn on two 👉 (INV-005)")
+            "following both ends the turn on two 👉 (INV-251)")
         self.assertRegex(
-            protocol, r"(?i)doing both ends the turn on two .{0,4}, which INV-005 forbids",
+            protocol, r"(?i)doing both ends the turn on two .{0,4}, which INV-251 forbids",
             "the clause does not name the consequence of doing both, so the alternation reads "
             "as a stylistic preference rather than a rule")
         self.assertRegex(
@@ -318,10 +318,10 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
         self.assertRegex(
             controls, r"(?i)invoking\*\* one is not a bootcamp question",
             "the preamble does not distinguish the bootcamper INVOKING a control from the "
-            "turn's 👉 budget, so it reads as a blanket exemption from INV-005's count")
+            "turn's 👉 budget, so it reads as a blanket exemption from INV-251's count")
         self.assertRegex(
             controls, r"(?i)the turn still ends on \*\*exactly one\*\*",
-            "the preamble does not restate that INV-005 still binds, which is the reading that "
+            "the preamble does not restate that INV-251 still binds, which is the reading that "
             "let a host-control detour carry a second 👉")
 
     def test_the_sole_exception_is_stated_where_the_precedent_is_set(self):

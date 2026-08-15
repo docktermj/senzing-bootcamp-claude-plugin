@@ -1,6 +1,6 @@
 """A step that asks nothing must have a legal way to be executed.
 
-Three rules collided with no legal move. INV-005: exactly one 👉 ends each yielding turn, so
+Three rules collided with no legal move. INV-251: a turn never carries two or more 👉, and INV-225 forbids ending on none, so
 presenting a statement-only step alone ends a turn with **zero**. "Advance exactly one step at
 a time", so folding it into the next step's turn looks like advancing two. And the post-nudge
 sequence said the reply turn ends "on Step 1's single 👉 question" — which Module 1's Step 1,

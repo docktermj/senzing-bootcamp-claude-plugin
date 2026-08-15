@@ -15,7 +15,7 @@ So the guide stopped where the output concluded something. On one dry-run walk
     Module 7 steps 2-3a   -> ended on the five business answers
 
 Twice the Bootcamper had to ask which question was pending. The `Stop` hook that would
-catch this (INV-005) does not fire during a walk, so in a real bootcamp the hook would
+catch this (INV-251) does not fire during a walk, so in a real bootcamp the hook would
 paper over the prompt weakness and it would never be observed — only its symptom.
 
 These tests pin the clause and the three site pointers, so a later consolidation cannot
@@ -86,7 +86,8 @@ class TheClauseIsStatedInTheProtocol(unittest.TestCase):
         """A rule with no action is advice; the action is 'count the 👉 first'."""
         section = nonyielding_section()
         self.assertIn("exactly one \U0001f449", section)
-        self.assertIn("INV-005", section)
+        # INV-251 governs the COUNT (relabelled 2026-08-15; INV-005 is the 👉 marker).
+        self.assertIn("INV-251", section)
 
     def test_the_clause_sits_inside_the_nonyielding_contract(self):
         """Reachable at the rule it qualifies, not filed elsewhere in the file."""

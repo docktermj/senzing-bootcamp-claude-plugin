@@ -77,12 +77,19 @@ def _finding(sev, code, turn, message):
 
 
 def check_one_pointer_per_turn(turns):
-    """INV-005: exactly one 👉 per turn, and it ends the turn."""
+    """INV-251: a turn MUST NOT contain two or more 👉; INV-225 forbids ending on none.
+
+    ⚠️ Was labelled INV-005 until 2026-08-15. INV-005 is the 👉 *marker* rule in full
+    ("Each question to the Bootcamper is preceded by 👉") and says nothing about count,
+    so every finding this emitted pointed the maintainer at the wrong invariant. The
+    counting logic is unchanged; only the label and the finding code moved.
+    (`specs/the-one-question-per-turn-rule-is-registered-nowhere.md`)
+    """
     out = []
     for index, text in enumerate(turns, 1):
         count = text.count(POINTER)
         if count > 1:
-            out.append(_finding(BREAKING, "INV-005-multi-question", index,
+            out.append(_finding(BREAKING, "INV-251-multi-question", index,
                                 f"{count} 👉 in one turn; exactly one is allowed"))
         if count == 1:
             body = _prose_after_question(text)
@@ -263,7 +270,7 @@ def selftest():
     if clean:
         failures.append(f"clean transcript produced findings: {clean}")
 
-    expected = {"INV-005-multi-question", "INV-079-module-number",
+    expected = {"INV-251-multi-question", "INV-079-module-number",
                 "INV-051-or-joined", "internal-marker-leaked", "INV-006-re-asked"}
     codes = {f["code"] for f in lint(_BAD)}
     for code in sorted(expected - codes):

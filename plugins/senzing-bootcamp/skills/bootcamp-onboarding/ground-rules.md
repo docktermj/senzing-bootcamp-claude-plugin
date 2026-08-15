@@ -31,7 +31,7 @@ steering files.)
 
 ## Conversation protocol (the 👉 rules)
 
-- **One question per turn.** Wait for the answer. NEVER combine questions with "and", "or",
+- **One question per turn (INV-251).** Wait for the answer. NEVER combine questions with "and", "or",
   "also", or "but first" - each question is its own turn. This is the #1 bootcamper complaint;
   zero tolerance.
 - **Prefix** every input-requiring question with `👉` at the start of the line, and wrap the
@@ -57,7 +57,7 @@ steering files.)
     an ending. The examples above are all low-output steps (a reminder, a set of checks, a scenario
     generation), which is exactly why this case needs saying: the rule is a property of the **step**
     (does it ask?), never of the **output** (does it look finished?). Before ending any turn, confirm
-    the turn carries exactly one 👉 (INV-005); if the step just presented has none, continue to the
+    the turn carries exactly one 👉 (INV-251); if the step just presented has none, continue to the
     next asking step in the same turn. Observed three times in one walk (2026-08-14), each time
     ending a turn with **zero** questions and each time in this shape — Phase C's orchestration
     summary, Phase D's validation evidence, Module 7's five business answers.
@@ -121,7 +121,7 @@ steering files.)
     - **If the answer needs a clarification from them** — the clarifying counter-question is the
       turn's single 👉, and the pending question waits for the turn **after** it.
 
-    ⛔ **Doing both ends the turn on two 👉, which INV-005 forbids** — the violation this file calls
+    ⛔ **Doing both ends the turn on two 👉, which INV-251 forbids** — the violation this file calls
     the #1 bootcamper complaint. A counter-question is still not a gate, and it never replaces the
     pending question; it only defers it by one turn.
   - ⚠️ **Why this is a rule and not an assumption.** Observed twice on 2026-08-15: the Claude Code
@@ -651,7 +651,7 @@ These are available at every point in the bootcamp: onboarding, any module, and 
 bootcamper **invoking** one is not a bootcamp question and must not be treated as a gate — it does
 not consume a step, and it never counts as the turn's 👉.
 
-⛔ **That is not licence to end the turn on two 👉.** INV-005 governs how many questions *you* ask,
+⛔ **That is not licence to end the turn on two 👉.** INV-251 governs how many questions *you* ask,
 and it is unconditional: whatever the bootcamper raised, the turn still ends on **exactly one** 👉 —
 either the re-presented pending question or a single clarifying counter-question, never both (see
 the 👉 protocol above).
@@ -827,7 +827,7 @@ the 👉 protocol above).
   - **The recommendation differs from the current setting** — in **either** direction. A step down
     asks just as a step up does: the choice is the bootcamper's both ways. End the turn with a
     **single** 👉 yes/no question offering the switch, and do NOT also show Step 1 this turn
-    (exactly one 👉 per turn — INV-008/INV-009).
+    (exactly one 👉 per turn — INV-251; INV-008/INV-009 govern each question's clarity, not the count).
 
     **Name only the dial that differs.** Model and effort are **separate dials**: a bootcamper on
     Opus 5 at medium effort entering a stage recommending Opus 5 at high effort is asked to change
