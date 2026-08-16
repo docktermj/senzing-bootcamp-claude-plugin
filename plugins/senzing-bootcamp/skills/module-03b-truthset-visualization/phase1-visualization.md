@@ -203,11 +203,14 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   entity surface must offer.
 - Serve the live D3 v7 page as a **single consolidated, tabbed app** (all tabs in 2.4), and write a
   self-contained standalone HTML snapshot.
-- **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
+- **Render offline (INV-091):** inline the vendored D3 at
+  `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback:
+  `../../scripts/vendor/d3.v7.min.js`, INV-252) into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
 - **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
-  tokens (`scripts/brand_tokens.py`, mirrored in `senzing_viz_server.py`). A non-Python server
+  tokens (`${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, skill-relative fallback
+  `../../scripts/brand_tokens.py` — INV-252; mirrored in `senzing_viz_server.py`). A non-Python server
   cannot import the Python module, so replicate the token **values** from the reference; never
   invent an ad-hoc palette. ⛔ **Assign data-source colors from the sources actually present in the
   data, never by lookup in a map keyed by expected source names** (INV-127) — the Truth Set happens

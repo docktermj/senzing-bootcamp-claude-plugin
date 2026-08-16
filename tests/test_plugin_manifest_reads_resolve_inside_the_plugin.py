@@ -57,9 +57,70 @@ RULE_OWNER = "onboarding-flow.md"
 NO_SEARCH = re.compile(r"never\s+(?:be\s+)?(?:found\s+by\s+)?(?:search\w*|by\s+search\w*)", re.I)
 
 
+#: Plugin directories holding assets that exist ONLY to be READ INTO a deliverable -- a
+#: vendored library inlined into a page, the brand tokens a page takes its palette from, the
+#: shipped example a step is told to match. Naming one is always in service of reading it, so
+#: an unrooted mention is unambiguous; there is no "merely identifying it" reading.
+#:
+#: ⛔ Deliberately EXCLUDES the rest of `scripts/`. The hook and server scripts are legitimately
+#: NAMED as documentation -- `hooks/README.md`'s table of which script backs which hook, a code
+#: comment pointing at a sibling module, "modeled on the shipped reference
+#: `scripts/senzing_viz_server.py`" -- none of which is an instruction to resolve a path. A
+#: sweep over all of `scripts/` returns 24 hits of which 18 are that shape, and a guard that
+#: cries wolf 18 times gets its assertion relaxed. Those scripts are RUN, and INV-185's guard
+#: (`test_bundled_script_and_production_paths.py`) already sweeps every invocation of them.
+READ_ONLY_ASSET_DIRS = ("scripts/vendor", "docs/examples")
+READ_ONLY_ASSET_FILES = ("scripts/brand_tokens.py",)
+
+#: Guide-facing prose. `scripts/` and `hooks/README.md` are developer documentation: their
+#: mentions address a reader of this repo, not a guide resolving a path in a project.
+GUIDE_FACING = ("skills", "commands")
+
+
 def shipped_prose():
     """Every shipped file that can instruct the guide."""
     return sorted(PLUGIN.rglob("*.md")) + sorted(PLUGIN.rglob("*.py"))
+
+
+def read_only_assets():
+    """Plugin-relative paths of the assets a step is told to read into a deliverable.
+
+    The asset list is derived by scanning those directories, never hardcoded (INV-246): a
+    newly vendored library is swept the moment it lands, which is the site a hardcoded list
+    would miss. What is named here is the directory *class*, the same shape as INV-185's
+    guard deriving `BUNDLED_SCRIPTS` from `SCRIPTS.glob("*.py")`.
+    """
+    out = set(READ_ONLY_ASSET_FILES)
+    for d in READ_ONLY_ASSET_DIRS:
+        for f in (PLUGIN / d).rglob("*"):
+            if f.is_file() and not f.name.startswith("."):
+                out.add(f.relative_to(PLUGIN).as_posix())
+    return out
+
+
+def guide_facing_prose():
+    return sorted(p for d in GUIDE_FACING for p in (PLUGIN / d).rglob("*.md"))
+
+
+def unrooted_asset_references():
+    """(path, asset) for each read-only asset a guide-facing file names but never roots.
+
+    Per artifact, per file. A file that roots one asset and leaves its sibling bare is the
+    exact defect this exists for -- `module-05/phase2` rooted `brand_tokens.py` on one line
+    and left `scripts/vendor/d3.v7.min.js` bare on the next -- so a whole-file "does this
+    file mention ${CLAUDE_PLUGIN_ROOT} anywhere" check would have passed it.
+    """
+    assets = read_only_assets()
+    out = []
+    for path in guide_facing_prose():
+        text = path.read_text(encoding="utf-8")
+        for asset in sorted(assets):
+            if asset not in text:
+                continue
+            if f"${{CLAUDE_PLUGIN_ROOT}}/{asset}" in text or f"../../{asset}" in text:
+                continue
+            out.append((path, asset))
+    return out
 
 
 def files_naming_the_manifest():
@@ -152,6 +213,38 @@ class EveryManifestPathResolvesInsideTheRunningPlugin(unittest.TestCase):
             "a step reads the plugin version without stating the resolution or citing "
             f"{RULE_OWNER} beside it; every consumer must resolve it the same way or they "
             "report different versions for one run:\n  " + "\n  ".join(problems),
+        )
+
+
+class ReadOnlyAssetsResolveInsideThePlugin(unittest.TestCase):
+    """INV-252 beyond the manifest: the vendored library, the brand tokens, the shipped example.
+
+    The manifest was the site the source spec was written for; these are the rest of the set it
+    binds. Found by a production-readiness audit asking what else "a bundled plugin file" covers
+    -- six unrooted references across five files, three of which rooted a sibling artifact
+    correctly in the same file, and one of which did both inside a single sentence.
+    """
+
+    def test_the_asset_sweep_is_not_vacuous(self):
+        assets = read_only_assets()
+        self.assertIn("scripts/vendor/d3.v7.min.js", assets)
+        self.assertIn("scripts/brand_tokens.py", assets)
+        self.assertTrue(
+            any(a.startswith("docs/examples/") for a in assets),
+            "the shipped example recap is no longer in the swept set",
+        )
+        self.assertGreaterEqual(len(guide_facing_prose()), 20, "the prose sweep has drifted")
+
+    def test_no_step_names_a_read_only_asset_by_a_bare_path(self):
+        problems = [f"{p.relative_to(REPO_ROOT)}  names {a} but never roots it"
+                    for p, a in unrooted_asset_references()]
+        self.assertEqual(
+            [], problems,
+            "a step tells the guide to read a plugin-only asset by a bare project-relative "
+            "path; from the Bootcamper's project root that names nothing (INV-050 gives the "
+            "project `src/scripts/`, never a top-level `scripts/`). For the vendored D3 the "
+            "documented consequence is a page that renders blank on an air-gapped "
+            "workstation with no error anywhere (INV-091):\n  " + "\n  ".join(problems),
         )
 
 

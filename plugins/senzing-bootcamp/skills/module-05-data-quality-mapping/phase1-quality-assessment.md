@@ -450,6 +450,7 @@ weight.
 
   (On a real source this mattered: `PPP_LOANS` scored 100% on its 8 resolving fields and
   94.4% averaged over all 19 root keys.)
+
 - **format_consistency (0-100)** — the share of populated values that match their field's dominant
   observed pattern (date shape, postal-code shape, casing of a coded value). Report the fields that
   drag it down; a single malformed field is more actionable than the aggregate.
@@ -616,10 +617,12 @@ and `../module-03b-truthset-visualization/visualization-api-reference.md` → "R
 the third; both are the statements of record, so read them rather than reconstructing the rules here.
 
 1. **Brand tokens, not an ad hoc palette** (INV-081): take colours and typography from
-   `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, degrading gracefully if the module cannot be
+   `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (skill-relative fallback
+   `../../scripts/brand_tokens.py`, INV-252), degrading gracefully if the module cannot be
    imported.
 2. **Renders offline** (INV-081/INV-091): **no CDN, no web font, no remote script.** If you need a
-   charting library, inline the vendored `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js`; plain
+   charting library, inline the vendored `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js`
+   (skill-relative fallback `../../scripts/vendor/d3.v7.min.js`, INV-252); plain
    HTML/CSS bars need no library at all and are the better default here. A `<script src="https://…">`
    makes the page render blank on an air-gapped workstation — which Senzing evaluations frequently
    are — with no error anywhere.

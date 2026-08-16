@@ -389,7 +389,8 @@ found in had summaries whose three blocks were simply absent.
 are **lists**: put the label on its own line and one bullet per accomplishment, and one bullet per
 file with a short "— what it is" gloss. `**Why it matters:**` is **prose**: it stays inline after its
 label. This is the shape `../bootcamp-onboarding/module-completion.md` prescribes and the shape
-`docs/examples/bootcamp_recap.example.md` shows. It is not cosmetic: the PDF renders bullets as
+`${CLAUDE_PLUGIN_ROOT}/docs/examples/bootcamp_recap.example.md` (skill-relative fallback:
+`../../docs/examples/bootcamp_recap.example.md`, INV-252) shows. It is not cosmetic: the PDF renders bullets as
 bullets and inline text as one wrapped paragraph, so a list written inline — the comma-joined run of
 paths being the usual way it happens — reaches the keepsake as a paragraph and cannot be recovered
 later. The shape chosen here is the shape the bootcamper keeps.

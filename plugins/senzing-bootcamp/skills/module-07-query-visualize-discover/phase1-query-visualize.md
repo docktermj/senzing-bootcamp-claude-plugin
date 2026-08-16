@@ -466,7 +466,8 @@ of the Truth Set. It MUST:
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
   SQL.
 - Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
-  from `scripts/brand_tokens.py` (INV-081).
+  from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative fallback
+  `../../scripts/brand_tokens.py`, INV-252).
 - Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
   the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
