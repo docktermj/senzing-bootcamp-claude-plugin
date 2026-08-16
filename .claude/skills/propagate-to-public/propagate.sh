@@ -57,8 +57,17 @@ rsync -a --delete "${excludes[@]}" "$here/plugins/" "$dest/plugins/"
 echo "=== Mirroring .claude-plugin/ (marketplace.json) ==="
 rsync -a --delete "$here/.claude-plugin/" "$dest/.claude-plugin/"
 
-echo "=== Mirroring docs/ (user-facing install docs) ==="
-rsync -a --delete "$here/docs/" "$dest/docs/"
+# `docs/` is mirrored as a USER-FACING directory, but the dev repo keeps one
+# maintainer-only file in it: `docs/development.md`, the development-loop index
+# (`/feedback-to-specs`, `/implement-spec`, `/dry-run`, `/propagate-to-public`, …).
+# Every skill it names is excluded from this mirror, so publishing it hands users a
+# list of commands their install does not have. It reached the public working tree
+# once (2026-08-16) precisely because "docs/ is user-facing" was a convention stated
+# in the manifest rather than a rule enforced here.
+echo "=== Mirroring docs/ (user-facing install docs, minus development.md) ==="
+# The leading slash anchors the pattern to the transfer root, so this excludes
+# exactly `docs/development.md` and not some future `docs/*/development.md`.
+rsync -a --delete --exclude='/development.md' "$here/docs/" "$dest/docs/"
 
 echo "=== Copying README.md ==="
 rsync -a "$here/README.md" "$dest/README.md"
