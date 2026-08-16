@@ -415,8 +415,14 @@ a run-environment provenance block, so the keepsake records which plugin version
 and the hardware/software it ran on. Add these header meta lines (in the preamble, above the first
 `## ` section) when absent, idempotently — leave existing lines intact:
 
-- `**Plugin version:**` — from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (should already be
-  present from the recap header; add it here if the header predates that field).
+- `**Plugin version:**` — from the plugin manifest (should already be present from the recap
+  header; add it here if the header predates that field). Resolve the manifest exactly as
+  `../bootcamp-onboarding/onboarding-flow.md` step 0 specifies —
+  `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, else
+  `<this-skill-dir>/../../.claude-plugin/plugin.json`, else "Unknown" — and ⛔ never by searching
+  the filesystem, which on a machine carrying two plugin checkouts records the wrong version in
+  the keepsake (INV-252). Record the version only, never the path it resolved from: an absolute
+  path carries a username and this block is PII-free (INV-065).
 - `**Operating system:**` — OS + architecture, reused from the detected/persisted values in
   `config/bootcamp_preferences.yaml` (INV-061), e.g. `Ubuntu 24.04 (x86_64)`.
 - `**Python version:**` — the `python3 --version` of the environment.

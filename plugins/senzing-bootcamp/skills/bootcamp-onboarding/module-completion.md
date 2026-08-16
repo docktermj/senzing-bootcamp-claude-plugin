@@ -44,7 +44,8 @@ have no line to anchor to.
 
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
-the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"; and
+the plugin version from the plugin manifest, resolved as `onboarding-flow.md` step 0 specifies
+(⛔ never by searching the filesystem for a `plugin.json` — INV-252), or "Unknown"; and
 also include the chosen programming language and path (Core/Customized) when present):
 
 ```markdown

@@ -14,6 +14,32 @@ import os
 import re
 import sys
 
+
+def plugin_version():
+    """The version of the plugin THIS hook ships in, resolved from the hook's own path.
+
+    Claude Code substitutes ``${CLAUDE_PLUGIN_ROOT}`` in the hook's ``args``, but not
+    inside the text the hook injects -- so handing the guide that path leaves it to
+    resolve the manifest with a variable that may be unset, and on a machine carrying
+    two plugin roots (an installed plugin plus a clone, or an un-removed upgrade) a
+    search for `plugin.json` then answers with the wrong checkout's version. This file
+    always knows where it lives, so it answers with the value instead of a path.
+
+    Returns "Unknown" rather than guessing when the manifest cannot be read or parsed.
+    """
+    manifest = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        ".claude-plugin",
+        "plugin.json",
+    )
+    try:
+        with open(manifest, encoding="utf-8") as handle:
+            version = json.load(handle).get("version")
+    except (OSError, ValueError):
+        return "Unknown"
+    return version.strip() if isinstance(version, str) and version.strip() else "Unknown"
+
+
 raw = sys.stdin.read()
 
 # Gate: outside a bootcamp, do nothing at all.
@@ -98,7 +124,9 @@ if FEEDBACK.search(lower):
         "begin with the pinned BOOTCAMP FEEDBACK entry banner and end with the "
         "FEEDBACK SAVED exit banner (see feedback.md for the verbatim banner wording); "
         "silently capture as much relevant context as possible (the time; the plugin "
-        "version from ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json; current_module, current_step, and "
+        "version, which is " + plugin_version() + " -- already resolved from the running "
+        "plugin, so record it as given and do NOT go looking for a plugin.json; "
+        "current_module, current_step, and "
         "completed modules from config/bootcamp_progress.json; the recent questions "
         "asked and the bootcamper's responses; what the plugin was doing behind the "
         "scenes; the observed problem; the expected behavior per the active "

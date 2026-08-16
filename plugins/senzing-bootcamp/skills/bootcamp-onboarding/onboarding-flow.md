@@ -30,9 +30,28 @@ Tell the bootcamper, in your own words:
 "I'm going to do some quick administrative setup: creating your project directory and checking
 your environment."
 
-Read the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (the `version`
-field; use "Unknown" if unreadable) and hold it to display with the WELCOME banner (step 3) and to
-record in the recap.
+Read the plugin version from the plugin manifest (`.claude-plugin/plugin.json`, the `version`
+field) and hold it to display with the WELCOME banner (step 3) and to record in the recap.
+**Resolve the manifest in this order and stop at the first that reads (INV-252):**
+
+1. `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, when `CLAUDE_PLUGIN_ROOT` is set **and
+   non-empty**.
+2. `<this-skill-dir>/../../.claude-plugin/plugin.json` — this skill's own directory, two levels
+   up. The harness supplies that directory at invocation, so by construction it belongs to the
+   plugin whose files are running. This is the same skill-relative fallback INV-185 documents for
+   bundled scripts.
+3. "Unknown" — reported as the version, never replaced by a guess.
+
+⛔ **Never search the filesystem for a `plugin.json`, and never read one outside the resolved
+plugin root.** Two plugin roots on one machine is a normal state, not a broken one — an installed
+plugin plus a clone, or an upgrade whose old copy was never removed — so the first match a search
+reaches is not the plugin serving this run. With `CLAUDE_PLUGIN_ROOT` empty, a search made the
+banner report `v0.5.0` from a second checkout while `0.5.1` was running, and a version line that
+can be wrong is worse than none: its whole job is provenance.
+
+Every other step needing the plugin version resolves it the same way — the feedback entry
+(`feedback.md`), the recap header (`module-completion.md`) and the recap's provenance block
+(`../graduation/SKILL.md`) — so all four report one version.
 
 ## 0b. MCP health check (required)
 

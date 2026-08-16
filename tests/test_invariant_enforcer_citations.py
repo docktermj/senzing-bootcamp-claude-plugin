@@ -168,7 +168,7 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: defect was a question improvised at runtime that exists in no file, so the pair records an
 #: enforcer of the rule, not a detector of the symptom.
 #:   INV-247 -> test_no_host_control_is_offered_as_a_question.py   (close the question set)
-EXPECTED_PAIRS = 64
+EXPECTED_PAIRS = 65
 
 
 def pairs():

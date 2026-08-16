@@ -19,7 +19,10 @@ extra question for this — and record "Unknown"/"Unavailable" (never a guess) w
 source is missing:
 
 - **Time:** the current date and time.
-- **Plugin version:** the `version` field of `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`.
+- **Plugin version:** the `version` field of the plugin manifest, resolved exactly as
+  `onboarding-flow.md` step 0 specifies — `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, else
+  `<this-skill-dir>/../../.claude-plugin/plugin.json`, else "Unknown". ⛔ Never found by searching
+  the filesystem: a machine carrying two plugin checkouts then reports the wrong version (INV-252).
 - **Workstation:** the operating system and platform the bootcamper is running on, from the environment/system context — OS name and version, and architecture if available.
 - **Model and effort:** the model name/ID and the reasoning-effort level in use, from the environment/system context.
 - **Context size:** the approximate size of the conversation context at the time of feedback — a token count and/or percentage of the context window in use. If only an estimate is available, label it as approximate rather than recording a precise-looking guess.
@@ -145,7 +148,7 @@ rewrite the file, so earlier entries are preserved.
 ### Context when reported
 
 - **Time:** [YYYY-MM-DD HH:MM local, or "Unknown"]
-- **Plugin version:** [from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"]
+- **Plugin version:** [the version captured above, or "Unknown"]
 - **Workstation:** [OS name and version, and architecture; e.g. "Linux 6.17.0-35-generic (x86_64)", or "Unknown"]
 - **Model / effort:** [model ID and reasoning-effort level; e.g. "claude-opus-5[1m] / high", or "Unknown"]
 - **Context size:** [approximate tokens and/or % of context window in use; e.g. "~85k tokens (~42% of window)", or "Unknown"]
