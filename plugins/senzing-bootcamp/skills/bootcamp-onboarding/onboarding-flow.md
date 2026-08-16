@@ -151,7 +151,7 @@ Then give the overview (cover naturally, do not ask a question yet).
 
 ⛔ **Every bullet below has a verbosity treatment — none is unconditional.** Two carry their own
 (the version line above and the feedback-trigger bullet below); the rest are governed as a group,
-so there is no bullet whose behaviour under a preset is left to guesswork:
+so there is no bullet whose behavior under a preset is left to guesswork:
 
 | Preset | The overview is |
 |---|---|

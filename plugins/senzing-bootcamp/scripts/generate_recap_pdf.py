@@ -1033,7 +1033,7 @@ _FALLBACK_RGB = {
 
 
 def _use_fallback_palette():
-    """The nine fallback colours in assignment order, in ONE place (INV-184).
+    """The nine fallback colors in assignment order, in ONE place (INV-184).
 
     Both `except` branches below need them, and nine assignment lines written out per
     branch is the drift surface — a tenth token added to one branch and not the other
@@ -1192,7 +1192,7 @@ _LATIN_FOLD = {
 # Characters `_fold_to_latin1` could not represent at all, mapped to an excerpt of the
 # first passage each was found in. INV-143 permits dropping them; what it does not permit
 # is doing so silently, and until this collector existed the warn half of that contract
-# was implemented for the certificate name only. A Cyrillic organisation name in a
+# was implemented for the certificate name only. A Cyrillic organization name in a
 # discoveries document rendered as `"- "` at exit 0 with `content retained: 96%` — the
 # retention figure cannot see it, because retention is measured over parsed *source*
 # characters before `_safe` runs at render time.
@@ -1880,12 +1880,12 @@ def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
 # an ember rule, then the Senzing wordmark, an eyebrow, the headline, the recipient, the
 # citation, and a date / issuer signature row flanking an award seal.
 #
-# Every number below is millimetres on landscape A4 (297 × 210), measured off the
+# Every number below is millimeters on landscape A4 (297 × 210), measured off the
 # template at 150 dpi and shifted to A4's slightly shorter page.
 # `_stdlib_certificate_stream` converts the same constants to points, so both renderers
 # put the same content in the same place (INV-066/INV-126) — change a number here and the
 # fallback follows it.
-_MM = 72.0 / 25.4          # one millimetre in PDF points, for the fallback's point space
+_MM = 72.0 / 25.4          # one millimeter in PDF points, for the fallback's point space
 _CERT_BAND_W = 65.0        # ember gradient band, full height down the left edge
 _CERT_CARD_X = 21.0
 _CERT_CARD_Y = 26.0
@@ -2672,7 +2672,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
     """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100).
 
     Follows the same template geometry as the fpdf2 renderer — same constants, same
-    millimetre positions, converted to this writer's point space — so the fallback is a
+    millimeter positions, converted to this writer's point space — so the fallback is a
     plainer *rendering* of one design rather than a second design (INV-066/INV-126). What
     it gives up: the wordmark is set as text instead of embedded, and italic degrades to
     regular, because this writer embeds neither images nor an oblique face.
@@ -2685,7 +2685,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         return f"{r:.3f} {g:.3f} {b:.3f} {op}"
 
     def flip(mm: float) -> float:
-        """A millimetre offset from the page top as a PDF point from the page bottom."""
+        """A millimeter offset from the page top as a PDF point from the page bottom."""
         return h - mm * _MM
 
     def path(points, style: str, width: float, stroke_color=ACCENT) -> None:
@@ -2709,8 +2709,8 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
              size: Optional[float] = None) -> None:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
-        # Sanitise BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
-        # measuring raw text and rendering sanitised text mis-centres the line — the same
+        # Sanitize BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
+        # measuring raw text and rendering sanitized text mis-centres the line — the same
         # desync the comment below describes for escaping, one step earlier.
         text = _safe(text)
         # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
@@ -2734,7 +2734,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
         return _wrap_to_width(
-            # Sanitise before wrapping: line breaks chosen on raw text do not hold once a
+            # Sanitize before wrapping: line breaks chosen on raw text do not hold once a
             # character transliterates to a longer form.
             _safe(text),
             _CERT_TEXT_W * _MM,
@@ -2840,14 +2840,14 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            # The one choke point for stdlib text: sanitise here so `_pdf_escape` only ever
+            # The one choke point for stdlib text: sanitize here so `_pdf_escape` only ever
             # sees Latin-1 and never has to substitute (INV-143). `_safe` is idempotent, so
-            # text already sanitised by `add_wrapped` passes through unchanged.
+            # text already sanitized by `add_wrapped` passes through unchanged.
             tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            # Sanitise BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
+            # Sanitize BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
             # changes the count, so wrapping raw text yields lines that overrun once
             # rendered.
             for chunk in _wrap(_safe(text), width):
@@ -3070,14 +3070,14 @@ def _wrap(text: str, width: int) -> List[str]:
 
 
 def _pdf_escape(s: str) -> str:
-    """Escape a string for a PDF `()` literal. ⛔ **Sanitise with `_safe` first.**
+    """Escape a string for a PDF `()` literal. ⛔ **Sanitize with `_safe` first.**
 
     This does PDF *syntax* only: escape `\\`, `(`, `)`, and emit `\\ooo` octal for the
     Latin-1 high range. It performs no transliteration.
 
     ⚠️ **It used to, and that was an INV-143 violation.** It carried its own inline
     substitution table of 9 entries — a subset of `_UNICODE_MAP`'s 33 — with a `"?"`
-    default. The fpdf2 renderer normalises through `_safe` and never reaches here, but the
+    default. The fpdf2 renderer normalizes through `_safe` and never reaches here, but the
     stdlib writers called this on raw text, so **24 of the 33 mapped characters rendered as
     `?`**: `≥ ≤ ≈ ≠ € ™ ∞ ← ↔ ⇒ ↑ ↓ ✅ ✓ ⚠` and the deliberately-dropped emoji. Silently, at
     exit 0, with a green retention figure — because `?` is one character replacing one, so
@@ -3102,7 +3102,7 @@ def _pdf_escape(s: str) -> str:
         elif 160 <= o <= 255:
             out.append("\\%03o" % o)
         else:
-            # Unreachable for `_safe`-sanitised text, which is every shipped caller.
+            # Unreachable for `_safe`-sanitized text, which is every shipped caller.
             # Reached only if a caller forgets — and then the loss must be legible on
             # stderr rather than a `?` on a Bootcamper's keepsake.
             _record_dropped_character(ch, s)

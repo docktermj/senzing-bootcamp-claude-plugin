@@ -197,7 +197,7 @@ python3 <helper> --html docs/visualizations/{name}.html --out-dir docs/visualiza
 
 ⛔ **`--single`, not "no `--tabs`".** An omitted `--tabs` does not mean "no tabs", it means **all
 six** — so the helper requests six tabs the page does not have, skips each one and reports it
-(INV-122, correct behaviour), and writes nothing. That is how every single-page deliverable used to
+(INV-122, correct behavior), and writes nothing. That is how every single-page deliverable used to
 miss the recap silently. `--single` and `--tabs` cannot be combined; the helper refuses both together
 rather than guessing.
 

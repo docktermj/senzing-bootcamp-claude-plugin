@@ -28,7 +28,7 @@ document that silently lost its structure.
 retention floor is, and neither flag relaxes it (INV-110).
 
 Success signal, exit codes, renderer tiering (fpdf2 then stdlib) and character handling are
-whatever `generate_discoveries_pdf.py` does; this file adds no behaviour of its own, so the
+whatever `generate_discoveries_pdf.py` does; this file adds no behavior of its own, so the
 two can never drift.
 """
 import sys

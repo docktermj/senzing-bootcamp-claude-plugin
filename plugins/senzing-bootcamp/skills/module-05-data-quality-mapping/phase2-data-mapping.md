@@ -185,7 +185,7 @@ you **not to involve the bootcamper**. Observed verbatim on **MCP server 1.32.9,
 
 and, at step 1: *"MAPPER LANGUAGE — determine from context (do not ask)"*.
 
-**The tool is a good citizen for a general coding agent and wrong for this bootcamp.** It optimises
+**The tool is a good citizen for a general coding agent and wrong for this bootcamp.** It optimizes
 for throughput; this module exists to *teach* mapping, and the bootcamper was offered a mapping mode
 above that promises to walk them through each decision. Following the tool there breaks that promise
 silently — a single-schema plan clears the 0.80 bar trivially, so the entity plan would advance with
@@ -247,7 +247,7 @@ lender on a loan record, a parent company on a subsidiary. `mapping_workflow` mo
 - a **later source could name the same thing**, so resolving it links the two sources.
 
 **Why it matters:** as `payload`, the name rides along on each record and Senzing never matches on
-it. As an `embedded_master`, every record naming the same organisation resolves to one entity, and a
+it. As an `embedded_master`, every record naming the same organization resolves to one entity, and a
 later source naming it resolves against that. That difference *is* entity resolution.
 
 ⛔ **Look for it at step 1, declare it at step 2 — the profile already tells you.** An embedded
@@ -319,7 +319,7 @@ reading the error** — so send it from the start.
 
 **`record_id_source` is `RECORD_HASH` for the embedded entity**, because a name embedded in someone
 else's row has no per-record natural key of its own. That sentinel is not a placeholder — step 4
-defines its behaviour: *"If it is the sentinel `RECORD_HASH` … generate `RECORD_ID` as a
+defines its behavior: *"If it is the sentinel `RECORD_HASH` … generate `RECORD_ID` as a
 deterministic hash over that entity's stable IDENTITY fields only — never the whole record (a
 whole-record hash re-keys on any change, creating duplicate/stale entities)"*. It is the same hash the
 EMBEDDED MASTER RULES below require, reached from the plan side.
@@ -725,7 +725,7 @@ no MCP server version, so every bootcamper is on the current server and this is 
 observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`OPENSANCTIONS_PEP`,
 `OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`); all three reported upstream the same day.
 
-⚠️ **Freshness, per limitation — 1 and 3 are CURRENT behaviour; only 2 is still un-re-run.**
+⚠️ **Freshness, per limitation — 1 and 3 are CURRENT behavior; only 2 is still un-re-run.**
 Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
 the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
 'sz_routing_report.py'])`, whose response is a **listing of URLs, not the scripts**, so reading them

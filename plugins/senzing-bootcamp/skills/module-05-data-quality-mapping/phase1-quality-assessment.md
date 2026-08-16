@@ -244,11 +244,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
    - **specification attributes** — keys that resolve to an attribute in the Entity Specification
      you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
-   - **unrecognised keys** — everything else.
+   - **unrecognized keys** — everything else.
 
    ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
    catalog attribute can arrive carrying a leading label, and an exact match reports it as
-   unrecognised — which would route a genuinely fully-mapped source into mapping, the pointless work
+   unrecognized — which would route a genuinely fully-mapped source into mapping, the pointless work
    the fast-path exists to remove. This is not hypothetical: `get_sample_data(dataset='las-vegas',
    source='PPP_LOANS')` ships `BUSINESS_NAME_ORG` and `BUSINESS_ADDR_LINE1`/`CITY`/`STATE`/
    `POSTAL_CODE`, while the specification's catalog names the attributes `NAME_ORG` and
@@ -259,14 +259,14 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    key against the specification you hold, and where a key is a catalog attribute carrying such a
    label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
    is an observed shape, not something the indexed specification states — so where you cannot
-   resolve a key with confidence, treat it as unrecognised and let step 6 name it, or use the
+   resolve a key with confidence, treat it as unrecognized and let step 6 name it, or use the
    optional `getRecordPreview` check above to ask Senzing directly how it reads the record.
 
-   **The threshold is a count, not a proportion: zero unrecognised keys, or no fast-path offer.**
+   **The threshold is a count, not a proportion: zero unrecognized keys, or no fast-path offer.**
    Recorded here with its reasoning, because it is a decision and not an obvious default:
 
    - **Why not a percentage.** A proportion has to be tuned against how wide the source happens to
-     be. `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it; a source with one
+     be. `PPP_LOANS` is 11 unrecognized of 19 keys and any threshold catches it; a source with one
      undecided column in thirty passes an 80%-coverage rule while still hiding a decision from the
      bootcamper. The number of columns nobody decided about is the thing that matters, and it does
      not get less important because the record is wide.
@@ -281,12 +281,12 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      source loses nothing by going through mapping: mapping is where "this is payload" is actually
      recorded, rather than assumed by a gate that cannot see intent.
    - **Why this does not re-introduce pointless work.** A genuinely fully-mapped source — the
-     `truthset` class the fast-path was built for — has zero unrecognised keys and still fast-paths
+     `truthset` class the fast-path was built for — has zero unrecognized keys and still fast-paths
      with no extra question. Nothing changed for it.
 
 4. **Record the result:** In `config/data_sources.yaml`, set the source's `senzing_loadable` and
    `fully_mapped` fields to `true` or `false`, record `unmapped_fields` as the sorted list of
-   unrecognised keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
+   unrecognized keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
 
    *(These replace the single `senzing_ready` field, which recorded only the structural test while
    the offer was presented on it. On a resumed bootcamp whose registry still carries
@@ -317,7 +317,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    > attributes — [list them] — so nothing has been decided about them yet. We'll map this one, and
    > those fields are the exercise: some will become features, some payload, some ignored."
 
-   Name every unrecognised column. A count alone tells the bootcamper a decision exists without
+   Name every unrecognized column. A count alone tells the bootcamper a decision exists without
    telling them what it is about. For `PPP_LOANS` those columns are `Business_Type`, `CD`,
    `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`,
    `OwnedByRaceEthnicity`, `OwnedByVeteran` — eleven real decisions the fast-path used to skip.
@@ -369,7 +369,7 @@ transformations:
     records_rejected: 0
     quality_score: null  # Quality assessment skipped
     fast_pathed: true
-    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognised fields"
+    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognized fields"
 ```
 
 **Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
@@ -616,7 +616,7 @@ saved, kept, and shareable, exactly like the Truth Set app's snapshot. See
 and `../module-03b-truthset-visualization/visualization-api-reference.md` → "Rendering contract" for
 the third; both are the statements of record, so read them rather than reconstructing the rules here.
 
-1. **Brand tokens, not an ad hoc palette** (INV-081): take colours and typography from
+1. **Brand tokens, not an ad hoc palette** (INV-081): take colors and typography from
    `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (skill-relative fallback
    `../../scripts/brand_tokens.py`, INV-252), degrading gracefully if the module cannot be
    imported.

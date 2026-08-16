@@ -31,7 +31,7 @@ branches produce the run, and each is correct in its own right:
 - **Step 2's marker/provenance guard** skips the provision question entirely and generates the files
   — the Bootcamper already chose this in Discover the Business Problem, so asking again re-litigates
   a settled decision.
-- **Step 8a's volume-skip** passes without a question when the collected total is inside the licence
+- **Step 8a's volume-skip** passes without a question when the collected total is inside the license
   limit, which that step calls the common case.
 - **Step 8b** says nothing when the loadable total is below its threshold.
 
@@ -844,7 +844,7 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
 ⛔ **Judge the time from what will actually be LOADED, not from what was collected — the two differ
 whenever Step 8a capped it, which is one step earlier in this same flow.** The "fires even when the
 license imposes no cap" clause above is correct and stays: time is a separate concern from capacity.
-Its mirror is what was missing — **when the licence caps below the collected total, the collected
+Its mirror is what was missing — **when the license caps below the collected total, the collected
 total is not what will be loaded, and a warning built from it describes work that cannot happen.**
 On the walk that found this: 19,500 collected against a 500-record evaluation cap produced a warning
 about a roughly half-hour load, for a load of about two minutes.
@@ -859,8 +859,8 @@ about a roughly half-hour load, for a load of about two minutes.
      `config/bootcamp_progress.json`. Then compute
      **`loadable = min(collected_total, effective_limit)`**, where the effective limit is
      `license_record_limit` when set, the built-in evaluation limit when `license: evaluation`, and
-     **unbounded** when the limit is `0`. Treat an unreadable licence state as unbounded — that
-     reproduces today's behaviour rather than inventing a cap.
+     **unbounded** when the limit is `0`. Treat an unreadable license state as unbounded — that
+     reproduces today's behavior rather than inventing a cap.
    - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
      missing key means Module 2 Step 7 did not record the choice, not that the engine is
      non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
@@ -883,15 +883,15 @@ about a roughly half-hour load, for a load of about two minutes.
      That query returns the **Hardware Sizing FAQ**, which is where the timing material lives:
      throughput per engine core, the three load phases (Phase 1 runs 10-100x faster than Phase 3,
      so a Phase-3 estimate is conservative), and worked load-time examples. `sdk_guide(topic='load',
-     record_count=…)` returns the licence note and the record-count threshold but **no timing
+     record_count=…)` returns the license note and the record-count threshold but **no timing
      figures at all**, so it is the wrong route for this. ⚠️ Nearby wordings do **not** find the FAQ
      — "hardware sizing capacity planning records per second load time" returns flag docs and code
      snippets instead — so use the query as written rather than paraphrasing it (verified on MCP
      server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-14).
      <!-- MCP-NEGATIVE: sdk_guide(topic='load', language='python', record_count=19500) — returns no load-duration or throughput figures — owner: search_docs(query='hardware sizing capacity planning') carries them, in the Hardware Sizing FAQ (routing negative — the fact exists, go there) — server 1.32.9, 2026-08-14 -->
    - ⛔ **State both numbers whenever they differ**, so the estimate is legible rather than
-     mysterious: "19,500 collected, 500 loadable under the evaluation licence — the load will take
-     about N minutes." Suppressing the collected figure would be worse than the old behaviour, not
+     mysterious: "19,500 collected, 500 loadable under the evaluation license — the load will take
+     about N minutes." Suppressing the collected figure would be worse than the old behavior, not
      better.
 
    👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
@@ -902,11 +902,11 @@ about a roughly half-hour load, for a load of about two minutes.
 
    _(Internal: end the turn on this question and wait.)_
 
-   ⛔ **Omit option 2 when the licence already caps the load below the collected total.** "Sample
+   ⛔ **Omit option 2 when the license already caps the load below the collected total.** "Sample
    down to a smaller record count" is the decision Step 8a just made — offering it again one step
    later is the INV-006 shape, and both remedies are the same action. Renumber the two remaining
    options (load it, or switch database) and say plainly that sampling is already in force under the
-   licence. When the licence imposes no cap, present all three unchanged.
+   license. When the license imposes no cap, present all three unchanged.
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.

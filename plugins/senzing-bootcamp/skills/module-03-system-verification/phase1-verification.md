@@ -218,7 +218,7 @@ names/addresses).
      Step 7 reported FAILED. The same three records with the first name identical throughout and only
      phone/address *formatting* varied resolved to **2 entities** with a 3-record cluster, and passed.
      The engine was right both times; only the prediction changed. (This is an observation of this
-     install's behaviour, not an MCP claim — INV-080/INV-149.)
+     install's behavior, not an MCP claim — INV-080/INV-149.)
    - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
      **singleton** (its own entity).
    - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a

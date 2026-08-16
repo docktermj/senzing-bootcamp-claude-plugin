@@ -439,7 +439,7 @@
 - Ran the ER statistics and match-key audit in a single export pass with relationships deduplicated by `(min_id, max_id)`.
 - **Investigated the `-TRUSTED_ID` suppressor with concrete evidence** (88.5% single-source, 11.3% cross-source) and cleared it: zero cross-source single-source-pair relationships carry it; all are same-type force-apart between different businesses sharing an address. Entity 200021 proved the namespacing works, holding both a `BID` and an `EFX_ID` after merging across sources.
 - Verified 3 cross-source merges against raw source records (all true positives) and inspected the largest entity (400304, `MIKE FIGLEY`, 3 records) for over-matching — correct.
-- Analysed the under-matching side: 128 cross-source `POSSIBLY_SAME` pairs, 122 on `+NAME` alone, with evidence showing name is the only shared feature on those person pairs.
+- Analyzed the under-matching side: 128 cross-source `POSSIBLY_SAME` pairs, 122 on `+NAME` alone, with evidence showing name is the only shared feature on those person pairs.
 
 ### End-of-Module Summary
 

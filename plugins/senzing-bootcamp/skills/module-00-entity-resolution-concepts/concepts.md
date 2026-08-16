@@ -165,13 +165,13 @@ On **accept** ("yes", "sure", "let's try"), run the knowledge check under these 
   a judgement call instead of a fact. Keep the *thinking* conceptual and the *answer format*
   closed.
 - ⛔ **When the answer is wrong, say so — and re-teach.** This is the highest-value moment in the
-  knowledge check, and it is the one a guide optimising for encouragement gets wrong. Do all three:
+  knowledge check, and it is the one a guide optimizing for encouragement gets wrong. Do all three:
   1. **Name it as incorrect, plainly and kindly.** Never "good thinking!" over a wrong answer, and
      never let the correction be so soft the bootcamper cannot tell they missed it. False praise
      here teaches the wrong concept.
   2. **Explain why the chosen option is wrong, then re-teach the concept** — not just "the answer
      was 2." Say what the option they picked actually describes, since a plausible distractor is
-     usually a *neighbouring* real concept, and that confusion is the thing worth fixing.
+     usually a *neighboring* real concept, and that confusion is the thing worth fixing.
   3. **Move on to the next item; do not re-ask the same one.** The point is understanding, not a
      score, and re-asking after supplying the answer tests nothing. Keep the remaining items at
      the same difficulty — a miss is not a reason to get easier, and this is a learning module,

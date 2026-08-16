@@ -896,7 +896,7 @@ Applies to **Entity Graph** in both of its modes.
   about what the browser draws.** Every draw site must key on a property that reaches the canvas. A
   wrap counter does not: it decides *whether* a second channel appears and *which* value it takes,
   and two sources with different counters can still be drawn identically. That is what happened in
-  the Python reference — six fills × three stroke colours read as more than enough, the renderer
+  the Python reference — six fills × three stroke colors read as more than enough, the renderer
   applied a stroke only when the counter was non-zero, and the actual space was 6 × 4 = **24**
   rendered appearances. The returned map stayed collision-free at any size because each entry
   carried a distinct counter, so nothing looked wrong; the 25th source simply came out identical to

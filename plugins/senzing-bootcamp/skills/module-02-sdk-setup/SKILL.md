@@ -283,7 +283,7 @@ uses a **hyphen**:
 | `szBuildVersion.json` → `BUILD_VERSION` | `4.3.3.26191` |
 
 Comparing those two raw strings reports a difference where none exists. **Prefer the package
-manager's version string**; when only the JSON is available, normalise the separator before
+manager's version string**; when only the JSON is available, normalize the separator before
 comparing. (Observed on a real 4.3.3-26191 install, 2026-07-31 — an environment observation, not
 an MCP-sourced fact.) On Windows that file is in the **sibling** `data` directory, not under
 `%SENZING_DIR%`.
@@ -512,7 +512,7 @@ Once the bootcamper responds, act on their answer:
    bare-`pip` prohibition still applies to the plugin's **own** tooling installs (`fpdf2`,
    Playwright — INV-066): always an explicit `python3 -m pip`, never a bare `pip`, and PEP 668
    handled with a project-local virtualenv. That rule is about *how* to run pip for the plugin's
-   helpers; it never authorises pip for the Senzing SDK, which is not a pip package at all.
+   helpers; it never authorizes pip for the Senzing SDK, which is not a pip package at all.
 
 **TypeScript/Node.js warning:** The TypeScript SDK (`sz-napi`) may require building from source
 if prebuilt binaries are not available for the user's platform. This involves installing the
@@ -813,7 +813,7 @@ conclusion above stays true — which is exactly how a correct ⛔ comes to look
 evidence. Citing it alone leaves
 the guide to invent the missing half from memory, which is exactly the training-data fallback
 INV-080 forbids. (Step 8a already carries this warning for a different need, and Step 9 cites
-`workflow='initialize'` correctly for its own — the lesson generalises: **check what a workflow's
+`workflow='initialize'` correctly for its own — the lesson generalizes: **check what a workflow's
 snippets actually contain before citing it for a specific need.**)
 
 ⛔ **`generate_scaffold` returns a **listing**, not code — you must fetch each file.** Its response

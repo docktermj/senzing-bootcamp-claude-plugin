@@ -408,7 +408,7 @@ def audit_discoveries(
     does not, because an empty deliverable is worse than none.
 
     ``required_sections`` defaults to ``REQUIRED_SECTIONS`` — the discoveries
-    document's own headings — so an unparameterised call behaves exactly as before.
+    document's own headings — so an unparameterized call behaves exactly as before.
     Pass a different list to render another document in the same house style, or an
     empty list to skip the section check entirely.
 
@@ -724,14 +724,14 @@ def render_with_stdlib(doc: Discoveries, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            # Mirrors the recap generator's stdlib path: sanitise at the token boundary so
+            # Mirrors the recap generator's stdlib path: sanitize at the token boundary so
             # `_pdf_escape` only ever sees Latin-1 and never substitutes (INV-143). Both
             # writers share `_pdf_escape`, so both need this — it is not enough to fix one.
             tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            # Sanitise before wrapping: `_wrap` counts characters and transliteration can
+            # Sanitize before wrapping: `_wrap` counts characters and transliteration can
             # change the count ("∞" -> "infinity").
             for chunk in _wrap(_safe(text), width):
                 add(chunk, font, size, indent)
@@ -870,7 +870,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    # Omitting both flags leaves the discoveries behaviour byte-for-byte unchanged.
+    # Omitting both flags leaves the discoveries behavior byte-for-byte unchanged.
     if args.no_section_check:
         required_sections: Optional[List[str]] = []
     elif args.require_sections is not None:
@@ -927,7 +927,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             # document, and BEFORE the success line so it cannot be mistaken for noise
             # following a clean result. `content retained` cannot catch this: it is
             # measured over parsed source characters, before `_safe` runs at render time,
-            # which is why a Cyrillic organisation name vanished at "retained: 96%".
+            # which is why a Cyrillic organization name vanished at "retained: 96%".
             dropped = dropped_character_warning()
             if dropped:
                 sys.stderr.write(dropped)

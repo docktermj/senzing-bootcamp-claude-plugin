@@ -133,7 +133,7 @@ def color_for_sources(sources):
     stroke colour, stroke width, then a lightness perturbation of the fill itself. That
     gives `SOURCE_ENCODING_CAPACITY` distinct **rendered** appearances — the key the
     browser actually draws being ``(fill, stroke when a width is set, width)``. Up to 24
-    sources the rendered result is identical to the pre-widening behaviour, which was
+    sources the rendered result is identical to the pre-widening behavior, which was
     correct at that scale; the widening only adds states past the point it stopped being.
 
     Beyond capacity a warning is issued rather than colliding silently: an acknowledged

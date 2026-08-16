@@ -193,7 +193,7 @@ def resume_summary():
     clauses = []
     unavailable = []
     for runtime, names in groups:
-        # An unrecognised runtime is reported under the name it was recorded with:
+        # An unrecognized runtime is reported under the name it was recorded with:
         # the guide can act on it even though this module will not run it.
         cli = KNOWN_RUNTIMES.get(runtime, runtime)
         if runtime_cli(runtime) is None:

@@ -62,7 +62,7 @@ def bootcamp_active():
     programming-language gate — so on the next session the `SessionStart` hook announced
     "a bootcamp is in progress … offer to resume from the last recorded module" on a
     project with no recorded module, telling the guide to do something impossible where
-    the correct behaviour was to run onboarding from the top.
+    the correct behavior was to run onboarding from the top.
 
     An empty progress file is therefore the **normal** state for that window, not a
     corruption: this returns False and every caller stays silent, which is what a fresh

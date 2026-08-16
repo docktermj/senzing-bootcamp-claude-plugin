@@ -40,7 +40,7 @@ steering files.)
   zero breaches **INV-225**.
 - ⛔ **A step with no 👉 question is NON-YIELDING: it does not end a turn, and it does not get a
   turn of its own.** Present it in the same turn as the next step that *does* ask, and let that
-  step's single 👉 end the turn for both. This is not a licence to run ahead — every step is still
+  step's single 👉 end the turn for both. This is not a license to run ahead — every step is still
   executed in order and in full — it is what "advance exactly one step at a time" means for a step
   that has nothing to wait for. Without it the rules collide with no legal move: a statement-only
   step presented alone ends a turn with **zero** 👉, and folded in it looks like advancing two
@@ -68,7 +68,7 @@ steering files.)
     the last completed step — that satisfies both the per-step rule and the write-noise rule
     (INV-012); do not drop the intermediate steps from `step_history`, and do not write once per
     step inside a single turn.
-  - **Report what happened, not each step.** A long non-yielding run still obeys INV-012: summarise
+  - **Report what happened, not each step.** A long non-yielding run still obeys INV-012: summarize
     the outcome the bootcamper cares about rather than narrating eleven steps.
 - ⛔ **Anything meant to inform the answer goes BEFORE the 👉.** A reassurance, caveat,
   recommendation, framing statement, or consent disclosure MUST be presented ahead of the
@@ -200,7 +200,7 @@ steering files.)
 - ⛔ **Always pass `language` to `reporting_guide` — every call, whatever the topic** (INV-192).
   Most topics withhold their content until it is supplied, answering instead with a **`needs_input`**
   object naming the parameter they want, while the content arrays in that same reply come back
-  **empty**. ⚠️ **Recognise the gate by `needs_input.parameter` — never by a particular field being
+  **empty**. ⚠️ **Recognize the gate by `needs_input.parameter` — never by a particular field being
   empty.** Which arrays a topic carries is the server's to rename, so a list of them here is the
   same liability as the list of gating topics this rule already refuses to keep. Observed on MCP
   server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13: `topic='evaluation'` and
@@ -234,7 +234,7 @@ steering files.)
   use this step; prefer fetching raw_url or cloning."*
   (This replaces the earlier reading — through 2026-07-30 on server 1.32.2 the same empty `content`
   arrived with no `content_elided` signal, so it was indistinguishable from a broken retrieval and
-  was treated as one. The behaviour was documented rather than reverted, so the guidance above is
+  was treated as one. The behavior was documented rather than reverted, so the guidance above is
   permanent, not a temporary mitigation waiting on a fix.)
 - **Three tools answer with a listing instead of content, and exactly one of them accepts `inline`
   (INV-136, INV-234).** `find_examples` file retrieval, `generate_scaffold` and `download_resource` all return
@@ -253,7 +253,7 @@ steering files.)
   <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.32.9, 2026-08-14 -->
 
   ⛔ **Read this as a consequence of the schema, never as a ban on the word `inline`.** Stated as
-  "never pass `inline`" the rule generalises wrongly, and a guide that internalised it that way will
+  "never pass `inline`" the rule generalizes wrongly, and a guide that internalized it that way will
   refuse the one call where `inline` is the documented remedy — stranding a firewalled bootcamper on
   the very step its `on_failure` text exists to serve. **INV-240** is the standing form of this rule:
   a prohibition derived from a general rule states the general rule and the property that triggers
@@ -652,7 +652,7 @@ These are available at every point in the bootcamp: onboarding, any module, and 
 bootcamper **invoking** one is not a bootcamp question and must not be treated as a gate — it does
 not consume a step, and it never counts as the turn's 👉.
 
-⛔ **That is not licence to end the turn on two 👉.** INV-251 governs how many questions *you* ask,
+⛔ **That is not license to end the turn on two 👉.** INV-251 governs how many questions *you* ask,
 and it is unconditional: whatever the bootcamper raised, the turn still ends on **exactly one** 👉 —
 either the re-presented pending question or a single clarifying counter-question, never both (see
 the 👉 protocol above).

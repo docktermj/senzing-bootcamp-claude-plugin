@@ -145,7 +145,7 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     def color_for_sources(sources):
         """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract).
 
-        Kept behaviourally identical, not merely similar: tests/test_brand_sync.py asserts
+        Kept behaviorally identical, not merely similar: tests/test_brand_sync.py asserts
         this returns the same dict as the helper, so the channel widening has to be here
         too or the import-failure path silently reverts to a 24-source ceiling.
         """
