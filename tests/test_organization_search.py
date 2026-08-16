@@ -160,6 +160,61 @@ class EngineErrorsAreSurfaced(unittest.TestCase):
         self.assertNotIn("error", out)
 
 
+class AFailedAttemptIsNotTheEndOfTheList(unittest.TestCase):
+    """INV-190. The mirror of `test_a_hit_is_not_discarded_by_a_later_failure`.
+
+    The guard was `if not items: return ...`, which is unconditionally true on the
+    *first* attribute — so an error searching `NAME_FULL` returned before `NAME_ORG`
+    was ever called, reinstating the INV-164 defect on the error path with an engine
+    message attached pointing at the attribute that could not have matched anyway.
+    """
+
+    class RaiseThenHit(FakeEngine):
+        def search_by_attributes(self, attrs, flags):
+            if list(json.loads(attrs))[0] == "NAME_FULL":
+                raise RuntimeError("first call fails")
+            return super().search_by_attributes(attrs, flags)
+
+    def test_name_org_is_still_tried_after_name_full_raises(self):
+        engine = self.RaiseThenHit({"NAME_ORG": {"ABSOLUTE DENTAL": 42}})
+        out = model().search(engine, 0, "ABSOLUTE DENTAL")
+        self.assertEqual([r["entity_id"] for r in out["results"]], [42])
+        self.assertEqual(out["attributes_tried"], ["NAME_FULL", "NAME_ORG"])
+        self.assertNotIn("error", out, "a hit stands; a failure behind it is not an error")
+
+    def test_a_failed_attempt_is_still_reported_as_tried(self):
+        engine = self.RaiseThenHit({})
+        out = model().search(engine, 0, "NOBODY AT ALL")
+        self.assertEqual(out["attributes_tried"], ["NAME_FULL", "NAME_ORG"])
+
+    def test_a_failure_with_no_hit_anywhere_is_reported_not_silently_no_match(self):
+        """Otherwise "the engine could not run this" renders as the clean no-match
+        "nothing in your data has that name" (INV-115)."""
+        engine = self.RaiseThenHit({})
+        out = model().search(engine, 0, "NOBODY AT ALL")
+        self.assertEqual(out["results"], [])
+        self.assertIn("first call fails", out["error"])
+        self.assertIn("NAME_FULL", out["error"], "the error must name the attribute that failed")
+
+    def test_every_failed_attribute_is_named_when_all_fail(self):
+        out = model().search(RaisingEngine("boom"), 0, "anything")
+        self.assertEqual(out["attributes_tried"], ["NAME_FULL", "NAME_ORG"])
+        for attr in SERVER_MOD.Model.SEARCH_NAME_ATTRS:
+            self.assertIn(attr, out["error"])
+
+    def test_the_loop_does_not_return_from_its_except_handler(self):
+        """Pins the shape, not just the behaviour: a `return` inside the handler is
+        how the bug is written, whatever the condition guarding it says."""
+        source = SERVER.read_text(encoding="utf-8")
+        body = source.split("def search(self, engine, flags, query):", 1)[1]
+        body = body.split("\n    def ", 1)[0]
+        handler = body.split("except Exception as exc:", 1)[1].split("items.extend", 1)[0]
+        code = [
+            line for line in handler.splitlines() if not line.strip().startswith("#")
+        ]  # the comment explains the old `return`; only the code counts
+        self.assertNotIn("return", "\n".join(code))
+
+
 class LegacyBindingSignatureStillWorks(unittest.TestCase):
     """Some bindings take a trailing search-profile argument."""
 

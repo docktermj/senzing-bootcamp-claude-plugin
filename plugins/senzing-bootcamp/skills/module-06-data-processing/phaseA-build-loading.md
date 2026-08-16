@@ -17,8 +17,12 @@ Read `config/data_sources.yaml` and check `test_load_status` per source:
   production-quality loading, error handling, progress tracking, throughput optimization, redo
   processing, and incremental strategies." Skip the basic test-load step and go straight to the
   production loading workflow.
-- **`skipped` or missing**, include a brief test-load step: run a quick load of 10–100 records
-  to verify the data loads before production concerns, then set `test_load_status: complete`.
+- **`skipped` or missing**, note that a brief test load is **owed** for that source, and say so:
+  "You skipped the sandbox test load in Data Quality, Mapping, and Transformation, so we'll do a
+  quick one before the full load." ⛔ **Do not run it here.** Phase B step 5 runs it, and it
+  cannot run any earlier: it needs the loading program, which step 3 builds from the volume tier
+  captured at step 1, and the registered `DATA_SOURCE` codes, which step 4a creates — without
+  which the load fails with `SENZ2207`, the exact error step 4a exists to prevent.
 
 **Phase 3 results integration:** if `test_load_status` is `complete` for multiple sources, use
 `test_entity_count` to estimate total volume and plan resource allocation, use Phase 3 quality
@@ -94,8 +98,8 @@ licensing as a default the bootcamper already has, never as a hard cap:
   (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server —
   before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
   among these, not the only path.
-- Source the record capacity and validity period from a Senzing MCP tool this session and
-  present exactly what it returns. If a value is unavailable or the MCP server can't be reached,
+- Source the record capacity and validity period from a Senzing MCP tool — **from the server,
+  not from this file** (a sourcing floor) — and present exactly what it returns. If a value is unavailable or the MCP server can't be reached,
   omit the figure and say it is currently unavailable, never substitute a remembered figure.
 - Gate the in-flow path as Module 1 does: check `submit_feedback` availability via
   `get_capabilities` (wait up to 30s), and omit the in-flow path when it is unavailable, errors,
@@ -133,9 +137,10 @@ the language for now.)
 tool that *selects* the threaded or single-threaded template from the record count; passing
 `record_count` to `generate_scaffold` does nothing, because that tool takes only `language`,
 `workflow`, and `version` and returns the whole snippet list. Verify both signatures via
-`get_capabilities` this session rather than trusting this note.
+`get_capabilities` rather than trusting this note (a sourcing floor).
 
-**The cutover is 500 records, sourced from the Senzing MCP server this session** — `sdk_guide`'s own
+**The cutover is 500 records, from `sdk_guide`'s own `record_count` contract** (re-read on MCP
+server 1.32.9, 2026-08-14) — `sdk_guide`'s own
 contract for `record_count` states that at or below 500 it returns the single-threaded demo, and
 above 500 (or when the count is omitted) it returns the threaded production pattern. A call at a
 few thousand records returns the thread-pool template and labels the single-threaded alternative
@@ -161,8 +166,29 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   warning the bootcamper cannot act on is noise (INV-012).
 - **Positive and below the dataset size** — the note applies. The single License Key gate (Module 4,
   Step 8a) already offered to expand capacity; restate that as a choice, never force downsizing.
-- **Absent or null** — no custom license was detected, so the default-limit note is the right
-  assumption. Relay it.
+- **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
+  assume it.** (INV-244) The only writer of `license_record_limit` is Module 4's Step 8a gate, which is
+  volume-gated by design: a bootcamper with a small dataset never triggers it, so the field is
+  absent no matter what license is installed. Assuming the default here relays a 500-record note —
+  and `sdk_guide`'s sampling prescription with it — to someone whose license may have no cap at
+  all, which is the same harm named just above, reached through the branch that is taken far more
+  often. It also contradicts a higher-precedence rule: a value you measured on this machine governs
+  over generic guidance about that same value, and `ground-rules.md` names the license record limit
+  explicitly (INV-012). It is one SDK call away.
+  - **Measure it** by the procedure Module 4 Step 8a already defines — generate a scaffold calling
+    `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
+    (INV-115), and parse `recordLimit`. Follow that step rather than re-deriving it; the module
+    already builds and runs SDK programs in the bootcamper's language, so this needs no new
+    machinery. (`get_sdk_reference(topic='response_schemas', filter='getLicense')`, server 1.32.9,
+    2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
+    `get_license() -> str`.)
+  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so later steps,
+    Phase B and graduation see a detected value instead of the same absence.
+  - **Then re-enter these three branches** with the measured value. `recordLimit: 0` lands on the
+    first branch and correctly suppresses the note.
+  - **Only if the call fails** (no engine yet, SDK error) does the default-limit note apply — and
+    say plainly that it is an assumption, naming what could not be measured, rather than presenting
+    it as the detected limit.
 
 Acting on the unreconciled note is not harmless: it sends a bootcamper with an unlimited license to
 sample down to 500 records, and the shrunken dataset then under-demonstrates the cross-source
@@ -290,7 +316,8 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
 3. **Prompt only when it matters.** Present the prompt only when the database is SQLite AND it was
    not already decided AND the volume is production-scale for SQLite — that is, the tier is
    `medium` or `large`, **or** the tier is `small` with a `raw_value` above the SQLite guidance
-   threshold. Source that threshold from MCP this session; `search_docs(query="loading",
+   threshold. Source that threshold from MCP rather than from this file (a sourcing
+   floor); `search_docs(query="loading",
    category="anti_patterns")` → "Do Not Use SQLite in Production" gives it as roughly 100,000
    records ("use SQLite only for quick local testing with small datasets"), well inside the
    `small` tier's span (above 500, up to 500,000), which is why the tier alone is not a sufficient

@@ -11,8 +11,12 @@ they read is mid-flight.
 python3 .claude/skills/dry-run/scaffold_project.py "$HOME/senzing-bootcamp-dryrun"
 ```
 
-The scaffold prints which fixture exercises which invariant. Each one is there
-because a naive fixture hid a defect:
+The scaffold prints which fixture exercises which invariant **for the mode it built**, and
+names the ones that mode omits. The list below is the default mid-bootcamp set, which is what
+phase 2 wants — `--fresh` and `--seeded` create only the two config files plus the feedback
+file, so they carry none of the recap/checkpoint/Markdown/records fixtures and their banners say
+so. Use `--explain` (with `--fresh`/`--seeded` if you mean those) to see a mode's list without
+writing anything. Each fixture is there because a naive one hid a defect:
 
 - **A mid-module recap** with a completed section and all four subsections — an empty
   recap never exercises the parser.

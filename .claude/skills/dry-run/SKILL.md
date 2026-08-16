@@ -41,6 +41,16 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    numbered list (1, 2, 3, or all three); do not assume. Phase 3 costs the
    maintainer's time in a way 1 and 2 do not, so it is never implied by "dry-run
    the plugin".
+
+   ⛔ **If phase 3 is among them, ask a second question before anything else runs:
+   which module the analysis starts at.** List the eleven modules in order, numbered,
+   and mark which ones this environment can actually reach (step 3 below is that
+   check). Everything before the chosen module is walked as a Bootcamper sees it with
+   the analysis off; the analysis begins when that module does. This is not a
+   refinement — a walk that analyses from the top runs out of context around Module 1
+   every time, which is why no phase-3 run has ever reached the later modules. Full
+   rules, including what the fast-forward may and may not do, in
+   [phase3-conversational.md](phase3-conversational.md).
 2. **Work outside the repo.** Phase 2 and 3 create a bootcamp project. Put it in
    `$HOME/senzing-bootcamp-dryrun` (or `-phase3`), never inside the repo and never
    under `/tmp` — a maintainer hook blocks system-temp writes, and the plugin's own
@@ -60,10 +70,48 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    ```
 
    `invariants` lists invariants no test mentions by ID — INV-060 and INV-097 both sat
-   there while standing unimplemented for weeks. `affected` lists ledgered specs whose
+   there while standing unimplemented for weeks. It splits its hits three ways so the
+   actionable number is visible: **fully superseded** (filtered — a retired rule needs no
+   test, and the list comes from the index's own "Fully superseded" entries, **not** a grep,
+   because a *partly* superseded invariant such as INV-040 still binds), **bootcamp outcome
+   invariants** (the first 50 ids — banners, questions, "the SDK is installed", which no
+   offline suite can assert, so they are phase 3's business rather than test debt), and the
+   **development rules** that remain. `shipped` is its mirror on the other side of
+   the contract: invariants that **name a shipped artifact** (a path, module, step or bundled
+   script) and that no file under `plugins/` cites, so the rule binds a step the guide cannot
+   look it up from (INV-183). It is the question `conformance.py rules` cannot ask — that scan
+   is satisfied by *any* `INV-NNN` in a section, which is how it reported **0** on 2026-08-13
+   while INV-212 was named nowhere near the step it was registered from. Development-environment
+   rules are exempt via the `INVARIANTS.md` index group that declares itself the exemption, and
+   invariants stating a general property with no artifact are not reported at all — both filters
+   exist so the output stays short enough to read. `affected` lists ledgered specs whose
    `## Affected files` predicted a path the entry's `Files changed:` never recorded —
-   which is how the graduation half of INV-097 went missing. Read-only, stdlib-only, exit 0
+   which is how the graduation half of INV-097 went missing. Its rows are classified, most
+   actionable first: **names a real current file**, then **path no longer exists**, **bare
+   filename** (an artifact, not a repo path) and **glob**, the last three being predictions
+   the scan structurally cannot match. Within the first class, **★ marks the rows whose spec's
+   `## Acceptance criteria` name the file** — the discriminator INV-097's defect actually had,
+   since an `## Affected files` entry alone is only a prediction. `negatives` lists every dated
+   "this MCP tool does **not** contain X" claim, oldest server version first — that one is
+   **phase 1's worklist**, not just a report, because a negative is the single claim shape
+   the offline suite can never notice going stale. Read-only, stdlib-only, exit 0
    whatever it finds. The `auto-test` skill can call it the same way.
+
+   `unmarked` is `negatives`' complement and the newer half of phase 1's worklist: dated
+   tool-absence claims in **shipped plugin prose that carry no marker**, which `negatives` cannot
+   see because it only lists what is already tagged. The **date** is the discriminator — undated
+   prose explaining how a tool behaves is not a re-checkable claim and is not reported. A hit needs
+   judgement (it may be prose *about* behaviour), which is why this reports rather than gates, and
+   the vocabulary is a phrase list, so a miss is weak evidence. ⛔ **Never mark one of these by
+   stamping today's date on it** — re-ask the owning route first; if the server has moved, the fix
+   is to correct the prose, not to certify it.
+
+   `negatives` also reads **`specs/DECLINED.md`** — the only file under `specs/` it scans,
+   added 2026-08-13. A spec body's Senzing facts are re-asked by `implement-spec` Step 3.3 on
+   the way in, but a *declined* spec is never implemented, so a negative in a `Revisit if:`
+   clause is re-read as authority and never re-verified. Give those markers the same weight as
+   a shipped claim: a wrong one sends the next revisit check to the wrong answer, which is
+   exactly what a phase 1 sweep found there.
 
 ## Absolute rules
 

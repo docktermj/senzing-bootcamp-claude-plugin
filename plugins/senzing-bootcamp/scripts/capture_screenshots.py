@@ -65,6 +65,7 @@ Exit codes: 0 = wrote at least one PNG; 2 = no headless capability available
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -73,6 +74,17 @@ import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import urlparse, urlencode
+
+# Sidecar manifest written beside the PNGs, recording what capture actually did.
+#
+# It exists because the recap PDF's `embedded N of M images` count derives its
+# denominator from the very Markdown it is measuring: if only four of six tabs were
+# ever captured, the line reads `embedded 4 of 4 images` — a perfect score against an
+# incomplete set. Only capture knows how many tabs there were, and capture is
+# best-effort and non-blocking by contract (INV-122), so the count it reached has to be
+# recorded here or it is lost. `generate_recap_pdf.py --check` reads this to get an
+# **external** denominator.
+MANIFEST_SCHEMA = 1
 
 # The visualization contract's tab inventory: id -> (filename slug, human label).
 # Ids are the app's DOM ids (`tab-<id>`, `navbtn-<id>`) and are contract, not an
@@ -106,6 +118,77 @@ DEFAULT_TABS = ("graph", "stats", "matchkeys", "features", "overlap", "probe")
 # runtime and carry none of the framing the comment above TABS does, so a reader of
 # `--help` was being shown eight capturable tabs for a six-tab app (INV-155).
 RESERVED_TABS = tuple(t for t in TABS if t not in DEFAULT_TABS)
+
+# ⛔ Not a tab: the internal id for capturing a page that HAS no tabs, as one image.
+# It is deliberately absent from TABS, so `--tabs page` is an unknown id and the only
+# way to reach this mode is `--single` (or the auto-detect safety net). A single-page
+# deliverable — the quality and mapping pages — has no tab controls at all, so asking
+# for "all tabs" against it requested six that do not exist and wrote **nothing**: an
+# omitted `--tabs` never meant "no tabs", it meant DEFAULT_TABS. The concept was
+# missing from this helper, not merely mis-invoked by its caller.
+SINGLE_PAGE_ID = "page"
+SINGLE_PAGE_LABEL = "Full page"
+
+# ⛔ The label must describe what the capture DID, not what the mode intended (INV-235).
+#
+# `--single` inherited the tabbed path's fixed viewport, where the premise does not hold: a
+# tab's content is designed to fit a screen, but a single-page deliverable is a *document*
+# and is as tall as its content. So the mode cropped to 1440×900 and printed "Full page"
+# regardless — and INV-123 names that printed label as the designated input to the caption a
+# caller writes, so obeying INV-123 exactly produced "Full page" over the top third of a
+# page. Only measuring the page's height against the PNG's revealed it, which nothing asked
+# for. (Observed 2026-08-14: a three-source quality page ~2100px tall captured at 900px, two
+# of three sources absent, exit 0, real 84 KB PNG, manifest entry, label "Full page".)
+SINGLE_PAGE_LABEL_VIEWPORT = "Top of page (viewport only)"
+FULL_PAGE_FULL = "full"
+FULL_PAGE_CLAMPED = "clamped"
+FULL_PAGE_VIEWPORT = "viewport"
+
+# A pathological page must not produce a 30,000px PNG. When the clamp bites, the label and
+# stderr both say so rather than truncating silently — the skip-and-report discipline
+# INV-122 already requires of this script, applied to height.
+_MAX_FULL_PAGE_PX = 12000
+
+
+def _single_page_label(outcome: str, page_height=None, captured_height=None) -> str:
+    """Label for a single-page capture, derived from what the backend actually did."""
+    if outcome == FULL_PAGE_FULL:
+        return SINGLE_PAGE_LABEL
+    if outcome == FULL_PAGE_CLAMPED:
+        return f"{SINGLE_PAGE_LABEL} (clamped at {_MAX_FULL_PAGE_PX}px)"
+    return SINGLE_PAGE_LABEL_VIEWPORT
+
+
+def _tab_label(tab: str) -> str:
+    """Human label for a tab id, or for the single-page pseudo-id.
+
+    For the single-page id the label depends on the capture's OUTCOME, which the backend
+    records in `_FULL_PAGE_OUTCOME` — read here rather than threaded through, for the same
+    reason `_CURRENT_TAB` is a global: `_BACKENDS` is called uniformly and tests substitute
+    two-argument callables. See the note on `_CURRENT_TAB` for why serial capture makes that
+    safe, and what to do if capture is ever parallelised.
+    """
+    if tab == SINGLE_PAGE_ID:
+        return _single_page_label(
+            _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+        )
+    return TABS.get(tab, (tab, tab))[1]
+
+
+def _has_tab_controls(source: str) -> bool:
+    """Does this page have a tab bar at all?
+
+    Used only to tell "a tabbed app whose tabs were misnamed" (report and skip — INV-122)
+    from "a document that has no tabs by design" (capture it whole). An unreadable page
+    returns False for both halves of the check, so the caller keeps its normal reporting
+    path rather than guessing.
+    """
+    if not source:
+        return False
+    return bool(
+        re.search(r'id\s*=\s*["\']navbtn-', source)
+        or re.search(r'id\s*=\s*["\']tab-', source)
+    )
 
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
@@ -182,6 +265,10 @@ def _to_url(target: str) -> str:
 
 
 def _out_path(out_dir: Path, name: str, tab: str) -> Path:
+    if tab == SINGLE_PAGE_ID:
+        # No slug suffix: a single-page deliverable has one image, so `{name}.png` is
+        # the predictable embed target beside the tabbed `{name}-<slug>.png` convention.
+        return out_dir / f"{name}.png"
     slug = TABS.get(tab, (tab, tab))[0]
     return out_dir / f"{name}-{slug}.png"
 
@@ -216,6 +303,84 @@ def _page_source(target: str, is_url: bool) -> str:
         return ""
 
 
+def _page_stats(source: str, target: str, is_url: bool) -> dict:
+    """The page's ``/api/stats`` payload, or ``{}`` when it cannot be determined.
+
+    Needed because a tab's *applicability* is a property of the data, not the markup:
+    the app suppresses a tab whose data does not exist (see ``_tabs_applicable``), and
+    the suppression happens at runtime in ``buildNav()``, so nothing in the saved markup
+    records it.
+
+    Two shapes, because the two targets carry stats differently:
+
+    * a standalone snapshot inlines every endpoint as ``const __DATA__={...};`` (see
+      ``senzing_viz_server.write_snapshot``), so ``stats`` is parsed straight out of it;
+    * a live server serves ``/api/stats``, so it is fetched.
+
+    ``{}`` on any failure — an unreadable or unrecognised page must never block capture
+    (INV-122 is best-effort by contract), and an empty dict makes every tab applicable,
+    which is exactly today's behaviour.
+    """
+    marker = "const __DATA__="
+    at = source.find(marker)
+    if at != -1:
+        try:
+            data, _ = json.JSONDecoder().raw_decode(source, at + len(marker))
+            stats = data.get("stats")
+            return stats if isinstance(stats, dict) else {}
+        except Exception:
+            return {}
+    if not is_url:
+        return {}
+    if not _is_local_target(target):  # never fetch a remote host (INV-091)
+        return {}
+    try:
+        import urllib.request
+
+        base = target.split("?")[0].rstrip("/")
+        with urllib.request.urlopen(f"{base}/api/stats", timeout=10) as response:
+            stats = json.loads(response.read().decode("utf-8", "replace"))
+        return stats if isinstance(stats, dict) else {}
+    except Exception:
+        return {}
+
+
+# ⛔ MIRRORS `tabApplicable()` IN `senzing_viz_server.py` — the app is the authority, and
+# `tests/test_capture_suppressed_tabs.py` → `test_python_rule_matches_the_apps_javascript_rule`
+# asserts the two agree (it parses `tabApplicable()` out of the server and compares the gated
+# tab set, the stats field each gates on, and the literal thresholds), because a silent
+# divergence here is the whole defect this function exists to fix. If you change one, change
+# both. (`tests/test_capture_tabs.py` is a different guard: tab *inventory* against the
+# contract's table, not these applicability rules.)
+#
+# The app hides a tab whose data does not exist rather than showing an empty one, so a tab
+# that is suppressed was never on screen for the bootcamper. Capturing it anyway produced a
+# near-empty PNG under a confident slug ("Cross-Source" over 700px of background) and, worse,
+# counted it as covered — the recap's `N of M images` denominator comes from the manifest's
+# `captured` list, so an over-count there is a perfect score against a set that was never
+# offered. That is the mirror of the under-count the manifest was introduced to prevent.
+_APPLICABILITY = {
+    "overlap": lambda s: (s.get("data_sources_total") or 0) >= 2,
+    "features": lambda s: (s.get("multi_record_entities") or 0) > 0,
+    "matchkeys": lambda s: (s.get("multi_record_entities") or 0) > 0,
+}
+
+
+def _tabs_applicable(stats: dict, tabs) -> tuple:
+    """Split ``tabs`` into (applicable, suppressed) according to the app's own rule.
+
+    With no stats every tab is applicable, so an unreadable page degrades to today's
+    behaviour rather than capturing nothing.
+    """
+    if not stats:
+        return list(tabs), []
+    applicable, suppressed = [], []
+    for tab in tabs:
+        rule = _APPLICABILITY.get(tab)
+        (applicable if rule is None or rule(stats) else suppressed).append(tab)
+    return applicable, suppressed
+
+
 def _tabs_present(source: str, tabs) -> tuple:
     """Split ``tabs`` into (present, absent) according to the page's own markup.
 
@@ -227,9 +392,14 @@ def _tabs_present(source: str, tabs) -> tuple:
     is not in the page is skipped and reported rather than captured wrongly.
 
     A tab hidden at runtime by ``tabApplicable`` still has its ``tab-<id>`` section in
-    the markup and still activates, so this only rejects genuinely absent tabs. When the
-    source cannot be read, every tab is treated as present (best-effort — never let an
-    unreadable page block capture).
+    the markup and still activates, so this only rejects genuinely absent tabs — a
+    suppressed one is caught by ``_tabs_applicable`` instead, and the two are kept apart
+    on purpose: **absent** means the tab inventory has drifted (a real problem), while
+    **suppressed** means this dataset does not have that tab's data (routine). Reporting
+    one as the other would send a reader looking for the wrong fault.
+
+    When the source cannot be read, every tab is treated as present (best-effort — never
+    let an unreadable page block capture).
     """
     if not source:
         return list(tabs), []
@@ -279,7 +449,29 @@ def _capture_playwright(url: str, out: Path) -> bool:
             # and give the D3 force layout a bounded moment to settle.
             page.goto(url, wait_until="load")
             page.wait_for_timeout(2500)
-            page.screenshot(path=str(out))
+            if _single_page_mode():
+                height = None
+                try:
+                    height = int(page.evaluate(
+                        "Math.max(document.documentElement.scrollHeight,"
+                        " document.body ? document.body.scrollHeight : 0)"
+                    ))
+                except Exception:
+                    height = None
+                if height and height > _MAX_FULL_PAGE_PX:
+                    # Clamp by shrinking the viewport and taking a viewport shot: a
+                    # full_page shot would ignore the clamp entirely.
+                    page.set_viewport_size(
+                        {"width": _WINDOW[0], "height": _MAX_FULL_PAGE_PX}
+                    )
+                    page.wait_for_timeout(400)
+                    page.screenshot(path=str(out))
+                    _record_full_page(FULL_PAGE_CLAMPED, height, _MAX_FULL_PAGE_PX)
+                else:
+                    page.screenshot(path=str(out), full_page=True)
+                    _record_full_page(FULL_PAGE_FULL, height, height)
+            else:
+                page.screenshot(path=str(out))
             page.close()
             browser.close()
         return out.is_file() and out.stat().st_size > 0
@@ -306,6 +498,47 @@ def _capture_selenium(url: str, out: Path) -> bool:
         import time
 
         time.sleep(2.5)
+        if _single_page_mode():
+            # Selenium has no full-page screenshot, so grow the window to the content and
+            # re-shoot.
+            #
+            # ⛔ `set_window_size` sets the OUTER window, and the viewport is shorter by the
+            # window chrome — the same trap as the Chrome CLI's `--window-size`, and it is
+            # NOT negligible under `--headless=new`. Measured 2026-08-14: sizing the window
+            # to a 2704px page rendered a 2565px viewport, so the capture lost the bottom
+            # 139px — the whole footer — while this function still reported a FULL capture
+            # and the label still read "Full page". That is an INV-235 breach produced by
+            # assuming the two agree, so the offset is now measured from `innerHeight` and
+            # added back, exactly as `_measure_chrome_cli` does for the CLI path.
+            height = None
+            try:
+                height = int(driver.execute_script(
+                    "return Math.max(document.documentElement.scrollHeight,"
+                    " document.body ? document.body.scrollHeight : 0);"
+                ))
+            except Exception:
+                height = None
+            if height:
+                captured = min(height, _MAX_FULL_PAGE_PX)
+                driver.set_window_size(_WINDOW[0], captured)
+                time.sleep(0.75)
+                # One correction pass: the chrome offset is a constant for the session, so
+                # measuring it once and adding it back is enough — no need to iterate.
+                try:
+                    inner = int(driver.execute_script("return window.innerHeight;"))
+                except Exception:
+                    inner = 0
+                if inner and inner < captured:
+                    driver.set_window_size(_WINDOW[0], captured + (captured - inner))
+                    time.sleep(0.75)
+                _record_full_page(
+                    FULL_PAGE_CLAMPED if height > _MAX_FULL_PAGE_PX else FULL_PAGE_FULL,
+                    height,
+                    captured,
+                )
+            else:
+                # Measurement failed: capture what we can and say it is the viewport.
+                _record_full_page(FULL_PAGE_VIEWPORT, None, _WINDOW[1])
         return bool(driver.save_screenshot(str(out)))
     except Exception:
         return False
@@ -406,10 +639,104 @@ def _chrome_exe():
     return None
 
 
+def _measure_chrome_cli(exe: str, url: str):
+    """``(page_height, window_chrome_px)`` for a ``file://`` url, or ``(None, 0)``.
+
+    Chrome's CLI cannot evaluate an expression for us and has no full-page screenshot
+    flag, so the height is read the only way available: stamp it into an attribute from
+    injected JS and serialize the DOM. This works for the `file://` pages the bootcamp
+    captures; a remote URL cannot be patched, so it returns None and the caller degrades
+    to a viewport capture with an honest label rather than guessing a height.
+
+    ⛔ **`--window-size` is not the viewport, and the difference silently crops.** Under
+    `--headless=new` Chrome reserves window chrome, so a requested 1440×900 window renders
+    an 813px viewport while the screenshot comes out 900px tall — the extra being blank
+    padding. Screenshotting at exactly `scrollHeight` therefore loses the last ~87px of a
+    tall page: measured live 2026-08-14 on a 2671px page whose footer occupied 2613-2671,
+    it produced a 2671px PNG with white where the footer should be. So the offset is
+    measured here (requested window height minus the `innerHeight` actually rendered) and
+    added back by the caller, rather than hard-coded — it varies with Chrome version and
+    platform, and a stale constant would crop exactly this quietly again.
+    """
+    if not url.startswith("file://"):
+        return None, 0
+    try:
+        # url2pathname, not a manual strip: it decodes %20 and gets the Windows
+        # /C:/... form right, both of which a hand-rolled slice gets wrong (INV-001).
+        from urllib.request import url2pathname
+
+        source_path = Path(url2pathname(urlparse(url).path))
+        if not source_path.is_file():
+            return None, 0
+        source = source_path.read_text(encoding="utf-8", errors="surrogateescape")
+        if "</body>" in source:
+            patched = source.replace("</body>", _MEASURE_JS + "</body>", 1)
+        else:
+            patched = source + _MEASURE_JS
+        handle, path = tempfile.mkstemp(
+            prefix=f".{source_path.stem}-measure-",
+            suffix=".html",
+            dir=str(source_path.parent),
+        )
+        os.close(handle)
+        temp = Path(path)
+    except Exception:
+        return None, 0
+    try:
+        temp.write_text(patched, encoding="utf-8", errors="surrogateescape")
+        done = subprocess.run(
+            [
+                exe,
+                "--headless=new",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--hide-scrollbars",
+                f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
+                f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
+                "--dump-dom",
+                _to_url(str(temp)),
+            ],
+            check=False,
+            capture_output=True,
+            timeout=90,
+        )
+        dom = done.stdout.decode("utf-8", "replace")
+        found = _MEASURED_HEIGHT_RE.search(dom)
+        if not found:
+            return None, 0
+        inner = _MEASURED_INNER_RE.search(dom)
+        # Positive offset only: if innerHeight somehow exceeds the request, adding a
+        # negative would crop rather than pad.
+        chrome_px = max(0, _WINDOW[1] - int(inner.group(1))) if inner else 0
+        return int(found.group(1)), chrome_px
+    except Exception:
+        return None, 0
+    finally:
+        try:
+            temp.unlink()
+        except OSError:
+            pass
+
+
 def _capture_chrome_cli(url: str, out: Path) -> bool:
     exe = _chrome_exe()
     if exe is None:
         return False
+    height = _WINDOW[1]
+    if _single_page_mode():
+        measured, chrome_px = _measure_chrome_cli(exe, url)
+        if measured:
+            covered = min(measured, _MAX_FULL_PAGE_PX)
+            # Request viewport-worth PLUS the window chrome, so `covered` px of PAGE is
+            # what actually renders. Without this the last `chrome_px` of the page is cut.
+            height = covered + chrome_px
+            _record_full_page(
+                FULL_PAGE_CLAMPED if measured > _MAX_FULL_PAGE_PX else FULL_PAGE_FULL,
+                measured,
+                covered,
+            )
+        else:
+            _record_full_page(FULL_PAGE_VIEWPORT, None, _WINDOW[1])
     try:
         subprocess.run(
             [
@@ -418,7 +745,7 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
                 "--no-sandbox",
                 "--disable-gpu",
                 "--hide-scrollbars",
-                f"--window-size={_WINDOW[0]},{_WINDOW[1]}",
+                f"--window-size={_WINDOW[0]},{height}",
                 f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
                 f"--screenshot={out}",
                 url,
@@ -452,7 +779,14 @@ def _capture_wkhtmltoimage(url: str, out: Path) -> bool:
         )
     except Exception:
         return False
-    return out.is_file() and out.stat().st_size > 0
+    ok = out.is_file() and out.stat().st_size > 0
+    if ok and _single_page_mode():
+        # `--width` with no `--height` renders the full content height by design, so this
+        # backend is already whole-document and needs no measurement pass. The clamp
+        # therefore does not apply here; it is the last-resort backend, and stating the
+        # exemption is better than implying a clamp that is not enforced.
+        _record_full_page(FULL_PAGE_FULL, None, None)
+    return ok
 
 
 _BACKENDS = (
@@ -466,7 +800,83 @@ _BACKENDS = (
 # The tab currently being captured, so a backend can size its settle time without every
 # backend signature growing a parameter — `_BACKENDS` is called uniformly, and tests
 # substitute two-argument callables for it.
+#
+# This is correct ONLY because captures run strictly one at a time: `capture()` walks the
+# tabs in a loop, and `_capture_one` owns the global for the duration of exactly one
+# capture. Parallelising that loop — the obvious optimisation on a step that shells out to
+# a browser per tab — would apply one tab's virtual-time budget to another tab's capture,
+# and the symptom is a subtly under-settled PNG rather than an error: the quiet way to
+# break INV-122's guarantee that each file shows the tab it is named after. If capture is
+# ever parallelised, thread the tab through the backend signature instead of this global.
+# `_capture_one` says so on stderr if a second capture begins while one is in flight, so
+# the change announces itself instead of silently mis-sizing a settle budget.
 _CURRENT_TAB = ""
+_CAPTURE_IN_FLIGHT = False
+
+# What the single-page capture actually achieved, and the two heights that decided it.
+# Reset per capture by `_capture_one`, set by whichever backend won, read by `_tab_label`.
+# Defaults to VIEWPORT so a backend that never records an outcome cannot inherit the
+# "Full page" claim by silence — the failure mode this whole change is about.
+_FULL_PAGE_OUTCOME = FULL_PAGE_VIEWPORT
+_FULL_PAGE_HEIGHT = None
+_FULL_PAGE_CAPTURED = None
+
+
+def _single_page_mode() -> bool:
+    """True when the capture in flight is the whole-document mode, not a tab."""
+    return _CURRENT_TAB == SINGLE_PAGE_ID
+
+
+def _record_full_page(outcome: str, page_height=None, captured_height=None) -> None:
+    """Record what a single-page capture achieved, and warn when it fell short."""
+    global _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+    _FULL_PAGE_OUTCOME = outcome
+    _FULL_PAGE_HEIGHT = page_height
+    _FULL_PAGE_CAPTURED = captured_height
+    if outcome == FULL_PAGE_FULL:
+        return
+    if outcome == FULL_PAGE_CLAMPED:
+        sys.stderr.write(
+            "capture_screenshots: page is %spx tall, above the %dpx clamp — captured the "
+            "top %dpx and labelled it as clamped, not as the full page.\n"
+            % (page_height, _MAX_FULL_PAGE_PX, _MAX_FULL_PAGE_PX)
+        )
+        return
+    sys.stderr.write(
+        "capture_screenshots: could not capture the full page; captured the viewport only "
+        "(%spx of a %spx page). The label says so — do NOT caption this as the full page "
+        "(INV-123).\n"
+        % (
+            captured_height if captured_height is not None else _WINDOW[1],
+            page_height if page_height is not None else "unknown",
+        )
+    )
+
+
+# Injected into a temp copy for the Chrome-CLI measurement pass. Chrome's `--dump-dom`
+# serializes the DOM *after* scripts run, so an attribute this sets is visible in that
+# output — which is the only way to read a computed layout height from a CLI that cannot
+# evaluate an expression for us. Stamped on a delay for the same reason captures settle:
+# the page's own layout has to finish first.
+_MEASURE_JS = """
+<script>
+(function(){
+  function stamp(){
+    try {
+      var d = document.documentElement, b = document.body;
+      var h = Math.max(d.scrollHeight, d.offsetHeight,
+                       b ? b.scrollHeight : 0, b ? b.offsetHeight : 0);
+      d.setAttribute("data-sz-scroll-height", String(h));
+      d.setAttribute("data-sz-inner-height", String(window.innerHeight));
+    } catch (e) {}
+  }
+  if (document.readyState === "complete") { setTimeout(stamp, 1500); }
+  else { window.addEventListener("load", function(){ setTimeout(stamp, 1500); }); }
+})();
+</script>
+"""
+_MEASURED_HEIGHT_RE = re.compile(r'data-sz-scroll-height="(\d+)"')
+_MEASURED_INNER_RE = re.compile(r'data-sz-inner-height="(\d+)"')
 
 
 def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
@@ -476,17 +886,37 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     re-walking the list — which would multiply the cost of every missing backend by
     the number of tabs.
     """
-    global _CURRENT_TAB
+    global _CURRENT_TAB, _CAPTURE_IN_FLIGHT
+    global _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED
+    # Reset before every capture, so one page's outcome can never label the next one.
+    _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED = (
+        FULL_PAGE_VIEWPORT, None, None,
+    )
+    if _CAPTURE_IN_FLIGHT:
+        # Warn, never raise: a capture step must not block the module (INV-052/INV-048).
+        sys.stderr.write(
+            "capture_screenshots: a capture started while another was still in flight. "
+            "`_CURRENT_TAB` is a single module global, so the virtual-time budget may be "
+            "sized for the wrong tab and a PNG may be captured under-settled (INV-122). "
+            "Thread the tab through the backend signature rather than capturing in "
+            "parallel.\n"
+        )
+    _CAPTURE_IN_FLIGHT = True
     _CURRENT_TAB = tab
-    for candidate in (backend,) if backend else _BACKENDS:
-        if candidate(url, out):
-            return candidate
-    return None
+    try:
+        for candidate in (backend,) if backend else _BACKENDS:
+            if candidate(url, out):
+                return candidate
+        return None
+    finally:
+        _CAPTURE_IN_FLIGHT = False
 
 
 def resolve_tabs(spec: str) -> list:
     """Parse a --tabs value into known tab ids, preserving the given order."""
-    if not spec:
+    if not spec or spec.strip().lower() == "all":
+        # `all` is an explicit spelling of the default, so a caller can state intent
+        # rather than relying on an omission that reads like "none".
         return list(DEFAULT_TABS)
     wanted, unknown = [], []
     for raw in re.split(r"[,\s]+", spec.strip()):
@@ -514,6 +944,77 @@ def resolve_tabs(spec: str) -> list:
     return wanted
 
 
+def manifest_path(out_dir: Path, name: str) -> Path:
+    """Where the sidecar manifest for ``name`` lives — beside its PNGs."""
+    return Path(out_dir) / f"{name}-tabs.json"
+
+
+def write_manifest(
+    out_dir: Path, name: str, requested, absent, written, missed, suppressed=()
+) -> bool:
+    """Record what capture did, beside the PNGs. Returns True if written.
+
+    Best-effort like capture itself (INV-122): a manifest that cannot be written is
+    reported on stderr and never fails the run — the PNGs are the deliverable. But it
+    is reported, because a silently absent manifest downgrades the coverage check to
+    "skipped" much later, in graduation, where the cause is no longer visible.
+    """
+    suppressed = list(suppressed)
+    slug_of = {
+        tab: (SINGLE_PAGE_ID if tab == SINGLE_PAGE_ID else TABS.get(tab, (tab, tab))[0])
+        for tab in requested
+    }
+    captured_tabs = [
+        tab
+        for tab in requested
+        if _out_path(Path(out_dir), name, tab) in {p for p, _ in written}
+    ]
+    payload = {
+        "schema": MANIFEST_SCHEMA,
+        "name": name,
+        # Every tab asked for, before the page was consulted.
+        "requested": list(requested) + list(absent) + suppressed,
+        "captured": [
+            {
+                "tab": tab,
+                "slug": slug_of.get(tab, tab),
+                "file": _out_path(Path(out_dir), name, tab).name,
+                "label": _tab_label(tab),
+            }
+            for tab in captured_tabs
+        ],
+        # Three different reasons a tab produced nothing. Keeping them apart matters:
+        # "not in this app" means the tab inventory drifted, "not applicable" is routine
+        # and correct, and "capture failed" is a real loss. A reader chasing a missing
+        # recap image needs to know which of the three they are looking at.
+        "not_present": [{"tab": tab, "reason": "not present in this visualization"}
+                        for tab in absent],
+        "not_applicable": [
+            {"tab": tab,
+             "reason": "the app suppresses this tab because its data does not exist"}
+            for tab in suppressed
+        ],
+        "failed": [{"tab": tab, "reason": "no image written by any backend"}
+                   for tab in missed],
+    }
+    payload["captured_count"] = len(payload["captured"])
+    payload["requested_count"] = len(payload["requested"])
+    target = manifest_path(Path(out_dir), name)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with open(target, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+    except OSError as exc:
+        print(
+            f"could not write the tab manifest {target} ({exc}); the recap's "
+            "tab-coverage check will report itself skipped rather than passed.",
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
 def capture(
     target: str,
     out_dir: Path,
@@ -536,7 +1037,12 @@ def capture(
         out = _out_path(out_dir, name, tab)
         temp = None
         try:
-            if is_url:
+            if tab == SINGLE_PAGE_ID:
+                # The page as it loads: no ?tab= deep link, and no activation copy —
+                # there is nothing to activate, and injecting one would only add a
+                # script that finds no tab and exhausts its retries.
+                url = target if is_url else _to_url(str(html))
+            elif is_url:
                 url = _tab_url(target, tab, query)
             else:
                 temp = _snapshot_copy(html, tab)
@@ -544,7 +1050,7 @@ def capture(
             winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner
-                written.append((out, TABS[tab][1]))
+                written.append((out, _tab_label(tab)))
             elif working_backend is None:
                 # Nothing worked for the first tab: no headless capability at all,
                 # so stop rather than failing identically for every remaining tab.
@@ -580,8 +1086,15 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--tabs",
         default="",
-        help=f"Comma-separated tab ids (default, and the app's full tab set: "
-        f"{','.join(DEFAULT_TABS)}).",
+        help=f"Comma-separated tab ids, or 'all' (default, and the app's full tab set: "
+        f"{','.join(DEFAULT_TABS)}). An omitted --tabs means ALL tabs, not none — for a "
+        f"page with no tabs use --single.",
+    )
+    ap.add_argument(
+        "--single",
+        action="store_true",
+        help="Capture the whole page as ONE image, for a single-page deliverable with no "
+        "tabs (writes {name}.png). Cannot be combined with --tabs.",
     )
     ap.add_argument(
         "--query",
@@ -591,11 +1104,21 @@ def main(argv=None) -> int:
     )
     args = ap.parse_args(argv)
 
-    try:
-        tabs = resolve_tabs(args.tabs)
-    except ValueError as exc:
-        print(str(exc), file=sys.stderr)
+    if args.single and args.tabs:
+        print(
+            "--single captures the page as one image and --tabs names tabs to capture; "
+            "pass one or the other.",
+            file=sys.stderr,
+        )
         return 1
+    if args.single:
+        tabs = [SINGLE_PAGE_ID]
+    else:
+        try:
+            tabs = resolve_tabs(args.tabs)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
     if not tabs:
         print("no tabs to capture", file=sys.stderr)
         return 1
@@ -619,22 +1142,65 @@ def main(argv=None) -> int:
         print(f"no such HTML file: {target}", file=sys.stderr)
         return 1
 
-    # Pre-flight: never capture a tab the page does not have (see _tabs_present).
-    tabs, absent = _tabs_present(_page_source(target, is_url), tabs)
-    for tab in absent:
+    # Pre-flight: never capture a tab the page does not have (see _tabs_present), nor one
+    # the app suppressed because its data does not exist (see _tabs_applicable).
+    source = _page_source(target, is_url)
+    absent = []
+    suppressed = []
+    if tabs != [SINGLE_PAGE_ID]:
+        tabs, absent = _tabs_present(source, tabs)
+        for tab in absent:
+            print(
+                f"tab {tab!r} is not present in this visualization; skipping it rather than "
+                "capturing the default tab under its name.",
+                file=sys.stderr,
+            )
+        tabs, suppressed = _tabs_applicable(_page_stats(source, target, is_url), tabs)
+        for tab in suppressed:
+            print(
+                f"tab {tab!r} is not applicable to this data, so the app does not show it; "
+                "skipping it rather than capturing an empty pane the bootcamper never saw.",
+                file=sys.stderr,
+            )
+    if not tabs and not _has_tab_controls(source):
+        # Safety net: the page has no tab bar at all, so this is a single-page document
+        # rather than a tabbed app whose tabs were misnamed. Capture it whole instead of
+        # exiting empty — exiting was the behaviour that silently cost every single-page
+        # deliverable its recap image.
         print(
-            f"tab {tab!r} is not present in this visualization; skipping it rather than "
-            "capturing the default tab under its name.",
+            "This page has no tab controls, so none of the requested tabs could exist; "
+            "capturing it as a single page instead. Pass --single to say so explicitly. "
+            f"Requested: {', '.join(absent + suppressed)}.",
             file=sys.stderr,
         )
-    if not tabs:
+        tabs, absent, suppressed = [SINGLE_PAGE_ID], [], []
+    elif not tabs:
+        # A tabbed app that offered none of the requested tabs. Report and skip (INV-122) —
+        # capturing the whole page here would put the default tab in a file named for a
+        # tab it does not show, which is the defect tab-naming exists to prevent.
         # Distinct from "no headless backend" — saying the wrong reason here would be
         # the same class of defect this script exists to stop.
-        print(
-            "None of the requested tabs exist in this visualization; nothing to capture. "
-            f"Requested: {', '.join(absent)}.",
-            file=sys.stderr,
-        )
+        #
+        # ⛔ The two reasons are reported separately even when both are empty-handed,
+        # because they send a reader to different places: a misnamed tab means the
+        # inventory drifted, while a suppressed one means this dataset simply has no such
+        # data and the run was fine. Collapsing them into "none of these tabs exist" would
+        # report a routine single-source bootcamp as a broken tab inventory.
+        if absent:
+            print(
+                "None of the requested tabs exist in this visualization; nothing to "
+                f"capture. Requested: {', '.join(absent)}.",
+                file=sys.stderr,
+            )
+        if suppressed:
+            print(
+                "Every requested tab is inapplicable to this data, so the app shows none "
+                f"of them; nothing to capture. Requested: {', '.join(suppressed)}.",
+                file=sys.stderr,
+            )
+        # Still record it: "this app offered none of these tabs" is a real answer to
+        # "how many tabs should the recap show", and the only one available here.
+        write_manifest(Path(args.out_dir), args.name, [], absent, [], [], suppressed)
         return 2
 
     try:
@@ -644,6 +1210,17 @@ def main(argv=None) -> int:
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    # Written before the no-capture branches below, because a run that captured
+    # nothing is exactly the case the recap's coverage check must be able to see.
+    _missed = [
+        t
+        for t in tabs
+        if _out_path(Path(args.out_dir), args.name, t) not in {p for p, _ in written}
+    ]
+    write_manifest(
+        Path(args.out_dir), args.name, tabs, absent, written, _missed, suppressed
+    )
 
     if not written:
         # Two different failures used to share one message, and the shared wording named
@@ -673,8 +1250,7 @@ def main(argv=None) -> int:
             )
         return 2
 
-    captured = [p for p, _ in written]
-    missed = [t for t in tabs if _out_path(Path(args.out_dir), args.name, t) not in captured]
+    missed = _missed
     if missed:
         # Never a silent partial result: say which tabs produced nothing.
         print(

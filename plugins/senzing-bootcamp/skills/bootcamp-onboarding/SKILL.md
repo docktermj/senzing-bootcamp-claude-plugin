@@ -20,12 +20,27 @@ bootcamper through setup and into the numbered module skills, one guided step at
 1. **Read and follow `ground-rules.md`** (in this skill directory). Those rules apply to every
    turn of the bootcamp: the 👉 one-question-at-a-time protocol, the MCP-first invariant, file
    placement, no direct SQL, progress tracking, and module banners. They are not optional.
-2. **Fresh start vs. resume.** Check for `config/bootcamp_progress.json` in the working
-   directory:
+2. **Fresh start vs. resume — decided by the progress file's CONTENT, not its existence.**
+   Read `config/bootcamp_progress.json` in the working directory. Three cases:
    - **Missing** -> this is a fresh bootcamp. Run the full onboarding in `onboarding-flow.md`.
-   - **Present** -> a bootcamp is already underway. Read it and offer to resume from the last
-     recorded module/step. (Full session-resume behavior is a later porting phase; for now,
-     read `current_module`/`current_step` and continue from there.)
+   - **Present but recording no module** — empty, `{}`, malformed, not a JSON object, or
+     `current_module` null/blank -> **also a fresh bootcamp.** Run the full onboarding from the
+     top, and do it **silently**: this is the *normal* state, not a corruption, so there is
+     nothing to report to the bootcamper (INV-012). The preface creates the file empty during
+     its silent project setup, and nothing records a module until Bootcamp preparation's final
+     consolidated write — so every quit between those two points lands here, across the whole
+     preface and all of Bootcamp preparation.
+   - **Present with a `current_module`** -> a bootcamp is already underway. Read it and offer to
+     resume from the last recorded module/step. (Full session-resume behavior is a later porting
+     phase; for now, read `current_module`/`current_step` and continue from there.)
+
+   ⛔ **Never announce a resume you cannot perform.** (INV-227 — the decision is made on whether
+   the progress file *records a module*, never on whether it exists.) Testing only for the file's
+   existence is
+   what produced "offer to resume from the last recorded module" on a project with no recorded
+   module — an instruction the guide cannot follow, on a project whose correct behaviour was to
+   start over. `recap_checkpoint.bootcamp_active()` now encodes this same three-way rule, so the
+   hooks stay silent in that window.
 
 ## Onboarding sequence (fresh start)
 
@@ -51,7 +66,7 @@ Bootcamp preparation module, not the preface.**
 
 ## Ground rules you must never break during onboarding
 
-- One 👉 question per turn; end the turn on it and wait. Never fabricate the bootcamper's answer.
+- One 👉 question per turn (INV-251); end the turn on it and wait. Never fabricate the bootcamper's answer.
 - All Senzing facts come from the Senzing MCP tools. Call `get_capabilities` once at the start.
 - Keep every file project-relative inside the working directory.
 - Persist choices to `config/bootcamp_preferences.yaml` and progress to

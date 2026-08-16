@@ -1,0 +1,140 @@
+"""The orchestrator must be told that per-source statistics are not free.
+
+Phase C step 17 requires "per-source progress/error tracking with error isolation, statistics
+aggregation, and a completion summary", and step 16 frames the Module 6 loading program as the
+template to build from. Both halves come from MCP scaffolds — and the loading scaffold keeps
+its counters as process-global state. Confirmed on server 1.32.9 (2026-08-14):
+`sdk_guide(topic='load', language='java', record_count=1000)` returns
+`senzing/code-snippets-v4` `java/snippets/loading/LoadViaFutures.java`, which declares
+
+    private static int errorCount = 0;
+    private static int successCount = 0;
+    private static int retryCount = 0;
+
+That is correct for a standalone `main()` and wrong the moment it is called once per source in
+one process. Observed on three sources of 10 / 10 / 8 records, the completion summary read
+10, then 20, then 28.
+
+What makes it worth a ⛔ rather than a note is that the load was **correct** — 28 records, zero
+errors, the datastore holding exactly what it should. Only the reporting was wrong, and it was
+wrong in the least visible way available: plausible, monotonic, summing to the right total. The
+same arithmetic hides a real failure, since a source that loads 0 of 8 still shows a rising
+count inherited from its predecessors. A wrong number is worse than a blank field (INV-115),
+because a blank invites a second look and a number does not.
+
+These tests pin the hazard, both resolutions, and the reconciliation requirement — the last of
+which is the part that actually catches the defect at runtime, since every check that looks
+only at the aggregate passes.
+
+Enforces **INV-243** — a per-source figure reported to the Bootcamper is reconciled against that source's own input count before it is shown.
+
+Enforces **INV-245** — a value that failed its own verification check is not presented as a result; the discrepancy is reported in its place. (Split out of INV-243 on maintainer review, 2026-08-14, so each states one condition; both are enforced here, which is the "one test named by several invariants" case `test_invariant_enforcer_citations.py` counts pairs for.)
+
+Source spec: `specs/orchestrator-per-source-stats-vs-static-scaffold-counters.md`.
+
+Run:  python3 -m unittest discover -s tests
+"""
+import re
+import unittest
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PHASE_C = (
+    REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" / "module-06-data-processing"
+    / "phaseC-multi-source.md"
+)
+
+
+def step_17():
+    """Step 17's body — the hazard must be reachable at the step it governs (INV-183)."""
+    text = PHASE_C.read_text(encoding="utf-8")
+    start = text.index("## 17. Create orchestrator program")
+    end = text.index("## 18. Test orchestrator", start)
+    return re.sub(r"\s+", " ", text[start:end])
+
+
+class TheHazardIsNamed(unittest.TestCase):
+    def test_the_counters_are_described_as_process_global(self):
+        body = step_17()
+        self.assertIn("process-global", body)
+
+    def test_the_concrete_declaration_is_quoted_with_its_provenance(self):
+        """A named symbol is what lets a reader check the claim against their own scaffold."""
+        body = step_17()
+        self.assertIn("LoadViaFutures.java", body)
+        self.assertIn("private static int", body)
+        self.assertIn("1.32.9", body)
+        self.assertIn("sdk_guide(topic='load'", body)
+
+    def test_it_says_why_the_scaffold_is_not_wrong(self):
+        """Without this the guide 'fixes' a snippet that is correct for its own shape."""
+        body = step_17()
+        self.assertIn("standalone", body)
+        self.assertIn("runs once and exits", body)
+
+    def test_it_is_not_stated_as_a_java_only_problem(self):
+        """INV-002: the bootcamper may be in any of five bindings."""
+        body = step_17()
+        self.assertIn("module-level or global state", body)
+        self.assertIn("INV-002", body)
+
+    def test_the_symptom_is_described_as_plausible_not_broken(self):
+        """The reason it survives review is that it looks like data."""
+        body = step_17()
+        self.assertIn("accumulate", body)
+        self.assertRegex(body, r"10, then 20, then 28")
+        self.assertIn("0 of 8", body)
+
+
+class BothResolutionsAreGiven(unittest.TestCase):
+    """One resolution is a constraint; two is a choice the bootcamper's stack can make."""
+
+    def test_scoping_the_counters_is_offered(self):
+        body = step_17()
+        self.assertIn("Scope the counters per source", body)
+        self.assertIn("reset at each", body)
+
+    def test_a_separate_process_per_source_is_offered(self):
+        body = step_17()
+        self.assertIn("own process", body)
+        self.assertIn("starts clean", body)
+
+    def test_neither_resolution_displaced_the_existing_requirements(self):
+        """The step's original contract must survive the insertion."""
+        body = step_17()
+        for phrase in (
+            "ordered loading with dependency enforcement",
+            "per-source progress/error tracking with error isolation",
+            "Retry with exponential backoff",
+            "Error isolation",
+            "Orchestrator health monitoring",
+        ):
+            self.assertIn(phrase, body, "%r was displaced" % phrase)
+
+
+class TheFiguresMustBeReconciled(unittest.TestCase):
+    """Criterion 2 — and the only part that catches the defect at runtime."""
+
+    def test_per_source_counts_are_checked_against_the_input(self):
+        body = step_17()
+        self.assertIn("input record count", body)
+
+    def test_the_per_source_counts_must_sum_to_the_aggregate(self):
+        self.assertIn("sum to the aggregate", step_17())
+
+    def test_the_comparison_is_reported_not_merely_performed(self):
+        """An unreported check is indistinguishable from no check."""
+        body = step_17()
+        self.assertIn("Report the comparison", body)
+
+    def test_a_disagreement_stops_rather_than_prints(self):
+        body = step_17()
+        self.assertIn("say so and stop", body)
+
+    def test_it_says_why_aggregate_only_checking_is_insufficient(self):
+        """The accumulating counters sum correctly; that is the trap."""
+        self.assertIn("passes every check that looks", step_17())
+
+
+if __name__ == "__main__":
+    unittest.main()

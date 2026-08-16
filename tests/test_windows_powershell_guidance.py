@@ -19,6 +19,10 @@ this reachable: the PowerShell halves were offered without their semantics.
 These tests pin the guidance and the mojibake detector. Mojibake fixtures are built by
 round-tripping rather than pasted, so this file stays ASCII and readable in any editor.
 
+Enforces **INV-167** (a PowerShell counterpart carries no bash-shaped constructs -- `&&`
+and `||` chaining above all -- because each is a *parser* error on Windows PowerShell 5.1,
+so the message points at syntax rather than at the real cause), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

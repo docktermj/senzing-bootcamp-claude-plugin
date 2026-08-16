@@ -103,7 +103,7 @@ class TheClassificationMatchesTheServer(unittest.TestCase):
     def test_the_verification_is_dated_and_names_the_server_version(self):
         for path in (PHASE_1, SKILL):
             with self.subTest(file=os.path.basename(path)):
-                self.assertRegex(flat(path), r"1\.32\.1, 2026-07-29")
+                self.assertRegex(flat(path), r"1\.32\.2, 2026-07-30")
 
     def test_the_reader_is_told_to_re_verify_rather_than_trust_the_note(self):
         """INV-080: the server ships independently, so a dated note is not authority."""

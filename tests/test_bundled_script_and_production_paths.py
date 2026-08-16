@@ -29,6 +29,10 @@ directory no test had modelled.
 
 Written as sweeps, not as three assertions about three lines, so the next one is caught too.
 
+Enforces **INV-185** (a command run against a bundled script resolves it inside the plugin
+via `${CLAUDE_PLUGIN_ROOT}`, never by a bare project-relative path -- the script ships in
+the plugin while the command runs in the Bootcamper's project), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
@@ -231,6 +235,17 @@ class InstallDocsCoverEverySupportedPlatform(unittest.TestCase):
             if "install.ps1" in line:
                 self.assertNotIn("&&", line, "bash chaining in a PowerShell command")
                 self.assertNotIn("||", line, "bash chaining in a PowerShell command")
+
+
+class TheProseSweepIsNotVacuous(unittest.TestCase):
+    """`prose_files()` is skills + commands. If either half stops matching, the path
+    checks pass over a smaller corpus and report clean."""
+
+    def test_both_halves_contribute(self):
+        found = prose_files()
+        self.assertGreater(len(found), 20, "corpus shrank to %d files" % len(found))
+        self.assertTrue(any("skills" in p.parts for p in found), "no skill .md found")
+        self.assertTrue(any("commands" in p.parts for p in found), "no command .md found")
 
 
 if __name__ == "__main__":

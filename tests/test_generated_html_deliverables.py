@@ -32,6 +32,11 @@ is certainly reading at that moment.
 
 Written as a sweep rather than two assertions, so the *next* ad-hoc HTML offer is caught too.
 
+Enforces **INV-183** (a step that generates a bootcamper-facing artifact must name, at that
+step, every rule governing how it is produced) for generated HTML. INV-183 names this file
+as its enforcer and is deliberately broader than this test: the next such artifact may not
+be HTML.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re

@@ -19,6 +19,12 @@ order. Never skip, combine, or abbreviate a step containing a 👉 question. Thi
 absolute precedence as a mandatory gate, and no internal reasoning (session length, context
 or token budget) can override it.
 
+⚠️ **This module has exactly one 👉 question** — the module-transition question at the end of
+`phase2-report-close.md`. Every other step is **non-yielding**, so "one at a time" is a rule about
+order and completeness, not about turns: the steps run in order inside the turn that ends on that
+question. See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the
+non-yielding step and the single-write checkpoint that follows from it.
+
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work.
 
@@ -33,11 +39,21 @@ system is verified against **synthetic records**: SDK initialization, code gener
 compilation, data loading, entity resolution, and database operations all confirmed working. (The
 interactive Truth Set web-app visualization is a separate, standalone module, run next when selected.)
 
-**Success indicator:** ✅ All 8 System Verification checks report "passed" (against synthetic data);
-the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic `VERIFY` data
+**Success indicator:** ✅ The **7 installation checks** report "passed" — MCP connectivity, engine
+initialization, SDK initialization, code generation, build, data-source registration, loading — plus
+**results validation**, which is reported separately and is the only one that is not a statement about
+the install; the Verification Report is persisted to `config/bootcamp_progress.json`; the synthetic
+`VERIFY` data
 is purged from the database; and gate 3→4 is marked completed (full criteria in
 `phase1-verification.md`). (The Truth Set visualization module — run next when selected — owns its
 own `web_service`/`web_page` checks, snapshot, and cleanup.)
+
+⛔ **Results validation is kept separate on purpose: it compares the engine against a prediction the
+guide made, so a mismatch has two candidate causes and only one of them is an install fault.** The
+other seven are unambiguous. A results mismatch that the engine coherently explains — via `why_records`
+/ `why_entities` — is an expectation mismatch, **not** a failed verification, and must not be reported
+as the bootcamper's system failing. Step 7 in `phase1-verification.md` states the procedure for
+telling the two apart.
 
 > **User reference:** detailed background on this module lives in the walkthrough above; a
 > standalone `docs/modules/MODULE_3_SYSTEM_VERIFICATION.md` reference is a later porting phase and
@@ -63,7 +79,7 @@ When the bootcamper hits an error during this module:
 
 System Verification uses **synthetic records** and never touches the Truth Set. The Truth Set is
 acquired, loaded, and visualized exclusively by the separate, standalone **Truth Set visualization**
-module (`../module-03b-truthset-visualization/`), which documents its own TruthSet source and
+module (`../module-03b-truthset-visualization/`), which documents its own Truth Set source and
 fallback.
 
 ## Reconciliation notes (Kiro Power -> Claude plugin)
@@ -73,8 +89,9 @@ fallback.
   `get_sdk_reference` + `sdk_guide` and run it. Never generate SQL against `database/G2C.db`.
 - Counts and statistics come from `reporting_guide` and from the generated SDK export code, never
   from direct SQL.
-- System Verification starts **no** web service (Agent Rule 9). Any web service belongs to the
-  separate Truth Set visualization module, which starts and stops it within its own phases.
+- System Verification starts **no** web service (INV-087; `phase1-verification.md` → Agent Rules,
+  *No orphaned processes*). Any web service belongs to the separate Truth Set visualization module,
+  which starts and stops it within its own phases.
 - Kiro helper scripts (`scripts/progress_utils.py`, `scripts/fetch_fallback_truthset.py`) are
   later porting phases; where referenced, perform the described action directly (write markers to
   `config/bootcamp_progress.json`, fetch/build inline, etc.).

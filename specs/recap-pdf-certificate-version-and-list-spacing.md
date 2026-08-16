@@ -188,3 +188,50 @@ aligns the guidance with the invariant rather than changing it.
   omitting the line rather than placeholdering it when the version is unknown, with both renderers
   identical and the attribution lines verified clear of the inner border by rasterizing (recorded in
   `specs/INVARIANTS.md`).
+
+## Correction: the "Files produced" exclusion was measured false (2026-07-31)
+
+⚠️ **One of this spec's two deliberate exclusions was reasoned from a false premise**, and
+the other was correct but over-broad. Both are left as written above — the record of what
+was believed is what makes the correction legible.
+
+**"Files produced is not spaced, being a short list of paths" is false.**
+`bootcamp-onboarding/module-completion.md:83` templates every entry as
+`` - `{path}` — {what it is} ``, and its line 98 makes that gloss a ⛔ requirement ("one
+bullet per file with a short '— what it is' gloss"). So the items are neither short nor
+one line. Measured in the reporting run's recap:
+
+| Section | Items | Longest item | Items that wrap |
+|---|---|---|---|
+| Truth Set visualization | 12 | 110 chars | ~2 |
+| Query, Visualize and Discover | 11 | 188 chars | ~4 |
+| Data Quality, Mapping, and Transformation | 8 | 147 chars | ~4 |
+| Data processing | 8 | 121 chars | ~3 |
+| Data collection | 5 | 145 chars | ~4 |
+
+The exclusion was decided from the list's **title** — "Files produced" sounds like short
+paths — rather than from what the template makes its items contain. That is why it looked
+right when written and was wrong in every real recap. And it is the worst list to lose:
+"Files produced" is the recap's index, the list a reader uses to find what the bootcamp
+built.
+
+**The "Questions & Responses" rationale was sound but too wide.** It argues correctly
+against spacing the indented `- **R:**` sub-bullets. It does not reach the top-level
+`- **Q:**` items, which ran together with no separation between one Q/R pair and the next.
+
+**What replaced the mechanism.** The opt-in tuple of three subsection/label names is gone,
+because the names were themselves the defect: any list added or renamed later was silently
+unspaced. Spacing is now **on by default**, and where the gap falls is decided
+**structurally** — emit it when the next content-bearing bullet is top-level. That single
+rule keeps a response attached to its question *and* separates one pair from the next, so
+both of this spec's exclusions are handled without a name to keep in sync. Two opt-out
+tuples remain as a documented, tested escape hatch, deliberately empty.
+
+**A latent defect surfaced while proving it.** The gap was decided on the bullet line,
+asking "is the next *source* line another item?" — so a bullet whose Markdown wraps across
+two source lines received **no gap at all**, in either renderer. Pre-existing and unrelated
+to the exclusions; invisible because the shipped example recap writes each entry as one
+long source line and lets the renderer wrap it, so no fixture had the shape. The gap is now
+emitted after an item's *last* source line.
+
+This spec's certificate and version work is untouched.

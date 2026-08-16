@@ -1,5 +1,18 @@
-"""Feedback is triaged plugin-vs-MCP-server, recorded locally either way, and only
-forwarded upstream on an explicit yes.
+"""Feedback is triaged to the component that OWNS it, recorded locally either way, and
+only forwarded upstream on an explicit yes.
+
+⚠️ **Not "plugin-vs-MCP-server" -- that framing was the defect.** Until 2026-08-15 both this
+docstring and the shipped taxonomy assumed a two-component world, so a defect in the Claude
+Code harness had nowhere to go: it survives a perfect plugin AND a perfect server, which the
+two-question test mapped to `both` ("the plugin repeated or failed to guard an **upstream**
+defect") when no upstream Senzing defect exists. Two bootcamper reports on 2026-08-15 hit it,
+and each wrote in its own `Routing:` field that the option set could not express the case. The
+`host` verdict exists for that class (`specs/feedback-routing-has-no-verdict-for-a-defect-
+neither-component-owns.md`).
+
+Enforces **INV-248** (the closed five-verdict set, stated identically at every site) and
+**INV-249** (only `mcp-server`/`both` may be offered upstream, and the shipped rule says why
+`host` cannot be -- `submit_feedback` reaches Senzing, which does not ship the harness).
 
 A bootcamper reports a symptom; identifying which component owns it is the plugin's job.
 Two of the defects filed during development were upstream — `mapping_workflow` returning a
@@ -36,9 +49,77 @@ FEEDBACK = PLUGIN / "skills" / "bootcamp-onboarding" / "feedback.md"
 COMMAND = PLUGIN / "commands" / "bootcamp-feedback.md"
 HOOK = PLUGIN / "scripts" / "feedback-capture.py"
 GRADUATION = PLUGIN / "skills" / "graduation" / "SKILL.md"
+ONBOARDING = PLUGIN / "skills" / "bootcamp-onboarding" / "onboarding-flow.md"
 
 FEEDBACK_PATH = "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md"
-VERDICTS = ("plugin", "mcp-server", "both", "unclear")
+#: The closed verdict set. `host` was added 2026-08-15; see the module docstring.
+VERDICTS = ("plugin", "mcp-server", "both", "host", "unclear")
+
+#: Verdicts whose entries may be OFFERED for upstream submission. `submit_feedback` reaches
+#: Senzing, so this set is exactly the ones Senzing owns -- `host` is excluded by definition,
+#: not by preference: Senzing does not ship the Claude Code harness.
+UPSTREAM_ELIGIBLE = ("mcp-server", "both")
+
+
+def verdict_set_sites():
+    """Every shipped line stating the verdict set, DERIVED not listed (INV-246).
+
+    A hardcoded list certifies the sites the author already thought of; the site added later
+    is the only one that matters. Membership floor below keeps the scan honest.
+
+    ⚠️ **An enumeration site is a pipe-separated series naming `mcp-server`** — the two shapes
+    the plugin actually uses, ``[plugin | mcp-server | …]`` and ``` `plugin` | `mcp-server` | … ```.
+    Markdown table rows are excluded (they start with a pipe and define one verdict per row, not
+    the series).
+
+    Three earlier versions of this scan were wrong, all caught self-auditing the commits that
+    introduced them — recorded because the sequence is the point, not the destination:
+
+    * Keying on ``Routing:`` reached the entry template and graduation's copy but missed
+      `feedback.md`'s sanctioned-external-path rule — a narrower site set than the rule's reach,
+      the exact INV-246 defect this guard enforces against.
+    * Keying on "three or more backticked verdicts" over-reached onto local-only subset lines
+      **and** still missed the entry template, which uses no backticks.
+    * Keying on "names an eligible verdict and a non-eligible one" matched ordinary prose:
+      ``both``, ``plugin`` and ``host`` are common English words, so *"Yes to the middle two →
+      **both** (the plugin repeated…)"* scored as an enumeration.
+
+    Local-only subset lines are a **different** claim and are checked separately by
+    ``LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated`` — requiring all five there would fail
+    correct content.
+
+    ⛔ **What this scan CANNOT see, stated because INV-248 says "every shipped site".** It
+    recognises the pipe-separated series and nothing else. A site that enumerated the taxonomy as
+    a bulleted list, a comma series, or prose would escape it entirely — so a clean run means "no
+    *pipe-separated* site has drifted", never "the taxonomy is stated identically everywhere". The
+    shape is checked rather than the meaning because "is this line enumerating the taxonomy?" is a
+    semantic judgement, and the two looser rules tried first both failed (above). If a third shape
+    ever ships, extend this — do not read a green run as proof it did not.
+    """
+    hits = []
+    for path in sorted(PLUGIN.rglob("*.md")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.lstrip().startswith("|"):
+                continue                      # a table row defines one verdict, not the series
+            if "mcp-server" in line and line.count("|") >= 3:
+                hits.append((path, line))
+    return hits
+
+
+def local_only_rule_lines():
+    """Lines stating which verdicts stay on the machine, DERIVED not listed (INV-246).
+
+    Separate from the enumeration sites because the claim is different: these name a *subset*
+    deliberately. They matter most, though — each one is a place a verdict could silently become
+    upstream-eligible by omission.
+    """
+    markers = ("skip this step entirely", "stays local")
+    hits = []
+    for path in sorted(PLUGIN.rglob("*.md")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if any(m in line for m in markers):
+                hits.append((path, line))
+    return hits
 
 
 def read(path):
@@ -47,6 +128,13 @@ def read(path):
 
 def plain(text):
     return re.sub(r"\s+", " ", text.replace("**", ""))
+
+
+def onboarding_overview():
+    """Step 3 of the preface — the WELCOME banner and the overview every bootcamper reads
+    first, ending where the 'any questions' gate begins."""
+    t = read(ONBOARDING)
+    return t[t.index("## 3. Welcome and overview") : t.index("## 4. Any questions")]
 
 
 def triage_step():
@@ -76,11 +164,88 @@ def hook_context(prompt, active=True):
     return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
 
 
+class TheTriggerIsTaughtBeforeItCanBeUsed(unittest.TestCase):
+    """INV-196: the preface teaches the feedback trigger before the first content module.
+
+    A control nobody is told about is reachable only by people who were told out of band.
+
+    The phrase used to appear in four files: the workflow itself, the guide's own ground rules,
+    one mid-bootcamp module, and graduation — i.e. everywhere except the one place every
+    bootcamper reads before the first module. Feedback arriving only from those who already knew
+    the phrase skews every entry the project receives, so the mention must live in
+    bootcamper-facing overview text, not in developer-only prose that reads as if it did.
+    """
+
+    def setUp(self):
+        self.overview = onboarding_overview()
+
+    def test_the_overview_names_the_trigger_phrase(self):
+        self.assertIn("bootcamp feedback:", self.overview)
+
+    def test_the_mention_is_bootcamper_facing_overview_content(self):
+        """A bullet in the overview is spoken to the bootcamper; surrounding agent prose is not.
+        Asserting only on the file would pass again if the line were demoted to an instruction."""
+        bullets, current = [], None
+        for line in self.overview.splitlines():
+            if line.startswith("- "):
+                current = [line]
+                bullets.append(current)
+            elif current is not None and line.startswith("  ") and line.strip():
+                current.append(line)          # wrapped continuation of the same bullet
+            else:
+                current = None
+        teaching = [b for b in bullets if "bootcamp feedback:" in " ".join(b).lower()]
+        self.assertTrue(
+            teaching, "the trigger must be taught in an overview bullet, not only in agent prose"
+        )
+
+    def test_it_is_taught_before_the_first_content_module(self):
+        """Step 3 precedes the Bootcamp preparation handoff, which precedes every module."""
+        t = read(ONBOARDING)
+        self.assertLess(
+            t.index("bootcamp feedback:"),
+            t.index("## 5. Hand off to the Bootcamp preparation module"),
+            "the trigger must be taught in the preface, not after the handoff",
+        )
+
+    def test_it_promises_the_bootcamper_keeps_their_place(self):
+        """That is the barrier — raising something must not read as abandoning the module
+        (INV-074 brackets the flow and restores the pending question)."""
+        squashed = plain(self.overview)
+        self.assertIn("You do not lose your place", squashed)
+        self.assertIn("comes straight back", squashed)
+
+    def test_it_is_a_statement_not_a_question(self):
+        posed = [l for l in self.overview.splitlines() if l.lstrip().startswith("👉")]
+        self.assertEqual([], posed, "the preface overview must not pose a 👉 question")
+        self.assertIn("never make it a 👉 question", plain(self.overview))
+
+    def test_it_is_verbosity_aware(self):
+        """Explanatory output: suppressed under `minimal`, one line under `concise`
+        (INV-011/INV-012), the treatment INV-096 gives the time estimate."""
+        squashed = plain(self.overview)
+        self.assertIn("verbosity-aware", squashed)
+        self.assertIn("under `minimal`, suppress it", squashed)
+        self.assertIn("under `concise`, one line", squashed)
+
+    def test_it_is_not_repeated_at_every_module_start(self):
+        """An always-available control repeated at every boundary is the noise INV-012 suppresses."""
+        self.assertIn("Do not repeat it at every module start", plain(self.overview))
+
+    def test_the_graduation_invitation_is_still_there(self):
+        """Late is not useless — it is a last invitation with the whole run in view. Teaching the
+        phrase early must not trade one gap for another."""
+        self.assertIn(
+            'Say \\"bootcamp feedback\\" anytime if you\'d like to share your experience.',
+            read(GRADUATION),
+        )
+
+
 class TriageStepExists(unittest.TestCase):
     def test_workflow_has_a_triage_step(self):
         self.assertIn("## Step 2b: Triage", read(FEEDBACK))
 
-    def test_all_four_verdicts_are_defined(self):
+    def test_every_verdict_is_defined(self):
         step = triage_step()
         for verdict in VERDICTS:
             with self.subTest(verdict=verdict):
@@ -97,6 +262,133 @@ class TriageStepExists(unittest.TestCase):
         squashed = plain(triage_step())
         self.assertIn("Would this still happen if the bootcamp plugin were perfect?", squashed)
         self.assertIn("Would this still happen if the Senzing MCP server were perfect?", squashed)
+
+    def test_the_test_asks_about_the_host_too(self):
+        """Two questions alone route a harness defect to `both`, which is wrong.
+
+        A Claude Code harness defect survives a perfect plugin AND a perfect server. Without a
+        third question the stated rule yields `both` — "the plugin repeated or failed to guard
+        an upstream defect" — and `both` is upstream-eligible, so the wrong verdict would offer
+        to send a harness report to Senzing.
+        """
+        squashed = plain(triage_step())
+        self.assertIn(
+            "Would this still happen with a perfect bootcamp plugin and a perfect Senzing MCP "
+            "server?", squashed,
+            "the triage test no longer asks whether NEITHER component owns the defect, so a "
+            "harness report falls through to `both` or `unclear`")
+
+    def test_host_is_defined_as_owned_by_the_claude_interface(self):
+        #: ⛔ Anchored to the TABLE ROW, not to tokens anywhere in the step. A mutation escaped
+        #: during negative-control: deleting the `host` row still passed, because both "`host`"
+        #: and "Claude interface" also appear in the discriminating question above the table.
+        #: Every verdict needs a row — the table is where a triaging guide actually looks.
+        rows = [l for l in triage_step().splitlines()
+                if l.startswith("| `host`")]
+        self.assertEqual(
+            1, len(rows),
+            "the verdict table has no `host` row; the discriminating question can name a "
+            "verdict the table never defines, which is how a guide ends up guessing")
+        self.assertRegex(
+            rows[0], r"(?i)Claude interface",
+            "the host row does not name the Claude interface as the owner, leaving it "
+            "indistinguishable from `unclear`")
+        self.assertRegex(
+            rows[0], r"(?i)neither the bootcamp nor Senzing",
+            "the host row does not say that NEITHER component ships it — the fact that "
+            "decides it is not forwarded upstream")
+
+
+class HostIsNeverForwardedUpstream(unittest.TestCase):
+    """`submit_feedback` reaches Senzing, which does not ship the Claude Code harness.
+
+    This is the sharp end of the taxonomy: a verdict that is upstream-eligible by accident
+    misroutes a bootcamper's report to a party that cannot act on it, anonymously, with no
+    reply channel. `host` must be excluded by rule, and the rule must say why.
+    """
+
+    def test_the_forward_step_excludes_host(self):
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"For `plugin`, `host` or `unclear`, skip this step entirely",
+            "Step 3c no longer skips the forward for a `host` verdict")
+
+    def test_only_the_eligible_verdicts_trigger_the_offer(self):
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"Only when Step 2b's verdict is .{0,6}`mcp-server`.{0,6} or .{0,6}`both`",
+            "the forward step's eligibility clause changed; verify `host` is still excluded")
+        for verdict in VERDICTS:
+            if verdict not in UPSTREAM_ELIGIBLE:
+                with self.subTest(verdict=verdict):
+                    self.assertNotRegex(
+                        step, r"verdict is \*\*`%s`\*\*" % re.escape(verdict),
+                        "%r is not upstream-eligible but the forward step names it as a "
+                        "trigger" % verdict)
+
+    def test_the_reason_host_cannot_be_forwarded_is_stated(self):
+        """A rule with no reason gets 'helpfully' relaxed by the next editor."""
+        step = plain(forward_step())
+        self.assertRegex(
+            step, r"(?i)submit_feedback.{0,40}reaches \*\*Senzing\*\*|reaches Senzing",
+            "Step 3c no longer says WHERE submit_feedback goes, which is the whole reason a "
+            "harness report must not be sent through it")
+
+
+class EverySiteStatesTheSameVerdictSet(unittest.TestCase):
+    """One taxonomy, stated in several places — they must not drift apart (INV-246).
+
+    Sites are DERIVED by scanning shipped Markdown for a `Routing:` line naming the verdicts,
+    never from a hardcoded path list: a listed guard certifies the files already thought of and
+    is blind to a module added later.
+    """
+
+    def test_the_scan_finds_the_sites_known_today(self):
+        """Membership floor — stronger than a count, which survives one site swapping for another."""
+        found = {p.name for p, _ in verdict_set_sites()}
+        for expected in ("feedback.md", "SKILL.md"):
+            with self.subTest(site=expected):
+                self.assertIn(expected, found,
+                              "the verdict-set scan no longer reaches %s" % expected)
+
+    def test_every_site_lists_every_verdict(self):
+        sites = verdict_set_sites()
+        self.assertGreaterEqual(len(sites), 2, "the scan matched too few sites to be meaningful")
+        for path, line in sites:
+            for verdict in VERDICTS:
+                with self.subTest(site=path.name, verdict=verdict):
+                    self.assertIn(
+                        verdict, line,
+                        "%s states the verdict set without %r — the taxonomy has drifted "
+                        "between its sites (INV-246)" % (path.name, verdict))
+
+
+class LocalOnlyVerdictsAreNamedWhereverTheRuleIsStated(unittest.TestCase):
+    """Every place saying what stays local must name every non-eligible verdict (INV-249).
+
+    These lines are where a verdict becomes upstream-eligible **by omission** — leave one out
+    and the rule silently permits forwarding it. They are checked apart from the enumeration
+    sites because naming a subset is correct here, so the all-five assertion would reject them.
+    """
+
+    def test_the_rule_is_stated_in_more_than_one_place(self):
+        lines = local_only_rule_lines()
+        self.assertGreaterEqual(
+            len(lines), 2,
+            "the local-only rule is stated in fewer places than expected — either it was "
+            "removed, or the marker phrases this scan derives from were reworded")
+
+    def test_each_names_every_non_eligible_verdict(self):
+        for path, line in local_only_rule_lines():
+            for verdict in VERDICTS:
+                if verdict in UPSTREAM_ELIGIBLE:
+                    continue
+                with self.subTest(site=path.name, verdict=verdict):
+                    self.assertIn(
+                        "`%s`" % verdict, line,
+                        "%s states which verdicts stay local without naming %r, so that "
+                        "verdict is upstream-eligible by omission (INV-249): %s"
+                        % (path.name, verdict, line.strip()[:80]))
 
     def test_each_verdict_carries_concrete_examples(self):
         """Criteria without examples get applied inconsistently."""
@@ -153,7 +445,18 @@ class NothingLeavesWithoutConsent(unittest.TestCase):
     def test_offer_is_gated_on_the_verdict(self):
         squashed = plain(self.step)
         self.assertIn("Only when Step 2b's verdict is", squashed)
-        self.assertIn("For `plugin` or `unclear`, skip this step entirely", squashed)
+        # Derived from UPSTREAM_ELIGIBLE rather than pinned as a sentence, so adding a sixth
+        # verdict cannot pass by leaving this assertion's literal untouched. Each non-eligible
+        # verdict must appear in the skip clause; the clause's prose shape is not pinned here.
+        clause = squashed[squashed.index("skip this step entirely") - 120:
+                          squashed.index("skip this step entirely")]
+        for verdict in VERDICTS:
+            if verdict not in UPSTREAM_ELIGIBLE:
+                with self.subTest(verdict=verdict):
+                    self.assertIn(
+                        "`%s`" % verdict, clause,
+                        "%r is not upstream-eligible but the skip clause does not name it, so "
+                        "the forward step may be offered for it" % verdict)
 
     def test_the_question_is_pinned_and_numbered(self):
         self.assertIn(

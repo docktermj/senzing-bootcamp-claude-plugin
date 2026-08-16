@@ -40,6 +40,9 @@ PHASE_D = os.path.join(SKILLS, "module-06-data-processing", "phaseD-validation.m
 PHASE_2B = os.path.join(
     SKILLS, "module-07-query-visualize-discover", "phase2b-discover.md"
 )
+QUERY_PHASE_1 = os.path.join(
+    SKILLS, "module-07-query-visualize-discover", "phase1-query-visualize.md"
+)
 
 
 def read(path):
@@ -58,9 +61,15 @@ class GroundRulesCoverParameterShapes(unittest.TestCase):
     def test_parameter_shape_rule_exists(self):
         self.assertIn("Parameter shapes, for the bootcamper's binding", self.text)
 
-    def test_it_says_the_existing_topics_do_not_cover_inputs(self):
+    def test_it_says_every_topic_carries_the_signature_when_filtered_by_a_method(self):
+        """The 2026-07-30 correction: this pinned the opposite until server 1.32.2
+        disproved it. `flags` and `response_schemas` both return a `method_signatures`
+        block when `filter` names a method, so telling the reader those topics cover
+        only what a method *returns* teaches them to distrust data they can see."""
         squashed = squash(self.text)
-        self.assertIn("not what it takes", squashed)
+        self.assertIn("whenever `filter` names a method", squashed)
+        self.assertIn("method_signatures", squashed)
+        self.assertNotIn("not what it takes", squashed)
 
     def test_the_methods_topic_is_named_as_the_route_to_parameter_shapes(self):
         """The correction: MCP answers this, so the guide must be sent to MCP."""
@@ -137,10 +146,20 @@ class PhaseDCarriesAWorkedExportExpression(unittest.TestCase):
         self.assertIn("SZ_EXPORT_DEFAULT_FLAGS", self.text)
         self.assertRegex(self.text, r"(?s)```python.{0,900}export_json_entity_report")
 
-    def test_it_marks_itself_as_needing_per_session_confirmation(self):
-        """A worked example must not become a substitute for the MCP lookup (INV-080)."""
+    def test_it_marks_itself_as_needing_an_mcp_lookup(self):
+        """A worked example must not become a substitute for the MCP lookup (INV-080).
+
+        The requirement is unchanged; the vocabulary is. "This session" was retired as a
+        freshness claim because it read as permission to present an earlier turn's result
+        (`specs/mcp-freshness-contract-says-this-turn-and-this-session.md`), so a
+        sourcing floor now says what it actually means: from the server, not from this file.
+        """
         squashed = squash(self.text)
-        self.assertIn("Re-confirm both names via MCP this session", squashed)
+        self.assertIn(
+            "Re-confirm both names via MCP rather than from this file "
+            "(INV-080; a sourcing floor)", squashed)
+        self.assertNotIn("via MCP this session", squashed,
+                         "the retired freshness phrasing came back")
         self.assertIn("INV-080", self.text)
 
     def test_it_uses_the_correct_close_call(self):
@@ -157,9 +176,14 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
     def setUp(self):
         self.text = read(PHASE_2B)
 
-    def test_step_4d_states_the_topics_do_not_cover_arguments(self):
+    def test_step_4d_says_the_signature_is_already_in_the_response_it_just_read(self):
+        """Same 2026-07-30 correction as ground-rules: this file carried the same false
+        premise, and here it is sharper — step 4d has *just* told the reader to call
+        `topic='flags'` and `topic='response_schemas'`, so the signature is literally in
+        the response in front of them."""
         squashed = squash(self.text)
-        self.assertIn("Neither of those topics tells you the ARGUMENT types", squashed)
+        self.assertIn("whenever `filter` names a method", squashed)
+        self.assertNotIn("Neither of those topics tells you the ARGUMENT types", squashed)
 
     def test_step_4d_routes_to_the_methods_topic_not_to_guesswork(self):
         """Same correction as ground-rules: this file carried the false premise too."""
@@ -190,6 +214,119 @@ class GraphMethodParameterShapesAreDocumented(unittest.TestCase):
         """The new input rule must not have displaced the INV-115 output rule."""
         self.assertIn("INV-115", self.text)
         self.assertIn("response_schemas", self.text)
+
+
+class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):
+    """INV-194: one tool's silence is not the server's silence.
+
+    The default-flags rule needs an unhappy path, and the right one.
+
+    `phase1-query-visualize.md` tells the guide to read a composite's
+    `composite_members` and confirm the flag populating a field is in it. For all three
+    `why_*` default composites that lookup returns **no** `composite_members` — only a
+    one-line description, `applies_to` as the literal glob `["why_entities*"]`, and a
+    `source_file` of the V3→V4 breaking-changes document instead of the flags reference
+    (re-verified on server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). A rule
+    with no unhappy path silently becomes "assume it is fine".
+
+    ⚠️ The obvious unhappy path is the wrong one. "No `composite_members`, so the check
+    cannot be run" is a conclusion about **the tool that was asked**, not about the
+    server: `search_docs` returns the membership from the flags documentation —
+    "The default recommended flags for `why_entities`. Equivalent to:
+    `SZ_INCLUDE_FEATURE_SCORES`" (`senzing.com/docs/flags/4/flags_why`). This repo has
+    already had to retract two over-generalized absolutes (INV-169); an empty structured
+    field is the same trap in a new place.
+
+    Why it matters concretely: the composite is that **one** flag, which carries no
+    entity-name flag, so `why_entities` returns `ENTITY_NAME: null` while match level,
+    why key, ER rule, every feature score and CONFIRMATIONS/DENIALS all render. That is
+    the deceptive half-populated row (INV-148) — the analysis is complete and only the
+    labels are missing, so it reads as unnamed data, not as a flags problem.
+    """
+
+    def setUp(self):
+        self.text = read(QUERY_PHASE_1)
+        self.flat = squash(self.text)
+
+    def test_the_rule_has_an_unhappy_path(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)returns a composite with NO `?composite_members`?",
+            "the procedure must say what to do when the lookup comes back without "
+            "membership, or it silently becomes 'assume it is fine'",
+        )
+
+    def test_the_unhappy_path_sends_the_reader_to_the_other_tool(self):
+        """Not "give up and OR blindly" — ask `search_docs`, which has the prose."""
+        self.assertRegex(self.flat, r"(?i)you asked the wrong tool")
+        self.assertRegex(
+            self.flat, r"(?i)ask `search_docs` before concluding anything"
+        )
+
+    def test_it_states_the_general_lesson_not_only_the_instance(self):
+        self.assertRegex(
+            self.flat,
+            r"(?i)only ever \"the tool I asked does not document X",
+            "scoped to why_entities alone, this would not survive the next composite "
+            "documented from the breaking-changes note",
+        )
+        self.assertRegex(self.flat, r"(?i)empty structured field is not an absent fact")
+
+    def test_or_ing_blindly_is_the_last_resort_not_the_first(self):
+        """Ordering is the whole point: two tools, then explicit OR, then disclosure."""
+        both_empty = self.flat.lower().index("only if both tools come back empty")
+        wrong_tool = self.flat.lower().index("you asked the wrong tool")
+        self.assertLess(
+            wrong_tool,
+            both_empty,
+            "the explicit-OR fallback must come after the second lookup, or a reader "
+            "takes it as the immediate remedy",
+        )
+
+    def test_the_why_composite_membership_is_recorded_with_its_consequence(self):
+        self.assertIn("SZ_WHY_ENTITIES_DEFAULT_FLAGS", self.text)
+        self.assertRegex(self.flat, r"(?i)Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`")
+        self.assertRegex(
+            self.flat,
+            r"(?i)`ENTITY_NAME` comes back `null`",
+            "the membership alone is trivia; the null field is what a reader recognises",
+        )
+        self.assertIn("SZ_ENTITY_INCLUDE_ENTITY_NAME", self.text)
+
+    def test_the_deceptive_shape_is_named(self):
+        """INV-148, in its worse form: only the labels are missing."""
+        self.assertIn("INV-148", self.text)
+        self.assertRegex(self.flat, r"(?i)reads as unnamed data")
+
+    def test_the_siblings_are_verified_rather_than_inferred(self):
+        """INV-169: the entry inferred them; the server was asked about each."""
+        for flag in (
+            "SZ_WHY_RECORDS_DEFAULT_FLAGS",
+            "SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS",
+        ):
+            with self.subTest(flag=flag):
+                self.assertIn(flag, self.text)
+        self.assertRegex(self.flat, r"(?i)checked \*\*individually\*\*|checked individually")
+        self.assertIn("INV-169", self.text)
+
+    def test_the_claims_carry_their_provenance(self):
+        """INV-080: a Senzing fact ships with the tool, version and date."""
+        self.assertRegex(self.flat, r"server 1\.32\.2")
+        self.assertRegex(self.flat, r"2026-07-31")
+
+    def test_the_existing_rows_survive(self):
+        """This extended the table; it must not have replaced it."""
+        for composite in (
+            "SZ_SEARCH_BY_ATTRIBUTES_ALL",
+            "SZ_FIND_NETWORK_DEFAULT_FLAGS",
+            "SZ_ENTITY_DEFAULT_FLAGS",
+        ):
+            with self.subTest(composite=composite):
+                self.assertIn(composite, self.text)
+
+    def test_the_scan_is_not_vacuous(self):
+        self.assertTrue(os.path.isfile(QUERY_PHASE_1))
+        self.assertGreater(len(self.text), 2000)
 
 
 if __name__ == "__main__":

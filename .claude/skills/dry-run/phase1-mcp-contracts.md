@@ -34,7 +34,27 @@ invented enum value breaks a module rather than degrading it.
    `get_sdk_reference(topic='methods', filter='find_network_by_entity_id')` returned
    the exact signature the invariant said was unobtainable.
 
-5. **Cross-check the server's `common_confabulations`** against the plugin. It names
+5. **Re-ask every dated negative — this is the worklist the offline suite cannot build.**
+
+   ```bash
+   python3 .claude/skills/dry-run/coverage_reports.py negatives
+   ```
+
+   Each row is a claim that some tool does **not** contain something, with the server
+   version and date it was last checked, oldest first. Call that tool and see whether the
+   claim still holds. A negative is the one shape that cannot go stale detectably: INV-108
+   keeps the suite offline, so nothing notices when the server gains the coverage the
+   plugin routed around — which has happened twice
+   (`senz7221-now-names-its-own-remedy`, `explain-error-code-now-owns-senz7426`).
+
+   ⛔ **When a negative no longer holds, the prose is only half the fix.** The second
+   instance had the stale claim written into the **guards** as well: two assertions
+   *required* the retired wording, so correcting the text failed the suite and the failure
+   messages told the fixer the opposite of what the server said. Check for a test pinning
+   the claim, and **invert or rescope it rather than deleting it** — the guard's underlying
+   rule is usually still right, only its premise expired. Start the oldest row first.
+
+6. **Cross-check the server's `common_confabulations`** against the plugin. It names
    `add_data_source` (a CLI command, not an SDK method), wrong env var names, and
    wrong method signatures. Grep for each.
 

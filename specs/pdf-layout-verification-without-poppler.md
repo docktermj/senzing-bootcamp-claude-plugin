@@ -136,3 +136,43 @@ were skipped — is compatible with everything and is the most valuable part.
   named in the closing message; an artifact MUST NOT be described as verified for a check that did not
   execute, and where a check's tool is absent on a supported platform the guidance MUST offer a route
   needing no new dependency (recorded in `specs/INVARIANTS.md`).
+
+## Correction: the platform claim was wrong for macOS (2026-07-31)
+
+⚠️ **This spec's platform premise is false for macOS, and it propagated.** Two statements are
+wrong as written and are left in place above, because the record of what was believed is worth
+more than a clean document:
+
+- `:43` — "[poppler] is standard on Linux and macOS and **not** present on Windows by default."
+- `:77` — "poppler is typically present on Linux and macOS and typically **absent on Windows**."
+
+**What was observed.** A full bootcamp run on **macOS 26.5.2 (Apple Silicon), with Homebrew
+installed and in active use for the Senzing SDK itself**, had *all four* poppler binaries absent
+(`pdftoppm`, `pdftotext`, `pdfinfo`, `pdfimages`) and poppler not installed as a formula. macOS
+ships none of them; they arrive only via an explicit `brew install poppler`, which a Bootcamper
+has no reason to have run.
+
+**Why it survived.** "poppler is standard on Linux" is true, and "Linux and macOS" is the
+habitual pairing for Unix-like tooling — but poppler is a Linux *distribution package*, not a
+macOS system component. No test could have caught it: no suite can check what is installed on a
+platform it is not running on, and this repo's CI runs on Linux, where the claim happens to hold.
+
+**What it cost.** This spec's own guidance, inherited by `graduation/SKILL.md` Step 1b, promised
+the *full* check set on macOS while removing the two checks this spec itself identifies as
+irreplaceable — the page raster (`pdftoppm`) and the `pdftotext` content probe. Worse, the
+reduced-set advice it gave for Windows ("keep the positive `pdftotext` probe") is **not
+actionable on macOS**, because `pdftotext` is one of the four missing binaries. So an agent
+following it on macOS could report the keepsake verified having silently run fewer checks than it
+believed — the precise overstatement this spec exists to prevent, and the failure INV-163 was
+written for.
+
+**What was corrected, and what was not.** `graduation/SKILL.md` Step 1b now separates macOS from
+Linux and treats macOS and Windows together as the missing-poppler case; INV-163's platform
+example is corrected **in place** (its ID unchanged, its MUST unchanged, per `INVARIANTS.md`'s
+own rules). **This spec's substance stands entirely**: verify the artifact, never install a tool
+to do it, report what you could not check. Only the platform mapping was wrong.
+
+**Still not runtime-verifiable here.** This repo runs on Linux, so the macOS absence cannot be
+reproduced in this environment. The evidence is the field observation recorded above with its OS
+version, architecture and Homebrew state — an environment observation, never laundered into an
+MCP-sourced claim (INV-080), because no MCP tool owns what is installed on a Bootcamper's laptop.

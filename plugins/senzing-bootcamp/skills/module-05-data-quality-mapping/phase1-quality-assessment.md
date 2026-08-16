@@ -6,14 +6,44 @@ question and waiting.
 
 ## 1. List the agreed-upon data sources
 
-Recap the data sources identified during the business problem discussion. Review
-`docs/business_problem.md` for the list.
+Recap what the bootcamper actually brought into this module. **`config/data_sources.yaml` is the
+list** — Data collection registers every source it acquired there, with its counts and provenance.
+Read `docs/business_problem.md` for the **why**: the business context that motivated each source,
+which is what makes the recap worth reading.
+
+⛔ **Do not take the source list from `docs/business_problem.md`.** That file records what was
+*discussed* in Discover the Business Problem, before Data collection ran. `config/data_sources.yaml`
+is the registry INV-203 gates: a source is recorded there only after its fetch returned 2xx **and**
+its measured record count matched, so it is the only list that says what was actually collected. The two routinely differ —
+Data collection is exactly where a bootcamper substitutes a CORD dataset for data they cannot share
+— and this module processes what is in `data/raw/`, not what was once intended. Where the two lists
+differ, say so in one line rather than silently preferring either: "we talked about X; what you
+collected is Y."
 
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
 
-## 2. Request sample data
+## 2. Confirm the source files are present
 
-For each data source, ask the user to place sample files in `data/raw/` or `data/samples/`:
+⛔ **Do not ask the bootcamper to place files here by default.** This module's prerequisite is
+"Module 4 complete (data sources collected, files in `data/raw/`)" — Data collection is a required
+module that runs immediately before this one, so asking for what it already fetched is a question
+the bootcamp does not need to ask (INV-006/INV-012). Worse, a bootcamper who takes it literally may
+re-fetch, which on a CORD source is a second download and a live rate-limit hazard
+(`cord-download-rate-limit-is-saved-as-data`, INV-203).
+
+**Verify instead.** For each source registered in `config/data_sources.yaml`:
+
+- confirm its file exists at the recorded path under `data/raw/`;
+- confirm its record count still matches the count recorded at collection (INV-203 wrote both);
+- report what you found — one line per source, not a wall of output (INV-012).
+
+**Ask only in the two cases where there is genuinely nothing to verify:**
+
+- a source is registered but its file is **missing**; or
+- the registry is **empty** — the bring-your-own-data path, which is real and supported: a
+  bootcamper whose data cannot leave their machine reaches this module with nothing collected.
+
+In either case, ask for what is missing in a single 👉 question, naming the forms that work:
 
 - CSV files (first 10-20 rows)
 - JSON samples
@@ -25,11 +55,62 @@ For each data source, ask the user to place sample files in `data/raw/` or `data
 
 ## 3. Understand the Senzing Generic Entity Specification
 
-Call `download_resource(filename="senzing_entity_specification.md")` to retrieve the current
-Senzing Generic Entity Specification. Use this as the authoritative reference for all attribute
-names, types, and structures in this step and every subsequent step. Save the downloaded
-specification to the single canonical copy at `docs/reference/senzing_entity_specification.md`
-(do not create duplicate copies elsewhere).
+Call `download_resource(filename="senzing_entity_specification.md")` to **locate** the current
+Senzing Generic Entity Specification.
+
+⛔ **The response is a listing, not the document.** Verified on server **1.32.9, 2026-08-14**: the
+call returns `mode: "url"` and a `resources` array whose entry carries `filename`, `size_bytes` and
+a `url` — and **no content**. There is nothing in the response to "save", so a guide that writes the
+response itself to the canonical path leaves Steps 4, 5, 5a and 6 reading attribute names out of a
+file that has none — and because a file still exists at the expected path, the failure is silent.
+`download_resource` is the third MCP tool with this shape; `ground-rules.md` → "Working examples"
+states the rule once for all three (INV-234).
+
+**Retrieve it in two steps:**
+
+1. **Fetch the `url`** the response gave you, using the HTTP client idiomatic to this bootcamp's
+   chosen language (INV-002) — not a hard-coded `curl`, which is not present on every supported
+   platform (INV-001).
+2. **Save the body** to the single canonical copy at
+   `docs/reference/senzing_entity_specification.md` (do not create duplicate copies elsewhere), then
+   **check the saved file's size against the response's `size_bytes`** before using it. On
+   2026-08-14 that was **73,051 bytes**, and a fetched-then-saved copy matched it exactly. A
+   truncated fetch, or a saved error page, is caught here in one comparison instead of surfacing in
+   Step 4 as attribute names that are merely absent. (INV-228's count-check discipline, applied to a
+   resource fetch rather than a dataset.)
+
+⚠️ **If the URL fetch fails, `inline=true` is the sanctioned fallback for this tool — and for this
+tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline` and
+`version`, so INV-136 permits `inline` here, and the resource's own `on_failure` names it: *"Fallback:
+call download_resource with this filename and inline=true."* Use it only **after** the URL fetch
+fails — the parameter's own description says to try the default `inline=false` first — and expect it
+to cost context, since the full 73 KB then arrives inside the response. This is the **opposite** of
+the rule for `generate_scaffold` and `find_examples`, whose schemas do not declare `inline` at all,
+so passing it there is a call that cannot work. The difference is not about the word `inline`; it is
+about what each tool's schema declares (INV-136).
+
+**How to consult it: targeted lookup, never end to end.** The file is **73 KB**. Look up the
+specific feature or attribute in question — grep for the attribute code, or open the single section
+that covers it. Do **not** read it front to back. `mapping_workflow` says so itself, at both its
+step 2 and step 3 (verbatim, server 1.32.9, 2026-08-14): *"Do NOT attempt to read it end-to-end —
+that is unnecessary and will overflow limited context windows."* That overflow costs the Bootcamper
+the rest of their session, not merely some tokens.
+
+**The scope of its authority is this phase.** Within Phase 1 the specification is the reference for
+attribute names, types and structures — Steps 4, 5, 5a and 6 all compare against it. From
+`mapping_workflow` step 2 onward the workflow delivers its own **distilled inline mapping
+reference** (the feature catalog, the identifier-classification workflow, and the exact attribute
+keys), and *that* is the working reference for the mapping phase; the tool states the 73 KB file "is
+available only as an optional deep-dive" for an edge case the inline reference does not cover. Phase
+2 already cites the inline reference — relay this rather than leaving a guide holding two references
+with no basis for preferring either.
+
+⚠️ **Two copies on disk is expected, and is not a breach of the rule above.** `mapping_workflow`
+step 1's own `resources` list writes `senzing_entity_specification.md` into the workflow's
+`workspace_dir` — `data/mapping/`, per INV-136 — verified on server 1.32.9, 2026-08-14. That is the
+tool's copy for the mapping phase; `docs/reference/senzing_entity_specification.md` is this phase's
+canonical copy. The no-duplicates rule governs copies **the guide** makes; it is not violated by the
+tool populating its own workspace. Do not delete either, and do not re-fetch to reconcile them.
 
 **Checkpoint:** write step 3.
 
@@ -55,8 +136,11 @@ compliant attribute names.)
 
 - **Entity Specification-compliant:** Data already uses attribute names and structures that
   match the Entity Specification. CORD sources (the already-Senzing-ready fast-path class) are
-  eligible for the fast-path (Step 5a, offered only for `provenance: cord`) — route directly to
-  Module 6 (loading), skipping mapping. Other compliant sources, including non-CORD data that
+  **eligible to be considered** for the fast-path (Step 5a, offered only for `provenance: cord`);
+  Step 5a decides, and it offers the skip only when the source is both structurally loadable
+  **and** fully mapped (INV-198) — a CORD source carrying fields that resolve to no specification attribute
+  goes through mapping like any other. Do not route a source past mapping from this
+  categorization; that is Step 5a's call. Other compliant sources, including non-CORD data that
   looks Senzing-ready, continue to Phase 2, which confirms compliance and records lineage before
   loading.
 - **Needs mapping:** Data uses different field names or structures than those defined in the
@@ -86,23 +170,33 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      `ADDRESSES`, `IDENTIFIERS`) wherever a feature repeats. A source with no repeating feature is
      in this shape with no sub-list at all — flat root attributes only.
 
-   **CORD ships both, so neither may be assumed.** Verified against the MCP server this session:
-   London/`GLOBALDATA` returns a `FEATURES` array, while Las Vegas/`PPP_LOANS` returns flat root
-   attributes. Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
+   **CORD ships both, so neither may be assumed.** Verified live —
+   `get_sample_data(dataset='london', source='GLOBALDATA')` returns a `FEATURES` array (with the
+   raw source columns alongside it at the record root), while
+   `get_sample_data(dataset='las-vegas', source='PPP_LOANS')` returns flat root attributes
+   (`BUSINESS_NAME_ORG`, `RECORD_TYPE`, `BUSINESS_ADDR_*`) and no `FEATURES` array at all
+   (MCP server 1.32.9, re-verified 2026-08-14). Requiring `FEATURES` alone classifies the legacy-shaped sources as not-ready and
    sends data that already loads and resolves through a mapping phase it does not need. Sample the
    actual records rather than assuming a dataset's shape, and confirm the still-supported statement
    from the specification you retrieved (INV-080), not from this file.
 
-2. **Perform the readiness check:** Examine up to 100 sample records from the source file. For
-   each record, verify:
+2. **Perform the structural check: will it load?** Examine up to 100 sample records from the
+   source file. For each record, verify:
+
    - The record is valid JSON.
    - The record contains the structural indicators identified from the Entity Specification
      (top-level keys, array structures).
    - DATA_SOURCE and RECORD_ID are present or derivable.
 
-   If ALL sampled records pass, classify as Senzing-ready. If ANY sampled record fails,
-   classify as not Senzing-ready. (The Kiro `check_cord_readiness.py` helper is a later porting
-   phase; perform the check directly against the sampled records for now.)
+   If ALL sampled records pass, classify as **structurally loadable**. If ANY sampled record
+   fails, classify as not structurally loadable. (The Kiro `check_cord_readiness.py` helper is a
+   later porting phase; perform the check directly against the sampled records for now.)
+
+   ⛔ **This is the entry condition, not the fast-path condition.** Structurally loadable means the
+   engine will accept the record; it does not mean every field in it has been decided about. Step 3
+   below answers that second question, and the offer in step 5 is gated on **both**. Classifying a
+   partially-mapped source as ready on this test alone is what let a source with eleven
+   undispositioned columns skip the module (see step 3).
 
    **A stronger check, when the engine is available: ask Senzing how it reads the record.** The
    structural test above confirms the *shape*; it cannot tell you whether an attribute name will
@@ -121,9 +215,13 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    SENZ2207|Data source code [<CODE>] does not exist
    ```
 
-   The prerequisite is **not** documented on the method — verified 2026-07-28 on MCP server 1.32.1,
-   `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns both overloads for every
-   binding with no mention of it. So the order is: register the source code(s) — taking the
+   The prerequisite is **not** documented on the method — **still true, re-verified 2026-08-11 on
+   MCP server 1.32.8** (first observed 2026-07-30 on 1.32.2):
+   `get_sdk_reference(topic='parameters', filter='getRecordPreview')` returns one signature per
+   binding — `get_record_preview(record_definition: str, flags: int = …) -> str` in Python — with no
+   mention of it.
+   (The same call also returns `get_record`, which the filter matches too; that is a second
+   *method*, not a second overload.) So the order is: register the source code(s) — taking the
    registration code from `sdk_guide(topic='configure')`, never hand-written (INV-080) — then preview.
    Registration is idempotent and the loading phase needs it anyway, so doing it here costs nothing.
 
@@ -134,19 +232,74 @@ obtained via the `get_sample_data` MCP tool in Module 4):
 
    **Optional and non-blocking.** If the engine is not available, or registration has not happened
    and you would rather not do it at this point, skip the preview and keep the structural check
-   (INV-048). Say which check ran, so "Senzing-ready" never implies a stronger test than was
+   (INV-048). Say which check ran, so `senzing_loadable` never implies a stronger test than was
    performed. The prerequisite applies wherever a preview-based check is used, not only to the CORD
    sources this step covers.
 
-3. **Record the result:** Set the source's `senzing_ready` field in `config/data_sources.yaml`
-   to `true` or `false` and update `updated_at`.
+3. **Perform the coverage check: is every field actually decided about?** Structurally loadable
+   answers *will it load*. This answers *is there anything left to map* — and they are not the same
+   question. Over the same sampled records, partition every root key into three sets:
 
-4. **If Senzing-ready: present the fast-path offer:**
+   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and the legacy
+     per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
+   - **specification attributes** — keys that resolve to an attribute in the Entity Specification
+     you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
+   - **unrecognised keys** — everything else.
 
-   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form (it has the correct JSON structure with DATA_SOURCE, RECORD_ID, and properly structured features). Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+   ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
+   catalog attribute can arrive carrying a leading label, and an exact match reports it as
+   unrecognised — which would route a genuinely fully-mapped source into mapping, the pointless work
+   the fast-path exists to remove. This is not hypothetical: `get_sample_data(dataset='las-vegas',
+   source='PPP_LOANS')` ships `BUSINESS_NAME_ORG` and `BUSINESS_ADDR_LINE1`/`CITY`/`STATE`/
+   `POSTAL_CODE`, while the specification's catalog names the attributes `NAME_ORG` and
+   `ADDR_LINE1`/`ADDR_CITY`/… (Entity Specification, *Feature: NAME*; and *Usage types and payload
+   (optional attributes)*, which defines a usage type as "a short label that distinguishes multiple
+   instances of the same feature on one entity" — both confirmed via
+   `search_docs(category='data_mapping')`, MCP server 1.32.8, docs index 2026-08-11). Resolve each
+   key against the specification you hold, and where a key is a catalog attribute carrying such a
+   label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
+   is an observed shape, not something the indexed specification states — so where you cannot
+   resolve a key with confidence, treat it as unrecognised and let step 6 name it, or use the
+   optional `getRecordPreview` check above to ask Senzing directly how it reads the record.
 
-   *(The wording holds for both supported shapes — "properly structured features" covers a
-   `FEATURES` array and the still-supported per-feature sub-lists alike.)*
+   **The threshold is a count, not a proportion: zero unrecognised keys, or no fast-path offer.**
+   Recorded here with its reasoning, because it is a decision and not an obvious default:
+
+   - **Why not a percentage.** A proportion has to be tuned against how wide the source happens to
+     be. `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it; a source with one
+     undecided column in thirty passes an 80%-coverage rule while still hiding a decision from the
+     bootcamper. The number of columns nobody decided about is the thing that matters, and it does
+     not get less important because the record is wide.
+   - **Why `payload`-worthy columns are NOT excluded from the count.** They cannot be: from the
+     record alone, a column the publisher deliberately kept as payload and a column nobody
+     dispositioned look identical — both are a non-catalog key at the root, and even
+     `getRecordPreview` only reports which features Senzing read, never what the publisher intended.
+     So they are not counted as *unmapped*; they are counted as **undecided**, and they are routed
+     to the step that decides them. `payload` is one of the five dispositions
+     `mapping_workflow` step 3 assigns (`feature`, `payload`, `ignore`, `derived`, `extract` —
+     confirmed against the live tool schema, MCP server 1.32.8, 2026-08-11), so a payload-heavy
+     source loses nothing by going through mapping: mapping is where "this is payload" is actually
+     recorded, rather than assumed by a gate that cannot see intent.
+   - **Why this does not re-introduce pointless work.** A genuinely fully-mapped source — the
+     `truthset` class the fast-path was built for — has zero unrecognised keys and still fast-paths
+     with no extra question. Nothing changed for it.
+
+4. **Record the result:** In `config/data_sources.yaml`, set the source's `senzing_loadable` and
+   `fully_mapped` fields to `true` or `false`, record `unmapped_fields` as the sorted list of
+   unrecognised keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
+
+   *(These replace the single `senzing_ready` field, which recorded only the structural test while
+   the offer was presented on it. On a resumed bootcamp whose registry still carries
+   `senzing_ready`, read it as `senzing_loadable` and treat `fully_mapped` as unknown — re-run
+   step 3 rather than inferring it, since the old field never measured coverage.)*
+
+5. **If structurally loadable AND fully mapped: present the fast-path offer.** State the coverage
+   figure, so skipping is an informed choice rather than a silent default:
+
+   👉 **Your CORD source [SOURCE_NAME] is already in Senzing-loadable form, and all [N] of its fields resolve to the Senzing Entity Specification — there is nothing left to map. Would you like to skip the mapping phase and proceed directly to loading in the Data processing module?**
+
+   *(The wording holds for both supported shapes — the structural check covers a `FEATURES` array
+   and the still-supported per-feature sub-lists alike.)*
 
    *(Internal: end the turn on this question and wait.)*
 
@@ -156,11 +309,47 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    - **If declined:** Continue through the normal quality assessment and mapping workflow for
      this source.
 
-5. **If NOT Senzing-ready or MCP unavailable:** Continue through the normal quality assessment
-   and mapping workflow. Do NOT present the fast-path offer.
+6. **If structurally loadable but NOT fully mapped: route to mapping, and name the columns.** Do
+   **not** present the fast-path offer — there is something to map, and the whole point of this
+   module is doing it. Say so in one statement (no 👉 question; the routing is not a choice):
 
-6. **Non-CORD sources:** Skip this step entirely. Never present the fast-path offer for sources
+   > "[SOURCE_NAME] will load as-is, but [N] of its fields aren't Senzing Entity Specification
+   > attributes — [list them] — so nothing has been decided about them yet. We'll map this one, and
+   > those fields are the exercise: some will become features, some payload, some ignored."
+
+   Name every unrecognised column. A count alone tells the bootcamper a decision exists without
+   telling them what it is about. For `PPP_LOANS` those columns are `Business_Type`, `CD`,
+   `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`,
+   `OwnedByRaceEthnicity`, `OwnedByVeteran` — eleven real decisions the fast-path used to skip.
+
+7. **If NOT structurally loadable or MCP unavailable:** Continue through the normal quality
+   assessment and mapping workflow. Do NOT present the fast-path offer.
+
+8. **Non-CORD sources:** Skip this step entirely. Never present the fast-path offer for sources
    with provenance other than `cord`.
+
+9. **After every source has been classified: if ALL of them were fully pre-mapped, say so and
+   offer mapping practice.** Never route the bootcamper past this module's core skill in silence —
+   they came to learn mapping, and a run where every source fast-pathed teaches none of it. This
+   fires only when no selected source reached step 6.
+
+   > "Every source you selected was already fully mapped to the Senzing Entity Specification, so
+   > the mapping exercise has nothing to work on. That's a real property of this data, not a
+   > shortcut — but it does mean you'd finish the bootcamp without writing a mapping."
+
+   👉 **Would you like to add a raw, unmapped source so you get the mapping practice? Reply with a number:**
+
+   1. Yes — a raw variant of the same data.
+   2. Yes — a raw sample from the free-data catalog (`https://github.com/docktermj/senzing-bootcamp-free-data`).
+   3. No — continue without a mapping exercise.
+
+   *(Internal: end the turn on this question and wait.)*
+
+   - **Options 1-2:** return to Module 4's data-collection flow to acquire the source, register it
+     with `provenance` other than `cord`, then run this module normally on it. Its caveats apply
+     — for the free-data catalog, give the ICIJ note in Module 4 before recommending that sample.
+   - **Option 3:** continue. Record the choice so graduation can state that no mapping was
+     authored, rather than leaving the recap silent about it.
 
 **Fast-path data-lineage entry:** Record a lineage entry ONLY for a source that was explicitly
 fast-pathed (the bootcamper confirmed the offer above). Never record one for a source that went
@@ -180,7 +369,7 @@ transformations:
     records_rejected: 0
     quality_score: null  # Quality assessment skipped
     fast_pathed: true
-    fast_path_reason: "CORD source already in Senzing-loadable form"
+    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognised fields"
 ```
 
 **Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
@@ -197,6 +386,89 @@ lineage write failure MUST NOT block the fast-path.
 
 For each data source, compute a quality score based on field completeness, format consistency,
 and duplicate rate.
+
+⛔ **Compute it this way — the number routes a gate banded to the percentage point, so two guides
+must reach the same figure.** The bands below (≥80 / 70-79 / <70) were precise while the arithmetic
+feeding them was never written down, which meant the score was reproducible only by accident:
+
+```text
+quality_score = 0.70 × completeness + 0.25 × format_consistency + 0.05 × (100 − duplicate_rate)
+```
+
+**Why duplicates barely count.** Completeness and format consistency are things the bootcamper can
+act on before mapping — a missing field stays missing, a malformed date stays malformed. A high
+duplicate rate is **not a defect to remediate**: resolving duplicate records is what Senzing is for,
+and this module runs *before* it has had the chance. Weighting duplicates heavily would send a
+bootcamper to "fix" the very condition that makes their data worth resolving. It stays in the score
+at 0.05 so a pathological source still registers, and it is **reported in full** regardless of its
+weight.
+
+- **completeness (0-100)** — the mean, across records, of the share of **applicable** fields that
+  are present in that record, using the presence test defined below and per-`RECORD_TYPE`
+  applicability (INV-174).
+
+  **Which fields count — stated positively, because a raw source is this module's central case.** A
+  source field enters the denominator when **any** of these is true:
+
+  - **Step 4 identified an Entity Specification counterpart for it.** Step 4 runs immediately before
+    this one and does exactly that comparison, so the set is read off its output rather than
+    re-derived here. On a raw source this is where the whole denominator comes from.
+  - it is already **dispositioned in mapping** (`feature`, `payload`, `extract`); or
+  - it is a **structural key** — `DATA_SOURCE`, `RECORD_ID`.
+
+  ⚠️ **Step 5a uses "resolves to" in a narrower sense, and reading that sense here breaks the
+  score.** Step 5a asks whether the **key itself** is a catalog attribute, allowing for a leading
+  label (`BUSINESS_NAME_ORG` → `NAME_ORG`) — a question about an already-Senzing-ready source. This
+  step asks whether a field **has a counterpart** — a question about a raw source, where no key is a
+  catalog attribute yet. Same words, two different questions. Read Step 5a's sense here and a fully
+  raw source has **zero** countable fields, so the number that gates this module is undefined on the
+  module's most common input. Do not change Step 5a: it is correct for what it asks.
+
+  **The exclusion stands, narrowed to what it is for.** A source column with **no** counterpart
+  **and** no disposition stays out of the denominator — scoring a source down for work this module
+  has not done yet is the false-alarm shape INV-174 records. What must **not** be excluded is a
+  column whose counterpart Step 4 has just identified.
+
+  **Worked example — a fully raw source, nothing dispositioned yet:**
+
+  ```text
+  full_name     -> NAME_FULL       counterpart identified at Step 4  -> counts
+  phone         -> PHONE_NUMBER    counterpart identified at Step 4  -> counts
+  created_date  -> (none)          no counterpart, no disposition    -> does NOT count
+
+  denominator = 2 applicable fields per record (plus structural keys) — not 3, and not 0
+  ```
+
+  ⛔ **An empty denominator means completeness is UNDEFINED. Never report 0/0 as 0% (INV-238).** A
+  source where no column has any counterpart and nothing is dispositioned yields 0/0. Say completeness
+  is undefined, give the one-line reason, and route that source to **"Needs enrichment"** (Step 5's
+  third category) instead of emitting a score. Reporting 0% instead computes
+  `0.25 × format_consistency + 0.05 × (100 − duplicate_rate)`, which lands under 70 and routes the
+  gate to "Recommend fixing before mapping" on **arithmetic rather than evidence** — a source with
+  nothing to measure is not a source measured as bad, and the bootcamper would be sent to remediate a
+  quality problem the number does not demonstrate.
+
+  (On a real source this mattered: `PPP_LOANS` scored 100% on its 8 resolving fields and
+  94.4% averaged over all 19 root keys.)
+
+- **format_consistency (0-100)** — the share of populated values that match their field's dominant
+  observed pattern (date shape, postal-code shape, casing of a coded value). Report the fields that
+  drag it down; a single malformed field is more actionable than the aggregate.
+- **duplicate_rate (0-100)** — the share of records whose `(DATA_SOURCE, RECORD_ID)` pair is not
+  unique. ⛔ **Compute it on that pair, never on whole-row equality** (INV-180): re-sending the same
+  pair *replaces* a record rather than adding one, so identical rows under distinct keys are two
+  records and identical keys are one. Row-level duplicate counting measures something Senzing does
+  not do.
+
+**Worked example** — 1,000 records; applicable fields present on 96% of them on average; 3% of
+populated values off-pattern; 10 records share a `RECORD_ID` with another (1%):
+
+```text
+0.70 × 96  +  0.25 × 97  +  0.05 × (100 − 1)   =  67.2 + 24.25 + 4.95  =  96.4  ->  ✅ (≥80)
+```
+
+Round to one decimal and state the three inputs alongside the total, so the bootcamper can see
+which dimension moved it.
 
 ⛔ **Define "present" this way — do not re-invent it.** Completeness feeds the score that gates this
 module, so the presence test is part of the measurement, not an implementation detail. A field value
@@ -251,7 +523,7 @@ category='data_mapping')` answers it directly — read the feature's description
 | `NAME` (organization) — "Organization legal or trade name… `NAME_ORG`" | ORGANIZATION |
 | `ADDRESS`, `PHONE`, `EMAIL`, identifiers | either — do not exclude these |
 
-(Verified against MCP server 1.32.1, 2026-07-28. Re-read it for the source you are assessing rather
+(Verified against MCP server 1.32.2, 2026-07-30. Re-read it for the source you are assessing rather
 than trusting this table — it is an illustration of *how the specification marks type*, not a
 substitute for asking, and it is deliberately partial: features not listed here still have to be
 checked the same way, INV-080.)
@@ -345,10 +617,12 @@ and `../module-03b-truthset-visualization/visualization-api-reference.md` → "R
 the third; both are the statements of record, so read them rather than reconstructing the rules here.
 
 1. **Brand tokens, not an ad hoc palette** (INV-081): take colours and typography from
-   `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, degrading gracefully if the module cannot be
+   `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (skill-relative fallback
+   `../../scripts/brand_tokens.py`, INV-252), degrading gracefully if the module cannot be
    imported.
 2. **Renders offline** (INV-081/INV-091): **no CDN, no web font, no remote script.** If you need a
-   charting library, inline the vendored `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js`; plain
+   charting library, inline the vendored `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js`
+   (skill-relative fallback `../../scripts/vendor/d3.v7.min.js`, INV-252); plain
    HTML/CSS bars need no library at all and are the better default here. A `<script src="https://…">`
    makes the page render blank on an air-gapped workstation — which Senzing evaluations frequently
    are — with no error anywhere.
@@ -402,10 +676,20 @@ Create `docs/data_source_evaluation.md`:
 
 ### Quality gate: iterate vs. proceed
 
-After presenting the quality assessment, guide the user's decision. Ask exactly one 👉 question
-to close the turn:
+After presenting the quality assessment, guide the user's decision.
 
-- **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping."
+**Where the score gates — 70-79% and below 70% — ask exactly one 👉 question to close the turn.**
+At **≥80% there is no decision to make**: state the result and continue straight into Phase 2 in the
+same turn, letting Phase 2's first step supply that turn's single 👉.
+
+⛔ **Do not invent a gate question for the ≥80% branch.** "Your data is fine, shall we continue?" is
+exactly the pointless question INV-012 forbids and INV-006 counts against the ask-once budget, and
+improvising one breaches INV-056, which pins every gate question's wording precisely so it cannot
+drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
+scores there — so this is the path most runs take.
+
+- **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
+  continue into Phase 2 this turn)**
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
   mapping now, or improve the weakest fields first."
 
@@ -423,7 +707,9 @@ to close the turn:
   1. Work on improving the data first.
   2. Proceed anyway, knowing the results may be limited.
 
-*(Internal: end the turn on the applicable question and wait.)*
+*(Internal: in the two gating branches, end the turn on the applicable question and wait. In the
+≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
+end on its first 👉.)*
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.

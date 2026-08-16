@@ -7,7 +7,7 @@ Continues from Phase 1. Follow the ground rules; `🛑`/`⛔` are internal direc
 ⛔ **Branch on scenario provenance first — never ask a bootcamper for diagrams of a scenario the
 bootcamp invented.** The provenance is the Phase 1 Step 4a outcome: whether the Business Case Offer
 was accepted. That is the same decision Step 11's generated-scenario branch acts on; do not
-introduce a second mechanism. (Step 11 persists it as the `> 🤖 Bootcamp-generated business case`
+introduce a second mechanism (INV-220). (Step 11 persists it as the `> 🤖 Bootcamp-generated business case`
 marker in `docs/business_problem.md`, but that file does not exist yet at this step — on a resumed
 session where it does, the marker is the authoritative form of the same signal.)
 
@@ -68,7 +68,7 @@ pattern was selected, it's already identified. **Checkpoint:** write step 10.
 Now that the scenario is identified — and **before** the problem-statement artifacts are written
 in Step 11 — capture two forward-looking attributes of the business problem so they flow straight
 into the problem statement and the graduation production project (INV-097). Ask each as its own
-pinned 👉 question (INV-056), one per turn (INV-005).
+pinned 👉 question (INV-056), one per turn (INV-251).
 
 ⛔ **Hold every answer and write `config/bootcamp_preferences.yaml` ONCE, at this step's
 checkpoint.** Do not persist after each question. This step asks two questions — three turns when
@@ -89,7 +89,14 @@ systems do you expect to integrate with?**" — and **hold** the named systems (
 Salesforce) as `integration_targets`. On **no**, hold `integration_targets: []`. Either way, do not
 write yet.
 
-Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051):
+Then, deployment target — a separate, pinned 👉 question (neutral lead + numbered list, INV-051).
+
+**Reassure them first**, as a statement before the question: "We'll develop everything locally
+first; deployment is addressed in the graduation production project and migration checklist." It
+has to come before, per `../bootcamp-onboarding/ground-rules.md` → anything meant to inform the
+answer precedes the 👉. Here it earns its place: it is what makes **4. Not sure yet** a comfortable
+answer instead of a guess, and a bootcamper who does not yet know their target should not feel
+pushed into naming one.
 
 👉 **Where do you plan to deploy the final solution? Reply with a number:**
 
@@ -98,8 +105,7 @@ Then, deployment target — a separate, pinned 👉 question (neutral lead + num
 3. Local / on-premises.
 4. Not sure yet.
 
-*(Internal: end the turn and wait.)* Reassure: "We'll develop everything locally first; deployment
-is addressed in the graduation production project and migration checklist."
+*(Internal: end the turn and wait.)*
 
 **Now write both answers together**, in one update to `config/bootcamp_preferences.yaml`:
 `integration_targets` (held above) and `deployment_target` (`aws`/`azure`/`gcp` — also
@@ -185,8 +191,17 @@ bootcamper the generated data is unavailable and let them supply real data.
 
 ## 12. Update README.md
 
-Fill the Overview and Business Problem sections with what was gathered; mention the design
-pattern if one was selected. **Checkpoint:** write step 12.
+Fill the `## Overview` and `## Business Problem` sections **created at project setup**
+(`../bootcamp-onboarding/onboarding-flow.md` → "1. Project setup") with what was gathered;
+mention the design pattern if one was selected.
+
+**If `README.md` is absent, create it first** with those two headings and then fill them — a
+resumed project whose setup predates this step, or one the bootcamper started by hand, will not
+have it. Do not stall on the missing file, and do not report the step complete without writing it.
+
+⛔ **Those two sections are the whole of this step.** Add no other sections here: the root
+`README.md` is the only `.md` permitted at the project root (INV-017), so it is not a place to
+park content that has a home under `docs/`. **Checkpoint:** write step 12.
 
 ## 13. Propose the solution approach
 
@@ -204,10 +219,39 @@ reference how the bootcamp implements it.
 
 ## 14. Senzing value restatement
 
-Before confirming, reinforce why Senzing ER is valuable for THIS problem. Use
-`search_docs(query='value proposition <use_case_category>', version='current')` and tie the
-value to the bootcamper's specific data, sources, and outcomes (not generic marketing). If
-integration targets exist, explain how Senzing fits alongside them as a foundational layer.
+Before confirming, reinforce why Senzing ER is valuable for THIS problem. Tie the value to the
+bootcamper's specific data, sources, and outcomes (not generic marketing). If integration targets
+exist, explain how Senzing fits alongside them as a foundational layer.
+
+**Retrieve the material with `search_docs(query='entity resolution business value')`.** Verified live
+on **MCP server 1.32.9, docs index 2026-08-11, checked 2026-08-12**: it returns the *Entity Resolution
+Buyer's Guide* ("Five Primary Business Use Cases", and its evaluation steps including Time To Value)
+and *Agentic Entity Resolution* ("Why Agentic Entity Resolution Matters", whose Business Impact list
+is broken out by use case). Read the bootcamper's use case **out of** those results.
+
+⛔ **Do not append the use-case category to the query.** It is the token that breaks the search, not
+a refinement of it. Measured on the same server and date: `value proposition Supply Chain` — the
+phrasing this step used to prescribe — returns `senzing/libpostal`'s geodata *store-chains* scripts
+and a `sz_spark` changelog's "CI / supply chain" heading, because BM25 matches **"chains"** and the
+software sense of "supply chain"; the words "value proposition" contribute nothing. Appending the
+category to the working query re-triggers it: `entity resolution business value supply chain` puts
+that same libpostal script back at the top, outranking the real material. The category selects
+*which part of the results to use*; it does not help retrieve them.
+
+⛔ **If the result is empty or off-topic, re-query before concluding the material is uncovered.** Use
+the use case's own business vocabulary — "supplier due diligence", "beneficial ownership",
+"watchlist screening" — rather than an abstract phrase. This is the rule
+[`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+states in full, including why the failure is dangerous: a query that misses looks exactly like
+documentation that does not cover the topic, which makes a training-data fallback feel justified. Do
+not restate that reasoning here — follow it.
+
+**If nothing relevant comes back after re-querying, say less — do not invent value.** Tie the value
+to what MCP *did* return earlier in this module: the data sources you actually found, their record
+types and counts, and the mapping findings already in hand. Then say plainly that Senzing's
+published material does not cover this use case specifically. Inventing value claims from memory is
+forbidden (INV-080), and Senzing does not merchandise every category equally — a short, concrete,
+sourced statement is the correct outcome, not a failure of the step.
 
 **Checkpoint:** write step 14.
 

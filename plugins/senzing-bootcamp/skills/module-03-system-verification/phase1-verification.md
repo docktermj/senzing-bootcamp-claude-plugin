@@ -6,6 +6,15 @@ directives, never rendered; signal a stop by ending the turn on the single 👉 
 waiting. This sequential rule has the same precedence as a mandatory gate; no internal reasoning
 overrides it.
 
+⛔ **Every step in this phase is NON-YIELDING** — this module's only 👉 is the module-transition
+question at the end of `phase2-report-close.md`. So "one at a time" here means *in order and in
+full*, inside the turn that ends on that question; it does **not** mean one turn per step, because a
+turn ending on a step that asks nothing would end with zero 👉 (INV-225). A faithful walk therefore
+generates code, runs it, registers a data source and loads records before the turn legally ends,
+and that is correct — the turn ends where the bootcamper is actually asked something. The concept
+and the checkpoint consequence are defined once in
+`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol.
+
 ## Opt-Out Gate
 
 Before starting Module 3 steps, check whether the bootcamper has explicitly requested to skip.
@@ -34,7 +43,7 @@ Before starting Module 3 steps, check whether the bootcamper has explicitly requ
 > the guaranteed Truth Set web-app "wow moment" is delivered by the selectable **Truth Set
 > visualization** module (`truthset_visualization`), a separate, standalone module run **next**
 > whenever selected (always in Core; in Customized only if chosen). Skipping System Verification
-> does NOT skip that module, and System Verification does not offer a standalone TruthSet demo of
+> does NOT skip that module, and System Verification does not offer a standalone Truth Set demo of
 > its own.
 
 **If NOT triggered:** proceed with Module 3 normally (default path).
@@ -45,8 +54,8 @@ The following rules are mandatory for the agent executing this module:
 
 1. **Synthetic verification data only:** verify with a small set of **synthetic records** you
    generate in Step 2 — designed to resolve deterministically into a known number of entities.
-   System Verification MUST NOT acquire, load, or visualize the Senzing TruthSet, nor use CORD,
-   Las Vegas, London, or Moscow. (The TruthSet belongs exclusively to the separate, standalone
+   System Verification MUST NOT acquire, load, or visualize the Senzing Truth Set, nor use CORD,
+   Las Vegas, London, or Moscow. (The Truth Set belongs exclusively to the separate, standalone
    **Truth Set visualization** module.) Offer no dataset choice to the bootcamper.
 2. **Database path:** the Senzing database is at `database/G2C.db`. All SDK initialization and
    database operations MUST reference this path.
@@ -71,17 +80,27 @@ The following rules are mandatory for the agent executing this module:
    (INV-087). The database cleanup ensures a clean slate for the synthetic records.
 9. **No orphaned processes:** System Verification starts no web service; the separate Truth Set
    visualization module starts and terminates its own web service within its own phases.
-10. **Progress persistence:** every step MUST write its checkpoint to
-    `config/bootcamp_progress.json` immediately upon completion, before proceeding.
+10. **Progress persistence:** every step MUST record its checkpoint in
+    `config/bootcamp_progress.json`. Because this phase's steps are non-yielding and share one
+    turn, make **one write at the end of that turn** carrying the last completed step rather than
+    eleven writes inside it — the per-step record is still complete, and eleven writes in a single
+    turn is the noise INV-012 exists to reduce (`../bootcamp-onboarding/ground-rules.md` →
+    "Progress and state"). If the turn cannot complete, write what did complete before stopping,
+    so resume lands on the right step.
 
 ### Step 1: MCP Connectivity Check
 
 Verify MCP server connectivity before code generation operations.
 
-1. Call `search_docs(query="Senzing SDK initialization")` with a 10-second timeout.
+1. Call `get_capabilities` with a 10-second timeout. ⛔ A reachability probe must **not** be a
+   document search: this step discards the content and keeps only "did the server answer", so a
+   `search_docs` query pays for retrieval it throws away. See
+   [`../bootcamp-onboarding/onboarding-flow.md`](../bootcamp-onboarding/onboarding-flow.md) →
+   "MCP health check", which states the reasoning; do not restate it here, and do not restore a
+   `search_docs` probe.
 2. **If a response is received** (including empty results): MCP connectivity confirmed. Proceed
    silently; do not display connectivity status to the bootcamper.
-3. **If the call fails** (timeout or error): retry `search_docs` once with the same 10-second
+3. **If the call fails** (timeout or error): retry `get_capabilities` once with the same 10-second
    timeout.
 4. **If the retry succeeds:** proceed silently.
 5. **If the retry fails:** display troubleshooting steps:
@@ -134,7 +153,19 @@ INV-080), create an engine, and release it.
 3. **If the code is `SENZ2027`**, add the cause its own resolution steps do not name: the libraries
    loaded but their support data did not — the runtime **data directory** is not where the
    configuration points. Send the bootcamper to Module 2's Step 8 SUPPORTPATH check (on Windows/Scoop,
-   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.1, 2026-07-28.
+   the sibling-directory case). Verified against the Senzing FAQ on MCP server 1.32.2, 2026-07-30.
+3b. **If the code is `SENZ7426`**, relay what `explain_error_code` returned (step 2 already says to)
+   and send them to the *same* Step 8 check. Re-verified on **MCP server 1.32.9, 2026-08-12**: it
+   now names the **macOS**-cask and **Windows**-Scoop `SUPPORTPATH` cases and points at
+   `sdk_guide(topic='install', …)` for the per-platform detail, ranking *"SUPPORTPATH points at a
+   directory with no transliteration modules … a configuration error, NOT a broken install"* as
+   `common_causes[0]` and *"Check SUPPORTPATH FIRST"* as `resolution_steps[0]`. So the tool now
+   agrees with Step 8 instead of contradicting it, and Step 8 is corroboration rather than a
+   correction. Its input-encoding cause is ranked **last** and conditioned on the error appearing
+   *"on a record operation after the engine has initialized successfully"* — not this failure, which
+   fires at engine construction, before any record is submitted.
+   ⛔ Never restate this as an unconditioned rule: stripped of the platform condition and that
+   record-level exception it becomes the over-generalization INV-169 forbids.
 4. Do not diagnose from the code alone beyond that: any other code goes through `explain_error_code`
    and `search_docs` per this module's Error handling section.
 
@@ -147,7 +178,7 @@ This is a check, not a 👉 question — run it silently and report only on fail
 
 Generate a small set of **synthetic** records designed to resolve deterministically into a known
 number of entities, so verification proves entity resolution works **without touching the Senzing
-TruthSet**. The records are the agent's own composition — no MCP TruthSet fetch, no sanctioned
+Truth Set**. The records are the agent's own composition — no MCP Truth Set fetch, no sanctioned
 fallback source, no CORD substitute. Keep them obviously synthetic and PII-free (invented
 names/addresses).
 
@@ -156,9 +187,38 @@ names/addresses).
    existing file), using **Senzing Entity Specification** attribute names. If unsure of the exact
    attribute names, confirm them via the MCP server (`search_docs` / `mapping_workflow`) — never
    guess (INV-080). Design them so resolution is deterministic and known in advance:
-   - **A merge cluster:** 2–3 records for the **same** synthetic person, sharing enough features
-     (matching full name + date of birth + address, with only trivial variation) that Senzing
-     resolves them into **one** entity.
+   - **A merge cluster:** 2–3 records for the **same** synthetic person, designed to resolve into
+     **one** entity. ⛔ **Make this unambiguous by construction, not by judgement** — "enough
+     features, with only trivial variation" is exactly the phrase that produced a false verification
+     failure, because two reasonable readings of it give opposite verdicts.
+
+     **Identical across every record in the cluster:**
+
+     - `NAME_FIRST`, `NAME_LAST`, and `NAME_MIDDLE` wherever present — the same strings, not
+       equivalents.
+     - `DATE_OF_BIRTH`.
+     - The address **content** (same street, city, state, postal code).
+     - The same feature *set*: if one record carries a phone, they all do.
+
+     **May vary — formatting only:**
+
+     - Punctuation and spacing (`123 Main St` vs `123 Main Street`, `#4` vs `Apt 4`).
+     - Phone-number formatting (`702-555-0100` vs `(702) 555-0100`).
+     - A middle name abbreviated to its initial where the full form appears elsewhere.
+
+     ⛔ **These are NOT trivial variation, and must not appear in the cluster:** a **nickname**
+     (`Mari` for `Marisol`), an **initial in place of a first name**, and an **omitted feature** in
+     one record but not the others. Each *reduces corroboration*, and the engine may then correctly
+     decline to merge — that is a defensible resolution decision, not a fault, and building it into a
+     cluster you have predicted will merge sets the module up to report a healthy install as broken.
+
+     ⚠️ **Worked counter-example, observed on a real walk (Senzing 4.3.4, 2026-08-13):** three
+     records for one person with the first name varied `Marisol` / `Mari` / `Marisol` and one record
+     missing its phone number resolved to **3 entities** — the `Mari` record stayed a singleton — and
+     Step 7 reported FAILED. The same three records with the first name identical throughout and only
+     phone/address *formatting* varied resolved to **2 entities** with a 3-record cluster, and passed.
+     The engine was right both times; only the prediction changed. (This is an observation of this
+     install's behaviour, not an MCP claim — INV-080/INV-149.)
    - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
      **singleton** (its own entity).
    - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a
@@ -188,6 +248,7 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    bootcamper's chosen language.
 2. **Fetch the snippet, then** save it to `src/system_verification/verify_init.[ext]` where `[ext]`
    matches the chosen-language file extension (`.py`, `.java`, `.cs`, `.rs`, `.ts`).
+   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.32.9, 2026-08-13 -->
    ⛔ `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
    `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
    1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. **Never pass
@@ -224,8 +285,16 @@ Verify the MCP server can generate a full pipeline script in the chosen language
 
 1. Call `generate_scaffold(workflow='full_pipeline')` in the bootcamper's chosen language.
 2. ⛔ **This returns MANY files, and which one you save decides whether Step 6 can run at all.**
-   The response is a **listing** of snippets across initialization, loading and searching — 18 of
-   them for Python on server 1.32.2 (verified 2026-07-29) — not "the" generated script. So:
+   The response is a **listing** of snippets across four groups — `initialization`,
+   `configuration`, `loading` and `searching` — not "the" generated script. For Python that was
+   **22** snippets (10 / 4 / 6 / 2) on server 1.32.9, verified 2026-08-14.
+
+   ⚠️ **That figure is illustration, never a check to perform** — and its own history is the
+   argument for the rule below. It was 18 across three groups on server 1.32.2 (2026-07-29): the
+   count moved and a whole group (`configuration`) appeared, while the two loading snippets named
+   below stayed exactly where they were. So a count or a position is precisely what selection must
+   **not** depend on. If your live response returns a different number, that is the server indexing
+   more snippets, not a problem to report. So:
    - **Pick the loading snippet that READS AN INPUT FILE line by line**, not the self-contained
      demo whose records are hardcoded in the source. For Python those are
      `loading/add_records_loop.py` (reads `INPUT_FILE`) versus `loading/add_records.py`
@@ -287,6 +356,12 @@ all build commands.
 | Rust | `cargo build --manifest-path src/system_verification/Cargo.toml` |
 | TypeScript | `tsc src/system_verification/verify_pipeline.ts --noEmit` |
 
+⛔ **On Java, keep `verify_pipeline.java` and declare the top-level class package-private** — the
+filename is `snake_case` and the idiomatic class name is not, and only a `public` top-level class is
+filename-bound. The rule, its reason and the C# difference are in `../bootcamp-onboarding/ground-rules.md`
+→ "File placement" (INV-237); do not restate them here and do not rename the file, which this table's
+own tests pin.
+
 1. Execute the build command for the chosen language.
 2. **If the build exits with code 0:** report pass.
 3. **If the build fails** (non-zero exit code): report fail including the first 50 lines of
@@ -311,7 +386,7 @@ all build commands.
 ### Step 5a: Register the Synthetic Data Source Code
 
 Register the synthetic verification data's source code(s) in the Senzing configuration
-**before** loading, so Step 6 does not fail with `SENZ2207: Data source code [...] does not
+**before** loading (INV-083), so Step 6 does not fail with `SENZ2207: Data source code [...] does not
 exist`. The default config seeded in Module 2 has no data sources registered, yet
 the load below references the code(s) the Step 2 records carry, which must exist
 first — so without this step every Module 3 run hits SENZ2207 on the first load attempt.
@@ -405,22 +480,53 @@ Each validation check has a 30-second timeout.
    validation checks. Execute ALL checks regardless of whether earlier checks pass or fail:
 
    **a) Entity count:**
+
    - Verify the total number of resolved entities equals the expected entity count from Step 2.
 
    **b) Merge cluster resolves to one entity:**
+
    - Verify the 2–3 records designed to match resolve to the **same** single entity ID.
 
    **c) Cross-record resolution:**
+
    - Verify the resolved entity count is strictly less than the total record count loaded,
      confirming that the merge cluster collapsed rather than every record loading as a singleton.
 
    **d) Distractor stays a singleton:**
+
    - Verify the distractor record(s) resolve to their own entity, separate from the merge cluster.
 
 3. **If all checks pass:** report pass with the entity count and confirmation of the merge.
-4. **If any check fails:** report fail listing each failed check with expected versus actual
-   values. Suggest re-running data loading or checking that the synthetic data file was loaded
-   completely.
+4. ⛔ **If a check fails, this is a DIAGNOSTIC, not a verdict on the install — there are two
+   candidate explanations and you must tell them apart before reporting either.** Every other check
+   in this module is an unambiguous statement about the installation; this one alone compares the
+   engine against **a prediction the guide made**, so a mismatch means *either* the engine is wrong
+   *or* the expectation was. Reporting the second as the first tells a bootcamper their working
+   system failed, at the end of the module whose entire purpose is to tell them it works.
+
+   **Ask the engine why, before concluding anything:**
+
+   - For a cluster that did **not** merge, call `why_records` on the pair that stayed apart (or
+     `why_entities` on the two entities), generating the call via `get_sdk_reference` +
+     `sdk_guide` — never from memory. Report the **match key** and the **feature scores** it returns.
+   - For an unexpected merge, do the same on the pair that joined.
+
+   **Then decide, and say which you decided:**
+
+   - **The engine explains its decision coherently** — e.g. a name variant scored below the
+     threshold, or a record carried one fewer corroborating feature. Then **the expectation was
+     wrong, and the install is fine.** Report it as an expectation mismatch: state the expected and
+     actual counts, quote the engine's explanation, and say plainly that entity resolution behaved
+     correctly. ⛔ **Do not report the system as having failed verification**, and do not tell the
+     bootcamper to re-run the load — nothing is wrong with it. Fix the records per Step 2's
+     constraints (the usual cause is a nickname, an initial, or an omitted feature that Step 2
+     forbids) and re-run this step if the module's other checks all passed.
+   - **The engine's explanation does not account for the difference**, or `why_*` itself errors —
+     then this is a real finding. Report fail with expected versus actual, include the `why_*` output,
+     and suggest re-running the load or confirming the synthetic data file loaded completely.
+
+   ⚠️ **This check is reported separately from the other seven**, which are install checks. A
+   mismatch the engine explains must not turn the module's overall result into a failure.
 
 **Checkpoint:** write to `config/bootcamp_progress.json`:
 
@@ -428,11 +534,20 @@ Each validation check has a 30-second timeout.
 {
   "module_3_verification": {
     "checks": {
-      "results_validation": {"status": "passed|failed", "entities": <count>, "matches_verified": <count>}
+      "results_validation": {"status": "passed|expectation_mismatch|failed", "entities": <count>, "matches_verified": <count>, "engine_explanation": "<the why_* match key and feature scores, on a mismatch>"}
     }
   }
 }
 ```
+
+⛔ **This check has THREE outcomes, and `expectation_mismatch` is the one the prose above
+defines** (INV-229): the counts differed and the engine's own `why_*` output accounts for it, so
+**the install is working and the prediction was wrong**. Recording that as `failed` is the false
+report this step exists to prevent, and recording it as `passed` hides a mismatch worth telling the
+bootcamper about — so neither of the two other values is available for it. Carry the engine's
+explanation into `engine_explanation`: Step 9 reports it, and it is the most interesting thing the
+module produces. `failed` is reserved for the case where the explanation does **not** account for
+the difference, or `why_*` itself errored.
 
 ### Step 8: Database Operations
 
@@ -493,5 +608,5 @@ System Verification is successfully complete when ALL of the following are true:
   section's `### End-of-Module Summary` subsection).
 
 (The Truth Set visualization module — run next when selected — owns its own `web_service`/`web_page`
-checks, standalone snapshot, web-service termination, TruthSet purge, and `## Truth Set
+checks, standalone snapshot, web-service termination, Truth Set purge, and `## Truth Set
 visualization` recap section; see `../module-03b-truthset-visualization/`.)

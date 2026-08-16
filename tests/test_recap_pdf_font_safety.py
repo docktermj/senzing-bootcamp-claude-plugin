@@ -25,6 +25,10 @@ What this pins:
 * End-to-end (skipped without fpdf2, which is not stdlib — INV-108): a recap whose title
   is long enough to clip still renders with **fpdf2**, not the fallback.
 
+Enforces **INV-159** (no character of a Bootcamper-authored value is reduced to `?` -- the
+name above all, which the certificate prints largest; an unprintable name warns and falls
+back to the placeholder rather than being transliterated), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import importlib.util

@@ -60,9 +60,28 @@ Usage:
     python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl \\
         --snapshot docs/visualizations/truthset_verification.html --no-serve
 
-Settings come from ``--settings`` (default ``config/engine_config.json``) or the
-``SENZING_ENGINE_CONFIGURATION_JSON`` env var. The Senzing native library must be
-importable (source the project ``src/scripts/senzing-env.sh`` first).
+Settings resolution, in this order — the precedence is **content-aware**, not
+existence-based:
+
+1. ``--settings`` (default ``config/engine_config.json``) when the file exists AND its
+   ``PIPELINE`` carries ``CONFIGPATH``, ``RESOURCEPATH`` and ``SUPPORTPATH``.
+2. ``SENZING_ENGINE_CONFIGURATION_JSON`` when the file is absent, unreadable, or
+   incomplete and the env var is complete. Which source won is stated on stderr whenever
+   both are present.
+3. Otherwise the run fails, naming the source it used and the ``PIPELINE`` keys that are
+   missing — it does NOT proceed into the engine.
+
+⛔ Step 3 exists because proceeding produced a **misleading** failure. A file containing
+``{"PIPELINE": {}}`` is valid JSON and truthy, so an emptiness check passes, and the engine
+then aborts with ``SENZ7426`` (transliteration). That error means ``SUPPORTPATH`` is wrong —
+``explain_error_code('7426')`` says "Check SUPPORTPATH FIRST … This is a configuration
+error, NOT a broken install" — so the reader is sent to fix a ``SUPPORTPATH`` that is
+correct in the place they are looking, while the value actually in force came from a file
+they were not told was preferred. Validating first turns a three-step misdiagnosis into one
+line naming the real cause.
+
+The Senzing native library must be importable (source the project
+``src/scripts/senzing-env.sh`` first).
 
 Exit code 0 means the entity model was built successfully (and, if requested, the
 snapshot was written); non-zero means it could not be built.
@@ -90,6 +109,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 _FALLBACK_SOURCE_COLORS = {"CUSTOMERS": "#F57826", "REFERENCE": "#3B6EA5", "WATCHLIST": "#C8922A"}
 _FALLBACK_COLORS = ["#8b5cf6", "#ec4899", "#0ea5e9", "#a3a34a", "#ef4444", "#14b8a6"]
 _FALLBACK_STROKES = ["#FFFFFF", "#18160F", "#FAF8F3"]
+_FALLBACK_STROKE_WIDTHS = [1.5, 3.0]
+_FALLBACK_FILL_SHADES = [0.0, 0.30, -0.30, 0.55, -0.55]
 _FALLBACK_BRAND = {
     "bg": "#FAF8F3", "surface": "#FFFFFF", "dark": "#18160F",
     "ink": "#18160F", "muted": "#4A4640", "accent": "#F57826",
@@ -104,6 +125,8 @@ try:
     SOURCE_COLORS = dict(_bt.SOURCE_COLORS)
     FALLBACK_COLORS = list(_bt.FALLBACK_COLORS)
     SOURCE_STROKES = list(_bt.SOURCE_STROKES)
+    SOURCE_STROKE_WIDTHS = list(_bt.SOURCE_STROKE_WIDTHS)
+    SOURCE_FILL_SHADES = list(_bt.SOURCE_FILL_SHADES)
     color_for_sources = _bt.color_for_sources
     _BRAND = {
         "bg": _bt.WARM_OFF_WHITE, "surface": _bt.WHITE, "dark": _bt.DEEP,
@@ -116,13 +139,32 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
     SOURCE_COLORS = dict(_FALLBACK_SOURCE_COLORS)
     FALLBACK_COLORS = list(_FALLBACK_COLORS)
     SOURCE_STROKES = list(_FALLBACK_STROKES)
+    SOURCE_STROKE_WIDTHS = list(_FALLBACK_STROKE_WIDTHS)
+    SOURCE_FILL_SHADES = list(_FALLBACK_FILL_SHADES)
 
     def color_for_sources(sources):
-        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract)."""
+        """Inlined mirror of ``brand_tokens.color_for_sources`` (same contract).
+
+        Kept behaviourally identical, not merely similar: tests/test_brand_sync.py asserts
+        this returns the same dict as the helper, so the channel widening has to be here
+        too or the import-failure path silently reverts to a 24-source ceiling.
+        """
+        states = 1 + len(SOURCE_STROKES) * len(SOURCE_STROKE_WIDTHS)
         codes = sorted({str(s) for s in (sources or []) if str(s).strip()})
         preferred = {c: SOURCE_COLORS[c] for c in codes if c in SOURCE_COLORS}
         claimed = set(preferred.values())
         available = [c for c in FALLBACK_COLORS if c not in claimed] or list(FALLBACK_COLORS)
+
+        def shade(fill, factor):
+            if not factor:
+                return fill
+            target = "#FFFFFF" if factor > 0 else "#18160F"
+            weight = abs(factor)
+            rgb = lambda v: (int(v[1:3], 16), int(v[3:5], 16), int(v[5:7], 16))  # noqa: E731
+            return "#%02X%02X%02X" % tuple(
+                round(a + (b - a) * weight) for a, b in zip(rgb(fill), rgb(target))
+            )
+
         assigned, nth = {}, 0
         for code in codes:
             if code in preferred:
@@ -130,10 +172,20 @@ except Exception:  # defensive fallback — kept in sync via tests/test_brand_sy
             else:
                 fill = available[nth % len(available)]
                 cycle = nth // len(available)
+                fill = shade(fill, SOURCE_FILL_SHADES[
+                    (cycle // states) % len(SOURCE_FILL_SHADES)])
                 nth += 1
+            slot = cycle % states
+            if slot == 0:
+                stroke, width = SOURCE_STROKES[0], None
+            else:
+                k = slot - 1
+                stroke = SOURCE_STROKES[(k + 1) % len(SOURCE_STROKES)]
+                width = SOURCE_STROKE_WIDTHS[k // len(SOURCE_STROKES)]
             assigned[code] = {
                 "fill": fill,
-                "stroke": SOURCE_STROKES[cycle % len(SOURCE_STROKES)],
+                "stroke": stroke,
+                "stroke_width": width,
                 "cycle": cycle,
             }
         return assigned
@@ -468,20 +520,22 @@ class Model:
             return {"results": []}
         items = []
         tried = []
+        failures = []
         for attr in self.SEARCH_NAME_ATTRS:
             tried.append(attr)
             try:
                 resp = self._search_one(engine, flags, attr, query)
             except Exception as exc:
-                # A later attribute failing must not discard a hit an earlier one
-                # already produced; only report the error if nothing matched at all.
-                if not items:
-                    return {
-                        "results": [],
-                        "error": str(exc),
-                        "attributes_tried": tried,
-                    }
-                break
+                # A failed attempt is an attempt, not the end of the list. This guard
+                # was `if not items: return ...`, which is unconditionally true on the
+                # *first* attribute — so any error searching NAME_FULL returned before
+                # NAME_ORG was ever called and silently reinstated the exact defect
+                # INV-164 exists to prevent, this time with an engine message attached
+                # pointing at the attribute that could not have matched anyway. Record
+                # the failure and carry on: a hit further down the list still wins, and
+                # the error is reported only if every candidate is exhausted (INV-190).
+                failures.append("%s: %s" % (attr, exc))
+                continue
             items.extend(resp.get("RESOLVED_ENTITIES", []))
             if items:
                 break  # first attribute that matches wins; no need to pay for the rest
@@ -503,8 +557,17 @@ class Model:
             )
         # `attributes_tried` lets the UI say what was searched when nothing matched,
         # so an empty result reads as "no match under these attributes" rather than
-        # as "this name is not in your data" (INV-115).
-        return {"results": results, "attributes_tried": tried}
+        # as "this name is not in your data" (INV-115). Failed attempts are listed
+        # there too — a candidate that errored was still tried, and the Bootcamper is
+        # shown that list.
+        out = {"results": results, "attributes_tried": tried}
+        # A hit is a hit: a failure behind it is not the Bootcamper's problem. Only when
+        # nothing matched anywhere does a failure become the answer — and then it must
+        # be reported, or "the engine could not run this" is rendered as the clean
+        # no-match "nothing in your data has that name" (INV-115).
+        if items == [] and failures:
+            out["error"] = "; ".join(failures)
+        return out
 
     def how(self, engine, sz, entity_id):
         """Explain HOW an entity was constructed from its records
@@ -730,10 +793,14 @@ const ALL_TABS=[["graph","Entity Graph"],["stats","Merge Statistics"],["matchkey
 // "unassigned" never masquerades as a real category.
 const SRC_COLORS=__SRC_COLORS__;
 const UNKNOWN_SRC="#9aa0a6";
-function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",cycle:0};}
+function srcStyle(src){return SRC_COLORS[src]||{fill:UNKNOWN_SRC,stroke:"#FFFFFF",stroke_width:null,cycle:0};}
 function color(src){return srcStyle(src).fill;}
 function srcStroke(src){return srcStyle(src).stroke;}
-function srcCycle(src){return srcStyle(src).cycle||0;}
+// The stroke WIDTH decides whether a stroke is drawn at all, and every draw site must key
+// on it -- not on `cycle`. `cycle` says which palette wrap a source landed in; it does not
+// reach the canvas, and keying on it capped the rendered encoding space at 24 sources while
+// the assigned map went on looking collision-free past that.
+function srcStrokeW(src){return srcStyle(src).stroke_width||0;}
 const CSSV=getComputedStyle(document.documentElement);
 function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
@@ -852,8 +919,8 @@ async function drawGraph(){
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
   node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
-    .attr("stroke",function(d){return srcCycle(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
-    .attr("stroke-width",function(d){return srcCycle(d.data_sources[0])?1.5:null;});
+    .attr("stroke",function(d){return srcStrokeW(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
+    .attr("stroke-width",function(d){return srcStrokeW(d.data_sources[0])||null;});
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
   // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
@@ -966,7 +1033,10 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const l=d3.select("#graph-container").append("div").attr("class","legend");
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");
     r.append("span").attr("class","dot").style("background",color(s))
-      .style("box-shadow",srcCycle(s)?("inset 0 0 0 1.5px "+srcStroke(s)):null);
+      // Same expression as the node's stroke, so the swatch and the node cannot disagree
+      // about a source's encoding -- including its WIDTH, which is a channel above 24
+      // sources.
+      .style("box-shadow",srcStrokeW(s)?("inset 0 0 0 "+srcStrokeW(s)+"px "+srcStroke(s)):null);
     r.append("span").text(s);
     r.append("span").attr("class","cnt").text(counts[s]);
     r.attr("title","Show only "+s+" (click again to restore)");
@@ -1154,13 +1224,23 @@ async function loadProbes(){const m=await getJSON("/api/merges");const box=d3.se
   // after an organization did while search tried NAME_FULL only. Verify against the
   // live engine — the same path the click will take — and drop any that come back
   // empty rather than shipping a dead control.
-  if(live){const cands=(m.entities||[]).slice(0,10);const good=[];
-    for(const e of cands){if(good.length>=6)break;
-      if(!e.entity_name)continue;
-      try{const r=await getJSON("/api/search?q="+encodeURIComponent(e.entity_name));
-        if(r&&r.results&&r.results.length)good.push(e);
-        else console.warn("dropped example chip (no match): "+e.entity_name);}
-      catch(err){console.warn("dropped example chip (search failed): "+e.entity_name);}}
+  // Verified concurrently rather than one at a time: nothing about the check is
+  // order-dependent, and a serial loop puts up to ten live engine round-trips in front
+  // of the first paint of the app. Order and the six-chip cap are reapplied to the
+  // results, so the chips offered are identical to the serial version's — only the
+  // waiting is gone. The trade is that all candidates are now searched instead of
+  // stopping at the sixth hit: the worst case (ten) is what it always was, the typical
+  // case costs a few more searches, and both happen in one round-trip.
+  if(live){const cands=(m.entities||[]).slice(0,10).filter(function(e){return e.entity_name;});
+    // Each candidate catches its own failure, so one rejected search drops one chip
+    // rather than rejecting the batch and taking every chip down with it.
+    const verdicts=await Promise.all(cands.map(function(e){
+      return getJSON("/api/search?q="+encodeURIComponent(e.entity_name))
+        .then(function(r){const hit=!!(r&&r.results&&r.results.length);
+          if(!hit)console.warn("dropped example chip (no match): "+e.entity_name);
+          return hit;})
+        .catch(function(err){console.warn("dropped example chip (search failed): "+e.entity_name);return false;});}));
+    const good=cands.filter(function(e,i){return verdicts[i];}).slice(0,6);
     good.forEach(function(e){box.append("button").attr("class","probe").text(e.entity_name)
       .on("click",function(){document.getElementById("search-in").value=e.entity_name;doSearch();});});}
   // The one capability the removed Record Merges tab uniquely had: browse every merged
@@ -1663,6 +1743,101 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
         fh.write(page)
 
 
+#: The `PIPELINE` keys the engine needs before it can initialize. A settings document
+#: missing any of them is incomplete, however valid its JSON.
+REQUIRED_PIPELINE_KEYS = ("CONFIGPATH", "RESOURCEPATH", "SUPPORTPATH")
+
+
+def _pipeline_gaps(raw):
+    """Missing REQUIRED_PIPELINE_KEYS for `raw`, or None when `raw` is not usable JSON.
+
+    None and [] are deliberately different: None means "cannot tell" (unparseable, or not
+    an object), [] means "parsed and complete".
+    """
+    if not raw or not raw.strip():
+        return None
+    try:
+        doc = json.loads(raw)
+    except ValueError:
+        return None
+    if not isinstance(doc, dict):
+        return None
+    pipeline = doc.get("PIPELINE")
+    if not isinstance(pipeline, dict):
+        return list(REQUIRED_PIPELINE_KEYS)
+    return [k for k in REQUIRED_PIPELINE_KEYS if not str(pipeline.get(k, "")).strip()]
+
+
+def resolve_settings(path, env_value, log):
+    """(settings, source, problem) — pick the settings document, content-aware.
+
+    Returns `problem` as a ready-to-write message when neither source is usable; otherwise
+    `problem` is None and `source` describes what won, for the caller to report.
+
+    ⛔ Precedence is content-aware on purpose (INV-210). The previous implementation was
+    `if os.path.exists(path)` — existence-based — so a `{"PIPELINE": {}}` stub silently beat
+    a fully populated env var, and the run then failed deep in the engine with `SENZ7426`,
+    an error whose documented meaning ("check SUPPORTPATH first; this is a configuration
+    error, not a broken install") points at the wrong thing entirely. The losing source is
+    never discarded silently: whenever both are present, which one is in force is stated.
+    """
+    file_raw = ""
+    file_unreadable = False
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                file_raw = fh.read()
+        except OSError as exc:
+            file_unreadable = True
+            log.write(f"settings: cannot read {path} ({exc}); falling back to "
+                      f"$SENZING_ENGINE_CONFIGURATION_JSON\n")
+
+    file_gaps = _pipeline_gaps(file_raw)
+    env_gaps = _pipeline_gaps(env_value)
+    file_ok = file_gaps == []
+    env_ok = env_gaps == []
+    both_present = bool(file_raw.strip() or file_unreadable) and bool(env_value.strip())
+
+    if file_ok:
+        if both_present and env_ok and file_raw.strip() != env_value.strip():
+            log.write(f"settings: using {path}; $SENZING_ENGINE_CONFIGURATION_JSON is also "
+                      "set and differs — the file wins.\n")
+        return file_raw, path, None
+
+    if env_ok:
+        if file_raw.strip() or file_unreadable:
+            why = "unreadable" if file_unreadable else (
+                "missing PIPELINE " + ", ".join(file_gaps) if file_gaps
+                else "not usable JSON")
+            log.write(f"settings: {path} is {why}; using "
+                      "$SENZING_ENGINE_CONFIGURATION_JSON instead.\n")
+        return env_value, "$SENZING_ENGINE_CONFIGURATION_JSON", None
+
+    # Neither is usable. Name the source that was tried and exactly what it lacks, so the
+    # reported cause is the real one rather than whatever the engine says three calls later.
+    if file_gaps:
+        return "", path, (
+            f"Engine settings in {path} are incomplete: PIPELINE is missing "
+            f"{', '.join(file_gaps)}.\n"
+            "The engine cannot initialize without them, and proceeding would fail with "
+            "SENZ7426 (transliteration), which points at SUPPORTPATH rather than at this "
+            "file. Fix the file, or unset it and export a complete "
+            "$SENZING_ENGINE_CONFIGURATION_JSON.\n")
+    if env_gaps:
+        return "", "$SENZING_ENGINE_CONFIGURATION_JSON", (
+            "Engine settings in $SENZING_ENGINE_CONFIGURATION_JSON are incomplete: "
+            f"PIPELINE is missing {', '.join(env_gaps)}.\n")
+    if file_raw.strip() and file_gaps is None:
+        return "", path, (
+            f"Engine settings in {path} are not usable JSON (expected an object with a "
+            "PIPELINE section).\n")
+    if env_value.strip() and env_gaps is None:
+        return "", "$SENZING_ENGINE_CONFIGURATION_JSON", (
+            "Engine settings in $SENZING_ENGINE_CONFIGURATION_JSON are not usable JSON "
+            "(expected an object with a PIPELINE section).\n")
+    return "", None, "No engine settings (missing --settings file and env var).\n"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--settings", default="config/engine_config.json")
@@ -1680,14 +1855,13 @@ def main(argv=None):
                     help="build the model (and snapshot) then exit without serving")
     args = ap.parse_args(argv)
 
-    if os.path.exists(args.settings):
-        with open(args.settings, encoding="utf-8") as _sf:
-            settings = _sf.read()
-    else:
-        settings = os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", "")
-    if not settings:
-        sys.stderr.write("No engine settings (missing --settings file and env var).\n")
+    settings, source, problem = resolve_settings(args.settings,
+                                                 os.getenv("SENZING_ENGINE_CONFIGURATION_JSON", ""),
+                                                 sys.stderr)
+    if problem:
+        sys.stderr.write(problem)
         return 2
+    _ = source
 
     try:
         factory, model, engine, flags, sz = build_model(settings, args.records)

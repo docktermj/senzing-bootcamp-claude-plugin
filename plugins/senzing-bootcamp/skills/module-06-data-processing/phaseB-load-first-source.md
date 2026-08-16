@@ -16,6 +16,17 @@ subset first:
 - Check that records are being added successfully
 - Observe any errors or warnings
 
+**On success, set `test_load_status: complete` for that source in `config/data_sources.yaml`.**
+Phase A's pre-load check reads this field to decide whether a test load is owed, so a run that
+is not recorded is a run that Phase A will ask for again on a resumed session.
+
+⛔ **This is the earliest point the test load can run, which is why it lives here and not in
+Phase A's pre-load checks.** It needs two things Phase A produces: the loading program itself,
+built at step 3 from the volume tier captured at step 1, and the registered `DATA_SOURCE` codes
+from step 4a — without which the load fails with `SENZ2207` (*"Data source code [{0}] does not
+exist"*, `explain_error_code('SENZ2207')`, server 1.32.9, 2026-08-14), the exact error step 4a
+exists to prevent. Do not move it earlier, and do not add a second copy upstream.
+
 If Phase 3 was completed, skip this step, the test load already verified basic loading. Proceed
 directly to production loading.
 
@@ -52,14 +63,42 @@ hardcoded figure:
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
   License Key gate (Module 4, Step 8a) already offered to expand capacity — restate that a larger
   license lets the full load proceed, as a choice, not a wall; do not force downsizing.
-- **Absent or null** (no custom license detected), warn that the evaluation license halts the
-  load at its cap, confirming the current capacity figure and the exact over-limit error code and
-  behavior from the Senzing MCP server at request time. If no figure is returned, say it is
-  currently unavailable rather than restating a remembered one.
+- **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
+  is the same branch, and the same trap, as Phase A's — `license_record_limit` is written only by
+  Module 4's volume-gated Step 8a, so its absence says nothing about the installed license. Measure
+  it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
+  `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter
+  these three branches with the measured value — a license reporting `recordLimit: 0` then lands on
+  the first branch and the warning is correctly omitted. If Phase A already measured and persisted
+  it, this branch is not reached.
+  - **Only if the measurement fails** does the evaluation-capacity warning apply. Say it is an
+    assumption, and confirm the current capacity figure and the exact over-limit error code and
+    behavior from the Senzing MCP server at request time. If no figure is returned, say it is
+    currently unavailable rather than restating a remembered one.
 
 **Data source registry.** On success, update `load_status` to `loaded` and `record_count` to the
 actual loaded count in `config/data_sources.yaml`. On failure, set `load_status` to `failed` and
 add an `issues` entry describing the error. Update `updated_at` either way.
+
+⛔ **Reconcile the loaded count against this source's own input *before* writing it — the value you
+are about to overwrite is the baseline.** (INV-243) `record_count` already holds the count Data
+collection **measured in the collected file**, alongside `expected_record_count` (what the provider
+stated), recorded there precisely "so the two can be compared here and re-checked later". Compare
+the loader's success count against that existing `record_count` first, and record the outcome under
+`validation_checks` as `load_count_matches_source` — the same auditable idiom Data collection
+already uses for `record_count_matches_expected`, so the comparison lives in the registry rather
+than only in the turn that ran it.
+
+⛔ **If the two disagree, write the discrepancy rather than the count** (INV-245): leave the
+existing `record_count` in place, set `load_status` to `failed`, record **both** figures in the
+`issues` entry, and do not present the loaded count as a result. Overwriting on a mismatch is the
+worst outcome available — it destroys the input baseline and files a partial load as a complete
+one, after which nothing downstream can tell the difference. This is the point where the figure
+enters durable state: `phaseC` step 12 reads it straight back out and presents it to the
+bootcamper, and Phase D writes it into `docs/loading_strategy.md`, so a number that was never
+checked here is never checked at all — it simply acquires the authority of having been written
+down. Reporting the aggregate alone does not discharge this: the failure mode this exists for
+produces figures that are plausible and sum correctly.
 
 **⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with
 single-threaded loading, entity resolution gets progressively slower as the database grows.

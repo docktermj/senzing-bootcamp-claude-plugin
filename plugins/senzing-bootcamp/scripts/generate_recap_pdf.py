@@ -70,6 +70,7 @@ missing.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import re
 import struct
@@ -122,7 +123,16 @@ RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 
 # Recap image references: `![alt](path)` on a line of its own.
-IMAGE_LINE_RE = re.compile(r"^!\[(.*?)\]\((.+?)\)$")
+# An embedded screenshot: ``![alt](path)`` alone on its line.
+#
+# The list marker is optional because `module-completion.md` tells the guide to add
+# screenshots *to* **Actions Taken**, which is a bulleted list — so following that
+# instruction literally yields ``- ![alt](path)``. Anchored matching then saw none of
+# them, and a recap of 8 captured screenshots embedded 0 at exit 0, with `--check`
+# reporting "captured 8, referenced 0" — which reads as *the guide forgot to embed
+# them*, the one thing that had not happened (measured 2026-08-14). Accepting the
+# marker is what makes recaps already written this way render.
+IMAGE_LINE_RE = re.compile(r"^(?:[-*+]\s+)?!\[(.*?)\]\((.+?)\)$")
 
 # A URL rather than a local file. Remote images are NEVER fetched (offline, INV-081).
 IMAGE_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*://")
@@ -267,13 +277,33 @@ def _split_title_date(rest: str) -> Tuple[str, str]:
 _ITEM_GAP_MM = 2.4
 _ITEM_GAP_PT = 3.0
 
-# Compared through _normalize_heading, so the "Action Taken" singular variant is covered.
-_SPACED_SUBSECTIONS = ("information shared", "actions taken")
+# Bullet lists are spaced BY DEFAULT (inverted 2026-07-31 — see below). Where the gap
+# falls is decided **structurally**, by indentation, not by a list of names:
+#
+#     - **Q:** a question          <- no gap; its answer belongs with it
+#       - **R:** the answer        <- gap; the next question starts a new pair
+#     - **Q:** the next question
+#
+# "Emit a gap when the next content-bearing bullet is TOP-LEVEL" keeps a response with
+# its question *and* separates one Q/R pair from the next, with no name to keep in sync.
+#
+# ⚠️ This replaced an opt-in tuple of three subsection/label names, and the names were
+# themselves the defect: a list added or renamed later was silently unspaced, and
+# "Files produced" was excluded on the stated belief that it was "a short reference list
+# of one-line paths". `bootcamp-onboarding/module-completion.md` requires every entry to
+# be a path **plus** a "— what it is" gloss, so in real recaps that list runs 5-12 items
+# at 110-188 characters — the very case the gap exists for, and the one list where it was
+# switched off. The exclusion looked right because it was reasoned from the list's
+# *title* rather than from what the template makes its items contain.
+#
+# These opt-outs are the escape hatch, deliberately empty: the structural rule already
+# covers both cases the original opt-in list was protecting. Add a name here only when a
+# list must stay tight *between* top-level items — and say why.
+_UNSPACED_SUBSECTIONS: Tuple[str, ...] = ()
 
-# Spaced only where they appear as a `**Label:**` block, so that within End-of-Module
-# Summary the accomplishments list is spaced while "Files produced" — a short list of
-# one-line paths — stays tight.
-_SPACED_LABELS = ("what you accomplished",)
+# Compared through _block_label, so a `**Label:**` block inside a subsection can opt out
+# without silencing the whole subsection.
+_UNSPACED_LABELS: Tuple[str, ...] = ()
 
 # Labels whose value always starts on its own line, left-aligned to the page margin,
 # rather than continuing inline after the bold label. "Why it matters" is a short label
@@ -282,18 +312,26 @@ _SPACED_LABELS = ("what you accomplished",)
 # per module), which reads as ragged and off-margin rather than as a normal paragraph.
 _NEW_LINE_LABELS = ("why it matters",)
 
-# Deliberately NOT spaced:
-# * "Questions & Responses" — its responses are indented sub-bullets under their
-#   questions; spacing every bullet would separate each answer from its question and
-#   read worse, not better.
-# * "Files produced" — a short reference list of paths.
+# Both former exclusions are gone, and neither needed a name in the end (2026-07-31):
+# * "Questions & Responses" — the concern was real (spacing every bullet would tear each
+#   answer away from its question) but it only ever applied to the *indented* `- **R:**`
+#   sub-bullets. The top-level `- **Q:**` items wanted the gap all along, and the
+#   structural rule gives exactly that: a response stays attached to its question, and
+#   one Q/R pair is separated from the next.
+# * "Files produced" — excluded as "a short reference list of paths", which
+#   `module-completion.md` contradicts: it templates every entry as
+#   `` - `{path}` — {what it is} `` and requires the gloss, so real recaps run 5-12
+#   items at 110-188 characters. It is also the recap's index, so it was the worst list
+#   to render as an undifferentiated block.
 
 
 def _block_label(line: str) -> str:
     """The normalized `**Label:**` of a line, or "" when it carries none.
 
-    Used to switch spacing on inside a subsection: End-of-Module Summary holds both a
-    list that wants spacing and one that does not.
+    Used to switch spacing **off** inside a subsection, via `_UNSPACED_LABELS`. It read
+    the other way until 2026-07-31, when the default inverted: a labeled block that must
+    stay tight between its top-level items is now the exception that has to be named,
+    rather than every spaced list having to be.
     """
     m = re.match(r"^\s*\*\*(.+?):\*\*", line.strip())
     return _normalize_heading(m.group(1)) if m else ""
@@ -346,6 +384,27 @@ def _is_bullet(line: str) -> bool:
     return bool(re.match(r"^\s*[-*]\s+\S", line))
 
 
+def _is_top_level_bullet(line: str) -> bool:
+    """A bullet with NO leading whitespace, as opposed to any indented sub-bullet.
+
+    ⚠️ **Deliberately a different threshold from the one used to *draw* the indent.**
+    Both renderers give a bullet its extra visual indent only at `>= 4` leading spaces
+    (`_render_line`'s `lead >= 4`, `_stdlib_subsection`'s `len(m.group(1)) >= 4`),
+    because that is where a second visual level is wanted. Spacing asks a different
+    question — "does this line belong with the one above it?" — and any indentation at
+    all is the author saying yes.
+
+    Being tolerant here is free and prevents a real regression. `module-completion.md`
+    mandates four spaces for a response (`    - **R:** …`), but a recap written with two
+    would, under a `>= 4` rule, have every answer torn away from its question — which is
+    precisely the failure the original "never space Questions & Responses" exclusion
+    existed to prevent. A genuine top-level list item never carries leading whitespace,
+    so nothing is lost by treating every indented bullet as a continuation.
+    """
+    m = re.match(r"^(\s*)[-*]\s+\S", line)
+    return bool(m) and not m.group(1)
+
+
 def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
     """True when the next content-bearing line after ``index`` is also a bullet.
 
@@ -356,6 +415,42 @@ def _next_nonblank_is_bullet(lines: List[str], index: int) -> bool:
         if not line.strip():
             continue
         return _is_bullet(line)
+    return False
+
+
+def _still_in_list_item(line: str, was_in_item: bool) -> bool:
+    """Whether, after this line, we are still inside a list item.
+
+    A bullet opens one; a blank line closes it; an **indented non-bullet line is a
+    soft-wrapped continuation** of the item above and keeps it open.
+
+    ⚠️ The continuation case is why the inter-item gap is decided on this rather than on
+    `_is_bullet` alone. Gating on the bullet line asks "is the *next source line* another
+    item?", and for a bullet whose Markdown wraps across two source lines the answer is
+    no — it is that same item's continuation — so such an item received **no gap at all**
+    (found 2026-07-31; latent since the gap was introduced, and invisible because the
+    shipped example recap writes every entry as one long source line and lets the
+    renderer wrap it). The gap has to be emitted after an item's *last* source line.
+    """
+    if _is_bullet(line):
+        return True
+    if not line.strip():
+        return False
+    return was_in_item and line[:1].isspace()
+
+
+def _next_nonblank_is_top_level_bullet(lines: List[str], index: int) -> bool:
+    """True when the next content-bearing line is a **top-level** bullet.
+
+    This is the whole spacing rule. Gating on the next line keeps the gap strictly
+    between items (never after the last); requiring that line to be top-level keeps it
+    strictly between *logical* items, so an indented response stays attached to the
+    question above it while the following question is still separated from the pair.
+    """
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            continue
+        return _is_top_level_bullet(line)
     return False
 
 
@@ -715,9 +810,116 @@ def image_embed_note(referenced: int) -> str:
     The character-retention figure cannot see a dropped image — the characters do
     render — so a recap that lost every screenshot still reported ~99%. This is the
     figure that makes the loss visible (INV-110).
+
+    ⛔ **This measures embedding, not coverage.** ``referenced`` counts the ``![](…)``
+    links in the recap being rendered, so the denominator comes from the same file as
+    the numerator: a recap that only ever referenced four of six captured tabs reads
+    ``embedded 4 of 4 images``. Use ``tab_coverage_note`` for the coverage question —
+    it takes its denominator from capture's sidecar manifest, which is external.
     """
     embedded = sum(1 for outcome in _IMAGE_OUTCOMES.values() if outcome == "embedded")
     return f"embedded {embedded} of {referenced} images"
+
+
+# --- Tab coverage, measured against an external denominator ------------------
+#
+# `capture_screenshots.py` writes `<name>-tabs.json` beside the PNGs recording how many
+# tabs it actually captured. That is the only number in the system that does not come
+# from the recap Markdown, so it is the only one that can detect a tab which was
+# captured and then never referenced.
+
+TAB_MANIFEST_GLOBS = ("*-tabs.json", "*/*-tabs.json")
+
+
+def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]:
+    """Load every capture manifest reachable from the recap's image bases.
+
+    Globs one level down as well as at the top, because the recap lives in ``docs/``
+    while its PNGs (and their manifests) live in ``docs/visualizations/``. The
+    subdirectory is found by shape rather than by name, so a project that keeps them
+    elsewhere still works.
+
+    A manifest that cannot be read or parsed is skipped and reported — never fatal,
+    and never silently treated as "no tabs expected", which would turn a corrupt file
+    into a clean bill of health.
+    """
+    manifests: List[dict] = []
+    seen: set = set()
+    for base in (base_dirs if base_dirs is not None else _IMAGE_BASE_DIRS) or [Path.cwd()]:
+        for pattern in TAB_MANIFEST_GLOBS:
+            try:
+                candidates = sorted(Path(base).glob(pattern))
+            except OSError:
+                continue
+            for path in candidates:
+                key = path.resolve()
+                if key in seen:
+                    continue
+                seen.add(key)
+                try:
+                    with open(path, encoding="utf-8") as fh:
+                        data = json.load(fh)
+                except (OSError, ValueError) as exc:
+                    sys.stderr.write(
+                        f"unreadable tab manifest {path} ({exc}); tab coverage cannot "
+                        "be checked from it\n"
+                    )
+                    continue
+                if isinstance(data, dict) and isinstance(data.get("captured"), list):
+                    data["_path"] = str(path)
+                    manifests.append(data)
+    return manifests
+
+
+def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[str]:
+    """Captured tabs that never reached the recap, named by slug.
+
+    This is the check `embedded N of M images` structurally cannot perform: it compares
+    what capture recorded against what the recap references.
+    """
+    referenced = {Path(target).name for target in recap_image_targets(source_text)}
+    problems: List[str] = []
+    for manifest in manifests:
+        missing = [
+            entry
+            for entry in manifest["captured"]
+            if isinstance(entry, dict) and entry.get("file") not in referenced
+        ]
+        if not missing:
+            continue
+        slugs = ", ".join(
+            str(entry.get("slug") or entry.get("tab") or entry.get("file"))
+            for entry in missing
+        )
+        name = manifest.get("name") or Path(str(manifest.get("_path", ""))).name
+        problems.append(
+            f"visualization {name!r}: {len(missing)} captured tab(s) are missing from "
+            f"the recap — {slugs} (captured {len(manifest['captured'])}, referenced "
+            f"{len(manifest['captured']) - len(missing)}; source: "
+            f"{manifest.get('_path', 'tab manifest')})"
+        )
+    return problems
+
+
+def tab_coverage_note(source_text: str, manifests: Sequence[dict]) -> str:
+    """``N of M captured tabs`` — empty when no manifest exists.
+
+    Deliberately worded so it cannot be mistaken for the Markdown-derived count that
+    sits beside it in the success line.
+    """
+    if not manifests:
+        return ""
+    referenced = {Path(target).name for target in recap_image_targets(source_text)}
+    captured = [
+        entry
+        for manifest in manifests
+        for entry in manifest["captured"]
+        if isinstance(entry, dict)
+    ]
+    if not captured:
+        return ""
+    present = sum(1 for entry in captured if entry.get("file") in referenced)
+    return f"{present} of {len(captured)} captured tabs reached the recap"
 
 
 @dataclass
@@ -828,6 +1030,29 @@ _FALLBACK_RGB = {
     "LIGHT": (250, 248, 243), "ACCENT": (255, 78, 31), "INK": (24, 22, 15),
     "GREEN": (29, 158, 117), "LINE": (229, 223, 211), "AMBER": (240, 146, 10),
 }
+
+
+def _use_fallback_palette():
+    """The nine fallback colours in assignment order, in ONE place (INV-184).
+
+    Both `except` branches below need them, and nine assignment lines written out per
+    branch is the drift surface — a tenth token added to one branch and not the other
+    is exactly the silent divergence `_FALLBACK_RGB` was named at module scope to
+    prevent. Mirrors `generate_discoveries_pdf.py`'s helper of the same name.
+    """
+    return (
+        _FALLBACK_RGB["NAVY"],
+        _FALLBACK_RGB["BLUE"],
+        _FALLBACK_RGB["SLATE"],
+        _FALLBACK_RGB["LIGHT"],
+        _FALLBACK_RGB["ACCENT"],
+        _FALLBACK_RGB["INK"],
+        _FALLBACK_RGB["GREEN"],
+        _FALLBACK_RGB["LINE"],
+        _FALLBACK_RGB["AMBER"],
+    )
+
+
 try:
     import brand_tokens as _bt
 
@@ -841,16 +1066,24 @@ try:
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
     LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
     AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
-except Exception:  # defensive fallback — kept in sync via tests/test_brand_sync.py
-    NAVY = _FALLBACK_RGB["NAVY"]
-    BLUE = _FALLBACK_RGB["BLUE"]
-    SLATE = _FALLBACK_RGB["SLATE"]
-    LIGHT = _FALLBACK_RGB["LIGHT"]
-    ACCENT = _FALLBACK_RGB["ACCENT"]
-    INK = _FALLBACK_RGB["INK"]
-    GREEN = _FALLBACK_RGB["GREEN"]
-    LINE = _FALLBACK_RGB["LINE"]
-    AMBER = _FALLBACK_RGB["AMBER"]
+except ModuleNotFoundError:  # defensive fallback — kept in sync via tests/test_brand_sync.py
+    # INV-111: a degraded path is never inferred from silence. The two branches stay
+    # distinct because they are different failures — say which occurred, since a
+    # project-local copy of this script without brand_tokens.py beside it is easy to
+    # create by accident, and "present but unusable" points somewhere else entirely.
+    # The recap PDF is the Bootcamper's keepsake; it renders either way (INV-048), but
+    # a keepsake printed in the fallback palette must not be indistinguishable from one
+    # printed in the brand's.
+    sys.stderr.write(
+        f"brand_tokens.py not importable from {Path(__file__).resolve().parent} "
+        "(copy it next to this script); using the inlined brand palette.\n"
+    )
+    NAVY, BLUE, SLATE, LIGHT, ACCENT, INK, GREEN, LINE, AMBER = _use_fallback_palette()
+except Exception as exc:  # present but unusable
+    sys.stderr.write(
+        f"brand_tokens.py present but unusable ({exc}); using the inlined brand palette.\n"
+    )
+    NAVY, BLUE, SLATE, LIGHT, ACCENT, INK, GREEN, LINE, AMBER = _use_fallback_palette()
 
 # Header-row fill for rendered tables. Derived from the warm line color so the
 # header reads as a band rather than a second body row, and so it cannot drift
@@ -2123,8 +2356,9 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
         pdf.multi_cell(epw, 6, "(not recorded)")
         pdf.ln(1)
         return
-    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    unspaced_section = _normalize_heading(name) in _UNSPACED_SUBSECTIONS
     active_label = ""
+    in_item = False
     index = 0
     while index < len(content or []):
         line = content[index]
@@ -2135,13 +2369,15 @@ def _render_subsection(pdf, epw, name: str, content: Optional[List[str]],
         if run:
             _render_table_fpdf2(pdf, epw, "\n".join(content[index : index + run]))
             index += run
+            in_item = False
             continue
         label = _block_label(line)
         if label:
             active_label = label
         _render_line(pdf, epw, line)
-        if _is_bullet(line) and (spaced_section or active_label in _SPACED_LABELS):
-            if _next_nonblank_is_bullet(content, index):
+        in_item = _still_in_list_item(line, in_item)
+        if in_item and not unspaced_section and active_label not in _UNSPACED_LABELS:
+            if _next_nonblank_is_top_level_bullet(content, index):
                 pdf.ln(_ITEM_GAP_MM)
         index += 1
     for block in missing_blocks:
@@ -2322,7 +2558,12 @@ def _render_line(pdf, epw, line: str) -> None:
     if _is_empty_takeaway(stripped):
         return
     # Embedded visualization screenshot: ![alt](path) on its own line.
-    img = re.match(r"^!\[(.*?)\]\((.+?)\)$", stripped)
+    #
+    # Uses IMAGE_LINE_RE rather than a second copy of the pattern: the counter
+    # (`recap_image_targets`) and this renderer decide the same question, and when they
+    # were written separately they could disagree about what an image line is. Checked
+    # before the bullet branch below, so a bulleted image renders AS an image.
+    img = IMAGE_LINE_RE.match(stripped)
     if img:
         _render_image(pdf, epw, img.group(2).strip(), img.group(1).strip())
         return
@@ -2468,6 +2709,10 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
              size: Optional[float] = None) -> None:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
+        # Sanitise BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
+        # measuring raw text and rendering sanitised text mis-centres the line — the same
+        # desync the comment below describes for escaping, one step earlier.
+        text = _safe(text)
         # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
         # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
         # and escaping twice prints the escape itself.
@@ -2489,7 +2734,9 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
         return _wrap_to_width(
-            text,
+            # Sanitise before wrapping: line breaks chosen on raw text do not hold once a
+            # character transliterates to a longer form.
+            _safe(text),
             _CERT_TEXT_W * _MM,
             lambda s: _stdlib_width(s, size, style == "B", spacing),
         )
@@ -2593,11 +2840,17 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            tokens.append((text, font, size, indent))
+            # The one choke point for stdlib text: sanitise here so `_pdf_escape` only ever
+            # sees Latin-1 and never has to substitute (INV-143). `_safe` is idempotent, so
+            # text already sanitised by `add_wrapped` passes through unchanged.
+            tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            for chunk in _wrap(text, width):
+            # Sanitise BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
+            # changes the count, so wrapping raw text yields lines that overrun once
+            # rendered.
+            for chunk in _wrap(_safe(text), width):
                 add(chunk, font, size, indent)
 
         add(recap.title, "F2", 22, 0)
@@ -2721,8 +2974,9 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
     if empty and not missing_blocks:
         add_wrapped("(not recorded)", "F1", 10, 6)
         return
-    spaced_section = _normalize_heading(name) in _SPACED_SUBSECTIONS
+    unspaced_section = _normalize_heading(name) in _UNSPACED_SUBSECTIONS
     active_label = ""
+    in_item = False
     cursor = 0
     while cursor < len(content or []):
         index, line = cursor, content[cursor]
@@ -2732,9 +2986,12 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
         if run:
             _stdlib_table(add, "\n".join(content[index : index + run]))
             cursor += run
+            in_item = False
             continue
         cursor += 1
         s = line.strip()
+        # Tracked before the skips below so a blank line still closes an item.
+        in_item = _still_in_list_item(line, in_item)
         if not s:
             add("", "F1", 4, 0)
             continue
@@ -2754,8 +3011,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
             s = _md_inline_to_text(s)
         add_wrapped(s, "F1", 10.5, indent)
         # Mirror the fpdf2 path's inter-item gap so the two renderers do not drift.
-        if m and (spaced_section or active_label in _SPACED_LABELS):
-            if _next_nonblank_is_bullet(content, index):
+        if in_item and not unspaced_section and active_label not in _UNSPACED_LABELS:
+            if _next_nonblank_is_top_level_bullet(content, index):
                 add("", "GAP", _ITEM_GAP_PT, 0)
     for block in missing_blocks:
         add_wrapped(f"{block}: (not recorded)", "F1", 10.5, 6.0)
@@ -2813,7 +3070,28 @@ def _wrap(text: str, width: int) -> List[str]:
 
 
 def _pdf_escape(s: str) -> str:
-    # PDF text within () strings: escape \, (, ) and drop non-Latin-1.
+    """Escape a string for a PDF `()` literal. ⛔ **Sanitise with `_safe` first.**
+
+    This does PDF *syntax* only: escape `\\`, `(`, `)`, and emit `\\ooo` octal for the
+    Latin-1 high range. It performs no transliteration.
+
+    ⚠️ **It used to, and that was an INV-143 violation.** It carried its own inline
+    substitution table of 9 entries — a subset of `_UNICODE_MAP`'s 33 — with a `"?"`
+    default. The fpdf2 renderer normalises through `_safe` and never reaches here, but the
+    stdlib writers called this on raw text, so **24 of the 33 mapped characters rendered as
+    `?`**: `≥ ≤ ≈ ≠ € ™ ∞ ← ↔ ⇒ ↑ ↓ ✅ ✓ ⚠` and the deliberately-dropped emoji. Silently, at
+    exit 0, with a green retention figure — because `?` is one character replacing one, so
+    retention is structurally unable to see it. INV-143 exists to forbid precisely that:
+    "MUST NOT substitute `?` for a character it cannot encode".
+
+    Two tables, one authoritative and one not, is the defect. There is now one:
+    `_UNICODE_MAP` via `_safe`. Do not reintroduce a table here — restoring parity by hand
+    is what drifted the first time.
+
+    A character that still arrives unencodable is **dropped and recorded**, so
+    `dropped_character_warning()` reports it (INV-111). Dropping is what INV-143 permits;
+    substituting is what it forbids.
+    """
     out = []
     for ch in s:
         o = ord(ch)
@@ -2824,19 +3102,10 @@ def _pdf_escape(s: str) -> str:
         elif 160 <= o <= 255:
             out.append("\\%03o" % o)
         else:
-            # Approximate common typographic characters, else '?'.
-            repl = {
-                0x2018: "'",
-                0x2019: "'",
-                0x201C: '"',
-                0x201D: '"',
-                0x2013: "-",
-                0x2014: "-",
-                0x2022: "-",
-                0x2026: "...",
-                0x2192: "->",
-            }.get(o, "?")
-            out.append(repl)
+            # Unreachable for `_safe`-sanitised text, which is every shipped caller.
+            # Reached only if a caller forgets — and then the loss must be legible on
+            # stderr rather than a `?` on a Bootcamper's keepsake.
+            _record_dropped_character(ch, s)
     return "".join(out)
 
 
@@ -2977,14 +3246,30 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"embedded image not found: {target} (relative to {inp.parent})"
             for target in unresolvable_image_targets(source_text)
         ]
+        # A captured tab that never reached the recap is invisible to every check
+        # above, because they all measure the recap against itself.
+        manifests = find_tab_manifests()
+        problems = problems + tab_coverage_problems(source_text, manifests)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
             sys.stderr.write(f"({audit.retention_note()})\n")
             return 1
+        if not manifests:
+            # A check that could not run is reported as skipped, never folded into a
+            # pass (INV-163). Without a manifest there is no external denominator, so
+            # "every captured tab reached the recap" is unverified, not true.
+            sys.stderr.write(
+                "SKIPPED: tab-coverage check — no capture manifest (<name>-tabs.json) "
+                "was found beside the recap's images, so how many tabs were captured "
+                "is unknown. The embedded-image count cannot answer this: its "
+                "denominator comes from this same recap.\n"
+            )
         print(
             "Recap complete: all module sections carry the required subsections, "
             "and every End-of-Module Summary carries its labeled blocks."
+            + (f" Tab coverage: {tab_coverage_note(source_text, manifests)}."
+               if manifests else "")
         )
         return 0
 
@@ -3078,6 +3363,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                 # The stdlib renderer embeds no images at all; say so rather than
                 # letting "embedded 0 of 6" read as a lookup failure.
                 note = f"{note} (the stdlib renderer embeds no images)"
+        # Stated separately from the embedded count, and worded differently, because
+        # conflating the two is the defect: the embedded count's denominator comes from
+        # this recap, and this one's comes from capture's manifest.
+        coverage = tab_coverage_note(source_text, find_tab_manifests())
+        if coverage:
+            note = f"{note}, {coverage}"
         print(f"PDF generated: {out} (renderer: {used}, {note})")
         return 0
 

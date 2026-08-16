@@ -15,7 +15,8 @@ plugin never alters unrelated Claude Code sessions.
 |-------|--------|---------|
 | `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). |
 | `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback and verbosity changes at any time (routes "bootcamp feedback" and "change verbosity" requests to the right workflow). |
-| `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes to system temp / Downloads and obvious hardcoded secrets during a bootcamp). |
+| `UserPromptSubmit` | `scripts/checkpoint-tick.py` | to keep the in-progress recap checkpoint durable (creates `docs/progress/recap_checkpoint.md` as an empty scaffold within a turn of the bootcamp starting, and reminds the guide once to keep it current). Runs per turn because a bootcamp becomes active *after* `SessionStart` has already run; silent on every turn after the file exists. |
+| `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes whose resolved target is outside the project — system temp and Downloads get a more specific message — and obvious hardcoded secrets, during a bootcamp). |
 | `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
 | `PreCompact` | `scripts/precompact-recap.py` | to preserve your in-progress recap before the conversation is compacted (folds the module recap checkpoint into the recap). |
 | `SessionEnd` | `scripts/session-end.py` | to preserve your in-progress recap when the session ends (folds the module recap checkpoint into the recap). |
@@ -58,7 +59,7 @@ Code identically on all three platforms, including inside `args`.
   are `command` scripts that decide behavior from the on-disk bootcamp-active
   signal, so they never fire in non-bootcamp sessions.
 - **Non-blocking by default.** The write-gate can block a tool call (exit 2), and only
-  for stray paths or obvious secrets during a bootcamp. The `Stop` hook can block a turn
+  for a target outside the project or an obvious secret, during a bootcamp. The `Stop` hook can block a turn
   from ending (`decision: block`) to request the one forgotten closing 👉 question, but
   only once: it returns success whenever `stop_hook_active` is true, so it can never loop
   on its own continuation, and it stays silent when the session is not a bootcamp, when

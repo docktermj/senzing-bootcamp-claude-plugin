@@ -36,7 +36,7 @@ from Phase 2 unchanged; checkpoint to `config/mapping_state_[datasource].json` a
 ### 21a. Register the data source code (before the test load)
 
 Before the step 22 test load, ensure the source's `DATA_SOURCE` code is registered in the Senzing
-engine config, so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
+engine config (INV-089), so the load does not fail with `SENZ2207: Data source code [...] does not exist` —
 the same register-before-load guarantee System Verification and Module 6 use. Collect the distinct
 `DATA_SOURCE` value(s) in this source's Phase 2 transformation output. If `mapping_workflow` step 6
 registers the code as part of loading, this is already satisfied; otherwise generate the
@@ -48,9 +48,13 @@ registers the code, and sets it as the new default, idempotently — and run it 
 registration snippet reads the current default config and builds from it, so against a
 just-schema-created datastore it fails with `SENZ7221
 EAS_ERR_NO_CONFIG_REGISTERED_FOR_DATA_ID` — a different failure from the `SENZ2207` above, and one
-whose own `explain_error_code` guidance does not name the cause. Seed via the **`init_default_config`**
-alternative in the same `sdk_guide(topic='configure')` response (see
-`../module-02-sdk-setup/SKILL.md` → Step 8a), then register. Where `mapping_workflow` step 6 creates
+whose own `explain_error_code` guidance **does** now name the cause and the remedy — call it
+(re-verified on MCP server 1.32.8, 2026-08-11: its first cause is *"No default config has EVER been
+registered on this datastore"* and its first resolution step names `create_config_from_template()` →
+`set_default_config(...)`, adding that `sdk_guide` `topic='configure'` "called WITHOUT `data_sources`
+… returns the seeding snippet"). Seed by calling `sdk_guide(topic='configure', language=…)` **without
+`data_sources`** — that call's **primary** `code` block is `init_default_config` — then call it again
+**with** `data_sources` to register (see `../module-02-sdk-setup/SKILL.md` → Step 8a). Where `mapping_workflow` step 6 creates
 and initializes the sandbox database itself, this is already handled — confirm rather than assume.
 
 **Checkpoint:** write step 21a.
@@ -259,7 +263,9 @@ record does not present features where the analyzer looks for them.
 
 ⛔ **Before fixing anything, sort the findings the way `phase2-data-mapping.md` requires** — the
 analyzer reports conformance to the *recommended* schema, which is a different question from
-whether the data loads:
+whether the data loads. This split is INV-144 (only structural invalidity may block; a conformance
+finding must not trigger remapping) and INV-145 (every shape the Entity Specification supports is
+accepted, not only the recommended one):
 
 - **Genuinely structural** (malformed JSON, missing `DATA_SOURCE`, unparseable record): the data
   cannot load. Fix it in the transformation program, then re-validate.
@@ -278,7 +284,9 @@ exit code was.
 ## Encoding
 
 - Detect encoding in the profiling step. Convert to UTF-8 in the transformation program.
-- Non-Latin scripts: `search_docs(query="globalization", category="globalization")`.
+- Non-Latin scripts: `search_docs(query="globalization", category="globalization")`. For the
+  sections to ask for by topic — and the two phrasings that return wrong content — see this
+  module's `SKILL.md` → "Multi-language data" (INV-212) rather than restating them.
 - Strip the UTF-8 BOM from Windows CSV files. JSON libraries handle special character escaping.
 - That covers a BOM arriving in **input** data. The more damaging case is a BOM you *write*: on
   PowerShell 5.1, `Out-File -Encoding utf8` prefixes the file it creates, so record 1 of a generated

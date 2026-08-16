@@ -80,12 +80,33 @@ class TheErrorCodeIsRouted(unittest.TestCase):
         """INV-080: the MCP tool stays the first stop even when we know the cause."""
         self.assertRegex(flat(MODULE_02), r"explain_error_code\('SENZ7221'\)")
 
-    def test_the_guidance_warns_the_error_codes_own_steps_mislead(self):
-        """Its resolution steps name paths/connection/initialization, not seeding."""
+    def test_the_guidance_sends_the_reader_to_follow_the_error_codes_own_steps(self):
+        """The 2026-07-30 correction, and the sharpest instance of its class.
+
+        This test previously asserted the opposite — that the guidance *warns* the error
+        code's own resolution steps mislead ("do **not** name this cause", "none of which
+        is the actual fix"). True on server 1.32.1. On 1.32.2 `explain_error_code('SENZ7221')`
+        returns the never-seeded datastore as its **first** cause and the seeding sequence
+        as its **first** resolution step — the plugin's own diagnosis and remedy. So the
+        old text told the guide to discount three accurate, ordered steps, inverting the
+        INV-080 routing it was written to serve, and this test made that load-bearing.
+        """
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)names its own remedy|follow what it returns")
+        for stale in ("none of which is the actual fix", "pulled toward re-checking"):
+            with self.subTest(phrase=stale):
+                self.assertNotIn(stale, text)
+
+    def test_the_correction_is_scoped_to_senz7221_only(self):
+        """SENZ2027 was re-checked the same day and is still a stub returning a
+        placeholder cause, so its compensating guidance is correct and must survive.
+        Richness varies per code; a blanket 'trust explain_error_code' would be wrong."""
+        text = flat(MODULE_02)
         self.assertRegex(
-            flat(MODULE_02),
-            r"(?i)do \*\*not\*\* name this cause|does not name the (?:actual )?(?:cause|fix)"
-            r"|none of which is the actual fix",
+            text, r"(?i)SENZ2027.{0,300}?The actionable detail is in the Senzing FAQ",
+            "the SENZ2027 compensating text was lost — that code is still a stub "
+            "(verified 2026-07-30: placeholder cause, three generic resolution steps), "
+            "so the plugin must keep supplying the FAQ detail the tool omits",
         )
 
 
@@ -95,16 +116,35 @@ class TheSeedingCodeComesFromMcp(unittest.TestCase):
     def test_init_default_config_is_named_as_the_route(self):
         self.assertIn("init_default_config", flat(MODULE_02))
 
-    def test_it_points_at_the_configure_response_alternatives(self):
-        self.assertRegex(flat(MODULE_02), r"(?i)`?alternatives`?")
+    def test_it_explains_which_call_puts_the_snippet_where(self):
+        """Repointed 2026-08-11 (INV-181): `alternatives` alone is not the requirement.
 
-    def test_the_wrong_route_is_explicitly_ruled_out(self):
-        """Implementation disproved the spec here: initialize does not seed."""
-        self.assertRegex(
-            flat(MODULE_02),
-            r"(?i)generate_scaffold\(workflow='initialize'\)\W{0,4}does not do this"
-            r"|initialize.{0,80}does not seed",
-        )
+        `sdk_guide(topic='configure')` called WITHOUT `data_sources` returns
+        `init_default_config` as the PRIMARY snippet and `register_data_sources` in
+        `alternatives`; called WITH `data_sources` the two swap. The module must state that
+        discriminator, because a step that just says "take the alternative" is right for one
+        call and wrong for the other."""
+        text = flat(MODULE_02).replace("*", "")   # emphasis must not decide the match
+        self.assertRegex(text, r"(?i)without\s+`?data_sources`?")
+        self.assertRegex(text, r"(?i)\bwith\s+`?data_sources`?")
+        self.assertRegex(text, r"(?i)`?alternatives`?")
+
+    def test_the_snippet_is_located_by_source_path_not_by_position(self):
+        """Repointed 2026-08-11 (`sdk-guide-configure-now-leads-with-seeding`, INV-181).
+
+        This asserted that the module rules `generate_scaffold(workflow='initialize')` out as
+        a seeding route — "does not do this". On server 1.32.8 that workflow DOES return the
+        `configuration/` snippets, so the assertion pinned a claim the server had falsified.
+
+        What the module actually promises, and what is worth pinning, is the discipline the
+        stale claim was a symptom of: `sdk_guide(topic='configure')` returns ONE primary
+        snippet and puts the other in `alternatives`, selected by whether `data_sources` was
+        passed — so a step must find the snippet by its `source_path`, never by its position
+        in the response. Pinning position is what went stale; pinning the rule cannot."""
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)source_path.{0,120}never by its position"
+                               r"|never by its position in the response")
+        self.assertIn("configuration/init_default_config.py", text)
 
     def test_no_seeding_code_is_hand_written_in_the_plugin(self):
         """Naming a method in prose is fine; shipping a code block is not."""
@@ -124,7 +164,12 @@ class TheSeedingCodeComesFromMcp(unittest.TestCase):
         text = flat(MODULE_02)
         self.assertIn("create_config_from_template()", text)
         self.assertIn("set_default_config", text)
-        self.assertRegex(text, r"(?i)verified on server 1\.32\.1")
+        self.assertRegex(
+            text, r"(?i)verified on MCP server 1\.\d+\.\d+, \d{4}-\d{2}-\d{2}"
+                  r"|verified on server 1\.\d+\.\d+",
+            "the sequence must carry a server version and date, whichever version is current "
+            "(repointed 2026-08-11: pinning 1.32.2 exactly made a correct re-verification fail)",
+        )
 
 
 class TheSeedIsVerifiedNotAssumed(unittest.TestCase):

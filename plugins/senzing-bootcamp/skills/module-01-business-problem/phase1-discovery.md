@@ -3,13 +3,21 @@
 Discovery and gap-filling. Follow the ground rules. `🛑`/`⛔` are internal directives: do not
 render them; signal a stop by ending the turn on the single 👉 question and waiting.
 
-## 1. Data privacy reminder (statement, no question)
+## 1. Data privacy reminder (statement, no question — NON-YIELDING)
 
 "Before we proceed, a quick reminder about data privacy. We'll be working with potentially
 sensitive data. Please ensure you have permission to use it, and consider anonymizing any PII
 for testing. We'll set up proper security measures as we go."
 
-**Checkpoint:** write step 1.
+⛔ **This step is non-yielding: it does not get a turn of its own.** Present it in the same turn as
+Step 2 and let Step 2's 👉 end that turn — a turn ending here would end with **zero** 👉, which
+INV-225 forbids, and presenting it alone is not what "advance exactly one step at a time" asks for
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol). This is also the step the post-nudge
+sequence lands on: on **no** to the model/effort switch, the reply turn carries this reminder and
+ends on Step 2's question.
+
+**Checkpoint:** write step 1 — but as one write with Step 2's at the end of the shared turn, not two
+writes inside it.
 
 ## 2. Offer the design pattern gallery (separate question)
 
@@ -19,9 +27,76 @@ for testing. We'll set up proper security measures as we go."
 
 ## 3. If they want patterns
 
-Present an entity-resolution design-pattern gallery (recognized use-case categories below;
-pull real-world examples via `search_docs`: the full pattern gallery is a later porting
-phase). For each: the problem it solves, the goal, typical data sources, business value.
+Present an entity-resolution design-pattern gallery over the recognized use-case categories, giving
+for each: the problem it solves, the goal, typical data sources, business value. Fill those four from
+**`search_docs` content returned on the turn the gallery is presented** — never from memory, and
+never from an earlier turn's results. This is **presentation freshness**
+(`../bootcamp-onboarding/ground-rules.md` → "MCP-first invariant"): the gallery carries an MCP
+attribution line, and the attribution is only truthful for what a tool produced this turn. "Already
+retrieved a few turns ago" does not satisfy it. (The full pattern gallery is a
+later porting phase; that is why this step retrieves rather than reads from a shipped catalogue.)
+
+⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one
+generic query is not it: the documentation's own words are industry terms, so "entity resolution use
+cases" reaches about four categories and leaves the rest looking uncovered when they are not. Two
+routes carry most of the material. Everything from here to the end of this step **is** the retrieval
+strategy INV-212 requires — the vocabulary, the documents that hold the material, the queries that
+return confidently wrong content, and what to do with a topic the searches do not reach:
+
+- **Business value, for nearly every category** — `search_docs(query='total economic cost mismatched
+  identity data by sector …')` returns `economic-cost-mismatched-identity-data.md`, whose
+  *"Estimated Annual Cost of Mismatched Identity Records"* table quantifies ten sectors. Its
+  appendix breaks several sectors into ER-attributable typologies. **Cite the figures as returned by
+  `search_docs`, never from this file** — the numbers live in the document, so a revision changes
+  them in one place.
+
+  ⚠️ **Two of the ten rows are "All Sectors" rows, and one of them is the row most bootcamper
+  scenarios actually need.** Lead with **`All Sectors: Cross-Industry Data Quality`** whenever the
+  scenario has **no clear industry vertical** — generic duplication across internal systems, which is
+  the common case — because it is the table's largest domain and was previously unnamed here, so the
+  gallery's most reusable figure went unreached. The other is
+  **`All Sectors: Marketing, Sales & CRM`**. The remaining eight rows are Government, Financial
+  Services, Supply Chain & Procurement, Insurance, Rest of Economy *(indicative)*, Healthcare,
+  Retail & E-Commerce, and Telecommunications. (Non-exhaustive as a guide to *which row to read* —
+  the table is the authority on its own contents.)
+
+  ⛔ **Sanctions & trade compliance is NOT a row — do not look for one.** It is a sub-line inside
+  **Rest of Economy**, described in the document's *"Remaining Sectors"* section alongside state &
+  local government and residual sectors, with full derivations in the appendix. Looking for it among
+  the rows sends the guide hunting something that does not exist. (Row list, the two "All Sectors"
+  rows and the Remaining-Sectors placement all re-verified live: `search_docs` on MCP server
+  **1.32.9**, docs indexed 2026-08-11 20:52 UTC, **2026-08-14**. The document's own totals line reads
+  "Expanded Estimate (all 10 sectors)", so "ten sectors" is right.)
+- **Problem, goal and typical sources** — the Senzing use-cases page (Customer 360, Fraud
+  Detection), the USCIS fraud case study, the MDM integration FAQ (Vendor MDM: free resolution vs
+  forced separation via a Trusted ID), and the non-person-entity-types FAQ (asset, claim and
+  vehicle linking).
+
+⛔ **Two category names are homonym traps that return confidently WRONG content, not nothing** —
+which is worse, because a wrong-looking result invites a re-query and a plausible one does not:
+
+- **Supply Chain** — BM25 matches "chains" and the software sense; see the measured example at
+  `phase2-document-confirm.md` → Step 14. Query the sector line instead.
+- **Data Migration** — returns the **V3→V4 SDK migration** (`sz_dbupgrade`, `sz_configupgrade`,
+  the Java/Python migration guides), which has nothing to do with a business use case. This is the
+  one recognized category with no business-use-case material; treat it as unreached below rather
+  than presenting SDK-upgrade steps as a pattern.
+
+**When a query misses, re-query with the documentation's own vocabulary before concluding the
+material is uncovered.** The rule and the reason it matters are stated in full at
+[`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+→ "Hard rule: facts come from MCP, not memory". Do not restate that reasoning here — follow it.
+
+⛔ **A bare link stub is not content.** The use-cases page returns several categories as nothing but
+`[Read More](/risk-fraud-detection)`. A stub is the shape most likely to be mistaken for coverage;
+it supplies none of the four attributes.
+
+⛔ **Never fill a category's detail from training data (INV-080).** For any category the searches do
+not reach, name it as available and say you can look it up on request — do not invent its problem,
+goal, sources or value. The gallery presents the categories the searches actually reached; it does
+not promise all ten, and a short sourced gallery plus an honest offer is the correct outcome, not a
+failure of this step. Fabricated detail here is especially costly because the attribution line below
+then presents it as Senzing-sourced.
 
 Because this content is MCP-sourced, make that visible so the bootcamper can trust it is real,
 not fabricated: add a brief inline attribution to the gallery — e.g. a one-line "*Sourced from
@@ -69,7 +144,10 @@ bootcamper explicitly accepts option 3.)*
   it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
   least two distinctly named data sources, each with ≥1 record; the data is
   mapping-complexity-rich (needs at least one transformation when mapped to the Senzing Entity
-  Specification); category is in the recognized set; problem and success are non-empty. On
+  Specification); the scenario is **quality-varied** — it promises missing and off-pattern values,
+  spanning bands rather than being uniformly clean, which is what Data collection then generates and
+  what makes the quality gate reachable (INV-239); category is in the recognized set; problem and
+  success are non-empty. On
   success, record artifacts in Phase 2 Step 11 (write `docs/business_problem.md` with the
   generated marker, and each source into `config/data_sources.yaml`), then continue at Step 5.
 - **Declined:** continue with their own description (Path 1/2); do not generate a scenario.
@@ -88,8 +166,45 @@ Treat the Senzing MCP server as the ONLY source of CORD facts: never training da
 for entity resolution scenarios')` to learn which datasets exist and what they contain. Present
 values exactly as returned. Wait up to 30s; retry once.
 
-- **Fitting CORD dataset returned:** back the scenario with it, provenance `cord`.
-- **None fit:** synthetic data, provenance `synthesized`.
+⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**
+It is the most inviting choice — smallest, already used elsewhere in the bootcamp, and its
+description says it is for quickstarts — so rule it out explicitly rather than leaving it to
+judgement:
+
+1. **It is pre-mapped**, so it can never satisfy Step 4a's mapping-complexity invariant. The
+   disqualifying word is the server's own: `get_capabilities` describes it as *"the Senzing demo
+   truth set: CUSTOMERS, REFERENCE, WATCHLIST — small, **pre-mapped**, used in quickstarts"*
+   (server 1.32.9, re-verified 2026-08-14). A scenario built on it passes every other check in
+   this step and leaves Data Quality, Mapping, and Transformation with nothing to transform.
+2. **Truth Set visualization already runs on it**, so a scenario backed by it collapses two
+   modules onto one dataset.
+
+**The eligible collections and what they are shaped like** — take the dataset names, source lists
+and counts from `get_sample_data` at runtime, never from here (INV-080); this is a note about
+*domain fit*, which the response does not judge for you (all four confirmed present on server
+1.32.9, 2026-08-14):
+
+| Dataset | Shaped like | Fit |
+|---|---|---|
+| `las-vegas` | risk, ownership and licensing data (the widest source set) | eligible |
+| `london` | sanctions and corporate-registry data | eligible |
+| `moscow` | sanctions and ownership data, non-Roman script | eligible |
+| `truthset` | the pre-mapped demo truth set | **ineligible — see above** |
+
+⚠️ **For the customer-facing categories, `synthesized` is the EXPECTED outcome, not a failure.**
+The recognized set in Step 4a includes Customer 360, Marketing and Vendor MDM, and all three
+eligible collections are risk / sanctions / ownership data — so for those categories no CORD
+dataset fits, and synthesizing is the correct answer rather than giving up. Customer 360 is the
+most likely pick of all, being the pattern gallery's most relatable entry. Say so to the
+bootcamper in those terms; do not present it as a fallback, and do not stretch a sanctions
+collection to cover a customer-360 problem in order to reach the `cord` branch.
+
+- **Fitting CORD dataset returned** (one of the three eligible collections, matching the
+  category's domain): back the scenario with it, provenance `cord`.
+- **None fit** — including every case where the only apparent fit was `truthset`: synthetic data,
+  provenance `synthesized`. Data collection generates the files for this provenance without asking
+  again (`../module-04-data-collection/SKILL.md` → Step 2), so this branch is complete, not
+  deferred.
 - **Timeout/unreachable after one retry:** omit CORD facts, tell the bootcamper they're
   unavailable, use synthetic data (`synthesized`).
 

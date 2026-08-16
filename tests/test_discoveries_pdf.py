@@ -16,6 +16,10 @@ PDF; these tests pin both halves of the fix:
 * The module skill produces the deliverable on every branch of the Discover
   opt-in, at the convergence point all four branches return to.
 
+Enforces **INV-121** (no full-width write in a bundled generator depends on the ambient
+cursor position, verified positionally rather than by text extraction), which names this
+file as its enforcer. INV-121's coverage here is path-scoped by design -- see its note.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os
@@ -25,12 +29,15 @@ import sys
 import tempfile
 import unittest
 import zlib
+from pathlib import Path
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp")
 SCRIPT = os.path.join(PLUGIN, "scripts", "generate_discoveries_pdf.py")
 MODULE7 = os.path.join(PLUGIN, "skills", "module-07-query-visualize-discover")
 PHASE1 = os.path.join(MODULE7, "phase1-query-visualize.md")
+WRAPPER = os.path.join(PLUGIN, "scripts", "generate_document_pdf.py")
+GRADUATION = os.path.join(PLUGIN, "skills", "graduation", "SKILL.md")
 PHASE2 = os.path.join(MODULE7, "phase2-discover.md")
 
 SUCCESS_LINE = "PDF generated:"
@@ -114,6 +121,18 @@ def run(args, cwd):
         capture_output=True,
         text=True,
     )
+
+
+def load_generator_module():
+    """Import the generator so its renderers and dataclasses can be driven directly."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("discoveries_gen_shared", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    # Register before exec: @dataclass resolves its module via sys.modules.
+    sys.modules["discoveries_gen_shared"] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def write_doc(directory, text, name="bootcamp_data_discoveries.md"):
@@ -416,7 +435,9 @@ class TestRendersASoundDocument(unittest.TestCase):
             write_doc(tmp, GOOD_DOC)
             result = run(["--check"], tmp)
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertIn("6/6 findings sections present", result.stdout)
+            # "findings" dropped 2026-07-31: the list is a parameter now, so the
+            # count is against whatever was expected, not against six findings.
+            self.assertIn("6/6 expected sections present", result.stdout)
             self.assertFalse(
                 os.path.exists(os.path.join(tmp, "docs", "bootcamp_data_discoveries.pdf")),
                 "--check must not write a PDF.",
@@ -638,10 +659,17 @@ class TestRefusesToShipAnEmptyDeliverable(unittest.TestCase):
         return result
 
     def test_recap_shaped_document_is_refused(self):
+        """Wording generalised 2026-07-31 ("required findings sections" -> "required
+        sections") because the list is now a parameter: with `--require-sections` the
+        expected headings are not findings at all, so the old phrase would be wrong for
+        every document but one. The actionable half — naming what was looked for — is
+        asserted here rather than the adjective."""
         with tempfile.TemporaryDirectory() as tmp:
             write_doc(tmp, RECAP_SHAPED)
             result = self.assert_refused(tmp)
-            self.assertIn("required findings sections", result.stderr)
+            self.assertIn("none of the required sections is present", result.stderr)
+            self.assertIn("looked for:", result.stderr)
+            self.assertIn("headline numbers", result.stderr)
 
     def test_document_without_headings_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -666,7 +694,8 @@ class TestPartialDocumentStillRenders(unittest.TestCase):
             result = run([], tmp)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertIn(SUCCESS_LINE, result.stdout)
-            self.assertIn("missing findings sections", result.stderr)
+            # Generalised with the flag (2026-07-31); the named sections are the point.
+            self.assertIn("missing sections", result.stderr)
 
 
 class TestStdlibFallback(unittest.TestCase):
@@ -751,6 +780,298 @@ class TestModuleWiring(unittest.TestCase):
     def test_recap_generator_is_not_reused_for_this_document(self):
         text = self.read(PHASE1)
         self.assertIn("do not point", text.lower())
+
+
+# A document with NONE of the discoveries headings, but plenty of content, so it clears
+# the retention floor. This is the shape that was refused: business_problem.md.
+OTHER_DOC = """# Business Problem
+
+**Bootcamper:** A. Person
+**Date:** 2026-07-31
+
+## The problem in one sentence
+
+Duplicate customer records across two acquired systems make it impossible to tell how many
+distinct customers the combined business serves, which blocks accurate churn reporting.
+
+## Why it matters
+
+Marketing spend is allocated per contact, so duplicates inflate cost and irritate customers
+who receive the same campaign several times over.
+
+## Success criteria
+
+- A single resolved view of customers across both source systems.
+- A defensible count of distinct customers, with merge evidence available for review.
+
+## Desired outputs
+
+A resolved-entity table, a review queue for ambiguous merges, and a short report naming the
+match keys that drove the largest merges.
+"""
+
+OTHER_SECTIONS = "the problem in one sentence;why it matters;success criteria;desired outputs"
+
+
+class TestAnyDocumentCanRenderWithItsOwnSections(unittest.TestCase):
+    """The required-section list is a parameter, not a constant.
+
+    `generate_discoveries_pdf.py` is already a general styled-Markdown renderer — its
+    layout engine carries nothing discoveries-specific — but `REQUIRED_SECTIONS` was a
+    module-level constant checked fatally with no CLI override, so it rendered exactly one
+    file. `docs/business_problem.md` and `docs/data_source_evaluation.md` were both refused.
+
+    The guard itself is correct and stays: it is what stops the script being pointed at
+    unrelated Markdown and silently emitting a near-empty PDF (INV-110). The defect was
+    expressing it as one document's section names.
+    """
+
+    def test_the_flag_lets_another_document_render(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            out = os.path.join("docs", "business_problem.pdf")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"),
+                 "--output", out, "--require-sections", OTHER_SECTIONS],
+                tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn(SUCCESS_LINE, result.stdout)
+            written = os.path.join(tmp, out)
+            self.assertTrue(os.path.exists(written))
+            # INV-129: the PDF must carry the content, not merely exist.
+            text = pdf_text(written)
+            for probe in ("Business Problem", "Success criteria", "churn reporting"):
+                with self.subTest(probe=probe):
+                    self.assertIn(probe.lower(), text.lower())
+
+    def test_omitting_the_flag_still_refuses_the_same_document(self):
+        """The companion assertion: the guard is relaxed only when asked."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            out = os.path.join("docs", "business_problem.pdf")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--output", out],
+                tmp,
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertNotIn(SUCCESS_LINE, result.stdout)
+            self.assertFalse(os.path.exists(os.path.join(tmp, out)))
+            self.assertIn("none of the required sections is present", result.stderr)
+
+    def test_the_discoveries_default_is_byte_for_byte_unchanged(self):
+        """No flags must behave exactly as before, or every existing call site shifts."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, GOOD_DOC)
+            result = run([], tmp)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn(SUCCESS_LINE, result.stdout)
+
+    def test_no_section_check_skips_only_the_section_check(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--check",
+                 "--no-section-check"],
+                tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn("would render", result.stdout)
+
+    def test_the_retention_floor_is_not_weakened_by_either_flag(self):
+        """The floor — not the section list — is what stops unrelated Markdown (INV-110).
+
+        Asserted against a document that genuinely fails retention (55% against a 60%
+        floor), so this cannot pass by the input happening to be fine. An earlier draft
+        accepted either outcome and was nearly tautological.
+        """
+        thin = "# T\n\n## A\n\nreal\n" + "\n---\n" * 10
+        for extra in (["--no-section-check"], ["--require-sections", "a"]):
+            with self.subTest(flag=extra[0]):
+                with tempfile.TemporaryDirectory() as tmp:
+                    write_doc(tmp, thin, name="thin.md")
+                    out = os.path.join("docs", "thin.pdf")
+                    result = run(
+                        ["--input", os.path.join("docs", "thin.md"), "--output", out, *extra],
+                        tmp,
+                    )
+                    self.assertNotEqual(
+                        0, result.returncode, "the retention floor must still refuse"
+                    )
+                    self.assertIn("content retention", result.stderr)
+                    self.assertNotIn(SUCCESS_LINE, result.stdout)
+                    self.assertFalse(os.path.exists(os.path.join(tmp, out)))
+
+    def test_the_cover_subtitle_is_overridable(self):
+        """⚠️ The spec says the layout engine "contains nothing specific to the
+        discoveries document". That is false for one string: the cover subtitle read
+        "What Senzing found in your data" in **both** renderers, so rendering
+        business_problem.md put a discoveries line on a stakeholder-facing keepsake —
+        the first thing its reader sees."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            out = os.path.join("docs", "business_problem.pdf")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--output", out,
+                 "--require-sections", OTHER_SECTIONS,
+                 "--subtitle", "The problem this bootcamp set out to solve"],
+                tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            text = pdf_text(os.path.join(tmp, out))
+            self.assertIn("The problem this bootcamp set out to solve", text)
+            self.assertNotIn("What Senzing found in your data", text)
+
+    def test_the_default_subtitle_is_unchanged_for_discoveries(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, GOOD_DOC)
+            out = os.path.join("docs", "d.pdf")
+            self.assertEqual(0, run(["--output", out], tmp).returncode)
+            self.assertIn("What Senzing found in your data", pdf_text(os.path.join(tmp, out)))
+
+    def test_both_renderers_honour_the_subtitle(self):
+        """INV-066: the fallback writer must not keep the discoveries cover line."""
+        module = load_generator_module()
+        doc = module.parse_discoveries(OTHER_DOC)
+        doc.subtitle = "A custom cover line"
+        with tempfile.TemporaryDirectory() as tmp:
+            for renderer in (module.render_with_fpdf2, module.render_with_stdlib):
+                with self.subTest(renderer=renderer.__name__):
+                    out = os.path.join(tmp, f"{renderer.__name__}.pdf")
+                    self.assertTrue(renderer(doc, Path(out)))
+                    text = pdf_text(out)
+                    self.assertIn("A custom cover line", text)
+                    self.assertNotIn("What Senzing found in your data", text)
+
+    def test_character_handling_is_unchanged_on_the_new_path(self):
+        """INV-143/INV-159: out-of-font characters are transliterated, not dropped.
+
+        The renderer is the same one, so this is a guard against a future change routing
+        the new path around `_safe`/`dropped_character_warning` rather than a new
+        behaviour. `->` and `>=` are what the reader should see; a `(cid:` artefact or a
+        vanished clause is the failure.
+        """
+        doc = (
+            "# Business Problem\n\n## Success criteria\n\n"
+            "A resolved view of customers → one entity per person, with ≥ 95% "
+            "precision, over ranges of 10–20 records.\n"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, doc, name="chars.md")
+            out = os.path.join("docs", "chars.pdf")
+            result = run(
+                ["--input", os.path.join("docs", "chars.md"), "--output", out,
+                 "--require-sections", "success criteria"],
+                tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            text = pdf_text(os.path.join(tmp, out))
+            self.assertIn("->", text)
+            self.assertIn(">=", text)
+            self.assertIn("95% precision", text, "the clause must survive intact")
+            self.assertNotIn("(cid:", text)
+
+    def test_an_empty_require_sections_value_is_an_error_not_a_silent_skip(self):
+        """`--require-sections ""` must not quietly mean `--no-section-check`."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--check",
+                 "--require-sections", ""],
+                tmp,
+            )
+            self.assertEqual(1, result.returncode)
+            self.assertIn("--no-section-check", result.stderr)
+
+    def test_section_names_are_matched_case_insensitively(self):
+        """Callers pass a document's headings verbatim, capitals and all."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--check",
+                 "--require-sections", "Success Criteria;Desired Outputs"],
+                tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+
+    def test_the_check_line_counts_against_the_effective_list(self):
+        """Reporting `n/6` while requiring two sections would be a lie."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            result = run(
+                ["--input", os.path.join("docs", "business_problem.md"), "--check",
+                 "--require-sections", "success criteria;desired outputs"],
+                tmp,
+            )
+            self.assertIn("2/2", result.stdout)
+
+
+class TestTheRendererIsFindable(unittest.TestCase):
+    """An otherwise generic renderer named for one document is a discoverability bug."""
+
+    def test_the_wrapper_exists_and_delegates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write_doc(tmp, OTHER_DOC, name="business_problem.md")
+            out = os.path.join("docs", "business_problem.pdf")
+            result = subprocess.run(
+                [sys.executable, WRAPPER,
+                 "--input", os.path.join("docs", "business_problem.md"),
+                 "--output", out, "--require-sections", OTHER_SECTIONS],
+                capture_output=True, text=True, cwd=tmp,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn(SUCCESS_LINE, result.stdout)
+            self.assertTrue(os.path.exists(os.path.join(tmp, out)))
+
+    def test_the_wrapper_adds_no_behaviour_of_its_own(self):
+        """It must not be able to drift from the script it wraps: no argument parsing,
+        no defaults, no rendering — just a delegated `main`."""
+        with open(WRAPPER, encoding="utf-8") as handle:
+            body = handle.read()
+        self.assertIn("from generate_discoveries_pdf import main", body)
+        for forbidden in ("add_argument", "ArgumentParser", "REQUIRED_SECTIONS"):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, body.split('"""', 2)[-1])
+
+    def test_the_wrapper_reports_a_broken_install_rather_than_crashing(self):
+        self.assertRegex(
+            open(WRAPPER, encoding="utf-8").read(),
+            r"(?s)except ImportError.*Cannot import generate_discoveries_pdf",
+        )
+
+    def test_graduation_renders_both_documents_via_the_plugin_root(self):
+        """INV-185: a bundled script is addressed through ${CLAUDE_PLUGIN_ROOT}."""
+        with open(GRADUATION, encoding="utf-8") as handle:
+            text = handle.read()
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/scripts/generate_document_pdf.py", text)
+        for doc in ("docs/business_problem.md", "docs/data_source_evaluation.md"):
+            with self.subTest(doc=doc):
+                self.assertIn(doc, text)
+
+    def test_graduation_says_to_read_the_documents_own_headings(self):
+        """There is no fixed list to hard-code — that is why the flag exists."""
+        flat = re.sub(r"\s+", " ", open(GRADUATION, encoding="utf-8").read())
+        self.assertRegex(flat, r"(?i)Read each document's actual H2 headings")
+        self.assertIn("--require-sections", flat)
+
+    def test_graduation_keeps_the_step_non_blocking_and_verified(self):
+        text = open(GRADUATION, encoding="utf-8").read()
+        start = text.index("## Step 5b:")
+        section = text[start : text.index("## Step 6:", start)]
+        self.assertIn("INV-048", section)
+        self.assertIn("INV-129", section)
+        self.assertRegex(
+            re.sub(r"\s+", " ", section), r"(?i)Extract text from the written file"
+        )
+        self.assertIn("INV-110", section)
+        self.assertRegex(
+            section, r"(?i)INV-143", "the character-drop report must not be bypassed"
+        )
+
+    def test_step_5b_sits_between_5a_and_the_revisit_bundle(self):
+        text = open(GRADUATION, encoding="utf-8").read()
+        self.assertLess(text.index("## Step 5a:"), text.index("## Step 5b:"))
+        self.assertLess(text.index("## Step 5b:"), text.index("## Step 6:"))
 
 
 if __name__ == "__main__":

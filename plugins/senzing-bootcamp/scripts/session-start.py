@@ -17,6 +17,8 @@ import recap_checkpoint
 
 if recap_checkpoint.bootcamp_active():
     folded = recap_checkpoint.fold_checkpoint()
+    # Fold first, then guarantee the file exists for the module about to resume.
+    recap_checkpoint.ensure_checkpoint()
     message = (
         "A Senzing bootcamp is in progress. Read config/bootcamp_progress.json "
         "and offer to resume from the last recorded module before doing anything else."
@@ -26,6 +28,12 @@ if recap_checkpoint.bootcamp_active():
             " An in-progress module recap checkpoint was found and folded into "
             "docs/bootcamp_recap.md (source: docs/progress/recap_checkpoint.md). "
             "Continue that module and finalize its recap section on completion."
+        )
+    else:
+        message += (
+            " No in-progress recap narrative was found to fold. Keep "
+            "docs/progress/recap_checkpoint.md current at each step boundary of the "
+            "resumed module — it is the only copy that survives a compaction."
         )
     containers = docker_lifecycle.resume_summary()
     if containers:

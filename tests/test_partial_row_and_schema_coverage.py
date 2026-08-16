@@ -41,6 +41,10 @@ element, treat a blank field as a wrong name, never present an unconfirmed name 
 authoritative) and the *record* (the dump-marked key list, and the `JSON_DATA`
 trap where the authoritative reference is itself what misleads).
 
+Enforces **INV-191** (a dated provenance stamp is never advanced for a claim that pass did
+not re-verify, and a claim this environment cannot re-check keeps its stamp and is recorded
+as skipped rather than restamped), which names this file as its enforcer.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os
@@ -145,7 +149,7 @@ class NoUnverifiedFieldNameIsShipped(unittest.TestCase):
         text = flat(CONTRACT)
         self.assertIn("MIN_ENTITY_ID", text)
         self.assertRegex(text, r"(?i)now (documented by|MCP-confirmed)")
-        self.assertRegex(text, r"1\.32\.1, 2026-07-29")
+        self.assertRegex(text, r"1\.32\.2, 2026-07-30")
         self.assertNotRegex(
             text,
             r"(?i)(still )?not MCP-confirmable",
@@ -203,7 +207,7 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
         """
         text = flat(CONTRACT)
         self.assertRegex(text, r"dump on SDK 4\.3\.3, 2026-07-28|dump-confirmed on SDK 4\.3\.3")
-        self.assertRegex(text, r"MCP server 1\.32\.1, 2026-07-29")
+        self.assertRegex(text, r"MCP server 1\.32\.2, 2026-07-30")
 
     def test_the_keys_are_no_longer_marked_unconfirmable(self):
         """The negative claim went stale when the server started documenting them.
@@ -282,6 +286,113 @@ class TheJsonDataTrapIsRecorded(unittest.TestCase):
         text = flat(DISCOVER)
         self.assertRegex(text, r"JSON_DATA")
         self.assertIn("SZ_ENTITY_INCLUDE_RECORD_FEATURE_DETAILS", text)
+
+
+class TheTwoGraphMethodsAreNotInterchangeable(unittest.TestCase):
+    """The link array is the one key that differs — and the only one a shared parser misses.
+
+    Verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31:
+    `get_sdk_reference(topic='response_schemas', filter='find_path')` returns
+    `ENTITY_PATH_LINKS[]` where `filter='find_network'` returns
+    `ENTITY_NETWORK_LINKS[]`. **Every other key in the two documents is the same** —
+    `ENTITIES[]`, `ENTITY_PATHS[]`, and the same seven link-element fields — so the
+    array name is the single difference, and it is the one a reader is least likely
+    to look for after carrying working code across.
+
+    `find_network` returning `ENTITY_PATHS[]` is what makes it bite: the network
+    response contains the word PATH, which reads as licence to expect
+    `ENTITY_PATH_LINKS[]` in it.
+
+    The reported failure was the half-populated row again (INV-148): a valid 2-degree
+    path whose entity names rendered while every edge printed
+    `(link detail not returned)`. Both the flags and the array name were wrong at
+    once, and nothing raised.
+
+    Two files are pinned because step 4d delegates its key list to the reference:
+    the reference's "Confirmed paths" table listed `find_path_*` as
+    `ENTITY_PATHS[]`, `ENTITIES[]` and omitted the links array altogether, so a
+    reader who followed the pointer got confirmation that the array they needed did
+    not exist.
+    """
+
+    def test_step_4d_names_both_link_arrays(self):
+        """Neither name may be lost — the divergence is unstatable with only one."""
+        text = flat(DISCOVER)
+        for array in ("ENTITY_PATH_LINKS[]", "ENTITY_NETWORK_LINKS[]"):
+            with self.subTest(array=array):
+                self.assertIn(
+                    array,
+                    text,
+                    "step 4d teaches find_path and find_network minutes apart; naming "
+                    "only one array name is what lets a parser be carried across",
+                )
+
+    def test_step_4d_says_which_method_returns_which(self):
+        """Both names present is not enough — a reader needs the pairing."""
+        text = flat(DISCOVER)
+        self.assertRegex(
+            text,
+            r"`find_path`[^.]*?`ENTITY_PATH_LINKS\[\]`",
+            "the array must be attributed to find_path, not merely mentioned nearby",
+        )
+        self.assertRegex(text, r"`find_network` returns them under[^.]*?ENTITY_NETWORK_LINKS")
+
+    def test_step_4d_states_the_element_fields_are_identical(self):
+        """The reason the array name is the *only* thing a shared parser misses.
+
+        Without this, "the names differ" reads as "the responses differ", and a
+        reader reasonably re-derives the whole element shape instead of changing one
+        key — or assumes the element fields differ too and distrusts the reference.
+        """
+        self.assertRegex(
+            flat(DISCOVER),
+            r"(?i)both link elements carry the same seven\s+fields|"
+            r"element fields are identical",
+        )
+
+    def test_step_4d_states_the_matching_info_flags_are_not_shared(self):
+        """Flags were the other half of the reported failure, not a footnote."""
+        text = flat(DISCOVER)
+        self.assertIn("SZ_FIND_NETWORK_INCLUDE_MATCHING_INFO", text)
+        self.assertIn("SZ_FIND_PATH_INCLUDE_MATCHING_INFO", text)
+        self.assertRegex(
+            text,
+            r"(?i)paired, not shared",
+            "naming both flags without saying they are exclusive leaves a reader free "
+            "to OR in whichever one they already have",
+        )
+
+    def test_step_4d_states_the_consequence(self):
+        """A rule with no named symptom is not recognisable in the wild (INV-148)."""
+        self.assertRegex(
+            flat(DISCOVER),
+            r"(?i)neither the flags nor the parser can be carried",
+        )
+
+    def test_the_reference_table_gives_find_path_its_links_array(self):
+        """The pointer's destination must not confirm the opposite of the rule."""
+        text = flat(CONTRACT)
+        self.assertRegex(
+            text,
+            r"`find_path_\*` \| `ENTITY_PATHS\[\]`, `ENTITIES\[\]`,[^|]*ENTITY_PATH_LINKS",
+            "the find_path row of the Confirmed paths table must name the links array; "
+            "omitting it reads as confirmation that find_path has no such array",
+        )
+
+    def test_the_existing_endpoint_key_warning_survives(self):
+        """This spec extended that warning; it must not have replaced it."""
+        text = flat(DISCOVER)
+        self.assertIn("MIN_ENTITY_ID", text)
+        self.assertRegex(text, r"ENTITY_ID` / `RELATED_ENTITY_ID")
+        self.assertRegex(text, r"(?i)Run the lookup and dump anyway")
+
+    def test_the_scan_is_not_vacuous(self):
+        """Both pinned files must exist and be non-trivial, or every assertion above
+        passes against nothing."""
+        for path in (DISCOVER, CONTRACT):
+            with self.subTest(file=os.path.basename(path)):
+                self.assertTrue(os.path.isfile(path))
+                self.assertGreater(len(flat(path)), 2000)
 
 
 if __name__ == "__main__":

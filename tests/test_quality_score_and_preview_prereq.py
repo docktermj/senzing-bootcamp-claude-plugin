@@ -95,7 +95,7 @@ class ApplicabilityComesFromTheSpecification(unittest.TestCase):
         self.assertRegex(text, r"(?i)deliberately partial")
 
     def test_the_provenance_is_recorded(self):
-        self.assertRegex(flat(), r"(?i)Verified against MCP server 1\.32\.1, 2026-07-28")
+        self.assertRegex(flat(), r"(?i)Verified against MCP server 1\.32\.2, 2026-07-30")
 
     def test_type_neutral_features_are_not_excluded(self):
         """Over-correcting would drop ADDRESS/PHONE/EMAIL from every denominator."""

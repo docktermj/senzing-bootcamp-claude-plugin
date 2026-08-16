@@ -30,16 +30,36 @@ Tell the bootcamper, in your own words:
 "I'm going to do some quick administrative setup: creating your project directory and checking
 your environment."
 
-Read the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` (the `version`
-field; use "Unknown" if unreadable) and hold it to display with the WELCOME banner (step 3) and to
-record in the recap.
+Read the plugin version from the plugin manifest (`.claude-plugin/plugin.json`, the `version`
+field) and hold it to display with the WELCOME banner (step 3) and to record in the recap.
+**Resolve the manifest in this order and stop at the first that reads (INV-252):**
+
+1. `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, when `CLAUDE_PLUGIN_ROOT` is set **and
+   non-empty**.
+2. `<this-skill-dir>/../../.claude-plugin/plugin.json` — this skill's own directory, two levels
+   up. The harness supplies that directory at invocation, so by construction it belongs to the
+   plugin whose files are running. This is the same skill-relative fallback INV-185 documents for
+   bundled scripts.
+3. "Unknown" — reported as the version, never replaced by a guess.
+
+⛔ **Never search the filesystem for a `plugin.json`, and never read one outside the resolved
+plugin root.** Two plugin roots on one machine is a normal state, not a broken one — an installed
+plugin plus a clone, or an upgrade whose old copy was never removed — so the first match a search
+reaches is not the plugin serving this run. With `CLAUDE_PLUGIN_ROOT` empty, a search made the
+banner report `v0.5.0` from a second checkout while `0.5.1` was running, and a version line that
+can be wrong is worse than none: its whole job is provenance.
+
+Every other step needing the plugin version resolves it the same way — the feedback entry
+(`feedback.md`), the recap header (`module-completion.md`) and the recap's provenance block
+(`../graduation/SKILL.md`) — so all four report one version.
 
 ## 0b. MCP health check (required)
 
 Confirm the Senzing MCP server is reachable before starting. It is required: it generates SDK
 code in the chosen language, looks up Senzing facts, and provides working examples.
 
-- **Probe:** call `get_capabilities` (about a 10-second timeout). This is the call
+- **Probe:** call `get_capabilities` (about a 10-second timeout) — never a content-returning
+  tool (INV-204). This is the call
   `ground-rules.md` → "Session start" already requires once before any other Senzing MCP call, so
   it doubles as the reachability probe and the preface makes **one** MCP call here, not two. Its
   response is also the tool manifest the guide needs anyway.
@@ -73,6 +93,27 @@ Do this silently:
    (and subfolders as modules need them - see file placement in `ground-rules.md`).
 2. Create `config/bootcamp_progress.json` and `config/bootcamp_preferences.yaml` if they do not
    exist.
+3. Create the project `README.md` if it does not exist, with the two headings Module 1 Step 12
+   fills in and a placeholder line under each. It is the **only** `.md` permitted at the project
+   root besides the generated `production/` deliverable (INV-017, and the root whitelist in
+   `ground-rules.md`) — do not add others.
+
+   ```markdown
+   # <project name>
+
+   ## Overview
+
+   _To be completed during the bootcamp._
+
+   ## Business Problem
+
+   _To be completed during the bootcamp._
+   ```
+
+   Nothing else belongs in this file: Module 1 Step 12 fills these two sections and adds nothing
+   further, and every other artifact has its own home under `docs/` (INV-017). Creating it here
+   is what makes Step 12 an **update** rather than an instruction to edit a file that does not
+   exist — the file is written silently, like the rest of this step (INV-012).
 
 (The Kiro Power installed Agent Hooks here via `createHook`. In the Claude plugin, hooks ship
 with the plugin in `hooks/hooks.json` and are already active - there is no hook-install step.)
@@ -106,7 +147,23 @@ so the line is simply shown, and that is correct rather than an oversight. The s
 reachable only on a resumed run, or when the bootcamper pre-seeded the file (INV-133). Do not stall
 trying to honor a preference that cannot exist yet, and do not ask for verbosity here.
 
-Then give the overview (cover naturally, do not ask a question yet):
+Then give the overview (cover naturally, do not ask a question yet).
+
+⛔ **Every bullet below has a verbosity treatment — none is unconditional.** Two carry their own
+(the version line above and the feedback-trigger bullet below); the rest are governed as a group,
+so there is no bullet whose behaviour under a preset is left to guesswork:
+
+| Preset | The overview is |
+|---|---|
+| `minimal` | the **module list** plus the **how-long-it-takes** bullet, and nothing else — orientation only |
+| `concise` | all bullets except *guided discovery* and *unfamiliar terms*, each trimmed to one line |
+| `standard` / `detailed` | all ten, as written |
+
+The split is orientation versus encouragement: the module list and the resume-and-time facts are
+what a bootcamper needs to navigate, and the rest is framing an expert moving fast does not. On a
+**fresh** bootcamp no preset exists yet, so all ten are shown and that is correct rather than an
+oversight (INV-075/INV-133) — the reduced forms are reachable only on a resumed run or a pre-seeded
+file.
 
 - This is a **guided discovery** of how to use Senzing. It is not a race - take it slow, read
   what the bootcamp tells you, and ask questions any time. Be curious.
@@ -116,7 +173,7 @@ Then give the overview (cover naturally, do not ask a question yet):
 - The bootcamp is a sequence of named modules: **Bootcamp preparation**, *Entity Resolution
   Concepts* (optional), **Discover the Business Problem**, **SDK setup**, *System verification* (optional),
   *Truth Set visualization* (optional), **Data collection**, **Data Quality, Mapping, and Transformation**, **Data
-  processing**, **Query, Visualize and Discover**, and **Graduation**.
+  processing**, **Query, Visualize and Discover**, and **Bootcamp graduation**.
 - Right after this welcome, the first module — **Bootcamp preparation** — lets you pick how to run
   the bootcamp: **Core** (every module, in order) or **Customized** (you choose which optional
   modules to include). It also sets your level of detail and programming language, and sets up
@@ -135,6 +192,24 @@ Then give the overview (cover naturally, do not ask a question yet):
   Bootcamp preparation) and on how fast the SDK downloads and installs on your machine. **You do
   not have to finish in one sitting** — progress is saved as you go, and you can stop and pick up
   where you left off.
+- **If anything about the bootcamp itself is confusing, broken, or missing, tell me the moment you
+  notice it:** start a message with **"bootcamp feedback:"** and I will capture it. You do not lose
+  your place — the note is saved under `docs/feedback/`, then the bootcamp question you were on
+  comes straight back and we carry on. No need to save it for the end.
+
+**The feedback-trigger bullet above is required here** (INV-196: the trigger phrase is named in
+bootcamper-facing text before the first content module, as a statement and never a 👉 question,
+and it says that using it costs them nothing), **and it is verbosity-aware, exactly like the
+version line above**
+(INV-011/INV-012 — the treatment INV-096 gives the time estimate): under `minimal`, suppress it;
+under `concise`, one line ("Say \"bootcamp feedback:\" any time — it is captured and you keep your
+place."); otherwise the full bullet. ⛔ Same caveat as the version line: on a **fresh** bootcamp no
+preset exists yet, so the full bullet is simply shown and that is correct, not an oversight
+(INV-075/INV-133). ⛔ **State it; never make it a 👉 question** — it needs no answer, and INV-012
+forbids output the bootcamper cannot act on. ⛔ **Do not repeat it at every module start** — the
+module-start apparatus is already dense (INV-028-031, INV-096, the model/effort nudge), and this is
+an always-available control (INV-010). Once, here, is the point; graduation's closing invitation
+(`../graduation/SKILL.md`, Step 7) stays as it is.
 
 ## 4. Any questions (preface item 2)
 

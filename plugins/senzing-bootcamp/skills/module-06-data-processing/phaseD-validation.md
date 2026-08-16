@@ -10,7 +10,7 @@ single-pass export statistics this phase needs, `topic='export'` for extraction 
 (`sz_dm_entity`, `sz_dm_record`, `sz_dm_relation`, `sz_dm_report`) that the bootcamp never builds —
 the tool says so itself, in that response's own schema notes: *"These tables are NOT part of the
 Senzing SDK and do NOT exist out of the box. They must be created and maintained by a separate data
-mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.1, 2026-07-28).
+mart replication pipeline that YOU build and operate"* (verified on MCP server 1.32.2, 2026-07-30).
 It is the production-reporting answer, not the evaluation one, so asking for it here returns
 well-formed SQL that cannot run against a single-database SQLite workspace. If you are already
 looking at that response, the usable subset is its `Validation:` patterns, which run against
@@ -42,7 +42,7 @@ done through generated SDK code.)
 Validate that the loaded data meets business expectations:
 
 - Verify record counts, does the number of loaded records match expectations? (Use
-  `reporting_guide(topic='evaluation')` for counts — not `topic='reports'`; see the header note.)
+  `reporting_guide(topic='evaluation', language='<chosen_language>')` for counts — not `topic='reports'`; see the header note.)
 - Spot-check entity resolution, pick 5–10 known entities and confirm they resolved correctly
 - Document any issues found in `docs/uat_results.md`
 - If critical issues are found, fix and reload before proceeding
@@ -57,7 +57,7 @@ single-source bootcampers, skip directly to step 28 (Document results).
 ## 23. Validate cross-source results
 
 Validate: record counts match expectations, cross-source entities exist, no unexpected data
-loss, error logs clean. Use `reporting_guide(topic='graph', version='current')` for
+loss, error logs clean. Use `reporting_guide(topic='graph', language='<chosen_language>', version='current')` for
 network-graph patterns.
 
 ⛔ **Before treating a low or zero cross-source entity count as a finding about the data, read how
@@ -83,8 +83,8 @@ cross-source visualization, to avoid a duplicate/misplaced offer.
 
 ## 24. Validate cross-source results quality
 
-Use `reporting_guide(topic='evaluation', version='current')` for the 4-point ER evaluation
-framework and `reporting_guide(topic='quality', version='current')` for precision/recall
+Use `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` for the 4-point ER evaluation
+framework and `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for precision/recall
 metrics.
 
 Validate: match accuracy (query known records via the generated SDK code / SDK method
@@ -92,6 +92,11 @@ Validate: match accuracy (query known records via the generated SDK code / SDK m
 matches), data completeness. If accuracy is poor, revisit Module 5 mapping.
 
 **Checkpoint:** write step 24.
+
+⛔ **Steps 21–24 ask nothing, so this turn does not end here** — validation results and evidence
+tables are the output most likely to be mistaken for a turn ending, because they conclude something
+(`ground-rules.md` → "A results presentation is not a turn ending", INV-225). Continue in the same turn to
+the next step that actually asks.
 
 ## 25. Execute UAT with business users
 
@@ -130,6 +135,12 @@ validation baseline before Module 7.
 
 Update `docs/loading_strategy.md` with: final load order and rationale, per-source statistics,
 cross-source match summary, issues and resolutions, recommendations for future loads.
+
+⛔ **The per-source statistics written here are reconciled figures or they are labelled as
+unreconciled — never bare numbers.** (INV-243/INV-245) This document outlives the session and is
+read as the record of what was loaded, so an unchecked count written into it is the hardest of all
+these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it
+the load is long finished.
 
 **Checkpoint:** write step 27.
 
@@ -196,13 +207,14 @@ re-running the check.) Senzing is then told a conflict exists where
 none does, and it **suppresses legitimate merges**. All gates green, matches quietly lost.
 
 This is the reading that catches it. It also matches the Senzing reporting guidance directly —
-`reporting_guide(topic='quality')`'s anti-patterns say *"Only checking aggregate statistics for
+`reporting_guide(topic='quality', language='<chosen_language>')`'s anti-patterns say *"Only checking aggregate statistics for
 quality … Aggregate stats hide errors. Always sample and manually review specific entities"* —
 which is exactly the gap the UAT percentages below leave open.
 
 1. **Read the match keys** from the loaded results using generated SDK code (never direct SQL
    against `database/G2C.db`). Per `get_sdk_reference(topic='response_schemas')` there are
-   **two reads, and they need two different methods** — confirm both via MCP this session:
+   **two reads, and they need two different methods** — confirm both via MCP rather than from
+   this file (a sourcing floor):
 
    | What | Where | How to obtain it |
    |---|---|---|
@@ -212,7 +224,7 @@ which is exactly the gap the UAT percentages below leave open.
    ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on the flag set, not on the method — so
    dump one row and route on what you see.** Do not assume either answer:
 
-   - `reporting_guide(topic='evaluation')` documents the export-with-defaults case directly
+   - `reporting_guide(topic='evaluation', language='<chosen_language>')` documents the export-with-defaults case directly
      (verified 2026-07-28): *"Use `export_json_entity_report` with `SZ_EXPORT_DEFAULT_FLAGS` … Each
      exported row is a JSON object containing `RESOLVED_ENTITY` … **and `RELATED_ENTITIES[]`** (with
      `ENTITY_ID`, `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`)"*, and its
@@ -235,7 +247,7 @@ which is exactly the gap the UAT percentages below leave open.
    were settled in either direction (INV-115/INV-149: the dumped row is the authority).
 
    ⚠️ **If you do read relationships from the export, deduplicate.** Per
-   `reporting_guide(topic='evaluation')`: *"Each relationship appears in BOTH entities'
+   `reporting_guide(topic='evaluation', language='<chosen_language>')`: *"Each relationship appears in BOTH entities'
    `RELATED_ENTITIES` — deduplicate by sorting `(min_id, max_id)` pairs and using a set."* Skipping
    this double-counts every relationship, which inflates a suppressor share rather than emptying it —
    a wrong number that still looks plausible. The same guidance notes export iteration is
@@ -264,7 +276,7 @@ which is exactly the gap the UAT percentages below leave open.
    from senzing import SzEngineFlags
 
    # SZ_EXPORT_DEFAULT_FLAGS carries the per-entity detail; add row filters only to widen
-   # WHICH entities appear. Re-confirm both names via MCP this session (INV-080) — this is a
+   # WHICH entities appear. Re-confirm both names via MCP rather than from this file (INV-080; a sourcing floor) — this is a
    # worked example, not a substitute for the lookup.
    flags = (
        SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS
@@ -290,6 +302,7 @@ which is exactly the gap the UAT percentages below leave open.
    print("top-level keys:", sorted(first))
    print("carries RELATED_ENTITIES:", "RELATED_ENTITIES" in first)
    ```
+
 2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
    and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
    `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
@@ -322,6 +335,14 @@ which is exactly the gap the UAT percentages below leave open.
 5. **Carry the outcome into the decision gate below**, alongside the UAT numbers. The audit has
    **three** outcomes, not two — finding, no finding, and could-not-measure — and the gate must be
    told which one it got.
+6. **If a finding here causes a mapping to change or be withdrawn, file it as bootcamp feedback
+   before moving on** — silently, per `../bootcamp-onboarding/ground-rules.md` → "Reversed decisions:
+   file them when they happen". This is the first and most important of that rule's three triggers,
+   and this is the step that fires it: the audit read the engine's own output and overturned a
+   decision every static gate had passed. Filing it here rather than at graduation is the whole
+   point — by then the reasoning may have been compacted away, leaving only the corrected mapping
+   and no record of what was wrong with the original or how it was caught. No banner, no question,
+   never blocking (INV-012/INV-048).
 
 > **Worked example.** In one bootcamp, `EFX_YREST` ("year established") and `FilingDate`
 > (incorporation filing date) were both mapped to `REGISTRATION_DATE`. A business usually operates

@@ -50,7 +50,7 @@ For the desktop application instead, see
 1. *Command line options:* run most of the bootcamp on **Sonnet 5** for
    the best value and switch up to **Opus 5** for the correctness-critical
    stretches: **SDK setup**, **Data Quality, Mapping, and Transformation**,
-   and **Graduation**. The bootcamp surfaces the recommendation at the start of
+   and **Bootcamp graduation**. The bootcamp surfaces the recommendation at the start of
    each module, so you never have to remember which is which.
 
    For the smoothest ride, run the Claude Code CLI with `--permission-mode auto`.
@@ -64,6 +64,7 @@ For the desktop application instead, see
 1. *Note:* besides the Claude Code CLI and Claude Desktop,
    the Senzing Bootcamp Claude Plugin can also be run in a Claude IDE extension:
     - [Claude Code for VSCode]
+
 1. Start the bootcamp. Tell Claude:
 
     ```console
@@ -79,7 +80,7 @@ have to remember them:
 | --- | --- |
 | `/start-bootcamp` | Start the bootcamp, or resume one already in progress (same as saying "Start the bootcamp"). |
 | `/bootcamp-feedback` | Share feedback about the bootcamp at any time (same as saying "bootcamp feedback"). Saved locally to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. |
-| `/graduate` | Graduate: render the recap PDF and generate the `production/` starter project. Graduation normally follows the last module on its own, so use this only to graduate early or to re-run it. |
+| `/graduate` | Graduate: render the recap PDF and generate the `production/` starter project. Bootcamp graduation normally follows the last module on its own, so use this only to graduate early or to re-run it. |
 
 ## Uninstall plugin
 

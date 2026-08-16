@@ -20,10 +20,92 @@ disqualifying:
 If the maintainer is not available, report phase 3 as **untested**. Do not
 approximate it, and do not describe a self-played walkthrough as a dry run.
 
+## Where the analysis starts — ask before scaffolding anything
+
+⛔ **The first thing this phase does is ask the maintainer which module the analysis
+starts at.** List the modules in order, numbered, and ask for one number. Do not
+scaffold, do not begin the walk, and do not assume the top of the bootcamp.
+
+**Why.** The bootcamp is cheap to walk; the *analysis* is what fills the context
+window — the test-notes blocks, the pinned-wording comparisons, the invariant lookups,
+the specs written mid-walk. A run that analyses from the onboarding preface exhausts
+its context somewhere around Discover the Business Problem and stops there. That is
+why every walk to date has re-covered the same opening stretch, and why Data
+processing, Query/Visualize/Discover and graduation have never been walked at all.
+Choosing where the analysis begins is the only way the later modules get exercised.
+
+The list is the module table in `bootcamp-preparation/SKILL.md` — **read it rather
+than trusting the copy below**, which is a convenience and can go stale:
+
+1. Bootcamp preparation — includes the onboarding preface; analysis from the first turn
+2. Entity Resolution Concepts
+3. Discover the Business Problem
+4. SDK setup
+5. System verification
+6. Truth Set visualization
+7. Data collection
+8. Data Quality, Mapping, and Transformation
+9. Data processing
+10. Query, Visualize and Discover
+11. Bootcamp graduation
+
+Numbering the list here is fine — INV-079 governs what the *Bootcamper* reads, and the
+maintainer is not the Bootcamper. Inside the walk itself, names only.
+
+⛔ **Mark the environment's ceiling on the list when you present it.** The fast-forward
+has to genuinely reach the chosen module, and from **SDK setup** onward that means a
+real Senzing install, a database, and a licence. Use the environment check from the
+SKILL's "Before you start" step 3 and say plainly which of the eleven are reachable
+today, so the maintainer picks knowing where the walk would stall. A choice past the
+ceiling is still the maintainer's to make — just do not let them make it blind.
+
+Recommend a module **later than the last run analysed**, and name that module when you
+recommend it. Nothing in the repo records it, so the previous run's report is the only
+memory this rotation has.
+
+### The fast-forward stretch — everything before the chosen module
+
+Run the bootcamp exactly as a Bootcamper would see it, and nothing else.
+
+- **Follow the skill files as written.** The fast-forward is what puts the project into
+  the state the chosen module reads, so improvising through it invalidates the analysis
+  that follows. This is not a skim.
+- **The maintainer still answers.** ⛔ The no-fabrication rule above is not relaxed here.
+  Fast-forward is the same walk with the *notes* turned off, not a simulation.
+- **No analysis.** No test-notes blocks, no invariant lookups, no character-for-character
+  gate comparisons, no specs. If something looks off, let it go — those modules are what
+  earlier runs covered and what a later run can start at.
+- **One exception: a blocker.** If the guide cannot proceed — an unsatisfiable
+  instruction, a missing file, a failed tool call — that is the walk failing, not an
+  observation. Write the spec, then continue if you can. It costs context and is worth it.
+- **Do not narrate the fast-forward.** No inter-module summaries, no progress
+  announcements, no "still fast-forwarding". Module-completion output the Bootcamper
+  would see is bootcamp output and stays.
+
+To shorten it: scaffold with `--seeded` and keep `verbosity: minimal`, which makes
+Bootcamp preparation ask nothing at all. Prefer that whenever the analysis starts past
+Bootcamp preparation — a short fast-forward leaves more context for the part being tested.
+
+⚠️ **The fast-forward is not free.** It still reads each module's `SKILL.md` in full,
+which is a real share of the window. What it removes is the analysis on top of that.
+
+### The analysis stretch — from the chosen module on
+
+Everything else in this file switches on the moment the chosen module starts: the
+two-channel discipline, the watch list, spec-on-sight. Tell the maintainer in one line
+that the analysis starts here, so they know which channel they are reading.
+
+Before its first turn, read that module's own `SKILL.md` and the invariants it cites.
+The watch list below is what breaks most often *anywhere*; it is not the list for any
+particular module.
+
 ## Setup
 
-Scaffold an **empty** project (no `bootcamp_progress.json` content, no preferences) —
-this phase tests the fresh-start path:
+Every walk starts from a fresh project — the fast-forward is what advances it — so the
+choice here is only which preference fixture it starts with.
+
+**If the analysis starts at Bootcamp preparation,** scaffold **empty** (no
+`bootcamp_progress.json` content, no preferences) to test the fresh-start path:
 
 ```bash
 python3 .claude/skills/dry-run/scaffold_project.py "$HOME/senzing-bootcamp-phase3" --fresh
@@ -44,14 +126,20 @@ the rule does not fire when it shouldn't, and says nothing about whether it fire
 should. The seeded walk is short: preparation should ask nothing at all and hand straight
 off, which is also the fastest way to catch a step that asks anyway.
 
-Run only as far as the SDK is not required. **Onboarding preface → Bootcamp
-preparation → Module 0 → Module 1** needs MCP access and nothing else, and it covers
-the densest concentration of interaction invariants in the plugin. Going further
-means installing the SDK, a database, and a licence — worth doing eventually, but a
-different exercise.
+**If the analysis starts anywhere later,** scaffold with `--seeded` and skip the
+second walk. Both fixtures differ only in what Bootcamp preparation does, which is
+now fast-forwarded rather than analysed, so the pair proves nothing here — and
+`--seeded` is the shorter fast-forward. Say in the report that the INV-133 pair was
+not run, so a later run knows it is still owed.
 
-Tell the maintainer up front which stretch you plan to cover and that they should
-answer as themselves.
+**How far the walk can go.** **Onboarding preface → Bootcamp preparation → Module 0 →
+Module 1** needs MCP access and nothing else, and covers the densest concentration of
+interaction invariants in the plugin. From **SDK setup** onward the walk needs a real
+install, a database and a licence — which is the ceiling to state when presenting the
+module list, and the thing that stops the fast-forward if the environment lacks them.
+
+Tell the maintainer up front where the analysis starts, how far you expect to get, and
+that they should answer as themselves throughout — including the fast-forward.
 
 ## How to run it
 
@@ -61,7 +149,8 @@ numbered steps in order. The point is to find where following them faithfully
 produces something wrong — which cannot happen if you are improvising a good
 bootcamp instead.
 
-Keep the two channels separate:
+Keep the two channels separate — **in the analysis stretch**; the fast-forward has only
+the first of them:
 
 - **The bootcamp output** — exactly what a Bootcamper would see. Nothing else.
 - **A collapsed test-notes block** after it, clearly marked ignorable, holding your
@@ -79,8 +168,10 @@ holding four findings in conversation alone is why this paragraph exists.
 
 Interaction invariants, in rough order of how often they break:
 
-- **INV-005 / one 👉 per turn.** Exactly one, ending the turn. Zero or two is a
-  violation — including a stray question inside an acknowledgment.
+- **INV-251 / one 👉 per turn.** Exactly one, ending the turn. **Two or more breaches
+  INV-251; zero breaches INV-225** — including a stray question inside an
+  acknowledgment. (Not INV-005, which is the 👉 *marker* rule and says nothing about
+  count; relabelled 2026-08-15.)
 - **INV-133 / saved preferences.** A preference already in
   `config/bootcamp_preferences.yaml` must be honored and its question **not asked**.
   Pre-seed one (e.g. `verbosity: minimal`) on a second run and see whether it is
@@ -118,6 +209,11 @@ The walk is an assistant following the skill files in a normal session, which le
 gaps. Name them in the report; a phase-3 run that lists findings without listing these
 reads as broader coverage than it had.
 
+- ⛔ **Every fast-forwarded module.** *Walked* is not *tested*. The stretch before the
+  chosen module ran with the analysis off, so it produced no evidence about itself — a
+  report that lists findings from Data processing without saying the seven modules
+  before it were fast-forwarded reads as a full-bootcamp walk. Name the start module and
+  name what that leaves uncovered.
 - **Administrative write noise.** INV-012 wants config writes unnarrated, and
   `hooks/README.md` records that no harness mechanism suppresses Write/Edit diffs — so the
   plugin minimises write *frequency* instead (INV-058's single consolidated write). During
@@ -140,7 +236,9 @@ reads as broader coverage than it had.
 
 Stop wherever the maintainer stops — a partial walk is still evidence, and the
 findings do not depend on reaching graduation. Then clean up the project and report,
-naming exactly how far you got so the untested remainder is visible.
+naming **both ends of the analysis** — the module it started at and how far it got — so
+the untested remainder on either side is visible, and so the next run knows which module
+to start later than.
 
 ⛔ **Before stopping, confirm every finding is in a spec.** The stop is not yours to schedule,
 so treat each turn as potentially the last: an observation that has firmed up and is still only

@@ -65,20 +65,20 @@ When the bootcamper hits an error during this module:
    fix guidance.
 2. **Known pitfalls** (port conflicts on 8080, database lock contention, MCP proxy connectivity):
    use `search_docs` to look up the symptom.
-3. **Timeouts:** TruthSet acquisition 30s, SDK/load per `phase1-visualization.md`, web service 10s
+3. **Timeouts:** Truth Set acquisition 30s, SDK/load per `phase1-visualization.md`, web service 10s
    per endpoint. On timeout, terminate the process, record the failure, and follow the phase's
    failure guidance.
 
 ## Truth Set source
 
-The Senzing MCP server is the primary and preferred TruthSet source; it always takes precedence.
+The Senzing MCP server is the primary and preferred Truth Set source; it always takes precedence.
 Retrieve it with **`get_sample_data(dataset='truthset')`** — `dataset` is a required parameter, so a
 bare `get_sample_data()` call fails rather than reporting availability (INV-136). Discover what is
 available with `dataset='list'` and read `available_datasets`. Only when that listing exposes **no**
 `truthset` entry does this module (Step 1) fall back to a sanctioned external source for the demo
-TruthSet DATA.
+Truth Set DATA.
 
-> Verified on MCP server 1.32.1, 2026-07-29: `truthset` is listed with `available: true` alongside the
+> Verified on MCP server 1.32.2, 2026-07-30: `truthset` is listed with `available: true` alongside the
 > three CORD collections, so the fallback is exceptional, not routine. Re-verify rather than trusting
 > this note (INV-080). Full classification and the degradation path: `phase1-visualization.md`, 1.1.
 
@@ -89,9 +89,9 @@ TruthSet DATA.
   unavailable and run the graceful-degradation path in `phase1-visualization.md`, Step 1, 1.1.)
 - **Approval rationale:** the workspace normally allows only `mcp.senzing.com` as an external
   endpoint. This exception exists because the source is the official Senzing-published deterministic
-  data with a ground-truth key, needed to preserve a deterministic "wow moment" when the MCP TruthSet
+  data with a ground-truth key, needed to preserve a deterministic "wow moment" when the MCP Truth Set
   is unavailable.
-- **Scope limit:** the fallback fetches TruthSet DATA only. All Senzing SDK facts, method
+- **Scope limit:** the fallback fetches Truth Set DATA only. All Senzing SDK facts, method
   signatures, and expected-behavior definitions continue to come from the MCP server.
 - Full detection, provenance recording, and graceful degradation live in the Step 1 flow in
   `phase1-visualization.md`.

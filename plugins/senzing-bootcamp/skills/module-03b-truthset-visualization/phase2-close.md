@@ -55,12 +55,16 @@ Terminate the web service and purge the Truth Set data from the database.
 yes.** Per the server-lifetime contract in `visualization-api-reference.md` → "Server lifetime",
 present this pinned question verbatim (INV-056) and end the turn on it:
 
-> 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
+⛔ **State what they are agreeing to FIRST, in the same turn but above the question, so the yes is
+informed:** the live URL goes dead, the Truth Set records are removed from the database (exploring
+further means reloading them), and the saved snapshot at
+`docs/visualizations/truthset_verification.html` keeps every tab that renders from embedded data but
+**not** the live `why`/`how`/`search` actions. This precedes the 👉 because nothing may follow it —
+the question ends the turn — and because a disclosure arriving after the answer cannot inform it
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol). The teardown is irreversible, so an
+uninformed yes here is the costliest kind.
 
-State what they are agreeing to before they answer, so the yes is informed: the live URL goes dead,
-the Truth Set records are removed from the database (exploring further means reloading them), and
-the saved snapshot at `docs/visualizations/truthset_verification.html` keeps every tab that renders
-from embedded data but **not** the live `why`/`how`/`search` actions.
+> 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
 
 *(Internal: end the turn on this question and wait.)*
 
@@ -87,11 +91,26 @@ permanent. Work through 1–4 in order; do not hoist the purge.
    Search / Probe tab can only show real results against the running engine, so capture it here
    rather than from the static snapshot. Best-effort and non-blocking.
 
-3. **Terminate the web service:**
-   - Send a termination signal to the visualization web service process started in Phase 1 (2.3).
-   - Wait up to 5 seconds for the process to exit and release the bound port.
-   - If it does not terminate within 5 seconds: force-stop the process and warn the bootcamper that
-     the port may need manual release.
+3. **Terminate the web service** — by process id, per `visualization-api-reference.md` → "Server
+   lifetime" → "Identifying the server process":
+   - Send a termination signal to the **pid recorded in Phase 1 (2.3)**, in
+     `truthset_visualization.checks.web_service.pid`.
+   - If no pid was recorded (a session resumed across older progress state), find the listener by
+     the recorded port instead: `lsof -ti:<port>` on Linux/macOS,
+     `Get-NetTCPConnection -LocalPort <port> | Select-Object -ExpandProperty OwningProcess` in
+     PowerShell.
+   - ⛔ **Never `pkill -f <script name>`** (or any other command-line pattern match). The pattern
+     appears in the matching command's own command line, so it signals the invoking shell: on a dry
+     run this killed the shell mid-teardown with exit code 144, leaving the records loaded, the
+     purge below unrun, and the failure looking like the purge had crashed. The server is also
+     built in the bootcamper's chosen language (INV-090), so in general there is no script name to
+     match.
+   - **Confirm the port is free** rather than assuming it: poll it for up to 5 seconds and stop as
+     soon as nothing is listening. If it is still bound after 5 seconds, force-stop the process,
+     re-check, and if it is *still* bound warn the bootcamper that the port may need manual release.
+   - ⛔ Do not start step 4 until the port is confirmed free or the bootcamper has been warned — the
+     purge is irreversible, and running it on the assumption that teardown succeeded is how a failed
+     kill gets attributed to the purge.
 
 4. **Purge the Truth Set data from the database** (the module's final action):
    - Remove the Truth Set records loaded in Phase 1 (CUSTOMERS/REFERENCE/WATCHLIST, or the CORD

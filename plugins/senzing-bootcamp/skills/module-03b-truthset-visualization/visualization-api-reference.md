@@ -99,7 +99,7 @@ from an export. ⚠️ **Whether an export carries `RELATED_ENTITIES` depends on
 row and check before building edges from it, because reading edges from a row that lacks the key
 yields an empty `edges` array and no error.**
 
-- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation')` documents each
+- With `SZ_EXPORT_DEFAULT_FLAGS` it **does**: `reporting_guide(topic='evaluation', language='<chosen_language>')` documents each
   exported row as carrying `RESOLVED_ENTITY` *and* `RELATED_ENTITIES[]` (with `ENTITY_ID`,
   `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `RECORD_SUMMARY[]`), and its worked pattern derives
   relationship statistics in a single export pass (verified 2026-07-28; a live SDK 4.3.3 run agreed).
@@ -107,12 +107,23 @@ yields an empty `edges` array and no error.**
   each relationship appears in *both* entities' `RELATED_ENTITIES`, so an un-deduplicated edge list
   draws every relationship twice.
 - With a flag set assembled from `SZ_ENTITY_INCLUDE_*` members instead, a bootcamp session on the
-  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. Those relationship-detail
-  flags (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members,
-  `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO`, `SZ_INCLUDE_MATCH_KEY_DETAILS`) do not list the export
-  methods in their `applies_to` — confirm with
-  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')` — which is why
-  composing an export's flags out of those alone is the case that loses relationships.
+  same SDK version got rows with **no `RELATED_ENTITIES` key at all**. `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+  and its members — `SZ_ENTITY_INCLUDE_RELATED_ENTITY_NAME`, `_RELATED_RECORD_SUMMARY`,
+  `_RELATED_MATCHING_INFO`, `_RELATED_RECORD_DATA`, `_RELATED_RECORD_TYPES` — do **not** list the
+  export methods in their `applies_to`, which is why composing an export's flags out of those alone
+  is the case that loses relationships. Confirm with
+  `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS')`, which returns the
+  whole family in one reply.
+- ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` is the exception in that same reply — it *does* apply to
+  export.** Its `applies_to` names `export_json_entity_report` and `export_csv_entity_report`
+  alongside the entity, `why_*`, `how_entity_by_entity_id`, `find_path_*` and `find_network_*`
+  methods (verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11). So
+  match-key detail **is** available on an export. It also carries `depends_on`
+  (`SZ_ENTITY_INCLUDE_ALL_RELATIONS`, or one of the individual relations flags), so it produces
+  output only when the export's flag set already includes relationships — a dependency, not an
+  exclusion. ⛔ **Read each row's own `applies_to`, never the response as one group.** This flag is
+  returned by the `SZ_ENTITY_INCLUDE_ALL_RELATIONS` filter *because* it depends on those flags, and
+  that adjacency is precisely what makes its longer `applies_to` easy to miss.
 
 So an export **is** a legitimate edge source when its rows carry the key, and the per-entity and
 network methods below remain correct and are the fallback when they do not.
@@ -146,19 +157,46 @@ entities that both appear in the node set above.
 **`GET /api/merges`:** Multi-record entities with constituent records
 
 ```json
-[
-  {
-    "entity_id": 1, "entity_name": "Robert Smith", "match_key": "+NAME+ADDRESS",
-    "records": [
-      {"data_source": "CUSTOMERS", "record_id": "1001", "name": "Robert Smith", "address": "123 Main St", "phone": "555-0100", "identifiers": {"SSN": "123-45-6789"}}
-    ]
-  }
-]
+{
+  "entities": [
+    {
+      "entity_id": 1, "entity_name": "Robert Smith", "record_count": 2,
+      "data_sources": ["CUSTOMERS", "REFERENCE"],
+      "records": [
+        {"data_source": "CUSTOMERS", "record_id": "1001", "match_key": ""},
+        {"data_source": "REFERENCE", "record_id": "2001", "match_key": "+NAME+ADDRESS"}
+      ]
+    }
+  ]
+}
 ```
 
-Each entity: `entity_id`, `entity_name`, `match_key`, `records`. Each record: `data_source`,
-`record_id`, `name`, `address`, `phone`, `identifiers`. Only entities with 2+ records are
-returned.
+Each entity: `entity_id`, `entity_name`, `record_count`, `data_sources`, `records`. Each record:
+`data_source`, `record_id`, `match_key`. Only entities with 2+ records are returned.
+
+⛔ **`match_key` lives on the RECORD, not on the entity — one home, and this is it.** It is the key
+that pulled *that* record into the entity, which is the more informative placement and the one the
+Match Keys tab reads. **An empty string is normal, not missing data:** the entity's seed record
+joined nothing, so it has no key. Render an empty value as "seed record" or omit the chip — never as
+a blank field, which reads as a defect (INV-115).
+
+⚠️ **Record fields are `data_source`, `record_id`, `match_key` — and no more, by design.** The
+entity model is built with `SZ_ENTITY_DEFAULT_FLAGS`, and that composite **excludes**
+`SZ_ENTITY_INCLUDE_RECORD_FEATURES` and `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` (measured against the
+SDK's own flag constants, Senzing 4.3.4, 2026-08-14). So a record's name, address and phone are
+**not in the response** at these flags — they are entity-level features, not record-level ones. A
+server that reports per-record names without adding those flags is inventing them.
+
+**To enrich the Records panel (optional, and not required by this contract):** add
+`SZ_ENTITY_INCLUDE_RECORD_FEATURES` — then each record carries `FEATURES.NAME[].FEAT_DESC`,
+`FEATURES.ADDRESS[].FEAT_DESC` and `FEATURES.PHONE[].FEAT_DESC` — and/or
+`SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` for the record as it was mapped. Confirm the paths against
+`get_sdk_reference(topic='response_schemas', filter='get_entity_by_record_id')` rather than from
+here (INV-080). ⚠️ Weigh it at scale first: this payload is **embedded in the standalone snapshot**
+(INV-070), and Query, Visualize and Discover points the same app at the Bootcamper's full dataset,
+so per-record features multiply the keepsake's size by the record count. Defaults stay lean for that
+reason, and the composite is the right choice for exploration (the server's own production caution
+notwithstanding — see Module 7).
 
 **`GET /api/search`:** Search entities with enriched resolution reasoning
 
@@ -174,6 +212,14 @@ and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both
 `ENTITY_ID`). This binds a server in **any** language (INV-090/INV-124), not only the bundled Python
 reference — the defect propagated into a generated query program precisely because it lived in the
 reference implementation and in no written rule.
+
+An attribute that **errors** is retried past, not returned on (INV-190). "Yields nothing" covers a
+failed attempt as well as an empty one: a search call that raises on `NAME_FULL` MUST still try
+`NAME_ORG`, because the attribute that failed is the one that could not have matched an
+organization anyway. Report an error only once every attribute has been attempted and none
+produced a result, and name which ones failed. Do not write the guard as "has anything matched so
+far" — that is true on the *first* attribute by construction, so the fallback is foreclosed on
+exactly the attempt it exists to follow (the bundled reference shipped that bug).
 
 The response MUST report which attributes were searched (`attributes_tried`), and an empty result
 MUST be rendered as "no entity matched a `NAME_FULL` then `NAME_ORG` search for X" — never as "not
@@ -274,11 +320,11 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > | Method | Confirmed paths |
 > |---|---|
 > | `get_entity_by_entity_id` / `get_entity_by_record_id` | `RESOLVED_ENTITY.ENTITY_ID`, `.ENTITY_NAME`, `.FEATURES`, `.RECORD_SUMMARY`, `.RECORDS[]` with `.DATA_SOURCE` / `.RECORD_ID` / `.MATCH_KEY` / `.MATCH_LEVEL_CODE` / `.ERRULE_CODE`; `RELATED_ENTITIES[]` with `.ENTITY_ID` / `.MATCH_LEVEL_CODE` / `.MATCH_KEY` / `.IS_DISCLOSED` / `.IS_AMBIGUOUS` |
-> | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]` (carries `MATCH_INFO`), `ENTITIES[]` |
+> | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]`, `ENTITIES[]` — and the `MATCH_INFO` interior is documented too: `.CANDIDATE_KEYS.<KEY_TYPE>[]`, `.FEATURE_SCORES.<FAMILY>[]`, `.WHY_KEY_DETAILS.CONFIRMATIONS[]`, `.MATCH_LEVEL_CODE`, `.WHY_ERRULE_CODE`, `.WHY_KEY` (re-verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11 — partial, ask for the full `fields[]`) |
 > | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
-> | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]` |
-> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.1, 2026-07-29 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
+> | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, **`ENTITY_PATH_LINKS[]`** — *not* `ENTITY_NETWORK_LINKS[]`; each link element carries the **same seven fields** as the network row below (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). The element fields are identical and only the array name differs, so a parser carried over from `find_network` returns every edge blank |
+> | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.2, 2026-07-30 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
 > | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
 >
 > ⛔ **`JSON_DATA` is `get_record`-only, whatever the `get_entity` schema says.**
@@ -310,16 +356,29 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > **`MATCH_KEY_DETAILS`** object inside each resolution step's `MATCH_INFO`. Both contain
 > `CONFIRMATIONS` (and optionally `DENIALS`). Reusing one parser for both silently yields nothing.
 >
-> Field names *inside* those `CONFIRMATIONS` entries, and the exact `FEATURE_SCORES` path, are
-> **not** documented by `response_schemas` — dump a raw response to confirm them. Do not copy
-> field names from any prior implementation, this file included.
+> **Both are documented — look them up rather than dumping first.**
+> `get_sdk_reference(topic='response_schemas', filter='why_entities')` returns the `data[]` entry
+> whose `id` is `why_entities`, and its `fields[]` array carries `path` and `field_type` for the
+> whole `MATCH_INFO` interior: `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS.CONFIRMATIONS[]` with
+> `FTYPE_CODE`, `TOKEN`, `SOURCE`, `SCORE`, `SCORE_BUCKET`, `SCORE_BEHAVIOR`, the
+> `CANDIDATE_FEAT_*` / `INBOUND_FEAT_*` pairs and `ADDITIONAL_SCORES.*`; and `FEATURE_SCORES` per
+> feature family — `.NAME[]`, `.ADDRESS[]`, `.DOB[]`, `.PHONE[]`, `.RECORD_TYPE[]` — each with its
+> own element fields. (Re-verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC,
+> 2026-08-11. The same entry covers `why_records` and `why_record_in_entity`, per its `methods[]`;
+> `why_search` is a **separate** document with its own `SEARCH_REQUEST` and `SEARCH_STATISTICS`.)
+> Dump a raw response when the lookup does not reach something, or to confirm what *this*
+> installation actually returned (INV-080/INV-149) — that is the fallback now, not the first move.
+> Do not copy field names from any prior implementation, this file included.
 >
-> **The graph methods stop at the top level, and their link elements are the next trap.** Verified
-> 2026-07-26: `get_sdk_reference(topic='response_schemas', filter='find_network')` **does** return an
-> entry, but it documents only the three arrays above — `ENTITY_NETWORK_LINKS[]` is described as
-> "Network link details between entities" with **no element fields**. So the lookup succeeds and
-> still leaves you guessing at the very field names you are about to parse. Dump one raw link
-> element and read its keys before writing the parser (INV-115).
+> **The link elements are documented now — and their endpoint names are still the trap.**
+> Re-verified on MCP server 1.32.2, 2026-07-30: `get_sdk_reference(topic='response_schemas',
+> filter='find_network')` returns the three arrays above **and** each `ENTITY_NETWORK_LINKS[]`
+> element's own fields (`MIN_ENTITY_ID`, `MAX_ENTITY_ID`, `MATCH_KEY`, `MATCH_LEVEL_CODE`,
+> `ERRULE_CODE`, `IS_AMBIGUOUS`, `IS_DISCLOSED`). (Through 2026-07-26 it documented only the
+> arrays, describing `ENTITY_NETWORK_LINKS[]` as "Network link details between entities" with no
+> element fields; that gap is closed, so the lookup no longer leaves you guessing.) Dump one raw
+> link element and read its keys before writing the parser anyway (INV-115) — the schema tells you
+> what the method documents, the dump tells you what *your* installation returned.
 >
 > ⚠️ **Do not assume a link's endpoints are keyed the way related-entity records are.** Two bootcamp
 > sessions now agree: parsing `ENTITY_NETWORK_LINKS` entries with the `ENTITY_ID` /
@@ -330,8 +389,8 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > `IS_AMBIGUOUS`.
 >
 > **That list is now MCP-confirmed.** When it was first recorded it was dump-only, so it was carried
-> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.1,
-> 2026-07-29**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
+> as an unverified caution rather than as names to code against. Re-checked on **MCP server 1.32.2,
+> 2026-07-30**: `get_sdk_reference(topic='response_schemas', filter='find_network')` now returns the
 > element fields itself — `ENTITY_NETWORK_LINKS[].MIN_ENTITY_ID`, `.MAX_ENTITY_ID`, `.MATCH_KEY`,
 > `.MATCH_LEVEL_CODE`, `.ERRULE_CODE`, `.IS_AMBIGUOUS`, `.IS_DISCLOSED`, plus
 > `ENTITIES[].RESOLVED_ENTITY.*` and `ENTITY_PATHS[].*`. So these are authoritative names, and the
@@ -411,8 +470,10 @@ unique content. Do NOT implement it, and do not add a separate "Results Dashboar
 
 Backs the **Records** action everywhere an entity is shown (see "Per-entity actions" below),
 including single-record entities — unlike `/api/merges`, which returns only multi-record entities.
-Each record carries the same fields `/api/merges` uses: `data_source`, `record_id`, `name`,
-`address`, `phone`, `identifiers`. On failure return `{"entity_id": <id>, "error": "<type>: <message>"}`
+Each record carries the same fields `/api/merges` uses — `data_source`, `record_id`, `match_key` —
+and the two endpoints MUST return **the same record objects**, not merely the same field names: they
+read one model, so a divergence between them is a bug in the server rather than a choice. On failure
+return `{"entity_id": <id>, "error": "<type>: <message>"}`
 with HTTP 200, so one entity's failure never breaks the tab.
 
 Unlike `why`/`how`, this endpoint's data MUST also be **embedded in the standalone snapshot**, so
@@ -594,7 +655,8 @@ Tab ids are **contract**, not an implementation detail: the recap screenshot hel
 id, so a server in any language (INV-090) must use these exact ids and expose the two hooks below.
 
 **The row order below is also the order the app presents its tabs, left to right, and therefore the
-order screenshots are embedded in the recap** — by `module-completion.md`'s capture step and by
+order screenshots are embedded in the recap** (INV-155 fixes the six-tab set and this order;
+INV-147 binds the recap's embedding to it) — by `module-completion.md`'s capture step and by
 graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
 list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
 app; images in capture or append order cannot be lined up against the interface.
@@ -622,7 +684,7 @@ The app MUST provide:
   `#navbtn-<id>`), which is how a tab is captured with no browser-automation dependency.
 
   ⛔ **`activate()` MUST be idempotent: called for the tab that is already active, it MUST
-  return without redrawing.** Redrawing rebuilds the tab, and for a tab whose layout
+  return without redrawing (INV-171).** Redrawing rebuilds the tab, and for a tab whose layout
   *animates* — the Entity Graph's force simulation — that restarts the animation from
   scratch. Mid-capture that yields a screenshot of every node collapsed in a corner: a
   valid PNG, at exit 0, of a graph that looks like it found nothing (47 KB where 227 KB
@@ -684,7 +746,7 @@ shape, so one drill-down renderer serves all three. An aggregate that shows a co
 opened is a dead end and is not acceptable.
 
 **No redundant inline record listings.** Where an entity list offers the Records action, it MUST
-NOT also print the constituent records inline. The "Show all merged entities" cards on Search /
+NOT also print the constituent records inline (INV-221). The "Show all merged entities" cards on Search /
 Probe show entity name, record count,
 and match key plus the actions — nothing more. Showing the same records twice is clutter, and it
 reads as unfinished once "click Records to see records" is the established pattern everywhere else.
@@ -781,7 +843,8 @@ and defeats the entire purpose of the feature, which exists to make Senzing's re
 Entity-detail dialogs (Records / Why? / How?) are a primary "wow moment" surface and get the same
 visual care as the headline tabs: a real header bar (title plus a close control) visually separated
 from the body, deliberate spacing and typographic hierarchy, and a subtle entrance transition.
-Palette and type come from `scripts/brand_tokens.py` (INV-081) — the brand tokens apply *inside* the
+Palette and type come from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative
+fallback `../../scripts/brand_tokens.py`, INV-252) — the brand tokens apply *inside* the
 modal, not only to the app shell. A functionally-correct but visually plain dialog undersells the
 moment.
 
@@ -794,12 +857,15 @@ Applies to **Entity Graph** in both of its modes.
   so a bootcamper can declutter for an overview pass or drill into detail without switching tabs.
 - **Scale-dependent defaults.** Label visibility defaults by graph size, not to a fixed value: both
   label sets default **off above ~150 nodes** and on below it. State the threshold in the
-  implementation so every language build behaves the same.
+  implementation so every language build behaves the same (INV-154 — a legibility default is a
+  function of the rendered data's scale, and its threshold is stated as a number in this contract).
 - **Say why they started off.** When labels default off, show a short inline note ("Labels hidden —
   3,986 entities; use the toggles above to show them"). Without it, a label-less graph reads as
   broken rather than as a deliberate default.
 - **Legible labels when shown.** On-canvas node labels MUST avoid unreadable overlap — a
-  collision/overlap-avoidance pass, truncation, or zoom-gated labels. A hover-only tooltip does
+  collision/overlap-avoidance pass, truncation, or zoom-gated labels (INV-153 governs what any
+  truncation you choose must preserve: no two rendered labels may be identical unless their values
+  are, checked on the **fitted** strings). A hover-only tooltip does
   **not** satisfy this: the complaint it addresses is being unable to tell which records matched
   without hovering every node in turn.
 - **Legends are generated FROM the data, and filter it.** Build each legend from the values actually
@@ -825,6 +891,30 @@ Applies to **Entity Graph** in both of its modes.
   entries, vary a second visual channel (e.g. node stroke) rather than silently reusing a color; and
   the reserved signal green is never assigned as a categorical color. The Python reference implements
   this as `brand_tokens.color_for_sources()`.
+
+  ⛔ **Count the channels as RENDERED, not as assigned — the distinctness requirement (INV-127) is
+  about what the browser draws.** Every draw site must key on a property that reaches the canvas. A
+  wrap counter does not: it decides *whether* a second channel appears and *which* value it takes,
+  and two sources with different counters can still be drawn identically. That is what happened in
+  the Python reference — six fills × three stroke colours read as more than enough, the renderer
+  applied a stroke only when the counter was non-zero, and the actual space was 6 × 4 = **24**
+  rendered appearances. The returned map stayed collision-free at any size because each entry
+  carried a distinct counter, so nothing looked wrong; the 25th source simply came out identical to
+  the 7th, in the graph *and* in the legend.
+
+  So, whatever channels you choose:
+
+  - **Define the rendered key** — for a node that is `(fill, stroke when a stroke is actually drawn,
+    stroke width, dash)` — and make it unique per present source. Test it at a size past your
+    capacity, not just past the palette: a check at "palette + 3" passes on an encoding that
+    collides at 25.
+  - **The legend swatch and the mark MUST derive from the same expression**, so they cannot disagree
+    about a source. Deriving them separately is how a legend ends up describing an appearance the
+    graph does not have.
+  - **State the capacity and do not exceed it silently.** An acknowledged ceiling with a warning is
+    defensible; a silent collision is not. The Python reference reports its capacity as
+    `brand_tokens.SOURCE_ENCODING_CAPACITY` (currently 210: six fills × seven rendered stroke states
+    × five fill-lightness steps) and warns past it.
 - **Init-state note.** An unchecked toggle fires no change event, so apply its render state
   explicitly at load — do not rely on the event handler to establish the initial view.
 
@@ -892,15 +982,64 @@ teardown.** Agent-side verification — API probes, endpoint checks, screenshot 
 interaction, and it MUST NOT stop the server. The bootcamper explores *after* the agent verifies,
 not instead of it.
 
+INV-131 governs the ordering half: irreversible teardown is the module's **last** action, after
+every step that needs the running service — endpoint verification and live-server screenshot
+capture are named in it. The explicit-approval half is the teardown gate below, pinned per INV-056.
+
 The sequence in every module that starts a server is therefore:
 
 1. Start the server and verify it (agent-side; server stays up).
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+### Identifying the server process (required)
+
+⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.**
+(INV-223.) A server that can be started but not *named* can only be stopped by guessing, and every
+guess available is worse than the handle you threw away. Recording it costs one variable at launch:
+
+| Shell | Handle |
+|---|---|
+| POSIX shells (Linux, macOS, Git Bash, WSL) | `$!` immediately after backgrounding with `&` |
+| PowerShell (Windows) | `$proc = Start-Process … -PassThru`, then `$proc.Id` |
+
+The port is already recorded (INV-172) — record the pid in the same checkpoint object, so a resumed
+session can still stop what a previous one started.
+
+⛔ **Never identify the server by matching its command line — `pkill -f <script name>` and its
+equivalents are unsafe here.** The pattern you match on appears in the *matching command's own*
+command line, so the kill signals the shell that issued it. Observed on a dry run 2026-08-13: `pkill
+-f senzing_viz_server.py` terminated the invoking shell with exit code 144 part-way through
+teardown, leaving the records still loaded and the purge unrun — and the failure presented as the
+purge crashing, not as the kill hitting the wrong target. A name-based match is also wrong in
+principle for this bootcamp: the server is written in the Bootcamper's chosen language (INV-090), so
+there is no script name to match on in general, and a second bootcamp running in another directory
+would match too.
+
+**Terminate by pid; fall back to the port, never to the name.** When the recorded pid is missing —
+a session resumed across the change, or a server someone else started — look the listener up by the
+port that *is* recorded: `lsof -ti:<port>` (Linux/macOS) or `Get-NetTCPConnection -LocalPort <port> |
+Select-Object -ExpandProperty OwningProcess` (PowerShell). The port is bound by exactly the process
+serving it, which is the property the command line lacks.
+
+**Confirm the port is free before continuing, rather than waiting a fixed interval.** Poll the port
+until nothing is listening, up to 5 seconds; then force-stop and re-check. Treat *the port being
+free* as the exit condition — a sleep asserts nothing, and any step that follows teardown (a data
+purge above all) then runs on an assumption instead of an observation.
+
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is
-about to happen in that module and nothing more, because the consequences differ:
+about to happen in that module and nothing more, because the consequences differ.
+
+⛔ **First, state what they are consenting to — this precedes the question, never follows it**
+(`../bootcamp-onboarding/ground-rules.md` → anything meant to inform the answer goes before the 👉;
+nothing may follow it, since it ends the turn). Say that the live URL goes dead, and that the
+standalone snapshot preserves every tab rendering from embedded data but **not** the live
+`why`/`how`/`search` actions, which need the running engine (see "Static snapshot degradation"
+above). **A yes given without that is not an informed yes** — and here the consent authorizes an
+irreversible teardown, so a disclosure arriving after the answer is worth nothing at all.
+
+Then ask the gate that matches the module:
 
 - Where teardown stops the server **and** removes data (Truth Set visualization, whose records are
   scaffolding): say both. → 👉 **Ready for me to stop the visualization server and clean up the Truth Set data?**
@@ -910,11 +1049,6 @@ about to happen in that module and nothing more, because the consequences differ
 ⛔ Never ask a vague "and clean up" in a module that has no purge — the bootcamper's own loaded
 data is needed downstream (recap, graduation), and a gate that sounds like it authorizes deleting it
 either frightens them or licenses a destructive step the module never intended.
-
-Tell the bootcamper what they are consenting to before they answer: the live URL goes dead, and the
-standalone snapshot preserves every tab that renders from embedded data but **not** the live
-`why`/`how`/`search` actions, which need the running engine (see "Static snapshot degradation"
-above). A yes given without that is not an informed yes.
 
 ⛔ **This is not an INV-006 violation.** INV-006 forbids re-asking *the same* question. An earlier
 "are you ready to continue?" or "done with the tour?" asks whether the bootcamper is ready to move

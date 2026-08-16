@@ -19,6 +19,10 @@ What this pins:
 * A removed tab id may survive only as an explicit removal/reserved note.
 * Anything that enumerates the tab set names the same six.
 
+Enforces **INV-188** (a user-visible string a shipped script *emits* is bound by the same
+content invariants as the plugin's prose, and conformance is verified by **executing** the
+script -- this file runs `--help` and the unknown-id error path), which names this file.
+
 Run:  python3 -m unittest discover -s tests
 """
 import ast
@@ -264,6 +268,22 @@ class YesNoHintConventionIsDocumented(unittest.TestCase):
         text = (PLUGIN / "skills" / "bootcamp-onboarding" / "ground-rules.md").read_text()
         squashed = re.sub(r"[*\s]+", " ", text)
         self.assertIn("do not add or remove it from a question whose wording is pinned", squashed)
+
+
+class TheMarkdownSweepIsNotVacuous(unittest.TestCase):
+    """`shipped_markdown()` spans skills, commands and docs; a rename in any one of them
+    silently shrinks the corpus these checks run over."""
+
+    def test_all_three_subtrees_contribute(self):
+        found = shipped_markdown()
+        self.assertGreater(len(found), 20, "corpus shrank to %d files" % len(found))
+        for sub in ("skills", "commands", "docs"):
+            with self.subTest(subtree=sub):
+                self.assertTrue(
+                    any(sub in p.parts for p in found),
+                    "no .md found under %s/ — the glob drifted and this subtree is "
+                    "no longer checked at all" % sub,
+                )
 
 
 if __name__ == "__main__":

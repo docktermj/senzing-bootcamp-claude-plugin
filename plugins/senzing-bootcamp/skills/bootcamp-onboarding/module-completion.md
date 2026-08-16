@@ -31,9 +31,21 @@ sections: append only.
 
 ### 2a. Create the recap on first module completion
 
+⛔ **This substep is UNCONDITIONAL at any module whose append finds no file — every module runs it,
+no module is exempt from it, and no citation elsewhere may narrow Step 2 in a way that omits it.**
+Nothing else creates the recap header: not the onboarding preface, not Bootcamp preparation (which
+is recap-exempt by INV-092 and writes only the two `config/` files). So whichever module happens to
+append first owns the creation, and which module that is depends on the path — Entity Resolution
+Concepts on a Core run, Discover the Business Problem on a Customized run that drops it. A module
+that cites "Step 2 (2b/2c)" and skips 2a appends a `## ` section to a file with no preamble, and the
+missing header is not discovered until graduation, on the keepsake: the certificate prints a
+placeholder name, and graduation's completion-date insertion and `**Plugin version:**` amendment
+have no line to anchor to.
+
 If `docs/bootcamp_recap.md` does not exist, create `docs/` and write this header
 (read `name` from `config/bootcamp_preferences.yaml`; default to `Bootcamper`;
-the plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json`, or "Unknown"; and
+the plugin version from the plugin manifest, resolved as `onboarding-flow.md` step 0 specifies
+(⛔ never by searching the filesystem for a `plugin.json` — INV-252), or "Unknown"; and
 also include the chosen programming language and path (Core/Customized) when present):
 
 ```markdown
@@ -95,8 +107,17 @@ graduation PDF renders exactly these four labeled sections per module):
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
   - ⛔ **Write all three as labeled blocks — `**What you accomplished:**`, `**Files produced:**`, `**Why it matters:**` — never as one prose paragraph.** The three labels are what the recap PDF renders and what `--check` validates (INV-103); a summary written as flowing prose satisfies the *heading* and loses all three blocks. The renderer now prints any absent block as "(not recorded)" in the keepsake rather than letting it disappear, so an unlabeled summary is visible on the page — but a bootcamper's PDF should never carry that marker. Blocks with no content still get their label: "(no files — conceptual primer)" under **Files produced** is a real answer; silence is not.
-  - ⛔ **The shape of each block is required too, not just its label.** `**What you accomplished:**` and `**Files produced:**` are **lists** — label on its own line, then one bullet per accomplishment, and one bullet per file with a short "— what it is" gloss, exactly as the template above shows. `**Why it matters:**` is **prose** and stays inline after its label. The PDF renders bullets as bullets and inline text as one wrapped paragraph, so a list written inline — most often as a comma-joined run of paths — arrives in the keepsake as a paragraph, and nothing downstream can turn it back into a list: `--check` validates the label, not the shape. Write the shape you want the bootcamper to keep.
-- **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](visualizations/<name>-<tab-slug>.png)` — in the same turn the capture ran, in the app's tab order. ⛔ **The path is relative to `docs/bootcamp_recap.md`, the file you are writing into — so it is `visualizations/…`, never `docs/visualizations/…`** (INV-161). The recap lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and matches nothing: it breaks the Markdown recap for a human reader *and* drops the image from the PDF. Write the one path that is correct for both; never adjust it to suit the renderer, and never `cd` to make it resolve. The graduation PDF embeds local images and **reports** every one it drops — naming it on stderr and printing an `embedded N of M images` count (INV-162) — so an absent screenshot never breaks the recap PDF but is never silent either, and graduation backfills any capture whose embed was missed.
+  - ⛔ **The shape of each block is required too, not just its label.** (INV-176) `**What you accomplished:**` and `**Files produced:**` are **lists** — label on its own line, then one bullet per accomplishment, and one bullet per file with a short "— what it is" gloss, exactly as the template above shows. `**Why it matters:**` is **prose** and stays inline after its label. The PDF renders bullets as bullets and inline text as one wrapped paragraph, so a list written inline — most often as a comma-joined run of paths — arrives in the keepsake as a paragraph, and nothing downstream can turn it back into a list: `--check` validates the label, not the shape. Write the shape you want the bootcamper to keep.
+- **Visualization screenshots:** when this module produced a visualization, capture is best-effort (see "Capturing visualization screenshots" below) — but **when a capture succeeds, embedding every screenshot it produced is required**, not optional, and no count cap applies (INV-146): add them all to this module's **Actions Taken** as Markdown images — `![caption](visualizations/<name>-<tab-slug>.png)` — in the same turn the capture ran, in the app's tab order. ⛔ **Each image goes on a line of its own, with nothing before it — not as a `- ` bullet, even though Actions Taken is otherwise a bulleted list.** (INV-242) Write it like this, directly beneath the bullets:
+
+  ```markdown
+  ### Actions Taken
+  - Captured the results visualization (3 tabs) and embedded each below.
+
+  ![Entity Graph — 12 resolved entities from 3 sources](visualizations/results_visualization-entity-graph.png)
+  ```
+
+  Its own line is the block form every Markdown renderer treats as an image, and it is the form the recap generator is written against. The generator also tolerates a leading `- `, so recaps already written as bullets still render — but write the canonical form: the tolerance exists to rescue past recaps, not as a second supported style. ⛔ **The path is relative to `docs/bootcamp_recap.md`, the file you are writing into — so it is `visualizations/…`, never `docs/visualizations/…`** (INV-161). The recap lives in `docs/`, so a `docs/`-prefixed path resolves to `docs/docs/…` and matches nothing: it breaks the Markdown recap for a human reader *and* drops the image from the PDF. Write the one path that is correct for both; never adjust it to suit the renderer, and never `cd` to make it resolve. The graduation PDF embeds local images and **reports** every one it drops — naming it on stderr and printing an `embedded N of M images` count (INV-162) — so an absent screenshot never breaks the recap PDF but is never silent either, and graduation backfills any capture whose embed was missed.
 
 ⛔ **Whenever a module step produces a bootcamper-facing artifact — a PDF, a PNG, an HTML
 visualization — verify the artifact itself, not the exit code.** A zero exit, a written file, and a
@@ -151,7 +172,10 @@ appended (2b), that block is superseded. Do two things:
   from `docs/bootcamp_recap.md` (the finalized section replaces it — this keeps the
   recap clean and never rewrites a completed `## {Name}` section).
 - Clear `docs/progress/recap_checkpoint.md` (empty the file or delete it) so the next
-  module starts a fresh checkpoint.
+  module starts a fresh checkpoint. Either is safe: `checkpoint-tick.py` lays a fresh
+  empty scaffold back down on the next turn if you delete it, and an emptied file is
+  treated as an unfilled scaffold — the fold hooks skip both rather than appending an
+  empty block to the recap.
 
 ## Capturing visualization screenshots (optional)
 
@@ -163,9 +187,24 @@ graceful degradation** — never a 👉 question, and never a reason to stall.
 **The per-tab procedure below is for the tabbed visualization app** — the Truth Set app and the
 Module 7 results app, which share the six-tab contract. A **single-page** HTML deliverable (Data
 Quality, Mapping, and Transformation's quality and mapping pages) has no tabs: capture it as **one
-image**, with no `--tabs` argument, and embed that one image. Passing `--tabs` at a page that has
-none makes the helper skip every requested tab and report on stderr (INV-122) — correct behaviour,
-but it captures nothing, so the page silently misses the recap.
+image** with `--single`, and embed that one image. It writes `{name}.png` — no tab slug — so the
+embed target is predictable:
+
+```bash
+python3 <helper> --html docs/visualizations/{name}.html --out-dir docs/visualizations \
+    --name {name} --single
+```
+
+⛔ **`--single`, not "no `--tabs`".** An omitted `--tabs` does not mean "no tabs", it means **all
+six** — so the helper requests six tabs the page does not have, skips each one and reports it
+(INV-122, correct behaviour), and writes nothing. That is how every single-page deliverable used to
+miss the recap silently. `--single` and `--tabs` cannot be combined; the helper refuses both together
+rather than guessing.
+
+⚠️ If a page with no tab controls is captured **without** `--single`, the helper now detects that and
+captures it as one image anyway, telling you to pass `--single` next time. Do not rely on that: a
+tabbed app whose tab ids are merely misspelled still reports and skips, exactly as before, because
+capturing the whole page there would name a file for a tab it does not show.
 
 For the tabbed app, it is a **tabbed** artifact, so capture is **one image per tab** — never several
 shots of one tab. Procedure (parameterized by the visualization's `{html}` file or live `{url}`, and
@@ -243,8 +282,16 @@ that both showed the Entity Graph, because the app *is* tabbed so the captures w
 tab-diverse. Never infer image content from the visualization contract.
 
 If the Search / Probe tab was captured from the **static snapshot** rather than the live server, its
-search box is inert (the snapshot has no engine), so caption it explicitly as the empty/inactive
-state or omit it — never imply a result set that was not captured.
+search box is inert (the snapshot has no engine), so **caption it explicitly as the empty/inactive
+state** — never imply a result set that was not captured.
+
+⛔ **Omitting the image is not an alternative.** INV-146 requires every screenshot the capture
+produced to reach the recap, and permits deleting only a true duplicate of the same tab. Omitting
+it here does not even lose it: graduation's orphaned-screenshot backfill embeds every PNG the recap
+does not already reference, and it captions from the tab slug alone — so the omitted image returns
+with a bare "Search / Probe" caption and **nothing saying the search box is inert**, which is the
+one outcome this instruction exists to prevent (INV-123). The caption is the remedy; there is no
+second option.
 
 ## Step 3: End-of-module summary (shown to the bootcamper)
 
@@ -294,7 +341,7 @@ summary content above into multiple questions: the summary is statements, the tr
 
 ## Reaching graduation (after the last content module)
 
-When the module just completed is the **last content module before Graduation in
+When the module just completed is the **last content module before Bootcamp graduation in
 `selected_modules`** — always **Query, Visualize and Discover** (Module 7), which is
 required in every path — do Steps 1-3 as usual, then, instead of a next-module
 transition, offer graduation (the mandatory terminal module):
@@ -303,6 +350,6 @@ transition, offer graduation (the mandatory terminal module):
 
 On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
 keep exploring first, stay available and offer graduation again whenever they are
-ready. Graduation is the required close-out module; its production project and
+ready. Bootcamp graduation is the required close-out module; its production project and
 migration checklist deliver the production-hardening guidance (performance,
 security, monitoring, deployment) for every bootcamper.

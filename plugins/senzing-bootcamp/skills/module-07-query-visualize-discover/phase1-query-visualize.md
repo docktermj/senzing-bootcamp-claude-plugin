@@ -61,20 +61,92 @@ language='<lang>', version='current')`.
 `get_sdk_reference(topic='flags', filter='<method>')` and select the flags matching the
 bootcamper's query intent. Explain the choice in one sentence: "I'm using [flag] so we can see
 [what it provides]." For visualization-bound queries, include `SZ_INCLUDE_FEATURE_SCORES`
-and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`.
+and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. ⚠️ **`SZ_INCLUDE_MATCH_KEY_DETAILS` `depends_on` a relations
+flag and writes into `RELATED_ENTITIES[]`, so pass it only alongside one** — `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+or one of its four members — and only for the methods that return related entities. Passed on its own
+it is accepted and adds nothing, which reads as "no relationships in this data" rather than as a
+missing flag (INV-179). It is **not** how a why response explains its match: see step 3a.
+(`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`, server 1.32.9, 2026-08-14.)
+
+⚠️ **The server cautions that DEFAULT composites are not for production code — relay this when you
+teach them.** Returned verbatim as the top-level `caution` field of
+`get_sdk_reference(topic='flags', filter='find_network_by_entity_id', language='python')`, **MCP
+server 1.32.9, 2026-08-12**:
+
+> **PRODUCTION GUIDANCE:** `*_DEFAULT_FLAGS` composites are intended for getting started and
+> exploration, not for production code. Their membership may change between Senzing versions, so
+> code pinned to a DEFAULT flag can silently change what it returns after an upgrade — no error is
+> raised. They also return more than most callers need, and unrequested data costs engine work and
+> response size. In production, request exactly the flags whose output you consume (OR the specific
+> `SZ_*` flags together) rather than relying on a DEFAULT composite.
+
+**Both halves of that are true here, and the split is the point.** Starting from a DEFAULT composite
+is the **right** thing for the bootcamp — the server's own wording calls it the getting-started and
+exploration path, and it is how you see a full response before deciding which parts you need. The
+code that **leaves with the Bootcamper** is different: graduation copies `src/query/**` into
+`production/src/`, so an exploration-shaped flag choice becomes their production artifact verbatim.
+Say that plainly when the composite table comes up, and note that the failure mode is **silent** —
+after a Senzing upgrade the response changes shape with no error, so nothing in their code will
+tell them. `production/MIGRATION_CHECKLIST.md` carries the corresponding action item.
+
+⛔ **Do not rewrite this module's examples to enumerate flags.** The exploration path is endorsed by
+the source that issues the caution, and turning a learning example into a production one trades a
+readable lesson for noise — the INV-169 mistake of letting a correct approach look broken.
 
 ⛔ **A method's own default-flags composite is NOT `SZ_ENTITY_DEFAULT_FLAGS`, and may omit
 sub-flags that one carries.** Before parsing an entity field out of a response, read the
 composite's `composite_members` and confirm the flag that populates *that* field is in it.
-Two confirmed cases, both of which apply when you pass **no** `flags` argument at all, because
+Three confirmed cases, all of which apply when you pass **no** `flags` argument at all, because
 these are the signature defaults (`get_sdk_reference(topic='flags', filter=…, language='python')`,
-server 1.32.2, verified 2026-07-29):
+server 1.32.2, verified 2026-07-29; the `why_*` row re-verified 2026-07-31):
 
 | Composite | Carries | Does **not** carry |
 |---|---|---|
 | `SZ_SEARCH_BY_ATTRIBUTES_ALL` (default for `search_by_attributes`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
 | `SZ_FIND_NETWORK_DEFAULT_FLAGS` (default for `find_network_*`) | `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` | `SZ_ENTITY_INCLUDE_RECORD_DATA` |
+| `SZ_WHY_ENTITIES_DEFAULT_FLAGS` (`why_entities`) — **one flag, not a set** | `SZ_INCLUDE_FEATURE_SCORES` only | `SZ_ENTITY_INCLUDE_ENTITY_NAME`, and every other entity sub-flag |
 | `SZ_ENTITY_DEFAULT_FLAGS` (`get_entity_*`) | **both** | — |
+
+⚠️ **The `why_*` row is the one that costs you a field you did not ask about.**
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS` is documented as "the default recommended flags for
+`why_entities`. Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`" — a single flag, carrying no
+entity-name flag at all, so **`ENTITY_NAME` comes back `null` while every analytical field
+renders correctly**: match level, why key, ER rule, feature scores and buckets, CONFIRMATIONS
+and DENIALS. That is the deceptive form of the half-populated row (INV-148) — the analysis is
+complete and only the human-readable labels are missing, so it reads as unnamed data rather
+than as a flags problem. OR the flag in explicitly:
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
+(`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
+`why_record_in_entity` — verified 2026-07-31). ⛔ **`SZ_INCLUDE_MATCH_KEY_DETAILS` was in this
+expression and has been removed: it `depends_on` a relations flag and writes into
+`RELATED_ENTITIES[]`, so on a why call it adds nothing.** The CONFIRMATIONS and DENIALS named
+above are already there without it — they are part of `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`
+(`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
+2026-08-14). Adding a flag that changes nothing is how a wrong field name survives review. The same holds for
+`SZ_WHY_RECORDS_DEFAULT_FLAGS` and `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS`, both documented
+as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not inferred from
+its sibling — INV-169).
+
+⛔ **When `topic='flags'` returns a composite with NO `composite_members`, the check is not
+unrunnable — you asked the wrong tool.** For all three `why_*` default composites
+`get_sdk_reference(topic='flags', …)` returns only a one-line description, no
+`composite_members` and no `response_paths`, with `applies_to` as the literal glob
+`["why_entities*"]` and a `source_file` of the V3→V4 breaking-changes document rather than the
+flags reference. The membership **is** documented — in the flags documentation, reachable with
+`search_docs(query='SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags')`, which returns
+the "Equivalent to:" line quoted above (source: `senzing.com/docs/flags/4/flags_why`). So:
+
+1. Ask `topic='flags'` first — it is authoritative and structured.
+2. If `composite_members` is absent, ask `search_docs` before concluding anything.
+3. Corroborate with the method signature: the same response's `method_signatures` shows the
+   binding's default, and for `why_entities` Python reads
+   `flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>` — independent
+   confirmation that the composite is that one flag.
+4. Only if **both** tools come back empty do you OR the needed sub-flags in explicitly and
+   record what you could not confirm (INV-080/INV-149).
+
+**"The server does not document X" is only ever "the tool I asked does not document X."**
+An empty structured field is not an absent fact.
 
 And the flag→field mapping that makes the consequence exact: `SZ_ENTITY_INCLUDE_RECORD_DATA` →
 `RESOLVED_ENTITY.RECORDS[]`; `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` → `RESOLVED_ENTITY.RECORD_SUMMARY[]`.
@@ -104,8 +176,10 @@ parser (INV-115).
 *parses* a response, also call `get_sdk_reference(topic='response_schemas', filter='<method>')`
 — **never infer field names from an example snippet.** Wrong field names do not raise: they
 render as blank text, so the output looks like "Senzing found nothing" rather than a bug.
-`response_schemas` documents the top-level shape per method; for deeper nesting (anything under
-`MATCH_INFO`), dump one raw response and read it before writing the parser.
+`response_schemas` documents **nested** paths, not merely the top-level shape — `MATCH_INFO` is
+covered in full, down to `WHY_RESULTS[].MATCH_INFO.FEATURE_SCORES.NAME[].SCORE_BUCKET` (verified
+on MCP server 1.32.2, 2026-07-30) — so look a suspect name up there first, then dump one raw
+response to confirm what *this* installation returns before writing the parser.
 
 **Defensive parsing.** A blank field has **three** possible causes, not two, and they need
 different fixes:
@@ -208,17 +282,62 @@ cross-source connections, just ask and I'll walk through it again."
 
 When presenting results from `how_entity` or the `why_*` methods (`why_entities`,
 `why_records`, `why_record_in_entity`), ensure the query was called with
-`SZ_INCLUDE_FEATURE_SCORES` and/or `SZ_INCLUDE_MATCH_KEY_DETAILS`. These flags provide the
-scoring detail needed for informative output. If the query used default flags, note what
-additional detail would be available with feature-score and match-key-detail flags.
+`SZ_INCLUDE_FEATURE_SCORES` — the flag that carries the per-feature scoring detail these
+presentations are built from (it applies to all four methods; `get_sdk_reference(topic='flags',
+filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default flags, note what
+additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
+read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, not from a `MATCH_KEY_DETAILS` field and
+not by adding `SZ_INCLUDE_MATCH_KEY_DETAILS`** — that flag targets `RELATED_ENTITIES[]` and needs
+a relations flag, so on a why call it has nothing to attach to and a parser written for it renders
+blank with no error (INV-179; see `phase2-discover.md` step 4b.3, which states this once).
 
 **Checkpoint:** write step 3a.
 
+⛔ **Steps 2–3a ask nothing, so this turn does not end here** — the business answers this step
+presents are a results presentation, which reads as an ending and is not one (`ground-rules.md` →
+"A results presentation is not a turn ending", INV-225). Continue into 3b/3c in the same turn, up to the
+next 👉.
+
 ### 3b. Quality evaluation
 
-Call `reporting_guide(topic='quality', language='<chosen_language>', version='current')` for
-the quality-evaluation methodology, then `search_docs(query='entity resolution quality
-evaluation', version='current')` for additional context on interpreting results.
+Call **both** `reporting_guide` topics — they carry different halves and this step needs both
+(verified live, **MCP server 1.32.9, 2026-08-12**):
+
+- `reporting_guide(topic='quality', language='<chosen_language>', version='current')` — the
+  **methodology**: precision/recall/F1 where a truth set exists, split/merge detection, and the
+  review-queue criteria (possible matches, ambiguous matches, large entities, and "review features"
+  — an entity carrying two different DOBs or SSNs).
+- `reporting_guide(topic='evaluation', language='<chosen_language>', version='current')` — how to
+  **interpret** what you found: the 4-Point ER Evaluation Framework (sanity check → over-matching →
+  under-matching → match principles), the `MATCH_LEVEL_CODE` reference, and the evidence rule below.
+
+⛔ **Do not reach for `search_docs` here.** This step used to add
+`search_docs(query='entity resolution quality evaluation')` "for additional context". Run live on
+server 1.32.9 (docs index 2026-08-11), that query returns the *Entity Resolution Buyer's Guide* →
+"The Steps To Evaluating Entity Resolution" — a nine-step guide to evaluating an ER **vendor**
+(deployment method, cloud vs on-prem, total cost of ownership), not to interpreting your results.
+BM25 matched "evaluation" in the procurement sense. `reporting_guide` owns this material; ask it.
+If a lookup here returns nothing relevant, re-query with the documentation's own vocabulary before
+concluding the material is uncovered — [`concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
+states that rule in full; follow it rather than restating it here.
+
+⛔ **Never state a quality verdict without showing the evidence for it.** Verbatim from
+`reporting_guide(topic='evaluation', language='python')` (server 1.32.9, 2026-08-12), which calls
+this its hallucination-prevention mechanism:
+
+> CRITICAL: Every evaluation finding MUST be supported by specific evidence — actual records, entity
+> IDs, and data values. … An LLM can easily generate plausible-sounding evaluation narratives without
+> actually examining the data. **Bad:** *"The resolution quality looks good with reasonable
+> compression rates."* **Good:** *"Entity 1042 contains 3 records from CUSTOMERS and 1 from VENDORS.
+> Records CUST-001 (John Smith, 1985-03-15, 555-1234) and CUST-047 (J. Smith, 1985-03-15, 555-1234)
+> correctly resolved via +NAME+DOB+PHONE. Record VEND-203 (Smith Consulting, 555-1234) merged via
+> +PHONE only — this is suspicious and may be over-matching."*
+
+**Both topics say the same thing about aggregates**, so the table below is where the review *starts*,
+never where it ends. `topic='quality'`: *"Aggregate stats (entity count, compression ratio) hide
+errors. Always sample and manually review specific entities — especially large entities, possible
+matches, and ambiguous matches. Use `why_entities` to understand individual resolution decisions."*
+`topic='evaluation'`: *"Never assess ER quality from aggregate statistics alone."*
 
 Present a quality summary:
 
@@ -235,13 +354,23 @@ Present a quality summary:
 - **Poor** (iterate): possible matches > 15%, clear split/merge patterns, or no matching
   occurring.
 
-Based on the assessment:
+⛔ **Before stating any of the three verdicts, sample and show.** Pull two or three entities from
+the larger size buckets and two or three pairs from the possible-match queue, retrieve them with
+`why_entities` / `get_entity`, and show the Bootcamper the actual records: entity ID, how many
+records, which sources, and the match key that joined them. This applies to **every** branch,
+including the one that proceeds — a verdict with no records behind it is the "Bad" example above,
+and **Acceptable** is the branch a Bootcamper is least likely to question.
 
-- **Acceptable:** "Your entity resolution quality looks good. Let's proceed to visualizations."
-- **Marginal:** "I see some potential issues. Let me show you a few specific entities to
-  review." (Present examples, then ask whether to proceed or iterate.)
-- **Poor:** "The results suggest mapping improvements would help. Here's what I recommend..."
-  (Present specific recommendations and offer the Module 5 feedback loop.)
+Based on the assessment — evidence first, wording second:
+
+- **Acceptable:** name what you examined, then proceed. "I looked at entities [IDs]: [n] records
+  merged on [match keys], and each is the same [person/organization]. Possible matches are [x]% of
+  entities. Quality looks good — let's proceed to visualizations."
+- **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
+  sampled entities and pairs with their match keys, then ask whether to proceed or iterate.)
+- **Poor:** "The results suggest mapping improvements would help." (Show the entities or possible-match
+  pairs that demonstrate it — naming the match key pattern the near-misses share, since that is what
+  points at the unmapped feature — then give recommendations and offer the Module 5 feedback loop.)
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
@@ -320,7 +449,10 @@ of the Truth Set. It MUST:
   `search_docs`, do not take it from here), `NAME_ORG` is the organization name attribute while
   `NAME_FULL` is for a single-field name whose type is unknown; an organization name sent as
   `NAME_FULL` matches nothing **and raises no error**. Try `NAME_FULL`, then `NAME_ORG` when the
-  first returns nothing (or send both and merge by `ENTITY_ID`). This module points at the
+  first returns nothing (or send both and merge by `ENTITY_ID`) — and when the first *errors*, try
+  `NAME_ORG` anyway rather than returning the error: a failed attribute is retried past, never
+  treated as the end of the list, and an error is reported only once every attribute has been
+  tried and none matched (INV-190). This module points at the
   bootcamper's own data, which is frequently half organizations: a search that quietly finds none of
   them reads as a failed load, not as a wrong query. Report an empty result as "nothing matched the
   attributes tried", naming them — never as "not in your data" (INV-115).
@@ -334,7 +466,8 @@ of the Truth Set. It MUST:
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
   SQL.
 - Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
-  from `scripts/brand_tokens.py` (INV-081).
+  from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative fallback
+  `../../scripts/brand_tokens.py`, INV-252).
 - Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
   the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording
@@ -385,9 +518,21 @@ and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper
 restart for a server they never agreed to stop. If the module ends with the server still up, say
 plainly that it is still running and how to stop it, rather than stopping it unasked.
 
+⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** (INV-223.)
+Capture the
+handle at launch (`$!` in a POSIX shell, `$proc.Id` from PowerShell's `Start-Process … -PassThru`)
+and record it in the `m7_visualizations` checkpoint below, with the port it bound; on teardown,
+signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own
+command line and signals the caller, and this module's server is generated in the bootcamper's
+chosen language (INV-090), so there is no script name to match on anyway. When the pid is missing,
+find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). Full rule:
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
+"Identifying the server process".
+
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
-(offered/accepted and the artifact path, e.g. `{"offered": true, "accepted": true, "artifact":
-"docs/visualizations/results_visualization.html"}`). The former per-visualization checkpoints
+(offered/accepted, the artifact path, and — while the server is up — the port and pid it was started
+on, e.g. `{"offered": true, "accepted": true, "artifact":
+"docs/visualizations/results_visualization.html", "port": <port>, "pid": <pid>}`). The former per-visualization checkpoints
 `m7_exploratory_queries` (entity graph) and `m7_findings_documented` (dashboard) are subsumed here.
 
 ## Next: Discover phase (step 4)
@@ -438,11 +583,16 @@ Source every figure through generated SDK code and `reporting_guide` — never d
 3. **`## Review queue`** — cross-source `POSSIBLY_SAME` / `AMBIGUOUS` pairs. This is the section with
    the most business value: each row is one human decision away from being acted on.
 4. **`## Why and how: worked examples`** — from the bootcamper's own entities, including at least one
-   **near-miss**. Why something did *not* merge teaches more than why something did.
+   **near-miss**. Why something did *not* merge teaches more than why something did. Label that
+   example exactly `**Near-miss (the one that teaches more):**` — the generator gives this label its
+   own line and an indented body, and keys on the label text, so the parenthetical is load-bearing:
+   `**Near-miss:**` alone renders inline like any other label (INV-242).
 5. **`## Relationship networks`** — multi-hop paths no single record states.
 6. **`## What was not found, and why`** — ⛔ the section most likely to be dropped, and the one that
-   changes how the whole document reads. State the measurement (e.g. how many names or identifiers
-   the sources actually share) and say explicitly which case applies: **the data had little overlap
+   changes how the whole document reads. State the measurement under the exact label
+   `**Measurement:**` (e.g. how many names or identifiers the sources actually share) — the
+   generator gives this label its own line and an indented body, and keys on the label text
+   (INV-242) — and say explicitly which case applies: **the data had little overlap
    to find**, or **the pipeline underperformed**. Without it, a correct result on a
    low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
    suppressor findings belong here.

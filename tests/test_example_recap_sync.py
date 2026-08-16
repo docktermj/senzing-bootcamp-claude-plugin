@@ -59,6 +59,9 @@ EXAMPLES = os.path.join(REPO_ROOT, "plugins", "senzing-bootcamp", "docs", "examp
 EXAMPLE_MD = os.path.join(EXAMPLES, "bootcamp_recap.example.md")
 EXAMPLE_PDF = os.path.join(EXAMPLES, "bootcamp_recap.example.pdf")
 EXAMPLE_PNG = os.path.join(EXAMPLES, "bootcamp_recap.example.truthset.png")
+GENERATOR = os.path.join(
+    REPO_ROOT, "plugins", "senzing-bootcamp", "scripts", "generate_recap_pdf.py"
+)
 
 
 def pdf_text(path):
@@ -86,6 +89,26 @@ def pdf_text(path):
     return " ".join(f.replace("\\(", "(").replace("\\)", ")") for f in fragments)
 
 
+def pdf_text_without_page_footers(path):
+    """`pdf_text`, minus fragments that are only a page number.
+
+    A page-number footer is its own `Tj` fragment, so when a source line straddles a
+    page break the footer lands *inside* it and `squash` welds the digits into the
+    middle of the compared window — "…assuming it **23** recordLimit: 0…". The line is
+    present; the comparison window is not contiguous. This module's `sampled_lines`
+    docstring already describes that hazard for `_NEW_LINE_LABELS`; it reaches ordinary
+    prose too, and which line it hits depends only on where the pagination happens to
+    fall, so any edit anywhere in the source can move it.
+
+    Dropping digit-only fragments cannot hide staleness: a sentence that is genuinely
+    missing from the PDF is still missing from this haystack. (Added 2026-08-11, when
+    a wording change in Module 0 shifted pagination and pushed the licence-measurement
+    line onto a page boundary — INV-181: fix the assertion's model of the artifact,
+    not the artifact.)
+    """
+    return re.sub(r"\s+\d+\s+", " ", " " + pdf_text(path) + " ")
+
+
 def squash(text):
     """Reduce to lowercase alphanumerics.
 
@@ -102,19 +125,43 @@ def pdf_bytes():
 
 
 def normalize(text):
-    """Fold the substitutions `_pdf_escape` makes, so comparisons are fair.
+    """Fold the generator's character substitutions, so comparisons are fair.
 
-    Non-Latin-1 typography is approximated on the way into the PDF (en dash ->
-    '-', curly quotes -> straight), so the Markdown side must be folded the same
-    way before searching.
+    Non-Latin-1 typography is approximated on the way into the PDF (en dash -> '-',
+    curly quotes -> straight, "∞" -> "infinity"), so the Markdown side must be folded
+    the same way before searching.
+
+    ⚠️ **Attribution corrected 2026-07-31.** This used to say it folded "the
+    substitutions `_pdf_escape` makes" and hardcoded 9 of them. `_pdf_escape` no longer
+    substitutes anything — it carried a 9-entry duplicate of `_UNICODE_MAP` with a `"?"`
+    default, which made the stdlib renderer print `?` for the other 24 (INV-143). The
+    substitutions still happen; they happen in `_safe` via `_UNICODE_MAP`.
+
+    Derived from `_UNICODE_MAP` rather than restating a subset of it, because a
+    hardcoded second copy is exactly the defect that was just removed from the source:
+    were the example recap to gain a "≥", a 9-entry list here would silently
+    mis-compare.
     """
-    for src, dst in (
-        ("‘", "'"), ("’", "'"), ("“", '"'), ("”", '"'),
-        ("–", "-"), ("—", "-"), ("•", "-"), ("…", "..."),
-        ("→", "->"),
-    ):
+    for src, dst in _generator_unicode_map().items():
         text = text.replace(src, dst)
     return text
+
+
+def _generator_unicode_map():
+    """`_UNICODE_MAP` from the recap generator, loaded once."""
+    global _UNICODE_MAP_CACHE
+    if _UNICODE_MAP_CACHE is None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("recap_gen_for_normalize", GENERATOR)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        _UNICODE_MAP_CACHE = module._UNICODE_MAP
+    return _UNICODE_MAP_CACHE
+
+
+_UNICODE_MAP_CACHE = None
 
 
 def example_md_text():
@@ -354,8 +401,14 @@ class TestPdfMatchesItsSource(unittest.TestCase):
         self.assertGreater(len(lines), 20, "sampler found too little to compare")
         haystack = squash(self.pdf)
         # Compare a distinctive leading run of each line, squashed, so wrapping
-        # and PDF escaping cannot produce a false failure.
-        missing = [ln for ln in lines if squash(ln)[:50] not in haystack]
+        # and PDF escaping cannot produce a false failure. A line that straddles a
+        # page break has the page-number footer welded into that window, so retry
+        # those against a haystack with digit-only fragments removed.
+        no_footers = squash(pdf_text_without_page_footers(EXAMPLE_PDF))
+        missing = [
+            ln for ln in lines
+            if squash(ln)[:50] not in haystack and squash(ln)[:50] not in no_footers
+        ]
         self.assertEqual(
             [],
             missing[:5],

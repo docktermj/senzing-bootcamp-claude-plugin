@@ -58,9 +58,9 @@ The **State token** column is the exact value to write into `selected_modules` a
 | 8 | Data Quality, Mapping, and Transformation | Required — Requires "Data collection" | `data_quality_mapping` | `module-05-data-quality-mapping` |
 | 9 | Data processing | Required — Requires "Data Quality, Mapping, and Transformation" | `data_processing` | `module-06-data-processing` |
 | 10 | Query, Visualize and Discover | Required — Requires "Data processing" | `query_visualize_discover` | `module-07-query-visualize-discover` |
-| 11 | Graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
+| 11 | Bootcamp graduation | Required — Requires "Query, Visualize and Discover" | `graduation` | `graduation` |
 
-Because **Graduation is required** and it requires "Query, Visualize and Discover", which requires
+Because **Bootcamp graduation is required** and it requires "Query, Visualize and Discover", which requires
 "Data processing", which requires "Data Quality, Mapping, and Transformation", which requires "Data collection", that
 whole downstream chain is always included. So the genuinely deselectable modules are exactly three:
 **Entity Resolution Concepts**, **System verification**, and **Truth Set visualization** (and
@@ -154,7 +154,8 @@ Apply the prerequisite rules when recording the selection:
 
 - All Required modules are always included. Name them exactly as the module table above spells them
   — Bootcamp preparation, Discover the Business Problem, SDK setup, Data collection, **Data Quality,
-  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Graduation —
+  Mapping, and Transformation**, Data processing, **Query, Visualize and Discover**, Bootcamp
+  graduation —
   never an abbreviation, since these names are what the bootcamper reads here and in every later
   journey map and transition question (INV-079).
 - If the bootcamper chooses **Truth Set visualization** (3) without **System verification** (2),
@@ -170,7 +171,7 @@ write in Step 6. Keep the list in module order so the journey map and transition
 ⛔ Skip this step entirely when `verbosity` is honorable per Step 0.
 
 **Before asking, tell them the choice is not permanent** — that they can change it any time
-("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-005 requires the
+("change verbosity", or "more code walkthroughs"). This has to come **first**: INV-251 requires the
 👉 question to end the turn, so nothing can follow it, and a reassurance delivered after the answer
 cannot inform the choice it was meant to inform.
 
@@ -210,10 +211,18 @@ replied. (The can-change-it-any-time reassurance belongs **before** the question
 
 ⛔ **There is no model-guidance question and no `model_guidance` preference (INV-137).** Ask nothing
 here and write nothing for it. Model/effort guidance behaves one way for everyone: at each module
-start and graduation start the guide surfaces the stage's recommendation, and **when the
-recommendation changes** it pauses on the pinned switch question followed by the pinned "Are you
-done modifying the model and effort?" gate; when it is unchanged it is a one-line statement. The
-full behavior lives in `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt".
+start and graduation start the guide surfaces the stage's recommendation, and **when that
+recommendation differs from what the bootcamper is running right now** — compared per dial — it
+pauses on the pinned switch question followed by the pinned "Are you done modifying the model and
+effort?" gate; when it already matches, it is a one-line statement.
+
+⛔ **The comparison is against the live session, never against the previous stage's
+recommendation.** Four consecutive stages share one recommendation, so reading it stage-to-stage
+would suppress the switch question through the whole opening of a Core run — for precisely the
+bootcamper who is already running something stronger, which is the common case rather than an edge
+case. `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt" is
+**authoritative** for the comparison, including the per-dial rule for a value that cannot be read;
+do not restate that procedure here — two copies is how this drifted in the first place.
 
 This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
 stay stable. Skip straight from Step 3 to Step 4.
@@ -244,7 +253,7 @@ questions.
   4. macOS (Intel)
   5. Windows (x86-64)
 
-  *(Internal: end the turn on this single 👉 question and wait — INV-005.)*
+  *(Internal: end the turn on this single 👉 question and wait — INV-251.)*
 
 - **Detect the bootcamper's name silently (do not ask).** Best-effort: read a display name from
   `git config user.name` (else the environment). If found, hold it as `name` for the Step 6
@@ -253,27 +262,48 @@ questions.
 - Call **`get_capabilities`** on the Senzing MCP server for the supported programming languages.
   It is the tool that carries that fact, and in the server's model the language set is
   **platform-independent**: Python, Java and C# official, Rust and TypeScript/Node.js
-  community-maintained wrappers (verified 2026-07-29, server 1.32.2). What varies per platform is
+  community-maintained wrappers (re-verified 2026-08-12, server 1.32.9). What varies per platform is
   the install *mechanism*, not which languages exist — so do **not** route this lookup to
   `sdk_guide`: `sdk_guide(topic='install', platform=…)` returns install commands, env vars, paths
   and gotchas and **no language list at all**, and with no `platform` it returns the platform
-  decision tree rather than a language one (both confirmed live, same server and date). The one
+  decision tree rather than a language one — `needs_input.parameter` is `platform`, offering five
+  operating systems (both halves re-checked live, same server and date, `platform='linux_apt'` and
+  no-platform).
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — owner: get_capabilities carries the language set (routing negative — the fact exists, go there) — server 1.32.9, 2026-08-13 -->
+  The one
   genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
   only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules
   below and in Module 2's routing, which is where it belongs.
 - Always say "**programming language**", never the bare word "language" (avoids confusion with
   spoken languages).
-- Present the MCP-returned options as a **numbered list**. Annotate an option **only where the
-  Module 2 routing rules actually distinguish it** — that is, where the platform forces a language
-  into a container — so the trade-off is visible at the decision point:
-  - **macOS Apple Silicon:** "Python — runs via Docker (the SDK is Linux-only); Java / C# —
-    native." (routing rules 1 and 3)
-  - **macOS Intel:** every language runs via Docker; there is no native Intel-Mac install. (rule 2)
-  - **Windows:** Python runs via Docker; other languages need Scoop, else Docker. (rules 1 and 4)
-  - **Linux:** the rules distinguish nothing per language — all supported languages install
-    natively via the platform's package manager (rule 5). Say that once rather than annotating
-    each option with the same thing, and do **not** invent per-language install detail to fill the
-    space.
+- Present the MCP-returned options as a **numbered list**, rendered **directly beneath the 👉
+  question, as part of it** — the same shape Steps 1–3 use, and required by
+  `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol. These options cannot be pinned,
+  because they come from the server at runtime; that changes whether the text is fixed, never where
+  it goes. The question says "reply with a number", so the numbers must follow it (INV-224).
+
+  ⛔ **Sort the two kinds of prose in this step by where they belong, because it mixes them.**
+  - **Platform-wide statements are informational → BEFORE the 👉**, with the detected-platform
+    line. The Linux sentence is one: it says the same thing about every option, so it is a fact
+    about the platform, not an annotation on a choice.
+  - **Per-option annotations belong ON their option**, inside the numbered list — never hoisted
+    above the question, where they separate the numbers from the instruction to use them.
+
+  Annotate an option **only where the Module 2 routing rules actually distinguish it** — that is,
+  where the platform forces a language into a container — so the trade-off is visible at the
+  decision point. The rules are the numbered list under "Routing rules (apply in order)" in
+  `../module-02-sdk-setup/SKILL.md`; the ordinals below index that list, so re-check them there
+  rather than trusting the numbers if that list is ever edited. All four platform cases:
+  - **macOS Apple Silicon:** per-option — "Python — runs via Docker (the SDK is Linux-only);
+    Java / C# — native." (routing rules 1 and 3)
+  - **macOS Intel:** platform-wide — every language runs via Docker; there is no native Intel-Mac
+    install. (rule 2) Say it once, above the 👉.
+  - **Windows:** per-option — Python runs via Docker; other languages need Scoop, else Docker.
+    (rules 1 and 4)
+  - **Linux:** platform-wide — the rules distinguish nothing per language, so all supported
+    languages install natively via the platform's package manager (rule 5). Say that once above the
+    👉 rather than annotating each option with the same thing, and do **not** invent per-language
+    install detail to fill the space.
 
   ⛔ **Do not manufacture an annotation the routing rules do not support.** Those rules
   (`../module-02-sdk-setup/SKILL.md`, "Determine Platform") resolve a *platform*, not per-language
@@ -281,6 +311,24 @@ questions.
   commands come from `sdk_guide(topic='install', platform=…, language=…)` in Module 2, at the point
   they are needed — not from memory here (INV-080). If the MCP server flags a language as
   discouraged or unsupported on the platform, relay that and suggest alternatives.
+
+  The resulting shape (Linux, where the platform statement is platform-wide). The question line is
+  written once, below — this is its position, not a second copy of it:
+
+  ```text
+  Detected platform: Linux (apt). All supported programming languages install natively
+  via the platform's package manager.
+
+  <the pinned 👉 question below, verbatim>
+
+  1. Python — official SDK
+  2. Java — official SDK
+  … (one line per language `get_capabilities` returned, in its order)
+  ```
+
+  On macOS Apple Silicon and Windows the same shape holds, with the routing note on the option it
+  applies to — `1. Python — runs via Docker (the SDK is Linux-only)` — and nothing platform-wide
+  hoisted above except the detected-platform line.
 
   👉 **Which programming language would you like to use for the bootcamp? Reply with a number:**
 
@@ -363,12 +411,37 @@ suppressed, so an honored preference is visible rather than looking like a quest
 ✅ Bootcamp preparation complete
 ────────────────────────────────
 • Path: Core (all modules) — or Customized (selected modules)
-• Modules: {ordered selected module names}
+• Modules: {ordered selected module names, separated by "; "}
 • Detail level: {verbosity}{ — from your saved preferences}
-• Language: {programming language}{ — from your saved preferences}
+• Programming language: {programming language}{ — from your saved preferences}
 • Version control: {git initialized | existing repo | git unavailable}
 → Next: {first content module name}
 ```
+
+⛔ **Two details in that template are load-bearing; do not "tidy" either one.**
+
+- **The module list is separated by semicolons, not commas.** Two display names contain internal
+  commas — *Data Quality, Mapping, and Transformation* and *Query, Visualize and Discover* — so a
+  comma-separated Core list reads as **fourteen** modules instead of eleven. This is the same reason
+  `generate_recap_pdf.py --check --expect-modules` takes a semicolon-separated list. The names
+  themselves must stay verbatim (INV-079), so the separator is the only place this can be fixed.
+- **The label is "Programming language", never the bare "Language"** — the rule stated in Step 4
+  above, and it applies to every bootcamper-facing line, not only to the question.
+
+⛔ **Under `minimal`, the six lines COLLAPSE to one — they are not dropped.** The one-line budget and
+the per-line provenance marker collide exactly when they matter most: a returning bootcamper who
+pre-seeded `path`, `verbosity` and `programming_language` needs all three marked, and has one line to
+put them on. Merge with `; ` and attach each marker **inline to its value**, per
+`../bootcamp-onboarding/ground-rules.md` → Verbosity. The module list compresses to a count, since
+the names were just given in the preface; a count is not a module number, so INV-079 is unaffected.
+This exact shape:
+
+```text
+✅ Bootcamp preparation complete — Path: Core (all 11 modules) — from your saved preferences; Detail level: minimal — from your saved preferences; Programming language: Java — from your saved preferences; Version control: git initialized. → Next: Entity Resolution Concepts
+```
+
+Nothing here is optional under `minimal`: the values in force, their provenance markers, and the
+next-module pointer are all required output, and `minimal` reduces only *explanatory* output.
 
 When Step 0 honored anything, close the recap with one line telling them how to change it: "Edit
 `config/bootcamp_preferences.yaml` to change any saved choice, or just tell me."

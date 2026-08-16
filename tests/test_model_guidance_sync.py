@@ -12,6 +12,11 @@ These tests are the enforcement:
 1. No superseded model name or ID survives anywhere in the shipped plugin.
 2. The two per-stage tables agree row for row.
 
+Enforces **INV-114** (bootcamper-facing model/effort guidance names only current models
+and IDs, with `ground-rules.md` authoritative and `docs/model-selection.md` derived) and
+**INV-140** (every stage the bootcamp can run has exactly one row in the per-stage table,
+including the apparatus-exempt setup stages). Both name this file as their enforcer.
+
 Run:  python3 -m unittest discover -s tests
 """
 import os

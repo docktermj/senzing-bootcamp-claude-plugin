@@ -91,7 +91,7 @@ class TheSenz2027DiagnosticIsNamed(unittest.TestCase):
         )
 
     def test_the_quote_carries_its_provenance(self):
-        self.assertRegex(flat(MODULE_02), r"(?i)verified 2026-07-28 on MCP server 1\.32\.1")
+        self.assertRegex(flat(MODULE_02), r"(?i)verified 2026-07-30 on MCP server 1\.32\.2")
 
     def test_explain_error_code_is_still_first(self):
         self.assertRegex(flat(MODULE_02), r"explain_error_code\('SENZ2027'\)")
@@ -106,9 +106,50 @@ class TheSenz2027DiagnosticIsNamed(unittest.TestCase):
 
 
 class TheRetractedClaimStaysRetracted(unittest.TestCase):
-    """SENZ7426 is a transliteration error; it must never be a SUPPORTPATH symptom."""
+    """SENZ7426 must never be an *unconditioned* SUPPORTPATH symptom.
 
-    def test_senz7426_is_never_tied_to_supportpath(self):
+    History, because it decides what this class may and may not permit. On 2026-07-28 the
+    absolute claim "SENZ7426 is the symptom of a wrong SUPPORTPATH" was retracted, on the
+    grounds that `explain_error_code('SENZ7426')` returned only generic causes and made no
+    SUPPORTPATH connection (re-verified 2026-07-31). A blanket ban on the two appearing
+    together was the right guard at the time.
+
+    **That premise is retired — do not restore it.** On server 1.32.9, 2026-08-12,
+    `explain_error_code('7426')` ranks "SUPPORTPATH points at a directory with no
+    transliteration modules … a configuration error, NOT a broken install" as
+    `common_causes[0]` and "Check SUPPORTPATH FIRST" as `resolution_steps[0]`, and carries
+    both the macOS-cask and Windows-Scoop cases. The two tools now AGREE, so the plugin no
+    longer withholds the tool's output, and the `denial` exemption this class used to grant
+    (any window whose text said explain_error_code was "generic"/"makes no connection" skipped
+    the check) has been removed with the sentences it protected — an exemption for the safety
+    text becomes an exemption for a false claim the moment the claim goes stale, which is how
+    a correct fix gets reverted by a passing suite.
+
+    It is now too broad. `sdk_guide(topic='install', platform='windows')` (server 1.32.2)
+    states the **conditioned** form: on Scoop, `%SENZING_DIR%\\data` resolves to a directory
+    that does not exist, and then every SzEngine/SzDiagnostic call fails with SENZ7426 while
+    SzProduct keeps working. That is not a contradiction of `explain_error_code` — a missing
+    data directory means no transliteration modules, so a transliteration failure is exactly
+    what you would expect. It is the same INV-169 distinction that forced the original
+    retraction, applied the other way: the conditioned claim is supported, the absolute is
+    not.
+
+    So the guard now polices the absolute. A SENZ7426/SUPPORTPATH pairing is permitted only
+    where the surrounding text carries **both** the platform condition and the tool that
+    actually states it.
+
+    **Updated 2026-07-31: the server documents a second platform, and this guard was narrower
+    than the property it enforces.** `sdk_guide(topic='install', platform='macos_arm')` on
+    server 1.32.3 states the same conditioned claim for the Homebrew cask — its shipped
+    `etc/sz_engine_config.ini` points `SUPPORTPATH` at a nonexistent `er/data` while the real
+    support data sits one level up — so the macOS pairing is as well-founded as the Scoop one.
+    The condition regex accepted only `scoop|windows`, so it rejected a correct macOS claim.
+    The *requirement* is unchanged — a pairing must carry a platform condition **and** the tool
+    — only the set of platforms the server documents has grown. Widening the regex rather than
+    the rule is the point: an unconditioned pairing is still an offence.
+    """
+
+    def test_senz7426_is_never_tied_to_supportpath_unconditionally(self):
         offenders = []
         for path in sorted(SKILLS.rglob("*.md")):
             text = path.read_text(encoding="utf-8")
@@ -116,29 +157,189 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
                 continue
             flat_text = re.sub(r"\s+", " ", text)
             for match in re.finditer(r"SENZ7426", flat_text):
-                window = flat_text[max(0, match.start() - 300):match.end() + 300]
-                if re.search(r"(?i)SUPPORTPATH", window):
-                    offenders.append("%s: %s" % (path.relative_to(REPO_ROOT), window[:160]))
+                window = flat_text[max(0, match.start() - 400):match.end() + 400]
+                if not re.search(r"(?i)SUPPORTPATH", window):
+                    continue
+                # No `denial` exemption: as of 1.32.9 (2026-08-12) explain_error_code names
+                # SUPPORTPATH first, so a sentence denying the link is no longer safety text
+                # — it is a stale claim, and exempting it would let one be reintroduced.
+                # Any platform the server documents this for, not just the first one found.
+                conditioned = re.search(
+                    r"(?i)scoop|windows|macos|macos_arm|homebrew|brew|cask", window
+                )
+                attributed = re.search(r"(?i)sdk_guide", window)
+                if not (conditioned and attributed):
+                    offenders.append(
+                        "%s: %s" % (path.relative_to(REPO_ROOT), window[:170])
+                    )
         self.assertEqual(
             [],
             offenders,
-            "SENZ7426 is EAS_ERR_XLITERATOR_FAILED (transliteration), not a SUPPORTPATH "
-            "symptom — verified on server 1.32.1, 2026-07-28 (INV-080/INV-169):\n  "
+            "SENZ7426 tied to SUPPORTPATH without the condition that makes it true. Both "
+            "explain_error_code('7426') and sdk_guide(topic='install') state the CONDITIONED "
+            "form (server 1.32.9, 2026-08-12), and explain_error_code still lists a genuine "
+            "record-level encoding cause — so the absolute remains an over-generalization. "
+            "Name the platform AND the tool, or do not make the link (INV-080/INV-169):\n  "
             + "\n  ".join(offenders),
         )
 
-    def test_the_plugin_does_not_claim_szproduct_masks_engine_failure(self):
-        """No MCP source states the per-class masking behavior; do not assert it."""
+    def test_the_supported_form_names_the_tool_that_states_it(self):
+        """Rescoped 2026-08-12: name a tool, and stop denying the other one.
+
+        Until today this asserted the opposite — that module 2 MUST say
+        `explain_error_code` makes no SUPPORTPATH connection — so the guard *required* the
+        claim it existed to keep honest, and correcting the prose failed the suite. That is
+        the failure mode worth naming: a guard written to hold a retraction in place will
+        hold it in place after the retraction expires, because nothing dates the premise.
+
+        Both tools now state the conditioned form (server 1.32.9, 2026-08-12), so the
+        requirement is **attribution** — name the tool that states it — plus the absence of
+        the retired denial. INV-169's ban on the unconditioned absolute is unchanged and is
+        enforced by `test_senz7426_is_never_tied_to_supportpath_unconditionally` above.
+        """
+        text = re.sub(r"\s+", " ", MODULE_02.read_text(encoding="utf-8"))
+        if "SENZ7426" not in text:
+            self.skipTest("module 2 no longer mentions SENZ7426")
+        window = text[max(0, text.index("SENZ7426") - 600):text.index("SENZ7426") + 900]
+        self.assertRegex(
+            window,
+            r"(?i)sdk_guide",
+            "where module 2 makes the SUPPORTPATH link it must name the tool that states "
+            "it, so the next reader can re-ask rather than re-derive",
+        )
+        self.assertNotRegex(
+            text,
+            r"(?i)explain_error_code[^.]{0,200}(?:only generic|no connection|makes no)",
+            "the retired claim must not be restated: explain_error_code('7426') ranks "
+            "SUPPORTPATH as common_causes[0] as of server 1.32.9, 2026-08-12",
+        )
+
+    def test_the_szproduct_masking_claim_carries_its_source(self):
+        """The masking claim is no longer unverified — but it still needs attributing.
+
+        This asserted, until 2026-07-31, that the plugin must NOT state the per-class
+        masking behaviour, because no MCP source did. One now does:
+        `sdk_guide(topic='install', platform='windows')` says a wrong SUPPORTPATH makes
+        every SzEngine/SzDiagnostic call fail "while SzProduct keeps working — so the
+        install looks healthy". Banning the claim would now suppress a sourced fact, so
+        the guard checks provenance instead of forbidding the statement.
+        """
+        pattern = re.compile(
+            r"(?i)SzProduct[^.]{0,90}(?:keep|keeps|still)\s+(?:succeed|work)", re.DOTALL
+        )
         for path in sorted(SKILLS.rglob("*.md")):
             flat_text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
-            with self.subTest(file=path.name):
-                self.assertNotRegex(
-                    flat_text,
-                    r"(?i)SzProduct[^.]{0,80}(?:keep|keeps|still) succeed",
-                    "the per-class masking claim is unverified; state only that libraries "
-                    "and support data can be present independently",
-                )
+            for match in pattern.finditer(flat_text):
+                window = flat_text[max(0, match.start() - 400):match.end() + 400]
+                with self.subTest(file=path.name):
+                    self.assertRegex(
+                        window, r"(?i)sdk_guide",
+                        "the SzProduct-masking claim appears without naming the tool that "
+                        "states it. It was retracted as unverified on 2026-07-28 and is "
+                        "supported only by sdk_guide(topic='install', platform='windows') "
+                        "— an unattributed version is the retracted claim again (INV-080).",
+                    )
+
+
+class TheSweepIsNotVacuous(unittest.TestCase):
+    """Both checks above assert an empty offender list over `SKILLS.rglob("*.md")`.
+
+    If that glob stops matching — a directory rename, a move — they pass forever while
+    checking nothing, and an empty result is indistinguishable from a clean one.
+    """
+
+    def test_skill_markdown_is_actually_being_scanned(self):
+        found = list(SKILLS.rglob("*.md"))
+        self.assertGreater(
+            len(found), 20,
+            "only %d skill .md files found; the glob has drifted and the SENZ7426 / "
+            "SzProduct-masking sweeps are now vacuous" % len(found),
+        )
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheSupportpathCheckIsNotGatedToOnePlatform(unittest.TestCase):
+    """The check is about a *layout*, not a platform, and gating it re-creates the defect.
+
+    Module 2's SUPPORTPATH verification closed with "This SUPPORTPATH verification applies to
+    Windows only. On Linux and macOS, use the MCP-returned paths without modification." That was
+    reasoned from Scoop, where SENZING_DIR points at `er` and `data` sits beside it — and the
+    Homebrew cask has the identical shape, documented by `sdk_guide(topic='install',
+    platform='macos_arm')` on server 1.32.3.
+
+    So a macOS bootcamper hitting SENZ7426 was sent (via Module 3) to a check that told them it
+    did not apply to them. Worse, Module 3's routing fired only on SENZ2027, so SENZ7426 reached
+    no diagnostic at all and `explain_error_code` sent them to validate input data for a failure
+    that happens before any record is submitted.
+    """
+
+    def test_the_check_is_not_declared_windows_only(self):
+        self.assertNotRegex(
+            flat(MODULE_02), r"(?i)SUPPORTPATH verification applies to Windows only",
+            "the check is gated to one platform again; the macOS cask has the same layout",
+        )
+
+    def test_macos_carries_the_check_with_its_own_paths(self):
+        text = flat(MODULE_02)
+        self.assertRegex(text, r"(?i)brew --prefix.{0,40}opt/senzing/data",
+                         "the macOS support-data path is missing")
+        self.assertRegex(text, r"(?i)TransRules\.sz",
+                         "the macOS verification command is missing")
+
+    def test_the_macos_cause_names_the_shipped_ini(self):
+        self.assertRegex(flat(MODULE_02), r"(?i)sz_engine_config\.ini")
+
+    def test_linux_is_marked_not_re_checked_rather_than_widened(self):
+        """Widening by inference is what this spec exists to stop doing."""
+        self.assertRegex(flat(MODULE_02), r"(?i)Linux was not re-checked")
+
+    def test_module_03_routes_senz7426_to_the_check(self):
+        """The criterion that names a second consumer, checked against that consumer (INV-182).
+
+        Asserts the routing *condition*, not the mere presence of the string. An earlier version
+        matched `SENZ7426.{0,400}SUPPORTPATH` anywhere, which the paragraph's own denial sentence
+        ("names no connection to `SUPPORTPATH`") satisfied — so renaming the routing rule's code
+        to SENZ9999 left the test green while nothing routed.
+        """
+        text = flat(PHASE1)
+        self.assertRegex(
+            text, r"(?i)If the code is `SENZ7426`",
+            "Module 3 has no branch keyed on SENZ7426, so it reaches no diagnostic at all — "
+            "step 4 sends it to explain_error_code, which names no SUPPORTPATH cause",
+        )
+        # `Step 8` specifically, not `Step 8|SUPPORTPATH`: the branch *explains* the cause using
+        # the word SUPPORTPATH, so the alternation was satisfied even after the routing sentence
+        # was deleted. The property is that it routes, and Step 8 is where it routes to.
+        self.assertRegex(text, r"(?i)If the code is `SENZ7426`.{0,300}Step 8",
+                         "the SENZ7426 branch does not route to Module 2's Step 8 check")
+
+    def test_module_03_relays_the_explanation_and_conditions_it(self):
+        """Inverted 2026-08-12: the tool now owns this diagnosis, so relaying is required.
+
+        This asserted the opposite until today — that Module 3 MUST say "do not relay" —
+        which pinned the suppression instruction in place. `explain_error_code('7426')` on
+        server 1.32.9 ranks SUPPORTPATH as `common_causes[0]` and "Check SUPPORTPATH FIRST"
+        as `resolution_steps[0]`, so the passage that was protective became the defect.
+
+        What survives is the reason the original worried: the encoding cause must not be
+        presented as applying to a pre-record failure. The tool now ranks it last and
+        conditions it itself, and Module 3 must say so — that is what is asserted here.
+        """
+        text = flat(PHASE1)
+        self.assertRegex(
+            text, r"(?i)relay what `explain_error_code` returned",
+            "Module 3 must relay what the tool returns for SENZ7426 — it now names "
+            "SUPPORTPATH first (server 1.32.9, 2026-08-12)",
+        )
+        self.assertRegex(
+            text, r"(?i)input-encoding cause is ranked \*\*last\*\*",
+            "relaying is only safe alongside the tool's own ranking: the encoding cause is "
+            "last and conditioned on the engine having initialized",
+        )
+        self.assertRegex(
+            text, r"(?i)fires at engine construction",
+            "the pre-record nature of this failure is why the encoding cause does not apply",
+        )

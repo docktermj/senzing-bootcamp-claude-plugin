@@ -20,6 +20,16 @@ This are ideas for future specs.
     (broaden the symptom to `SENZ7426`) would write a false Senzing fact into the plugin (INV-080,
     INV-169). The feedback entry itself said the failure "was not hit in its damaging form" and that
     the code came from inference while writing the configuration.
+  - **✅ SUPERSEDED 2026-07-31 — the masking claim is now MCP-confirmed, by a different tool.**
+    `sdk_guide(topic='install', platform='windows')` (server 1.32.2) states that a `SUPPORTPATH`
+    built as `%SENZING_DIR%\data` makes "every SzEngine/SzDiagnostic call … fail with `SENZ7426`
+    … **while SzProduct keeps working — so the install looks healthy**". Both halves the 2026-07-28
+    check could not establish. Recorded in `module-02-sdk-setup/SKILL.md` beside the existing
+    masking warning, attributed to `sdk_guide`. **The 2026-07-28 reasoning below stands as written**
+    — it was correct on the evidence available, and the correction is the point: that check asked
+    `explain_error_code`, which *still* makes no SUPPORTPATH connection (re-verified 2026-07-31).
+    "The server does not cover X" is only ever "the tool I asked does not cover X".
+    (Source: `windows-scoop-facts-the-server-now-owns`.)
   - The `SzProduct`-succeeds-while-`SzEngine`-fails masking claim is **neither confirmed nor refuted**
     by any MCP source. The FAQ supports only a weaker form: the libraries can load while the support
     data is absent, so a check proving the SDK imports does not prove the engine can initialize.
@@ -31,13 +41,17 @@ This are ideas for future specs.
     directory** is missing, which is exactly the Windows/Scoop sibling-directory case Step 8's
     `Test-Path` check already handles.
 
-- **The `auto-test` skill and its 11 tests are untracked, deliberately.**
-  `.claude/skills/auto-test/` (`autotest.py`, `mcp_probe.py`, `walk.py`, `transcript_lint.py`,
-  `baseline/mcp-snapshot.json`) and `tests/test_auto_test_harness.py` have no git history and are
-  the only one of the six maintainer skills under `.claude/skills/` not committed — the maintainer
-  chose to keep them that way on 2026-07-28. **The consequence worth knowing:** `pytest tests/`
-  collects that file, so **11 of the suite's tests exercise a module git does not have**. Any
-  test-count figure quoted from a clean checkout will be 11 lower than one quoted from the
-  maintainer's working tree, and those 11 will error rather than fail (import error, not assertion).
-  Nothing to do unless the counts need to reconcile; committing the skill would close it, and
-  `.claude/**` is already excluded from `propagate-to-public`, so it would not reach the public repo.
+- **✅ RESOLVED 2026-07-31 — the `auto-test` skill is tracked; this entry was stale.**
+  ~~The `auto-test` skill and its 11 tests are untracked, deliberately.~~ All seven files
+  (`.claude/skills/auto-test/{SKILL.md,autotest.py,mcp_probe.py,walk.py,transcript_lint.py,baseline/mcp-snapshot.json}`
+  and `tests/test_auto_test_harness.py`) are in git, added by **`47d108d`**
+  *"#1 test(auto-test): add the auto-test skill and its harness test"*. The test count (11) was
+  right. **The consequence of leaving this uncorrected was the real cost:** the entry instructed a
+  reader to discount every suite figure by 11, which would have made every count reported since
+  wrong. Verified with `git ls-files` and `git log --diff-filter=A`.
+
+- **Senzing web app as a curriculum option.** Bootcamper suggestion, 2026-07-27 (Module 0), no detail
+  given before they returned to the bootcamp — recorded in `feedback/PROCESSED.jsonl` as
+  `needs-clarification`. The curriculum is SDK-code-focused; `truthset_visualization` is the one
+  existing web-app-based module. Needs a scoping conversation — which modules, alongside or instead
+  of generated SDK code — before it can be specced.

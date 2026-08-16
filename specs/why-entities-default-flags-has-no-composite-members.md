@@ -1,0 +1,205 @@
+# `SZ_WHY_ENTITIES_DEFAULT_FLAGS` returns no `composite_members`, so the plugin's own default-flags procedure cannot be run for it
+
+Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
+
+## Problem
+
+`module-07-query-visualize-discover/phase1-query-visualize.md` carries an explicit rule:
+"Before parsing an entity field out of a response, read the composite's `composite_members`
+and confirm the flag that populates *that* field is in it," with a table covering
+`SZ_SEARCH_BY_ATTRIBUTES_ALL`, `SZ_FIND_NETWORK_DEFAULT_FLAGS` and `SZ_ENTITY_DEFAULT_FLAGS`.
+
+**For the `why_*` composites the rule is unrunnable.** Verified on server 1.32.2, docs
+indexed 2026-07-29 11:11 UTC, 2026-07-31:
+
+```text
+get_sdk_reference(topic='flags', filter='SZ_WHY_ENTITIES_DEFAULT_FLAGS')  →
+  { "applies_to": ["why_entities*"],
+    "description": "Replaces `G2_WHY_ENTITY_DEFAULT_FLAGS`, focused on the
+                    `whyEntities*` functions",
+    "name": "SZ_WHY_ENTITIES_DEFAULT_FLAGS",
+    "source_file": "docs-release-4-4_0_breaking_changes-4_0_breaking_changes_sdk.md" }
+```
+
+No `composite_members`. No `response_paths`. A one-line description sourced from the
+V3→V4 breaking-changes document rather than the flags documentation. Its `applies_to` is even
+the literal glob `"why_entities*"` — every sibling lists real method names.
+
+Every other composite in the **same response** carries a full membership list —
+`SZ_ENTITY_DEFAULT_FLAGS` (9 members), `SZ_ENTITY_CORE_FLAGS` (6),
+`SZ_ENTITY_INCLUDE_ALL_RELATIONS` (4) — as do `SZ_FIND_PATH_DEFAULT_FLAGS`,
+`SZ_FIND_NETWORK_DEFAULT_FLAGS` and `SZ_HOW_ENTITY_DEFAULT_FLAGS`. The gap is specific to the
+`why_*` default composites.
+
+**What it costs a reader.** Calling `why_entities` with
+`SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_INCLUDE_FEATURE_SCORES | SZ_INCLUDE_MATCH_KEY_DETAILS`
+returned both entity names as `null` while every other field — match level, why key, ER rule,
+all feature scores and buckets, CONFIRMATIONS and DENIALS — rendered correctly. Adding
+`SZ_ENTITY_INCLUDE_ENTITY_NAME` explicitly fixed it, and the server confirms that flag's
+`applies_to` includes `why_entities`.
+
+So the only route to discovering the omission is to call it, notice the nulls, and guess —
+which inverts INV-115. The reference is supposed to prevent the empirical discovery, not
+require it.
+
+It is also the **more deceptive** shape of the half-populated row (INV-148): the *analytical*
+content of the response is complete and correct, and only the human-readable labels are
+missing, so the output reads as an unnamed-data problem rather than a flags problem.
+
+## Root cause
+
+The plugin's rule assumes every composite carries its membership, because every composite in
+its own table does. The `why_*` composites are documented from the breaking-changes note
+rather than the flags reference, so they arrive with a description and nothing machine-readable.
+The rule has no branch for "the lookup returned no membership" — and a rule with no
+unhappy path silently becomes "assume it is fine".
+
+## Proposed change
+
+The upstream half is already filed (the reporting entry records `Upstream: submitted
+2026-07-31`), so **do not re-file it**. This spec is the plugin half.
+
+1. **Add a row to the default-flags table** in `phase1-query-visualize.md`:
+   `SZ_WHY_ENTITIES_DEFAULT_FLAGS` does not carry `SZ_ENTITY_INCLUDE_ENTITY_NAME`, so
+   `ENTITY_NAME` reads `null` — OR it in explicitly. Cite the tool, server version and date.
+2. **Give the rule its unhappy path**, which is the durable half: when a composite is
+   returned **without** a `composite_members` list, the procedure **cannot be run**, and the
+   sub-flags MUST be OR-ed in explicitly rather than assumed. State this generally, not only
+   for `why_entities` — the same shape applies to its `why_records` and `why_record_in_entity`
+   siblings, and to any composite documented from the breaking-changes note.
+3. **Do not assert the sibling composites are identically affected** without checking them.
+   The entry infers it; the server was asked only about `SZ_WHY_ENTITIES_DEFAULT_FLAGS`.
+   Either check `why_records` and `why_record_in_entity` during implementation and record
+   what they return, or scope the table row to what was verified and say the siblings are
+   unverified.
+
+## Acceptance criteria
+
+- [ ] The default-flags table names `SZ_WHY_ENTITIES_DEFAULT_FLAGS` and states that
+      `SZ_ENTITY_INCLUDE_ENTITY_NAME` must be OR-ed in explicitly, with tool, version and date.
+- [ ] The rule states what to do when a composite returns **no** `composite_members`: the
+      check cannot be run, so OR the needed sub-flags in explicitly rather than assuming.
+- [ ] That instruction is general, not scoped to `why_entities` alone.
+- [ ] The `why_records` / `why_record_in_entity` siblings are either verified and recorded, or
+      explicitly marked unverified — not asserted from the `why_entities` result (INV-169).
+- [ ] **Re-verification clause:** implementing this requires
+      `get_sdk_reference(topic='flags', filter='SZ_WHY_ENTITIES_DEFAULT_FLAGS')` to still
+      return no `composite_members`. If Senzing has populated it — the upstream request asks
+      exactly that — the table row is unnecessary and only the general unhappy-path rule should
+      ship. **Check this first; it is the one criterion most likely to have changed.**
+- [ ] `tests/test_sdk_parameter_shapes.py` passes; a test pins the general
+      no-membership rule so it cannot be dropped if the specific row is later removed.
+- [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
+
+## Affected files
+
+- `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md` — the default-flags table and the rule's unhappy path.
+- `tests/test_sdk_parameter_shapes.py` — the no-membership rule pin.
+
+## Source
+
+- Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "get_sdk_reference returns
+  SZ_WHY_ENTITIES_DEFAULT_FLAGS with no composite_members, so the plugin's own default-flags
+  procedure cannot be run for it" (2026-07-31, Module: Query, Visualize and Discover;
+  `Source: self-observed (assistant retrospective)`; `Routing: both`)
+- Priority: Medium
+- MCP re-check: server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31 — **still
+  reproduces**, confirmed verbatim including the absent `response_paths` and the glob
+  `applies_to`. Tool: `get_sdk_reference(topic='flags', filter='SZ_WHY_ENTITIES_DEFAULT_FLAGS')`.
+  The same response confirms every sibling composite carries a full `composite_members` list.
+- Upstream: **already sent 2026-07-31** per the entry's own `Upstream:` field — do not
+  re-file. A follow-up would be warranted only with something the first submission lacked.
+- Related specs: `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132),
+  `specs/find-path-and-find-network-links-diverge.md` (the sibling trap in the adjacent step).
+
+## Deviations from this spec, and why (2026-07-31)
+
+**The re-verification clause holds, and the spec's proposed rule is nevertheless wrong.**
+
+Re-verified on server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31:
+`get_sdk_reference(topic='flags', filter='SZ_WHY_ENTITIES_DEFAULT_FLAGS')` **still** returns no
+`composite_members`, no `response_paths`, `applies_to` as the literal glob `["why_entities*"]`,
+and a `source_file` of the V3→V4 breaking-changes document. Senzing has not populated the field,
+so the table row stands. Every sibling composite in the same response still carries a full
+membership list.
+
+**What changed is the remedy.** The spec's proposed rule was: when a composite comes back
+without `composite_members`, "the procedure **cannot be run**, and the sub-flags MUST be OR-ed
+in explicitly rather than assumed." That is a conclusion about the *tool that was asked*, not
+about the server — and it is false here. The membership **is** documented:
+
+```text
+search_docs(query='SZ_WHY_ENTITIES_DEFAULT_FLAGS default recommended flags')  →
+  flags_why: "The default recommended flags for `why_entities`.
+              Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`."
+  (source: senzing.com/docs/flags/4/flags_why)
+```
+
+So the composite is exactly **one** flag, `SZ_INCLUDE_FEATURE_SCORES`, which carries no
+entity-name flag — which is why `ENTITY_NAME` came back `null` while every analytical field
+rendered. The reported symptom is now *explained* rather than merely worked around, and the
+shipped rule is a two-tool lookup ending in explicit OR-ing as the **last** resort, not the
+first. `tests/test_sdk_parameter_shapes.py::…::test_or_ing_blindly_is_the_last_resort_not_the_first`
+pins the ordering, because a reader who takes the fallback as the immediate remedy loses the
+fact.
+
+Independent corroboration the spec did not have: the **method signatures** in the same
+`topic='flags'` response show the binding defaults — Python
+`why_entities(..., flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>)`, C#
+`flags: SzFlag? = SzFlag.SzIncludeFeatureScores`. So `SZ_WHY_ENTITIES_DEFAULT_FLAGS` is not even
+what the method defaults to; the documented default is that single flag directly.
+
+**Criterion 4 satisfied by verification, not by scoping.** The spec allowed marking the siblings
+unverified. Both were checked individually instead (INV-169):
+
+- `SZ_WHY_RECORDS_DEFAULT_FLAGS` — `get_sdk_reference(topic='flags', …)`: `applies_to`
+  `["why_records*"]`, same one-line breaking-changes description, no `composite_members`.
+  Identically affected.
+- `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS` — `search_docs`: "The default recommended flags for
+  `why_record_in_entity`. Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`." Same membership.
+
+Also confirmed rather than carried from the spec: `SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to`
+includes all three `why_*` methods, so OR-ing it in is valid for each.
+
+**Upstream:** not re-filed, per the spec. Worth noting a follow-up now *would* carry something
+the 2026-07-31 submission lacked — the membership is present in the `flags_why` documentation and
+missing only from the structured `composite_members` field, which makes this an extraction gap
+rather than a documentation gap, and names the source file to extract from. That is a maintainer
+decision, not taken here.
+
+## Invariants introduced
+
+- `INV-194` — An empty or absent field in one MCP tool's response is **not** evidence the server
+  lacks the fact; before recording that Senzing does not document X, also ask the tool that owns
+  X in prose (`search_docs`), and scope every negative finding to the tool and parameters asked
+  (recorded in `specs/INVARIANTS.md`, maintainer-approved 2026-07-31).
+
+## Upstream: follow-up sent 2026-07-31
+
+A **follow-up** to the 2026-07-31 submission was sent via
+`submit_feedback(category='bug')` after maintainer approval. ⛔ **Do not re-file either.**
+
+It carried what the first submission lacked: the membership is present in the indexed
+documentation (`flags_why` — "Equivalent to: `SZ_INCLUDE_FEATURE_SCORES`") and missing only
+from `topic='flags'`'s structured `composite_members`, which makes this an **extraction**
+gap with a named source file rather than a documentation gap. Also sent: the corroborating
+binding defaults from `method_signatures` in the same response, the scope across all three
+`why_*` composites, and a three-step reproduction contrasting the empty field with
+`SZ_ENTITY_DEFAULT_FLAGS`'s nine members.
+
+Sent as `bug` rather than `feature` because two tools on the same server give different
+answers about the same flag, and the documentation already contains what the structured
+field omits.
+
+Scoped deliberately to the tool-vs-tool inconsistency — the only part verifiable this
+session. The null-entity-name consequence was described as a *shape* with no SDK build
+named, because the field observation behind it came from a run whose SDK version could not
+be confirmed (INV-080/INV-169).
+
+Anonymous, so **no reply is possible**; the server directs follow-up to support@senzing.com.
+A future submission is warranted only with something neither of these two carried — most
+likely a newer server version on which it still reproduces.
+
+**Re-check on the next sweep:** if `composite_members` becomes populated, the specific table
+row in `phase1-query-visualize.md` is unnecessary and only the general two-tool rule
+(INV-194) should remain.

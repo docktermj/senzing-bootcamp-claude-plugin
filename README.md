@@ -10,17 +10,17 @@ a hands-on, module-by-module tutorial.
 A guided sequence of hands-on modules takes you from zero
 to working entity resolution:
 
-- Bootcamp preparation — choose Core (every module) or Customized, your level of detail, and your programming language
-- Entity Resolution Concepts — a primer on how entity resolution works *(optional)*
-- Discover the Business Problem
-- SDK setup — install and configure the Senzing SDK
-- System verification — end-to-end checks that Senzing works on your machine *(optional)*
-- Truth Set visualization — an interactive web app of the resolved Truth Set data *(optional)*
-- Data collection — identify and collect your data sources
-- Data Quality, Mapping, and Transformation
-- Data processing
-- Query, Visualize and Discover
-- Graduation
+- ***Bootcamp preparation:*** choose your curriculum, level of detail, and programming language
+- ***Entity Resolution Concepts:*** a primer on how entity resolution works *(optional)*
+- ***Discover the Business Problem:*** describe the problem you are trying to solve
+- ***SDK setup:*** install and configure the Senzing SDK
+- ***System verification:*** end-to-end checks that Senzing works on your machine *(optional)*
+- ***Truth Set visualization:*** an interactive web app of the resolved Truth Set data *(optional)*
+- ***Data collection:*** identify and collect your data sources
+- ***Data Quality, Mapping, and Transformation:*** make your data "Senzing-ready"
+- ***Data processing:*** ingest your Senzing-ready data
+- ***Query, Visualize and Discover:*** see what Senzing can do for you
+- ***Bootcamp graduation:*** wrap up your bootcamp with a bow
 
 You finish with working Senzing code and data in your project, a professional
 recap PDF you can keep and share, and a production starter. See
@@ -33,10 +33,16 @@ recap PDF you can keep and share, and a production starter. See
   It generates SDK code,
   looks up Senzing facts,
   and provides working examples.
+- Minimum of a [Claude Max 5x] plan.
+  - *Note:* Multiple 5-hour windows of a [Claude Pro] plan will work, but you will not be able to complete the bootcamp in one session.
+- *Recommended, but not mandatory:*
+  A business problem requiring Entity Resolution
+  and 5,000 to 20,000 records that illustrate the problem.
 
 ## Install and start
 
-This is a Claude Code plugin, and Claude Code has two interfaces you can run it in.
+This is a Claude Code plugin.
+Claude Code has two interfaces you can run it in.
 Pick either:
 
 - **Claude Desktop** — Claude Code inside the desktop application; the step-by-step
@@ -77,7 +83,7 @@ and starting the Bootcamp.
     1. Choose the Mode: "**auto**" for a smooth ride.
     1. Choose the Model "**Sonnet 5**".
     1. Choose the Effort: "**medium**".
-1. In Claude Desktop near the bottom in the agentic chat, enter:
+1. In Claude Desktop, near the bottom, in the agentic chat, enter:
 
     ```console
     Start the bootcamp
@@ -102,9 +108,11 @@ the issue may be with an incomplete installation of Claude Desktop.
 
 - Claude Desktop requires `git` to be installed.
 
+[Bootcamp commands]: docs/README.md#bootcamp-commands
 [bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
-[Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli
-[Bootcamp commands]: docs/README.md#bootcamp-commands
+[Claude Max 5x]: https://claude.com/pricing
+[Claude Pro]: https://claude.com/pricing
 [Senzing MCP server]: https://mcp.senzing.com/mcp
 [Senzing]: https://senzing.com
+[Using the Claude Code CLI]: docs/README.md#using-the-claude-code-cli

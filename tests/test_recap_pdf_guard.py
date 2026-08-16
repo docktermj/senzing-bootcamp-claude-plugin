@@ -52,7 +52,7 @@ from records that merely look similar, which is the whole point of the exercise.
 
 ### Actions Taken
 
-- Completed the concepts primer and the optional knowledge-check quiz.
+- Completed the concepts primer and the optional knowledge check.
 
 ### End-of-Module Summary
 
@@ -223,6 +223,13 @@ class StdlibFallbackKeepsCertificate(unittest.TestCase):
 
 # A recap whose lists exercise every spacing decision at once: spaced subsections,
 # the spaced "What you accomplished" label block, and the two deliberate exclusions.
+# One rendered line is 5.5 mm ≈ 15.6 pt; the inter-item gap adds 2.4 mm ≈ 6.8 pt. A
+# separation above this means "more than one line apart", i.e. the gap was emitted.
+# Named rather than repeated as a bare 17.0, because it is the yardstick every spacing
+# assertion in this file compares against — and because the whole defect is that a
+# wrapped item's *internal* line spacing is indistinguishable from it without one.
+_WRAPPED_ITEM_GAP_PT = 17.0
+
 SPACING_RECAP = """# Senzing Bootcamp Recap
 
 **Bootcamper:** Ada Lovelace
@@ -258,8 +265,8 @@ SPACING_RECAP = """# Senzing Bootcamp Recap
 - Configured the database and engine.
 
 **Files produced:**
-- `artifacts/alpha-marker.db`
-- `artifacts/beta-marker.json`
+- `artifacts/alpha-marker.db` — the SQLite database holding every resolved entity, its records and the relationships Senzing inferred between them during this module
+- `artifacts/beta-marker.json` — the engine configuration, including the registered data sources and the resolution settings this module established
 """
 
 
@@ -439,16 +446,183 @@ class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
                 return y
         self.fail(f"{needle!r} was not drawn")
 
-    def test_spaced_and_unspaced_subsections_are_declared(self):
-        self.assertEqual(
-            ("information shared", "actions taken"), self.module._SPACED_SUBSECTIONS
+    def test_spacing_is_opt_out_not_opt_in(self):
+        """Inverted 2026-07-31. The opt-in tuple was itself the defect: a list added
+        or renamed later was silently unspaced, and that is how "Files produced" —
+        the recap's index — shipped as an undifferentiated block."""
+        self.assertEqual((), self.module._UNSPACED_SUBSECTIONS)
+        self.assertEqual((), self.module._UNSPACED_LABELS)
+        self.assertFalse(
+            hasattr(self.module, "_SPACED_SUBSECTIONS"),
+            "the opt-in constants must be gone, not merely unused — a leftover pair "
+            "reads as the live mechanism",
         )
-        self.assertEqual(("what you accomplished",), self.module._SPACED_LABELS)
+        self.assertFalse(hasattr(self.module, "_SPACED_LABELS"))
 
-    def test_action_taken_singular_is_covered(self):
-        """INV-048 names it singular; every surface uses the plural."""
-        self.assertIn(
-            self.module._normalize_heading("Action Taken"), self.module._SPACED_SUBSECTIONS
+    def _stdlib_gaps(self, content, name="End-of-Module Summary"):
+        """Drive the stdlib renderer in-process; return the emitted token kinds.
+
+        The positional tests above measure the fpdf2 PDF, which `render_to` renders in
+        a **subprocess** — so a constant patched in this process cannot reach it. The
+        stdlib path takes plain callables, so it can be driven directly. That also
+        makes these the only tests covering the second renderer's spacing, which
+        INV-066 requires not to drift from the first.
+        """
+        tokens = []
+        self.module._stdlib_subsection(
+            lambda text, font, size, indent: tokens.append((font, text)),
+            lambda text, font, size, indent: tokens.append(("WRAP", text)),
+            name,
+            content,
+        )
+        return tokens
+
+    def test_the_opt_out_is_a_live_mechanism_not_dead_code(self):
+        """An empty escape hatch is worth nothing unless it demonstrably works.
+
+        Populating it must actually suppress the gap — otherwise the next maintainer
+        who needs a tight list adds a name, sees no effect, and hard-codes something.
+        """
+        content = [
+            "**Files produced:**",
+            "- `a.db` — the database",
+            "- `b.json` — the config",
+        ]
+        default = self._stdlib_gaps(content)
+        self.assertIn("GAP", [f for f, _ in default], "spacing must be on by default")
+
+        self.module._UNSPACED_LABELS = ("files produced",)
+        try:
+            opted_out = self._stdlib_gaps(content)
+        finally:
+            self.module._UNSPACED_LABELS = ()
+        self.assertNotIn(
+            "GAP",
+            [f for f, _ in opted_out],
+            "naming a label in _UNSPACED_LABELS must suppress its gaps",
+        )
+
+    def test_the_subsection_opt_out_works_too(self):
+        content = ["- first item", "- second item"]
+        self.assertIn("GAP", [f for f, _ in self._stdlib_gaps(content, "Actions Taken")])
+
+        self.module._UNSPACED_SUBSECTIONS = ("actions taken",)
+        try:
+            opted_out = self._stdlib_gaps(content, "Actions Taken")
+        finally:
+            self.module._UNSPACED_SUBSECTIONS = ()
+        self.assertNotIn("GAP", [f for f, _ in opted_out])
+
+    def test_the_stdlib_renderer_keeps_a_response_with_its_question(self):
+        """INV-066: the second renderer must not drift from the first.
+
+        Asserted here because the positional PDF tests only exercise fpdf2.
+        """
+        tokens = self._stdlib_gaps(
+            [
+                "- **Q:** first question",
+                "    - **R:** first answer",
+                "- **Q:** second question",
+                "    - **R:** second answer",
+            ],
+            "Questions & Responses",
+        )
+        kinds = [f for f, _ in tokens]
+        # Exactly one gap: after the first answer, before the second question.
+        self.assertEqual(
+            1, kinds.count("GAP"), "expected one gap between the two Q/R pairs"
+        )
+        gap_at = kinds.index("GAP")
+        self.assertIn("first answer", tokens[gap_at - 1][1])
+        self.assertIn("second question", tokens[gap_at + 1][1])
+
+    def test_the_fpdf2_path_also_spaces_a_source_wrapped_item(self):
+        """The same continuation fix, asserted against the real PDF geometry.
+
+        Added because a mutation reverting *only* the fpdf2 path's gap condition to
+        `_is_bullet(line)` broke nothing: the stdlib tests below cover the rule, and
+        the other positional tests all use single-source-line items. Information
+        Shared's fixture items wrap across source lines, so they are the shape that
+        exercises it — and INV-066 requires the two renderers not to drift.
+        """
+        internal = self._y_of("First shared item") - self._y_of(
+            "gap between items has to be"
+        )
+        self.assertGreater(internal, 0, "item 1 must span two rendered lines")
+        tail_to_next = self._y_of("gap between items has to be") - self._y_of(
+            "Second shared item"
+        )
+        self.assertGreater(
+            tail_to_next,
+            internal * 1.2,
+            "a source-wrapped item must be separated from the next in the fpdf2 "
+            "renderer too, not just the stdlib fallback",
+        )
+
+    def test_a_source_wrapped_item_still_gets_its_gap(self):
+        """A latent defect this spec's assertion exposed (2026-07-31).
+
+        The gap used to be decided on the bullet line, asking "is the next *source*
+        line another item?" For a bullet whose Markdown wraps across two source lines
+        the answer is no — it is that item's own continuation — so such an item got
+        **no gap at all**. It stayed invisible because the shipped example recap writes
+        every entry as one long source line and lets the renderer wrap it, so no
+        fixture exercised the shape.
+
+        Pre-existing, not introduced here: the same shape held under the opt-in rule.
+        """
+        wrapped = [
+            "- first item that runs long and",
+            "  continues on this source line",
+            "- second item",
+        ]
+        self.assertEqual(
+            1,
+            [f for f, _ in self._stdlib_gaps(wrapped, "Information Shared")].count("GAP"),
+            "an item whose Markdown wraps across source lines must still be separated "
+            "from the next item",
+        )
+
+    def test_the_gap_lands_after_the_items_last_source_line(self):
+        """Not after its first — otherwise it falls *inside* the item."""
+        tokens = self._stdlib_gaps(
+            ["- first item and", "  its continuation", "- second item"],
+            "Information Shared",
+        )
+        kinds = [f for f, _ in tokens]
+        gap_at = kinds.index("GAP")
+        self.assertIn("its continuation", tokens[gap_at - 1][1])
+        self.assertIn("second item", tokens[gap_at + 1][1])
+
+    def test_a_blank_line_closes_the_item(self):
+        self.assertFalse(self.module._still_in_list_item("", True))
+        self.assertTrue(self.module._still_in_list_item("  continuation", True))
+        self.assertFalse(
+            self.module._still_in_list_item("  continuation", False),
+            "an indented line only continues an item that was already open",
+        )
+        self.assertFalse(
+            self.module._still_in_list_item("**Files produced:**", True),
+            "an unindented label closes the list above it",
+        )
+
+    def test_a_two_space_indent_is_also_treated_as_a_sub_bullet(self):
+        """The template mandates four spaces, but a recap written with two must not
+        have its answers torn away from their questions — that is the regression the
+        original blanket exclusion existed to prevent."""
+        for indent in ("  ", "    ", "\t"):
+            with self.subTest(indent=repr(indent)):
+                self.assertFalse(
+                    self.module._is_top_level_bullet(f"{indent}- **R:** an answer")
+                )
+        self.assertTrue(self.module._is_top_level_bullet("- **Q:** a question"))
+
+    def test_action_taken_singular_is_covered_by_the_opt_out(self):
+        """INV-048 names it singular; every surface uses the plural. The normalization
+        still has to hold, or an opt-out written either way would silently miss."""
+        self.assertEqual(
+            self.module._normalize_heading("Action Taken"),
+            self.module._normalize_heading("Actions Taken"),
         )
 
     def test_consecutive_actions_taken_items_are_more_than_one_line_apart(self):
@@ -456,27 +630,82 @@ class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
         second = self._y_of("Created the engine configuration")
         gap = first - second
         # One line is 5.5 mm ≈ 15.6 pt; the item gap adds 2.4 mm ≈ 6.8 pt.
-        self.assertGreater(gap, 17.0, "Actions Taken items are still one line apart")
+        self.assertGreater(
+            gap, _WRAPPED_ITEM_GAP_PT, "Actions Taken items are still one line apart"
+        )
 
     def test_question_and_response_stay_together(self):
         """Spacing here would separate each answer from the question it answers."""
         question = self._y_of("Which database would you like to use")
         response = self._y_of("SQLite")
         self.assertLess(
-            question - response, 17.0, "Q/R pairing must not be broken by item spacing"
+            question - response,
+            _WRAPPED_ITEM_GAP_PT,
+            "Q/R pairing must not be broken by item spacing",
         )
 
-    def test_files_produced_list_stays_tight(self):
-        first = self._y_of("artifacts/alpha-marker.db")
-        second = self._y_of("artifacts/beta-marker.json")
-        self.assertLess(
-            first - second, 17.0, "Files produced is a short path list; keep it tight"
+    def test_files_produced_wrapped_items_are_separated(self):
+        """⚠️ Reverses `test_files_produced_list_stays_tight` (2026-07-31).
+
+        That test asserted the opposite, on the originating spec's stated premise that
+        "Files produced" is "a short reference list of one-line paths". The premise is
+        false: `bootcamp-onboarding/module-completion.md:83` templates every entry as
+        `` - `{path}` — {what it is} `` and its line 98 makes the gloss a ⛔
+        requirement, so real recaps run 5-12 items at 110-188 characters. Measured
+        across the reporting run's nine sections, every one had items that wrap.
+
+        The assertion is the exact condition the generator's own comment describes: a
+        wrapped item ends with no trailing gap, so the space between two items equals
+        the space *inside* one, and multi-line entries run together. Comparing against
+        a wrapped item's own internal line spacing is what makes this catch the real
+        defect — a character count cannot see it, and neither can a gap threshold
+        measured on single-line items.
+
+        ⚠️ The comparison must be **last line of item 1 → first line of item 2**, not
+        first-line-to-first-line. A wrapped item spans two lines whatever the spacing,
+        so a first-to-first measurement clears any fixed threshold even with the gap
+        switched off — the first draft of this test did exactly that and would have
+        passed vacuously. The yardstick is the item's own internal line spacing,
+        measured from the same render.
+        """
+        internal = self._y_of("artifacts/alpha-marker.db") - self._y_of(
+            "relationships Senzing inferred"
+        )
+        self.assertGreater(
+            internal, 0, "item 1 must actually render-wrap for this to mean anything"
+        )
+        tail_to_next = self._y_of("relationships Senzing inferred") - self._y_of(
+            "artifacts/beta-marker.json"
+        )
+        self.assertGreater(
+            tail_to_next,
+            internal * 1.2,
+            "'Files produced' is the recap's index — the list a reader uses to find "
+            "what the bootcamp built — so it is the worst one to render as a block. "
+            "The space after an item's last line must exceed the space between that "
+            "item's own wrapped lines, or the entries still run together.",
+        )
+
+    def test_question_and_response_pairs_are_separated_from_each_other(self):
+        """Spacing Q&R top-level bullets was the other half of the reversal.
+
+        The originating spec excluded the whole subsection, correctly arguing against
+        splitting a response from its question — but that argument does not reach the
+        top-level `- **Q:**` items, which ran together with no separation between one
+        pair and the next.
+        """
+        first_response = self._y_of("SQLite")
+        next_question = self._y_of("Do you have a Senzing License Key")
+        self.assertGreater(
+            first_response - next_question,
+            _WRAPPED_ITEM_GAP_PT,
+            "one Q/R pair must be visibly separated from the next",
         )
 
     def test_accomplishments_list_is_spaced(self):
         first = self._y_of("Verified the SDK works end to end")
         second = self._y_of("Configured the database and engine")
-        self.assertGreater(first - second, 17.0)
+        self.assertGreater(first - second, _WRAPPED_ITEM_GAP_PT)
 
     def test_gap_is_between_items_never_after_the_last(self):
         lines = [

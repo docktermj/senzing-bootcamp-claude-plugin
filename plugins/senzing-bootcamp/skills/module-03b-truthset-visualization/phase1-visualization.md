@@ -92,14 +92,57 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    per-source record counts you will need in 1.2 and in the report, then the records themselves. Take
    the codes and counts from the response, never from this file (INV-080).
 
-   > Verified on MCP server 1.32.1, 2026-07-29: `dataset='list'` returns **four** datasets — the three
+   > Verified on MCP server 1.32.2, 2026-07-30: `dataset='list'` returns **four** datasets — the three
    > CORD collections plus `truthset` (`available: true`) — and `dataset='truthset', source='list'`
    > returns the Truth Set's sources with their record counts. So the primary path normally succeeds;
    > treat the fallback below as genuinely exceptional rather than expected. Re-check rather than
    > trusting this note: the server ships independently of the plugin.
-2. **Available (primary path):** save the MCP records to
-   `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
-   provenance `mcp_primary` (30-second timeout).
+2. **Available (primary path):** ⛔ **`get_sample_data(dataset='truthset', source='<CODE>')` returns
+   a PREVIEW plus URLs — not the
+   dataset.** Its `records` array is a sample (the response's `citation.note` says how many of how
+   many), and saving it produces a file with a handful of records instead of the Truth Set's 159.
+   That failure is silent: the graph renders, looks plausible, and misrepresents what Senzing did on
+   the module the bootcamp treats as its showpiece. Verified on **MCP server 1.32.9, 2026-08-14**:
+   `dataset='truthset', source='list'` returns `records: []` with `total_available: 159` and three
+   sources; a per-source call returns a preview with `citation.note` reading *"Showing N of 17
+   records (preview). To get more: download_url serves up to 10000 records per request and needs only
+   mcp.senzing.com allowed; source_download_url is the complete uncapped file but requires egress to
+   raw.githubusercontent.com."*
+
+   So **download the records**, then verify the count:
+
+   1. **Fetch each source from a URL in the response, never a hardcoded one.** Prefer
+      `citation.download_url` (MCP-hosted; every Truth Set source is far below its
+      `download_url_max_records` cap) and fall back to `citation.source_download_url`.
+      ⚠️ **The two responses use the name `download_url` for different hosts** — a real trap:
+      `source='list'` returns `available_sources[].download_url` pointing at
+      **raw.githubusercontent.com**, while a per-source call returns `citation.download_url` pointing
+      at **mcp.senzing.com**. Read the URL you actually intend to use rather than the field name
+      (same server and date).
+   2. ⛔ **Name the egress host from the URL you chose, per dataset.** `mcp.senzing.com` for the
+      MCP-hosted download; for `source_download_url`, whatever host it carries — for the Truth Set
+      that is **`raw.githubusercontent.com`**, *not* `senzing.com`. The MCP server's own instructions
+      warn that allowing `mcp.senzing.com` does not cover GitHub content, so a firewalled bootcamper
+      told to allow `senzing.com` would still fail here. (Module 4's sentence is CORD-specific; see
+      `../module-04-data-collection/SKILL.md` → the download contract, which this step needs first
+      because it runs before Module 4.)
+   3. ⛔ **Retry with backoff on HTTP 429, and never write a non-JSON body into the file.** The
+      MCP download endpoint is rate-limited, and back-to-back source fetches are exactly what trips
+      it: the response is a 43-byte `Rate limit exceeded. Try again in 1 second.` served with **429**.
+      `curl -sS -o file` writes that sentence **into `truthset_data.jsonl`** — `-sS` only silences the
+      progress meter, and without `-f` a 4xx body is saved like any other — leaving one line of
+      English prose in the middle of the dataset. Check the status before writing, or use `-f`/
+      `--fail-with-body`, or fetch in a language whose client raises. Retrying with backoff recovers
+      all three sources.
+   4. ⛔ **Compare the written line count against the per-source `record_count` values from the
+      `source='list'` call, and STOP on a mismatch.** (INV-228.) Expect exactly `record_count` from
+      `source_download_url`, and `min(record_count, download_url_max_records)` from `download_url`
+      (the same rule Module 4 states). This one check is what turns the whole class of under-fetch —
+      preview-only, rate-limited, truncated — into a visible error instead of a sparse graph. Do not
+      proceed to 1.2 on a mismatch: report the expected and actual counts per source and retry.
+
+   Then save to `src/system_verification/truthset_data.jsonl` (overwrite, one JSON object per line),
+   provenance `mcp_primary` (30-second timeout per fetch).
 3. **Unavailable (fallback path):** fetch the demo Truth Set **DATA only** from the sanctioned
    fallback source — resolve source id `senzing_truthset_demo` from `config/fallback_sources.yaml`,
    never a raw URL — write `truthset_data.jsonl`, provenance `github_fallback`. (If the registry
@@ -129,8 +172,12 @@ expected record count for the report.
    pipeline pattern; never direct SQL). Registering **before** the load upholds the "register
    before load" guarantee so the load never fails with `SENZ2207`.
 
-Save the load artifacts under `src/system_verification/` (Agent Rule 5). Once the Truth Set is
-loaded, continue to Step 2 below to visualize it.
+Save the load artifacts under `src/system_verification/` — that is where INV-050's project layout
+places them, and they are **this** module's artifacts even though they sit in a directory named for
+another (INV-087 keeps the two modules separate). System Verification's own re-run cleanup is
+required to leave them untouched, so nothing here is lost if that module runs again
+(`../module-03-system-verification/phase1-verification.md` → Agent Rules, *Overwrite on re-run*).
+Once the Truth Set is loaded, continue to Step 2 below to visualize it.
 
 ## Step 2: Build and run the visualization server in your chosen programming language
 
@@ -156,11 +203,14 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   entity surface must offer.
 - Serve the live D3 v7 page as a **single consolidated, tabbed app** (all tabs in 2.4), and write a
   self-contained standalone HTML snapshot.
-- **Render offline (INV-091):** inline the vendored D3 at `scripts/vendor/d3.v7.min.js` into both
+- **Render offline (INV-091):** inline the vendored D3 at
+  `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback:
+  `../../scripts/vendor/d3.v7.min.js`, INV-252) into both
   the live page and the standalone snapshot; never fetch from a CDN. (D3 runs in the browser, so
   this holds regardless of the server's language.)
 - **Use the Senzing brand (INV-081):** take the palette and typography from the shipped brand
-  tokens (`scripts/brand_tokens.py`, mirrored in `senzing_viz_server.py`). A non-Python server
+  tokens (`${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py`, skill-relative fallback
+  `../../scripts/brand_tokens.py` — INV-252; mirrored in `senzing_viz_server.py`). A non-Python server
   cannot import the Python module, so replicate the token **values** from the reference; never
   invent an ad-hoc palette. ⛔ **Assign data-source colors from the sources actually present in the
   data, never by lookup in a map keyed by expected source names** (INV-127) — the Truth Set happens
@@ -222,7 +272,7 @@ WATCHLIST", acquired here via `get_sample_data(dataset='truthset')` (server 1.32
 2026-07-29). Query, Visualize and Discover passes its own wording for the Bootcamper's data; neither
 module may let the other's label reach its snapshot.
 
-(The **filename** stays `truthset_verification.html`. Graduation maps each screenshot to its module
+(The **filename** stays `truthset_verification.html`. Bootcamp graduation maps each screenshot to its module
 by that base name (`../graduation/SKILL.md` → "Backfill orphaned screenshots") and recaps already
 reference it, so renaming it would break that mapping for no Bootcamper-visible gain.)
 
@@ -233,7 +283,10 @@ re-run SDK initialization from Module 2 / System Verification; check `config/eng
 and retry until the snapshot is written — the module does not complete without it.
 
 **Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
-running (2.3) and capture from **`--url http://localhost:8080`**, one image per tab, so the
+running (2.3) and capture from **`--url http://localhost:<port>`** — substituting the port the
+server was **actually started on** in 2.3, which is `8080` only when that port was free (INV-172).
+Capturing from a port nothing is listening on exits 2 and loses every image for this module, and
+those images cannot be re-taken after teardown. One image per tab, so the
 Search / Probe tab shows real results — the standalone snapshot has no engine, so its search box is
 inert. `{name}` = `truthset_verification`. Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
@@ -259,12 +312,20 @@ python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
   --title "Senzing Truth Set" \
   --dataset "the Senzing Truth Set" \
-  --port 8080
+  --port 8080 &
+VIZ_PID=$!
 ```
 
 For any other language, start your server's equivalent. It should report a URL like
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the
 chosen URL.
+
+⛔ **Record the process id along with the port** — `$!` in a POSIX shell as above,
+`$proc.Id` from `Start-Process … -PassThru` in PowerShell. It is the only unambiguous handle on the
+server, and Step 4 has no other way to name what it must stop: the server may be written in any of
+the five languages (INV-090), so there is no script name to match on, and matching one anyway
+signals the shell doing the matching. The full rule, including the port-based fallback, is in
+`visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".
 
 ### 2.4 Verify the endpoints
 
@@ -282,6 +343,16 @@ The app serves the live page at `/` plus JSON APIs. Verify each (10-second timeo
 | `GET /api/overlap` | HTTP 200; `sources` + square `matrix` of cross-source shared-entity counts |
 | `GET /api/matchkeys` | HTTP 200; `match_keys` (most-frequent first) + `distinct` + `capped` |
 | `GET /api/features` | HTTP 200; `features` (per-feature score-bucket counts), `sampled`, `multi_record_total`, `capped` |
+
+⛔ **An empty visualization is a FAILED verification, never a passing one (INV-250).** This step
+exists to show the bootcamper that Senzing works on their workstation, so a page that renders with
+`entities_total` at zero has demonstrated the opposite. If `/api/stats` reports no entities — or the
+graph opens empty — say so plainly, name the likely cause, and do **not** move on as though the
+step passed. **The most common cause is a datastore connection that is not persistent and shareable
+across processes (INV-231):** the loader writes to one place and this server reads another, so every
+load reports success and nothing fails until this page comes up blank three modules later. The
+connection-string rule and the scheme it forbids are in `ground-rules.md` → "Mandatory gates and
+step order". Re-check the datastore before rebuilding the server.
 
 The live page is a **single consolidated, tabbed app** — the one visualization artifact (no
 separate static pages). All tabs are populated from these APIs; a tab whose data is absent is not
@@ -343,7 +414,8 @@ Entity Graph (per `visualization-api-reference.md` → "De-duplication").
 
 ⛔ **If the visualization's code changes for any reason after 2.2 — a bootcamper request, a bug fix,
 a styling tweak — re-run the build-only snapshot step (2.2) and re-verify it. Do not stop at
-re-verifying the live server.**
+re-verifying the live server.** (INV-130 — the retained snapshot MUST be rebuilt after **any**
+post-build change, and re-verifying the live server is explicitly not a substitute.)
 
 This is a numbered step, not a note, because the failure is silent and permanent. The snapshot is
 the artifact the bootcamper keeps and the one embedded in the recap; the live server is torn down at
@@ -364,7 +436,9 @@ copy.
 
 Tell the bootcamper the app is running and where the saved copy is:
 
-- "Your visualization is running at `http://localhost:8080`, open it in your browser."
+- "Your visualization is running at `http://localhost:<port>`, open it in your browser."
+  (Substitute the port actually in use — never a literal `8080` when 2.3 chose another, or this
+  line sends the Bootcamper to a port nothing is listening on. INV-172.)
 - "A saved copy is at `docs/visualizations/truthset_verification.html`, you can open that file
   any time, even after we stop the server. Every tab still works offline there, except **Why?**,
   **How?**, and live search — those need the running engine, so use them while the server is up."
@@ -415,8 +489,8 @@ Never treat a yes here as consent to stop the server.
 {
   "truthset_visualization": {
     "checks": {
-      "web_service": {"status": "passed|failed", "port": 8080},
-      "web_page": {"status": "passed|failed", "url": "http://localhost:8080/",
+      "web_service": {"status": "passed|failed", "port": <port>, "pid": <pid>},
+      "web_page": {"status": "passed|failed", "url": "http://localhost:<port>/",
                    "snapshot": "docs/visualizations/truthset_verification.html"}
     }
   }

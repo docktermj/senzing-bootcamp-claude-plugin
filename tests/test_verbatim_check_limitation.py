@@ -1,5 +1,10 @@
 """The verbatim check cannot express a non-string source value, and the plugin must say so.
 
+MCP-NEGATIVE-SCAN: ignore-file — this file asserts *about* the markers in
+`phase2-data-mapping.md` (that the field-count negative carries one, and that it names the
+owning route), so the token appears here as an assertion string rather than as a claim of
+its own. The claims themselves live in the shipped file, where the scanner reads them.
+
 `sz_verbatim_check.py` is delivered by the MCP server as a workflow resource. Verified
 against the current resource (server 1.32.1, 2026-07-28):
 
@@ -207,3 +212,228 @@ class TheEmissionChoiceIsSpecDriven(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
+    """The gate rejects two mechanisms the same server prescribes, and crashes on CSV.
+
+    Reported 2026-07-27 across four sources mapped end to end. All three are a *different* kind of
+    limitation from the two harvesting gaps above them: here the harvester works and something else
+    does not — the equality test's shape (`extract`), the key waiver's coverage (`REL_*`), and the
+    input format (CSV). Keeping them in a separate block is why the harvesting section can still
+    truthfully say "that is the whole of the harvesting limitation".
+
+    These assert the *requirement*, not phrasing: that a mapper meeting one of the three finds it
+    named, learns why, and is routed to INV-173's exemption path rather than to changing the data.
+    """
+
+    def setUp(self):
+        self.text = flat(PHASE2)
+
+    def test_the_extract_disposition_limitation_is_named(self):
+        # The *claim*, not words near it. An earlier version asserted that "`extract`",
+        # "allowed_values()" and "a.k.a." each appeared somewhere — all true even after the
+        # sentence stating that extract output is rejected was deleted, because `extract` is a
+        # documented disposition named elsewhere in this file and the rest of the paragraph
+        # survived. Assert the statement that makes it a limitation.
+        self.assertRegex(
+            self.text, r"(?i)`extract` output is rejected",
+            "the text never states that correct `extract` output fails the gate — without that "
+            "claim the surrounding detail explains nothing",
+        )
+        self.assertRegex(self.text, r"(?i)allowed_values\(\)",
+                         "the cause — whole value / delimiter segment / whitespace token — is absent")
+        self.assertRegex(self.text, r"(?i)a\.k\.a\.",
+                         "the worked repro that makes the failure concrete is absent")
+
+    def test_the_relationship_scaffolding_limitation_is_named(self):
+        for attribute in ("REL_ANCHOR_DOMAIN", "REL_POINTER_DOMAIN", "REL_POINTER_ROLE"):
+            with self.subTest(attribute=attribute):
+                self.assertIn(attribute, self.text)
+
+    def test_it_says_which_relationship_attributes_pass(self):
+        """`REL_*_KEY` passing is what identifies the cause as the waiver, not the harvester."""
+        self.assertRegex(self.text, r"(?i)REL_ANCHOR_KEY.{0,80}REL_POINTER_KEY.{0,60}pass")
+
+    def test_the_csv_limitation_is_named_with_its_error(self):
+        self.assertRegex(self.text, r"(?i)load_jsonl")
+        self.assertRegex(self.text, r"json\.decoder\.JSONDecodeError")
+
+    def test_the_csv_limitation_appears_at_the_gate_presentation(self):
+        """INV-183: the rule belongs where the artifact is produced, not one section away.
+
+        A crash reads as environment trouble unless the step that runs the script says otherwise,
+        and that step is where the reader is when it happens.
+        """
+        gate = self.text[:self.text.find("harvests source *values* only")]
+        self.assertIn("JSONDecodeError", gate,
+                      "the CSV crash is documented only in the limitations block, not at the gate")
+        self.assertRegex(gate, r"(?i)tool limitation, not an environment problem")
+
+    def test_all_three_are_dated_and_their_freshness_is_stated_per_limitation(self):
+        """INV-080/INV-169: every entry carries a date, and none claims to be current
+        behaviour without saying how that was checked.
+
+        ⚠️ **Rescoped 2026-08-14.** Until then this asserted the blanket caveat — that *none*
+        of the three had been re-run — which made the guard hold the old freshness state in
+        place after it expired: limitations 1 and 3 have since been re-confirmed against
+        server 1.32.9 by reading the scripts the server delivers, so requiring the plugin to
+        say they were never re-run would have required it to be wrong. That is the same
+        failure this repo already recorded once, in
+        `tests/test_engine_verification_and_senz2027.py`: a guard written to pin a caveat
+        will pin it after the caveat stops being true, because nothing dates the premise.
+
+        What remains required is the part that does not expire: the original observation
+        date and SDK, and an explicit per-limitation freshness statement rather than a
+        silent claim of currency.
+        """
+        self.assertRegex(self.text, r"(?i)First observed 2026-07-27",
+                         "the original observation date must survive")
+        self.assertRegex(self.text, r"(?i)4\.3\.3\.26191")
+        self.assertRegex(
+            self.text, r"(?i)Freshness, per limitation",
+            "freshness must be stated per limitation, not as one blanket caveat")
+        self.assertRegex(
+            self.text, r"(?i)only 2 is still un-re-run",
+            "the entry that is still unverified must be named")
+        self.assertRegex(
+            self.text, r"(?i)does not depend on re-running a mapping",
+            "a re-check must disclose what kind of check it was, or 'CONFIRMED CURRENT' "
+            "overstates it")
+
+    def test_the_prescriptions_carry_current_mcp_provenance(self):
+        """What *was* re-verified: that the server still prescribes both mechanisms."""
+        self.assertRegex(self.text, r"(?i)1\.32\.3")
+        self.assertRegex(self.text, r"(?i)Feature: REL_ANCHOR",
+                         "the Entity Specification sections that prescribe REL_* are not cited")
+
+    def test_handling_routes_to_the_existing_exemption_path(self):
+        self.assertRegex(self.text, r"(?i)Handling is the same for all three")
+        self.assertIn("INV-173", self.text)
+
+    def test_it_forbids_forking_the_scripts(self):
+        self.assertRegex(self.text, r"(?i)Do not ship a patched copy",
+                         "INV-173's no-fork rule must survive next to a workaround")
+
+    def test_the_harvesting_section_no_longer_claims_to_be_exhaustive(self):
+        """It said "they are the whole of this limitation", which three more entries falsify."""
+        self.assertNotRegex(
+            self.text, r"(?i)they are the whole of this limitation",
+            "the harvesting block still claims to cover every limitation",
+        )
+
+
+class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
+    """Three `mapping_workflow` step-1 defects, each of which yields a wrong artifact silently.
+
+    Reported 2026-07-27 across four sources on SDK 4.3.3.26191 and sent upstream 2026-07-31. They
+    share a delivery channel and a failure signature — a plausible, well-formed output that is
+    wrong — but they fire at *different* steps, so INV-183 puts each where it happens: the two
+    profiler defects at `### 9. Profile`, the counter at `### 11. Map`. A limitations list one
+    section away is unreachable at the moment it bites.
+
+    These assert placement as well as presence, because presence alone was satisfied by the
+    limitations block already in this file.
+    """
+
+    @staticmethod
+    def _flatten(text):
+        """Same normalisation as `flat()`, applied to a slice rather than a whole file.
+
+        These are wrapped prose sections, so a phrase assertion on raw text is really an
+        assertion about where the line breaks fall — which is how the first version of
+        `test_the_multi_file_output_collision_is_at_the_profile_step` failed on correct text.
+        """
+        return re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
+
+    def setUp(self):
+        raw = PHASE2.read_text(encoding="utf-8")
+        self.profile = self._flatten(raw[raw.index("### 9. Profile"):raw.index("### 10. Plan")])
+        self.mapping = self._flatten(raw[raw.index("### 11. Map"):raw.index("### 12.")])
+        self.all = flat(PHASE2)
+
+    def test_the_multi_file_output_collision_is_at_the_profile_step(self):
+        self.assertRegex(self.profile, r"(?i)same output path",
+                         "the colliding -o path is not documented where the profiler runs")
+        self.assertRegex(self.profile, r"(?i)only the second file's profile survives",
+                         "the consequence — silent loss of the first profile — is not stated")
+        self.assertRegex(self.profile, r"profile_report_<stem>\.md",
+                         "the distinct-path workaround is not given")
+
+    def test_the_headerless_csv_limitation_is_at_the_profile_step(self):
+        self.assertRegex(self.profile, r"(?i)headerless CSV")
+        self.assertRegex(self.profile, r"(?i)one record disappears",
+                         "the lost record is the part that matters and is not stated")
+        self.assertRegex(self.profile, r"(?i)headered copy for profiling only",
+                         "the workaround is not given")
+
+    def test_the_sentinel_caveat_is_where_population_is_reported(self):
+        """INV-128 one layer up: a sentinel is a value, so population != information."""
+        self.assertRegex(self.profile, r"(?i)sentinel")
+        self.assertRegex(self.profile, r"(?i)100% population")
+        self.assertIn("INV-128", self.profile)
+
+    def test_the_field_count_warning_is_at_the_mapping_step(self):
+        self.assertRegex(self.mapping, r"(?i)field-count warning",
+                         "the counter is not documented where step 3 fires it")
+        self.assertRegex(self.mapping, r"(?i)wrong in both directions",
+                         "the double error is what makes it unfixable by eye; state it")
+        self.assertRegex(self.mapping, r"type_discriminator\.field_overrides",
+                         "the excluded half of the miscount is not named")
+
+    def test_the_warning_guidance_does_not_teach_ignoring_warnings(self):
+        """A step whose other warnings are real must not be written off wholesale."""
+        self.assertRegex(
+            self.mapping, r"(?i)Do not\s+start ignoring this step's warnings generally",
+            "the guidance must protect the step's other warnings",
+        )
+
+    def test_each_defect_is_marked_upstream_owned_and_dated(self):
+        """So a later run can retire one, the way the numeric-value entry was retired."""
+        for section, label in ((self.profile, "profile step"), (self.mapping, "mapping step")):
+            with self.subTest(section=label):
+                self.assertRegex(section, r"(?i)reported upstream 2026-07-31")
+                self.assertRegex(section, r"(?i)not re-run",
+                                 "must say the observation was not re-verified")
+
+    def test_the_prescriptions_carry_current_mcp_provenance(self):
+        """What *was* re-verified: the schema still declares derived and type_discriminator."""
+        self.assertRegex(self.mapping, r"(?i)1\.32\.3")
+        self.assertRegex(self.mapping, r"(?i)derived_as")
+
+    def test_the_field_count_block_leads_with_the_negative_re_check(self):
+        """Re-checked 2026-08-14 on server 1.32.9: the warning did not fire.
+
+        The block must lead with that rather than still promising the warning, and must not
+        re-assert the universal quantifier its own re-check falsified — a ⛔ whose stated
+        trigger demonstrably does not occur erodes the load-bearing ⛔s around it.
+        """
+        self.assertRegex(self.mapping, r"(?i)field-count warning no longer fires")
+        self.assertRegex(self.mapping, r"(?i)1\.32\.9, 2026-08-14")
+        self.assertNotRegex(
+            self.mapping,
+            r"(?i)on \*\*every\*\* mapping that uses `derived` entries",
+            "the falsified universal quantifier is back",
+        )
+
+    def test_the_type_discriminator_half_is_marked_not_re_run(self):
+        """One re-check retires one half. The walk had no per-record type field."""
+        self.assertRegex(self.mapping, r"(?i)Only the `derived` half was re-run")
+        self.assertRegex(self.mapping, r"(?i)field_overrides` declare at least one source field")
+
+    def test_the_disposition_counts_are_marked_server_derived(self):
+        """So a later reader does not 'fix' the plugin by sending them."""
+        self.assertRegex(
+            self.mapping,
+            r"(?i)Do not send `feature_count`, `payload_count` or `ignored_count`",
+        )
+        self.assertRegex(self.mapping, r"(?i)the server derives them")
+
+    def test_the_negative_carries_an_owned_mcp_marker(self):
+        """An absence claim needs the route that owns it named (INV-194)."""
+        self.assertIn("MCP-NEGATIVE:", self.mapping)
+        self.assertRegex(self.mapping, r"owner: the step-3 advance response is the only route")
+
+    def test_it_forbids_forking_the_profiler(self):
+        self.assertRegex(self.profile, r"(?i)do not ship a patched profiler")
+        self.assertIn("INV-173", self.profile)

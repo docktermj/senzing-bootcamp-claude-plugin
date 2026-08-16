@@ -24,6 +24,19 @@ Where the server now disagrees with the spec, the server wins and the deviation 
 recorded; implementing a stale spec faithfully means writing a fresh defect into the
 plugin, with a spec file that makes it look reviewed.
 
+⛔ **When a spec's diagnosis rests on the server LACKING something, re-ask the OWNER, not the
+tools the spec listed.** Its `MCP re-check` line must carry `owner-checked: <route that would
+carry the fact> — <what it returned>` (`../feedback-to-specs/spec-template.md`). Re-ask that
+route. **A missing `owner-checked:` clause on an absence claim is a blocker, not a note:**
+re-diagnose before implementing, because the empty tools the spec named prove something about
+those tools and nothing about the negative. Two instances in one session, both from the same
+mechanism — a real tool, real parameters, a real empty result, an honest date, and the wrong
+tool asked. The first shipped as INV-208 plus a guard banning the correct value; the second
+(`pattern-gallery-asks-for-more-than-mcp-can-supply`) was caught at exactly this step, and its
+whole diagnosis inverted — the server covered the material all along, reachable by a different
+vocabulary. That is this check paying for itself, and it is why the clause is enforced
+(INV-194) rather than left to attention.
+
 ## Invocation modes
 
 - **No argument** → discovery mode. List every spec that has **not** yet been
@@ -48,14 +61,39 @@ are never implementable specs:
 - `INVARIANTS.md` — the ruleset every spec must respect (not a task).
 - `todo.md` — the lightweight idea backlog (not yet specs).
 - `IMPLEMENTED.md` — the record this skill maintains.
+- `DECLINED.md` — the record of specs deliberately **not** being built (see below).
 
 ## Step 1: Load state
+
+⛔ **Compute the set with the script, not by hand:**
+
+```bash
+python3 .claude/skills/implement-spec/list_specs.py
+```
+
+It does exactly steps 1–4 below, prints the counts alongside the open set so an empty result is
+visible rather than ambiguous, and flags a spec that is in **both** ledgers. Steps 1–4 remain as
+the explanation of *what* it computes and *why*; run the script to get the answer.
+
+⚠️ **This became a script because the by-hand version failed.** On 2026-08-13 a run subtracted
+only `IMPLEMENTED.md`, reported a **declined** spec as open, recommended it to the maintainer,
+and implemented it; `tests/test_declined_ledger.py` caught the contradiction afterwards, but
+nothing caught the listing. The instruction below was correct at the time and was simply not
+followed — which is the argument for mechanising it rather than restating it more firmly
+(INV-207).
 
 1. **List** `specs/*.md` and drop the meta files above → the candidate set.
 2. **Read `specs/IMPLEMENTED.md`** (create it from the scaffold if missing) and
    collect the `## <name>` headings → the implemented set.
-3. **Unimplemented = candidates − implemented.**
-4. **Read `specs/INVARIANTS.md`.** Every spec begins "Maintain the invariant
+3. **Read `specs/DECLINED.md`** (if present) and collect its `## <name>` headings →
+   the declined set. Same heading idiom, so the same parser reads both.
+4. **Unimplemented = candidates − implemented − declined.**
+
+   A spec reaches one of **two** terminal states, and both are subtracted. Omitting the
+   declined set re-offers a spec the maintainer has already ruled out, every run — and
+   the spec's own text argues *for* the change with nothing recording the argument
+   against it, so the next run re-derives and re-asks.
+5. **Read `specs/INVARIANTS.md`.** Every spec begins "Maintain the invariant
    conditions in @INVARIANTS.md" — the implementation must honor it (cross-platform
    Linux/macOS/Windows, language-agnostic, production-ready, consistent/coherent/
    complete, and the per-module outcomes).
@@ -151,6 +189,42 @@ Work one spec at a time. For each:
    in particular keep the change cross-platform and language-agnostic. Any Senzing
    fact you write into the plugin carries its provenance: the tool and parameters
    that established it, the server version, and the date.
+
+   ⛔ **A Senzing fact that is a *negative* — "tool X does not contain Y" — additionally
+   carries an `MCP-NEGATIVE` marker**, so it lands on the worklist a dry run re-asks:
+
+   ```text
+   MCP-NEGATIVE: <tool(params) asked> — <what is absent> — owner: <route that owns the fact + outcome> — server <version>, <YYYY-MM-DD>
+   ```
+
+   <!-- MCP-NEGATIVE-SCAN: ignore-file — this file documents the marker FORMAT; the template
+   above is a placeholder, not a dated claim about the current server, and the scanner would
+   otherwise report it as a malformed marker. -->
+
+   A negative is the one claim shape that cannot go stale detectably. The suite is offline
+   (INV-108), so nothing notices when the server gains the coverage the plugin routed
+   around — it has happened twice, and the second time the claim was in the **guards** too,
+   so correcting the prose failed the suite. `coverage_reports.py negatives` lists every
+   marker oldest-first; a negative with no marker is invisible to it. Prefer asserting what
+   **is** true over what must not be said: the latter is the form that expires.
+
+   ⛔ **`owner:` is required, and it is the field that makes the negative worth anything.**
+   Name the route that would **carry** this fact and say what it returned. The empty call in
+   the claim slot proves a fact about *that call*; it is not evidence for the negative.
+   "`sdk_guide(topic='configure')` returns no license variable" is true and irrelevant —
+   the variable lives in `sdk_guide(topic='load', record_count=<above the limit>)`. Two shapes,
+   both needing the clause:
+
+   - **Routing negative** — the fact exists elsewhere. The owner is where the reader must go
+     instead of concluding absence.
+   - **Absence negative** — the fact is served nowhere. The owner is the route you asked and
+     found empty, and naming it is the only thing separating this from a wrong-route error.
+
+   A marker with no `owner:` clause **does not parse** and is reported as missing rather than
+   well-formed, deliberately. This exists because a wrong-route negative reached a registered
+   invariant and a guard that enforced it, with dated evidence throughout, and read as
+   reviewed the whole way (INV-194; `specs/mcp-negative-markers-must-name-the-owning-route.md`).
+
 5. **Verify against the acceptance criteria.** Walk each checkbox and confirm it
    holds — run the relevant script/hook/command or exercise the flow where
    possible (consider the `/verify` skill). If a criterion cannot be satisfied,
@@ -204,14 +278,31 @@ Both were invisible to the whole suite, because neither INV-060 nor INV-097 is c
 test. So: **a criterion that names a file, a module, or a second consumer is checked
 against that file** — open it and look — not against the change you remember making.
 
+⛔ **And the spec's list of sites is not the set of sites — sweep for the rest (INV-246).** A
+spec enumerates where its author *noticed* the defect, which is precisely what is wrong when a
+rule is applied incompletely. On 2026-08-14 a spec closed with a section titled *"The same branch
+exists twice"*, naming two files; the branch existed **three** times, and the third was upstream of
+both, in the module where the decision it governed was actually made. It shipped unfixed, guarded
+by a test that named the same two paths. So: **the guard you write derives its site set by
+scanning, never by hardcoding paths** — a listed guard certifies the sites you already thought of
+and is blind to the one you missed, which is the only site that matters.
+
 Two supporting reports exist for the gaps this cannot catch by hand; run them when the
 audit workflows ask, or when a spec touches the ledger
 (`.claude/skills/dry-run/coverage_reports.py`, both stdlib-only):
 
 ```bash
 python3 .claude/skills/dry-run/coverage_reports.py invariants   # invariants no test cites
+python3 .claude/skills/dry-run/coverage_reports.py shipped      # invariants no SHIPPED file cites
 python3 .claude/skills/dry-run/coverage_reports.py affected     # predicted-but-unrecorded files
+python3 .claude/skills/dry-run/coverage_reports.py negatives    # dated "tool lacks X" claims
 ```
+
+⛔ **`shipped` is the one that catches an invariant this skill just minted.** It was missing from
+this list until 2026-08-14, so the skill checked whether a *test* cited a new rule and never whether
+the *plugin* did — and on 2026-08-14 all eight newly registered invariants (INV-222–INV-229) were
+cited by no file under `plugins/`, one day after `aa013dc` had fixed thirteen of the same by hand.
+A rule with no ID beside it is one a later editor cannot look up and will "tidy" away.
 
 Only after the change is made **and** its acceptance criteria are met, prepend an
 entry to `specs/IMPLEMENTED.md` under the header (newest first). Get the date
@@ -238,12 +329,95 @@ hash in on the next `implement-spec` run**: before writing a new entry, scan the
 how 66 entries went stale at once, leaving the field unable to answer the one question it
 exists for.
 
+⛔ **Re-run `citations.py verify` AFTER the entry is written — it is the last action of this
+step, not part of the criterion walk.**
+
+```bash
+python3 .claude/skills/compact-dev-environment/citations.py verify
+```
+
+The ledger is **inside** the corpus that scan reads, so a clean result recorded before the
+entry exists measured a different repo than the one that ships. This is not hypothetical:
+an entry whose evidence sentence wrote out an unminted `INV-NNN` created two citations of an
+undefined invariant, turning the whole suite red — *after* the same run had recorded
+`citations.py verify` as clean. The check was run before the artifact that broke it existed.
+Same rule for the full suite when an entry's text could affect it.
+
+⚠️ **And read the runner's verdict line, not just its count.** That run recorded
+"1792 passed, 3 skipped" from a `Ran 1792 tests` line while `FAILED (failures=1, skipped=3)`
+sat immediately beneath it — so 1792 was the total *run*, the suite was already red, and the
+ledger said otherwise. A count is not a result.
+
 If the maintainer chose to re-implement an already-recorded spec, update that
 spec's existing entry rather than adding a duplicate.
 
 Leave the spec file itself in place under `specs/` — the ledger, not the file's
 location, records completion. Do not commit unless the maintainer asks; if they
 do, reference the commit hash in the entry.
+
+## Declining a spec instead of implementing it
+
+Some specs are correct and still should not be built — most often because the change
+they propose is an architectural decision rather than a defect repair. That outcome
+needs recording, or the spec is offered again on every run and the reasoning against it
+is lost.
+
+⛔ **Never decline a spec on your own initiative.** This skill implements what the
+maintainer chooses; deciding *not* to build something is theirs alone. If a spec looks
+like a poor idea, say so and let them rule — do not write to `DECLINED.md` without their
+explicit decision.
+
+When they do decline one, append an entry to `specs/DECLINED.md` using the same
+`## <spec-name>` heading idiom as `IMPLEMENTED.md` (Step 1 subtracts both):
+
+```markdown
+## <spec-name>
+
+- **Declined:** YYYY-MM-DD
+- **Decided by:** <who made the call>
+- **Reason:** <why not — required; never leave this empty>
+- **Revisit if:** <the condition that would reopen it, or "nothing foreseeable">
+```
+
+Two fields carry the weight. **Reason** is required for the same reason
+`delegate-to-mcp-server` requires one on a `keep-by-design` verdict: an unreasoned
+decline is indistinguishable from nobody having looked, and the next run looks again.
+**Revisit if** keeps the file from becoming a graveyard — most declines are made against
+current architecture or a current upstream gap, and naming the trigger lets a later run
+check cheaply instead of re-arguing.
+
+⛔ **An absence claim in a `Revisit if:` clause or a dated revisit note carries the same
+`MCP-NEGATIVE` marker Step 3.4 requires — this file needs it most, not least.** A declined
+spec is never implemented, so Step 3.3 never re-asks its facts: a negative written here is
+the only Senzing claim in the repo with no re-verification path, while this skill tells the
+next reader to trust it *over* the spec's own citations. Write the marker on the same bullet
+as the claim:
+
+```markdown
+- **Revisit if:** Senzing documents a self-service route for <X>.
+  MCP-NEGATIVE: search_docs(query='<terms>') — no indexed document names <X> — owner: search_docs IS the corpus route the condition is written against, so the empty result is the answer rather than a miss (absence negative) — server <version>, <YYYY-MM-DD>
+```
+
+`coverage_reports.py negatives` scans `specs/DECLINED.md` (and no other file under `specs/`)
+for exactly this reason, so a marker here reaches the worklist a dry run re-asks;
+`tests/test_declined_ledger.py` fails on an absence-shaped bullet that has none. Prose that
+**quotes a retracted claim** is exempt and must say so on the bullet with
+`MCP-NEGATIVE-SCAN: quoted-history`, so a correction can restate what it corrects.
+
+This is INV-194 applied where it was actually breached: the 2026-08-13 revisit note on
+`no-route-for-bootcampers-who-cannot-add-an-mcp-server` concluded a binary had lost its
+citations after asking a tool description and the tool manifest — when the binary was that
+manifest's own `server_name`. Requiring the `owner:` clause is what forces the owning route
+to be asked.
+
+**Leave the spec file where it is.** Do not archive, move or delete it: its analysis is
+what made the decision possible, and its filename is a permanent address. A declined
+spec also stays visible to `feedback-to-specs`' Step 4 deduplication, so the same
+subject arriving again finds it rather than producing a second spec.
+
+**Declined is not superseded.** A spec whose facts are wrong, or that a later spec
+overtakes, is `feedback-to-specs`' business — the remedy there is a corrected or
+superseding spec, not a `DECLINED.md` entry.
 
 ## Step 5: Record any new invariants
 
@@ -290,6 +464,19 @@ otherwise draft it. For each new invariant:
 
    - `INV-NNN` — <statement> (recorded in `specs/INVARIANTS.md`).
    ```
+
+5. ⛔ **Cite the new ID in the shipped text that states its rule, before recording the spec as
+   implemented.** The prose is already there — what is missing is the `INV-NNN` beside it, and
+   INV-183 requires a rule binding a step to be reachable **at** that step. Add it at every site
+   the rule governs, then re-run `coverage_reports.py shipped` and confirm the new ID is gone from
+   its output.
+
+   ⚠️ **This matters most when the invariant is QUEUED for approval**, because then the citation
+   is *un-writable* at the moment the prose is written — the ID does not exist yet. That is exactly
+   what happened on 2026-08-14: eight implementations shipped with their rules stated and no IDs,
+   the eight IDs were minted later in one commit, and nothing sent anyone back to the prose. A
+   citation that cannot be written when the prose is written will not be written at all unless a
+   step asks for it. So: **minting the ID is not the last action — citing it is.**
 
 If one implementation establishes several invariants, add one entry per
 invariant using consecutive IDs.

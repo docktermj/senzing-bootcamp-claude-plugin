@@ -24,9 +24,18 @@ Entries before the cutoff are grandfathered deliberately: ~145 specs predate thi
 and many are fixes that correctly establish nothing, so retrofitting a marker onto all of
 them would be churn with no signal. The gate is forward-looking on purpose.
 
+Also enforces **INV-207** (a claim about this repo's own reference graph is verified AFTER it
+is recorded, never before; and evidence for "identifier X is unused" must not quote X), which
+names this file as its enforcer. `TestTheLedgerIsVerifiedAfterItIsWritten` pins the three
+things `implement-spec`'s Step 4 must say: that `citations.py verify` runs after the entry is
+written, *why* (the ledger is inside the corpus the scan reads), and that a test count is not
+a verdict. The detection itself belongs to `citations.py verify`, which caught all three
+instances; what this file guards is that the ordering instruction cannot be quietly dropped.
+
 Run:  python3 -m unittest discover -s tests
 """
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -284,6 +293,58 @@ class TestCommitFieldHygiene(unittest.TestCase):
             "recorded)` — free text makes the field unreadable:\n  " + "\n  ".join(bad),
         )
 
+    def test_every_recorded_hash_resolves_to_a_real_commit(self):
+        """Hash-*shaped* is not hash-*valid*, and the difference hid for two weeks.
+
+        `test_commit_fields_use_the_fixed_vocabulary` accepts any 7–40 hex run, so a
+        hash that resolves to nothing passes it while answering the one question the
+        field exists for with a lie — and unlike `uncommitted`, it looks answered. On
+        2026-07-31, 22 of 228 entries recorded commits from a 2026-07-15/16 history
+        rewrite that no longer exist in the object store or any reflog. They were
+        repaired to the post-rewrite commits, but nothing would have caught them.
+
+        Skipped rather than failed when history is unavailable (shallow clone, no git,
+        not a work tree) — a partial clone must not read as a corrupt ledger.
+        """
+        if not (REPO_ROOT / ".git").exists():
+            self.skipTest("not a git work tree")
+        if subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "rev-parse", "--is-shallow-repository"],
+            capture_output=True, text=True,
+        ).stdout.strip() == "true":
+            self.skipTest("shallow clone — pre-rewrite history is not present")
+
+        dangling, checked = [], 0
+        for name, _, body in entries():
+            m = COMMIT_FIELD.search(body)
+            if not m:
+                continue
+            value = m.group(1).strip()
+            if value.startswith("uncommitted") or "hash not recorded" in value:
+                continue
+            found = HASH.search(value)
+            if not found:
+                continue
+            # The primary hash is the first one; a repaired entry also cites the dead
+            # pre-rewrite hash in a trailing "(was `…`)" note, which must not be checked.
+            digest = found.group(0).strip("`")
+            checked += 1
+            if subprocess.run(
+                ["git", "-C", str(REPO_ROOT), "cat-file", "-e", digest + "^{commit}"],
+                capture_output=True,
+            ).returncode:
+                dangling.append("%s: %s" % (name, digest))
+
+        self.assertGreater(checked, 100, "the scan is not vacuous")
+        self.assertEqual(
+            [], dangling,
+            "%d recorded commit hash(es) resolve to nothing — the field cannot answer "
+            "what it exists for. Find the surviving commit (its subject usually names "
+            "the spec, or it is the commit that added the entry's `## heading`) and "
+            "record it as `<new>` (was `<old>`, …):\n  %s"
+            % (len(dangling), "\n  ".join(dangling)),
+        )
+
 
 class TestAffectedFilesAccounting(unittest.TestCase):
     """A post-cutoff entry records what its spec predicted, or explains the difference."""
@@ -334,3 +395,54 @@ class TestAffectedFilesAccounting(unittest.TestCase):
             AFFECTED_GRANDFATHERED - names,
             "AFFECTED_GRANDFATHERED names an entry absent from IMPLEMENTED.md",
         )
+
+
+class TestTheLedgerIsVerifiedAfterItIsWritten(unittest.TestCase):
+    """A clean citation scan recorded *before* the entry exists measured a different repo.
+
+    The ledger is inside the corpus `citations.py verify` reads. An entry whose evidence
+    sentence wrote out an unminted `INV-NNN` created two citations of an undefined
+    invariant and turned the whole suite red — after that same run had recorded the scan
+    as clean. Ordering is the fix, so the ordering instruction is what gets pinned.
+    """
+
+    SKILL = REPO_ROOT / ".claude" / "skills" / "implement-spec" / "SKILL.md"
+
+    def setUp(self):
+        self.assertTrue(self.SKILL.is_file(), "implement-spec/SKILL.md moved — re-point this guard")
+        self.body = self.SKILL.read_text(encoding="utf-8")
+
+    def step_four(self):
+        """Step 4 only: the instruction has to live in the step that writes the entry."""
+        start = self.body.index("## Step 4: Record the implementation")
+        end = self.body.index("## Declining a spec instead of implementing it", start)
+        return re.sub(r"\s+", " ", self.body[start:end]).replace("**", "")
+
+    def test_step_four_requires_the_scan_after_the_entry(self):
+        section = self.step_four()
+        self.assertIn(
+            "citations.py verify", section,
+            "Step 4 never names the citation scan, so nothing tells a run to re-check the "
+            "corpus its own entry just joined")
+        self.assertRegex(
+            section, r"(?i)AFTER the entry is written|after the ledger entry is written",
+            "Step 4 must say the scan runs AFTER the entry is written. Naming the command "
+            "without the ordering is what already failed: the scan ran during the criterion "
+            "walk, the entry was written afterwards, and the entry was what broke it.")
+
+    def test_step_four_says_why_the_ordering_matters(self):
+        """Without the reason, the ordering reads as ceremony and gets optimised away."""
+        section = self.step_four()
+        self.assertRegex(
+            section, r"(?i)ledger is (\*\*)?inside(\*\*)? the corpus|inside the corpus",
+            "the ordering must carry its reason — that the ledger is part of what the scan "
+            "reads — or a later editor will reasonably move it back next to the other checks")
+
+    def test_step_four_warns_that_a_count_is_not_a_result(self):
+        """The same run also read `Ran N tests` and missed `FAILED` on the next line."""
+        section = self.step_four()
+        self.assertRegex(
+            section, r"(?i)A count is not a result|read the runner's verdict",
+            "Step 4 must warn that a test count is not a verdict. The run that recorded a "
+            "red suite as '1792 passed' took the number off the `Ran 1792 tests` line while "
+            "`FAILED (failures=1, skipped=3)` sat directly beneath it")
