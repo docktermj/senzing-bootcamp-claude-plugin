@@ -45,7 +45,7 @@ later and made worse by two side effects the check itself does not have:
 ## Root cause
 
 The INV-229 fix reached the file that **performs** the check and the file that
-**summarises** the module, and not the file that **grades** it.
+**summarizes** the module, and not the file that **grades** it.
 
 Applied: `phase1-verification.md` Step 7 (`:495-523`) and `SKILL.md`'s success
 indicator (7 installation checks, results validation reported separately, "is an
@@ -81,7 +81,7 @@ guard certifies the two files the implementer edited, which is the one place a
 regression will not come from.
 
 **No Senzing fact is at issue.** This is internal consistency between three files
-of one module; nothing here re-asserts engine behaviour, so no MCP re-verification
+of one module; nothing here re-asserts engine behavior, so no MCP re-verification
 was needed to establish it (INV-080 untouched).
 
 ## Proposed change
@@ -134,7 +134,7 @@ was needed to establish it (INV-080 untouched).
 ## Source
 
 `production-readiness-audit`, 2026-08-14. Found by checking whether INV-229 — one of
-the eight invariants registered that day — was honoured at every site it binds,
+the eight invariants registered that day — was honored at every site it binds,
 rather than at the site the spec that produced it named.
 
 - Related: `verification-grades-the-engine-against-the-guides-own-prediction`

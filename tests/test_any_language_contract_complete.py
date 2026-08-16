@@ -19,7 +19,7 @@ Offline rendering (INV-091) is stated in the build guidance in plain terms. Esca
 Same class, one communicated, one missed by inference.
 
 So this test asserts, for each requirement an any-language builder must satisfy, that the
-build guidance states it **as behaviour** — and that no such requirement is expressed only
+build guidance states it **as behavior** — and that no such requirement is expressed only
 as a Python identifier.
 
 Run:  python3 -m unittest discover -s tests
@@ -53,7 +53,7 @@ def plain(text):
 
 INVARIANTS = REPO_ROOT / "specs" / "INVARIANTS.md"
 
-#: The declared index group in INVARIANTS.md. Its membership is DATA, not judgement, so the
+#: The declared index group in INVARIANTS.md. Its membership is DATA, not judgment, so the
 #: candidate set is derived from it (INV-246 in spirit: the requirement set below was a list
 #: of what its author knew about, and a sixth requirement would have passed silently — the
 #: failure this file's own docstring records having happened once, to INV-106's escaping).
@@ -61,13 +61,13 @@ VISUALIZATION_GROUP = re.compile(
     r"- \*\*Visualization and screenshots\*\*.*?\n((?:  INV-[^\n]*\n))", re.S)
 
 #: Invariants in that group the Bootcamper does NOT build, so INV-002/INV-090 do not require
-#: them in the any-language contract. ⛔ THIS SET IS THE JUDGEMENT HALF AND MUST STAY SMALL
+#: them in the any-language contract. ⛔ THIS SET IS THE JUDGMENT HALF AND MUST STAY SMALL
 #: AND REASONED: an entry added without a reason is how this rule quietly stops binding.
 #: Each value says why the Bootcamper never implements it.
 APPARATUS_EXEMPT = {
     "INV-107": "inlined fallback constants in the plugin's OWN Python scripts "
                "(senzing_viz_server.py, generate_recap_pdf.py) — the reference "
-               "implementation's internals, generalised by INV-184; not a server behaviour",
+               "implementation's internals, generalized by INV-184; not a server behavior",
     "INV-122": "screenshot file naming and per-tab capture — capture_screenshots.py, "
                "plugin-side apparatus the Bootcamper never writes",
     "INV-123": "recap screenshot captions — the recap generator, plugin-side",
@@ -147,7 +147,7 @@ class EveryServerBindingInvariantReachesTheContract(unittest.TestCase):
         self.assertEqual(
             [], stale,
             "APPARATUS_EXEMPT names invariants that are no longer in the visualization "
-            "group, so the exemption is carrying a judgement about a rule that moved: %s"
+            "group, so the exemption is carrying a judgment about a rule that moved: %s"
             % stale)
 
 
@@ -168,7 +168,7 @@ class ContractCarriesEveryBuildRequirement(unittest.TestCase):
         "tab identifiers and deep-linking (INV-124)": [
             "Tab identifiers and deep-linking", "activate(<id>)", "?tab=",
         ],
-        "data-source colours assigned from the data (INV-127)": [
+        "data-source colors assigned from the data (INV-127)": [
             "ASSIGNED FROM the sources present", "never from a name-keyed palette",
         ],
         "legends generated from the data": [
@@ -232,7 +232,7 @@ class NoRequirementIsStatedOnlyAsAPythonIdentifier(unittest.TestCase):
     # Python-only identifiers that must never be the SOLE expression of a requirement.
     PY_ONLY = ("_script_json", "_esc_html", "json.dumps")
 
-    def test_python_helpers_appear_only_as_a_labelled_reference(self):
+    def test_python_helpers_appear_only_as_a_labeled_reference(self):
         text = CONTRACT.read_text()
         for name in self.PY_ONLY:
             if name not in text:
@@ -249,12 +249,12 @@ class NoRequirementIsStatedOnlyAsAPythonIdentifier(unittest.TestCase):
                         f"{name} is cited without marking it as the Python reference: …{window[-160:]}",
                     )
 
-    def test_invariant_states_behaviour_not_a_function_name(self):
+    def test_invariant_states_behavior_not_a_function_name(self):
         inv = (REPO_ROOT / "specs" / "INVARIANTS.md").read_text()
         body = re.search(r"^- \*\*INV-106\*\* — (.*?)(?=\n- \*\*INV-)", inv, re.M | re.S).group(1)
         squashed = plain(body)
         self.assertIn("MUST have `<`, `>` and `&` escaped", squashed)
-        self.assertIn("stated as behaviour in `visualization-api-reference.md`", squashed)
+        self.assertIn("stated as behavior in `visualization-api-reference.md`", squashed)
         self.assertRegex(
             squashed,
             r"Python reference implementation of it, not the requirement itself",

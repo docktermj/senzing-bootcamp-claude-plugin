@@ -62,7 +62,7 @@ wrong in every real recap.
 ## Proposed change
 
 1. **Add `"files produced"` to `_SPACED_LABELS`.** A one-token change reusing the existing
-   `_ITEM_GAP_MM` machinery and its never-after-the-last-item behaviour.
+   `_ITEM_GAP_MM` machinery and its never-after-the-last-item behavior.
 2. **Space "Questions & Responses" top-level bullets only** — apply the gap when the current
    line is a top-level `- ` bullet and the next content-bearing line is also top-level,
    leaving indented `- **R:**` sub-bullets tight against their question. This satisfies the
@@ -71,9 +71,9 @@ wrong in every real recap.
    explicit **opt-out** list, rather than an opt-in list of three names. The current shape is
    why this was missed, and it will miss the next list added for the same reason.
 4. **Correct the comment block and the originating spec.** Update "Deliberately NOT spaced"
-   to match the new behaviour, and append a dated note to
+   to match the new behavior, and append a dated note to
    `specs/recap-pdf-certificate-version-and-list-spacing.md` recording that its
-   "short reference list of paths" characterisation was measured false — items run 8–12
+   "short reference list of paths" characterization was measured false — items run 8–12
    wrapped entries because the template mandates a gloss. Do not rewrite that spec's original
    reasoning; it was correct given what it assumed, and the correction is the record.
 
@@ -85,7 +85,7 @@ wrong in every real recap.
 - [ ] Spacing is opt-out by default: a bullet list added later is spaced without being named.
 - [ ] Both renderers satisfy this (INV-066) — the stdlib fallback may achieve separation
       differently but must not run items together.
-- [ ] The "Deliberately NOT spaced" comment reflects actual behaviour.
+- [ ] The "Deliberately NOT spaced" comment reflects actual behavior.
 - [ ] `specs/recap-pdf-certificate-version-and-list-spacing.md` carries a dated note that its
       "short list of paths" premise was measured false; its original reasoning is left intact.
 - [ ] A test asserts a wrapped multi-line "Files produced" item is separated from the next

@@ -1,4 +1,4 @@
-# Data collection does not recognise a synthesized scenario
+# Data collection does not recognize a synthesized scenario
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
@@ -6,7 +6,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 The Business Case Offer produces **two** provenances — `cord` when a CORD
 collection fits the chosen category, and `synthesized` when none does. Data
-collection's skip guard recognises only `cord`. So a Bootcamper whose generated
+collection's skip guard recognizes only `cord`. So a Bootcamper whose generated
 scenario is synthetic is asked, once per source, how they would like to provide
 data they already told the bootcamp they do not have.
 

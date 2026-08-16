@@ -114,7 +114,7 @@ bundled script that accepts both a settings file and the env var.
 - [ ] The docstring states the precedence order explicitly.
 - [ ] A repo-level stdlib-only test in `tests/` covers the stub-file case without
       requiring the Senzing SDK (assert on the message and the absent snapshot, not on
-      engine behaviour) — per INV-108.
+      engine behavior) — per INV-108.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files

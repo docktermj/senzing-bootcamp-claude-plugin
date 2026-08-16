@@ -109,7 +109,7 @@ without saying which topic answers the bootcamp's question.
   `topic='reports'`'s own `schema.description` back, stating the original claim is incorrect, and
   asking that it not be investigated as a real defect. Category is `general` rather than `bug`
   because the note withdraws a report rather than filing one. Submissions are anonymous, so the
-  withdrawal cannot be threaded to the original and no acknowledgement is possible; the server's
+  withdrawal cannot be threaded to the original and no acknowledgment is possible; the server's
   reply directs any follow-up to `support@senzing.com`. **This item is closed** — nothing further is
   owed here, and the plugin-side fix is independent of it.
 - Related specs: `specs/export-related-entities-is-flag-conditional.md` (INV-169 — the same class of

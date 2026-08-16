@@ -55,7 +55,7 @@ condition that let INV-060 and INV-097 sit for a month each.
    authority, and INV-001–050 are unindexed so they need the outcome bucket below instead.
 
 2. **`invariants`: separate the bootcamp-outcome invariants (INV-001–050) into their own
-   section**, labelled as `dry-run` phase 3 territory rather than test debt. They are the flow's
+   section**, labeled as `dry-run` phase 3 territory rather than test debt. They are the flow's
    own outcomes; no offline test can assert that a banner was presented in a live turn.
 
 3. **`affected`: classify each gap row** — `glob`, `bare filename`, `path no longer exists`, or
@@ -74,7 +74,7 @@ condition that let INV-060 and INV-097 sit for a month each.
 - [ ] A test asserts INV-040 (partly superseded, still binding) is **not** filtered, and that a
       fully-superseded ID is — negative-controlled, since this is the exact distinction the naive
       implementation gets wrong.
-- [ ] `invariants` reports INV-001–050 in a separate, labelled section that names `dry-run`
+- [ ] `invariants` reports INV-001–050 in a separate, labeled section that names `dry-run`
       phase 3 as their route.
 - [ ] `affected` classifies every row into the four buckets, prints per-class counts, and orders
       real-current-file rows first.

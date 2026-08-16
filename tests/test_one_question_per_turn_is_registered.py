@@ -12,7 +12,7 @@ invariant. Six sites cited an authority and every one was wrong:
 
 All 249 invariant entries were parsed and searched: four mentioned a per-turn count and all
 four were **scoped** — INV-063 (model/effort switch), INV-064 (accepted-switch continuation),
-INV-135 (licence-request flow), INV-225 (an observation). None stated the general rule.
+INV-135 (license-request flow), INV-225 (an observation). None stated the general rule.
 (`specs/the-one-question-per-turn-rule-is-registered-nowhere.md`)
 
 Enforces **INV-251**. Its companion is **INV-225**, which forbids the *zero* case; the two
@@ -22,7 +22,7 @@ clause — duplicating a clause across two IDs is how they drift apart.
 ⛔ **WHAT THIS GUARD CANNOT SEE — TWO LIMITS, both stated because one disclosure reads as all
 of them.**
 
-1. **The behaviour.** Whether a guide actually ends a turn on one question is a live-turn
+1. **The behavior.** Whether a guide actually ends a turn on one question is a live-turn
    property. Reading files cannot establish it, and an offline suite (INV-108) never will.
    The only mechanism that checks it is `.claude/skills/auto-test/transcript_lint.py`, against
    real transcripts; `dry-run` phase 3 judges a live turn. A clean run here means the rule is
@@ -78,7 +78,7 @@ WINDOW = 140
 #: correction explaining the distinction would itself trip the guard.
 EXEMPT = re.compile(r"(?i)(not the count|marker rule|marker\b|at the time|"
                     r"says nothing about\s*count|not\s+INV-0\d\d|"
-                    r"rather than\s+INV-0\d\d|relabelled)")
+                    r"rather than\s+INV-0\d\d|relabeled)")
 
 
 def states_the_count(line):
@@ -122,7 +122,7 @@ def paragraphs(text):
 def misattributed_count_claims():
     """Every passage that states the count AND cites an invariant that is not the count.
 
-    ⛔ **The unit is a WINDOW AROUND THE CITATION, and both neighbours of that choice were
+    ⛔ **The unit is a WINDOW AROUND THE CITATION, and both neighbors of that choice were
     wrong when tried.** Negative control drove this, site by site:
 
     * **Per line** — escaped 3 of 8. This corpus wraps prose, so a citation and the 👉 it
@@ -203,7 +203,7 @@ class ThisGuardDisclosesWhatItCannotSee(unittest.TestCase):
     def setUp(self):
         self.doc = squash(__doc__ or "")
 
-    def test_the_behaviour_limit_is_disclosed(self):
+    def test_the_behavior_limit_is_disclosed(self):
         self.assertRegex(
             self.doc, r"(?i)never that it is obeyed",
             "the docstring no longer says a clean run proves the rule is cited, not obeyed")
@@ -265,8 +265,8 @@ class NoSiteCitesTheWrongInvariantForTheCount(unittest.TestCase):
             "editor cannot look it up (INV-183)")
 
 
-class TheRuntimeCheckIsLabelledCorrectly(unittest.TestCase):
-    """`auto-test`'s linter is the only thing that checks the BEHAVIOUR; its label must be right.
+class TheRuntimeCheckIsLabeledCorrectly(unittest.TestCase):
+    """`auto-test`'s linter is the only thing that checks the BEHAVIOR; its label must be right.
 
     Its finding code is what a maintainer reads in an auto-test report. While it was
     ``INV-005-multi-question`` every caught breach pointed at a one-line marker rule.
@@ -288,7 +288,7 @@ class TheRuntimeCheckIsLabelledCorrectly(unittest.TestCase):
 
     def test_the_counting_logic_is_unchanged(self):
         """The check was always correct — only its label was wrong. Guard against a 'fix'
-        that rewrites the logic while relabelling it."""
+        that rewrites the logic while relabeling it."""
         self.assertRegex(
             squash(self.text), r"count = text\.count\(POINTER\).{0,80}if count > 1",
             "the per-turn counting logic changed; the 2026-08-15 correction was a RELABEL "

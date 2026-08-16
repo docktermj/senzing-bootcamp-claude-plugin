@@ -162,7 +162,7 @@ class ContentIsPreserved(unittest.TestCase):
         self.assertFalse(self.mod._signatures_compatible(["```"], ["~~~text"]))
 
     def test_a_lossy_transform_restores_the_file_and_reports_it(self):
-        """The end-to-end behaviour: the document on disk is never damaged."""
+        """The end-to-end behavior: the document on disk is never damaged."""
         with tempfile.TemporaryDirectory() as tmp:
             docs = Path(tmp) / "docs"
             docs.mkdir()

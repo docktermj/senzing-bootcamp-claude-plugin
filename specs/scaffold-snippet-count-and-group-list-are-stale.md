@@ -36,7 +36,7 @@ change. The claim is correctly version-stamped and dated, which is the plugin's
 existing mitigation and is why this is a low-severity finding rather than a wrong
 fact — the prose does not assert the count is current.
 
-The group list has no such defence: "across initialization, loading and searching" is
+The group list has no such defense: "across initialization, loading and searching" is
 written as a description of the response's shape rather than as a dated observation,
 so it reads as durable while being an enumeration that a new snippet group
 invalidates. That is the same failure mode the skill's `unmarked` report exists to
@@ -79,7 +79,7 @@ blocker.
 ## Proposed change
 
 1. Update the count to 22 with the current server version and date, or drop the
-   specific number in favour of the group breakdown, which is more informative and
+   specific number in favor of the group breakdown, which is more informative and
    less volatile.
 2. Add `configuration` to the group list so the enumeration matches the response.
 3. Frame the drift as support for the existing rule: note that the count moved

@@ -34,7 +34,7 @@ never from an earlier turn's results. This is **presentation freshness**
 (`../bootcamp-onboarding/ground-rules.md` → "MCP-first invariant"): the gallery carries an MCP
 attribution line, and the attribution is only truthful for what a tool produced this turn. "Already
 retrieved a few turns ago" does not satisfy it. (The full pattern gallery is a
-later porting phase; that is why this step retrieves rather than reads from a shipped catalogue.)
+later porting phase; that is why this step retrieves rather than reads from a shipped catalog.)
 
 ⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one
 generic query is not it: the documentation's own words are industry terms, so "entity resolution use
@@ -169,7 +169,7 @@ values exactly as returned. Wait up to 30s; retry once.
 ⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**
 It is the most inviting choice — smallest, already used elsewhere in the bootcamp, and its
 description says it is for quickstarts — so rule it out explicitly rather than leaving it to
-judgement:
+judgment:
 
 1. **It is pre-mapped**, so it can never satisfy Step 4a's mapping-complexity invariant. The
    disqualifying word is the server's own: `get_capabilities` describes it as *"the Senzing demo

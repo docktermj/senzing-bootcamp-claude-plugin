@@ -60,7 +60,7 @@ the plugin already says in the sentence quoted above.
 
 ## Root cause
 
-The carve-out was written to fix a *behavioural* defect (the tool suppressing interaction) and
+The carve-out was written to fix a *behavioral* defect (the tool suppressing interaction) and
 correctly located the decision in `mapping_verbosity`. But it delegates the question itself to "this
 module's own 👉" without ever adding one to step 10 — the step it governs. The instruction and the
 artifact it depends on live in different sections, and only the instruction was written.
@@ -165,7 +165,7 @@ next reader does not find this same hole.
   The spec permitted either. Step 11's questions are *conditional* and each is already pinned or
   specified where it triggers (a sub-0.80-confidence field via the reshaped `QUESTION FORMAT`, the
   shared-feature collision, the twice-rejecting validator), so a general gate there would duplicate
-  them. Step 15's `verdict` is a QA judgement that follows from the analyzer's own output rather than
+  them. Step 15's `verdict` is a QA judgment that follows from the analyzer's own output rather than
   a preference the bootcamper holds, and that step already ends on pinned questions (the
   visualization offer, the quality-gate branches). Both now say so explicitly, with the reason, so
   the absence reads as intended rather than as the same hole step 10 had.

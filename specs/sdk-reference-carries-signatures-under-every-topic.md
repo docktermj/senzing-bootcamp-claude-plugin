@@ -92,7 +92,7 @@ again, and no test can pin "the server still cannot do X" without calling the se
 ## Proposed change
 
 Replace the false premise in all three places with the filter-dependent rule the server
-actually implements. Keep every behavioural instruction that is still correct.
+actually implements. Keep every behavioral instruction that is still correct.
 
 1. **`specs/INVARIANTS.md`, INV-132** — edit the premise clause in place (a clarification
    of fact, not a change of meaning; the MUST is unchanged, so this needs no new ID per

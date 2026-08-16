@@ -34,7 +34,7 @@ be checked — so every output path says so rather than reporting a clean bill (
 check that did not run is reported as skipped, never described as verified).
 
 Rows are keyed by a **stable slug describing the claim**, never by path or line. Files
-get reorganised and line numbers churn constantly; a decision keyed to a location is
+get reorganized and line numbers churn constantly; a decision keyed to a location is
 lost the first time someone moves a section, and the sweep silently re-litigates it.
 
 The ledger is ``specs/mcp-coverage.jsonl`` — one JSON object per verdict, append-only
@@ -362,7 +362,7 @@ def cmd_summary(args) -> int:
             print("  %-22s %d" % (verdict, counts[verdict]))
     for verdict, count in sorted(counts.items()):
         if verdict not in VERDICTS:
-            print("  %-22s %d  (unrecognised)" % (verdict, count))
+            print("  %-22s %d  (unrecognized)" % (verdict, count))
     print("\nserver versions represented:")
     for version in sorted(versions):
         print("  %-10s %d row(s)" % (version, versions[version]))

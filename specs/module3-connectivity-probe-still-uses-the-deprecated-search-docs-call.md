@@ -41,8 +41,8 @@ step also specifies no `max_results`, so the default page size applies.
 3. **It is the same non-propagation pattern as two other findings from this run.** `concepts.md`'s
    re-query discipline never reached Module 1 Step 14
    (`specs/step14-value-proposition-query-is-bm25-hostile-with-no-fallback.md`), and
-   `ground-rules.md`'s model-nudge trigger was summarised wrongly in Bootcamp preparation
-   (`specs/preparation-summarises-the-model-nudge-trigger-as-the-forbidden-comparison.md`). A lesson
+   `ground-rules.md`'s model-nudge trigger was summarized wrongly in Bootcamp preparation
+   (`specs/preparation-summarizes-the-model-nudge-trigger-as-the-forbidden-comparison.md`). A lesson
    learned in one module and not carried across skill boundaries is this plugin's recurring defect
    shape, and this is the third instance found in a single walk.
 
@@ -81,7 +81,7 @@ has been called — which is precisely the argument the preface makes for itself
 
 - [ ] Module 3 Step 1 probes with `get_capabilities`; no shipped step uses `search_docs` (or another
       content-returning tool) purely to test reachability.
-- [ ] Step 1's timeout, single retry, troubleshooting list, silent-on-success behaviour and
+- [ ] Step 1's timeout, single retry, troubleshooting list, silent-on-success behavior and
       `mcp_connectivity` checkpoint are unchanged (`git diff` confined to the call and a reason line).
 - [ ] A test asserts no shipped file pairs a liveness/connectivity/reachability probe with
       `search_docs`. Negative-controlled: restoring the `search_docs` probe fails the suite, with the
@@ -110,7 +110,7 @@ has been called — which is precisely the argument the preface makes for itself
 - Upstream: not applicable — BM25 returned reasonable lexical matches; the plugin chose to use a
   search as a boolean.
 - Related specs: `specs/step14-value-proposition-query-is-bm25-hostile-with-no-fallback.md` and
-  `specs/preparation-summarises-the-model-nudge-trigger-as-the-forbidden-comparison.md` — the same
+  `specs/preparation-summarizes-the-model-nudge-trigger-as-the-forbidden-comparison.md` — the same
   lesson-not-propagated shape, both from this run.
 
 ## Invariants introduced

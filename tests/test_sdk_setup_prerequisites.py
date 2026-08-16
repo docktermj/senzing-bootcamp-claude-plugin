@@ -86,7 +86,7 @@ class TheSqliteBranchStatesItsThreeRungs(unittest.TestCase):
         self.assertRegex(
             self.flat, r"(?i)required\*?\*? when using `senzingsdk-setup`",
             "the server's condition on the schema step is not relayed, so a reader may "
-            "think the poc package's behaviour applies")
+            "think the poc package's behavior applies")
 
     def test_the_schema_path_comes_from_the_server(self):
         self.assertRegex(

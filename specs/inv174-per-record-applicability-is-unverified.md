@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
-The 2026-08-13 audit prioritised invariants by intersecting two risk signals:
+The 2026-08-13 audit prioritized invariants by intersecting two risk signals:
 
 - **Enumerating** invariants — those stating an exact count, a closed list, or a series of three or
   more literals. An invariant stating a *property* survives change; one *listing members* breaks the
@@ -48,7 +48,7 @@ run until that guide is ported"* — so there is no single shipped implementatio
 That is exactly what makes the invariant fragile: it constrains code the plugin **describes** rather
 than ships, so conformance depends on the guidance stating the rule completely enough that a
 fresh implementation each run gets it right — which is INV-002's boundary test ("a rule constraining
-what the Bootcamper's code must do MUST be stated as behaviour in the any-language contract, never
+what the Bootcamper's code must do MUST be stated as behavior in the any-language contract, never
 only in a Python reference implementation").
 
 ## Proposed change
@@ -68,7 +68,7 @@ only in a Python reference implementation").
    specification's type marking, and confirm the two cited examples still read as the invariant says.
    ⚠️ The ledger row `record-type-feature-applicability-table` records this as `keep-by-design` at
    server 1.32.2 and it has **not** been re-asked at 1.32.9 — so this check is due regardless.
-3. **Where a requirement is missing from the guidance, add it as behaviour** in the any-language
+3. **Where a requirement is missing from the guidance, add it as behavior** in the any-language
    contract — not as a Python snippet (INV-002).
 4. **Guard what is guardable.** The helper is authored per run, so a test cannot execute it. What a
    test *can* assert is that the guidance states all four requirements at the step that authors the
@@ -83,7 +83,7 @@ only in a Python reference implementation").
       session and cited with tool, parameters, version and date. If the specification no longer marks
       type as the invariant describes, that is a **changed** outcome: report it and do not implement on
       the old premise.
-- [ ] Anything added is stated as **behaviour in the any-language contract**, with no rule reaching
+- [ ] Anything added is stated as **behavior in the any-language contract**, with no rule reaching
       generated code only through a reference implementation (INV-002).
 - [ ] A test cites `INV-174` by ID and asserts the four requirements are stated at that step —
       **negative-controlled** by removing each requirement in turn, confirming failure, then
@@ -124,9 +124,9 @@ only in a Python reference implementation").
 
 ## Deviations from this spec, and why (2026-08-13)
 
-**The forward sweep found INV-174 already honoured — all four requirements present, at the step that
+**The forward sweep found INV-174 already honored — all four requirements present, at the step that
 authors the helper, and the metric definition already cites the invariant by ID.** So proposed change
-3 ("where a requirement is missing, add it as behaviour") was **not needed**: nothing was missing.
+3 ("where a requirement is missing, add it as behavior") was **not needed**: nothing was missing.
 The work was entirely proposed change 4 — guard what is guardable — plus the re-ask.
 
 Where each requirement lives, verified by opening the file:

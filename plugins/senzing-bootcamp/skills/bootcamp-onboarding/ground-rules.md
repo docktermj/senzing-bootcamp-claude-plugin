@@ -538,7 +538,7 @@ which interface. The bootcamp runs in more than one, and the names are not inter
   already consume those tokens; any generator you build — including the chosen-language Truth Set
   visualization server (INV-090) and any one-off HTML page a module offers — MUST too. Key rules: dark backgrounds are
   Obsidian/Deep (never pure black), the accent is the ember family, signal green is reserved for
-  live/resolved states (never decorative), light sections are warm off-white (never cold grey),
+  live/resolved states (never decorative), light sections are warm off-white (never cold gray),
   and rendering stays offline (no web-font/CDN fetch — prefer Roboto with a system fallback,
   INV-081).
 - **The one carve-out: plain functional/dev output stays unbranded.** A progress line, a log file, a

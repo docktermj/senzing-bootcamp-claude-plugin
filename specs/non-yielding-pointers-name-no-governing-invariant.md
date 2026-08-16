@@ -14,7 +14,7 @@ module-07-query-visualize-discover/phase1-query-visualize.md  ⛔ **Steps 2–3a
 ```
 
 Each cross-references `ground-rules.md` by **prose title** — *"A results presentation is not a turn
-ending"* — and names **no invariant**, although the behaviour is governed by **INV-225** (a step
+ending"* — and names **no invariant**, although the behavior is governed by **INV-225** (a step
 with no 👉 is non-yielding and must not end a turn) and **INV-005** (exactly one 👉 per yielding turn).
 
 `conformance.py rules` flags `phaseD-validation.md:96` as one of only **2** hard-rule lines in the

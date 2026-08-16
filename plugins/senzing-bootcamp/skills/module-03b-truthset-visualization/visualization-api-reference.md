@@ -715,7 +715,7 @@ the artifact they keep.
 CLI takes (the Python reference spells it `--dataset`; INV-090 leaves the spelling to you) — and the
 **caller MUST pass it**: Truth Set visualization passes "the Senzing Truth Set", Query, Visualize and
 Discover passes wording describing the Bootcamper's own sources. Accepting it and defaulting to
-neutral wording is only half the requirement; a snapshot that could have been labelled and was not
+neutral wording is only half the requirement; a snapshot that could have been labeled and was not
 is a vaguer keepsake than the data warranted.
 
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
@@ -800,7 +800,7 @@ helper is safe in text and attribute position alike. Those are the names in the 
 **not** the requirement — implement the equivalent for your language (INV-090). ⛔ **Whatever you
 implement, cover the quotes.** Until 2026-07-30 the reference escaped only the three, matching case 2's
 text half while this very paragraph promised the attribute half: every call site happened to be a text
-node, so nothing rendered wrong, and an implementer modelling the helper rather than the rule would
+node, so nothing rendered wrong, and an implementer modeling the helper rather than the rule would
 have inherited an attribute-position hole with no symptom to find it by (the INV-164 pattern — a
 divergence between the reference and the written rule reaches generated code). A server that skips
 this ships a stored-XSS vector in a shared keepsake, which is why it is a ⛔ and not a nicety

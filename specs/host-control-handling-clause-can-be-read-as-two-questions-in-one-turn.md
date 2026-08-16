@@ -78,7 +78,7 @@ question — rather than reading as a blanket exemption from INV-005's count.
       whole file (INV-183) — **negative-controlled**, mutation verified to land, then reverted.
 - [ ] ⛔ Not runtime-verified by this or any test: whether a guide actually ends such a turn on one
       question is a live-turn property (INV-005), reachable only by `dry-run` phase 3. The test
-      asserts the text, never the behaviour.
+      asserts the text, never the behavior.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
@@ -124,4 +124,4 @@ question — rather than reading as a blanket exemption from INV-005's count.
   the run (server **1.32.9**, 2026-08-15), confirming this spec's `MCP re-check: n/a`.
 - ⛔ **The runtime half remains unverified, exactly as this spec's own criterion states.** Whether a
   guide ends such a turn on one question is a live-turn property; the five mutations prove the text
-  says the right thing, never that the behaviour follows. `dry-run` phase 3 is still owed.
+  says the right thing, never that the behavior follows. `dry-run` phase 3 is still owed.

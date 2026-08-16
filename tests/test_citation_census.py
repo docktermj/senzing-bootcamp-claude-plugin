@@ -4,7 +4,7 @@ That skill merges invariants, archives specs and prunes feedback. Each of those 
 break a reference, and the reference density here rules out doing it by eye: 4,614 live
 `INV-NNN` citations across shipped plugin text, specs, tests and skills on 2026-07-30.
 
-What is pinned here is the census's *accuracy*, because every judgement the skill makes
+What is pinned here is the census's *accuracy*, because every judgment the skill makes
 rests on it. In particular the template placeholder: `INVARIANTS.md` documents its own
 format with a literal `- **INV-NNN** — <single testable MUST/ALWAYS condition.>` line,
 and a naive `grep '^- \*\*INV-'` counts it as a real invariant. That off-by-one was live
@@ -177,7 +177,7 @@ class TheFeedbackLedgerIsReadLastWins(unittest.TestCase):
     next to the current one. On 2026-07-31 `census` did exactly that, reported a phantom
     undisposed entry whose very next ledger line already named the right spec, and the
     compaction run "fixed" it with a redundant no-op append. These assert the collapse
-    behaviourally — a raw-line reader passes none of them.
+    behaviorally — a raw-line reader passes none of them.
     """
 
     UNRECORDED = {"entry_id": "e1", "title": "t", "archive": "F_1.md",

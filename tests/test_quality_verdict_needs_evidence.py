@@ -42,7 +42,7 @@ PHASE1 = (
 
 
 def step_3b():
-    """Step 3b only — the quality gate, bounded by its neighbouring headings."""
+    """Step 3b only — the quality gate, bounded by its neighboring headings."""
     text = PHASE1.read_text(encoding="utf-8")
     start = text.index("### 3b. Quality evaluation")
     nxt = re.search(r"(?m)^#{2,4} (?!3b\.)", text[start + 1:])

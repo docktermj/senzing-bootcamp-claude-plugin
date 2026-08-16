@@ -10,7 +10,7 @@ still carried a distinct counter, so nothing looked wrong.
 `tests/test_brand_sync.py` now asserts the rendered key at every size up to capacity, but
 it computes that key in Python from the assignment. This file asserts it **in a browser**,
 off the drawn SVG and the drawn legend, which is the only place the claim is actually about.
-That distinction is the whole defect: the previous guard modelled the output and its model
+That distinction is the whole defect: the previous guard modeled the output and its model
 diverged from the output.
 
 Needs headless Chrome and skips without it.
@@ -205,8 +205,8 @@ class ThirtySourcesRenderThirtyAppearances(unittest.TestCase):
         """The swatch must mirror the node's width, not a hardcoded 1.5px."""
         # The ring width is box-shadow's SPREAD — the LAST length, after offset-x,
         # offset-y and blur. Two traps: matching the first `px` reads one of the zero
-        # offsets and reports every ring as 0px, and Chrome serialises the computed value
-        # as `rgb(...) 0px 0px 0px 1.5px inset` — colour first, `inset` last — so a pattern
+        # offsets and reports every ring as 0px, and Chrome serializes the computed value
+        # as `rgb(...) 0px 0px 0px 1.5px inset` — color first, `inset` last — so a pattern
         # anchored on a leading `inset` finds nothing at all. Anchor on the trailing one.
         spread = re.compile(r"([\d.]+)px\s+inset\b")
         widths = set()

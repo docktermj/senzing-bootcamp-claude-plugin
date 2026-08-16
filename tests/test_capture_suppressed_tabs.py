@@ -111,7 +111,7 @@ class ApplicabilityRule(unittest.TestCase):
         self.assertEqual(ALL_SIX, applicable)
 
     def test_absent_stats_suppress_nothing(self):
-        """An unreadable page must degrade to the old behaviour, never to capturing none."""
+        """An unreadable page must degrade to the old behavior, never to capturing none."""
         mod = load_module()
         for stats in ({}, None):
             applicable, suppressed = mod._tabs_applicable(stats or {}, ALL_SIX)
@@ -228,7 +228,7 @@ class EndToEnd(unittest.TestCase):
         self.assertEqual(0, data["captured_count"])
 
     def test_a_retired_slug_is_still_reported_as_absent_not_inapplicable(self):
-        """INV-122's existing behaviour is unchanged by the new skip."""
+        """INV-122's existing behavior is unchanged by the new skip."""
         proc, out = self._run(snapshot_page(ONE_SOURCE), "network", "ret")
         self.assertEqual(2, proc.returncode)
         self.assertIn("not present in this visualization", proc.stderr)

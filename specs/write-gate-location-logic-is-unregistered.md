@@ -36,7 +36,7 @@ covered less well than the others"*, which is exactly INV-001's subject.
 
 **The consequence.** Relax the location logic tomorrow — widen an allow-prefix, drop the `..`-escape
 check, stop consulting `%TEMP%` — and `INVARIANTS.md` does not notice. The tests would fail, which is
-real protection; but a spec that deliberately changed the behaviour would simply update them, and
+real protection; but a spec that deliberately changed the behavior would simply update them, and
 nothing in the ruleset would say the guarantee had been traded away. That is the reverse-sweep
 failure this audit exists for: the guarantee lives in the product and nowhere in the rules.
 
@@ -50,7 +50,7 @@ general rule with no citation at all. The specific case is bound; the general ca
 ## Root cause
 
 The rule predates the invariant-registration discipline and reads like plumbing rather than a
-guarantee — it is a hook's behaviour, not a step's instruction, so no spec ever proposed promoting
+guarantee — it is a hook's behavior, not a step's instruction, so no spec ever proposed promoting
 it. `harden-write-gate` (2026-07-24) registered INV-109 for the half it was *changing* (secrets) and
 left the half it was not touching unregistered, which is reasonable spec hygiene and exactly how a
 gap of this shape opens.
@@ -80,12 +80,12 @@ agreed to), at the next unused ID, index entry in the same edit:
 class is the one this audit ranks first — and because this spec exists *because* a rule stated in two
 places was registered from neither.
 
-**Add no new test.** `tests/test_write_gate.py`'s 12 location tests already hold the behaviour; what
+**Add no new test.** `tests/test_write_gate.py`'s 12 location tests already hold the behavior; what
 is missing is the citation linking them to a rule. Add the invariant ID to that file's docstring so
 `coverage_reports.py invariants` stops reporting the new invariant as unenforced, and so a reader of
 either file can find the other.
 
-**What stays.** All of it. This registers an existing guarantee; it changes no behaviour and removes
+**What stays.** All of it. This registers an existing guarantee; it changes no behavior and removes
 nothing.
 
 ## Acceptance criteria
@@ -99,7 +99,7 @@ nothing.
       it. Verified by opening it.
 - [ ] `write-gate.py:117`'s INV-001 citation is **left alone** — it is correct: it explains covering
       all three platforms' temp-var conventions equally, which is INV-001's subject, not this rule's.
-- [ ] No behaviour changes: `tests/test_write_gate.py` passes unmodified apart from the docstring
+- [ ] No behavior changes: `tests/test_write_gate.py` passes unmodified apart from the docstring
       citation.
 - [ ] Holds on Linux, macOS and Windows (the gate already consults `TMPDIR`/`TEMP`/`TMP`); Windows
       enforcement is **not runtime-verified here** — no Windows host — and that is disclosed rather
@@ -117,7 +117,7 @@ nothing.
 - Audit: `production-readiness-audit`, 2026-08-11 (second run, scoped to the delta since the first
   and to the gaps the first disclosed). Step 3, reverse sweep.
 - Suite green at the time of the finding: 1594 passed, 3 skipped, 1259 subtests.
-- Priority: **Medium-high.** Nothing is broken and the tests do protect the behaviour today; the gap
+- Priority: **Medium-high.** Nothing is broken and the tests do protect the behavior today; the gap
   is that a deliberate future change would face no rule, only tests it would update in the same
   commit.
 - MCP re-check: **n/a — no Senzing fact.** No tool called for this finding.
@@ -161,8 +161,8 @@ no static list matches, so only the env-var branch can block it, with
 the static lists — otherwise the new test would start passing for the wrong reason.
 
 **4. A test was therefore added, against the spec's instruction.** The spec says "Add no new test",
-on the premise that the 12 existing location tests already held the behaviour. They do not hold all
-of it. Two tests added; behaviour unchanged.
+on the premise that the 12 existing location tests already held the behavior. They do not hold all
+of it. Two tests added; behavior unchanged.
 
 **MCP re-check:** the rule asserts no Senzing fact. The one Senzing detail written into shipped text
 — that `mapping_workflow` and `analyze_record` require `workspace_dir` and that the server warns

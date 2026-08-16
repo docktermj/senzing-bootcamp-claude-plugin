@@ -1,4 +1,4 @@
-# Bootcamp preparation summarises the model/effort trigger as the comparison ground-rules forbids
+# Bootcamp preparation summarizes the model/effort trigger as the comparison ground-rules forbids
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
@@ -27,7 +27,7 @@ subject.
 "When the recommendation changes" / "when it is unchanged" is recommendation-to-recommendation — the
 comparison the ⛔ forbids by name.
 
-**This is not hypothetical; it changed the behaviour of a live walk.** Executing the files as written
+**This is not hypothetical; it changed the behavior of a live walk.** Executing the files as written
 on 2026-08-12, entering **Discover the Business Problem** on the Claude Code CLI:
 
 | Trigger read | Comparison | Outcome |
@@ -52,8 +52,8 @@ so a guide reading it has no signal that the one-clause trigger it states is a s
 
 ## Root cause
 
-`INV-137` restored the unconditional switch-question behaviour, superseding INV-119/INV-120, and the
-detailed rule was written into `ground-rules.md` where the behaviour lives. `bootcamp-preparation`
+`INV-137` restored the unconditional switch-question behavior, superseding INV-119/INV-120, and the
+detailed rule was written into `ground-rules.md` where the behavior lives. `bootcamp-preparation`
 Step 3a was rewritten in the same change to say the question is retired, and it added a one-sentence
 description of what happens instead — a pointer, not a specification. It was phrased from the
 *stage table's* point of view ("the recommendation changes", which is what a reader of that table
@@ -120,4 +120,4 @@ are load-bearing — the spec's job is to make the summary agree with it, not to
 - Related specs: `specs/preparation-recap-template-contradicts-its-own-rules.md` (a second
   self-inconsistency in the same file, found in the same walk),
   `specs/model-effort-guidance-advisory-not-gate.md` and
-  `specs/model-switch-single-turn-continuation.md` (prior work on this gate's behaviour).
+  `specs/model-switch-single-turn-continuation.md` (prior work on this gate's behavior).

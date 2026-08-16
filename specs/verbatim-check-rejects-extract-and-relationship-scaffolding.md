@@ -58,10 +58,10 @@ key-based waiver list that was never extended when relationship features were ad
 This is the third recorded instance of one shape, and the plugin already documents the first two at
 `module-05-data-quality-mapping/phase2-data-mapping.md:330-361`: the `EXEMPT_KEYS` waiver, a numeric
 source value (fixed upstream since — `:342` records "Numbers are NOT in that list any more"), and a
-value derived from a source *field name*. **INV-173 already generalises the class**: where a
+value derived from a source *field name*. **INV-173 already generalizes the class**: where a
 validation gate cannot represent a legitimate input, its finding is not evidence about the data, must
 not block, and must not be resolved by altering the data to satisfy the gate. What is missing is the
-three specific limitations at the step, so a mapper meeting them recognises the class instead of
+three specific limitations at the step, so a mapper meeting them recognizes the class instead of
 rediscovering it.
 
 ## Proposed change

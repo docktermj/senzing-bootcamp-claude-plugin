@@ -79,7 +79,7 @@ Two derived surfaces need **no** separate change:
    needed — but any call site passing this name must use the semicolon separator, and this is exactly
    the kind of thing a rename breaks silently.
 6. **Capitalization.** The new name is title-case with internal commas, unlike the sentence-case
-   neighbours ("Data collection", "Data processing"). That is what the bootcamper asked for; apply it
+   neighbors ("Data collection", "Data processing"). That is what the bootcamper asked for; apply it
    verbatim rather than normalizing it, and use it identically in every one of the 20 places so the
    inconsistency is at least uniform.
 

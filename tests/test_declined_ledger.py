@@ -89,7 +89,7 @@ ABSENCE_VOCAB = re.compile(
     r"(?:names?|named|mentions?|contains?|carr(?:y|ies)|includes?|lists?|documents?)"
 )
 #: Block-level escape for prose that QUOTES a retracted claim, mirroring the file-level
-#: `MCP-NEGATIVE-SCAN: ignore-file` that `coverage_reports.py` already honours. A correction has
+#: `MCP-NEGATIVE-SCAN: ignore-file` that `coverage_reports.py` already honors. A correction has
 #: to be able to restate what it corrects; without this, the honest move (quote the wrong claim
 #: verbatim) is the one the guard punishes, and the author is pushed to paraphrase history
 #: instead of adding evidence. Same abuse risk as the file-level opt-out, and the same answer:
@@ -400,7 +400,7 @@ class AnAbsenceClaimNamesItsOwningRoute(unittest.TestCase):
         """Negative control, pinned. Reintroducing the 2026-08-13 wording must fail the guard.
 
         Asserting only that the live file is clean cannot notice the vocabulary being narrowed
-        until it detects nothing — the failure mode `test_the_detector_recognises_the_historical
+        until it detects nothing — the failure mode `test_the_detector_recognizes_the_historical
         _offenders` guards against in `test_dated_negatives_are_marked.py`.
         """
         block = "  - ⚠️ **One of the two routes lost its citation.** " + RETRACTED_WORDING

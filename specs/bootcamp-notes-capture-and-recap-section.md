@@ -237,7 +237,7 @@ reason it stays off the certificate.
 
 **What must change in `generate_recap_pdf.py`, and what must not:**
 
-| Concern | Required behaviour |
+| Concern | Required behavior |
 |---|---|
 | `parse_recap` | The fenced block is parsed into a new `Recap.notes` field, **not** into `Recap.modules`. |
 | `verify_recap` / `--check` | Never demands the four module subsections of the notes section. A recap whose only defect is "notes present" reports zero problems. |
@@ -274,7 +274,7 @@ offers the same three choices, in the numbered-list shape the plugin already use
 multi-way questions (`feedback.md` Step 3c, graduation Step 2), and costs one turn for the common
 case where the note is fine as written.
 
-⚠️ **This is the one judgement call in the spec that is easy to reverse.** If the maintainer wants
+⚠️ **This is the one judgment call in the spec that is easy to reverse.** If the maintainer wants
 the three questions asked separately, only Step 3 of `notes.md` changes; nothing else in this spec
 depends on it.
 

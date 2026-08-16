@@ -14,7 +14,7 @@ policy and sometimes prohibited outright. A bootcamper in that position cannot s
 plugin has nothing to say to them.
 
 The onboarding MCP health check (`onboarding-flow.md` step 0b) covers **connectivity** —
-internet reachability, proxy allowlisting. An organisational policy blocking the *addition of a
+internet reachability, proxy allowlisting. An organizational policy blocking the *addition of a
 server* is a different blocker with a different remedy, and neither `onboarding-flow.md` nor
 `ground-rules.md` addresses it. The failure mode is the worst kind: the bootcamper does everything
 right, the health check tells them the server is unreachable, and the only advice available is to
@@ -33,7 +33,7 @@ fix a network problem they do not have.
   /downloads/ … eliminating the need to configure apt/yum repositories in firewalled environments"*.
 
 So the server ships as a **local binary runnable over stdio**, and a **private deployment** is a
-recognised configuration. Either would satisfy a policy that forbids adding an external endpoint
+recognized configuration. Either would satisfy a policy that forbids adding an external endpoint
 while permitting a locally-run tool — which is the common corporate shape.
 
 **What could not be established.** `search_docs(query='self-hosted private MCP server deployment
@@ -44,7 +44,7 @@ matches, not coverage. **The routes are named by the tooling and undocumented in
 
 ## Root cause
 
-The plugin was built against the public endpoint and never modelled a bootcamper who is permitted to
+The plugin was built against the public endpoint and never modeled a bootcamper who is permitted to
 run the bootcamp but not to add the server it depends on. Step 0b was written as a *connectivity*
 check because connectivity is the failure the authors could reproduce; policy refusal produces the
 same surface symptom (no server) from a cause no amount of proxy configuration fixes.
@@ -71,7 +71,7 @@ unreachable-by-policy path has never executed.
    not start. The honest outcome for a blocked bootcamper is a clear explanation and a named contact.
 
 ⚠️ **Do not present stdio mode as verified to satisfy any particular policy.** Whether a locally-run
-binary is permitted is the bootcamper's organisation's decision, not a fact the plugin can assert.
+binary is permitted is the bootcamper's organization's decision, not a fact the plugin can assert.
 Offer it as the route to ask about.
 
 ⚠️ **Do not write installation instructions for `sz-mcp-coworker`.** They are not in the indexed

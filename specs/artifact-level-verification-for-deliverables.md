@@ -17,7 +17,7 @@ times**: a step reported success while producing wrong, missing, or unreadable o
 None raised an error. **Two reached a signed keepsake** — the recap PDF, explicitly framed as
 something to revisit and share with a team — before the bootcamper caught them by eye.
 
-The plugin already has strong guards against a *recognisably* broken artifact: INV-110 audits input
+The plugin already has strong guards against a *recognizably* broken artifact: INV-110 audits input
 before rendering and refuses to ship on structural mismatch or low content retention; INV-111
 forbids a silent fallback. Both are necessary and both were satisfied here. Neither can catch these
 four, because in every case the generator's own model of its work was correct — the content *was*

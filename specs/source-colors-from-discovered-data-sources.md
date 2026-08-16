@@ -42,7 +42,7 @@ const SRC_COLORS=__SRC_COLORS__;
 function color(src){return SRC_COLORS[src]||"#8b5cf6";}
 ```
 
-Every unrecognised source collapses to the single hardcoded literal `#8b5cf6`. There is no
+Every unrecognized source collapses to the single hardcoded literal `#8b5cf6`. There is no
 per-source assignment and no distinctness guarantee.
 
 `FALLBACK_COLORS` — the six-color palette that exists for exactly this purpose — is imported into

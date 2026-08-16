@@ -39,8 +39,8 @@ But the **license-driven** path never mentions it:
   sampling as an ordinary choice, with no warning attached.
 
 So the two paths that reduce a dataset give opposite quality of advice, and the one a bootcamper
-reaches first — the licence gate at step 6 — silently takes the harmful default. Step 8b fires only
-on load-time concerns, which a within-licence-but-large dataset never triggers.
+reaches first — the license gate at step 6 — silently takes the harmful default. Step 8b fires only
+on load-time concerns, which a within-license-but-large dataset never triggers.
 
 ## Proposed change
 
@@ -98,7 +98,7 @@ on load-time concerns, which a within-licence-but-large dataset never triggers.
 - Related specs: `specs/module3-synthetic-verification-data.md` (the precedent for constructing data
   that demonstrates resolution rather than sampling it),
   `specs/post-load-match-key-semantic-audit.md` (INV-117 — the audit that surfaces the consequence),
-  `specs/single-license-gate-at-data-processing.md` (INV-093 — the licence gate that offers sampling)
+  `specs/single-license-gate-at-data-processing.md` (INV-093 — the license gate that offers sampling)
 
 ## Deviations from this spec, and why (2026-07-28)
 

@@ -30,7 +30,7 @@ stands."* INV-079's own note supersedes exactly one clause. The index flattens a
 to fully-retired.
 
 Two more are worse than partial — they were **restored**. INV-063 and INV-119/INV-137
-form a chain that ends with INV-063's behaviour reinstated, and INV-063's own note says
+form a chain that ends with INV-063's behavior reinstated, and INV-063's own note says
 so: *"so the behavior described here is once again the behavior, with no preference
 gating it."* INV-069's note likewise records INV-137 restoring its gate unconditionally.
 Both are on the skip list, and INV-098 and INV-114 cite both as live authority — INV-114
@@ -77,7 +77,7 @@ Neither defect is reachable by any existing check: `citations.py verify` confirm
    applies) a distinct sublist — e.g. *"Partially superseded — still binding except as
    noted; read the invariant:"* — and move INV-079, INV-086 and INV-137 into it. The label
    MUST NOT say "skip".
-2. **Move INV-063 and INV-069 out of the superseded sublist.** Their behaviour was
+2. **Move INV-063 and INV-069 out of the superseded sublist.** Their behavior was
    restored by INV-137 and they are cited as live by INV-098 and INV-114. Either list them
    as live with a note pointing at the chain, or place them in the partially-superseded
    sublist — but they must not carry a "skip" instruction.
@@ -102,7 +102,7 @@ untouched — nothing here edits an invariant's statement.
 - [ ] INV-079, INV-086 and INV-137 are classified as partially superseded, each with a
       one-line note naming which clause was replaced and by what.
 - [ ] INV-063 and INV-069 no longer carry a skip instruction, and their entry reflects that
-      INV-137 restored the behaviour they describe.
+      INV-137 restored the behavior they describe.
 - [ ] No invariant statement is edited, deleted, or renumbered — only index metadata changes.
 - [ ] Either the two counts are gone, or `tests/test_invariants_index.py` asserts both
       against the live file and fails when an append invalidates them. A count that is kept
@@ -111,7 +111,7 @@ untouched — nothing here edits an invariant's statement.
       exactly one group, with the new sublist included in that accounting.
 - [ ] A test asserts that an ID listed as fully superseded does **not** appear as a live
       authority in another invariant's text — the mechanical form of defect (1), which is
-      what let three partial cases be mislabelled.
+      what let three partial cases be mislabeled.
 - [ ] `python3 .claude/skills/compact-dev-environment/citations.py verify` stays clean.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 

@@ -14,7 +14,7 @@ interpreter. Reading the manifest matched neither the rule nor the sweep.
 
 Enforces **INV-252** (a read of a bundled plugin file resolves inside the plugin serving the
 run — `${CLAUDE_PLUGIN_ROOT}`, else the skill-relative fallback, else "Unknown" — and never by
-searching the filesystem), which names this file. INV-252 is the generalisation of INV-185:
+searching the filesystem), which names this file. INV-252 is the generalization of INV-185:
 reading a bundled file resolves the same way running one does.
 
 ⚠️ **What this test cannot do.** The defect was a filesystem search improvised at runtime; it

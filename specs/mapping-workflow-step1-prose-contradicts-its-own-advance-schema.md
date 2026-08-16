@@ -49,7 +49,7 @@ pattern across the workflow.
 `profile_summary` changed shape from an object map to an array of typed entries when the typed
 `payload` branches were introduced (the schema carries `for_step` discriminators throughout, which
 reads as a later addition), and the two prose copies were not updated with it. That is inference,
-and it is labelled as such — the server is closed to us.
+and it is labeled as such — the server is closed to us.
 
 Nothing in this repo could have caught it: `tests/test_mcp_call_contracts.py` verifies tool names,
 required parameters and enumerated values, all of which are correct here. The defect is an
@@ -60,7 +60,7 @@ only appears when the workflow is actually driven.
 
 1. **Report upstream**, with the maintainer's explicit approval of the exact text, per the same
    route `mcp-tools-disagree-on-eval-license-duration` took: `submit_feedback(category='bug')`.
-   ⛔ **A dry run must never send it** — the send is a separate, maintainer-authorised action.
+   ⛔ **A dry run must never send it** — the send is a separate, maintainer-authorized action.
 
 2. **Add a one-line caution to `phase2-data-mapping.md`** at the step-1 advance, stating that the
    tool's prose `ADVANCE FORMAT` for `profile_summary` shows an object map, that the **array** form
@@ -132,7 +132,7 @@ show `profile_summary` as an object keyed by schema name, while the inline JSON 
 specific to step 1.
 
 **The upstream report was NOT sent**, as the spec requires. Its drafted text stands above awaiting
-the maintainer's approval; sending is a separate, maintainer-authorised action.
+the maintainer's approval; sending is a separate, maintainer-authorized action.
 
 **The caution is longer than the "one line" the Proposed change asked for** — it shows both shapes as
 fenced examples, because the difference is structural and a prose description of it is exactly what
@@ -143,7 +143,7 @@ mode that would do real damage: a reader sent to the shape the schema rejects.
 ## Upstream report sent (2026-08-12)
 
 The maintainer approved the drafted text **verbatim** and it was sent as
-`submit_feedback(category='bug')` on 2026-08-12 — a separate, maintainer-authorised action, taken
+`submit_feedback(category='bug')` on 2026-08-12 — a separate, maintainer-authorized action, taken
 after the dry run closed and therefore outside the skill's ⛔ on invoking `submit_feedback` during a
 run. No text was changed between approval and sending.
 

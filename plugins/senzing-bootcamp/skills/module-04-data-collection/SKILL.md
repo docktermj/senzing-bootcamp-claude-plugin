@@ -361,7 +361,7 @@ elsewhere.**
 
    A mismatch is a **failed collection, not a warning**: re-fetch with the backoff from check 1, and
    if it persists, report it to the Bootcamper and leave the source uncollected rather than passing a
-   short file downstream. Note that "plausible record count" is a judgement and does **not** catch
+   short file downstream. Note that "plausible record count" is a judgment and does **not** catch
    this — one line is arguably plausible for a source whose size you never looked up.
 
 3. **Never write an unverified fetch to `data/raw/` under the source's final name.** Fetch to a
@@ -972,7 +972,7 @@ if it's already in the right format for Senzing."
   free-data options are declined.
 
   ⚠️ **"Last resort" is scoped to that Bootcamper — the one arriving with no data and no scenario.**
-  It is **not** a judgement on `provenance: synthesized`, which the Business Case Offer produces by
+  It is **not** a judgment on `provenance: synthesized`, which the Business Case Offer produces by
   design whenever no CORD collection fits the chosen category, and which Step 2 handles by generating
   the files without asking. Applying "last resort" there would re-open a settled decision and push
   CORD at a category Module 1 already ruled it out for.

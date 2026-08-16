@@ -3,7 +3,7 @@
 Two defects, both hit by executing the module as written on a `--fresh` walk (2026-08-12), and
 both invisible to the suite because nothing rendered the template:
 
-1. The template labelled the value `• Language:`, while the same file says 100 lines earlier:
+1. The template labeled the value `• Language:`, while the same file says 100 lines earlier:
    *"Always say **programming language**, never the bare word 'language' (avoids confusion
    with spoken languages)."* An absolute rule, stated with its rationale, contradicted by a
    pinned-looking template in bootcamper-facing text. A guide cannot satisfy both.
@@ -66,7 +66,7 @@ class TheTemplateIsFound(unittest.TestCase):
         self.assertIn("• Modules:", recap_template())
 
 
-class TheProgrammingLanguageRuleIsHonoured(unittest.TestCase):
+class TheProgrammingLanguageRuleIsHonored(unittest.TestCase):
     def test_the_rule_is_still_stated(self):
         """If the rule goes, this test should be deleted deliberately, not pass vacuously."""
         self.assertRegex(

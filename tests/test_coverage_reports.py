@@ -177,7 +177,7 @@ class TestShippedReport(unittest.TestCase):
         (root / "specs" / "INVARIANTS.md").write_text(invariants_md, encoding="utf-8")
         # The filter reads its display names from the shipped module table, so a tree without
         # one is not a valid repo — `module_display_names` raises rather than narrowing itself
-        # in silence, which is the behaviour `test_a_tree_with_no_module_table_raises` pins.
+        # in silence, which is the behavior `test_a_tree_with_no_module_table_raises` pins.
         prep = root / "plugins" / "senzing-bootcamp" / "skills" / "bootcamp-preparation"
         prep.mkdir(parents=True, exist_ok=True)
         (prep / "SKILL.md").write_text(self.MODULE_TABLE, encoding="utf-8")
@@ -268,7 +268,7 @@ class TestShippedReport(unittest.TestCase):
             ))
             hits, _ = reports.find_uncited_in_shipped(str(root))
             self.assertEqual([], hits,
-                             "a general property with no artifact is honoured by behaviour; "
+                             "a general property with no artifact is honored by behavior; "
                              "reporting it is the noise that gets a report ignored")
 
     def test_an_invariant_naming_a_module_by_its_DISPLAY_name_is_reported(self):
@@ -297,7 +297,7 @@ class TestShippedReport(unittest.TestCase):
                     hits, _ = reports.find_uncited_in_shipped(str(root))
                     self.assertEqual(
                         [FIX_A], [h[0] for h in hits],
-                        "%s (%s) is not recognised as naming a shipped artifact, so an "
+                        "%s (%s) is not recognized as naming a shipped artifact, so an "
                         "uncited invariant about it is invisible" % (name, why))
 
     def test_a_skill_named_in_prose_with_a_space_is_reported(self):
@@ -632,7 +632,7 @@ class TestUnmarkedReport(unittest.TestCase):
       bullets. Units are per-bullet.
     * A fenced block stays whole, because a claim there is routinely split across two comment
       lines — the tool on one, the date on the next.
-    * The **date** is the discriminator: undated prose about tool behaviour is not a re-checkable
+    * The **date** is the discriminator: undated prose about tool behavior is not a re-checkable
       claim, so it is not reported.
     """
 
@@ -739,7 +739,7 @@ class TestUnmarkedReport(unittest.TestCase):
                 "  <!-- MCP-NEGATIVE-SCAN: quoted-history — retracted claim, kept verbatim -->\n"))
             self.assertEqual([], self.report(root))
 
-    def test_the_file_level_opt_out_is_honoured(self):
+    def test_the_file_level_opt_out_is_honored(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = self._tree(tmp, (
                 "MCP-NEGATIVE-SCAN: ignore-file — fixtures below.\n\n"

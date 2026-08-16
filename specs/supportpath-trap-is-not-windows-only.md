@@ -73,7 +73,7 @@ coverage against the server's. INV-001 makes macOS a supported platform, but not
 1. **Restate the check by layout, not by platform.** The rule is: after `sdk_guide(topic='configure')`
    returns the engine config, confirm the `SUPPORTPATH` directory exists; if it does not, check one
    level up from `er`; use the parent if it exists; otherwise report both paths tried. That is
-   already the Windows procedure — it needs to stop being labelled Windows-only.
+   already the Windows procedure — it needs to stop being labeled Windows-only.
 2. **Add the macOS specifics, quoted with provenance.** The cask's shipped
    `etc/sz_engine_config.ini` points at a nonexistent `er/data`; the correct location is
    `$(brew --prefix)/opt/senzing/data`; the server's own verification command is
@@ -171,7 +171,7 @@ only where the surrounding text carries both a platform condition and the tool t
 correct, and it is why the retracted absolute cannot return. But its condition regex accepted only
 `scoop|windows`, written when Windows was the only platform the server documented. It therefore
 rejected the **correct** macOS claim. The regex now accepts the macOS/Homebrew forms; the *rule* is
-untouched, and an unconditioned pairing is still an offence — verified by mutation.
+untouched, and an unconditioned pairing is still an offense — verified by mutation.
 
 **Two of my own tests were too weak, both in the same way, and both caught by mutation.**
 `test_module_03_routes_senz7426_to_the_check` first asserted `SENZ7426.{0,400}(Step 8|SUPPORTPATH)`

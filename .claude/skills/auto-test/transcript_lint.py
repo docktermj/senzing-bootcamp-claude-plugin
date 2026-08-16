@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check a recorded bootcamp transcript against the plugin's interaction invariants.
 
-Deterministic and offline: no model, no judgement, no flake. Reads the
+Deterministic and offline: no model, no judgment, no flake. Reads the
 newline-delimited JSON that ``claude -p --output-format stream-json`` writes and
 asserts the mechanically checkable half of
 ``.claude/skills/dry-run/phase3-conversational.md``'s watch list.
@@ -17,7 +17,7 @@ a count or a regex over text the Bootcamper actually saw.
 ⛔ What this does NOT establish
 ------------------------------
 A clean lint is **not** a passed phase 3. ``phase3-conversational.md`` is explicit
-that a walk can only show following the files *can* produce correct behaviour, and
+that a walk can only show following the files *can* produce correct behavior, and
 that an assistant's own compliance is not evidence. This tool inherits that limit
 exactly: **findings are trustworthy; a clean run is weak evidence.** It is a
 regression net for changes that break a rule outright, not an audit.
@@ -79,7 +79,7 @@ def _finding(sev, code, turn, message):
 def check_one_pointer_per_turn(turns):
     """INV-251: a turn MUST NOT contain two or more 👉; INV-225 forbids ending on none.
 
-    ⚠️ Was labelled INV-005 until 2026-08-15. INV-005 is the 👉 *marker* rule in full
+    ⚠️ Was labeled INV-005 until 2026-08-15. INV-005 is the 👉 *marker* rule in full
     ("Each question to the Bootcamper is preceded by 👉") and says nothing about count,
     so every finding this emitted pointed the maintainer at the wrong invariant. The
     counting logic is unchanged; only the label and the finding code moved.

@@ -91,7 +91,7 @@ the one that is missing.
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "holding the Senzing factory in a local variable
   destroys the engine on return" (2026-07-26, Module Query, Visualize and Discover;
   `Source: self-observed (assistant retrospective)`; `Routing: plugin — a documentation gap; the SDK
-  behaviour is reasonable`)
+  behavior is reasonable`)
 - Priority: Low
 - Related specs: `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132 — the sibling
   rule for call shapes), `specs/lookup-sdk-response-schemas-before-parsing.md` (INV-115),

@@ -47,13 +47,13 @@ Four errors, from three independent omissions:
    one-element example as an addition to the existing plan rather than a replacement of it.
 
 **Why the earlier verification missed it.** The originating spec
-(`module5-cannot-honour-an-embedded-entity-discovered-at-step-3`) records the legacy shape as
+(`module5-cannot-honor-an-embedded-entity-discovered-at-step-3`) records the legacy shape as
 "Verified on server 1.32.9, 2026-08-12". What was verified is that the step-2 response *documents* the
 legacy channel as accepted, and that `action='back'` works — both true, both re-confirmed today. What
 was never done is **sending an `embedded_master` payload and seeing it validate**. The plugin
 therefore documents the right channel with a payload that cannot travel it, which is a strictly worse
 failure than documenting nothing: it reads as verified, and it fails at the one moment a bootcamper is
-watching the guide honour their choice.
+watching the guide honor their choice.
 
 **The working payload**, established empirically the same session and same server version:
 
@@ -153,16 +153,16 @@ inherited the incompleteness plus a transcription loss.
 ## Source
 
 - Dry run, **phase 3**, 2026-08-12, fresh session, maintainer answering as the Bootcamper. The
-  Bootcamper chose "make each lender its own organisation record", and carrying it out ran the
+  Bootcamper chose "make each lender its own organization record", and carrying it out ran the
   documented route: `back` → legacy `entity_plan` → step 3.
 - **MCP:** server **1.32.9**, 2026-08-12. The four-error rejection is verbatim from the live response
   to the module's own example payload. `action='back'` returning to step 2 with `schema_plan`
   preserved was re-confirmed in the same run.
 - Priority: **High.** It is on the required path the previous fix created, it fails closed at the exact
-  moment the bootcamper's explicit choice is being honoured, and the module currently presents it as
+  moment the bootcamper's explicit choice is being honored, and the module currently presents it as
   verified. A guide that hits four validation errors while carrying out a decision the bootcamper just
   made is the worst possible place for this to surface.
-- Related: `module5-cannot-honour-an-embedded-entity-discovered-at-step-3` (the spec whose example
+- Related: `module5-cannot-honor-an-embedded-entity-discovered-at-step-3` (the spec whose example
   this corrects), `embedded-master-check-belongs-at-plan-time-not-only-as-a-back-recovery` (the
   companion finding from the same walk), INV-080 (the tool's payload contracts are authoritative),
   INV-125 (record the raw failure).

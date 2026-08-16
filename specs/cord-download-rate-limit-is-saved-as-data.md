@@ -41,7 +41,7 @@ comparing against MCP's figure would catch this. But:
 
 - `:284` records `record_count` as *"(if known, else null)"* — optional, so nothing forces the
   comparison to exist.
-- *"Plausible"* is a judgement, not a check. One line is arguably "plausible" for a source whose size
+- *"Plausible"* is a judgment, not a check. One line is arguably "plausible" for a source whose size
   the guide never looked up.
 - The exact expected count is **already in hand**: `get_sample_data(dataset='las-vegas',
   source='list')` returns `record_count` per source. The check that catches this costs nothing and is
@@ -75,7 +75,7 @@ dry run does and no offline test can.
 
 ## Proposed change
 
-1. **Prescribe the count comparison, not a judgement.** In Module 4's collection step, require that
+1. **Prescribe the count comparison, not a judgment.** In Module 4's collection step, require that
    each fetched CORD source's record count be compared against the `record_count` returned by
    `get_sample_data(dataset=…, source='list')` for that source, and treat a mismatch as a **failed
    collection** — not a warning. Record both numbers in `config/data_sources.yaml` so the check is

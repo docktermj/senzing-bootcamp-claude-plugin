@@ -5,15 +5,15 @@ Maintain the invariant conditions in @INVARIANTS.md and implement the following 
 ## Problem
 
 `specs/INVARIANTS.md` is 192 invariants and 21,270 words. Measured 2026-07-30, it holds
-two clearly different kinds of content — and only one of them is organised.
+two clearly different kinds of content — and only one of them is organized.
 
-**The first 50 are organised.** They sit in seven labelled sections
+**The first 50 are organized.** They sit in seven labeled sections
 (`## INV-005 – INV-015: Whole-Bootcamp outcomes`, `## INV-033 – INV-046: Module-specific
 outcomes`, and so on). They are short (median **15** words) and mostly not MUST
 conditions at all (**8 of 50**) — they describe what the bootcamp *produces*: "The Senzing
 SDK is installed.", "A banner is presented, 'GRADUATION'."
 
-**The remaining 142 are not organised.** Every invariant from INV-051 onward lives in a
+**The remaining 142 are not organized.** Every invariant from INV-051 onward lives in a
 single flat section titled `## Invariants added from implemented specs`, in the order it
 happened to be written. They are the development rules — median **166** words in the most
 recent band, **100%** stating a MUST — and they are what a developer needs when asking

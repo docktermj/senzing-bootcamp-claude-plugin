@@ -71,7 +71,7 @@ makes the consequence exact:
 
 And the contrast that makes it a trap — `SZ_ENTITY_DEFAULT_FLAGS` **does** carry
 `SZ_ENTITY_INCLUDE_RECORD_DATA` (its `composite_members` list it explicitly), as does
-`SZ_ENTITY_CORE_FLAGS`. So a guide who has internalised "the default flags give me records"
+`SZ_ENTITY_CORE_FLAGS`. So a guide who has internalized "the default flags give me records"
 from `get_entity` is correct there and wrong for `search_by_attributes` and `find_network`.
 
 The Python signatures returned alongside confirm these composites are the **implicit** defaults,

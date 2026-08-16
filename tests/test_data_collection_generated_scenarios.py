@@ -1,4 +1,4 @@
-"""Data collection must recognise BOTH generated provenances, and judge load time on what loads.
+"""Data collection must recognize BOTH generated provenances, and judge load time on what loads.
 
 MCP-NEGATIVE-SCAN: ignore-file — this file quotes the MCP-NEGATIVE marker's shape in order to
 assert that the real one (in module-04's SKILL.md) carries its `owner:` clause. The pattern
@@ -16,14 +16,14 @@ how they would like to provide data they had already told the bootcamp they do n
 step's own prose condemns exactly that. Worse, the branch it fell into "recommend[s] CORD data as
 the primary alternative" — the option Module 1 had already evaluated and rejected for that
 category, so the question could not resolve.
-(`specs/data-collection-does-not-recognise-a-synthesized-scenario.md`)
+(`specs/data-collection-does-not-recognize-a-synthesized-scenario.md`)
 
-**The load-time warning ignored the cap set one step earlier.** Step 8a settles the licence
-question; a Bootcamper who declines a key is capped at the built-in evaluation licence. Step 8b
+**The load-time warning ignored the cap set one step earlier.** Step 8a settles the license
+question; a Bootcamper who declines a key is capped at the built-in evaluation license. Step 8b
 then judged SQLite load time from the **collected** total: 19,500 collected against a 500-record
 cap produced a warning about a roughly half-hour load, for a load of about two minutes — and
 offered "sample down to a smaller record count", which is what Step 8a had just decided.
-(`specs/load-time-warning-ignores-the-licence-cap-decided-one-step-earlier.md`)
+(`specs/load-time-warning-ignores-the-license-cap-decided-one-step-earlier.md`)
 
 Both are conversational instructions, so this file pins them as requirements on the prose. The
 Senzing routing claim is checked as a claim about the *route*, not about the numbers.
@@ -68,7 +68,7 @@ class TheScanIsNotVacuous(unittest.TestCase):
                          "Module 1 no longer records the synthesized provenance")
 
 
-class TheSkipGuardRecognisesBothProvenances(unittest.TestCase):
+class TheSkipGuardRecognizesBothProvenances(unittest.TestCase):
     def setUp(self):
         self.step2 = squash(section(read(), "### 2. For each data source, collect the data",
                                     "### 3."))
@@ -137,14 +137,14 @@ class TheLastResortFramingIsScoped(unittest.TestCase):
             "the free-data hierarchy still applies to a Bootcamper whose scenario is "
             "already decided")
 
-    def test_last_resort_is_explicitly_not_a_judgement_on_the_provenance(self):
+    def test_last_resort_is_explicitly_not_a_judgment_on_the_provenance(self):
         self.assertRegex(
             self.flat,
             r'(?i)"Last resort" is scoped to that Bootcamper',
             "the last-resort framing is unscoped, so it contradicts Step 2's synthesized "
             "branch")
         self.assertRegex(
-            self.flat, r"(?i)not\*?\*? a judgement on `provenance: synthesized`",
+            self.flat, r"(?i)not\*?\*? a judgment on `provenance: synthesized`",
             "nothing separates the act of synthesizing from the recorded provenance")
 
 
@@ -171,12 +171,12 @@ class TheLoadTimeWarningUsesTheLoadableTotal(unittest.TestCase):
 
     def test_it_reads_step_8as_outcome(self):
         # ⛔ The key NAMES alone are not the requirement — a mutation that kept them while
-        # replacing the instruction with "Ignore the licence" escaped this test. Assert the
+        # replacing the instruction with "Ignore the license" escaped this test. Assert the
         # imperative too.
         self.assertRegex(
             self.step8b,
             r"(?i)Also read Step 8a's outcome, which this step ran seconds after",
-            "Step 8b is not instructed to read the licence outcome, so it can carry the "
+            "Step 8b is not instructed to read the license outcome, so it can carry the "
             "key names while ignoring them")
         for key in ("license_record_limit", "config/bootcamp_preferences.yaml",
                     "config/bootcamp_progress.json"):
@@ -194,8 +194,8 @@ class TheLoadTimeWarningUsesTheLoadableTotal(unittest.TestCase):
             self.step8b, r"(?i)\*\*unbounded\*\* when the limit is `0`",
             "the unbounded case is not defined")
         self.assertRegex(
-            self.step8b, r"(?i)unreadable licence state as unbounded",
-            "an unreadable licence state could invent a cap, which is worse than the "
+            self.step8b, r"(?i)unreadable license state as unbounded",
+            "an unreadable license state could invent a cap, which is worse than the "
             "defect being fixed")
 
     def test_the_warn_decision_uses_the_loadable_total(self):
@@ -216,7 +216,7 @@ class TheLoadTimeWarningUsesTheLoadableTotal(unittest.TestCase):
     def test_sampling_is_not_re_offered_under_a_cap(self):
         self.assertRegex(
             self.step8b,
-            r"(?i)Omit option 2 when the licence already caps the load",
+            r"(?i)Omit option 2 when the license already caps the load",
             "sampling is still offered one step after Step 8a decided it")
         self.assertRegex(
             self.step8b, r"(?i)INV-006 shape",

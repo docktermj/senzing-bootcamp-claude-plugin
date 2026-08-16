@@ -40,7 +40,7 @@ moved it. It correctly supersedes INV-038's delivery clause. It silently also re
 Verified by sweeping every invariant mentioning the visualization: **INV-038 is the only one whose
 text contains "verify that Senzing works", and it is marked superseded.** The live visualization
 invariants govern placement (INV-070), offline rendering (INV-091, superseding INV-071), tab set
-(INV-155), suppression (INV-232), colour sourcing (INV-127), legibility (INV-154), capture and
+(INV-155), suppression (INV-232), color sourcing (INV-127), legibility (INV-154), capture and
 embedding (INV-122, INV-123, INV-146, INV-147) — every one of them about *how it renders or is
 captured*, none about *whether it contains the bootcamper's resolved data*.
 
@@ -94,7 +94,7 @@ missing is the *rule* the guidance cites as its authority.
      `bootcamp-preparation/SKILL.md:231-232`, `module-07/SKILL.md:94`. These *describe* the chain;
      citing the retired ID is the point.
    - **"Superseded then restored"** — the ~14 INV-063/INV-069 module-start citations. INV-063 →
-     INV-119 → INV-137, and **INV-137 restored the unconditional behaviour**; INV-063's own entry
+     INV-119 → INV-137, and **INV-137 restored the unconditional behavior**; INV-063's own entry
      says so ("the behavior described here is once again the behavior, with no preference gating
      it"). `INVARIANTS.md`'s index defines this form explicitly and instructs **"Read it — for
      several of these the invariant is still the only statement of what it requires."**
@@ -104,7 +104,7 @@ missing is the *rule* the guidance cites as its authority.
    INV-038 is that it is **fully** superseded, the superseding invariant **dropped** a clause
    rather than restating or restoring it, and shipped text cites the successor **for the dropped
    clause**. That conjunction is what a guard would have to detect, and detecting "which clause
-   was dropped" is a semantic judgement, not a scan.
+   was dropped" is a semantic judgment, not a scan.
 
 ## Acceptance criteria
 
@@ -120,7 +120,7 @@ missing is the *rule* the guidance cites as its authority.
       `## Proposed change` item 4 found 26 such citations and every one is correct, so that guard
       would fail on valid content. If a guard for this class is wanted at all, it must key on the
       narrower conjunction described there — and whether a superseding invariant *dropped* a clause
-      is a semantic judgement no scan settles.
+      is a semantic judgment no scan settles.
 - [ ] ⛔ Not runtime-verified: whether a live engine actually produces a populated graph. That needs
       `libSz.so` and loaded data, absent from this environment. The guard asserts the rule exists
       and is cited correctly, never that a render succeeds.

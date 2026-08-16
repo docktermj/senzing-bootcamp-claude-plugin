@@ -64,7 +64,7 @@ def shipped_markdown():
     return sorted(PLUGIN.rglob("*.md"))
 
 
-def offences():
+def offenses():
     found = []
     for path in shipped_markdown():
         flat = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
@@ -83,10 +83,10 @@ class NoShippedFileStatesTheDuration(unittest.TestCase):
         files = shipped_markdown()
         self.assertGreater(len(files), 30, "the shipped markdown corpus was not found")
         corpus = " ".join(p.read_text(encoding="utf-8") for p in files)
-        self.assertRegex(corpus, LICENSE_VOCAB, "no licence vocabulary found — scan is vacuous")
+        self.assertRegex(corpus, LICENSE_VOCAB, "no license vocabulary found — scan is vacuous")
 
     def test_no_duration_is_stated(self):
-        found = offences()
+        found = offenses()
         self.assertEqual(
             [],
             found,
@@ -103,7 +103,7 @@ class TheOmissionIsRecordedAsADecision(unittest.TestCase):
 
     NOTE_HOME = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
 
-    def test_the_licence_step_records_the_contradiction(self):
+    def test_the_license_step_records_the_contradiction(self):
         flat = re.sub(r"\s+", " ", self.NOTE_HOME.read_text(encoding="utf-8"))
         self.assertRegex(flat, CONTESTED, "the contested-fact note is missing")
         self.assertIn("1.32.9", flat)

@@ -482,7 +482,7 @@ class TestGraduationVerifiesScreenshots(unittest.TestCase):
 class TestCaptureIsSequentialOnly(unittest.TestCase):
     """`_CURRENT_TAB` is a module global read by `_capture_chrome_cli` to size the
     virtual-time budget. That is correct only while captures run one at a time.
-    Parallelising `capture()`'s loop would apply one tab's budget to another tab's
+    Parallelizing `capture()`'s loop would apply one tab's budget to another tab's
     capture — an under-settled PNG, not an error, which is the quiet way to break
     INV-122. The precondition is unenforceable by types, so it is pinned here.
     """
@@ -509,7 +509,7 @@ class TestCaptureIsSequentialOnly(unittest.TestCase):
         )
 
     def test_a_concurrent_capture_is_reported_not_silently_mis_sized(self):
-        """The guard fires on reentrancy — a future parallelisation announces itself."""
+        """The guard fires on reentrancy — a future parallelization announces itself."""
         seen = []
 
         def reenters(url, out):

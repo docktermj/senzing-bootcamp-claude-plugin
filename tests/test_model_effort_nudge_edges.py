@@ -170,7 +170,7 @@ class AnEffortAboveTheWholeTableIsNotAMismatch(unittest.TestCase):
         self.assertRegex(
             self.flat, r"(?i)never to a step down \*?\*?within\*?\*? it",
             "the exemption does not say it excludes within-table step downs, which "
-            "reads as licence to drop every step-down question")
+            "reads as license to drop every step-down question")
         self.assertIn("2026-07-26", self.flat,
                       "the maintainer decision the carve-out narrows is not cited")
 
@@ -206,7 +206,7 @@ class EffortIsNotClaimedToBeUnreadable(unittest.TestCase):
         self.assertRegex(
             self.flat, r"(?i)previous-stage fallback MUST NOT be used for it",
             "the fallback is not forbidden once the value is known, so the premise "
-            "correction changes no behaviour")
+            "correction changes no behavior")
 
     def test_the_non_cli_path_is_kept(self):
         """INV-001/INV-098: the dial may genuinely be unreadable off the CLI."""
@@ -229,7 +229,7 @@ class TheTableIsAFloorNotACeiling(unittest.TestCase):
     def test_the_derived_doc_carries_the_exemption_row(self):
         flat = squash(read(MODEL_SELECTION))
         self.assertRegex(flat, r"(?i)above every row.{0,40}in the table",
-                         "the nudge-behaviour table in the derived doc has no row for "
+                         "the nudge-behavior table in the derived doc has no row for "
                          "an effort above the table, so the two copies disagree")
 
 

@@ -143,4 +143,4 @@ spec, that is `feedback-to-specs`' business and the remedy is a corrected or sup
 - Related specs: none — no existing spec covers spec lifecycle. The design precedent is
   `delegate-to-mcp-server`'s `keep-by-design` verdict and its required reason, and
   `specs/topical-index-for-the-invariants.md`'s principle that a permanent address is never removed,
-  only re-labelled.
+  only re-labeled.

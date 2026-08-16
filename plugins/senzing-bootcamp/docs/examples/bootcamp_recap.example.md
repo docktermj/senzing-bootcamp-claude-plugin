@@ -413,7 +413,7 @@
 
 ### Information Shared
 
-- The loader's architecture follows the *production* volume target, not the bootcamp dataset: `sdk_guide` switches template at a 500-record cutover, and a medium-tier target selects the threaded pattern while labelling the single-threaded one "demo-only".
+- The loader's architecture follows the *production* volume target, not the bootcamp dataset: `sdk_guide` switches template at a 500-record cutover, and a medium-tier target selects the threaded pattern while labeling the single-threaded one "demo-only".
 - Sorted or grouped input costs 2-10x throughput through lock contention, rated `error` severity by Senzing's own anti-pattern list. This project's files were grouped (matched pairs written first during collection), so shuffling before load genuinely mattered.
 - Redo must be drained by looping on `get_redo_record()` returning empty. Using `count_redo_records()` as the loop sentinel is a documented anti-pattern: it table-scans per call, and because redo generates more redo, a count-driven loop is O(n squared).
 - In a match key, `+` means the feature contributed and `-` means it detracted. A feature detracting on many cross-source comparisons can mean two source fields measuring different things were mapped to the same feature, silently suppressing legitimate merges.

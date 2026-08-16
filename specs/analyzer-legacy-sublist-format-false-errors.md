@@ -105,7 +105,7 @@ mitigation below is the durable one, not a stopgap.
 - [ ] A `Missing or non-array FEATURES` / `Feature attribute … must be inside FEATURES array` report
       over data that loads is handled as informational, with the Entity Specification's
       "we still support that" statement cited and MCP-re-confirmed at implementation time (INV-080).
-- [ ] `No NAME features found` is documented as a sub-list-format artefact, not evidence that names
+- [ ] `No NAME features found` is documented as a sub-list-format artifact, not evidence that names
       are missing.
 - [ ] When the analyzer and a same-server specification disagree, the guidance requires a
       one-record load probe and records its result and the concluded cause in the checkpoint

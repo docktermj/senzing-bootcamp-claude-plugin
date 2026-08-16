@@ -45,7 +45,7 @@ aggravating detail that the site which should hold it (`ground-rules.md`) is not
 
 1. **State the rule once in `ground-rules.md`**, beside the existing 👉-question rules: a step
    containing a 👉 question has the same absolute precedence as a `⛔` mandatory gate, and no
-   internal reasoning — token budget, session length, context pressure, or a judgement that the
+   internal reasoning — token budget, session length, context pressure, or a judgment that the
    answer is already known — may override it.
 2. **Keep every per-module copy that names a local hazard**, and have each cite the central rule
    rather than restating it in full. A restatement *at the step that needs it* is INV-183, not
@@ -75,9 +75,9 @@ is used, cut no rationale.
 - [ ] `conformance.py size` shows the shipped word count has not risen as a result of this change.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
-⚠️ **Not runtime-verifiable here.** Whether a guide actually honours the clause is INV-005–INV-009
+⚠️ **Not runtime-verifiable here.** Whether a guide actually honors the clause is INV-005–INV-009
 territory, which only `dry-run` phase 3 can exercise. The criteria above are all static; the
-behavioural half must be disclosed as untested until a dry run covers it.
+behavioral half must be disclosed as untested until a dry run covers it.
 
 ## Affected files
 
@@ -122,7 +122,7 @@ to this repo's own prose instead of an MCP tool.
 is drifted *restatement*, not a coverage gap, and **INV-183 explicitly sanctions restating a rule at
 the step that needs it** — each module copy names a real local hazard (token budget, session length,
 tool-returned directives). Whether four differently-worded copies of a rule that is also stated
-centrally is a defect at all is a judgement call, and a much smaller one than this spec claims.
+centrally is a defect at all is a judgment call, and a much smaller one than this spec claims.
 
 **Status: open, premise retracted.** Correcting the spec's body is `feedback-to-specs`' job, not
 this skill's; this note is the permitted Step 3.6 append. A future run should re-scope or decline it

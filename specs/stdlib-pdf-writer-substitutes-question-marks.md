@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
-**INV-143 forbids exactly this**, in its own words: "A generator's character sanitisation MUST
+**INV-143 forbids exactly this**, in its own words: "A generator's character sanitization MUST
 NOT substitute `?` for a character it cannot encode: every character a bootcamper-authored
 deliverable can carry MUST map to an ASCII equivalent or be dropped deliberately." The stdlib
 PDF writer does it for 24 characters, and says nothing.
@@ -13,9 +13,9 @@ Confirmed end to end 2026-07-31, recap generator with `fpdf2` shadowed so the fa
 
 ```text
 source:   Precision came out ≥ 95% and recall ≈ 90%, with cost ≤ €500 per run. The
-          vendor's Senzing™ licence covers it, and throughput was effectively ∞ …
+          vendor's Senzing™ license covers it, and throughput was effectively ∞ …
 rendered: Precision came out ? 95% and recall ? 90%, with cost ? ?500 per run. The
-          vendor's Senzing? licence covers it, and throughput was effectively ? …
+          vendor's Senzing? license covers it, and throughput was effectively ? …
 
 PDF generated: out.pdf (renderer: stdlib, rendered 619 of 655 source characters (95%))
 ```
@@ -70,17 +70,17 @@ where the 24 land.
 (33 entries) and then `_fold_to_latin1()`, whose contract is explicit: characters that cannot be
 folded are **dropped**, "which INV-143 permits, never encoded as `?`, which it forbids".
 `_pdf_escape()` is the low-level PDF string escaper and carries a *duplicate* 9-entry map with a
-`"?"` default — and only the fpdf2 call sites pre-normalise through `_safe`. The stdlib writer
+`"?"` default — and only the fpdf2 call sites pre-normalize through `_safe`. The stdlib writer
 calls `_pdf_escape` on raw text.
 
 **Why it survived.** The character-safety work was aimed at a different failure. Both
 `test_recap_pdf_font_safety.py` and `test_recap_measure_font_safety.py` exist to stop **fpdf2**
 raising on an unencodable character — the first opens "No text path may hand *fpdf2's* Latin-1
 core font a character it cannot encode", and the second treats `renderer: stdlib` as evidence
-"something crashed". So the stdlib writer was modelled as the *symptom* of a defect, never as a
+"something crashed". So the stdlib writer was modeled as the *symptom* of a defect, never as a
 renderer whose own character handling could be wrong. No test calls `_pdf_escape`. One test
 (`test_example_recap_sync.py:105`) has a helper that *folds `_pdf_escape`'s substitutions* "so
-comparisons are fair" — accommodating the behaviour rather than checking it.
+comparisons are fair" — accommodating the behavior rather than checking it.
 
 That is also why INV-143's own words go unmet: it requires "the character inventory under test
 MUST cover what generated **deliverables** carry" — and the inventory covers one of the two
@@ -88,9 +88,9 @@ renderers that produce them.
 
 ## Proposed change
 
-1. **One table, not two.** Route `_pdf_escape` through the same authoritative sanitisation as
+1. **One table, not two.** Route `_pdf_escape` through the same authoritative sanitization as
    the fpdf2 path — either by calling `_safe()` at the top of `_pdf_escape`, or by having the
-   stdlib writers sanitise before escaping. Then delete the inline 9-entry map; a second copy of
+   stdlib writers sanitize before escaping. Then delete the inline 9-entry map; a second copy of
    a subset is the defect, and re-syncing two tables by hand is how it recurs.
 2. **Keep `_pdf_escape`'s actual job intact.** It must still escape `\`, `(`, `)` and emit
    `\ooo` octal for 160-255. Only the substitution/fallback half changes. `_safe` guarantees
@@ -115,7 +115,7 @@ symptom.
 
 - [ ] No character in `_UNICODE_MAP` renders as `?` on **either** renderer — asserted by
       iterating the whole map, not a sample.
-- [ ] `_pdf_escape` has no private substitution table; sanitisation comes from the one
+- [ ] `_pdf_escape` has no private substitution table; sanitization comes from the one
       authoritative source.
 - [ ] `_pdf_escape` still escapes `\`, `(`, `)` and emits octal for 160-255 — a round-trip test
       on a Latin-1 string with all three metacharacters.
@@ -124,7 +124,7 @@ symptom.
 - [ ] An end-to-end stdlib render (fpdf2 shadowed) of a document containing `≥ ≈ ≤ € ™ ∞ ✅`
       shows their mapped forms and **zero** `?`.
 - [ ] The certificate's existing placeholder guard for an unfoldable name still fires on both
-      paths (`recap_certificate_name_unprintable` behaviour unchanged).
+      paths (`recap_certificate_name_unprintable` behavior unchanged).
 - [ ] Both generators benefit — `generate_discoveries_pdf.py` imports `_pdf_escape`, so its
       stdlib path is asserted too, not assumed.
 - [ ] The fpdf2 path is unchanged: `test_recap_pdf_font_safety.py`,
@@ -166,16 +166,16 @@ recorded. Four differences worth recording:
 1. **`_safe` is called at the writers' boundaries, not inside `_pdf_escape`.** The spec
    offered either. Putting it inside `_pdf_escape` would have been wrong: `generate_recap_pdf.py`
    measures width on raw text and escapes afterwards *on purpose* — its own comment explains
-   that `_pdf_escape` turning `·` into `\267` would mis-centre a line measured before escaping.
+   that `_pdf_escape` turning `·` into `\267` would mis-center a line measured before escaping.
    Transliteration has the same hazard one step earlier and worse (`∞` → `infinity`, one
-   character to eight), so sanitising inside the escaper would desync every measured width and
-   every wrap decision from what is actually drawn. Sanitisation therefore happens **before**
+   character to eight), so sanitizing inside the escaper would desync every measured width and
+   every wrap decision from what is actually drawn. Sanitization therefore happens **before**
    measurement and **before** wrapping: the certificate's `line()` and `wrap()` helpers, and
    both generators' `add()` / `add_wrapped()` token constructors.
 
-2. **Two sanitisation points per generator, deliberately, because they cover different
+2. **Two sanitization points per generator, deliberately, because they cover different
    routes.** `add()` covers direct calls (the H1 title, module labels); `add_wrapped()`
-   sanitises before `_wrap` because `_wrap` counts characters and transliteration changes the
+   sanitizes before `_wrap` because `_wrap` counts characters and transliteration changes the
    count. `_safe` is idempotent, so text passing through both is unaffected.
 
 3. **`test_example_recap_sync.py`'s folding helper was NOT redundant — its attribution was
@@ -185,10 +185,10 @@ recorded. Four differences worth recording:
    from `_UNICODE_MAP`, and its docstring records the correction. Were the example recap ever
    to gain a `≥`, a 9-entry list there would have silently mis-compared.
 
-4. **A weak test of my own, replaced.** `test_its_token_boundary_sanitises` asserted the string
+4. **A weak test of my own, replaced.** `test_its_token_boundary_sanitizes` asserted the string
    `"_safe(text)"` appeared in `render_with_stdlib`'s source. That passed even with the `add()`
    boundary removed, because the string still occurred in `add_wrapped` — a guard that cannot
-   fail. It is now behavioural: render a document whose *title* and *subtitle* carry symbols
+   fail. It is now behavioral: render a document whose *title* and *subtitle* carry symbols
    (the direct-`add` route) and assert the mapped forms appear with no `?`.
 
 **On the mutation testing, since it is the evidence for everything above.** Three mutations
@@ -196,12 +196,12 @@ initially appeared to escape and did not: `_fold_to_latin1` and `_pdf_escape` bo
 `_record_dropped_character(ch, s)` at the same indent, so a first-occurrence replace hit the
 wrong function — which also explains why the `?`-fallback mutation failed a *certificate* test
 rather than a `?` test. Re-run against unique anchors, all are caught. Two further mutations
-(removing `add()`'s sanitisation in each generator) genuinely escaped the first version of the
+(removing `add()`'s sanitization in each generator) genuinely escaped the first version of the
 tests, for the reason in item 4; the direct-title-route tests were added and both now fail as
 they should.
 
 **One thing left unpinned, and named rather than glossed.** `add_wrapped`'s
-sanitise-before-wrap ordering is a *layout* correctness measure — its effect is line width, not
+sanitize-before-wrap ordering is a *layout* correctness measure — its effect is line width, not
 which characters appear — and I did not find an assertion for it that would be robust against
 ordinary font-metric variation. Reverting it changes no character, so no test here fails. The
 character-safety guarantee is fully covered by `add()`; the wrap ordering rests on the reasoning

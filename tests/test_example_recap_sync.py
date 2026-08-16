@@ -102,7 +102,7 @@ def pdf_text_without_page_footers(path):
 
     Dropping digit-only fragments cannot hide staleness: a sentence that is genuinely
     missing from the PDF is still missing from this haystack. (Added 2026-08-11, when
-    a wording change in Module 0 shifted pagination and pushed the licence-measurement
+    a wording change in Module 0 shifted pagination and pushed the license-measurement
     line onto a page boundary — INV-181: fix the assertion's model of the artifact,
     not the artifact.)
     """

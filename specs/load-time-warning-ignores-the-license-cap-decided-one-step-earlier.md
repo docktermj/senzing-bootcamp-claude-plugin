@@ -1,11 +1,11 @@
-# Load-time warning ignores the licence cap decided one step earlier
+# Load-time warning ignores the license cap decided one step earlier
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
 Data collection's Step 8a settles the Senzing License Key question, and a
-Bootcamper who declines a key is capped at the built-in evaluation licence — **500
+Bootcamper who declines a key is capped at the built-in evaluation license — **500
 records**, whatever they collected. Step 8b then runs immediately afterwards and
 judges SQLite load time from the **collected** total, not the **loadable** one. So a
 Bootcamper who has just chosen to load 500 records is warned about the load time of
@@ -23,9 +23,9 @@ the step deliberately, and the scoping is where it goes wrong:
 > "it judges the Module 6 SQLite load time from the **actual collected dataset** and
 > fires **even when the effective license imposes no record cap**."
 
-The second clause anticipates the *unlimited* licence case — warn anyway, because
+The second clause anticipates the *unlimited* license case — warn anyway, because
 time is a separate concern from capacity. That is right. But the *capped* case is
-the mirror image and is not addressed: when the licence caps loading **below** the
+the mirror image and is not addressed: when the license caps loading **below** the
 collected total, the collected total is no longer what will be loaded, and the
 warning describes work that cannot happen.
 
@@ -47,25 +47,25 @@ apart.
    Step 8a's outcome — `license_record_limit` when set, the evaluation limit when
    `license: evaluation`, unbounded when the limit is `0`.
 2. **State both numbers when they differ**, so the Bootcamper sees why the estimate
-   is what it is: "19,500 collected, 500 loadable under the evaluation licence — the
+   is what it is: "19,500 collected, 500 loadable under the evaluation license — the
    load will take about N minutes." Suppressing the collected figure would be worse
-   than the current behaviour, not better.
-3. **Do not offer "sample down" when the licence already caps the load.** Option 2
+   than the current behavior, not better.
+3. **Do not offer "sample down" when the license already caps the load.** Option 2
    is a decision Step 8a just made. Keep options 1 and 3 (load it, or switch
    database) and say plainly that sampling is already in force.
-4. Keep the "fires even when the licence imposes no cap" clause — it is correct —
-   and add its mirror: **when the licence caps below the collected total, judge the
+4. Keep the "fires even when the license imposes no cap" clause — it is correct —
+   and add its mirror: **when the license caps below the collected total, judge the
    time from the cap.**
 
 ## Acceptance criteria
 
 - [ ] With 19,500 collected and a 500-record effective limit, Step 8b either stays
       silent or warns using the 500-record figure — never the 19,500-record one.
-- [ ] With an unlimited licence and a large collected total, Step 8b warns exactly
+- [ ] With an unlimited license and a large collected total, Step 8b warns exactly
       as it does today.
 - [ ] When the two totals differ, both are stated, with the loadable one driving
       the estimate.
-- [ ] "Sample down to a smaller record count" is not offered when the licence
+- [ ] "Sample down to a smaller record count" is not offered when the license
       already caps the load.
 - [ ] Timing figures still come from the Senzing MCP server at request time, with
       any figure the server does not return left unavailable rather than
@@ -80,14 +80,14 @@ apart.
 ## Source
 
 - Feedback: dry run phase 3, 2026-08-14 — reached Step 8b with 19,500 collected
-  records and no licence key, one step after Step 8a capped the load at 500
+  records and no license key, one step after Step 8a capped the load at 500
   (`Source: self-observed (assistant retrospective)`)
 - Priority: Medium — non-blocking and the Bootcamper can proceed either way, but it
   presents a misleading estimate and re-offers a decision made one step earlier,
   which is the INV-006 shape.
 - MCP re-check: server 1.32.9, docs indexed 2026-08-11 20:52 UTC, checked
   2026-08-14. `sdk_guide(topic='load', language='python', record_count=19500)`
-  returns the licence-required note and the 500-record default limit but **no timing
+  returns the license-required note and the 500-record default limit but **no timing
   figures**; `search_docs(query='hardware sizing capacity planning')` is the route
   that carries them — the Hardware Sizing FAQ gives ~5-10 records/second per engine
   core steady-state, a three-phase load profile where Phase 1 runs 10-100x faster

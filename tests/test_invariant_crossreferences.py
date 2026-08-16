@@ -11,12 +11,12 @@ resolution existed only in code comments or in the finder's head:
   manifest), so the constraint lived in Python comments that a server generated in another
   language never reads (INV-002/INV-090).
 - **INV-048 ↔ INV-110.** INV-048 says the recap PDF "is **always** created"; INV-110 requires
-  writing no file and exiting non-zero on structural mismatch. Shipped behaviour is INV-110's.
+  writing no file and exiting non-zero on structural mismatch. Shipped behavior is INV-110's.
 - **INV-002 → INV-052/INV-108/INV-090.** INV-002 stated language-agnosticism unqualified while
   two invariants mandate Python. The apparatus-versus-bootcamper-artifact distinction the
   ruleset actually operates on was written nowhere.
 
-These are prose assertions, which this repo normally avoids in favour of behavioural ones —
+These are prose assertions, which this repo normally avoids in favor of behavioral ones —
 justified here because the artifact under test *is* prose, and its defect mode is a later
 edit trimming the reconciliation back out. Each asserts the requirement, not a phrase: a
 reworded note that still carries the link and the substance passes.

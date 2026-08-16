@@ -2,7 +2,7 @@
 
 The plugin stated it both ways and reconciled neither. Read as "this turn", a long module
 re-issues identical queries on every turn a Senzing name appears — waste, against a rule
-claiming ⛔-gate precedence, so not one a careful guide economises on. Read as "this
+claiming ⛔-gate precedence, so not one a careful guide economizes on. Read as "this
 session", the guide presents Senzing content on a turn with no MCP call, which the
 pre-response checklist in every skill file forbids and which makes that turn's "via the
 Senzing MCP server" attribution untrue.
@@ -87,7 +87,7 @@ class TheScanIsNotVacuous(unittest.TestCase):
             "from memory.")
         self.assertIsNotNone(
             SUSPECT.search(regressed),
-            "the scanner does not recognise the phrasing it exists to catch, so a clean "
+            "the scanner does not recognize the phrasing it exists to catch, so a clean "
             "run proves nothing")
 
     def test_every_allowlisted_phrase_is_still_present_somewhere(self):

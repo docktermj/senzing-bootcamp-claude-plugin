@@ -46,7 +46,7 @@ Feed each its real stdin shape (`{"prompt": …}` for `UserPromptSubmit`,
 for `Stop`) and assert on behavior, not just exit status:
 
 - **write-gate** — must block `/tmp/…`, `~/Downloads/…`, `C:\Windows\Temp\…`, a
-  relocated `%TEMP%`, a PEM key, an AWS key id and an `AQAAAD…` licence blob, while
+  relocated `%TEMP%`, a PEM key, an AWS key id and an `AQAAAD…` license blob, while
   **allowing** project-relative writes (INV-109, INV-001). Include a project whose
   own path contains `tmp` — it must not trip.
 - **feedback-capture** — must inject guidance for a feedback prompt and stay
@@ -79,7 +79,7 @@ Drive each and **inspect the artifact, not the exit code** (INV-129):
 - `brand_tokens.color_for_sources()` — pass sources that are **not** the Truth Set's
   names, which is every real bootcamper's case (INV-127). Assert distinct encodings,
   including more sources than palette entries (it must vary a second channel, not
-  reuse a colour), and that the result is order-independent.
+  reuse a color), and that the result is order-independent.
 
 ## Interpreting a caught exception
 

@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
-⚠️ **An invariant recorded today encodes a false premise about shipped behaviour.** INV-200 was
+⚠️ **An invariant recorded today encodes a false premise about shipped behavior.** INV-200 was
 registered 2026-08-11 and states:
 
 > Every file the bootcamp writes MUST live inside the Bootcamper's project directory. The
@@ -58,7 +58,7 @@ nothing would. An invariant encoding a false premise is worse than a missing one
 files stay inside the working directory"*, which is the same claim. The gap is between what the
 guidance promises the guide and what the hook enforces.
 
-**No Senzing fact is involved.** Internal behaviour only; no MCP tool was called for this finding.
+**No Senzing fact is involved.** Internal behavior only; no MCP tool was called for this finding.
 
 ## Root cause
 
@@ -84,7 +84,7 @@ impossible when there is no `block()` there to delete.
   (the guide is instructed, the hook is a backstop) but should say so rather than implying the gate
   catches everything.
 - **(b) The gate is wrong** → add the missing `block(LOC_MSG)` on the fall-through, so any resolved
-  target outside the project is blocked and INV-200 becomes true. This is a **behaviour change** and
+  target outside the project is blocked and INV-200 becomes true. This is a **behavior change** and
   needs its own risk assessment: it would block every write outside the project during a bootcamp,
   including any the plugin legitimately makes to the user's Claude configuration or elsewhere. That
   set must be enumerated before choosing this, not assumed empty.
@@ -99,7 +99,7 @@ body does not test.
 - [ ] INV-200 and the gate agree. Under (a) INV-200 carries a dated in-place correction and is not
       deleted or renumbered; under (b) `write-gate.py` blocks the fall-through case.
 - [ ] `test_dotdot_escape_blocked` targets a path outside the project that no location list names,
-      and asserts the chosen behaviour — so its name and its body claim the same thing.
+      and asserts the chosen behavior — so its name and its body claim the same thing.
 - [ ] A test covers the fall-through case explicitly, with a not-vacuous guard proving the probe path
       is not caught by any static list (the `test_the_relocated_temp_probe_is_not_caught_by_a_static_list`
       idiom already in that file).

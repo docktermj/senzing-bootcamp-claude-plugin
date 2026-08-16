@@ -88,7 +88,7 @@ data source until a second is loaded (Cross-Source), and no multi-record entitie
 *and* Feature Scores). A module completing with zero multi-record entities produces three
 near-empty screenshots, all counted as covered.
 
-### ⚠️ The behaviour is already acknowledged in the code, and the fix is a judgement call
+### ⚠️ The behavior is already acknowledged in the code, and the fix is a judgment call
 
 `_tabs_present`'s docstring (`capture_screenshots.py:278-281`) states it plainly:
 
@@ -114,7 +114,7 @@ separately:
 
 ✅ **Decided by the maintainer, 2026-08-14: do not capture suppressed tabs, and fix the
 count.** Both halves apply — the `tabApplicable` check in full, plus the manifest change.
-The image is dropped, not merely relabelled.
+The image is dropped, not merely relabeled.
 
 ## Proposed change
 
@@ -128,7 +128,7 @@ The image is dropped, not merely relabelled.
    Guard on `typeof` so a snapshot saved before `tabApplicable` existed still captures as it
    does today — the same degradation pattern the file already uses for `activate`.
 
-2. Signal the skip back to Python the way the existing not-present path is signalled, and route
+2. Signal the skip back to Python the way the existing not-present path is signaled, and route
    it to the same handling: stderr message, no PNG, and an entry in the manifest. Record it
    under a distinct reason (e.g. `"reason": "not applicable — the app suppresses this tab"`)
    rather than reusing `"not present in this visualization"`, because the two are diagnostically
@@ -148,7 +148,7 @@ The image is dropped, not merely relabelled.
 - [ ] A snapshot with no `tabApplicable` function captures exactly as it does today (no
       regression for previously saved snapshots).
 - [ ] Requesting the retired slugs `network`/`merges` still skips with a message and writes no
-      file — INV-122's existing behaviour is unchanged.
+      file — INV-122's existing behavior is unchanged.
 - [ ] A test covers a suppressed tab and a non-suppressed one, negative-controlled in both
       directions.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).

@@ -4,7 +4,7 @@ Three rules collided with no legal move. INV-251: a turn never carries two or mo
 presenting a statement-only step alone ends a turn with **zero**. "Advance exactly one step at
 a time", so folding it into the next step's turn looks like advancing two. And the post-nudge
 sequence said the reply turn ends "on Step 1's single 👉 question" — which Module 1's Step 1,
-a privacy reminder explicitly labelled statement-only, does not have.
+a privacy reminder explicitly labeled statement-only, does not have.
 
 The obvious resolution was unwritten, so the guide had to break a rule and learn to read ⛔ as
 advisory. The consequential form is not one step: Module 1 Phase 1 has four non-yielding steps

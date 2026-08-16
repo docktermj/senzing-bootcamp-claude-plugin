@@ -7,7 +7,7 @@ to build the removed tabs. An agent following
 `module-07-query-visualize-discover/phase1-query-visualize.md` would have rebuilt them,
 contradicting the contract it was told to build to.
 
-The lesson generalised: the earlier tests asserted the two surfaces that had been *edited*
+The lesson generalized: the earlier tests asserted the two surfaces that had been *edited*
 and inferred the rest was consistent. Consistency between files is exactly what cannot be
 inferred, so it gets asserted here — across **every** shipped skill file, not a listed few.
 
@@ -15,7 +15,7 @@ What this pins:
 
 * No shipped skill, command, or bundled doc presents a removed tab as a live tab.
 * The reference server's `ALL_TABS`, the contract's active inventory, and the screenshot
-  helper's tab catalogue all describe the same set.
+  helper's tab catalog all describe the same set.
 * A removed tab id may survive only as an explicit removal/reserved note.
 * Anything that enumerates the tab set names the same six.
 
@@ -141,8 +141,8 @@ class EveryTabInventoryAgrees(unittest.TestCase):
         module = load(CAPTURE)
         self.assertEqual(LIVE_TAB_IDS, list(module.DEFAULT_TABS))
 
-    def test_capture_helper_catalogue_matches_the_contract_identifier_table(self):
-        """Removed ids stay in the catalogue so an older snapshot is still capturable —
+    def test_capture_helper_catalog_matches_the_contract_identifier_table(self):
+        """Removed ids stay in the catalog so an older snapshot is still capturable —
         but they must be marked REMOVED in the contract, never offered as defaults."""
         module = load(CAPTURE)
         text = CONTRACT.read_text()
@@ -421,7 +421,7 @@ class CaptureHelperRuntimeStringsNameTheLiveSix(unittest.TestCase):
         self.mod = _capture_module()
 
     def test_reserved_ids_are_still_accepted(self):
-        """Old snapshots must keep their slugs — the fix is about wording, not behaviour."""
+        """Old snapshots must keep their slugs — the fix is about wording, not behavior."""
         self.assertEqual(["network"], self.mod.resolve_tabs("network"))
         self.assertEqual(("network", "merges"), self.mod.RESERVED_TABS)
 

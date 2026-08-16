@@ -188,7 +188,7 @@ names/addresses).
    attribute names, confirm them via the MCP server (`search_docs` / `mapping_workflow`) — never
    guess (INV-080). Design them so resolution is deterministic and known in advance:
    - **A merge cluster:** 2–3 records for the **same** synthetic person, designed to resolve into
-     **one** entity. ⛔ **Make this unambiguous by construction, not by judgement** — "enough
+     **one** entity. ⛔ **Make this unambiguous by construction, not by judgment** — "enough
      features, with only trivial variation" is exactly the phrase that produced a false verification
      failure, because two reasonable readings of it give opposite verdicts.
 

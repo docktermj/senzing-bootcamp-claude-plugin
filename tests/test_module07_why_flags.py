@@ -58,7 +58,7 @@ def enclosing_block(text, offset):
     qualifies a flag mention sits at the head of its own block, and a fixed window is
     the wrong length by construction — too short and it misses a qualifier three
     sentences up (which produced a false positive here), too long and it borrows a
-    qualifier from an unrelated neighbouring block.
+    qualifier from an unrelated neighboring block.
     """
     start = text.rfind("\n\n", 0, offset)
     end = text.find("\n\n", offset)

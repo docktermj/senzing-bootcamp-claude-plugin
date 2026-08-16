@@ -155,7 +155,7 @@ So the split is sharper than the spec described, and it is **asymmetric across p
 update happen to use the same command the server documents. That is the strongest form of this
 spec's point and it is now stated at the step: the server documents *installing*, not *updating* —
 which is exactly the coverage gap sent upstream as a `feature` request on 2026-07-31. Had I
-implemented the spec's table as written, I would have labelled two plugin-owned commands as
+implemented the spec's table as written, I would have labeled two plugin-owned commands as
 server-documented and shipped the same provenance defect I was fixing, one platform over.
 
 **Criterion 6 needed writing, not just checking.** It asks that the plugin-owned half "carry its

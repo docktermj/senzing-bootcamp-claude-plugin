@@ -5,7 +5,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 ## Problem
 
 Two foundational invariants disagree about where the generated project's `README.md` lives,
-and the plugin ships the behaviour the *other* one describes.
+and the plugin ships the behavior the *other* one describes.
 
 **INV-017** (`specs/INVARIANTS.md:76`) admits exactly one exception:
 
@@ -61,7 +61,7 @@ in `ground-rules.md:216-217`** — the project root's `README.md` **and** the ge
 This is an in-place clarification under rule 2 of "Maintaining this file", not a change of
 meaning: INV-050 has mandated the root `README.md` since the same original block, the ground
 rules have always excepted it, and Module 1 has always updated it. INV-017's text is being
-corrected to describe what the invariant set has always required, so no behaviour changes and
+corrected to describe what the invariant set has always required, so no behavior changes and
 no shipped file moves.
 
 Record the correction the way the file records its other in-place fixes — a dated

@@ -43,7 +43,7 @@ SHIPPED_ARTIFACT = re.compile(
 Every alternative is a **repo-internal** name: a path, a filename, a `module-NN`
 directory, a `Module N` catalog label, or a hyphenated skill-directory name. The
 vocabulary an invariant actually uses to name a module is the **display name** — and
-the filter recognises none of them:
+the filter recognizes none of them:
 
 | Invariant | Names, in its own text | Filter sees it? |
 |---|---|---|
@@ -68,7 +68,7 @@ sibling is listed.
 **This is the "guard narrower than the invariant it claims to enforce" class** (audit
 Step 7, item 3), applied to a report rather than a test. The report's docstring is
 honest that it under-reports — "a hit is not a defect… this is where to look, not a bug
-list" — but the miss here is not a judgement call at the margin: it is the report's
+list" — but the miss here is not a judgment call at the margin: it is the report's
 central case, eight times, on the day the class occurred.
 
 **No Senzing fact is at issue** — this is a repo-side detector, offline, touching no
@@ -144,7 +144,7 @@ returned zero hits for all eight.
   precisely this blind spot — the report would keep printing and keep looking authoritative while
   seeing no display-name invariant at all. The scratch-tree fixture in
   `tests/test_coverage_reports.py` therefore had to grow a module table; nine existing tests failed
-  until it did, which is the behaviour working as intended.
+  until it did, which is the behavior working as intended.
 - **Two negative controls escaped and both were real weaknesses in the assertions, not in the fix.**
   (1) The "Bootcamp preparation" case passed on the table-derived name alone, proving nothing about
   the spaced form in `STATIC_ARTIFACT`; onboarding is the only skill named in invariant prose that

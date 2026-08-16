@@ -5,7 +5,7 @@ Maintain the invariant conditions in @INVARIANTS.md and implement the following 
 ## Problem
 
 `phase2-data-mapping.md:232-288` now documents `embedded_master` — landed 2026-08-12 by
-`module5-cannot-honour-an-embedded-entity-discovered-at-step-3`. It frames the discovery as a
+`module5-cannot-honor-an-embedded-entity-discovered-at-step-3`. It frames the discovery as a
 **step-3 event** and prescribes `action='back'` as the route:
 
 > ⛔ **The timing is a trap, and going `back` is the sanctioned fix.** An embedded master is
@@ -49,7 +49,7 @@ profile in hand, is told to identify "relationships" but not embedded masters, a
 that omits one.
 
 **The cost is a wholly avoidable round trip, on the required path.** Caught at step 10 it is one
-extra entry in the step-2 payload. Missed there, honouring it costs `back` → re-plan → re-advance,
+extra entry in the step-2 payload. Missed there, honoring it costs `back` → re-plan → re-advance,
 *and* dropping from the tool's preferred typed `payload` to the legacy `entity_plan` shape (the
 constraint `:263-275` documents) — a materially harder path that the same section correctly warns is
 "a trap". The plugin documents the recovery from a miss and never documents avoiding the miss.
@@ -61,7 +61,7 @@ report the same session had just generated.
 
 ## Root cause
 
-**The originating spec generalised from the turn it was found on, not from where the evidence lives.**
+**The originating spec generalized from the turn it was found on, not from where the evidence lives.**
 
 The defect was discovered *at* step 3 in the 2026-08-12 walk, because that is where the previous
 session happened to be looking closely at values. The fix documented the situation as encountered —
@@ -130,7 +130,7 @@ needs it — and the same concern `inv205-covers-whether-to-ask-but-not-how` cit
   numbered steps were followed as written.
 - Priority: **Medium.** Not a wrong statement — an incomplete route on the required path. The
   documented fix works; it is just the expensive half of the answer, and the cheap half is missing.
-- Related: `module5-cannot-honour-an-embedded-entity-discovered-at-step-3` (the spec this refines —
+- Related: `module5-cannot-honor-an-embedded-entity-discovered-at-step-3` (the spec this refines —
   its route is correct, its premise about *when* is not), INV-183 (reachable at the step that needs
   it), INV-136 (the `back` action), INV-007 (the bootcamper's choice is theirs).
 
@@ -177,5 +177,5 @@ appear in no removed line.
 
 **None proposed.** INV-183 already covers reachability; this is an unapplied instance of it. A rule
 of the shape *every tool-side obligation stated in a step's response must be reachable from the
-module step that calls it* would be a real generalisation, and it is deliberately not smuggled in
+module step that calls it* would be a real generalization, and it is deliberately not smuggled in
 here — it would need its own instance threshold.

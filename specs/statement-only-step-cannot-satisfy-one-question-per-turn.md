@@ -43,7 +43,7 @@ three rules that collide:
 
 The plugin has no concept of a **non-yielding step**: every rule about step
 boundaries assumes a step ends by asking something. Module 1's step 1 is the only
-step in the plugin explicitly *labelled* statement-only, but the gap is structural
+step in the plugin explicitly *labeled* statement-only, but the gap is structural
 and it is not confined to single steps.
 
 **Long non-yielding runs are the more consequential form**, found on the same walk:

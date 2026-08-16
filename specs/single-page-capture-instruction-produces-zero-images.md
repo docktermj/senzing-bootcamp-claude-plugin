@@ -42,14 +42,14 @@ single-page / no-tab mode at all.
 `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md:166-171`
 assumes the opposite, and is otherwise exactly right about the situation — it
 correctly identifies which deliverables are single-page, and correctly describes the
-INV-122 skip-and-report behaviour. Only the invocation is wrong.
+INV-122 skip-and-report behavior. Only the invocation is wrong.
 
 Reproduced 2026-08-14 against `docs/visualizations/data_quality_assessment.html`, a
 valid 10,991-byte page that renders correctly.
 
 ## Proposed change
 
-Fix the helper, not just the instruction — the instruction describes the behaviour a
+Fix the helper, not just the instruction — the instruction describes the behavior a
 reader would reasonably expect, and the helper is where the concept is missing.
 
 1. **Add a single-page mode to `capture_screenshots.py`.** Either make `--tabs ""`
@@ -71,12 +71,12 @@ reader would reasonably expect, and the helper is where the concept is missing.
 - [ ] The tabbed app's six-image capture is unchanged, by the same invocation it
       uses today.
 - [ ] A tabbed app whose requested tabs are all misnamed still reports and skips —
-      the INV-122 behaviour is preserved, and is not replaced by a whole-page
+      the INV-122 behavior is preserved, and is not replaced by a whole-page
       capture.
 - [ ] `module-completion.md` prescribes an invocation that works, and the two agree.
 - [ ] A repo-level test covers the single-page path against a fixture page with no
       tab controls, negative-controlled by restoring the `default=""` →
-      `DEFAULT_TABS` behaviour.
+      `DEFAULT_TABS` behavior.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files

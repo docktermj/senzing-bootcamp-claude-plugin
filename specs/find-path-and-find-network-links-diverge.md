@@ -141,7 +141,7 @@ this spec does not say:
    reported failure needs the *network* flag OR-ed in explicitly.
 
 4. **`find_network` also returns `ENTITY_PATHS[]`.** Not in the spec, and it is the sharpest
-   edge of the trap: the network response contains the word PATH, which reads as licence to
+   edge of the trap: the network response contains the word PATH, which reads as license to
    expect `ENTITY_PATH_LINKS[]` in it. Confirmed this session in both documents'
    `detect_keys`. Stated at the step.
 

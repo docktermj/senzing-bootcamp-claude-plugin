@@ -136,7 +136,7 @@ validation baseline before Module 7.
 Update `docs/loading_strategy.md` with: final load order and rationale, per-source statistics,
 cross-source match summary, issues and resolutions, recommendations for future loads.
 
-⛔ **The per-source statistics written here are reconciled figures or they are labelled as
+⛔ **The per-source statistics written here are reconciled figures or they are labeled as
 unreconciled — never bare numbers.** (INV-243/INV-245) This document outlives the session and is
 read as the record of what was loaded, so an unchecked count written into it is the hardest of all
 these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it

@@ -278,7 +278,7 @@ accepted, not only the recommended one):
   `No NAME features found` as evidence that names are absent — they are extracted normally at load.
 
 The arbiter is this phase's own instrument: load one unmodified record and read back the features
-Senzing extracted. Extracted features settle it in favour of loadability, whatever the analyzer's
+Senzing extracted. Extracted features settle it in favor of loadability, whatever the analyzer's
 exit code was.
 
 ## Encoding

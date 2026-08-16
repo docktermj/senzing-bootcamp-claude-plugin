@@ -35,7 +35,7 @@ single pinned confirm-style question"* — "a single … question" **per step**,
 the pair. Each step is individually compliant with what that spec asked for, and the pair is what
 the Bootcamper experiences.
 
-**The behaviour is exactly what the skill files prescribe**, which is why this is a design issue
+**The behavior is exactly what the skill files prescribe**, which is why this is a design issue
 rather than a deviation: nothing here is a misreading of the text.
 
 ## The invariants pull in opposite directions, and the spec must say so

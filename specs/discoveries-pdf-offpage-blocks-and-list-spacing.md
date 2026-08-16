@@ -1,4 +1,4 @@
-# Fix the discoveries PDF's off-page blocks, squeezed labelled bullets, and list spacing
+# Fix the discoveries PDF's off-page blocks, squeezed labeled bullets, and list spacing
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
@@ -140,7 +140,7 @@ this directory" from "present but unusable", matching how `:300-305` already rep
 fallback. Also note in the module docstring that `brand_tokens.py` must sit beside a copied
 generator — `generate_discoveries_pdf.py` imports shared helpers from `generate_recap_pdf.py`
 "expected next to this script" (`:61-77`) and imports `brand_tokens` separately, so a project-local
-copy of one without the other silently used fallback colours until `brand_tokens.py` was copied
+copy of one without the other silently used fallback colors until `brand_tokens.py` was copied
 alongside.
 
 **5. Close the test gap that let (a) ship.**
@@ -170,17 +170,17 @@ so the choice stays visible rather than assumed.
       remembering to reset (helper or explicit `new_x`), and no full-width `multi_cell` in the file
       depends on the ambient cursor.
 - [ ] A bullet with a ~60-character bold label puts the label on its own line and its body at full
-      width; a short-labelled bullet still renders inline. Verified in **both**
+      width; a short-labeled bullet still renders inline. Verified in **both**
       `generate_discoveries_pdf.py` and `generate_recap_pdf.py`.
 - [ ] Consecutive bullets and sub-bullets are visibly separated, with no gap after the last item of
       a list, in both the fpdf2 and stdlib renderers.
 - [ ] A `brand_tokens` import failure prints a stderr line naming which case occurred (INV-111);
-      the fallback still proceeds and still renders identical colours (`tests/test_brand_sync.py`
+      the fallback still proceeds and still renders identical colors (`tests/test_brand_sync.py`
       passes).
 - [ ] `tests/test_discoveries_pdf.py` passes and now **fails** against the pre-fix script — the
       table and subtitle probes must be able to detect the original defect.
 - [ ] The INV-110 guard is unchanged: retention is still reported, a structurally wrong document
-      still writes no file and exits non-zero, and a recognisable-but-incomplete one still warns and
+      still writes no file and exits non-zero, and a recognizable-but-incomplete one still warns and
       exits 0.
 - [ ] All six required findings sections are present in the rendered PDF after the change.
 - [ ] Verified by rasterizing every affected page, not by exit code or retention percentage.

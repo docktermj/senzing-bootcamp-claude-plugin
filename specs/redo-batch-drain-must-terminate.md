@@ -32,7 +32,7 @@ The plugin states the requirement and leaves the pattern to a tool that answers 
 - `phaseB-load-first-source.md:94-96` then instructs a code comment explaining that "in production,
   redos are typically handled by an always-running redo processor that wakes, checks for pending
   redos, processes them, and sleeps when the queue is empty" — an accurate production note sitting
-  immediately beside a batch step, describing exactly the behaviour of the snippet that hangs it. The
+  immediately beside a batch step, describing exactly the behavior of the snippet that hangs it. The
   two patterns are adjacent and never distinguished.
 - **The `count_redo_records` sentinel anti-pattern is absent from the plugin's guidance.** Grep finds
   it only in `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md:268`, inside an
@@ -114,6 +114,6 @@ the bootcamp is where the mismatch bites.
 
 ## Invariants introduced
 
-- `INV-151` — The redo drain MUST terminate, sentinelled on the fetch returning no record, never on
+- `INV-151` — The redo drain MUST terminate, sentineled on the fetch returning no record, never on
   a redo-count method; an MCP-returned snippet MUST be checked for non-termination and adapted, and
   the drain MUST report its terminal condition (recorded in `specs/INVARIANTS.md`).

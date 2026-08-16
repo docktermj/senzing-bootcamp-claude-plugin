@@ -10,7 +10,7 @@ inside it produced, on the next session:
     to resume from the last recorded module before doing anything else.
 
 …on a project with no recorded module. The guide was told to do something impossible, on a
-project whose correct behaviour was to run onboarding from the top.
+project whose correct behavior was to run onboarding from the top.
 
 Every resume decision tested the file's **existence** while
 `recap_checkpoint.current_module()` already returned `None` for a contentless file — the

@@ -131,7 +131,7 @@ and which lines up exactly with the Windows/Scoop sibling-directory case the `Te
 - Related specs: `specs/sdk-guide-configure-unseeded-datastore.md` (the sibling Module 2
   configure-step defect, and the `SENZ7221` precedent for an error whose own guidance does not name
   its cause), `specs/artifact-level-verification-for-deliverables.md` (INV-129 — verify the thing,
-  not the exit status; this is its SDK-install analogue),
+  not the exit status; this is its SDK-install analog),
   `specs/mcp-grounding-in-every-skill.md` (INV-080),
   `specs/export-related-entities-is-flag-conditional.md` (INV-169 — the rule this spec's first
   version violated)

@@ -87,7 +87,7 @@ instructions imply a file that routinely exists.
 - [ ] A test asserts the chosen design end to end — that a simulated module boundary
       produces the file (A), or that no skill references folding it (B). The current gap was
       invisible to 1156 tests.
-- [ ] The append-at-close recap behaviour (INV-103) is unchanged either way — it is what
+- [ ] The append-at-close recap behavior (INV-103) is unchanged either way — it is what
       kept this run correct.
 - [ ] MCP re-check: n/a — no Senzing fact is involved.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).

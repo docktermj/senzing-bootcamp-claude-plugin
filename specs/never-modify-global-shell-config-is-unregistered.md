@@ -37,7 +37,7 @@ MCP server's own macOS install guidance suggests for a human operator, *"Add to 
 persist"* — would violate this guarantee, break the bootcamp's self-containment, and pass the entire
 suite.
 
-**No Senzing fact is at issue.** The rule is about the plugin's behaviour on the Bootcamper's
+**No Senzing fact is at issue.** The rule is about the plugin's behavior on the Bootcamper's
 machine. The `sdk_guide` install text quoted above is context for *why the rule is easy to breach*,
 not a claim this spec asserts; it was returned by `sdk_guide(topic='install', platform='macos_arm',
 language='java')` on server 1.32.8, 2026-08-11.

@@ -54,7 +54,7 @@ apply, and will fall back to per-entity calls they do not need.
 
 ## Root cause
 
-The sentence was written from one lookup and generalised across a list. `SZ_INCLUDE_MATCH_KEY_DETAILS`
+The sentence was written from one lookup and generalized across a list. `SZ_INCLUDE_MATCH_KEY_DETAILS`
 is returned *in the same response* as the relations flags — it appears in the
 `filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS'` result because it `depends_on` them — so it is easy to read
 the whole response as one homogeneous group and miss that one row's `applies_to` is longer than the
@@ -85,7 +85,7 @@ instruction — which is the thing that makes this page self-correcting and shou
 not less.
 
 **Check `phaseD-validation.md:225-227` and leave it alone if it still scopes correctly.** It does
-today. Do not "harmonise" the two by copying the wrong sentence into it — the divergence is the
+today. Do not "harmonize" the two by copying the wrong sentence into it — the divergence is the
 correct one being narrower, and the fix is to narrow the other.
 
 **Fallback (INV-125).** None needed; this corrects a stated fact and adds no new call.
@@ -153,4 +153,4 @@ dropping the dependency clause, stripping the provenance — and all four now fa
 **`phaseD-validation.md` was verified by opening it** (INV-182) and left unchanged: `:222-229`
 scopes to "`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members" and never names
 `SZ_INCLUDE_MATCH_KEY_DETAILS`, so it was already correct. A new assertion pins that it stays that
-way, since the obvious "harmonise the two files" instinct would propagate the wrong form into it.
+way, since the obvious "harmonize the two files" instinct would propagate the wrong form into it.

@@ -66,12 +66,12 @@ class TheOverrideIsStated(unittest.TestCase):
             "the precedence statement must name mapping_workflow as the source of the "
             "directives, or a reader cannot tell what it is about")
 
-    def test_it_quotes_the_directive_so_a_reader_recognises_it(self):
+    def test_it_quotes_the_directive_so_a_reader_recognizes_it(self):
         """Paraphrase is not enough: the guide has to spot this string in a live response."""
         flat = re.sub(r"\s+", " ", self.body)
         self.assertRegex(
             flat, r"(?i)Do NOT ask the user",
-            "the observed directive is not quoted; the guide must be able to recognise it "
+            "the observed directive is not quoted; the guide must be able to recognize it "
             "verbatim when a tool response carries it")
 
     def test_it_states_that_the_bootcamp_wins_on_interaction(self):
@@ -108,11 +108,11 @@ class TheOverrideIsScoped(unittest.TestCase):
                               "the scope limit must name %r as still governed by the tool" % kept)
 
     def test_the_verbosity_offer_is_not_weakened(self):
-        """The fix must honour the guided-mode promise, never retract it."""
+        """The fix must honor the guided-mode promise, never retract it."""
         self.assertRegex(
             self.body, r"👉 \*\*Before we start mapping, which mode would you like\?",
             "the pinned mapping-verbosity question was altered or removed; the remedy for the "
-            "tool conflict is to honour that promise, not to stop making it (INV-056)")
+            "tool conflict is to honor that promise, not to stop making it (INV-056)")
 
 
 
@@ -181,7 +181,7 @@ class TheQuestionFormatDirectiveIsAddressed(unittest.TestCase):
         flat = re.sub(r"\s+", " ", self.body)
         self.assertRegex(
             flat, r"(?i)QUESTION FORMAT",
-            "the step-3 QUESTION FORMAT directive is not named; a guide cannot recognise "
+            "the step-3 QUESTION FORMAT directive is not named; a guide cannot recognize "
             "it in a live response if the plugin never quotes it")
 
     def test_the_conforming_shape_is_stated(self):

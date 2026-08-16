@@ -50,11 +50,11 @@ row's source line in a monospace font. The module docstring said so outright: ta
 limitation, deliberately not changed"**, deferring real tables as "a genuine enhancement but a larger
 change than a layout fix". This spec is that deferred enhancement, now that a bootcamper has hit it.
 
-**(b) The only inter-block gap was gated on both neighbours being list items.** `_needs_item_gap()`
+**(b) The only inter-block gap was gated on both neighbors being list items.** `_needs_item_gap()`
 returned true only when the current *and* next block were `bullet`/`subbullet`, with
 `ITEM_GAP_MM = 2.4` / `ITEM_GAP_PT = 3.0`. `text` blocks received no trailing space at all. That
 helper came from the same prior spec, which asked only for "a blank line between the elements of
-every bulleted list" — so it was built to the letter of that request and never generalised to
+every bulleted list" — so it was built to the letter of that request and never generalized to
 paragraphs.
 
 **(c) `_UNICODE_MAP` in `generate_recap_pdf.py` (`:594-600`) had no entry for `↔`, `⚠`, or the emoji
@@ -79,18 +79,18 @@ close the gaps it left.
   the table branch, so a blank line correctly separates two adjacent tables.
 - New `parse_table(text) -> (header, rows)`: splits into cells, drops the `|---|---|` alignment row,
   and pads or truncates ragged rows to the header's column count so a malformed row cannot
-  desynchronise the grid.
+  desynchronize the grid.
 - New `_render_table_fpdf2()`: bordered grid, shaded header, wrapped multi-line cells, column widths
   proportional to the longest cell per column (floor 6, cap 60 characters), header repeated when a
   table splits across a page.
 - stdlib fallback: space-padded monospace columns with a rule under the header — not raw pipes — so
   the two renderers do not drift (INV-066).
 - New `TABLE_HEAD_FILL` derived from `WARM_LINE`, keeping the grid inside the brand palette (INV-081).
-- Module docstring corrected; it advertised the behaviour being removed.
+- Module docstring corrected; it advertised the behavior being removed.
 
 **2. Paragraph and list spacing** (`generate_discoveries_pdf.py`)
 
-- `_needs_item_gap()` generalised from "both neighbours are list items" to a block-boundary rule
+- `_needs_item_gap()` generalized from "both neighbors are list items" to a block-boundary rule
   covering prose→prose, prose→list, list→list, and around code and table blocks. Headings are
   excluded — they already bring their own leading space.
 - `ITEM_GAP_MM` 2.4 → 3.6, `ITEM_GAP_PT` 3.0 → 5.0, so the gap reads as a paragraph break rather than
@@ -141,7 +141,7 @@ the output was wrong, and both were caught only by rasterizing pages (INV-129).
       every source table appears as a bordered grid with a shaded header.
 - [ ] A table spanning a page break repeats its header, and the first body row on the continuation
       page renders in the body font, not bold.
-- [ ] A ragged or malformed source row does not desynchronise the grid or lose a cell.
+- [ ] A ragged or malformed source row does not desynchronize the grid or lose a cell.
 - [ ] The stdlib fallback renderer emits aligned columns, not pipe source, so both renderers produce a
       readable table (INV-066), and the fallback still announces itself on stderr (INV-111).
 - [ ] Consecutive paragraphs, and paragraph/list boundaries, are visibly separated in both renderers;
@@ -149,7 +149,7 @@ the output was wrong, and both were caught only by rasterizing pages (INV-129).
 - [ ] `↔` and `⚠️` render as `<->` and `!` in **both** PDFs; no `?` substitution remains for any
       character the deliverables carry.
 - [ ] Content retention stays 100% and the INV-110 guard is unchanged: a structurally wrong document
-      still writes no file and exits non-zero; a recognisable-but-incomplete one still warns and
+      still writes no file and exits non-zero; a recognizable-but-incomplete one still warns and
       exits 0.
 - [ ] Verified by **rasterizing** the affected pages, not by exit code, retention, or text extraction
       (INV-129) — the defects and both regressions were invisible to all three.
@@ -164,7 +164,7 @@ the output was wrong, and both were caught only by rasterizing pages (INV-129).
 ## Affected files
 
 - `plugins/senzing-bootcamp/scripts/generate_discoveries_pdf.py` — `parse_discoveries` table
-  accumulation; new `parse_table` and `_render_table_fpdf2`; `TABLE_HEAD_FILL`; generalised
+  accumulation; new `parse_table` and `_render_table_fpdf2`; `TABLE_HEAD_FILL`; generalized
   `_needs_item_gap` with `ITEM_GAP_MM` 3.6 / `ITEM_GAP_PT` 5.0 and the `label` exemption; stdlib
   table rendering; module docstring.
 - `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py` — `_UNICODE_MAP` (`:594-600`): `↔`, `⚠`,
@@ -199,9 +199,9 @@ the output was wrong, and both were caught only by rasterizing pages (INV-129).
 
 - `INV-142` — A bundled generator MUST render a Markdown construct as that construct, never as its
   source text; tables are drawn as a grid, with a repeated header across page breaks that does not
-  leave the following body row bold, ragged rows normalised, and adjacent tables visibly separated
+  leave the following body row bold, ragged rows normalized, and adjacent tables visibly separated
   (recorded in `specs/INVARIANTS.md`).
-- `INV-143` — Character sanitisation MUST NOT substitute `?` for an unencodable character, and the
+- `INV-143` — Character sanitization MUST NOT substitute `?` for an unencodable character, and the
   inventory under test MUST cover what generated deliverables carry, not only what the plugin's own
   templates emit (recorded in `specs/INVARIANTS.md`).
 

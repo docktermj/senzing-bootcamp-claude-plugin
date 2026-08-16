@@ -6,7 +6,7 @@ Three defects found in one dry-run walk on 2026-08-12, all in
 
 * **Step 2 asked for data the module's own prerequisite says is already there.** SKILL.md
   states "Module 4 complete (data sources collected, files in `data/raw/`)"; Step 2 said
-  "ask the user to place sample files". Confirmed behaviourally in the walk — the answer was
+  "ask the user to place sample files". Confirmed behaviorally in the walk — the answer was
   a bare "yes", which cannot distinguish "I placed files" from "they were already there", so
   the question could not detect the state it existed to establish.
 * **The quality score had precise bands and no formula.** Step 6 named three dimensions,

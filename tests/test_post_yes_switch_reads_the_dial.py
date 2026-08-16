@@ -11,7 +11,7 @@ up, not down — in the same turn. Following the flow as written then required e
     Switching to `/effort medium` — run `/effort medium` in the Claude Code CLI.
 
 which is wrong twice: it instructs a command already run, and it names a value the Bootcamper
-had just deliberately rejected in favour of a higher one. The pinned gate that follows,
+had just deliberately rejected in favor of a higher one. The pinned gate that follows,
 "Are you done modifying the model and effort?", then asked a question the transcript had
 already answered.
 

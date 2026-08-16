@@ -115,7 +115,7 @@ missing citation, never the removal of a correct one.
   earlier the same day.
 - Prior art this supersedes in scope: `production-readiness-audit-2026-08-11` finding (3), which
   recorded three of the eleven and was never actioned.
-- Priority: **Medium.** No shipped behaviour is wrong and no guarantee is unenforced. The value is
+- Priority: **Medium.** No shipped behavior is wrong and no guarantee is unenforced. The value is
   that the repo's only unguarded-rule signal is currently unreliable in both directions.
 - MCP re-check: **n/a — no Senzing fact.** `get_capabilities` reported server **1.32.9** this
   session for unrelated work; no tool was called for this finding.

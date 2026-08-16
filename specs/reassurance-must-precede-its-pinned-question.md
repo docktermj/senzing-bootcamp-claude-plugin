@@ -95,7 +95,7 @@ conformance sweep to check and nothing for a reviewer to cite.
   (`Source: self-observed (assistant retrospective)`)
 - Priority: Low — the guide resolves it correctly by analogy and no bootcamper-facing output is
   wrong. Worth fixing because it is an instruction that cannot be followed as written, which is the
-  class the phase-3 procedure calls out for eroding the authority of neighbouring ⛔ rules.
+  class the phase-3 procedure calls out for eroding the authority of neighboring ⛔ rules.
 - MCP re-check: n/a (no Senzing fact) — this is entirely an interaction-layer ordering question.
 - Upstream: not applicable.
 - Related specs: none

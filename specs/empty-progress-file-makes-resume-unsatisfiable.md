@@ -24,7 +24,7 @@ to resume from the last recorded module before doing anything else.
 ```
 
 followed by a guide that cannot do what it was just told to do, on a project
-where the correct behaviour is to run onboarding from the top.
+where the correct behavior is to run onboarding from the top.
 
 ## Root cause
 

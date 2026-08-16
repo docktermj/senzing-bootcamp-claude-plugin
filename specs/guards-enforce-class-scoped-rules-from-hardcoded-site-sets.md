@@ -82,7 +82,7 @@ nothing — the failure mode a derived guard introduces and a hardcoded one does
 - [ ] `tests/test_brand_sync.py` covers every script carrying a brand-palette fallback constant,
       discovered rather than listed, satisfying INV-184's "every shipped generator" as INV-246
       requires it be satisfied.
-- [ ] No behaviour changes in `plugins/` — this is entirely test-side.
+- [ ] No behavior changes in `plugins/` — this is entirely test-side.
 - [ ] The full suite stays green and `citations.py verify` stays clean.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 

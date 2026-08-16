@@ -153,4 +153,4 @@ conflict.
   `ground-rules.md`, the second phrasing of the rule) in place, so the assertions still matched.
   Re-run as whole-statement deletions, both are caught — the central-statement control by three
   tests and the mapping pointer by two. Recorded because a mutation that does not actually remove
-  the behaviour proves nothing, and reporting it as an escape would have been the wrong conclusion.
+  the behavior proves nothing, and reporting it as an escape would have been the wrong conclusion.

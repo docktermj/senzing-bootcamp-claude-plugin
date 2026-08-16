@@ -5,7 +5,7 @@
 (http://localhost:8080)". One code path serves the Truth Set in its own module and the
 bootcamper's own data in Query, Visualize and Discover, and the server takes `--port`, so
 that text told a Module 7 reader on a non-default port to open a port nothing was
-listening on *and* mislabelled their data — permanently, in `docs/visualizations/*.html`.
+listening on *and* mislabeled their data — permanently, in `docs/visualizations/*.html`.
 
 **Re-activating the already-active tab.** Capture drives the app with an injected
 `activate('<tab>')` (snapshot) or `?tab=<id>` (live server). Both call `activate()`, which

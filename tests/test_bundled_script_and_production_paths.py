@@ -2,7 +2,7 @@
 
 `deep-dive-audit-2026-07-30b`. Three path defects of one shape, none of which any existing
 test could see, because each is a *string in prose* that is only wrong relative to a working
-directory no test had modelled.
+directory no test had modeled.
 
 1. **A bundled script invoked by a bare project-relative path.** Module 7 said:
 

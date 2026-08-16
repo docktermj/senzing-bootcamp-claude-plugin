@@ -16,7 +16,7 @@ with no citing test is born into that blind spot.
 to change; what must not regress is that the paragraph stating it names its governing ID, and
 that each invariant's own text still says the thing the citation promises. Scoped to the
 paragraph rather than the line because both citations sit on a continuation line of a wrapped
-paragraph — a per-line check would pass while the citation drifted into a neighbouring rule.
+paragraph — a per-line check would pass while the citation drifted into a neighboring rule.
 
 Run:  python3 -m unittest discover -s tests
 """

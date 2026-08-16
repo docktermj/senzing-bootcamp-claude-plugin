@@ -28,7 +28,7 @@ the flow as written then required emitting:
 > Switching to `/effort medium` — run `/effort medium` in the Claude Code CLI.
 
 which is wrong twice over: it instructs a command already run, and it names a value the Bootcamper
-had just deliberately rejected in favour of a higher one. The pinned gate that follows —
+had just deliberately rejected in favor of a higher one. The pinned gate that follows —
 "👉 **Are you done modifying the model and effort?**" — then asks a question the transcript has
 already answered.
 
@@ -68,7 +68,7 @@ transcript makes that visible.
 require the guide to check whether the transcript already shows the dial set, then take one of
 three shapes:
 
-1. **Not yet set** — the current behaviour, unchanged: "run `/effort medium` in the Claude Code
+1. **Not yet set** — the current behavior, unchanged: "run `/effort medium` in the Claude Code
    CLI", then the pinned gate.
 2. **Already set to the recommended value** — acknowledge it instead of instructing it ("You're on
    `/effort medium` already — that's this module's recommendation."), then proceed to Step 1 **in

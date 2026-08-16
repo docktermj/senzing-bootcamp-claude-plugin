@@ -103,7 +103,7 @@ nothing else. `fpdf2` renderer.
 
 - `INV-242` — Where shipped prose instructs the guide to author content that a **bundled script
   must parse**, that instruction MUST state the shape the script accepts (recorded in
-  `specs/INVARIANTS.md`, indexed under *Generator behaviour: rendering, encoding, reporting*
+  `specs/INVARIANTS.md`, indexed under *Generator behavior: rendering, encoding, reporting*
   beside its sibling INV-161; enforced by `tests/test_recap_pdf_bulleted_images.py`).
   ✅ **Approved by the maintainer on 2026-08-14**, on review of the wording as registered. Originally minted under the standing authorization given before that unattended run.
 

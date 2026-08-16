@@ -203,7 +203,7 @@ class AFailedAttemptIsNotTheEndOfTheList(unittest.TestCase):
             self.assertIn(attr, out["error"])
 
     def test_the_loop_does_not_return_from_its_except_handler(self):
-        """Pins the shape, not just the behaviour: a `return` inside the handler is
+        """Pins the shape, not just the behavior: a `return` inside the handler is
         how the bug is written, whatever the condition guarding it says."""
         source = SERVER.read_text(encoding="utf-8")
         body = source.split("def search(self, engine, flags, query):", 1)[1]

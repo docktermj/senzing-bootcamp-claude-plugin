@@ -77,7 +77,7 @@ Two independent gaps, both from the same habit of composing a query instead of r
    from the topic name rather than a phrasing that was run and inspected. Step 3b also carries no
    re-query rule, so an off-topic result has no recovery path — the discipline
    `module-00-entity-resolution-concepts/concepts.md:29-43` states and Step 3b never inherited.
-2. **The evidence requirement lives in the tool response, and the step summarises the response
+2. **The evidence requirement lives in the tool response, and the step summarizes the response
    instead of relaying it.** Step 3b tells the guide to *call* `reporting_guide(topic='quality')` and
    then supplies its own verdict bands and scripts. Those scripts were written independently of what
    the tool returns, so nothing carried the Evidence Requirement across — and `topic='evaluation'`,

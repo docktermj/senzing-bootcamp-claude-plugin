@@ -49,7 +49,7 @@ actual output against those stored figures and writes a pass/fail check.
 
 Two problems compound:
 
-1. **The prediction is a claim about engine behaviour, produced by the guide's own
+1. **The prediction is a claim about engine behavior, produced by the guide's own
    reasoning.** That is the one class of Senzing fact the MCP-first invariant
    exists to prevent (INV-080). Step 2 explicitly forbids fetching the figures,
    which is right about *not* inventing a source — but it leaves the guide asserting
@@ -64,7 +64,7 @@ engine fault, so every failure of this check reads as the latter.
 
 ## Proposed change
 
-1. **Make the merge cluster unambiguous by construction, not by judgement.** Spell
+1. **Make the merge cluster unambiguous by construction, not by judgment.** Spell
    out what the records must share and what may vary: identical `NAME_FIRST`,
    `NAME_MIDDLE` where present, and `NAME_LAST`; identical `DATE_OF_BIRTH`;
    identical address content; and variation limited to **formatting only**
@@ -124,7 +124,7 @@ engine fault, so every failure of this check reads as the latter.
   2026-08-13. Entity Specification attribute names (`NAME_FIRST`, `NAME_MIDDLE`,
   `NAME_LAST`, `DATE_OF_BIRTH`, `ADDR_LINE1`, `PHONE_NUMBER`, `RECORD_TYPE`, the
   `FEATURES` array) confirmed via `search_docs` before composing the records, so the
-  records themselves are not the variable. The engine behaviour observed is this
+  records themselves are not the variable. The engine behavior observed is this
   install's, not an MCP claim — observation-only (INV-080/INV-149).
 - Upstream: not applicable — the engine behaved correctly in both runs.
 - Related specs: `specs/statement-only-step-cannot-satisfy-one-question-per-turn.md`

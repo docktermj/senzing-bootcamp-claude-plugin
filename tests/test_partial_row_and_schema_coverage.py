@@ -178,7 +178,7 @@ class NoUnverifiedFieldNameIsShipped(unittest.TestCase):
 class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
     """Closing the criterion `network-link-fields-...` deliberately left open.
 
-    That spec shipped the defence without the datum, because its implementation
+    That spec shipped the defense without the datum, because its implementation
     environment had no loaded engine, and said so: "someone with a loaded engine
     should dump one link element, confirm the keys, and promote the caution to a
     documented field list marked verified-when." That dump has now happened.
@@ -224,7 +224,7 @@ class TheDumpConfirmedLinkKeysAreRecorded(unittest.TestCase):
         )
 
     def test_the_dump_requirement_survives_the_documentation(self):
-        """Documented keys are an expectation to check, not a licence to skip the dump."""
+        """Documented keys are an expectation to check, not a license to skip the dump."""
         self.assertRegex(
             flat(CONTRACT), r"(?i)dump one element and use what is actually there"
         )
@@ -300,7 +300,7 @@ class TheTwoGraphMethodsAreNotInterchangeable(unittest.TestCase):
     to look for after carrying working code across.
 
     `find_network` returning `ENTITY_PATHS[]` is what makes it bite: the network
-    response contains the word PATH, which reads as licence to expect
+    response contains the word PATH, which reads as license to expect
     `ENTITY_PATH_LINKS[]` in it.
 
     The reported failure was the half-populated row again (INV-148): a valid 2-degree
@@ -363,7 +363,7 @@ class TheTwoGraphMethodsAreNotInterchangeable(unittest.TestCase):
         )
 
     def test_step_4d_states_the_consequence(self):
-        """A rule with no named symptom is not recognisable in the wild (INV-148)."""
+        """A rule with no named symptom is not recognizable in the wild (INV-148)."""
         self.assertRegex(
             flat(DISCOVER),
             r"(?i)neither the flags nor the parser can be carried",

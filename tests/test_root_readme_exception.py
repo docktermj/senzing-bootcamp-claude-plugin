@@ -86,7 +86,7 @@ class TheGroundRulesStateTheSameRule(unittest.TestCase):
         self.assertRegex(flat(GROUND_RULES), r"(?i)root whitelist.{0,200}`README\.md`")
 
     def test_the_whitelist_still_bans_every_other_root_markdown(self):
-        """The exception is one file, not a licence for root `.md` generally."""
+        """The exception is one file, not a license for root `.md` generally."""
         self.assertRegex(flat(GROUND_RULES), r"(?i)`?\.md`?\s*\(except README\)")
 
 

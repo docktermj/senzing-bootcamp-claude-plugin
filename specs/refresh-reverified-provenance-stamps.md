@@ -204,7 +204,7 @@ spec clears the twelve that are already verified; it does not try to automate th
   own criterion forbids. `tests/test_partial_row_and_schema_coverage.py::TheDumpConfirmedLinkKeysAreRecorded`
   failed on it, the dump date was restored to 2026-07-28, and the remaining eleven edited
   lines were audited for the same shape (none carried a second provenance). Recorded
-  because the lesson generalises: **a stamp refresh must target the MCP provenance
+  because the lesson generalizes: **a stamp refresh must target the MCP provenance
   specifically, not every date on the line** — some lines cite a live-engine observation
   the sweep structurally cannot re-run.
 - **The tests pin exact stamp values, so every future refresh will break them.** Seven

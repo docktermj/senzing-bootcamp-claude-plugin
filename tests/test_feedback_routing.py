@@ -89,11 +89,11 @@ def verdict_set_sites():
     correct content.
 
     ⛔ **What this scan CANNOT see, stated because INV-248 says "every shipped site".** It
-    recognises the pipe-separated series and nothing else. A site that enumerated the taxonomy as
+    recognizes the pipe-separated series and nothing else. A site that enumerated the taxonomy as
     a bulleted list, a comma series, or prose would escape it entirely — so a clean run means "no
     *pipe-separated* site has drifted", never "the taxonomy is stated identically everywhere". The
     shape is checked rather than the meaning because "is this line enumerating the taxonomy?" is a
-    semantic judgement, and the two looser rules tried first both failed (above). If a third shape
+    semantic judgment, and the two looser rules tried first both failed (above). If a third shape
     ever ships, extend this — do not read a green run as proof it did not.
     """
     hits = []
@@ -537,7 +537,7 @@ class EveryEntryPointDescribesTheRouting(unittest.TestCase):
 
     def test_hook_injects_the_routing_instruction(self):
         ctx = hook_context("bootcamp feedback: a tool returned a truncated error")
-        self.assertTrue(ctx, "the hook must recognise a feedback prompt")
+        self.assertTrue(ctx, "the hook must recognize a feedback prompt")
         for probe in ("Triage", "Routing", "submit_feedback", "INV-015", "INV-065",
                       "showing the exact message"):
             with self.subTest(probe=probe):

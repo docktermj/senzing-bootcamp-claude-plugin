@@ -1,9 +1,9 @@
 """The verbatim-check limitations must say, per limitation, how fresh each one is.
 
 `phase2-data-mapping.md` recorded three limitations of `sz_verbatim_check.py` and honestly
-labelled all three as "**not** re-run against the current server … treat them as 'expect this,
+labeled all three as "**not** re-run against the current server … treat them as 'expect this,
 and check'". Two have now been re-confirmed and one has not, so a single blanket caveat is no
-longer the truth: it invites a reader to re-derive behaviour that is known, while giving the same
+longer the truth: it invites a reader to re-derive behavior that is known, while giving the same
 weight to the one entry that really is unverified.
 
 ⛔ **What was re-verified here is the MECHANISM, from the scripts the server itself delivers** —
@@ -74,12 +74,12 @@ class TheBlanketCaveatIsReplacedByPerLimitationFreshness(unittest.TestCase):
             self.block,
             r"(?i)They were \*\*not\*\* re-run against the\s*current server",
             "all three limitations are still caveated together, so two known-current "
-            "behaviours still invite re-derivation")
+            "behaviors still invite re-derivation")
 
     def test_freshness_is_stated_per_limitation(self):
         self.assertRegex(
             self.block,
-            r"(?i)Freshness, per limitation — 1 and 3 are CURRENT behaviour; only 2 is still "
+            r"(?i)Freshness, per limitation — 1 and 3 are CURRENT behavior; only 2 is still "
             r"un-re-run",
             "the block does not say which entries are current")
 
@@ -149,7 +149,7 @@ class TheEvidenceForTheMechanismIsQuoted(unittest.TestCase):
             r"(?i)offers a disposition its own\s*step-4 gate rejects \*\*by construction\*\*",
             "the collision is described without saying it is structural")
 
-    def test_limitation_3_generalises_the_json_error(self):
+    def test_limitation_3_generalizes_the_json_error(self):
         self.assertRegex(
             self.block,
             r"(?i)its message text depends on the CSV's first line\*\*,\s*so do not match on the "

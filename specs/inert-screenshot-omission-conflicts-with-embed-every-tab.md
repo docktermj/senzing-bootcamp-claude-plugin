@@ -24,7 +24,7 @@ follows INV-146 finds INV-123's disjunction offers an option that is never avail
 Neither invariant mentions the other — verified: `INV-146` does not appear in INV-123's
 text and `INV-123` does not appear in INV-146's.
 
-**Why this is more than pedantry.** INV-146 exists precisely because a "best of" judgement
+**Why this is more than pedantry.** INV-146 exists precisely because a "best of" judgment
 deleted the three *analytical* tabs from a six-tab app — its own text records that. The
 Search / Probe tab is the one INV-123 singles out as inert, so it is exactly the tab an
 implementer is most likely to reach for the omission branch on, and INV-146's stated failure
@@ -44,7 +44,7 @@ correct in isolation. `embed-every-captured-tab-in-tab-order` then established I
 invariants for permissions it had just revoked.
 
 The result is that INV-123's omission branch is **already unreachable** in conforming
-behaviour: given INV-146, the only conforming remedy for an inert capture is the caption. The
+behavior: given INV-146, the only conforming remedy for an inert capture is the caption. The
 disjunction is dead text that reads as a live option.
 
 **Unverified — needs investigation at implementation:** which branch the shipped guidance
@@ -116,7 +116,7 @@ without deleting content.
   loses a Bootcamper's screenshot, and INV-146 exists because that already happened once.
   Raised to High if the investigation finds shipped guidance taking the omission branch.
 - MCP re-check: **n/a (no Senzing fact).** Both invariants govern the plugin's own capture
-  and recap apparatus; no Senzing behaviour is asserted and no MCP tool owns either claim.
+  and recap apparatus; no Senzing behavior is asserted and no MCP tool owns either claim.
 - Upstream: not applicable.
 - Related specs: `specs/per-tab-screenshot-capture-and-grounded-captions.md` (INV-123's
   source), `specs/enforce-screenshot-embed-and-backfill.md` and

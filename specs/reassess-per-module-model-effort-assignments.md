@@ -111,7 +111,7 @@ premise no longer supports.
 Best value remains "the capability the workload needs, at the lowest tier that meets it" — re-judged
 against what each module does **today**, and against where defects have actually occurred. Verify
 model names, IDs and pricing against current Claude documentation at implementation time (INV-114);
-the tiers below are the judgement, not the model facts.
+the tiers below are the judgment, not the model facts.
 
 | # | Stage | Recommended | Change | Why |
 |---|---|---|---|---|
@@ -119,7 +119,7 @@ the tiers below are the judgement, not the model facts.
 | 1 | Bootcamp preparation | Sonnet 5, medium | — | Same; apparatus-exempt, listed for detection only. |
 | 2 | Entity Resolution Concepts | Sonnet 5, medium | **new row** | Teaching and quiz, conversational; apparatus-exempt, listed for detection only. |
 | 3 | Discover the Business Problem | Sonnet 5, medium | — | Discovery conversation, light technical. |
-| 4 | SDK setup | Opus 5, high | — | Largest skill; cross-platform install, licence/engine/DB config, build-from-source recovery. Errors here are high-cost and platform-specific. |
+| 4 | SDK setup | Opus 5, high | — | Largest skill; cross-platform install, license/engine/DB config, build-from-source recovery. Errors here are high-cost and platform-specific. |
 | 5 | System verification | Sonnet 5, **high** | effort ↑ | Not "run / check / report" any more: it writes and runs the first real SDK code, and the export-flag defect in the 2026-07-26 feedback was filed against **this** module at step 7. Sonnet still fits the volume of work; the reasoning load justifies high. |
 | 6 | Truth Set visualization | **Opus 5, high** | model ↑, effort ↑ | Builds a full web application in an arbitrary language from a written contract (INV-090/INV-124/INV-106/INV-091/INV-081). The largest code-generation task before graduation, and historically the most defect-prone. |
 | 7 | Data collection | Sonnet 5, medium | — | Gathering sources, light code. Genuinely the lightest technical module. |
@@ -131,7 +131,7 @@ the tiers below are the judgement, not the model facts.
 Effects: the back half (Data Quality → Data processing → Query, Visualize and Discover → Graduation)
 becomes **flat at Opus 5 / high**, eliminating three change points in the stretch where the Bootcamper
 is deepest in the work; change points fall from six to five, and the remaining ones sit at genuine
-workload boundaries rather than at artefacts of an ageing table.
+workload boundaries rather than at artifacts of an aging table.
 
 **Considered and rejected, recorded so they are not re-litigated:**
 
@@ -152,7 +152,7 @@ Keep the flow exactly as INV-137 defines it — on a change, a single pinned �
 own yielding turn; on **yes**, the one-line run-commands statement followed by the pinned
 "👉 Are you done modifying the model and effort?" gate, with the module's first step deferred to the
 turn after the Bootcamper confirms; on **no**, the first step lands that same reply turn. That is the
-requested behaviour and it is already shipped. Three corrections:
+requested behavior and it is already shipped. Three corrections:
 
 1. **Compare against the Bootcamper's actual setting, not the previous recommendation.** The trigger
    is "the recommendation differs from what the Bootcamper is running now". The guide is told its own
@@ -194,7 +194,7 @@ renumbering or deletion is needed (INVARIANTS.md rule 1). What changes:
   requires a single comparable value. This is what closes problem (e).
 - **INV-114** — unchanged in meaning, but its scope note should state that the two tables must match
   **row for row including the stage list**, so a newly added stage row cannot land in one file only.
-- **INV-063/INV-069** — no change; their behaviour is what §2 preserves.
+- **INV-063/INV-069** — no change; their behavior is what §2 preserves.
 - **INV-098** — no change; surface adaptation applies unchanged to the revised wording.
 - **INV-133** — no change; it already records that it no longer governs `model_guidance`.
 - **INV-096** — no change, but confirm the apparatus order (step overview → time estimate →
@@ -231,7 +231,7 @@ renumbering or deletion is needed (INVARIANTS.md rule 1). What changes:
 - [ ] Exactly one 👉 per turn throughout, every gate pinned verbatim, and the gate asked once
       (INV-008/INV-009/INV-056/INV-006).
 - [ ] `graduation/SKILL.md` no longer asserts that graduation always steps up from Module 7; it
-      derives its behaviour from the table like every other stage.
+      derives its behavior from the table like every other stage.
 - [ ] The apparatus-exempt stages still present no model/effort guidance at all (INV-075/INV-078).
 - [ ] The revised invariants are recorded in `specs/INVARIANTS.md` as new IDs superseding INV-137
       where meaning changed, with no existing invariant deleted or renumbered.
@@ -248,7 +248,7 @@ renumbering or deletion is needed (INVARIANTS.md rule 1). What changes:
   (`:371-376`), the change-detection rule (`:320-353`), the downgrade framing (`:349-353`), and the
   Entity Resolution Concepts row plus the detection note at `:382-384`.
 - `plugins/senzing-bootcamp/docs/model-selection.md` — the mirrored table (`:133-138`), the per-skill
-  best-value evaluation (`:80-91`), the behaviour table (`:103-106`), and the recommendation section
+  best-value evaluation (`:80-91`), the behavior table (`:103-106`), and the recommendation section
   (`:140-153`) whose "switch up for Modules 2 and 5, and graduation" summary changes.
 - `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — `:81-86`: drop the hardcoded "always steps
   up from Module 7" premise.
@@ -287,7 +287,7 @@ Both open questions are settled. Nothing in this spec awaits a choice — implem
   and Query, Visualize and Discover re-ratings.
 - Priority: High (the flow is shipped and unconditional, so the assignment now sets the interruption
   rate for every bootcamp)
-- Related specs: `retire-model-guidance-modes` (INV-137 — the current governing behaviour; ledgered in
+- Related specs: `retire-model-guidance-modes` (INV-137 — the current governing behavior; ledgered in
   `specs/IMPLEMENTED.md:71`, no spec file), `specs/skip-model-guidance-question.md` (its predecessor),
   `specs/model-effort-guidance-advisory-not-gate.md` (INV-119/INV-120, retired),
   `specs/model-effort-change-prompt.md` (INV-063), `specs/model-effort-switch-done-confirmation.md`

@@ -55,7 +55,7 @@ this session, and the plugin's call sites were counted against those same lists.
 
 `REQUIRED_PARAMS` was written to fix the two tools that had a *known* defect —
 `dry-run`'s originating finding was `mapping_workflow`'s missing `workspace_dir`, and
-`analyze_record` shares the parameter. It was never generalised to the other seven, and its comment
+`analyze_record` shares the parameter. It was never generalized to the other seven, and its comment
 (*"Tools whose schema marks a parameter REQUIRED"*) reads as though it enumerates them all. A guard
 that names its subject in the general and covers a subset is the "guard narrower than the invariant
 it claims to enforce" class, here in a test rather than an invariant.

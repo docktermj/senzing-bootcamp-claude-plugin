@@ -77,7 +77,7 @@ this repo's CI runs on Linux, where the claim happens to hold.
       platform claim; its substance and its criteria are otherwise untouched.
 - [ ] INV-163's platform example is corrected in place; its ID is not renumbered and its
       MUST is unchanged.
-- [ ] INV-129 is still honoured — nothing instructs installing poppler to satisfy a check.
+- [ ] INV-129 is still honored — nothing instructs installing poppler to satisfy a check.
 - [ ] A test asserts that macOS is not grouped with Linux for poppler availability, so the
       habitual pairing cannot be reintroduced.
 - [ ] **Not runtime-verifiable in this environment**, and disclosed as such: this repo runs
@@ -117,7 +117,7 @@ All four sites corrected as specified. Five things differ from the text:
    opened by repeating the false claim verbatim — "poppler, which is standard on Linux and macOS
    and **absent on Windows by default**". The spec lists that file for the new assertion but not
    as a *source* of the claim. It is now corrected, with a note recording that it carried the
-   premise and that a wording assertion is the only defence available, since no suite can check
+   premise and that a wording assertion is the only defense available, since no suite can check
    what is installed on a platform it is not running on.
 2. **Line references drifted.** The spec cites Step 1b at `:608-616`; the block is at `:619-635`
    because commits `4cff770` and `022c4b2` added text to `graduation/SKILL.md` earlier the same

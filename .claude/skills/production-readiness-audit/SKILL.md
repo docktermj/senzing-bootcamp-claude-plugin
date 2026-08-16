@@ -1,6 +1,6 @@
 ---
 name: production-readiness-audit
-description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honoured, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
+description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honored, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
 ---
 
 # Production-readiness audit
@@ -48,7 +48,7 @@ existing tests could see."* A sample of what a green suite shipped:
 
 ## What this skill is not
 
-Five neighbours overlap. Keeping them distinct keeps all five useful.
+Five neighbors overlap. Keeping them distinct keeps all five useful.
 
 | Skill | Asks |
 |---|---|
@@ -108,7 +108,7 @@ new invariant — do not read one into INV-003.
 
 This is the part no other skill does, and the direction that has repeatedly cost weeks.
 
-**Forward — does the plugin honour `INVARIANTS.md`?** For each invariant, find every
+**Forward — does the plugin honor `INVARIANTS.md`?** For each invariant, find every
 site it binds and check them *all*. The dominant failure is not a rule ignored; it is a
 rule **applied incompletely**. INV-142 said "a bundled generator" and was implemented in
 one of two. INV-146's superseded "2-3 screenshots" survived in three places. INV-153 was
@@ -182,10 +182,10 @@ Read `specs/INVARIANTS.md` in full — 194 invariants, and the per-module outcom
 
 For each invariant, ask two questions and prefer the second:
 
-1. Is it honoured **where I first look**?
-2. **What is the full set of sites it binds, and is it honoured in all of them?**
+1. Is it honored **where I first look**?
+2. **What is the full set of sites it binds, and is it honored in all of them?**
 
-Use the enumeration scan to prioritise, because enumerations rot fastest:
+Use the enumeration scan to prioritize, because enumerations rot fastest:
 
 ```bash
 python3 .claude/skills/production-readiness-audit/conformance.py enumerations
@@ -263,7 +263,7 @@ Neither number is a target. Use them to find:
   forward sweep's incomplete-application class, approached from the other end.
 - **A governing rule buried below the fold** of a long file, where the model reaches the
   action before the constraint. Moving it up is a concision fix that removes nothing.
-- **Definition too thin** — a step that assumes a judgement the guidance never states.
+- **Definition too thin** — a step that assumes a judgment the guidance never states.
   Goldilocks cuts both ways, and this half is easy to forget because nothing looks wrong.
 
 ## Step 7: The defect classes worth hunting, in value order
@@ -275,7 +275,7 @@ Drawn from the six prior audits. The first three produced the highest-severity f
 2. **A string that is wrong only relative to a working directory or a runtime.** A bare
    `scripts/…` path that works in the repo and fails in the Bootcamper's project; an
    f-string interpolated at runtime so the `⛔ RESERVED` framing above the dict never
-   travelled with the value. Tests that model neither cannot see these.
+   traveled with the value. Tests that model neither cannot see these.
 3. **A guard narrower than the invariant it claims to enforce.** The INV-146 guard's
    regex required "most"|"best" after "2-3" and scanned two of three call sites, so it
    passed while three violations shipped. Read what a guard *asserts*, not its name.
@@ -285,7 +285,7 @@ Drawn from the six prior audits. The first three produced the highest-severity f
    comment claimed `test_brand_sync.py` asserted its palette; it did not.
 7. **An inlined constant diverging from its source of truth** — a fallback palette, a
    duplicated table, a figure hardcoded where the guidance says to look it up.
-8. **A claim about behaviour that the code stopped doing** — "silently skips" where the
+8. **A claim about behavior that the code stopped doing** — "silently skips" where the
    script now names each drop on stderr.
 
 ## Step 8: What to do with a finding

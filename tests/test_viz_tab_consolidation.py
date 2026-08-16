@@ -119,7 +119,7 @@ class EntityGraphCarriesTheRelationshipMode(unittest.TestCase):
         self.assertRegex(self.page, r"relationships_total\|\|0\)>0")
 
     def test_relationship_styling_is_preserved(self):
-        """Edge colour plus dash, so the types survive a monochrome screenshot."""
+        """Edge color plus dash, so the types survive a monochrome screenshot."""
         self.assertIn("stroke-dasharray", self.page)
         self.assertIn("function rdash", self.page)
 

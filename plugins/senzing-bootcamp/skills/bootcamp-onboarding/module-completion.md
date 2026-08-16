@@ -259,7 +259,7 @@ a short `{name}`):
    unique content. Delete only a true duplicate: two images of the *same* tab, which per-tab capture
    should not produce. Judging which shots are worth keeping is what previously dropped Merge
    Statistics, Match Keys and Feature Scores from a six-tab app — the three *analytical* tabs, since
-   any such judgement pulls toward the most visually striking. The recap then showed the same three
+   any such judgment pulls toward the most visually striking. The recap then showed the same three
    tabs in both visualization sections and the app looked narrower than it was.
 
    ⛔ **Embed in the app's tab order, never in capture or append order.** The order is the row order

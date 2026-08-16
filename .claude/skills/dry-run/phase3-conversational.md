@@ -28,7 +28,7 @@ scaffold, do not begin the walk, and do not assume the top of the bootcamp.
 
 **Why.** The bootcamp is cheap to walk; the *analysis* is what fills the context
 window — the test-notes blocks, the pinned-wording comparisons, the invariant lookups,
-the specs written mid-walk. A run that analyses from the onboarding preface exhausts
+the specs written mid-walk. A run that analyzes from the onboarding preface exhausts
 its context somewhere around Discover the Business Problem and stops there. That is
 why every walk to date has re-covered the same opening stretch, and why Data
 processing, Query/Visualize/Discover and graduation have never been walked at all.
@@ -54,12 +54,12 @@ maintainer is not the Bootcamper. Inside the walk itself, names only.
 
 ⛔ **Mark the environment's ceiling on the list when you present it.** The fast-forward
 has to genuinely reach the chosen module, and from **SDK setup** onward that means a
-real Senzing install, a database, and a licence. Use the environment check from the
+real Senzing install, a database, and a license. Use the environment check from the
 SKILL's "Before you start" step 3 and say plainly which of the eleven are reachable
 today, so the maintainer picks knowing where the walk would stall. A choice past the
 ceiling is still the maintainer's to make — just do not let them make it blind.
 
-Recommend a module **later than the last run analysed**, and name that module when you
+Recommend a module **later than the last run analyzed**, and name that module when you
 recommend it. Nothing in the repo records it, so the previous run's report is the only
 memory this rotation has.
 
@@ -128,14 +128,14 @@ off, which is also the fastest way to catch a step that asks anyway.
 
 **If the analysis starts anywhere later,** scaffold with `--seeded` and skip the
 second walk. Both fixtures differ only in what Bootcamp preparation does, which is
-now fast-forwarded rather than analysed, so the pair proves nothing here — and
+now fast-forwarded rather than analyzed, so the pair proves nothing here — and
 `--seeded` is the shorter fast-forward. Say in the report that the INV-133 pair was
 not run, so a later run knows it is still owed.
 
 **How far the walk can go.** **Onboarding preface → Bootcamp preparation → Module 0 →
 Module 1** needs MCP access and nothing else, and covers the densest concentration of
 interaction invariants in the plugin. From **SDK setup** onward the walk needs a real
-install, a database and a licence — which is the ceiling to state when presenting the
+install, a database and a license — which is the ceiling to state when presenting the
 module list, and the thing that stops the fast-forward if the environment lacks them.
 
 Tell the maintainer up front where the analysis starts, how far you expect to get, and
@@ -171,7 +171,7 @@ Interaction invariants, in rough order of how often they break:
 - **INV-251 / one 👉 per turn.** Exactly one, ending the turn. **Two or more breaches
   INV-251; zero breaches INV-225** — including a stray question inside an
   acknowledgment. (Not INV-005, which is the 👉 *marker* rule and says nothing about
-  count; relabelled 2026-08-15.)
+  count; relabeled 2026-08-15.)
 - **INV-133 / saved preferences.** A preference already in
   `config/bootcamp_preferences.yaml` must be honored and its question **not asked**.
   Pre-seed one (e.g. `verbosity: minimal`) on a second run and see whether it is
@@ -216,7 +216,7 @@ reads as broader coverage than it had.
   name what that leaves uncovered.
 - **Administrative write noise.** INV-012 wants config writes unnarrated, and
   `hooks/README.md` records that no harness mechanism suppresses Write/Edit diffs — so the
-  plugin minimises write *frequency* instead (INV-058's single consolidated write). During
+  plugin minimizes write *frequency* instead (INV-058's single consolidated write). During
   a walk you will likely write config with `Bash`, which renders as tool output rather than
   an inline diff, so **the walk cannot tell you whether the noise INV-058 exists to reduce
   is actually reduced**. What it *can* check is the count: one write per file at Bootcamp
@@ -226,9 +226,9 @@ reads as broader coverage than it had.
   particular the `Stop` hook's closing-question safety net is untested here — phase 2
   executes all six directly instead.
 - **Anything past the SDK.** The walk stops where a real Senzing install is needed, so the
-  loads, the live visualisation server, and graduation's deliverables are out of reach.
+  loads, the live visualization server, and graduation's deliverables are out of reach.
 - **The assistant's own compliance is not evidence.** A walk shows that following the files
-  *can* produce correct behaviour. It cannot show that a different assistant, or the same
+  *can* produce correct behavior. It cannot show that a different assistant, or the same
   one without a maintainer watching, would land the same way. Findings are trustworthy;
   clean stretches are weaker evidence than they feel.
 

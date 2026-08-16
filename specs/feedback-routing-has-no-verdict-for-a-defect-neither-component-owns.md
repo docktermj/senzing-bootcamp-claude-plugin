@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
-The feedback flow's routing taxonomy (`feedback.md:86-98`) recognises four verdicts — `plugin`,
+The feedback flow's routing taxonomy (`feedback.md:86-98`) recognizes four verdicts — `plugin`,
 `mcp-server`, `both`, `unclear` — and is built on a **two-component world model**: the bootcamp
 plugin, and the Senzing MCP server. A defect owned by the **Claude Code harness** fits none of
 them, and the discriminating test routes it to the wrong one.

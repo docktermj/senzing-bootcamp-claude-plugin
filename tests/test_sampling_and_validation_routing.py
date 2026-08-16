@@ -1,7 +1,7 @@
 """Two ways a technically perfect load produced nothing useful.
 
 **Random sampling destroyed the cross-source overlap.** Module 4 offered sampling at the
-licence gate with no strategy guidance, and the natural instinct — a random sample is
+license gate with no strategy guidance, and the natural instinct — a random sample is
 representative — is right for profiling and wrong for entity resolution, which needs the
 same real-world entities to appear in more than one source. A random 300 records from each
 of five sources loaded flawlessly (1,147 records, zero errors, redo drained, quality
@@ -9,7 +9,7 @@ of five sources loaded flawlessly (1,147 records, zero errors, redo drained, qua
 overlap was real: 507 shared names across 21,284 x 63,193 candidates for the largest pair.
 
 The correct guidance already existed at Step 8b, in the branch that fires only on
-SQLite load-time concerns — never on the licence-driven path a bootcamper meets first.
+SQLite load-time concerns — never on the license-driven path a bootcamper meets first.
 The module also said "Ensure the sample is representative of the full dataset", which is
 the harmful instinct stated as instruction.
 
@@ -17,7 +17,7 @@ the harmful instinct stated as instruction.
 everywhere else, so topic='reports' is the name a reader picks for "counts and statistics"
 — and its SQL targets a data mart the bootcamp never builds. Note the server itself
 discloses that (verified 1.32.1, 2026-07-28), so the defect is the plugin's routing, not
-the tool's candour; the guidance quotes the tool rather than asserting on its own
+the tool's candor; the guidance quotes the tool rather than asserting on its own
 authority.
 
 These tests pin the single-source-of-truth structure, since this defect *was* two copies
@@ -169,7 +169,7 @@ class ValidationRoutingNamesItsTopic(unittest.TestCase):
             "returns a needs_input tree with no content when it is omitted (1.32.2)",
         )
 
-    def test_reports_is_characterised_rather_than_merely_avoided(self):
+    def test_reports_is_characterized_rather_than_merely_avoided(self):
         text = flat(PHASE_D)
         self.assertRegex(text, r"(?i)`topic='reports'` is not this bootcamp's route")
         self.assertRegex(text, r"sz_dm_entity")

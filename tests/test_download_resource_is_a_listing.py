@@ -14,8 +14,8 @@ only parameters the live schema declares may be passed:
 * `download_resource` declares `filename`, `filenames`, `inline`, `version`.
 
 So the two siblings inherit a prohibition and `download_resource` inherits a permission.
-Stated per-tool as "never pass `inline`" the rule generalises wrongly, and a guide that
-internalised it that way refuses the one call where `inline` is the documented remedy —
+Stated per-tool as "never pass `inline`" the rule generalizes wrongly, and a guide that
+internalized it that way refuses the one call where `inline` is the documented remedy —
 stranding a firewalled bootcamper on the step whose `on_failure` text exists for them.
 
 These tests pin three things: that every `download_resource` call site accounts for the

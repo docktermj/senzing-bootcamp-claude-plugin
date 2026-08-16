@@ -289,7 +289,7 @@ class AnEmptyCompositeMembersFieldIsNotAnAbsentFact(unittest.TestCase):
         self.assertRegex(
             self.flat,
             r"(?i)`ENTITY_NAME` comes back `null`",
-            "the membership alone is trivia; the null field is what a reader recognises",
+            "the membership alone is trivia; the null field is what a reader recognizes",
         )
         self.assertIn("SZ_ENTITY_INCLUDE_ENTITY_NAME", self.text)
 

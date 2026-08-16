@@ -1,7 +1,7 @@
 """INV-143 on the *other* renderer: `?` must never reach the page, on either path.
 
 `_pdf_escape` carried its own inline substitution table — 9 entries, a subset of
-`_UNICODE_MAP`'s 33 — with a `"?"` default. The fpdf2 renderer normalises through `_safe`
+`_UNICODE_MAP`'s 33 — with a `"?"` default. The fpdf2 renderer normalizes through `_safe`
 and never reaches that default, but the stdlib writers called `_pdf_escape` on raw text, so
 **24 of the 33 mapped characters rendered as `?`**. Measured 2026-07-31, before the fix:
 
@@ -17,7 +17,7 @@ substitution was not merely wrong, it was unreportable.
 
 Why it survived: `test_recap_pdf_font_safety.py` and `test_recap_measure_font_safety.py`
 both exist to stop **fpdf2** raising on an unencodable character — the second treats
-`renderer: stdlib` as evidence something crashed. The stdlib writer was modelled as the
+`renderer: stdlib` as evidence something crashed. The stdlib writer was modeled as the
 *symptom* of a defect, never as a renderer whose own character handling could be wrong. No
 test called `_pdf_escape`.
 
@@ -79,7 +79,7 @@ RECAP_WITH_SYMBOLS = """# Senzing Bootcamp Recap ≥ 95% ✅
 ### Information Shared
 
 Precision came out ≥ 95% and recall ≈ 90%, with cost ≤ €500 per run. The vendor's
-Senzing™ licence covers it, and throughput was effectively ∞ for our volume.
+Senzing™ license covers it, and throughput was effectively ∞ for our volume.
 
 ### Questions & Responses
 
@@ -133,7 +133,7 @@ class TheEscaperNoLongerSubstitutes(unittest.TestCase):
                 self.mod._safe(self.mod._safe(ch))
             )
         ]
-        self.assertEqual([], differ, "sanitisation must be idempotent across the map")
+        self.assertEqual([], differ, "sanitization must be idempotent across the map")
 
     def test_it_has_no_private_substitution_table(self):
         """A second copy of a subset is the defect, not the fix."""
@@ -156,7 +156,7 @@ class TheEscaperNoLongerSubstitutes(unittest.TestCase):
         self.assertEqual(r"Jos\351 Pe\361a", self.mod._pdf_escape("José Peña"))
         self.assertEqual("plain ASCII 123", self.mod._pdf_escape("plain ASCII 123"))
 
-    def test_an_unsanitised_character_is_dropped_and_recorded(self):
+    def test_an_unsanitized_character_is_dropped_and_recorded(self):
         """The forgot-to-call-`_safe` case must be legible, not a `?` on a keepsake."""
         out = self.mod._pdf_escape("李明")
         self.assertEqual("", out, "dropping is what INV-143 permits")
@@ -214,10 +214,10 @@ class TheStdlibRendererIsCleanEndToEnd(unittest.TestCase):
                 "every `?` on the page is a character the writer could not render",
             )
 
-    def test_the_direct_token_route_is_sanitised_too(self):
+    def test_the_direct_token_route_is_sanitized_too(self):
         """The H1 title reaches `add()` directly, not via `add_wrapped`.
 
-        Sanitisation happens at two points — `add()` for direct calls and before `_wrap`
+        Sanitization happens at two points — `add()` for direct calls and before `_wrap`
         in `add_wrapped()` — and they cover different routes. Body prose travels
         `add_wrapped`, so a fixture with symbols only in prose leaves the `add()`
         boundary unpinned: removing it changes nothing observable. The title is the
@@ -255,7 +255,7 @@ class TheStdlibRendererIsCleanEndToEnd(unittest.TestCase):
 class TheDiscoveriesWriterSharesTheFix(unittest.TestCase):
     """Both generators import `_pdf_escape`, so fixing one is not enough."""
 
-    def test_its_direct_token_route_is_sanitised(self):
+    def test_its_direct_token_route_is_sanitized(self):
         """The cover title and subtitle reach `add()` directly.
 
         Replaced a source-scrape for `"_safe(text)"`, which passed even with the `add()`
@@ -280,7 +280,7 @@ class TheDiscoveriesWriterSharesTheFix(unittest.TestCase):
             "# Data Discoveries\n\n"
             "## Headline numbers\n\n"
             "Cross-source precision was ≥ 95% at a cost of ≤ €500, and the vendor's "
-            "Senzing™ licence covers throughput of effectively ∞ records.\n\n"
+            "Senzing™ license covers throughput of effectively ∞ records.\n\n"
             "## What was not found\n\n"
             "Overlap was low, so the ceiling was near — this is data, not pipeline.\n"
         )

@@ -129,7 +129,7 @@ Implemented as written, with one addition the spec does not name and one placeme
    does deliberately, so the correction is legible as one. Without an escape the honest move
    (quote the wrong claim verbatim) is the one the guard punishes, and the author is pushed to
    paraphrase history instead of adding evidence. The escape mirrors the file-level
-   `MCP-NEGATIVE-SCAN: ignore-file` that `coverage_reports.py` already honours, carries the same
+   `MCP-NEGATIVE-SCAN: ignore-file` that `coverage_reports.py` already honors, carries the same
    abuse risk, and has the same answer: it is one grep away from review.
 2. **The "why" comment sits on `NEGATIVE_EXTRA_FILES`, with `NEGATIVE_ROOTS`' own comment
    extended.** Criterion 3 asks for it "on the comment on `NEGATIVE_ROOTS`". The two constants

@@ -54,15 +54,15 @@ plugin will read three accurate, ordered resolution steps and discount them — 
 is now the thing pulling the reader away from the fix. That inverts INV-080, which exists
 to route the guide **to** MCP.
 
-It is also the fourth instance this week of one defect class: **the plugin characterising
-what an MCP tool returns, and the characterisation going stale** (after INV-132's
+It is also the fourth instance this week of one defect class: **the plugin characterizing
+what an MCP tool returns, and the characterization going stale** (after INV-132's
 `flags`/`response_schemas` claim, the `response_schemas` top-level claim, and
 `reporting_guide`'s gating). A claim about a tool's *output* has no test that can catch it
 and no reason to be revisited.
 
 ## Root cause
 
-The characterisation was accurate when written (2026-07-28, server 1.32.1) and nothing
+The characterization was accurate when written (2026-07-28, server 1.32.1) and nothing
 re-asks a negative claim about a tool's output. Senzing improved this specific code's
 entry — `SENZ2027`, checked the same day, is still a stub returning a placeholder cause —
 so richness varies per code and cannot be inferred from one sample.
@@ -79,7 +79,7 @@ so richness varies per code and cannot be inferred from one sample.
    a distraction. **Keep** the `explain_error_code` call itself (INV-080) and keep the
    pointer to Step 8a.
 3. **Add the provenance stamp** both places: server 1.32.2, 2026-07-30.
-4. **Do not generalise to other codes.** `SENZ2027` remains a stub — verified the same
+4. **Do not generalize to other codes.** `SENZ2027` remains a stub — verified the same
    day — and the plugin's compensating text for it is still correct and must stay. Any
    wording introduced here must be about `SENZ7221` specifically, not about
    `explain_error_code` in general.
@@ -134,7 +134,7 @@ so richness varies per code and cannot be inferred from one sample.
   so the corrected claim is now the guarded one, and mutation-tested by restoring the
   stale wording.
 - **A second guard was added beyond the spec.** `test_the_correction_is_scoped_to_senz7221_only`
-  pins `SENZ2027`'s compensating FAQ text. The spec's step 4 says not to generalise across
+  pins `SENZ2027`'s compensating FAQ text. The spec's step 4 says not to generalize across
   codes; nothing enforced that, and the obvious future error is a pass that reads this
   change and concludes `explain_error_code` can now be trusted everywhere. `SENZ2027` was
   re-verified the same day and is still a stub, so richness genuinely varies per code.

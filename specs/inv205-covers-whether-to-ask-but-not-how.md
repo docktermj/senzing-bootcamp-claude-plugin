@@ -52,7 +52,7 @@ the **absent lead question**, not the recommendation.
 
 ## Root cause
 
-**The invariant was generalised from one instance and enumerated its scope too narrowly.**
+**The invariant was generalized from one instance and enumerated its scope too narrowly.**
 
 INV-205 was drafted, signed off and recorded the same day, from a single observed directive. Framing
 its scope as "whether, when, or what" felt exhaustive against that instance; it is a list, and
@@ -118,7 +118,7 @@ hook for the step-3 case either.
   not anticipate. That is the argument for the instance-threshold discipline the repo applies
   elsewhere, and it is recorded plainly rather than quietly widened.
 - Priority: **Medium-low.** The substantive rule already holds and a careful guide reaches the right
-  behaviour from INV-005/INV-051 directly; what is missing is the routing that makes it obvious at
+  behavior from INV-005/INV-051 directly; what is missing is the routing that makes it obvious at
   the moment of use (INV-183's concern).
 - Related: INV-205 (the rule being widened), INV-005 and INV-051 (the rules the tool's format
   breaches), INV-183 (a rule must be reachable at the step that needs it).

@@ -62,7 +62,7 @@ tool's own guidance names it as the correct fallback:
 and each resource's `on_failure` says *"Fallback: call download_resource with this filename and
 inline=true."*
 
-So a guide that has correctly internalised the plugin's blanket never-inline rule will refuse the
+So a guide that has correctly internalized the plugin's blanket never-inline rule will refuse the
 one call where inline is the documented remedy. **That leaves a firewalled Bootcamper with no route
 at all** — exactly the reader the `on_failure` text exists for — on a step every later step depends
 on. The plugin currently teaches a rule that is right twice and wrong once, and never distinguishes
@@ -76,7 +76,7 @@ Two causes, and the second is the one worth fixing structurally:
    It predates the `find_examples` / `generate_scaffold` findings and was never revisited when those
    produced their ⛔s.
 2. **The never-inline rule is stated per-tool, as a prohibition, with the reason (an undeclared
-   parameter) buried in each instance.** Stated that way it generalises wrongly. The rule that
+   parameter) buried in each instance.** Stated that way it generalizes wrongly. The rule that
    actually holds is *"only declared parameters may be passed"* (INV-136) — from which
    `generate_scaffold`/`find_examples` inherit a prohibition and `download_resource` inherits a
    permission. Nothing says this, so the prohibition reads as being about the word `inline`.

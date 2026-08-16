@@ -9,7 +9,7 @@ INV-115 requires looking up a method's response structure via
 For several methods the bootcamp routinely parses, that lookup returns nothing:
 
 - **`get_version` and `get_license`** — `data` came back as an empty array, so the response shape had
-  to be discovered by dumping a raw response. Module 4's licence gate parses `get_license`'s
+  to be discovered by dumping a raw response. Module 4's license gate parses `get_license`'s
   `recordLimit`; Module 2 reports the SDK version.
 - **`find_network_by_entity_id`** — no `response_schemas` entry at all, at the one step whose
   guidance explicitly demands the lookup first.
@@ -153,7 +153,7 @@ guidance would assert an unverified Senzing fact, which INV-080 forbids and whic
 already had to retract once (`verify-sdk-parameter-shapes-and-flag-families` shipped
 "`SZ_EXPORT_ALL_FLAGS` does not exist" and needed a five-place correction).
 
-So the **defence** was implemented rather than the **datum**: the contract states that the graph
+So the **defense** was implemented rather than the **datum**: the contract states that the graph
 entry stops at the top level, requires dumping one raw link element before parsing, and carries the
 endpoint-key divergence as a caution explicitly marked *not MCP-confirmable* and *never the field
 names to code against*. That closes the reported failure mode — a half-populated row that reads as

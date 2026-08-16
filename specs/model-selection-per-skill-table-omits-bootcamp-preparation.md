@@ -37,7 +37,7 @@ into a preparation module. The stage was added to the per-stage table and to INV
 parenthetical, and the per-skill table was not extended with it.
 
 Nothing catches this: INV-140 binds the *per-stage* table, which is complete, so the invariant is
-honoured while its sibling table is one row short. No test compares either table against the shipped
+honored while its sibling table is one row short. No test compares either table against the shipped
 skills directory — a `ls plugins/senzing-bootcamp/skills/` versus table-rows check would have caught
 it on the day the stage landed.
 
@@ -79,7 +79,7 @@ it on the day the stage landed.
 ## Source
 
 - Skill: `production-readiness-audit`, 2026-08-13. Found by the **completeness** sweep while checking
-  INV-140 and INV-141, both of which turned out to be honoured — the defect is in the sibling table
+  INV-140 and INV-141, both of which turned out to be honored — the defect is in the sibling table
   neither invariant binds.
 - Priority: **Low.** Nothing a Bootcamper experiences changes: the stage has a published
   recommendation and the switch-question machinery reads the per-stage table. The cost is to future

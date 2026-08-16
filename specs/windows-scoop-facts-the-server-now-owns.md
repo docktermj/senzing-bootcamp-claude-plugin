@@ -23,7 +23,7 @@ scoop bucket add senzingsdk https://github.com/Senzing/scoop-senzingsdk
 scoop install senzingsdk/senzingsdk
 ```
 
-The bucket is hosted under Senzing's own GitHub organisation and the server calls it
+The bucket is hosted under Senzing's own GitHub organization and the server calls it
 **official**. Calling it unofficial in the plugin invites a Bootcamper on Windows to
 distrust the very route the vendor publishes — on the one platform where the SDK's
 supported-language set is already narrowest.
@@ -72,7 +72,7 @@ carry).
 ## Root cause
 
 Both are the sweep's core shape: a fact written when it was true, with nothing to re-ask.
-The "unofficial" characterisation was plausible when the Scoop route was newer. The
+The "unofficial" characterization was plausible when the Scoop route was newer. The
 `SENZ7426` gap was a genuine absence in one tool that another tool has since filled — or
 always had.
 
@@ -101,7 +101,7 @@ always had.
       names the Senzing-org bucket.
 - [ ] The `SENZING_DIR`-points-at-`er` layout explanation and the `%SENZING_DIR%\..\data`
       fallback both survive unchanged — the server confirms them.
-- [ ] The SUPPORTPATH guidance records the `SENZ7426` + `SzProduct`-masking behaviour,
+- [ ] The SUPPORTPATH guidance records the `SENZ7426` + `SzProduct`-masking behavior,
       attributed to `sdk_guide(topic='install', platform='windows')`.
 - [ ] No text attributes the SUPPORTPATH→`SENZ7426` link to `explain_error_code`, which
       does not make it.

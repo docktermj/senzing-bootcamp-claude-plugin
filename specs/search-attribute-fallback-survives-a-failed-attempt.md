@@ -132,7 +132,7 @@ faithful reading of the guidance, which is how the original `NAME_FULL`-only def
   class asserts only that the drop-and-warn strings are present in the source; it does not drive
   the chip path. The inheritance is nonetheless real and structural — the chips verify through
   `GET /api/search`, which is `Model.search`, so there is one code path and no second fix to
-  make. It was exercised behaviourally by running the rendered page's `loadProbes` under Node
+  make. It was exercised behaviorally by running the rendered page's `loadProbes` under Node
   with a stubbed `/api/search` (six chips offered in merge order; one erroring candidate dropped
   only itself), but **not** against a live engine with loaded data, which this environment does
   not have. Recorded as implemented-but-not-runtime-verified rather than ticked.
@@ -141,7 +141,7 @@ faithful reading of the guidance, which is how the original `NAME_FULL`-only def
   signature as `search_by_attributes(attributes: str, flags: int = SZ_SEARCH_BY_ATTRIBUTES_ALL,
   search_profile: str = '') -> str`, so both the 2-arg and 3-arg calls remain valid and the
   retry was left exactly as it was. The C# binding takes 2 arguments where Python takes 3, which
-  is why the any-language wording stays about *behaviour* and not about a call shape.
+  is why the any-language wording stays about *behavior* and not about a call shape.
 
 ## Invariants introduced
 

@@ -21,13 +21,13 @@ EXIT=0
 Source line:
 
 ```text
-The network centres on Акционерное общество "Газпром-Медиа Холдинг" and its affiliates.
+The network centers on Акционерное общество "Газпром-Медиа Холдинг" and its affiliates.
 ```
 
 Extracted from the rendered PDF:
 
 ```text
-The network centres on "- " and its affiliates.
+The network centers on "- " and its affiliates.
 ```
 
 The fenced diagram lost its `│` and `▼` connectors and its Cyrillic line entirely; only
@@ -63,7 +63,7 @@ the identity field and not for the document body.
 
 ## Proposed change
 
-Close the warn half of the contract, in the shared sanitisation path so both generators get it:
+Close the warn half of the contract, in the shared sanitization path so both generators get it:
 
 1. **Make `_safe()` report what it dropped.** Have the fold path record the characters it
    discarded (and, for the caller's benefit, enough context to locate them) rather than
@@ -129,7 +129,7 @@ Close the warn half of the contract, in the shared sanitisation path so both gen
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "bootcamp_data_discoveries.md content with Cyrillic org names corrupts silently in the PDF" (2026-07-29, Module Query, Visualize and Discover; `Source: self-observed (assistant retrospective)`)
 - Priority: Medium
 - MCP re-check: n/a (no Senzing fact — the Latin-1 limitation is the core PDF fonts' and the
-  drop is the plugin's own sanitisation). Server **1.32.2** was current at triage time,
+  drop is the plugin's own sanitization). Server **1.32.2** was current at triage time,
   2026-07-29. Reproduced directly against the working-tree generator instead.
 - Upstream: not applicable. The entry is routed `both`, but its non-plugin half is the fpdf2
   core-font character range, not Senzing or the MCP server, so there is nothing to report to
@@ -156,7 +156,7 @@ Close the warn half of the contract, in the shared sanitisation path so both gen
   recap generator's own comment records that the fpdf2 renderer runs **two passes**, and it may then
   fall back to the stdlib writer — so an occurrence counter would report two or three times the real
   loss, which is its own silently-wrong number. The collector is keyed by character, making the
-  record idempotent however many times the same content is sanitised; a test pins that
+  record idempotent however many times the same content is sanitized; a test pins that
   (`test_the_record_is_idempotent_across_render_passes`).
 - **Both generators' assertions live in `tests/test_recap_pdf_font_safety.py`**, the first location
   the spec names, rather than splitting the discoveries half into `tests/test_discoveries_pdf.py`.

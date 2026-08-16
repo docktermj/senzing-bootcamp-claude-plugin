@@ -139,5 +139,5 @@ at Truth Set visualization and at every module after it.
   not re-derived later.
 - **An existing guard corrected the first draft.** `tests/test_model_nudge_trigger_direction.py`
   rejected the sentence describing the observed defect, because it named the previous-stage
-  comparison with no adjacent prohibition — a description of a wrong behaviour reads as a
-  description of the behaviour. Reworded to state the ban explicitly.
+  comparison with no adjacent prohibition — a description of a wrong behavior reads as a
+  description of the behavior. Reworded to state the ban explicitly.

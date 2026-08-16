@@ -162,7 +162,7 @@ On **accept** ("yes", "sure", "let's try"), run the knowledge check under these 
   choices never joined with "or". Do **not** pose open-ended items ("explain why principle-based
   matching beats hand-written rules") — however good the question, it fits neither INV-051's
   numbered shape nor INV-008's single-meaning-answer requirement, and it makes "was that correct?"
-  a judgement call instead of a fact. Keep the *thinking* conceptual and the *answer format*
+  a judgment call instead of a fact. Keep the *thinking* conceptual and the *answer format*
   closed.
 - ⛔ **When the answer is wrong, say so — and re-teach.** This is the highest-value moment in the
   knowledge check, and it is the one a guide optimizing for encouragement gets wrong. Do all three:

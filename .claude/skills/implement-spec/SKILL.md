@@ -79,7 +79,7 @@ the explanation of *what* it computes and *why*; run the script to get the answe
 only `IMPLEMENTED.md`, reported a **declined** spec as open, recommended it to the maintainer,
 and implemented it; `tests/test_declined_ledger.py` caught the contradiction afterwards, but
 nothing caught the listing. The instruction below was correct at the time and was simply not
-followed — which is the argument for mechanising it rather than restating it more firmly
+followed — which is the argument for mechanizing it rather than restating it more firmly
 (INV-207).
 
 1. **List** `specs/*.md` and drop the meta files above → the candidate set.
@@ -258,7 +258,7 @@ claim, and nothing downstream re-checks it.** For each `- [ ]` in `## Acceptance
 name what proves it: a `file:line` you changed, a test that asserts it, or a command you
 ran. A criterion you cannot prove is **not** ticked — it is either implemented-but-not-
 runtime-verified (say what it needs, in both the report and the entry) or a deviation
-(Step 3.6). Do not summarise the *narrative* of the work in place of this walk: the
+(Step 3.6). Do not summarize the *narrative* of the work in place of this walk: the
 narrative is what a spec's `## Proposed change` already says, and the criteria are what
 was actually promised.
 

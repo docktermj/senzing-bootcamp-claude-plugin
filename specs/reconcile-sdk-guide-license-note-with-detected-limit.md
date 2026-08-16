@@ -70,7 +70,7 @@ reconciliation below is the durable fix.
    (INV-080); a note about the *installed environment* derived from a parameter the caller supplied
    is a conditional, not a fact about this system. Where the bootcamp holds a measured value for the
    same thing — a detected license limit, a detected SDK version, a detected platform — the measured
-   value governs, and the divergence is recorded rather than silently resolved. This is not a licence
+   value governs, and the divergence is recorded rather than silently resolved. This is not a license
    to answer from training data: both sides here are MCP-sourced, one generically and one by
    measurement of the bootcamper's machine.
 
@@ -113,7 +113,7 @@ reconciliation below is the durable fix.
   `Source: self-observed (assistant retrospective)`; `Routing: mcp-server`;
   `Upstream: offered, declined`)
 - Priority: Medium
-- Related specs: `specs/single-license-gate-at-data-processing.md` (the one licence gate this
+- Related specs: `specs/single-license-gate-at-data-processing.md` (the one license gate this
   defers to), `specs/module2-license-clarity.md`, `specs/license-request-option.md`,
   `specs/mcp-grounding-in-every-skill.md` (INV-080),
   `specs/production-volume-question-clarity-and-threading-cutover.md` (the other consumer of
@@ -129,4 +129,4 @@ reconciliation below is the durable fix.
 
 The premise was confirmed at the schema level rather than assumed: `sdk_guide`'s own `record_count`
 parameter documentation states "Values > 500 also surface license guidance (default Senzing license
-limit)" — so the note is emitted from the count alone, with no knowledge of the installed licence.
+limit)" — so the note is emitted from the count alone, with no knowledge of the installed license.

@@ -205,7 +205,7 @@ nothing shown and nothing asked.
   end the turn on a question must resolve to a pinned question that actually exists at the step it
   names.
 - **Do not weaken the mapping-verbosity offer to match the tool.** The bootcamper was promised they
-  would see each decision; honour it.
+  would see each decision; honor it.
 - ⛔ **This carve-out is about *conversation only*.** Everything else the tool says remains
   authoritative and must be followed exactly (INV-080): payload shape and the per-step advance
   schema, the opaque `state` echo, which resources to download and where, and every Senzing fact in
@@ -347,7 +347,7 @@ embedded: {'disposition': 'derived', 'derived_as': 'REL_ANCHOR',  'domain': '<DS
 ⛔ **Never silently downgrade a bootcamper's choice to `payload`.** Offer the decision **at step 3**,
 where the values are in front of them, and state the trade-off both ways — a resolvable entity and
 more records, against a string that never matches. If the bootcamper asks for the entity, carry it
-out. If it will not be modelled — they declined, or going back is not possible — **say so and record
+out. If it will not be modeled — they declined, or going back is not possible — **say so and record
 it** in `config/data_sources.yaml`, so the outcome is visible rather than inferred from its absence.
 Mapping it to `payload` while they asked for an entity is assuming an answer they gave differently,
 which **INV-007** forbids.
@@ -423,14 +423,14 @@ this file is the precedent for retiring one once the server fixes it.
 2. **A headerless CSV is profiled by consuming its first data row as column names.** The profiler
    assumes a header row. On a documented headerless source (the free-data catalog ships one, with 12
    positional columns in its README) that means **one record disappears** and every column is
-   mislabelled with a value from that row. Nothing fails — you get a confident, wrong profile, and
+   mislabeled with a value from that row. Nothing fails — you get a confident, wrong profile, and
    every step-3 mapping decision rests on it. **Write a headered copy for profiling only**, using
    the documented column order, and let the mapper keep reading the raw file positionally.
 
 ⚠️ **A column's population percentage is not a quality signal when a sentinel token is in use.** A
 null sentinel is a *value*, so the profiler counts it as present: a source using `-0-` for "no data"
 reported **100% population on all 12 columns** when 8 carried no information. Treat population as
-"has a value", never as "has information", and do not let it feed a completeness judgement —
+"has a value", never as "has information", and do not let it feed a completeness judgment —
 that distinction is INV-128's, one layer upstream of where it usually bites.
 
 ⛔ **Work around these; do not ship a patched profiler.** `sz_schema_generator.py` is
@@ -874,7 +874,7 @@ root attributes. Read the actual records.
 Both statements are true, and they answer different questions. The analyzer measures conformance;
 the gate this module needs is loadability.
 
-**`No NAME features found` does not mean the names are missing.** It is an artefact of the analyzer
+**`No NAME features found` does not mean the names are missing.** It is an artifact of the analyzer
 not looking inside the sub-list — it reports `NAMES` and `ADDRESSES` as *payload* attributes and
 skips feature analysis entirely. Names in sub-list records are extracted normally at load. This is
 the single most misleading line in the report, because a bootcamper cannot tell "the analyzer did
@@ -1021,7 +1021,7 @@ source's mapper is written, reviewed and documented — not here. Tell the user:
 it means for matching, any issues found.
 
 ⚠️ **This advance is unconditional in both modes too, and for a different reason than step 11's.**
-The `verdict` is not a preference the bootcamper holds — it is a QA judgement that follows from the
+The `verdict` is not a preference the bootcamper holds — it is a QA judgment that follows from the
 analyzer's own output (features at 0%, a short record count, a payload that should have been a
 feature), so putting it to a vote would be asking them to ratify evidence they have just been shown.
 Compute it, say which check decided it, and advance. The bootcamper's decision points here are the

@@ -176,4 +176,4 @@ bullet:
   separate tests, each verified to fail when the block is removed.
 - **Two earlier mutations also escaped for the same reason and are not counted as guard weaknesses:**
   replacing only a bold lead sentence left the following sentence stating the same rule, so the
-  assertion still matched. A mutation that does not remove the behaviour proves nothing.
+  assertion still matched. A mutation that does not remove the behavior proves nothing.

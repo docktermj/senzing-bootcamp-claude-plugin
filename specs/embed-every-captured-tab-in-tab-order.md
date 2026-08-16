@@ -24,7 +24,7 @@ Two consequences, both raised in the report:
    (which feature combinations drove resolutions) and Feature Scores (how tightly each feature
    agreed) are the quantitative views. Entity Graph and Cross-Source are the most *visually*
    striking — which is what "most representative" pulls toward. The rule systematically discards the
-   analytical content in favour of the decorative.
+   analytical content in favor of the decorative.
 
 **(b) Screenshots appear in capture/append order, not tab order.** Both sections presented their six
 images as Entity Graph, Cross-Source, Search / Probe, Merge Statistics, Match Keys, Feature Scores.
@@ -33,7 +33,7 @@ Cross-Source, Search / Probe. The recap is a walkthrough of the app; a reader ca
 up against the interface, and the analytical tabs land after the search screenshot rather than in the
 sequence the app presents them.
 
-The order was an artefact of how the images got there — three embedded first, three appended later
+The order was an artifact of how the images got there — three embedded first, three appended later
 when the pruning was reversed. Nothing in the guidance specifies an order, so append order won by
 default. The session's own recap was reordered by hand; the guidance is unchanged and would produce
 append order again next time.
@@ -82,7 +82,7 @@ would itself prune a full set.
    duplicate — two images of the same tab — which per-tab capture should not produce anyway. This is
    the bootcamper's stated position: captured tabs are retained, not pruned.
 
-2. **Remove the selection judgement entirely.** "Most representative" is what biased the outcome
+2. **Remove the selection judgment entirely.** "Most representative" is what biased the outcome
    toward the visual tabs. With every tab kept there is no selection to make, so the phrase and its
    pull disappear rather than being re-tuned.
 
@@ -137,7 +137,7 @@ would itself prune a full set.
   — `:446-456`: state explicitly that the table's row order **is** the recap embedding order, so both
   call sites have something to cite.
 - `plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.md` — `:182` ("kept the most
-  representative one for this recap") models the retired behaviour; update it and keep
+  representative one for this recap") models the retired behavior; update it and keep
   `tests/test_example_recap_sync.py` passing.
 - `tests/` — assert the guidance carries no keep-N cap and that both call sites reference the tab
   table for ordering.
@@ -169,7 +169,7 @@ would itself prune a full set.
 
 ## Implementation note
 
-The shipped example recap (`docs/examples/bootcamp_recap.example.md`) modelled the retired behaviour
+The shipped example recap (`docs/examples/bootcamp_recap.example.md`) modeled the retired behavior
 in prose — "kept the most representative one for this recap" — so it was updated too, and its
 committed `.pdf` re-rendered from `plugins/senzing-bootcamp/` as `tests/test_example_recap_sync.py`
 requires (rendering from any other directory silently drops the screenshot). The suite caught the

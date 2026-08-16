@@ -94,7 +94,7 @@ it does not soften the last one.
 
 - `plugins/senzing-bootcamp/skills/bootcamp-onboarding/module-completion.md` — Step 2c
   (`:140-156`), and one line in Step 2b's rules block (`:103-111`).
-- `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — no behaviour change; note that `--check`
+- `plugins/senzing-bootcamp/skills/graduation/SKILL.md` — no behavior change; note that `--check`
   is no longer first run here, so its findings should normally be empty.
 - `tests/` — new guard for the Step 2c invocation and the generator's continued refusal.
 

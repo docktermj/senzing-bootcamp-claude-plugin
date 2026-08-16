@@ -77,7 +77,7 @@ inference a guide draws from them.
    will be split.
 3. **Reconcile Module 1's invariant.** `phase1-discovery.md:145-146` requires "at least one
    transformation"; it must be satisfiable by something the specification actually calls for. Either
-   name the qualifying kinds (date normalisation, code/value standardisation, splitting a field the
+   name the qualifying kinds (date normalization, code/value standardization, splitting a field the
    spec *does* take as components, composing a `RECORD_ID`) or restate the invariant as
    *cross-source mapping divergence*, which is what the teaching actually needs. ⛔ Do not leave it
    as an unqualified "transformation" — that is the wording that produced the reversal.
@@ -119,7 +119,7 @@ inference a guide draws from them.
 - Priority: Medium — no code was written, but the wrong plan was committed to two documents and the failure it would have produced is silent.
 - MCP re-check: **server 1.32.9, 2026-08-16 — still reproduces, and the re-check widened the finding.** `search_docs(query='NAME_FULL single name field do not parse NAME_FIRST NAME_LAST', category='data_mapping')` returns the Senzing Entity Specification; the full document fetched from `https://mcp.senzing.com/resources/senzing_entity_specification.md` (the URL `download_resource(filename='senzing_entity_specification.md')` returns) carries the quoted rule verbatim, plus the parallel `ADDR_FULL` single-field form. The entry quoted the rule accurately. What the entry did not report, and this re-check established, is that Module 4's own two examples are direct mappings under that specification rather than transformations — cause 2 above.
 - Upstream: not applicable — routed `plugin`. The specification is correct and unambiguous; the plugin contradicts it.
-- Related specs: `specs/step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it.md` (when and how the specification is reachable), `specs/download-resource-returns-a-url-not-the-specification.md` (confirmed again here — `download_resource` returned a `mode: "url"` manifest, not content), `specs/synthesized-scenarios-make-the-quality-gate-unreachable.md` and `specs/generated-dataset-is-sized-before-anything-measures-the-licence.md` (siblings in the same branch), `specs/completeness-denominator-has-two-readings-on-a-raw-source.md`
+- Related specs: `specs/step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it.md` (when and how the specification is reachable), `specs/download-resource-returns-a-url-not-the-specification.md` (confirmed again here — `download_resource` returned a `mode: "url"` manifest, not content), `specs/synthesized-scenarios-make-the-quality-gate-unreachable.md` and `specs/generated-dataset-is-sized-before-anything-measures-the-license.md` (siblings in the same branch), `specs/completeness-denominator-has-two-readings-on-a-raw-source.md`
 
 ## Ordering, stated generally
 

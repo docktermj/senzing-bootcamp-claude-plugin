@@ -71,7 +71,7 @@ which is worse than not having it.
    specific site and the citation was simply never added — INV-212's shape exactly.
 
 Report only. Like the other four, it is a lead generator, not a gate: an invariant may
-legitimately be honoured without being named, and the report must say so in its own preamble
+legitimately be honored without being named, and the report must say so in its own preamble
 rather than implying every hit is a defect.
 
 ## Acceptance criteria
@@ -109,7 +109,7 @@ rather than implying every hit is a defect.
 ## Source
 
 - Feedback: none — self-observed. Raised as loose thread 2 of `production-readiness-audit-2026-08-13` and sized at the maintainer's request the same day (`Source: self-observed (assistant retrospective)`).
-- Priority: **Medium.** No bootcamper-facing behaviour changes and nothing is broken today. The value is that the reverse direction of the invariant contract is where this repo has repeatedly lost weeks, and it is currently the only direction with no mechanical report — the same argument that produced `list_specs.py` (INV-216) and INV-207: mechanise the check that was correct-but-not-followed rather than restating it more firmly.
+- Priority: **Medium.** No bootcamper-facing behavior changes and nothing is broken today. The value is that the reverse direction of the invariant contract is where this repo has repeatedly lost weeks, and it is currently the only direction with no mechanical report — the same argument that produced `list_specs.py` (INV-216) and INV-207: mechanize the check that was correct-but-not-followed rather than restating it more firmly.
 - MCP re-check: **n/a (no Senzing fact).** This spec concerns this repo's own reference graph only. Note INV-207: any claim it makes about that graph must be re-verified **after** the change, not before — the counts in `## Problem` were measured at 220 defined invariants on 2026-08-13 and will have moved.
 - Upstream: not applicable.
 - Related specs: `the-invariant-to-enforcing-test-link-is-asserted-nowhere` (the same gap on the test side, and the precedent for how to report it), `triage-the-twelve-uncited-hard-rules` (closed `conformance.py rules` to 0, which is what made this gap the next one), `globalization-retrieval-names-a-query-that-returns-homonyms` (the INV-212 instance this would have caught first).
@@ -125,7 +125,7 @@ them:
   new invariant there can see what it turns off.
 - **Scope — report only invariants whose text names a shipped artifact.** A rule naming a file,
   module, step or bundled script is one INV-183 requires to be reachable at that step; a rule
-  stating a general property with no artifact is honoured by behaviour and is not expected to be
+  stating a general property with no artifact is honored by behavior and is not expected to be
   cited anywhere in particular.
 
 Measured effect: **57 → 51** from the exemption alone, **51 → 14** once the artifact filter is
@@ -140,7 +140,7 @@ applied. The second filter is what makes it a report rather than a backlog.
 - **INV-001–INV-050 are out of scope, which the spec did not say.** They are the bootcamp's own
   outcomes, `INVARIANTS.md` states they are deliberately not indexed ("everything below is a
   development rule"), and being unindexed the exemption cannot classify them either way. They are
-  honoured by the flow existing rather than by any file naming them. Excluded, with the reason in
+  honored by the flow existing rather than by any file naming them. Excluded, with the reason in
   the code, and a test pins it.
 - ⚠️ **The report surfaced a re-filing candidate on its first live run: INV-108** ("dev-only tests
   MUST live in the repo top-level `tests/`"). It is a development rule filed under *Platform,
@@ -166,7 +166,7 @@ applied. The second filter is what makes it a report rather than a backlog.
   exemption, so re-filing is a permitted maintainer edit rather than a regression, and a test
   failing on it would freeze the classification. Replaced with the coupling that can genuinely
   rot: the index must keep **declaring** that group as the exemption, and must keep a name the
-  script recognises. Both mutations are caught.
+  script recognizes. Both mutations are caught.
 - **Fixture invariant IDs are assembled at runtime.** Written as literals, `INV-800`/`801`/`802`/
   `900`/`999` read as citations of undefined invariants and failed `citations.py verify` with five
   dangling references — the trap `implement-spec` Step 4 documents, hit here for real.

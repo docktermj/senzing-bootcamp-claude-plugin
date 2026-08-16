@@ -78,8 +78,8 @@ counter's two-directional error was real and specifically measured (12 reported 
 3. **Keep the real instruction, which is version-independent:** confirm every source field carries a
    disposition. That was always "the real question the warning gestures at", and it holds whether or
    not the counter is wrong.
-4. **Preserve the ⚠️ against generalising.** "Do not start ignoring this step's warnings generally"
-   must survive — a retired warning is not a licence to distrust the step.
+4. **Preserve the ⚠️ against generalizing.** "Do not start ignoring this step's warnings generally"
+   must survive — a retired warning is not a license to distrust the step.
 5. **Record the `type_discriminator` half as still unverified.** The block's claim covers `derived`
    entries **and** `type_discriminator`; this walk exercised only `derived` (our source is
    single-type, so no discriminator). Say so explicitly rather than letting one re-check retire both
@@ -95,7 +95,7 @@ counter's two-directional error was real and specifically measured (12 reported 
 3. The version-independent instruction — confirm every source field has a disposition — is retained
    as the step's actual requirement.
 4. The `type_discriminator` half is marked as **not** re-run, with what would verify it.
-5. The ⚠️ against generalising to the step's other warnings is retained verbatim.
+5. The ⚠️ against generalizing to the step's other warnings is retained verbatim.
 6. A note records that `feature_count`/`payload_count`/`ignored_count` are **server-derived**, so the
    plugin deliberately does not send them — with the returned-state evidence — so a future reader
    does not "fix" the plugin by adding them.

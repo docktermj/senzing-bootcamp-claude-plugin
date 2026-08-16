@@ -838,7 +838,7 @@ def _record_full_page(outcome: str, page_height=None, captured_height=None) -> N
     if outcome == FULL_PAGE_CLAMPED:
         sys.stderr.write(
             "capture_screenshots: page is %spx tall, above the %dpx clamp — captured the "
-            "top %dpx and labelled it as clamped, not as the full page.\n"
+            "top %dpx and labeled it as clamped, not as the full page.\n"
             % (page_height, _MAX_FULL_PAGE_PX, _MAX_FULL_PAGE_PX)
         )
         return

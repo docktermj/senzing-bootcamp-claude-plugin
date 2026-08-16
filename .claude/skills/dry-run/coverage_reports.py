@@ -63,7 +63,7 @@ is not buried under legitimate entries:
     dated.
 
     ⚠️ **A report, not a gate, and deliberately so.** Deciding whether a hit is a live claim or
-    prose about tool behaviour needs judgement, which is the same reason ``invariants`` and
+    prose about tool behavior needs judgment, which is the same reason ``invariants`` and
     ``affected`` are reports. The absence vocabulary is also a phrase list, so it is evadable by
     paraphrase: a miss is weak evidence. The marker is the durable route; this finds the ones
     nobody marked.
@@ -163,7 +163,7 @@ PROSE_QUOTED_HISTORY = "MCP-NEGATIVE-SCAN: quoted-history"
 #: "the datastore has no default configuration" — a fact about the Bootcamper's environment — from
 #: "the declared schema has no `inline` parameter", and both must stay sayable: the second needs a
 #: marker and the first cannot have one, because there is no route to re-ask. Declaring it converts
-#: a judgement into a greppable, reviewable decision, which is the same reason `quoted-history`
+#: a judgment into a greppable, reviewable decision, which is the same reason `quoted-history`
 #: exists. Triaged 2026-08-13: exactly one site in the corpus (`module-02` Step 9's SENZ7221 bullet).
 PROSE_NOT_A_CLAIM = "MCP-NEGATIVE-SCAN: not-a-tool-claim"
 #: How far from a unit a marker may sit and still cover it. Markers are written as HTML comments
@@ -246,7 +246,7 @@ def _columns(numbers, per_row=10):
 
 
 #: INV-001..INV-050 are the bootcamp's own OUTCOMES, which `INVARIANTS.md` states are
-#: deliberately not indexed ("everything below is a development rule"). They are honoured by
+#: deliberately not indexed ("everything below is a development rule"). They are honored by
 #: the flow existing rather than by a test, so they are reported apart from test debt.
 OUTCOME_MAX = 50
 
@@ -277,7 +277,7 @@ DEV_GROUP = "development record itself"
 #: This is the filter that makes the report readable: a rule naming a file, module or step is
 #: one INV-183 requires to be reachable AT that step, so an uncited one is a real gap. A rule
 #: stating a general property with no artifact ("a value the Bootcamper was asked for MUST
-#: outrank...") is honoured by behaviour and is not expected to be cited anywhere in
+#: outrank...") is honored by behavior and is not expected to be cited anywhere in
 #: particular — reporting it is the noise that gets a report ignored.
 #:
 #: ⛔ **Repo-internal vocabulary is not enough, and getting this wrong is silent.** These
@@ -397,7 +397,7 @@ def find_uncited_in_shipped(repo):
     for inv_id, text in entries:
         # INV-001–INV-050 are the bootcamp's own OUTCOMES, which `INVARIANTS.md` states are
         # deliberately not indexed ("everything below is a development rule"). They are
-        # honoured by the flow existing rather than by any file naming them, so scoring them
+        # honored by the flow existing rather than by any file naming them, so scoring them
         # against shipped citations measures the wrong thing — and, being unindexed, the
         # exemption cannot classify them either way.
         if int(inv_id[4:]) <= 50:
@@ -424,7 +424,7 @@ def report_shipped(repo):
     print("The mirror of the `invariants` report, which looks at tests/ only. A rule that")
     print("names a file, module or step must be reachable AT that step (INV-183); one that")
     print("is cited nowhere in shipped text is a rule the guide cannot look up.")
-    print("(A hit is not a defect. An invariant can be honoured by behaviour without being")
+    print("(A hit is not a defect. An invariant can be honored by behavior without being")
     print(" named — this is where to look, not a bug list. Development-environment rules are")
     print(" exempt via the INVARIANTS.md index group that declares them; invariants stating a")
     print(" general property with no artifact are not reported at all.)")
@@ -678,8 +678,8 @@ def report_unmarked(repo):
     print("re-asks an unmarked negative. Give each one a marker with its `owner:` clause — after")
     print("re-asking the owning route, never by stamping today's date on an unverified claim.")
     print()
-    print("⚠️ Judgement required, which is why this is a report. A hit may be prose ABOUT tool")
-    print("behaviour rather than a live claim. The date is what separates the two: undated prose")
+    print("⚠️ Judgment required, which is why this is a report. A hit may be prose ABOUT tool")
+    print("behavior rather than a live claim. The date is what separates the two: undated prose")
     print("is not re-checkable, so it is not reported. Vocabulary is a phrase list and evadable")
     print("by paraphrase — a miss is weak evidence, a hit is worth reading.")
     print()

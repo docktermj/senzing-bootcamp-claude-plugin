@@ -78,7 +78,7 @@ record is specified and the producer is not.
 4. **Record the static-gate lesson where the gates live.** The most valuable single sentence in
    this entry is that a data-quality score *rose* when a bad mapping was added. Wherever the
    plugin presents a quality score, it should say plainly that the score cannot detect a
-   semantically wrong mapping and that the match-key audit is what does — this generalises
+   semantically wrong mapping and that the match-key audit is what does — this generalizes
    INV-174's applicability rule from *fields* to *mappings*.
 
 Item 4 is worth shipping even if 1–3 are deferred: it is the part that protects the next

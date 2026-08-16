@@ -33,7 +33,7 @@ wrapped continuation. So each generator is asserted from both sides: the allowli
 labels break, a non-allowlisted label does not.
 
 ⛔ Layout is asserted **relatively** — the value sits on a later line and further right
-than its label — never against the millimetre constants (`_ITEM_GAP_MM * 2`, `+= 12`).
+than its label — never against the millimeter constants (`_ITEM_GAP_MM * 2`, `+= 12`).
 A deliberate design tweak must stay possible; an accidental collapse back to inline must
 fail. Text position is read from the PDF content stream directly rather than via
 `pdftotext`, which is absent on some supported platforms (see
@@ -405,7 +405,7 @@ class TheHangingIndentBranchStaysSuppressed(unittest.TestCase):
     Removing it re-applies the hanging indent on top of the new layout — the value
     still starts below its label, so the layout tests above still pass, and the defect
     returns anyway. Asserted on the source because the resulting shift is a few
-    millimetres and would make a rendered assertion brittle.
+    millimeters and would make a rendered assertion brittle.
     """
 
     def test_both_generators_guard_the_indent_branch(self):

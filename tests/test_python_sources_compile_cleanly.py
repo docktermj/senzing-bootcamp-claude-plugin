@@ -26,7 +26,7 @@ Nothing else in the repo could see this class: the suite imports, and `conforman
 (`specs/bytecode-caching-hides-a-latent-syntax-error-from-the-suite.md`)
 
 ⛔ **WHAT THIS GUARD CANNOT SEE.** It proves the files *compile* cleanly under the Python
-running the suite. It does not prove they run correctly, and it cannot prove behaviour under
+running the suite. It does not prove they run correctly, and it cannot prove behavior under
 a future Python that has already promoted the warning to an error -- it only ensures the repo
 is clean when that lands. A clean run is a statement about syntax, not about correctness.
 

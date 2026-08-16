@@ -95,7 +95,7 @@ read old commits and be misled by them.
   whatever it looks like in isolation.
 - **A test is a guarantee.** Deleting one removes a promise. Merge traversals for
   speed; never merge two assertions into one, and never delete a test without
-  naming which invariant or behaviour loses its enforcement.
+  naming which invariant or behavior loses its enforcement.
 - **`IMPLEMENTED.md` and `PROCESSED.jsonl` are append-only.** They are the ledgers
   that make specs and feedback re-findable. Files they point at may move; the
   ledger lines never go.
@@ -169,7 +169,7 @@ A spec is a record of a decision; the ledger heading is what makes it findable.
   taught to read `specs/archive/` **first**, and the reading burden is
   `IMPLEMENTED.md` (2,986 lines) regardless, which archiving does not touch.
 - **Implemented but the change was later reverted or superseded** → the spec is
-  now *misleading*, because it reads as describing shipped behaviour. Do not
+  now *misleading*, because it reads as describing shipped behavior. Do not
   delete it: append a dated note saying what superseded it, then archive. The
   ledger entry stays.
 - **Cited as a `Source:` by an invariant** → the name must remain resolvable.
@@ -217,7 +217,7 @@ took item 4 and left the rest standing:
    a false claim load-bearing and fails the suite when someone corrects the truth.
    Three were found on 2026-07-30, all asserting the plugin still *said* something
    the MCP server had since contradicted. Look for assertions that pin the
-   *absence* of a capability, or that quote wording rather than behaviour.
+   *absence* of a capability, or that quote wording rather than behavior.
 2. **A test whose subject was deleted** — passes vacuously forever.
 3. **Duplicate coverage** — two files asserting the same guarantee. Keep the one
    whose failure message is better; delete the other only after saying which

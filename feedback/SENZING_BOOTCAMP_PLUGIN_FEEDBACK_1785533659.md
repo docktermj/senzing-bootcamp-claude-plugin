@@ -214,7 +214,7 @@ Investigation while capturing this feedback surfaced a **second, related defect*
 - Spec attributes: `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `BUSINESS_NAME_ORG`, `BUSINESS_ADDR_LINE1/CITY/STATE/POSTAL_CODE`
 - Unmapped raw columns: `Business_Type`, `CD`, `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`, `OwnedByRaceEthnicity`, `OwnedByVeteran`
 
-That source *is* a genuine mapping exercise. But step 5a's readiness check tests only **structural** indicators (valid JSON, `DATA_SOURCE`/`RECORD_ID` present or derivable, a recognised feature shape). `PPP_LOANS` satisfies all of them, so it would also be classified `senzing_ready: true` and offered the fast-path — skipping the very decisions those 11 unmapped columns demand. **Structurally loadable is not the same as fully mapped, and the check currently conflates the two.**
+That source *is* a genuine mapping exercise. But step 5a's readiness check tests only **structural** indicators (valid JSON, `DATA_SOURCE`/`RECORD_ID` present or derivable, a recognized feature shape). `PPP_LOANS` satisfies all of them, so it would also be classified `senzing_ready: true` and offered the fast-path — skipping the very decisions those 11 unmapped columns demand. **Structurally loadable is not the same as fully mapped, and the check currently conflates the two.**
 
 Notably, the module's own text already anticipates this distinction ("It says nothing about whether a field will be mapped to a feature that **means** the same thing"), but the readiness gate does not act on it.
 
@@ -224,7 +224,7 @@ The bootcamper specifically wants to practice mapping and configuration changes 
 
 ### Suggested fix
 
-From the bootcamper: provide CORD datasets that are **not** pre-mapped to the Senzing format, so mapping can actually be practised.
+From the bootcamper: provide CORD datasets that are **not** pre-mapped to the Senzing format, so mapping can actually be practiced.
 
 Additional suggestions from the investigation above:
 
@@ -419,14 +419,14 @@ one invocation and have the profiler emit one section per file.
 `samples/raw/ofac-sdn/sdn-sample.csv` from the free-data repository is **headerless** — its own
 README documents 12 positional columns. The profiler assumes a header row, so profiling it
 directly consumes the first data row as column names: one sanctioned party disappears and every
-column is mislabelled with a value from that row.
+column is mislabeled with a value from that row.
 
 Worked around by writing a headered copy for profiling only, using the documented column order,
 while the mapper still reads the raw headerless file positionally.
 
 ### Why it matters
 
-The profile is the basis for every step-3 mapping decision. A mislabelled profile does not fail —
+The profile is the basis for every step-3 mapping decision. A mislabeled profile does not fail —
 it produces a confident, wrong mapping, and the lost record is a *sanctioned party* silently
 absent from a screening list.
 
@@ -479,7 +479,7 @@ entities and cannot be loaded as records at all.
 ICIJ Offshore Leaks is the one source in that catalog whose distinguishing value is **disclosed
 relationships** — the `REL_ANCHOR`/`REL_POINTER` pattern that nothing else in the catalog
 exercises. As sampled, that exercise is impossible, and a bootcamper following the join keys
-in good faith gets a silent zero rather than an error. (Recovered here by modelling the
+in good faith gets a silent zero rather than an error. (Recovered here by modeling the
 `service_provider` column instead, which is present on all 10 entity rows.)
 
 ### Suggested fix

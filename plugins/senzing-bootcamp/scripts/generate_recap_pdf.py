@@ -1064,7 +1064,7 @@ try:
     ACCENT = _h2rgb(_bt.EMBER_HOT)   # hot ember accent / rules
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
-    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold gray)
     AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
 except ModuleNotFoundError:  # defensive fallback — kept in sync via tests/test_brand_sync.py
     # INV-111: a degraded path is never inferred from silence. The two branches stay
@@ -1090,8 +1090,8 @@ except Exception as exc:  # present but unusable
 # from the brand palette (INV-081/INV-107) — it is not a new token.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
 
-# Muted warm grey for the certificate's small-caps labels, where body ink reads too
-# loud and a cold grey fights the ember band. Derived by blending body ink toward the
+# Muted warm gray for the certificate's small-caps labels, where body ink reads too
+# loud and a cold gray fights the ember band. Derived by blending body ink toward the
 # warm off-white — the same "derive, never invent" rule TABLE_HEAD_FILL follows
 # (INV-081): it is not a new brand token.
 MUTED = tuple(round(s + (l - s) * 0.48) for s, l in zip(SLATE, LIGHT))
@@ -1892,7 +1892,7 @@ _CERT_CARD_Y = 26.0
 _CERT_CARD_W = 255.0
 _CERT_CARD_H = 158.0
 _CERT_BORDER = 1.3         # ember card border stroke
-_CERT_CX = 148.5           # page centre; every line on the certificate is centred on it
+_CERT_CX = 148.5           # page center; every line on the certificate is centered on it
 _CERT_TEXT_W = 175.0       # wrap width for the citation and the module list
 _CERT_LIST_W = 227.0       # widest a line may run: the card less both signature insets
 _CERT_RULE_W = 33.0        # short ember rule under the tagline
@@ -1970,7 +1970,7 @@ def _cert_citation(labels: List[str]) -> str:
 
 
 def _cert_band_color(fraction: float) -> Tuple[int, int, int]:
-    """Colour of the gradient band at `fraction` of the way down the page.
+    """Color of the gradient band at `fraction` of the way down the page.
 
     Ember at both ends, amber through the middle — the template's warm band, mirrored
     with the brand's own gradient pair (`EMBER_HOT`/`EMBER_GRAD_END`) instead of hexes
@@ -2026,7 +2026,7 @@ def _cert_seal_paths() -> Tuple[List[Tuple[float, float]], Tuple[float, float, f
 
 def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) -> float:
     """Width in mm of one certificate line, letterspacing included but not its trailing
-    advance — fpdf2 counts spacing after the last glyph too, which would shift a centred
+    advance — fpdf2 counts spacing after the last glyph too, which would shift a centered
     line half a space to the left."""
     pdf.set_font("Helvetica", style, size)
     setter = getattr(pdf, "set_char_spacing", None)
@@ -2042,9 +2042,9 @@ def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) ->
 
 def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
                size: Optional[float] = None, max_w: float = 0.0) -> None:
-    """Draw one centred certificate line with its baseline at `y` (mm).
+    """Draw one centered certificate line with its baseline at `y` (mm).
 
-    Centred here rather than with ``cell(align="C")`` because the template's positions
+    Centered here rather than with ``cell(align="C")`` because the template's positions
     were measured as cap tops, and `text()` takes a baseline — a cell would tie the line
     to a box height instead. Letterspacing is real (``set_char_spacing``), never spaces
     inserted between glyphs: a certificate gets searched and copied out of, and
@@ -2642,10 +2642,10 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
-# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centred line;
+# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centered line;
 # everything else is within a hair of 556. This writer has no font metrics of its own, and
 # the crude `len(text) * size * 0.52` it used before put the certificate's 38 pt headline
-# 8 mm off centre — visible on the page, invisible to text extraction.
+# 8 mm off center — visible on the page, invisible to text extraction.
 _HELV_W = {
     " ": 278, "!": 278, '"': 355, "'": 191, "(": 333, ")": 333, "*": 389, ",": 278,
     "-": 333, ".": 278, "/": 278, ":": 278, ";": 278, "[": 278, "]": 278, "|": 260,
@@ -2657,7 +2657,7 @@ _HELV_W = {
     "W": 944, "Z": 611,
 }
 # Helvetica-Bold runs ~8% wider than Helvetica across mixed-case text; one factor is
-# accurate enough to centre a line, and far more accurate than ignoring the difference.
+# accurate enough to center a line, and far more accurate than ignoring the difference.
 _HELV_BOLD_FACTOR = 1.08
 
 
@@ -2710,11 +2710,11 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
         # Sanitize BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
-        # measuring raw text and rendering sanitized text mis-centres the line — the same
+        # measuring raw text and rendering sanitized text mis-centers the line — the same
         # desync the comment below describes for escaping, one step earlier.
         text = _safe(text)
         # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
-        # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
+        # 4-character sequence `\267`, so measuring after escaping mis-centers the line —
         # and escaping twice prints the escape itself.
         width = _stdlib_width(text, size, style == "B", spacing)
         text = _pdf_escape(text)
@@ -3021,8 +3021,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
 def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
     """Greedy word wrap on measured width, where `measure(str)` returns a width.
 
-    Used by the certificate, whose lines are centred: a character-count wrap
-    (``_wrap``) cannot centre honestly, because "Illinois" and "MMMMMMMM" are the same
+    Used by the certificate, whose lines are centered: a character-count wrap
+    (``_wrap``) cannot center honestly, because "Illinois" and "MMMMMMMM" are the same
     number of characters and nowhere near the same width. Both renderers pass their own
     `measure`, so neither wraps the certificate differently from the other (INV-066).
     """

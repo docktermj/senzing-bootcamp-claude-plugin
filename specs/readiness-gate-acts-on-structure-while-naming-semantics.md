@@ -55,7 +55,7 @@ conditions that keep it out of the gate: it needs an engine, and `:115-118` reco
 which is why the check fails where it is most natural to run". So the stronger check is documented,
 correct, and structurally unable to be the gate.
 
-Nothing catches this: the fast-path is *correct behaviour* for a fully-mapped source, so no test can
+Nothing catches this: the fast-path is *correct behavior* for a fully-mapped source, so no test can
 assert it never fires, and `senzing_ready` is a true statement about structure.
 
 ## Proposed change
@@ -124,7 +124,7 @@ check.
 - Priority: **Medium**, as filed. Nothing breaks and no artifact is wrong; the cost is that the
   module's core learning objective can be skipped without the bootcamper knowing it happened.
 - MCP re-check: **n/a for the defect itself (server 1.32.3, 2026-07-31).** The finding is about the
-  plugin's own gate logic, not about Senzing behaviour. The two Senzing facts the step relies on —
+  plugin's own gate logic, not about Senzing behavior. The two Senzing facts the step relies on —
   that the legacy flat shape is still supported, and that CORD ships both shapes — are already
   MCP-cited in the step at `:89-94` and are unchanged by this spec.
 - Upstream: not applicable. The MCP server correctly serves the data it has, including
@@ -150,7 +150,7 @@ spec exists to stop.
 
 **2. The threshold is a count, not a proportion.** The spec left the choice open and required the
 reasoning to be recorded; it is, at the step itself. A percentage has to be tuned against how wide
-the source happens to be — `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it,
+the source happens to be — `PPP_LOANS` is 11 unrecognized of 19 keys and any threshold catches it,
 while one undecided column in thirty passes an 80% rule and still hides a decision.
 
 **3. Criterion 8 was verified, not disclosed.** It marks the `PPP_LOANS` field list as the
@@ -186,7 +186,7 @@ updated to the new vocabulary.
 ## Invariants introduced
 
 - `INV-198` — Module 5's CORD fast-path offer MUST be gated on a source being both structurally
-  loadable **and** fully mapped, recorded as separate fields; a source with unrecognised keys is
+  loadable **and** fully mapped, recorded as separate fields; a source with unrecognized keys is
   routed to mapping with every column **named**; payload-worthy columns are not excluded from the
   count; the threshold is a count rather than a proportion; and an all-pre-mapped run is told the
   mapping exercise is being skipped and offered an alternative. Partly supersedes INV-040's

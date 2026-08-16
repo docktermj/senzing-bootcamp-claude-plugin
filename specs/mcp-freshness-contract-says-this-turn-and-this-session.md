@@ -12,7 +12,7 @@ that mentions a Senzing specific.
 The cost lands on both sides. Read as "this turn", a long module re-issues
 identical queries every turn a Senzing name appears — measurable waste against a
 rule that claims ⛔-gate precedence, so it is not one a careful guide feels free to
-economise on. Read as "this session", the guide presents Senzing content on a turn
+economize on. Read as "this session", the guide presents Senzing content on a turn
 with no MCP call, which the pre-response checklist in all thirteen skill files
 forbids, and which also breaks the attribution rule that permits crediting the MCP
 server only for what "an MCP tool actually produced **this turn**".

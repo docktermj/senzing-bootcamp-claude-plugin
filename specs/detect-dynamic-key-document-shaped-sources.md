@@ -11,7 +11,7 @@ correctly inside `FEATURES` *and* as a dynamic root key whose name is the relate
 24 were real.
 
 `mapping_workflow` reported the field count **without comment**. Diagnosing it required noticing the absurd
-number, inspecting raw records, hypothesising the pattern, and verifying it across the file (all 1,605
+number, inspecting raw records, hypothesizing the pattern, and verifying it across the file (all 1,605
 dynamic keys matched a `REL_POINTER_KEY` in the same record, 0 exceptions) before pre-processing. Field
 counts then collapsed to 45/18.
 

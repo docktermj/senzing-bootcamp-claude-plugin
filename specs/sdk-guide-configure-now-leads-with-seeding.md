@@ -89,7 +89,7 @@ that instead of asserting it.
 **Do not hardcode the new shape either.** The lesson of this spec is that a response shape is not a
 fact to cache. Instruct the reader to locate the seeding snippet by its `source_path` ending
 `configuration/init_default_config.py` **wherever it appears** — primary or alternative — rather than
-by its position in the response. That survives the next reorganisation; naming a position does not.
+by its position in the response. That survives the next reorganization; naming a position does not.
 
 **Fallback when the call fails (INV-125).** Unchanged from today: `sdk_guide` is already the sole
 route and the step already depends on it. If it is unreachable, stop and report — do not hand-write a
@@ -147,7 +147,7 @@ primary/alternative "roles have **swapped**". They do not swap — the tool **se
 | `sdk_guide(topic='configure', language='python')` — no `data_sources` | `python/configuration/init_default_config.py` | `register_data_sources` |
 | `sdk_guide(..., data_sources=["CUSTOMERS","WATCHLIST"])` | `python/configuration/register_data_sources.py` | `init_default_config` |
 
-The spec was written after calling it **one** way and generalising — the precise failure INV-169
+The spec was written after calling it **one** way and generalizing — the precise failure INV-169
 names, and which this repo has had to retract twice before. `explain_error_code('SENZ7221')` gave it
 away: its first resolution step now reads "see sdk_guide topic='configure' **(called WITHOUT
 `data_sources`, this returns the seeding snippet)**".

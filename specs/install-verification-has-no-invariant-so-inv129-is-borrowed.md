@@ -83,7 +83,7 @@ deliverable (PDF, PNG, HTML artifact)" to "anything produced" is a change of mea
 editing it would silently alter what its **15+ existing citations** resolve to.
 
 **What stays:** every command, every probe, and the whole `:197` explanation of *why* brew reads as
-success. Nothing about the guidance's behaviour changes — this makes the authority match the rule.
+success. Nothing about the guidance's behavior changes — this makes the authority match the rule.
 
 ## Acceptance criteria
 

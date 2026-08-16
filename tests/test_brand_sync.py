@@ -203,9 +203,9 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         """The key the browser actually draws.
 
         A stroke appears only when a stroke width is set, so `stroke` alone overstates the
-        space: a source with no stroke still carries a stroke *colour* in the returned dict.
+        space: a source with no stroke still carries a stroke *color* in the returned dict.
         This mirrors the served JS exactly — `srcStrokeW(src) ? srcStroke(src) : null` for
-        the colour, `srcStrokeW(src) || null` for the width — which is the whole point:
+        the color, `srcStrokeW(src) || null` for the width — which is the whole point:
         asserting on the returned tuple instead is what certified 6×3 combinations while
         the canvas had 6×4.
         """
@@ -227,7 +227,7 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         It stopped at `len(FALLBACK_COLORS) + 3` = 9, which never approaches the encoding
         space, and it compared `(fill, stroke)`, which at n=9 agrees with the rendered key
         only by accident — no source has reached the wrap where a no-stroke entry and a
-        stroked entry share a stroke colour. Both under-scopings hid the same defect: the
+        stroked entry share a stroke color. Both under-scopings hid the same defect: the
         25th source rendered identically to the 7th.
         """
         capacity = self.bt.SOURCE_ENCODING_CAPACITY
@@ -266,9 +266,9 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         """Up to 24 sources the old encoding was right, so nothing may move there.
 
         Re-derives the pre-fix rendering — stroke drawn only when the wrap counter is
-        non-zero, colour `SOURCE_STROKES[cycle % 3]`, width always 1.5 — and requires the
+        non-zero, color `SOURCE_STROKES[cycle % 3]`, width always 1.5 — and requires the
         new code to agree with it exactly. Without this, widening the space is free to
-        recolour every existing bootcamp's graph.
+        recolor every existing bootcamp's graph.
         """
         strokes = self.bt.SOURCE_STROKES
         for n in (2, 3, 6, 7, 12, 18, 24):

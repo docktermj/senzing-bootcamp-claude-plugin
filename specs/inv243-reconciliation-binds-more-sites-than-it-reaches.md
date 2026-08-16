@@ -126,7 +126,7 @@ better than the spec described.
 
 4. **The detector was deliberately narrowed after a false-positive pass.** A first version keyed on
    `record count` in prose and flagged seven blocks that are not INV-243 sites at all —
-   `phase2-discover.md` uses "record count" for an *entity's* record count, Module 4 for a licence
+   `phase2-discover.md` uses "record count" for an *entity's* record count, Module 4 for a license
    limit, and `phase1-quality-assessment.md` in a source-list warning. A guard that fails on correct
    content is worse than one that misses, so the trigger is the **action** (writing the registry
    field, or writing per-source statistics to a document), not the vocabulary. That narrowing is the

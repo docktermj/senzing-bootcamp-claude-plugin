@@ -272,7 +272,7 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
 
     def test_all_three_are_dated_and_their_freshness_is_stated_per_limitation(self):
         """INV-080/INV-169: every entry carries a date, and none claims to be current
-        behaviour without saying how that was checked.
+        behavior without saying how that was checked.
 
         ⚠️ **Rescoped 2026-08-14.** Until then this asserted the blanket caveat — that *none*
         of the three had been re-run — which made the guard hold the old freshness state in
@@ -338,7 +338,7 @@ class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
 
     @staticmethod
     def _flatten(text):
-        """Same normalisation as `flat()`, applied to a slice rather than a whole file.
+        """Same normalization as `flat()`, applied to a slice rather than a whole file.
 
         These are wrapped prose sections, so a phrase assertion on raw text is really an
         assertion about where the line breaks fall — which is how the first version of
