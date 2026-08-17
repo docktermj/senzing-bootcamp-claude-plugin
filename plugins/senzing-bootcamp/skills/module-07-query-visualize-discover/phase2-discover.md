@@ -206,6 +206,28 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    parsing it (INV-115). Explain: "I'm using
    SZ_INCLUDE_FEATURE_SCORES so we can see the scoring at each construction step. This shows
    how closely features matched each time a new record was added."
+
+   ⛔ **The two sides of a resolution step are `VIRTUAL_ENTITY_1` and `VIRTUAL_ENTITY_2`** —
+   objects, each carrying `.VIRTUAL_ENTITY_ID` and `.MEMBER_RECORDS[].RECORDS[].{DATA_SOURCE,
+   RECORD_ID}`. The similarly-named `INBOUND_VIRTUAL_ENTITY_ID` is a **string ID** on the step, not
+   the object, and its partner is `RESULT_VIRTUAL_ENTITY_ID`. **There is no
+   `CANDIDATE_VIRTUAL_ENTITY` at any depth.** (Verified via
+   `get_sdk_reference(topic='response_schemas', filter='how_entity')`, server 1.32.9, 2026-08-17.)
+
+   ⚠️ **Why the wrong pairing is reachable, and why the lookup above does not by itself prevent it.**
+   `INBOUND_…`/`CANDIDATE_…` *is* a real pairing in this very response — one level deeper, inside
+   `MATCH_INFO.FEATURE_SCORES.<FEATURE>[]`, as `INBOUND_FEAT_DESC` / `CANDIDATE_FEAT_DESC` (it
+   recurs in one further `MATCH_INFO` sub-object; see this module's API reference). Generalizing
+   that pairing **up** to the step level
+   lands on `INBOUND_VIRTUAL_ENTITY_ID`, which exists, so the name is not obviously wrong; its
+   invented partner `CANDIDATE_VIRTUAL_ENTITY` simply returns nothing. A parser built that way raises
+   no error and renders every step as `? joined ?` while the rule and match key beside them populate
+   correctly — the failure is silent and looks like missing data rather than a wrong key.
+
+   ⛔ **So a name-level lookup is not enough here: read the returned paths' TYPES, or dump one raw
+   step.** A wholly invented key is caught by the first lookup; a key that appears in the schema at a
+   different depth and type survives it. This is INV-115's dump-before-parse rule at the one place
+   where skipping the dump is most tempting, because the lookup appears to have confirmed the name.
 3. **Chronological narrative presentation:** present the How Analysis output as a chronological
    narrative of the entity's construction history:
    - each step where a new record was added,
