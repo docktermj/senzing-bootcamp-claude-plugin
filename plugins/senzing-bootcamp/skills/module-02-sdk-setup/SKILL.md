@@ -470,8 +470,39 @@ Once the bootcamper responds, act on their answer:
    which the earlier phase already installed, so Python's Step 3 work is to make them importable —
    not to fetch them. Take the paths from the server, never from this file (INV-080):
    `sdk_guide(topic='install', platform='<platform>', language='python')` returns them in
-   `install.platform.env_vars` (`PYTHONPATH`, and `LD_LIBRARY_PATH` for when the native library is
-   not found automatically) and repeats the rule verbatim in `install.platform.gotchas[]`.
+   `install.platform.env_vars` and repeats the rule verbatim in `install.platform.gotchas[]`.
+
+   ⛔ **On `linux_apt` with Python, BOTH `PYTHONPATH` and `LD_LIBRARY_PATH` are required — set both.**
+   ⚠️ **One `sdk_guide` payload says this two different ways, and the governing half is the
+   language-specific one.** Re-verified on MCP server **1.32.9, 2026-08-17**,
+   `sdk_guide(topic='install', platform='linux_apt', language='python')`:
+
+   - The **Python SDK** entry in `install.platform.gotchas[]` states it unconditionally, and this is
+     the one that governs for `language='python'`:
+
+     > "The senzing and senzing-core packages are included in senzingsdk-runtime at
+     > /opt/senzing/er/sdk/python. Do NOT pip install them — instead set
+     > PYTHONPATH=/opt/senzing/er/sdk/python:$PYTHONPATH **and**
+     > LD_LIBRARY_PATH=/opt/senzing/er/lib:$LD_LIBRARY_PATH"
+
+   - The **same response** hedges the same variable twice — `env_vars.LD_LIBRARY_PATH` reads
+     *"(only needed if native lib not found automatically)"*, and the first `gotchas[]` entry repeats
+     that as a general note. `sdk_guide(topic='configure', platform='linux_apt', language='python')`
+     returns `environment.env_vars` with the identical hedged string, so changing topic does not
+     resolve it.
+
+   **Both readings are in the payload; do not silently pick one — the contradiction is the fact the
+   reader needs.** Reported upstream 2026-08-16 (`submit_feedback`, `bug`, anonymous); do not
+   re-file. Until the server changes, treat the language-specific line as authoritative on this
+   platform.
+
+   ⚠️ **The cost of getting this wrong lands a module later.** An environment script written from
+   `env_vars` alone sets only `PYTHONPATH`; the import then fails at the first engine call with
+   `libSz.so: cannot open shared object file: No such file or directory` — which reads as a **broken
+   SDK install** rather than an incomplete environment, in a module that did not cause it. (Observed
+   on Senzing SDK 4.3.4-26210, apt-installed at `/opt/senzing`, no custom location; the loader
+   behavior itself is observation-only.) Take the values from `sdk_guide` rather than from this
+   file — the paths above are quoted with their route, version and date, not adopted (INV-080).
    `generate_scaffold(language='python', workflow=<any>)` carries the same rule as an
    `anti_patterns[]` entry at **`severity: error`**, for **every** workflow it scaffolds — quoted
    below because the wording is the argument (re-verified live, MCP server 1.32.9, 2026-08-14):
@@ -656,8 +687,16 @@ fi
 export SENZING_PROJECT_ROOT="$_sz_root"
 export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # Platform-specific exports (SENZING_ROOT, DYLD_LIBRARY_PATH / LD_LIBRARY_PATH, jar
-# paths) go here — take them from sdk_guide(topic='install', platform=…), never from
-# memory or from this file (INV-080).
+# paths) go here — take them from sdk_guide(topic='install', platform=…, language=…),
+# never from memory or from this file (INV-080).
+#
+# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary, and it
+# hedges LD_LIBRARY_PATH as "only needed if native lib not found automatically" while the
+# language-specific gotchas[] entry in the SAME response requires it. A script written
+# from env_vars alone omits a variable the runtime needs, and the failure surfaces at the
+# first engine call -- "libSz.so: cannot open shared object file" -- one module after this
+# script was written, where it reads as a broken install. See Step 3 above for the quoted
+# contradiction, its provenance, and which half governs.
 unset _sz_self _sz_root _sz_settings
 ```
 
@@ -744,7 +783,10 @@ timeout on macOS. Use a background process plus a polling loop with a deadline i
 timeout. Check before relying on it rather than assuming a Linux userland.
 
 **Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
-"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. On
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⚠️ **This is
+not a JVM-only concern:** on `linux_apt` with **Python**, `LD_LIBRARY_PATH` is required too, and
+`sdk_guide`'s `env_vars` hedges it while its language-specific `gotchas[]` entry does not — see
+Step 3's Python note, which is where a non-JVM author will be. On
 **Windows**, the DYLD/LD variables do not apply at all and the env script is a `.bat`; the
 classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
 `timeout` caveat is macOS-specific — **neither applies on Linux**, where both behave as expected.
