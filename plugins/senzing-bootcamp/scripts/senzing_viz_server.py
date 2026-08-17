@@ -110,6 +110,17 @@ from urllib.parse import urlparse, parse_qs
 #: wrong. See the any-language contract's "Binding the port (required)".
 BIND_HOST = "127.0.0.1"
 
+#: Joins an entity's sorted source codes into the single key its color is chosen by.
+#: Mirrored in the page's `srcKeyOf()`; the any-language contract states it as behavior.
+SOURCE_KEY_SEP = "|"
+
+#: Nodes the graph endpoint will emit before it caps and says so. Above this the payload
+#: (and the self-contained snapshot embedding it) carries every entity — 5,678 of them on
+#: one real run, 3,692 unconnected singletons — which is a size and portability problem
+#: rather than a legibility one; the client already defaults to the relationship subgraph
+#: above GRAPH_SUBGRAPH_DEFAULT_ABOVE.
+GRAPH_NODE_CAP = 1500
+
 #: Unique to this process, exposed on /api/stats so a caller can confirm the server that
 #: answered is the one it started. See `confirm_server_identity` below.
 SERVER_NONCE = uuid.uuid4().hex
@@ -532,9 +543,55 @@ class Model:
         compute_feature_dist). Safe before computation — returns the empty default."""
         return self.feature_dist
 
-    def graph(self):
+    def color_keys(self):
+        """Every key the graph colors by: each source, plus each source COMBINATION seen.
+
+        ⛔ **One list, allocated in one pass.** A node is colored by the identity of its
+        whole source set, so a cross-source entity must be visually distinct from every
+        single-source entity — otherwise 1,951 cross-source vendors render in the
+        single-source `GLEIF` color, under a legend positively implying they are
+        GLEIF-only, and the bootcamp's headline result is invisible in the tab built to
+        show it.
+
+        ⚠️ Allocating individuals and combinations in **two** calls restarts each at the
+        top of the palette and reproduces exactly the collision this fixes — the error
+        made while repairing it by hand. Returning one list is what makes the single-pass
+        allocation the only convenient thing to do.
+        """
+        singles = set(self.data_sources())
+        combos = set()
+        for entity in self.entities.values():
+            sources = sorted(set(entity.get("data_sources") or []))
+            if len(sources) >= 2:
+                combos.add(SOURCE_KEY_SEP.join(sources))
+        return sorted(singles) + sorted(combos)
+
+    def graph(self, cap=None):
         node_ids = set(self.entities)
         nodes = list(self.entities.values())
+        total = len(nodes)
+        capped = False
+        if cap is not None and total > cap:
+            # Rank by SOURCE SPAN first: an entity spanning several sources is the one
+            # worth seeing, and it is precisely what a truncation ordered by id or by
+            # insertion would drop at random. Connectivity breaks ties, then record
+            # count, then entity_id so the selection is deterministic across rebuilds
+            # (a re-rendered snapshot must not disagree with the recap describing it).
+            degree = {}
+            for a, b in self.edges:
+                degree[a] = degree.get(a, 0) + 1
+                degree[b] = degree.get(b, 0) + 1
+            nodes = sorted(
+                nodes,
+                key=lambda e: (
+                    -len(set(e.get("data_sources") or [])),
+                    -degree.get(e["entity_id"], 0),
+                    -e.get("record_count", 0),
+                    e["entity_id"],
+                ),
+            )[:cap]
+            node_ids = {e["entity_id"] for e in nodes}
+            capped = True
         edges = []
         for (a, b), meta in self.edges.items():
             if a in node_ids and b in node_ids:
@@ -546,7 +603,9 @@ class Model:
                         "relationship_type": meta["relationship_type"],
                     }
                 )
-        return {"nodes": nodes, "edges": edges}
+        # `total` and `capped` travel with the payload so the UI can state what it is
+        # showing rather than implying it is everything.
+        return {"nodes": nodes, "edges": edges, "total": total, "capped": capped}
 
     def merges(self):
         out = [e for e in self.entities.values() if e["record_count"] > 1]
@@ -864,6 +923,15 @@ function srcStroke(src){return srcStyle(src).stroke;}
 // reach the canvas, and keying on it capped the rendered encoding space at 24 sources while
 // the assigned map went on looking collision-free past that.
 function srcStrokeW(src){return srcStyle(src).stroke_width||0;}
+// The key a NODE is colored by: its whole source set, joined, not one member of it.
+// Coloring by data_sources[0] made every cross-source entity render as whichever of its
+// sources sorted first, so 1,951 cross-source vendors appeared to be GLEIF-only. Fill,
+// stroke and stroke width must all read THIS, or a partial version of the same
+// misencoding survives. Single-source entities degenerate to their own source code, which
+// is why their appearance is unchanged.
+function srcKeyOf(d){var s=(d&&d.data_sources)||[];return s.length?s.slice().sort().join("|"):"";}
+function isCombo(k){return k.indexOf("|")>=0;}
+function comboLabel(k){return k.split("|").join(" + ");}
 const CSSV=getComputedStyle(document.documentElement);
 function cssv(n,f){var v=CSSV.getPropertyValue(n).trim();return v||f;}
 const C_BLUE=cssv('--blue','#F57826'),C_GOLD=cssv('--gold','#FF4E1F'),C_GREEN=cssv('--green','#1D9E75'),C_MUTED=cssv('--muted','#4A4640');
@@ -981,9 +1049,9 @@ async function drawGraph(){
       tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
         .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
     .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(d.data_sources[0]);})
-    .attr("stroke",function(d){return srcStrokeW(d.data_sources[0])?srcStroke(d.data_sources[0]):null;})
-    .attr("stroke-width",function(d){return srcStrokeW(d.data_sources[0])||null;});
+  node.append("circle").attr("r",radius).attr("fill",function(d){return color(srcKeyOf(d));})
+    .attr("stroke",function(d){var k=srcKeyOf(d);return srcStrokeW(k)?srcStroke(k):null;})
+    .attr("stroke-width",function(d){return srcStrokeW(srcKeyOf(d))||null;});
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
   // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
@@ -1090,10 +1158,27 @@ function addGraphControls(containerId,nodeCount){
 // Clicking an entry filters the view and toggles back.
 function drawLegend(nodes){d3.select("#graph-container .legend").remove();
   const counts={};(nodes||[]).forEach(function(n){(n.data_sources||[]).forEach(function(s){counts[s]=(counts[s]||0)+1;});});
+  // Combination entries, counted over the nodes that actually carry them, so a
+  // cross-source color on screen always has a row naming what it means. A color a viewer
+  // cannot name is not an improvement over the wrong color.
+  const comboCounts={};
+  (nodes||[]).forEach(function(n){const k=srcKeyOf(n);if(isCombo(k))comboCounts[k]=(comboCounts[k]||0)+1;});
   const srcs=Object.keys(counts).sort();
+  const combos=Object.keys(comboCounts).sort();
   if(!srcs.length)return;
   const off={};
   const l=d3.select("#graph-container").append("div").attr("class","legend");
+  if(combos.length){
+    l.append("div").attr("class","why").style("margin","0 0 4px")
+      .text("Entities in more than one source have their own color:");
+    combos.forEach(function(k){const r=l.append("div").attr("class","row");
+      r.append("span").attr("class","dot").style("background",color(k))
+        .style("box-shadow",srcStrokeW(k)?("inset 0 0 0 "+srcStrokeW(k)+"px "+srcStroke(k)):null);
+      r.append("span").text(comboLabel(k));
+      r.append("span").attr("class","cnt").text(comboCounts[k]);
+      r.attr("title","Entities appearing in "+comboLabel(k));});
+    l.append("div").attr("class","why").style("margin","6px 0 4px").text("Single-source:");
+  }
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");
     r.append("span").attr("class","dot").style("background",color(s))
       // Same expression as the node's stroke, so the swatch and the node cannot disagree
@@ -1535,13 +1620,13 @@ def make_handler(model, engine, flags, sz, title):
                 if path in ("/", "/index.html"):
                     return self._send(
                         200,
-                        render_page(title, sources=model.data_sources()),
+                        render_page(title, sources=model.color_keys()),
                         "text/html; charset=utf-8",
                     )
                 if path == "/api/stats":
                     return self._send(200, json.dumps(model.stats()))
                 if path == "/api/graph":
-                    return self._send(200, json.dumps(model.graph()))
+                    return self._send(200, json.dumps(model.graph(cap=GRAPH_NODE_CAP)))
                 if path == "/api/merges":
                     return self._send(200, json.dumps(model.merges()))
                 if path == "/api/overlap":
@@ -1760,7 +1845,7 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
     renders with no server and no network access."""
     payload = {
         "stats": model.stats(),
-        "graph": model.graph(),
+        "graph": model.graph(cap=GRAPH_NODE_CAP),
         "merges": model.merges(),
         # No "records" key: /api/records is per-entity, and graph.nodes already
         # carries every entity with its constituent records, so the shim below
@@ -1799,7 +1884,7 @@ def write_snapshot(model, engine, flags, title, out_path, port=8080, dataset="")
         title,
         data_shim=shim,
         probe_body=_snapshot_probe_html(model, engine, flags, port=port, dataset=dataset),
-        sources=model.data_sources(),
+        sources=model.color_keys(),
     )
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as fh:

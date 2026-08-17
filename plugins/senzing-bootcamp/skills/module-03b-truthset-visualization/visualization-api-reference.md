@@ -992,6 +992,42 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+### Coloring graph nodes (required — behavior, in every language)
+
+⛔ **A node is colored by its whole source set — never by one member of it.** The key is the
+entity's data sources, sorted and joined (`GLEIF|LEI`, not `GLEIF`), so a cross-source entity is
+visually distinct from every single-source entity. **Fill, stroke and stroke width all derive from
+that key**; leaving any one of the three reading the first source keeps a partial version of the
+same misencoding.
+
+⚠️ **Where an entity has one source the key degenerates to that source code**, so single-source
+entities are unchanged. That is the compatibility guarantee — and it is why this defect survived:
+on the Truth Set most entities sit in one source, so "first source" *is* the entity's source and
+the encoding looks correct at that scale.
+
+**The failure it prevents:** a real run rendered **1,951 cross-source entities in the single-source
+`GLEIF` color**, with a legend implying they were GLEIF-only. Nothing looked broken — the graph
+drew, the legend populated, every count was right, and the headline result of the bootcamp was
+invisible in the tab built to show it.
+
+⛔ **The palette MUST be allocated in a single pass over the full key set** — every source and every
+combination together, one call. Two calls each restart at the top of the palette and reproduce the
+collision this fixes; that is the error made while repairing it by hand, not a hypothetical.
+
+**The legend MUST name each combination** it colors, labeled as a combination and counted over the
+nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
+
+### The graph payload is bounded, and says so (required)
+
+The graph endpoint MUST cap the nodes it emits and carry **`total`** and whether a cap was applied,
+so the UI can state what it is showing rather than implying it is everything. Rank candidates by
+**source span first** — entities spanning most sources are the ones worth seeing — then by
+connectivity, then deterministically, so a re-rendered snapshot does not disagree with the recap
+prose describing it. ⚠️ This is about the **size and portability** of the payload and the
+self-contained snapshot, which embeds it whole; the *legibility* half is already handled by the
+scale-aware subgraph default below, and the client filtering what it draws does not bound what the
+server ships.
+
 ### Binding the port (required — behavior, in every language)
 
 ⛔ **Bind the LOOPBACK interface explicitly — `127.0.0.1` — never the wildcard address.** In Java

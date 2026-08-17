@@ -127,3 +127,33 @@ reporter's app was ported to Java from the Python reference and may predate or o
 What genuinely remains from that half is the **payload and snapshot size**, which the client-side
 default does not address, and it is carried here as the smaller of the two changes. The color defect
 is untouched by any implemented spec and is the reason this spec exists.
+
+## Deviations from this spec, and why (2026-08-17)
+
+1. ⛔ **"Truth Set output is unchanged" is not literally achievable, and asserting it would have
+   been asserting the defect.** The precise guarantee — the one the spec's own proposed change 1
+   states — is that **single-source** entities are unchanged, because the combination key
+   degenerates to the bare source code. Truth Set entities that genuinely span sources now render
+   in a combination color, which is the fix working, visible there too. What is asserted instead
+   is the checkable form: the Truth Set's source names keep their **preferred** palette
+   assignments when combination keys are added to the allocation, so no single-source entity
+   changes appearance.
+
+2. **The graph cap is `GRAPH_NODE_CAP = 1500`.** The spec requires a bound and a report but names
+   no number. 1500 sits well above the `GRAPH_SUBGRAPH_DEFAULT_ABOVE = 400` threshold at which the
+   client already switches to the relationship subgraph, so the cap bounds payload and snapshot
+   size without changing what any current view draws.
+
+3. ⚠️ **Not verified against a production-scale dataset**, which is the spec's ninth criterion.
+   This environment has no Senzing engine and no multi-thousand-entity corpus, so the cap, the
+   ranking and the combination coloring are verified on synthetic models carrying the reported
+   shape (two sources, a genuine cross-source entity; 61 entities with a 2- and a 3-source
+   member). ⛔ **The snapshot-size criterion is therefore implemented but unmeasured:** the cap is
+   asserted to be applied at both the endpoint and the snapshot payload by reading the call sites,
+   and the cap's behavior is tested directly, but no snapshot was rendered before and after on a
+   large fixture. That measurement needs `dry-run`.
+
+4. **`tests/test_brand_sync.py` needed updating** — not in `## Affected files`, but required: it
+   pinned the node's stroke expression as the literal `d.data_sources[0]` form this spec replaces.
+   Its stated criterion (swatch and mark must agree for one key) is unchanged and still asserted;
+   only the expression it pins moved to `srcKeyOf(d)`.

@@ -432,6 +432,15 @@ and the `../module-03b-truthset-visualization/visualization-api-reference.md` co
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. It MUST:
 
+- ⛔ **Color each graph node by the entity's whole source SET, not by its first source** — see the
+  contract's "Coloring graph nodes". ⚠️ **This is the rule the Truth Set cannot test.** Most Truth
+  Set entities sit in one source, so first-source coloring looks correct there and only misreports
+  on the bootcamper's own data: one run rendered **1,951 cross-source entities in a single-source
+  color**, under a legend implying they were single-source, and the headline finding of the whole
+  bootcamp — the same vendor found in more than one system — was invisible in the tab built to show
+  it. Nothing looked broken. This step's own warning applies to itself here: *the bootcamper cannot
+  tell a bad default from bad data*, so check what the colors encode rather than assuming the
+  reference got it right.
 - Serve/render every applicable tab from that contract — Entity Graph, Merge Statistics, Match
   Keys, Feature Scores, Cross-Source, and Search / Probe. That is the whole set: **six** tabs. Tabs
   whose data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys /

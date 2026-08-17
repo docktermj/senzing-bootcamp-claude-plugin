@@ -377,14 +377,22 @@ class VizServerUsesTheAssignedColors(unittest.TestCase):
                          "counter, so widths and shades never render")
 
     def test_the_legend_and_the_node_use_the_same_expression(self):
-        """Criterion: swatch and mark must agree for the same source above 24 sources."""
+        """Criterion: swatch and mark must agree for the same key above 24 sources.
+
+        ⚠️ The node's expression changed on 2026-08-17 from `d.data_sources[0]` to
+        `srcKeyOf(d)` — a node is colored by its whole source COMBINATION, not by whichever
+        of its sources sorts first. The criterion is unchanged: both sides still resolve
+        through `srcStyle`, so a swatch and the marks it describes cannot disagree. For a
+        single-source entity `srcKeyOf(d)` degenerates to that source code, which is why
+        the single-source legend rows still key on `s`.
+        """
         page = self.viz.render_page("T", sources=["A", "B"])
-        node = 'return srcStrokeW(d.data_sources[0])?srcStroke(d.data_sources[0]):null;'
+        node = 'var k=srcKeyOf(d);return srcStrokeW(k)?srcStroke(k):null;'
         legend = 'srcStrokeW(s)?("inset 0 0 0 "+srcStrokeW(s)+"px "+srcStroke(s)):null'
         self.assertIn(node, page, "the node stroke is not derived from the width channel")
         self.assertIn(legend, page,
                       "the legend swatch does not mirror the node's stroke and width, so "
-                      "the two can describe different appearances for one source")
+                      "the two can describe different appearances for one key")
 
     def test_model_reports_its_data_sources_sorted(self):
         model = self.viz.Model()
