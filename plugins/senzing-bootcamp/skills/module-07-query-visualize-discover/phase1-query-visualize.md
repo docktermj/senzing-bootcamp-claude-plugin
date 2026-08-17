@@ -117,12 +117,17 @@ complete and only the human-readable labels are missing, so it reads as unnamed 
 than as a flags problem. OR the flag in explicitly:
 `SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
 (`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
-`why_record_in_entity` — verified 2026-07-31). ⛔ **`SZ_INCLUDE_MATCH_KEY_DETAILS` was in this
-expression and has been removed: it `depends_on` a relations flag and writes into
-`RELATED_ENTITIES[]`, so on a why call it adds nothing.** The CONFIRMATIONS and DENIALS named
-above are already there without it — they are part of `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`
-(`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
-2026-08-14). Adding a flag that changes nothing is how a wrong field name survives review. The same holds for
+`why_record_in_entity` — verified 2026-07-31). ⛔ **Add `SZ_INCLUDE_MATCH_KEY_DETAILS` together
+with a relations flag when the match-key breakdown is wanted.** `WHY_KEY_DETAILS` is documented on
+the why response and **no flag is documented as populating it**
+(`get_sdk_reference(topic='flags', filter='why_records')`, server 1.32.9, 2026-08-17: 29 flags
+apply, none names it) — but on **Senzing SDK 4.3.4** it was **absent** without that flag and
+**present** with it plus `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, and on **4.3.2** absent without it
+(observation-only, 2026-08-16; INV-080/INV-149). ⚠️ **This flag was previously removed from this
+expression on the grounds that the breakdown is "already there without it" — that was wrong**: the
+measurement it rested on passed the flag in *both* arms, so its contribution was never varied. The
+full statement, with both builds and the reason a version floor cannot be read from them, is in
+`phase2-discover.md` step 4b.3. The same holds for
 `SZ_WHY_RECORDS_DEFAULT_FLAGS` and `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS`, both documented
 as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not inferred from
 its sibling — INV-169).
@@ -286,10 +291,13 @@ When presenting results from `how_entity` or the `why_*` methods (`why_entities`
 presentations are built from (it applies to all four methods; `get_sdk_reference(topic='flags',
 filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default flags, note what
 additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
-read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, not from a `MATCH_KEY_DETAILS` field and
-not by adding `SZ_INCLUDE_MATCH_KEY_DETAILS`** — that flag targets `RELATED_ENTITIES[]` and needs
-a relations flag, so on a why call it has nothing to attach to and a parser written for it renders
-blank with no error (INV-179; see `phase2-discover.md` step 4b.3, which states this once).
+read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, never from a `MATCH_KEY_DETAILS` field** —
+that field name is the one this module already corrected, and it is still wrong here. ⚠️ **Getting
+`WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
+flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
+(observation-only). If it is missing for the flags in force, say so explicitly and fall back to
+`FEATURE_SCORES` rather than rendering an empty section — the full statement is in
+`phase2-discover.md` step 4b.3, which states it once (INV-179).
 
 **Checkpoint:** write step 3a.
 

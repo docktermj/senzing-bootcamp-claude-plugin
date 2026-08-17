@@ -9,21 +9,37 @@ no `MATCH_KEY_DETAILS`. The breakdown of the why key lives at
 confirmed on MCP server 1.32.9 (2026-08-14) via
 `get_sdk_reference(topic='response_schemas', filter='why_records')`.
 
-The flag is not simply misnamed — it is a different surface. `topic='flags'` reports
-`SZ_INCLUDE_MATCH_KEY_DETAILS` with `response_paths: RELATED_ENTITIES[]` and `depends_on` one
-of the five relations flags, so what it populates is a `MATCH_KEY_DETAILS` object on each
-*related entity*. The why methods accept it; on a why call it has nothing to attach to.
+The flag names a different surface. `topic='flags'` reports `SZ_INCLUDE_MATCH_KEY_DETAILS`
+with `response_paths: RELATED_ENTITIES[]` and `depends_on` one of the five relations flags, so
+what it *documentedly* populates is a `MATCH_KEY_DETAILS` object on each *related entity*.
 
 That is the silent-blank failure `ground-rules.md` → "Defensive parsing" exists for: a parser
 written for the wrong field name yields None and renders as empty text, with no error raised.
 The step's own prose was what pointed at the wrong name.
 
-So this file asserts the step names the real path, that the only surviving mention of
-`MATCH_KEY_DETAILS` is the one forbidding it here (with the reason that makes the ban
-checkable, not a bare prohibition), that the composite-vs-member type hazard is stated, and
-that the pre-existing `response_schemas`-before-parsing instruction survived the edit.
+⛔ **CORRECTED 2026-08-17 — this file previously enforced a claim that was wrong.** From the
+above it concluded *"on a why call it has nothing to attach to"* and asserted a ⛔ forbidding
+the flag on why calls. That inference was never measured: the 2026-08-14 table it rested on
+passed the flag in **both** arms, so the flag's contribution was never varied. On **SDK 4.3.4**
+`WHY_KEY_DETAILS` was **absent** with `SZ_INCLUDE_FEATURE_SCORES` alone and **present** once
+`SZ_INCLUDE_MATCH_KEY_DETAILS | SZ_ENTITY_INCLUDE_ALL_RELATIONS` was added; on **4.3.2** absent
+without it. Following the ban produced a why demonstration with no match-key breakdown at all —
+and because every other field rendered, it read as *"this SDK doesn't provide that detail"*.
 
-Source spec: `specs/why-response-carries-why-key-details-not-match-key-details.md`.
+⚠️ **What the server says is unchanged and still narrow:** re-verified on **1.32.9,
+2026-08-17**, 29 flags apply to `why_records` and **none** names `WHY_KEY_DETAILS` in its
+`response_paths`. So the field is documented and attributed to no flag; server position and
+engine observation are held apart (INV-169), and no version floor is written from a matrix that
+never varied the relevant term.
+
+So this file asserts the step names the real path, that the flag is prescribed **with** its
+relations dependency and its conditions, that every mention of it carries a qualifier, that the
+composite-vs-member type hazard is stated, and that the pre-existing
+`response_schemas`-before-parsing instruction survived. The field-name correction —
+`WHY_KEY_DETAILS`, never `MATCH_KEY_DETAILS`, on a why response — is untouched by the reversal.
+
+Source specs: `specs/why-response-carries-why-key-details-not-match-key-details.md` (the field
+name), and `specs/why-key-details-needs-the-flag-the-plugin-forbids.md` (this correction).
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -72,14 +88,21 @@ def step_4b3(text):
     return text[start:end]
 
 
-def prohibition_bullet(text):
-    """The single ⛔ bullet that forbids SZ_INCLUDE_MATCH_KEY_DETAILS on a why call.
+def flag_guidance(text):
+    """The bullet that governs `SZ_INCLUDE_MATCH_KEY_DETAILS` on a why call.
 
-    Spans from its ⛔ marker to the start of the next sibling bullet, so a mention that
-    drifts out of the ban and back into prescription falls outside it.
+    ⚠️ **This used to be `prohibition_bullet()`, anchored on "⛔ Do not reach for".** That
+    ban was **withdrawn on 2026-08-17**: it rested on a measurement whose two arms both
+    passed the flag, so the flag's contribution was never varied and "already there without
+    it" was never tested. On SDK 4.3.4 `WHY_KEY_DETAILS` was absent without the flag and
+    present with it; on 4.3.2 absent without it. Following the ban produced a why
+    demonstration with no match-key breakdown at all, silently.
+
+    Spans from its ⛔ marker to the next sibling bullet, so guidance that drifts out of this
+    block falls outside it — the same span technique, applied to the corrected rule.
     """
     body = step_4b3(text)
-    start = body.index("⛔ **Do not reach for")
+    start = body.index("⛔ **`WHY_KEY_DETAILS` may need")
     nxt = re.search(r"\n   - ", body[start:])
     return body[start:start + nxt.start()] if nxt else body[start:]
 
@@ -107,42 +130,55 @@ class WhyKeyDetailsIsTheParsedField(unittest.TestCase):
         self.assertIn("WHY_KEY_DETAILS", step5)
 
 
-class MatchKeyDetailsIsNotPrescribedForAWhyCall(unittest.TestCase):
-    def test_every_match_key_details_mention_sits_inside_the_prohibition(self):
-        """The criterion: the file must not instruct parsing it out of a why response.
+class TheFlagIsPrescribedWithItsConditions(unittest.TestCase):
+    """⚠️ Was `MatchKeyDetailsIsNotPrescribedForAWhyCall`; its premise was withdrawn.
 
-        Asserted by span, not by counting: a new prescription anywhere else in the file
-        lands outside the ⛔ bullet and fails, which a bare 'the token appears' check or a
-        fixed occurrence count would both miss.
-        """
-        text = read()
-        ban = prohibition_bullet(text)
-        offsets = [m.start() for m in re.finditer(r"MATCH_KEY_DETAILS", text)]
-        self.assertTrue(offsets, "MATCH_KEY_DETAILS vanished; the ban states the reason")
-        ban_start = text.index(ban)
-        ban_end = ban_start + len(ban)
-        stray = [o for o in offsets if not ban_start <= o < ban_end]
-        self.assertEqual(
-            [],
-            stray,
-            "MATCH_KEY_DETAILS mentioned outside the prohibition, at offsets "
-            f"{stray} — a why demonstration must not prescribe or parse it",
-        )
+    The old class asserted that every `MATCH_KEY_DETAILS` mention sat inside a ⛔ forbidding
+    the flag on why calls. That ban is retracted (see `flag_guidance`), so what is asserted
+    now is the corrected rule: the flag is **prescribed with a relations flag**, the server
+    position and the engine observation are kept apart (INV-169), and no version floor is
+    written. What survives unchanged from the old file is the field-name correction —
+    `WHY_KEY_DETAILS`, never `MATCH_KEY_DETAILS`, is what a why response carries — and that
+    is asserted in `WhyKeyDetailsIsTheParsedField` above and below.
+    """
 
-    def test_the_ban_carries_the_reason_that_makes_it_checkable(self):
-        """A bare ban is unmaintainable: the next editor cannot tell whether it still holds.
+    def test_the_flag_is_prescribed_together_with_a_relations_flag(self):
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag",
+                      guidance)
 
-        Both halves are load-bearing — the surface it populates, and the dependency that
-        keeps it empty on a why call.
-        """
-        ban = squash(prohibition_bullet(read()))
-        self.assertIn("RELATED_ENTITIES[]", ban)
-        self.assertIn("depends_on", ban)
-        self.assertIn("relations flag", ban)
+    def test_the_dependency_that_makes_it_checkable_survives(self):
+        """The half of the old ban that was always true, and still is."""
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("depends_on", guidance)
+        self.assertIn("relations flag", guidance)
 
-    def test_the_ban_names_where_the_flag_does_belong(self):
-        """Routing the reader onward is what stops the ban reading as 'never use this flag'."""
-        self.assertIn("step 4d", squash(prohibition_bullet(read())))
+    def test_the_flags_documented_surface_is_still_named(self):
+        """It populates MATCH_KEY_DETAILS on RELATED_ENTITIES[] — also still true."""
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("RELATED_ENTITIES[]", guidance)
+
+    def test_the_server_position_and_the_observation_are_separate(self):
+        """INV-169 — neither presented as governing the other."""
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("no flag is documented as populating it", guidance)
+        self.assertIn("observation-only", guidance)
+        self.assertIn("INV-080/INV-149", guidance)
+
+    def test_no_version_floor_is_asserted(self):
+        """⛔ Writing one would repeat the error this correction exists for."""
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("NOT a version floor", guidance)
+        self.assertIn("never run on 4.3.2", guidance)
+
+    def test_the_withdrawn_ban_is_gone_from_the_step(self):
+        self.assertNotIn("Do not reach for `SZ_INCLUDE_MATCH_KEY_DETAILS`", read())
+
+    def test_the_correction_says_what_it_corrects(self):
+        """A silent reversal leaves the next editor free to restore the ban."""
+        guidance = squash(flag_guidance(read()))
+        self.assertIn("corrects a directive that used to forbid the flag here", guidance)
+        self.assertIn("both passed the flag", guidance)
 
 
 class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
@@ -154,15 +190,32 @@ class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
     So this sweeps the module: a fix applied to one file is not a fix.
     """
 
-    def test_the_flag_is_never_mentioned_without_its_dependency_or_its_ban(self):
-        """Every mention carries what makes it checkable, in one of two shapes.
+    #: What makes a mention of the flag checkable rather than a bare prescription.
+    #:
+    #: ⚠️ Rewritten 2026-08-17 with the ban's withdrawal. The rule is unchanged in spirit —
+    #: every mention states the reason it can silently do nothing — but "it has no surface
+    #: on a why call" was false, so that qualifier is replaced by the two that are true: the
+    #: relations dependency, and the conditioned observation about when the field appears.
+    QUALIFIERS = (
+        "depends_on",                  # the documented dependency
+        "relations flag",              # the same, in prose
+        "RELATED_ENTITIES[]",          # the surface the flag documentedly populates
+        "no flag is documented as populating it",   # the server's silence, stated
+        "observation-only",            # the conditioned engine result
+        "not from a `MATCH_KEY_DETAILS`",   # the surviving field-name correction
+        "never from a `MATCH_KEY_DETAILS`",
+    )
+
+    def test_the_flag_is_never_mentioned_without_a_qualifier(self):
+        """Every mention carries what makes it checkable.
 
         The flag is legitimate for the methods that return related entities — a network
         visualization renders exactly the `RELATED_ENTITIES[]` it populates — so a blanket
-        ban would be wrong and would have to be worked around. What is never optional is
-        the reason it can silently do nothing: on a why call it has no surface (the ban),
-        and anywhere else it needs a relations flag (`depends_on`). A mention carrying
-        neither is the shape that produced this defect twice in one module.
+        ban would be wrong, and one was written and had to be withdrawn. What is never
+        optional is the reason it can silently do nothing: it needs a relations flag, and
+        whether it is required for `WHY_KEY_DETAILS` is an observation rather than a
+        documented guarantee. A mention carrying neither is the shape that produced this
+        defect twice in one module.
         """
         for path in sorted(PHASE2.parent.glob("*.md")):
             text = path.read_text(encoding="utf-8")
@@ -170,11 +223,9 @@ class NoOtherSiteInTheModulePrescribesIt(unittest.TestCase):
                 with self.subTest(file=path.name, offset=match.start()):
                     block = squash(enclosing_block(text, match.start()))
                     self.assertTrue(
-                        "Do not reach for" in block
-                        or "not from a `MATCH_KEY_DETAILS`" in block
-                        or "depends_on" in block,
-                        "%s mentions SZ_INCLUDE_MATCH_KEY_DETAILS at offset %d with "
-                        "neither its relations dependency nor the why-call prohibition"
+                        any(q in block for q in self.QUALIFIERS),
+                        "%s mentions SZ_INCLUDE_MATCH_KEY_DETAILS at offset %d with none "
+                        "of its qualifying conditions in the same block"
                         % (path.name, match.start()),
                     )
 

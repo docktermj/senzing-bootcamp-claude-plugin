@@ -125,17 +125,46 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      `SCORE_BUCKET`. That is the path to parse for step 5
      (`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
      2026-08-14).
-   - ⛔ **Do not reach for `SZ_INCLUDE_MATCH_KEY_DETAILS` here.** The why methods accept it, but
-     what it populates is a `MATCH_KEY_DETAILS` object on **each related entity**
-     (`response_paths: RELATED_ENTITIES[]`), and it `depends_on` one of the relations flags — so
-     it belongs to relationship inspection in step 4d, not to a why demonstration comparing two
-     records. A parser written for `MATCH_KEY_DETAILS` in a why response finds nothing and
-     renders blank, with no error: exactly the failure "Defensive parsing" in `ground-rules.md`
-     exists for. This is INV-179's second cause of a blank field — a correct field name the
-     flags in force do not populate — so confirm the flag that populates the field you intend
-     to read, not merely that the name is spelled right.
-     (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`,
-     server 1.32.9, 2026-08-14.)
+   - ⛔ **`WHY_KEY_DETAILS` may need `SZ_INCLUDE_MATCH_KEY_DETAILS` to appear at all — pass it,
+     with a relations flag.** Two separate things are known here and neither governs the other
+     (INV-169); read both before choosing flags.
+
+     **What the server documents** (`get_sdk_reference(topic='flags', filter='why_records')` and
+     `filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server 1.32.9, 2026-08-17): `WHY_KEY_DETAILS` is a
+     real path on the why response, and **no flag is documented as populating it** — all 29 flags
+     that apply to `why_records` name other `response_paths`, and `SZ_INCLUDE_MATCH_KEY_DETAILS`'
+     own documented effect is a `MATCH_KEY_DETAILS` object on **each related entity**
+     (`RELATED_ENTITIES[]`). So the server attributes the field to nothing.
+
+     ⚠️ **What was observed, engine-side — observation-only, not an MCP claim** (INV-080/INV-149):
+     on **Senzing SDK 4.3.4**, `WHY_KEY_DETAILS` was **absent** from `WHY_RESULTS[].MATCH_INFO`
+     with `SZ_INCLUDE_FEATURE_SCORES` alone and with `+ SZ_ENTITY_INCLUDE_ENTITY_NAME`, and
+     **present** once `SZ_INCLUDE_MATCH_KEY_DETAILS | SZ_ENTITY_INCLUDE_ALL_RELATIONS` was added —
+     returning `+NAME score 95 (CLOSE)` and `+ADDRESS score 100 (SAME)` in `CONFIRMATIONS[]`
+     (2026-08-16). A second run on **SDK 4.3.2** also found it absent without the flag
+     (`SZ_WHY_RECORDS_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`; the raw `MATCH_INFO` keys
+     were `CANDIDATE_KEYS, DISCLOSED_RELATIONS, FEATURE_SCORES, MATCH_LEVEL_CODE, WHY_ERRULE_CODE,
+     WHY_KEY`). ⛔ **This is NOT a version floor:** the with-flag arm was never run on 4.3.2, so
+     the evidence is equally consistent with "the flag is required on both" and says nothing about
+     a boundary. Do not write one.
+
+     **So: pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag** — its documented
+     `depends_on` still holds — and treat the breakdown as conditional rather than guaranteed.
+
+     ⚠️ **This corrects a directive that used to forbid the flag here**, on the grounds that the
+     breakdown was "already there without it". That claim came from a measurement whose **two arms
+     both passed the flag**, so the flag's contribution was never varied and never observed; a
+     negative about a flag needs an arm in which that flag is **absent**. Following the old ⛔
+     produced a why demonstration with no match-key breakdown at all, and — because every other
+     analytical field rendered — it read as *"this SDK doesn't provide that detail"* rather than
+     *"a flag is missing"*. That is INV-179's silent-blank shape, reached by obeying the step's own
+     instruction.
+   - ⛔ **Dump `MATCH_INFO`'s top-level keys before writing the parser, and never render an empty
+     section.** Print the keys you actually got; if `WHY_KEY_DETAILS` is not among them, say so
+     explicitly — *"match-key breakdown not returned by this SDK for these flags"* — and fall back
+     to `FEATURE_SCORES`, which carries the same per-feature evidence and was fully populated in
+     both runs above. An omitted section is indistinguishable from a feature the engine does not
+     have; a stated absence is what turned this defect up in the first place.
    - ⚠️ **Confirm each flag's type, not only its name.** Where a binding takes a *collection* of
      flags, a composite constant may not belong to that collection's element type, and must then
      be passed as its members instead — `get_sdk_reference` lists those under `composite_members`
