@@ -208,11 +208,32 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   ⛔ **Ask nothing, recommend no CORD alternative, and do not enter the free-data hierarchy.** That
   hierarchy is for a Bootcamper who has *not* already decided; recommending CORD here recommends the
   option Module 1 evaluated and rejected for this category.
-  ⛔ **Generate the mapping complexity the scenario promised** — Module 1 Step 4a's invariant
-  required it, so the files must actually carry it: names split into components in one source and
-  joined in another, addresses as free text where the scenario says so, per-campaign duplicates, and
-  the deliberate inconsistencies across sources. Data Quality, Mapping, and Transformation has to
-  have the work this scenario advertised; a clean, uniform generation makes the next module vacuous.
+  ⛔ **Generate the SHAPE differences the scenario promised** — Module 1 Step 4a's invariant
+  required cross-source mapping divergence, so the files must actually carry it: one source carrying
+  a single name field while another carries components, one carrying a free-text address while
+  another carries parts, per-campaign duplicates, and the deliberate inconsistencies across sources.
+  Data Quality, Mapping, and Transformation has to have the work this scenario advertised; a clean,
+  uniform generation makes the next module vacuous.
+
+  ⛔ **Describe SHAPE only — do not state, or invite, what any field maps to.** The Senzing Entity
+  Specification is not read until Data Quality, Mapping, and Transformation, so a mapping claim
+  recorded here is made without the document that governs it, and it lands in
+  `config/data_sources.yaml` and `docs/data_source_locations.md` where it reads as settled fact a
+  module before anything can check it. Record "one name field" or "name in two parts", never "needs
+  splitting into `NAME_FIRST`/`NAME_LAST`".
+
+  ⚠️ **The one mapping rule that belongs here, because it changes what gets generated:** the
+  specification documents `NAME_FULL` as the *"Single-field name when type (person vs org) is unknown
+  or only a full name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
+  (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
+  when the type is unknown or only a single field exists"*
+  (`search_docs(category='data_mapping')` → *Name > Feature: NAME*, server 1.32.9, 2026-08-17). So a
+  source carrying **one** name field maps to `NAME_FULL` — a direct field-to-attribute mapping. ⛔ **A
+  joined name is therefore NOT a transformation waiting to happen**, and generating one on the
+  assumption that the next module will split it builds the scenario on a plan the specification does
+  not call for. One run recorded exactly that for two sources — a `full_name` and a `"Last, First"`
+  `member_name` — in both documents, and reading the specification at Module 5 reversed both. The
+  full mapping rules stay in that module; this is the one that reaches back this far.
 
   ⛔ **Generate realistic quality gaps too, not only structural complexity (INV-239).** Everything in
   the list above is about **shape** — how a value is structured across sources. None of it is about

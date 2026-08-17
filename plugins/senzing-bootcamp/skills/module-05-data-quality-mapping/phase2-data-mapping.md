@@ -550,6 +550,27 @@ are in this module's `SKILL.md` → "Multi-language data" (INV-212); do not re-d
 Tell the user: show
 the mapping table with reasoning for each decision and a confidence score.
 
+⛔ **A single name field maps to `NAME_FULL` — it is not split.** This is the authority Module 1 and
+Data collection route here for, so state it before mapping any name column. The specification
+documents `NAME_FULL` as the *"Single-field name when type (person vs org) is unknown or only a full
+name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
+(`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
+when the type is unknown or only a single field exists"* (`search_docs(category='data_mapping')` →
+*Name > Feature: NAME*, server 1.32.9, 2026-08-17). "When available" means **the source provides
+separate fields** — so one `full_name` column is a direct mapping to `NAME_FULL`, and a
+`"Last, First"` column is too, however parseable it looks.
+
+⚠️ **Two further rules from the same section, because getting them wrong is silent.** Do not mix
+`NAME_FULL` with parsed name fields in one `NAME` object, do not mix `NAME_ORG` with parsed person
+fields, and do not split one name across two `NAME` objects — the specification marks all three ❌
+with worked examples. An organization name belongs in `NAME_ORG`, not `NAME_FULL`.
+
+⚠️ **This is the reversal these routes exist to prevent:** one run recorded, a module earlier, that a
+`full_name` and a `"Last, First"` `member_name` each "needed splitting" — in both
+`config/data_sources.yaml` and `docs/data_source_locations.md`, where it read as settled fact.
+Splitting them would have produced a mapping that loads and validates cleanly while degrading
+resolution quality silently, which is exactly the class a quality score cannot detect.
+
 ⚠️ **This advance is unconditional in both modes — there is no general guided-mode gate here, and
 that is deliberate.** Unlike step 10, the questions this step needs are *conditional*, and each is
 already pinned or specified where it triggers: a field the tool returns below 0.80 confidence gets

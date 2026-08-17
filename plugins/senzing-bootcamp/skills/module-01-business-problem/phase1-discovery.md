@@ -142,9 +142,18 @@ bootcamper explicitly accepts option 3.)*
   Migration, Compliance, Marketing, Healthcare, Supply Chain, KYC, Insurance, Vendor MDM), and
   a non-empty definition of success. If a pattern was picked in Step 3, the category must match
   it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
-  least two distinctly named data sources, each with ≥1 record; the data is
-  mapping-complexity-rich (needs at least one transformation when mapped to the Senzing Entity
-  Specification); the scenario is **quality-varied** — it promises missing and off-pattern values,
+  least two distinctly named data sources, each with ≥1 record; the data carries **cross-source
+  mapping divergence** — at least two sources describing the same feature in **different shapes**
+  (one a single name field, another parsed components; one a free-text address, another parts), so
+  the mapping module has real per-source work to do. ⛔ **Do not state this as "at least one
+  transformation".** That wording produced a reversal: a joined name is a **direct** mapping to
+  `NAME_FULL` under the Entity Specification, not a field awaiting a split, so a scenario built to
+  satisfy "a transformation" on the strength of a joined name satisfies nothing and encodes a plan
+  the specification does not call for. If a genuine value-level transformation is wanted, name a
+  kind the specification actually asks for — date normalization, code or value standardization,
+  composing a `RECORD_ID` — rather than leaving it unqualified. ⚠️ **Do not record what any field
+  maps to here either:** the specification is not read until Data Quality, Mapping, and
+  Transformation. The scenario is **quality-varied** — it promises missing and off-pattern values,
   spanning bands rather than being uniformly clean, which is what Data collection then generates and
   what makes the quality gate reachable (INV-239); category is in the recognized set; problem and
   success are non-empty. On

@@ -152,8 +152,14 @@ class ThePromiseAndTheGenerationAgree(unittest.TestCase):
             "requirement has no authority behind it",
         )
 
-    def test_step_4a_still_requires_mapping_complexity(self):
-        self.assertRegex(squash(DISCOVERY), r"(?i)mapping-complexity-rich")
+    def test_step_4a_still_requires_cross_source_mapping_divergence(self):
+        """⚠️ Was "mapping-complexity-rich"; reworded 2026-08-17, same requirement.
+
+        The old phrasing said "needs at least one transformation", which was unsatisfiable
+        by its own examples — a joined name is a DIRECT mapping to NAME_FULL. The
+        requirement that generated data not be clean and uniform is unchanged.
+        """
+        self.assertRegex(squash(DISCOVERY), r"(?i)cross-source\*{0,2} mapping divergence")
 
     def test_step_4a_cites_the_invariant(self):
         self.assertIn("INV-239", squash(DISCOVERY))

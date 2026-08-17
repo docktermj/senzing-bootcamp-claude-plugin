@@ -115,9 +115,16 @@ class TheSkipGuardRecognizesBothProvenances(unittest.TestCase):
             self.step2, r"(?i)no CORD collection fits the chosen\s*category",
             "without the reason, synthesized still reads as the exceptional case")
 
-    def test_the_mapping_complexity_requirement_is_carried_through(self):
+    def test_the_shape_difference_requirement_is_carried_through(self):
+        """⚠️ Was "the mapping complexity"; reworded 2026-08-17 to "the SHAPE differences".
+
+        The directive used to invite a claim about what fields MAP to, a module before the
+        Entity Specification is read — which produced a plan to split single-field names
+        that the specification reversed. The requirement that the files actually carry the
+        divergence is unchanged.
+        """
         self.assertRegex(
-            self.step2, r"(?i)Generate the mapping complexity the scenario promised",
+            self.step2, r"(?i)Generate the SHAPE differences the scenario promised",
             "generated files may be clean and uniform, which makes the mapping module "
             "vacuous — Module 1 Step 4a's invariant promised otherwise")
 
