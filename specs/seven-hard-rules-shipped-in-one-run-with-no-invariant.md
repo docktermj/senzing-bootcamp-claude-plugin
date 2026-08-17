@@ -135,3 +135,42 @@ implementation whose fix *was* a hard rule, shipped by a run that had decided no
 wording it could not get approved. Filing three specs would record three rules and lose the reason
 all three happened in one session — which is the part that will recur, because the next unattended
 run inherits the same constraint and the same reasonable-looking policy.
+
+## Invariants introduced
+
+- `INV-259` — A graph node's visual encoding (fill, stroke and stroke width) MUST derive from the
+  entity's whole sorted **set** of data sources; the palette MUST be allocated in a single pass over
+  every source and every observed combination; every combination color drawn MUST be named in the
+  legend. (Recorded in `specs/INVARIANTS.md`, indexed under *Visualization and screenshots*.)
+- `INV-260` — A visualization server MUST bind the loopback interface explicitly, never the
+  wildcard, and MUST confirm before handing over its URL that the process answering `/api/stats` is
+  the one just started, by comparing a per-process nonce; a disagreement stops rather than warns.
+  (Indexed under *Visualization and screenshots*.)
+- `INV-261` — A named cross-source join prediction in a Bootcamper-facing deliverable MUST be
+  labeled `measured` — backed by a count of distinct values shared on the named attribute — or
+  explicitly `candidate, overlap unmeasured`. (Indexed under *Data quality, mapping and validation
+  gates*.)
+
+## Deviations from this spec, and why (2026-08-17)
+
+1. ⛔ **The third invariant was NARROWED before recording, on the maintainer's decision.** This spec
+   drafted it as *"Where shipped guidance has the guide write a prediction into a Bootcamper-facing
+   deliverable…"* — general to all predictions. As recorded, `INV-261` is scoped to **cross-source
+   join predictions** specifically. The reason: the general form would bind recap prose, discoveries
+   reports and quality summaries, none of which produced the evidence, and a rule cited far from its
+   evidence is the shape that gets re-argued. The narrowed rule still covers the reported defect in
+   full. The first two were recorded as drafted.
+
+2. **The invariant entries were kept deliberately lean.** The same session's earlier work expanded
+   spec-drafted wording by 1.6x–12.3x with added rationale; the maintainer flagged that, so these
+   three carry the drafted rule, one dated observation, the enforcing test, and provenance — nothing
+   further.
+
+3. **Each of the three guards already existed** — they were written when the rules shipped, before
+   the invariants were registered — so no new test was needed. Each gained a back-citation to its
+   invariant, which `tests/test_invariant_enforcer_citations.py` requires, and `EXPECTED_PAIRS` rose
+   73 → 76.
+
+4. ⚠️ **The `implement-spec` guardrail (proposed change 2) was added during the audit itself**, ahead
+   of this spec being implemented, because the next unattended run would otherwise inherit the same
+   gap. It is recorded in the `production-readiness-audit-2026-08-17` ledger entry.

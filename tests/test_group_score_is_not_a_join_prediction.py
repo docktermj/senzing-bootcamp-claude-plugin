@@ -1,5 +1,10 @@
 """A grouped completeness score must not be read as a cross-source join prediction.
 
+Enforces **INV-261** — a named cross-source pair is labeled `measured` (backed by a count of
+distinct values shared on the named attribute) or `candidate, overlap unmeasured`; a grouped
+score is not evidence for a per-attribute claim. Registered 2026-08-17, scoped deliberately
+to cross-source join predictions rather than to predictions generally (maintainer decision).
+
 Two sources both scored **IDENTIFIER 100%** — the group counts as present when *any* of
 its members is populated — and the evaluation report named them the highest-confidence
 cross-source pair, "both carrying LEI". One carried 2,375 LEI values; the other carried

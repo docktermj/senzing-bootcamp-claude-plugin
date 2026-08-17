@@ -185,7 +185,16 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-256 -> test_bootcamp_notes_flow.py                        (append, then verify)
 #:   INV-257 -> test_bootcamp_notes_flow.py                        (their words stay theirs)
 #:   INV-258 -> test_bootcamp_notes_flow.py, test_recap_notes_section.py
-EXPECTED_PAIRS = 73
+#:
+#: 73 -> 76 on 2026-08-17: the production-readiness audit found seven hard rules shipped
+#: with no invariant in one unattended run; the maintainer approved three invariants for
+#: them (INV-259 graph source encoding, INV-260 viz bind/identity, INV-261 cross-source
+#: join predictions), each naming the guard that already existed for its rule. Re-derived
+#: by running the extractor.
+#:   INV-259 -> test_graph_colors_by_source_combination.py    (color by the source SET)
+#:   INV-260 -> test_viz_server_bind_and_identity.py          (loopback + identity probe)
+#:   INV-261 -> test_group_score_is_not_a_join_prediction.py  (measured or unmeasured)
+EXPECTED_PAIRS = 76
 
 
 def pairs():

@@ -1,5 +1,10 @@
 """A busy port can still accept a bind, so the server asks who is answering.
 
+Enforces **INV-260** — bind loopback explicitly, never the wildcard, and confirm the process
+answering `/api/stats` is the one just started by comparing a per-process nonce; a
+disagreement stops rather than warns. Registered 2026-08-17, after the production-readiness
+audit found the rule shipped and unregistered.
+
 `lsof -ti:8080` reported port 8080 busy — an unrelated `VizServer` from another project,
 started three weeks earlier, bound to `127.0.0.1:8080`. The bootcamp's server bound
 **successfully anyway**, to `*:8080`, because a loopback bind and a wildcard bind do not

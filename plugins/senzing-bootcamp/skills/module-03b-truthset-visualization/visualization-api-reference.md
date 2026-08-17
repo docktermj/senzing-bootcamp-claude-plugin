@@ -1002,9 +1002,9 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
-### Coloring graph nodes (required — behavior, in every language)
+### Coloring graph nodes (required — behavior, in every language, INV-259)
 
-⛔ **A node is colored by its whole source set — never by one member of it.** The key is the
+⛔ **A node is colored by its whole source set — never by one member of it (INV-259).** The key is the
 entity's data sources, sorted and joined (`GLEIF|LEI`, not `GLEIF`), so a cross-source entity is
 visually distinct from every single-source entity. **Fill, stroke and stroke width all derive from
 that key**; leaving any one of the three reading the first source keeps a partial version of the
@@ -1020,11 +1020,11 @@ the encoding looks correct at that scale.
 drew, the legend populated, every count was right, and the headline result of the bootcamp was
 invisible in the tab built to show it.
 
-⛔ **The palette MUST be allocated in a single pass over the full key set** — every source and every
+⛔ **The palette MUST be allocated in a single pass over the full key set** (INV-259) — every source and every
 combination together, one call. Two calls each restart at the top of the palette and reproduce the
 collision this fixes; that is the error made while repairing it by hand, not a hypothetical.
 
-**The legend MUST name each combination** it colors, labeled as a combination and counted over the
+**The legend MUST name each combination** it colors (INV-259), labeled as a combination and counted over the
 nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
 
 ### The graph payload is bounded, and says so (required)
@@ -1038,9 +1038,9 @@ self-contained snapshot, which embeds it whole; the *legibility* half is already
 scale-aware subgraph default below, and the client filtering what it draws does not bound what the
 server ships.
 
-### Binding the port (required — behavior, in every language)
+### Binding the port (required — behavior, in every language, INV-260)
 
-⛔ **Bind the LOOPBACK interface explicitly — `127.0.0.1` — never the wildcard address.** In Java
+⛔ **Bind the LOOPBACK interface explicitly — `127.0.0.1` — never the wildcard address (INV-260).** In Java
 that is `new InetSocketAddress("127.0.0.1", port)`, not `new InetSocketAddress(port)`; in Node
 `server.listen(port, "127.0.0.1")`; in C# a loopback `IPAddress.Loopback` endpoint. The idiomatic
 one-argument form in most languages is a **wildcard** bind, so this is the rule an otherwise faithful
@@ -1057,14 +1057,14 @@ someone else's and the keepsake screenshots capturing it. A loopback bind is als
 security posture for a server holding the Bootcamper's resolved data — a second reason not to leave
 it to the language's default.
 
-⛔ **A successful bind is NOT proof the port was free.** Any guidance that treats a port conflict as
+⛔ **A successful bind is NOT proof the port was free (INV-260).** Any guidance that treats a port conflict as
 a *bind failure* is describing only one of the two cases. A failure stops the step; this succeeds and
 produces nondeterministic results, which is strictly worse.
 
-### Confirming the server that answers is yours (required)
+### Confirming the server that answers is yours (required — INV-260)
 
 ⛔ **After binding and before handing the URL to the Bootcamper, probe `/api/stats` and confirm the
-responder is the server just started.** Mint a **nonce** at startup — any value unique to this
+responder is the server just started (INV-260).** Mint a **nonce** at startup — any value unique to this
 process — expose it on `/api/stats`, and compare. ⚠️ **Compare the nonce, not the record count:** two
 runs of the same project agree on record count, so a count check passes in exactly the case where a
 stale listener is most likely to be the Bootcamper's own earlier server.

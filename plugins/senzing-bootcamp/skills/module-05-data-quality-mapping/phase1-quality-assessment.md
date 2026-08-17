@@ -704,7 +704,7 @@ Create `docs/data_source_evaluation.md`:
 ```
 
 ⛔ **Every named cross-source pair in this report carries one of two labels, and neither is
-optional.** `measured` requires a **distinct-value overlap count on the named attribute**; anything
+optional (INV-261).** `measured` requires a **distinct-value overlap count on the named attribute**; anything
 else is `candidate, overlap unmeasured`. ⚠️ **A group completeness score is not a measurement for
 this purpose** — see the ⛔ at the completeness definition above. Two sources at IDENTIFIER 100% were
 once written up as the highest-confidence pair "both carrying LEI" when exactly **one** LEI value was

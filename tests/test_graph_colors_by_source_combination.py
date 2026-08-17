@@ -1,5 +1,10 @@
 """A node is colored by its whole source set, not by whichever source sorts first.
 
+Enforces **INV-259** — a node's fill, stroke and stroke width all derive from the entity's
+sorted source SET; the palette is allocated in a single pass over sources and combinations
+together; and every combination color drawn is named in the legend. Registered 2026-08-17,
+after the production-readiness audit found the rule shipped and unregistered.
+
 Module 7's results app rendered **1,951 cross-source entities in the single-source `GLEIF`
 color**, under a legend positively implying they were GLEIF-only. The headline result of
 the entire bootcamp — vendors found in more than one system — was invisible in the tab
