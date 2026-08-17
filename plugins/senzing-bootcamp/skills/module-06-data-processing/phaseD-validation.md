@@ -156,6 +156,14 @@ read as the record of what was loaded, so an unchecked count written into it is 
 these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it
 the load is long finished.
 
+⛔ **There are three reconciliation outcomes to write here, not two.** A source recorded
+`expected_delta` (Phase B's three-way rule) is written as a **reconciled** result carrying **both**
+figures and the artifact that predicts the delta — never as a failure, and never as a bare matching
+count. A load that legitimately changed the record count is the visible consequence of a mapping
+decision, and this document is the place a Bootcamper will look for it a month later; recording it as
+`failed` tells them a clean load broke, and recording it as a plain pass hides that anything happened
+at all.
+
 **Checkpoint:** write step 27.
 
 ## Document results and complete (always)

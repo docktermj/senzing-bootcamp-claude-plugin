@@ -76,9 +76,11 @@ hardcoded figure:
     behavior from the Senzing MCP server at request time. If no figure is returned, say it is
     currently unavailable rather than restating a remembered one.
 
-**Data source registry.** On success, update `load_status` to `loaded` and `record_count` to the
-actual loaded count in `config/data_sources.yaml`. On failure, set `load_status` to `failed` and
-add an `issues` entry describing the error. Update `updated_at` either way.
+**Data source registry.** On success, update `load_status` to `loaded` in
+`config/data_sources.yaml`. On failure, set `load_status` to `failed` and add an `issues` entry
+describing the error. Update `updated_at` either way. ⛔ **Do not write the loaded count over
+`record_count` — reconcile first, per the rule below, which decides both what `load_status` becomes
+and where the loaded figure is recorded.**
 
 ⛔ **Reconcile the loaded count against this source's own input *before* writing it — the value you
 are about to overwrite is the baseline.** (INV-243) `record_count` already holds the count Data
@@ -90,15 +92,45 @@ already uses for `record_count_matches_expected`, so the comparison lives in the
 than only in the turn that ran it.
 
 ⛔ **If the two disagree, write the discrepancy rather than the count** (INV-245): leave the
-existing `record_count` in place, set `load_status` to `failed`, record **both** figures in the
-`issues` entry, and do not present the loaded count as a result. Overwriting on a mismatch is the
-worst outcome available — it destroys the input baseline and files a partial load as a complete
-one, after which nothing downstream can tell the difference. This is the point where the figure
-enters durable state: `phaseC` step 12 reads it straight back out and presents it to the
-bootcamper, and Phase D writes it into `docs/loading_strategy.md`, so a number that was never
-checked here is never checked at all — it simply acquires the authority of having been written
-down. Reporting the aggregate alone does not discharge this: the failure mode this exists for
-produces figures that are plausible and sum correctly.
+existing `record_count` in place, record **both** figures, and do not present the loaded count as a
+bare result. Overwriting on a mismatch is the worst outcome available — it destroys the input
+baseline and files a partial load as a complete one, after which nothing downstream can tell the
+difference. This is the point where the figure enters durable state: `phaseC` step 12 reads it
+straight back out and presents it to the bootcamper, and Phase D writes it into
+`docs/loading_strategy.md`, so a number that was never checked here is never checked at all — it
+simply acquires the authority of having been written down. Reporting the aggregate alone does not
+discharge this: the failure mode this exists for produces figures that are plausible and sum
+correctly.
+
+⛔ **A disagreement has THREE outcomes, not two. Do not collapse them.** INV-245 forbids presenting
+a value that **failed its own verification check**; a delta the mapping specification *predicts* has
+not failed verification — it is verified and reconciled, which is a different state from unverified.
+Route on which of these it is:
+
+| Outcome | `load_status` | What else to record |
+|---|---|---|
+| **Equal** | `loaded` | `validation_checks.load_count_matches_source: pass` |
+| **Explained delta** — a named mapping artifact predicts it | `loaded` | both figures; `validation_checks.load_count_matches_source: expected_delta`; a `load_reconciliation` note naming the disposition **and the document that predicts it** |
+| **Unexplained delta** | `failed` | both figures in the `issues` entry, exactly as above |
+
+⛔ **The explained branch is reachable ONLY with a citation, never with an assertion.** The note must
+name the mapping artifact that predicts the delta — the source's own mapping specification, or the
+recorded disposition in `config/data_sources.yaml`. *"The mapping probably explains it"* is precisely
+the failure INV-245 exists to prevent, and without the citation requirement this branch becomes a
+universal escape hatch wearing the rule as a disguise. No citation → **unexplained** → `failed`.
+
+⚠️ **This is not a hypothetical branch: the bootcamp teaches the mapping that reaches it.**
+`embedded_master` is a disposition Module 5 teaches under its own heading, defined as *"the value
+becomes its own Senzing record, and the parent points at it"* — a disposition whose definition is
+"emit an additional record" **necessarily** makes the loaded count exceed the input count. One source
+loaded **3,727** records against a measured `record_count` of **3,488**: 239 distinct lenders emitted
+as embedded masters, exactly as that source's mapping specification prescribes, every input record
+loaded, zero errors. Under a two-way rule the only compliant action was to file a completely
+successful load as `failed`, and to write that into the Bootcamper's own loading strategy.
+
+**The baseline stays immutable in all three branches** (INV-243) — the existing `record_count` is
+never overwritten and the loaded figure is recorded beside it. That half of the rule is correct and
+is not what changed.
 
 **⚠️ SQLite performance note — only when the volume question is still open.** On SQLite with
 single-threaded loading, entity resolution gets progressively slower as the database grows.

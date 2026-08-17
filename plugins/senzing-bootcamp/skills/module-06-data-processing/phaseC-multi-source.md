@@ -15,6 +15,14 @@ source. Enumerate every data source. For each: source name / DATA_SOURCE identif
 count, quality score, mapping status, loaded status. Present a summary table so the bootcamper
 can review and confirm the list is complete.
 
+⛔ **A source whose `validation_checks.load_count_matches_source` is `expected_delta` is a
+RECONCILED result, not a failure and not a plain pass.** Show both figures and the reason — "3,727
+loaded from 3,488 input records; 239 embedded masters, per the source's mapping specification" — and
+never render it as `failed`. It is the visible consequence of a mapping decision the bootcamper made
+in the previous module, so it is worth showing rather than flattening: a record-multiplying
+disposition like `embedded_master` makes the loaded count exceed the input count **by design** (see
+`phaseB-load-first-source.md`'s three-way reconciliation rule).
+
 ⛔ **The `record_count` shown here is a figure presented to the bootcamper, so it carries the
 reconciliation requirement with it.** (INV-243) Phase B reconciles each count against that
 source's own input before writing it; a source whose count was never reconciled — one loaded
