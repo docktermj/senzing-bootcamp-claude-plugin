@@ -92,7 +92,7 @@ argument), ask this pinned question (INV-056) and end the turn on it:
 Assign a type — `idea` | `question` | `reminder` | `to-do` | `memo` — from the wording, as
 an assessment, exactly as `feedback.md` Step 2b triages routing.
 
-⛔ **Do not ask for it.** They reported a thought; naming its kind is the plugin's job, and
+⛔ **Do not ask for it (INV-257).** They reported a thought; naming its kind is the plugin's job, and
 a 👉 spent on a taxonomy is a 👉 spent on nothing they care about.
 
 ## Step 3: Recite it for approval

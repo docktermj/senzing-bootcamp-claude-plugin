@@ -101,7 +101,7 @@ the next step that actually asks.
 ## 25. Execute UAT with business users
 
 ⛔ **Branch on scenario provenance first — never ask a bootcamper to convene business users for a
-business case the bootcamp invented.** Read `docs/business_problem.md`: if it carries the
+business case the bootcamp invented (INV-006/INV-012).** Read `docs/business_problem.md`: if it carries the
 bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
 accepted in Module 1), or otherwise records no real stakeholders, take 25a. Otherwise take 25b.
 

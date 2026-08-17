@@ -481,6 +481,33 @@ otherwise draft it. For each new invariant:
 If one implementation establishes several invariants, add one entry per
 invariant using consecutive IDs.
 
+⛔ **Declining to mint an invariant does NOT decline to ship the rule — and that gap has been
+walked into once, at scale.** When the maintainer is unavailable and step 2's sign-off cannot be
+obtained, the safe-looking move is "do not record an invariant they have not agreed to". It is only
+half safe: if the implementation's *fix* is a hard rule, the rule ships anyway, and the run has then
+produced exactly the unregistered guarantee the reverse contract forbids — a rule in the product,
+nothing in the ruleset, nothing binding future work to it (INV-134 and INV-155 are the precedents,
+each wrong for weeks).
+
+So an implementation that ships a hard rule — a ⛔, a bolded MUST/NEVER, anything
+`conformance.py rules` would count — owes **one of two things, never silence**:
+
+- the invariant, recorded; or
+- an explicit **deferral in the ledger entry**, naming the rule, the site, and why it was not
+  registered — so the next `production-readiness-audit` reads it as known rather than discovering it.
+
+⚠️ **Check before writing the entry, not after:**
+
+```bash
+python3 .claude/skills/production-readiness-audit/conformance.py rules
+```
+
+A run that raises this count owes a line in the ledger for each new hit. On 2026-08-17 an
+unattended run took the count from **1 to 10** across eighteen implementations, entirely by applying
+the policy above consistently; the audit found it the same day
+(`specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md`). Flagging loudly is the remedy —
+not letting the rule ship unmentioned.
+
 ## Step 6: Report
 
 For each spec implemented, report:
