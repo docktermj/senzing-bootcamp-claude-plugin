@@ -501,6 +501,30 @@ profiling.
 apply to a record is not missing data, and averaging it in penalizes the source for data that could
 not exist.
 
+⛔ **A GROUP score is not evidence that two sources share an ATTRIBUTE, and MUST NOT be read as a
+cross-source join prediction.** Completeness for a grouped family — the Entity Specification's
+*Identifiers* section groups `NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI_NUMBER` and `TRUSTED_ID`
+(verified via `search_docs(category='data_mapping')`, server 1.32.9, 2026-08-17) — counts the group
+as present when **any** member is populated. That is the right answer to *does this record carry an
+identifier at all*. It is not evidence for *will these two sources join*, because a join needs
+presence-of-**same**, not presence-of-any.
+
+⚠️ **The guards above all protect the number's accuracy; this one protects its interpretation, and
+that is a different failure.** Two sources both scored **IDENTIFIER 100%**, and the evaluation report
+named them the highest-confidence cross-source pair, "both carrying LEI". One carried **2,375** LEI
+values; the other carried **one**, across 137 records — its identifiers were national IDs and
+passports. Exactly one LEI value was shared in the whole dataset: the prediction was wrong by ~38x on
+the attribute it named, and nothing disproved it until **after loading**, when the match keys showed
+LEI in a single match key. ⛔ **The 0%/100% sanity-check above does not catch this**: it fires on a
+suspiciously uniform figure as a probable *measurement* failure, and here the 100% was entirely real
+— so a guide following that instruction confirms the number and proceeds with the wrong inference
+intact.
+
+**So, before naming any expected cross-source pair:** count the **distinct values shared on the named
+attribute**, not the group scores. The profiling pass already holds the values, so this is cheap. If
+that count was not run, write the pair as a *candidate on group coverage, overlap unmeasured* — a
+prediction is still useful, but an unmarked one is what did the damage.
+
 This is not a corner case. Mixed person/organization sources are the norm in KYC, AML, sanctions
 screening, vendor MDM and beneficial-ownership work — several of this bootcamp's headline use cases.
 One sanctions list with **NAME and ADDRESS on 100% of records** scored **52% completeness / 69%
@@ -672,7 +696,25 @@ Create `docs/data_source_evaluation.md`:
 ## Mapping Priority
 1. [Data source] - [Reason for priority]
 2. [Data source] - [Reason for priority]
+
+## Cross-Source Outlook
+- [Source A] × [Source B] — **[measured | candidate, overlap unmeasured]**
+  - Shared attribute: [the named attribute, e.g. `LEI_NUMBER`]
+  - Distinct values shared: [count] (of [A count] in A, [B count] in B)
 ```
+
+⛔ **Every named cross-source pair in this report carries one of two labels, and neither is
+optional.** `measured` requires a **distinct-value overlap count on the named attribute**; anything
+else is `candidate, overlap unmeasured`. ⚠️ **A group completeness score is not a measurement for
+this purpose** — see the ⛔ at the completeness definition above. Two sources at IDENTIFIER 100% were
+once written up as the highest-confidence pair "both carrying LEI" when exactly **one** LEI value was
+shared in the entire dataset; the group scores were correct and the inference was wrong by ~38x.
+
+⚠️ **This report is a deliverable the Bootcamper keeps** — it is rendered to
+`docs/data_source_evaluation.pdf` at graduation and it shapes the load-order rationale — so an
+unmarked prediction reads as a finding long after the run. Nothing between writing it and loading
+re-examines it. Never rank pairs by confidence on group coverage alone; where the overlap was not
+counted, say so in the report rather than omitting the pair.
 
 ### Quality gate: iterate vs. proceed
 

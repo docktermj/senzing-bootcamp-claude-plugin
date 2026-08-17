@@ -91,3 +91,31 @@ Nothing between writing the prediction and loading re-examines it.
 - MCP re-check: **n/a (no Senzing fact).** The completeness metric and its grouping are the plugin's own construct; the feature names it groups (`NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI`, `TRUSTED_ID`) are already-recorded Entity Specification attributes and this spec asserts nothing new about them, nor any absence about the server. Server **1.32.9** (`get_capabilities`, 2026-08-17) recorded for this run.
 - Upstream: not applicable — routed `plugin` by the entry, and confirmed.
 - Related specs: `specs/completeness-denominator-has-two-readings-on-a-raw-source.md` (the adjacent question of what the figure is computed *over*), `specs/quality-score-per-record-type.md` (the per-record-type scoping this must not disturb), `specs/module5-quality-gate-demands-a-question-its-best-branch-lacks.md`, `specs/step3b-quality-lookup-misroutes-and-omits-the-evidence-requirement.md`, and INV-002.
+
+## Deviations from this spec, and why (2026-08-17)
+
+1. ⚠️ **The `MCP re-check: n/a` line was not taken at face value, and re-asking changed one name.**
+   The spec reasons that the grouped feature names are "already-recorded Entity Specification
+   attributes" asserting nothing new — true of the spec, but the implementation writes those names
+   into **shipped guidance**, which INV-080 forbids doing from a spec without re-confirming this
+   session. `search_docs(query='identifier attributes NATIONAL_ID PASSPORT TAX_ID LEI TRUSTED_ID
+   exclusive identifier features', category='data_mapping')` on server **1.32.9, 2026-08-17**
+   returned the Entity Specification's **Identifiers** section with `TAX_ID`, `NATIONAL_ID` and
+   `LEI_NUMBER` as distinct features.
+
+   - **Confirmed** — the group/attribute distinction this spec rests on is the specification's own
+     structure, not a plugin construct, which strengthens the case for the guard.
+   - **Corrected** — the spec's group list names the member `LEI`. The specification's attribute is
+     **`LEI_NUMBER`** ("Legal Entity Identifier"). Shipped guidance uses `LEI_NUMBER`; the bare
+     "LEI" survives only inside the quoted worked example, where it reports what a past run wrote.
+
+2. **The evaluation report gained a `## Cross-Source Outlook` section.** The spec requires the two
+   labels and the overlap count but does not say where they live, and the existing template had no
+   place for a cross-source claim at all — which is part of why one was written into free prose.
+   Giving it a named section with the count as a field makes the unmeasured case visible by its
+   absence rather than by an editor remembering to add a caveat.
+
+3. **No invariant was drafted or minted.** The rule here ("a group score may not be read as a join
+   prediction") is a plausible candidate, but the wording would be mine rather than the maintainer's,
+   so it is reported as a candidate instead — consistent with how this session handled every other
+   spec that drafts no invariant.
