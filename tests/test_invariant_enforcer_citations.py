@@ -168,7 +168,14 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: defect was a question improvised at runtime that exists in no file, so the pair records an
 #: enforcer of the rule, not a detector of the symptom.
 #:   INV-247 -> test_no_host_control_is_offered_as_a_question.py   (close the question set)
-EXPECTED_PAIRS = 65
+#:
+#: 65 -> 66 on 2026-08-16: INV-253 (US English is the only spelling written in this
+#: repository) names its new guard, tests/test_us_english_spelling.py. Re-derived by
+#: running the extractor. ⚠️ That guard's vocabulary is hardcoded and cannot be otherwise —
+#: the corpus is what is being judged — so the pair records an enforcer of the rule, not a
+#: detector of every breach of it.
+#:   INV-253 -> test_us_english_spelling.py                        (the house spelling)
+EXPECTED_PAIRS = 66
 
 
 def pairs():

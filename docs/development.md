@@ -34,8 +34,28 @@ Two deliberate exceptions, both verified rather than assumed:
 deliberately carries both `"generalis"` and `"generaliz"` so the scanner stays
 tolerant of either spelling in text it reads.
 
-⚠️ This is a convention, not yet an invariant: no test enforces it, so a
-British spelling reintroduced in a future edit will not fail the suite.
+This is **INV-253**, enforced by `tests/test_us_english_spelling.py`, which scans
+the whole tree and matches whole words after splitting identifiers on both `_`
+and CamelCase boundaries — so `test_the_..._limit` and `NoStep...Changed` are
+caught as readily as prose.
+
+⚠️ **A clean run does not mean the corpus is US English.** The guard's word list
+is hardcoded and cannot be otherwise: the corpus is the thing being judged, so
+there is nothing to derive the vocabulary from. A clean run means no *listed*
+form is present. Two consequences worth knowing before you rely on it:
+
+- `analyses` is deliberately absent, because it is both the British verb and the
+  correct US plural of `analysis`. Those seven occurrences were converted by
+  hand and would not be caught coming back.
+- Stem matching is rejected: `organism`, `mechanism`, `parallelism`,
+  `characteristic`, `equally`, `totally`, `radialLine` and
+  `LabelLayoutAssertions` are all correct and all contain British-looking stems.
+
+A file that must carry a British form is waived by **path plus the exact word and
+count**, never as a whole file, so every other British form in it still fails and
+a waiver whose word has gone fails as stale. There is no marker you can add to a
+line to silence the guard — that is deliberate, or it becomes the way every
+future British spelling gets waved through.
 
 ## Claude development skills
 

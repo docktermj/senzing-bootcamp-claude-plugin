@@ -192,7 +192,7 @@ leave a reader to assume away:
 
 ## Invariants introduced
 
-- `INV-258` — Every English word written in this repository MUST use its US spelling, in shipped
+- `INV-253` — Every English word written in this repository MUST use its US spelling, in shipped
   plugin prose, specs, invariants, tests, code comments and identifiers alike; where the US and
   British forms differ, only the US form may be written, and any exempted file MUST carry its
   reason. (Recorded in `specs/INVARIANTS.md`, indexed under *The development record itself*.)
@@ -208,3 +208,57 @@ second citation of each — the hazard `tests/test_spec_ledger_invariants.py` ex
 and one this repo has already tripped over once (`specs/IMPLEMENTED.md:805`). This spec adds
 exactly one new dangling reference to `test_citation_census`, its own, taking the count of
 undefined ids from 5 to 6.
+
+## Deviations from this spec, and why (2026-08-16)
+
+1. **The invariant minted is `INV-253`, not the provisional id proposed above.** Re-derived at
+   implementation time exactly as the note above requires: `INV-252` was the highest defined,
+   this spec landed first, so it took the next number rather than the one reserved for it. The
+   five ids `bootcamp-notes-capture-and-recap-section` claims therefore shift up by one when that
+   spec lands, and its own text will need the same correction — including its lowest claimed id,
+   which now resolves to **this** invariant and must not be read as the note-capture rule.
+
+   ⛔ **The provisional id is deliberately not written out here**, for the same reason this spec
+   declines to name the other five: writing it would make this section a live citation of an
+   undefined invariant, which is the dangling reference `test_citation_census` fails on. Caught
+   by that guard on the first run of this very implementation.
+
+2. ⚠️ **One of the three named exceptions turned out not to be needed, and was not added.**
+   `SCOPE_VERBS` at `.claude/skills/compact-dev-environment/widened_scope.py:61` carries the
+   *fragments* `"generalis"` and `"generaliz"`, not whole words. The guard matches whole words
+   only — the very rule this spec's limitation 2 demands — so the fragment never matches and
+   needs no exemption. Adding one would have created precisely the stale exception the spec's
+   fifth acceptance criterion exists to forbid. Verified by running the matcher against
+   `"generalis"` directly; it is pinned in `test_correct_us_prose_and_identifiers_are_left_alone`
+   so a future edit that widens the matcher to fragments fails there rather than silently.
+
+3. ⛔ **The set of files needing an exemption is larger than the three this spec names — INV-246
+   in action.** A full scan found British forms in **four** further places, none of them defects:
+
+   | Site | Why it may keep them |
+   |---|---|
+   | `feedback/**` (31 occurrences) | The bootcamper-feedback archive. It is testimony this repo **quotes**, not prose it writes; rewriting a bootcamper's words falsifies the record, and the text is also the content-addressed dedup key `PROCESSED.jsonl` stores, so a correction would break the ledger correspondence too. Exempt whole, liveness-asserted. |
+   | `specs/license-cap-branch-offers-no-way-to-apply-the-license-that-may-have-arrived.md` (2) | Quotes a bootcamper's feedback title verbatim in its `Source:` line — the same string the archive above records. Waived word-and-count. |
+   | `specs/INVARIANTS.md` (1) | INV-253's own statement names the British form it forbids, so the rule reads without a second lookup. Waived word-and-count. |
+   | `specs/IMPLEMENTED.md` (1) | Records the German `D:\Programme` fixture in a ledger entry — the same exception the spec names for the test file, one file further on. Waived word-and-count. |
+
+4. **The carve-out mechanism is a per-file word-and-count waiver, chosen over the spec's other two
+   options.** A waiver names the path, the exact word, *and* how many times it may appear. That
+   makes it strictly narrower than a whole-file exemption (every other British form in a waived
+   file still fails), self-invalidating (a waiver whose word has gone, or whose count moved, fails
+   as stale — which is what satisfies criterion 5 for **all** waivers at once rather than by a
+   separate liveness test each), and impossible to use as a general silencer, since there is no
+   marker an edit can add to a line: a waiver is a path and a number recorded in the guard, where
+   it shows up in a diff. The guard's own file is handled differently and deliberately — a
+   sentinel-delimited data block holding the vocabulary, the exemption literals and the negative
+   controls' probe words is excised before it is scanned, so the guard's **prose** is still
+   checked. `test_the_sentinels_are_not_a_general_silencer` proves the sentinels are honored for
+   that one path and nowhere else.
+
+5. **`docs/development.md`'s British forms are not confined to its table**, so the line-based
+   table carve-out the spec floated would not have covered it: `licence` also appears in the
+   prose sentence naming the pairs. The word-and-count waiver covers both without distinguishing.
+
+6. ⚠️ **`tests/test_invariant_enforcer_citations.py` needed its `EXPECTED_PAIRS` raised 65 → 66**
+   — not listed in `## Affected files`, but required: INV-253 names its enforcing test, and that
+   guard asserts the invariant→test pair count deliberately rather than tracking it.
