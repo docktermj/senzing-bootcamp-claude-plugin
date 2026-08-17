@@ -166,6 +166,11 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   warning the bootcamper cannot act on is noise (INV-012).
 - **Positive and below the dataset size** — the note applies. The single License Key gate (Module 4,
   Step 8a) already offered to expand capacity; restate that as a choice, never force downsizing.
+  ⛔ **Do not improvise a menu of options here, and do not ask what to load.** This phase builds the
+  loader; the load decision — with its pinned question, the *"a license may already have arrived"*
+  readout, and the pointer to Step 8a sub-step 5's apply procedure — belongs to
+  `phaseB-load-first-source.md` step 7, once. Improvising a choice at this point is how a Bootcamper
+  came to be offered *"wait until the evaluation license is applied"* with no way to reach it.
 - **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
   assume it.** (INV-244) The only writer of `license_record_limit` is Module 4's Step 8a gate, which is
   volume-gated by design: a bootcamper with a small dataset never triggers it, so the field is

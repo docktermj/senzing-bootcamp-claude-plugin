@@ -778,6 +778,22 @@ training data.
    email; the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even
    in a later session. Record `license: evaluation` when no custom key is applied.
 
+   ⛔ **When a request is actually SENT, record it as an event — `license: evaluation` cannot carry
+   this.** Persist `license_key_requested` in `config/bootcamp_progress.json` with the channel and
+   the date — presence means a request went out:
+
+   ```json
+   "license_key_requested": { "channel": "mcp-submit-feedback", "date": "YYYY-MM-DD" }
+   ```
+
+   ⚠️ **`license: evaluation` means "no custom key is applied" and NOTHING about whether a request
+   is outstanding.** It is written on two opposite paths — after a request was sent (above), and
+   when the Bootcamper **declined** to send one (sub-step 6a step 4). A later step that reminds the
+   Bootcamper to check their inbox based on `license: evaluation` would therefore tell someone who
+   deliberately declined to go looking for a license they never asked for. Write `license_key_requested`
+   **only on an actual send**, and leave it absent otherwise — Data processing reads it to decide
+   whether that reminder is owed at all.
+
    ### 6a. The in-flow license request sends the Bootcamper's name and work email — gate it
 
    ⛔ **This is the only step in the entire bootcamp that transmits the Bootcamper's personal
@@ -833,7 +849,10 @@ training data.
       > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.
 
    4. **Send only on an explicit yes.** On anything else, record `license: evaluation`, continue,
-      and do not re-ask (INV-006). Relay whatever the server returns verbatim.
+      and do not re-ask (INV-006). Relay whatever the server returns verbatim. ⛔ **Do not write
+      `license_key_requested` on this path** — nothing was sent, and a later "check your email" reminder
+      keyed to it would be addressed to someone who declined. On a successful send, write it per
+      sub-step 6.
    5. **A failure never blocks.** Report it in one line and continue on the built-in evaluation
       license.
 

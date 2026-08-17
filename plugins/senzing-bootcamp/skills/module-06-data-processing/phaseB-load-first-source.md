@@ -63,6 +63,46 @@ hardcoded figure:
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
   License Key gate (Module 4, Step 8a) already offered to expand capacity — restate that a larger
   license lets the full load proceed, as a choice, not a wall; do not force downsizing.
+
+  ⛔ **Read `license_key_requested` from `config/bootcamp_progress.json` first, and say the license may
+  already be here.** When it records a sent request, state plainly that the license is delivered **by
+  email**, that it may already have arrived, and that it can be applied now — including in a later
+  session. ⚠️ **Only when a request is outstanding.** `license: evaluation` is written both after a
+  request was sent *and* when the Bootcamper **declined** to send one, so keying this reminder to it
+  would tell someone who declined to go hunting for a license they never asked for. Absent
+  `license_key_requested` → no reminder; say nothing about email.
+
+  **The apply procedure already exists — point at it, do not restate it.** Module 4 Step 8a
+  **sub-step 5** decodes a Base64 key or copies a `.lic` to `licenses/g2.lic`, adds `LICENSEFILE` to
+  the engine-config PIPELINE section, and records `license: custom`. ⛔ **Do not write a second copy
+  of it here, and do not substitute a different mechanism.** A platform-specific procedure duplicated
+  is a procedure that drifts, and the MCP server describes a *different* route
+  (`SENZING_LICENSE_FILE`, or a license file in `etc/`) which is real but is **not** the one wired
+  into this bootcamp's file layout — using it here would leave the engine config pointing at nothing.
+
+  **Then re-measure and re-enter these branches.** After applying, re-read the license via
+  `SzProduct.get_license()`, parse `recordLimit`, confirm it actually moved, and route again on the
+  new value — a license reporting `0` lands on the first branch and the whole cap discussion
+  dissolves. ⚠️ Do **not** state the evaluation license's size or duration from this file: those
+  figures have changed before and two MCP tools have disagreed about them, so take them from a
+  runtime lookup at the moment of use or say they are unavailable.
+
+  End the turn on this single pinned question (INV-056), which replaces the improvised one — it is
+  **one** 👉 (INV-251) and it is **not** a second License Key gate (INV-093: that decision was asked
+  once, in Module 4, and is settled — this offers a *procedure* and a *status readout*, not the
+  question again):
+
+  > 👉 **Your dataset is larger than this license allows. How would you like to proceed? Reply with a number:**
+  >
+  > 1. **Load an overlap-preserving subset now** — keeps cross-source matches visible at this capacity.
+  > 2. **Apply a license I have** — I'll walk you through it, then load everything.
+  > 3. **Load the first records as they come** — simplest, but cross-source overlap may be lost.
+
+  *(Internal: end the turn on this question and wait.)* On **2**, follow Step 8a sub-step 5, then
+  re-measure and re-enter these branches. ⛔ **Option 2 stays on the list even when
+  `license_key_requested` is absent** — a Bootcamper may hold a license the bootcamp never asked about,
+  and it is the option this branch previously omitted entirely; what the `license_key_requested`
+  marker gates is only the *"check your email, it may have arrived"* line above.
 - **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
   is the same branch, and the same trap, as Phase A's — `license_record_limit` is written only by
   Module 4's volume-gated Step 8a, so its absence says nothing about the installed license. Measure
