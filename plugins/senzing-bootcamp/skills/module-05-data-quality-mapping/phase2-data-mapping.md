@@ -558,6 +558,49 @@ aimed at one feature family gets the shared-feature collision question below, an
 rejects twice without saying why gets its own. Present the mapping table and advance. Stated here so
 a later reader does not read the absence as the same omission step 10 once had.
 
+⛔ **Before accepting the plan: a root-level `payload` key MUST NOT be a registered feature
+attribute name.** Check every `disposition: payload` field's emitted key against the attribute
+catalog you already consult for `feature` mappings — the same lookup, asked of the other
+disposition. This runs **here**, where the routing decision is made, not after the output is
+analyzed.
+
+⚠️ **This mechanism is OBSERVATION-ONLY** — one run, one SDK build, 2026-08-17, with the bundled
+analyzer's own SCHEMA warning as the corroborating instrument (it fired on the collision and cleared
+on the rename). Observed: a field routed to `payload` but emitted under its own name at the record
+root, where that name is a registered feature attribute, was extracted by Senzing as a **feature**
+anyway — so the Bootcamper's explicit routing answer was honored in form and not in effect. Treat it
+as a strong local observation, not as a documented rule, and re-confirm before relying on it
+elsewhere (INV-080/INV-149).
+
+MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and it returned the *Payload attributes (optional)* and *Mapping identifiers* sections, which establish that payload and registered features are distinct categories and that choosing between them is a mapping decision, but state no precedence for a colliding root-level key (absence negative) — server 1.32.9, 2026-08-17
+
+**On a collision, do NOT silently re-route or override the answer (INV-006).** Their intent — *do
+not match on this* — is achievable; only the key **name** is wrong. Say what will actually happen
+and offer the fix, ending the turn on one pinned 👉 question:
+
+> 👉 **`{field}` is routed to payload, but `{KEY}` is a registered Senzing feature attribute — at the record root Senzing will resolve on it anyway. Shall I store it as `{KEY}_PAYLOAD` instead, so it rides along without matching?** (respond yes or no)
+
+On **yes**, emit the renamed key and record the rename in the mapping table's reasoning column. On
+**no**, record that the Bootcamper accepts the field being matched on, so the decision is theirs and
+is visible later — never leave the collision unrecorded either way.
+
+⚠️ **A list-valued field routed to `payload` is joined into ONE literal value.** A multi-valued
+column becomes a single meaningless string: the observed signature was `"XXX; VGB; GBR"` in
+**13,803 of 19,050 records** (72%). Say so before accepting a payload route on a repeating field —
+the Bootcamper usually wants either the first value, a chosen one, or the field split, none of which
+a join produces.
+
+**Surface the analyzer's SCHEMA warnings here, not only in the output analysis.** The analyzer is
+the instrument that already detects this class, and it currently reports one step too late to
+prevent it: read its SCHEMA warnings at this gate and resolve them before the plan is accepted.
+
+⛔ **The general shape, and the reason every existing gate missed this.** The analyzer, the verbatim
+check and the routing report all confirm the **output matches the plan** and the **plan is faithful
+to the source**. None of them confirms the plan does what the Bootcamper **asked for** — so an
+answer that selects a *behavior* rather than a *value* is unverified by construction, and passes
+every gate while being silently unhonored. Wherever a question's answer chooses a behavior,
+something must check the behavior was actually obtained.
+
 > ⛔ **Heads-up before you map anything with `disposition: extract` — read this now, not after the
 > gate fails.** `extract` is for pulling a value out of a prose field, and **every correct
 > multi-word extraction is rejected by step 4's verbatim gate**, by construction: the gate compares

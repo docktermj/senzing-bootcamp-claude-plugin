@@ -52,6 +52,19 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: that quietly upgrades "I ran it" into "it is good" is the same laundering this guard exists
 #: to stop.
 VERIFIED_QUERIES = {
+    # Executed 2026-08-17 on server 1.32.9 (docs index 2026-08-11 20:52 UTC), later than
+    # VERIFIED_ON above, which records the date the bulk of this allowlist was measured.
+    "payload attribute versus registered feature attribute record root extracted as feature precedence":
+        "ADJACENT, AND DELIBERATELY SO: Senzing Entity Specification -> 'Payload attributes "
+        "(optional)' (57.9), 'Attributes for the record key' (49.8), 'Mapping identifiers' "
+        "(48.1). These establish that payload and registered features are distinct "
+        "categories and that choosing between them is a mapping decision -- they do NOT "
+        "state the precedence when a payload-intended root key carries a registered "
+        "attribute's name, which is exactly what the MCP-NEGATIVE marker at that call site "
+        "claims. The query is prescribed so a reader can re-run the absence, not to "
+        "retrieve an answer. NOTE: the highest-scoring result overall was an off-topic "
+        "pricing document ('Data Source Records (DSRs) Explained', 105.0) despite "
+        "category='data_mapping', so the category filter did not exclude it",
     "entity resolution business value":
         "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases'; "
         "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",
