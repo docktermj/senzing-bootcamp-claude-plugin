@@ -949,6 +949,71 @@ def manifest_path(out_dir: Path, name: str) -> Path:
     return Path(out_dir) / f"{name}-tabs.json"
 
 
+def _merge_manifest(prior: dict, payload: dict) -> dict:
+    """Fold this run's `payload` into the `prior` manifest, per tab.
+
+    ⛔ **A targeted re-capture must not erase the tabs it did not touch.** This run's
+    entries replace the prior ones for **every tab it touched** — in whichever list they
+    now belong, so a tab moving between ``captured``, ``failed`` and ``not_applicable``
+    between runs leaves exactly one entry — and every entry for an untouched tab is kept.
+
+    The failure this prevents: capture six tabs, then re-capture one because its query
+    returned nothing, and the manifest describes **one**. Graduation's coverage check then
+    reports full coverage on a 1-of-1 denominator, and would report it just as cheerfully
+    if five of the six images had been lost. The manifest is the only number in the system
+    that does not come from the recap Markdown (INV-122), so there is no second denominator
+    on the consumer side to catch it — a partial write and a complete write are
+    indistinguishable in the format.
+    """
+    touched = set(payload["requested"])
+    merged = dict(payload)
+    prior_requested = [t for t in prior.get("requested", []) if isinstance(t, str)]
+    merged["requested"] = prior_requested + [
+        t for t in payload["requested"] if t not in prior_requested
+    ]
+    for key in ("captured", "not_present", "not_applicable", "failed"):
+        kept = [
+            entry for entry in prior.get(key, [])
+            if isinstance(entry, dict) and entry.get("tab") not in touched
+        ]
+        merged[key] = kept + list(payload[key])
+    merged["captured_count"] = len(merged["captured"])
+    merged["requested_count"] = len(merged["requested"])
+    return merged
+
+
+def _prior_manifest(target: Path) -> "dict | None":
+    """The manifest already at `target`, or None when there is nothing safe to merge.
+
+    ⚠️ Merging into a corrupt or foreign file is never attempted: an absent, unreadable,
+    unparseable or schema-mismatched manifest is reported and then overwritten, exactly as
+    before this merge existed. A merge that could fail the run would be worse than the
+    defect it fixes — the PNGs are the deliverable (INV-122).
+    """
+    try:
+        with open(target, encoding="utf-8") as handle:
+            prior = json.load(handle)
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as exc:
+        print(
+            f"the existing tab manifest {target} could not be read ({exc}); "
+            "writing this run's tabs only, so it no longer describes earlier captures.",
+            file=sys.stderr,
+        )
+        return None
+    if not isinstance(prior, dict) or prior.get("schema") != MANIFEST_SCHEMA:
+        print(
+            f"the existing tab manifest {target} has schema "
+            f"{prior.get('schema') if isinstance(prior, dict) else 'unknown'!r}, not "
+            f"{MANIFEST_SCHEMA!r}; writing this run's tabs only, so it no longer "
+            "describes earlier captures.",
+            file=sys.stderr,
+        )
+        return None
+    return prior
+
+
 def write_manifest(
     out_dir: Path, name: str, requested, absent, written, missed, suppressed=()
 ) -> bool:
@@ -958,6 +1023,10 @@ def write_manifest(
     reported on stderr and never fails the run — the PNGs are the deliverable. But it
     is reported, because a silently absent manifest downgrades the coverage check to
     "skipped" much later, in graduation, where the cause is no longer visible.
+
+    ⚠️ **Merges with any existing manifest rather than replacing it** (see
+    `_merge_manifest`), so re-capturing a single tab does not discard the record of the
+    other five.
     """
     suppressed = list(suppressed)
     slug_of = {
@@ -1000,6 +1069,9 @@ def write_manifest(
     payload["captured_count"] = len(payload["captured"])
     payload["requested_count"] = len(payload["requested"])
     target = manifest_path(Path(out_dir), name)
+    prior = _prior_manifest(target)
+    if prior is not None:
+        payload = _merge_manifest(prior, payload)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "w", encoding="utf-8") as fh:

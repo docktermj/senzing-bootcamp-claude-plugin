@@ -510,6 +510,16 @@ none of these are covered by it:
      shortfall, naming the missing tab slugs; if `--check` reported
      `SKIPPED: tab-coverage check`, no manifest was found and this check has **not** run — say so
      rather than treating it as passed (INV-163).
+
+     ⚠️ **`--check` also reports a manifest that *undercounts*** — one recording fewer captured tabs
+     than there are `<name>-*.png` files beside it — as `the manifest undercounts`. Read that as the
+     coverage check above having measured against too small a denominator, not as a missing image.
+     The usual cause is a **targeted re-capture**: re-running capture for one tab used to rewrite the
+     manifest from scratch, leaving `captured_count: 1` where six tabs had been captured, after which
+     coverage passed on a 1-of-1 denominator and would have passed just as cheerfully with five of
+     the six images lost. `write_manifest` now merges instead of replacing, so this should not recur;
+     the count against the PNGs is what notices if that merge is ever bypassed. Fix the manifest (or
+     re-run the full capture) and re-check rather than reading the coverage line as a pass.
    - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
      visualization's base name and compare against the section's image lines.
 

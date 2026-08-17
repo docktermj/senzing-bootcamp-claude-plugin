@@ -353,7 +353,14 @@ class TheManifestRecordsWhatCaptureDid(unittest.TestCase):
 
     def test_the_recorded_filename_matches_what_capture_writes(self):
         """The join between the two scripts. A slug mismatch here silently makes
-        every captured tab look missing from the recap."""
+        every captured tab look missing from the recap.
+
+        ⚠️ Looks the entry up **by tab** rather than taking ``captured[0]``. Each iteration
+        writes into the same directory, and `write_manifest` merges with any prior manifest
+        rather than replacing it, so index 0 stays the *first* tab written while this
+        iteration's entry is appended. The subject of this test — that the recorded
+        filename and slug match what capture writes — is unchanged either way.
+        """
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "viz"
             for tab, slug in TABS:
@@ -361,11 +368,12 @@ class TheManifestRecordsWhatCaptureDid(unittest.TestCase):
                     written = [(self.cs._out_path(out, "v", tab), "L")]
                     self.cs.write_manifest(out, "v", [tab], [], written, [])
                     data = json.loads(self.cs.manifest_path(out, "v").read_text())
+                    entries = [e for e in data["captured"] if e["tab"] == tab]
+                    self.assertEqual(1, len(entries),
+                                     f"expected exactly one entry for {tab!r}")
                     self.assertEqual(
-                        self.cs._out_path(out, "v", tab).name,
-                        data["captured"][0]["file"],
-                    )
-                    self.assertEqual(slug, data["captured"][0]["slug"])
+                        self.cs._out_path(out, "v", tab).name, entries[0]["file"])
+                    self.assertEqual(slug, entries[0]["slug"])
 
     def test_an_unwritable_target_is_reported_not_raised(self):
         """Best-effort like capture (INV-122) — but never silent."""

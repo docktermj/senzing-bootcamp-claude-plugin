@@ -1085,6 +1085,48 @@ def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[s
     return problems
 
 
+def manifest_undercount_problems(manifests: Sequence[dict]) -> List[str]:
+    """Manifests describing fewer captures than there are PNGs beside them.
+
+    ⛔ **This is the denominator the manifest cannot supply about itself.** The manifest is
+    the only number in the system that does not come from the recap Markdown, which is
+    exactly why a truncated one is undetectable from the consumer side: there is no second
+    figure to check it against. The PNGs are that second figure, and they are the one
+    record a truncating manifest write cannot destroy — the earlier images stay on disk.
+
+    The reported sequence: six tabs captured, one re-captured on its own because its query
+    matched nothing, and the manifest rewritten from scratch as ``captured_count: 1``.
+    Coverage then passes on a 1-of-1 denominator — and would pass just as cheerfully with
+    five of the six images lost. `write_manifest` now merges rather than replaces, but this
+    check is what notices when that merge is bypassed, skipped, or undone by a later edit;
+    it also catches any other cause of an undercount, not just the re-capture path.
+    """
+    problems: List[str] = []
+    for manifest in manifests:
+        source = manifest.get("_path")
+        name = manifest.get("name")
+        if not source or not name:
+            continue
+        directory = Path(str(source)).parent
+        try:
+            pngs = sorted(directory.glob(f"{name}-*.png"))
+        except OSError:
+            continue
+        if not pngs:
+            continue
+        captured = len([e for e in manifest.get("captured", []) if isinstance(e, dict)])
+        if captured >= len(pngs):
+            continue
+        problems.append(
+            f"visualization {name!r}: the tab manifest records {captured} captured tab(s) "
+            f"but {len(pngs)} {name}-*.png file(s) sit beside it — the manifest "
+            "undercounts, so the coverage check above is measuring against a denominator "
+            "smaller than what was actually captured (a targeted re-capture that replaced "
+            f"the manifest is the usual cause; source: {source})"
+        )
+    return problems
+
+
 def tab_coverage_note(source_text: str, manifests: Sequence[dict]) -> str:
     """``N of M captured tabs`` — empty when no manifest exists.
 
@@ -3551,6 +3593,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         # above, because they all measure the recap against itself.
         manifests = find_tab_manifests()
         problems = problems + tab_coverage_problems(source_text, manifests)
+        # …and whether the manifest those checks trust is itself complete.
+        problems = problems + manifest_undercount_problems(manifests)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")
