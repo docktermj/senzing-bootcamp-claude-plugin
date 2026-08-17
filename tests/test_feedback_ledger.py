@@ -260,10 +260,21 @@ class TheArchiveIsNeverPropagated(unittest.TestCase):
         self.assertIn("`feedback/**`", manifest)
 
     def test_the_propagate_script_copies_only_allowlisted_paths(self):
+        """The archive must not be an rsync source — which is a claim about CODE.
+
+        This asserted the bare substring against the whole file until 2026-08-16, when
+        `cc0a7b0` added a comment naming `/feedback-to-specs` among the maintainer-only
+        skills `docs/development.md` indexes. That comment copies nothing, and the guard
+        failed on it — a proxy firing on prose. Comment lines are stripped first so the
+        assertion tests what it means; any operative mention still fails it.
+        """
         script = (REPO_ROOT / ".claude" / "skills" / "propagate-to-public" / "propagate.sh").read_text(
             encoding="utf-8"
         )
-        self.assertNotIn("feedback", script)
+        code = "\n".join(
+            line for line in script.splitlines() if not line.lstrip().startswith("#")
+        )
+        self.assertNotIn("feedback", code)
 
 
 if __name__ == "__main__":
