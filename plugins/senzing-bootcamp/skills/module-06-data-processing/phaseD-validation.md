@@ -100,15 +100,29 @@ the next step that actually asks.
 
 ## 25. Execute UAT with business users
 
-**First, check whether there are real stakeholders.** Read `docs/business_problem.md`. If it carries
-the bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
-accepted in Module 1), or otherwise records no real stakeholders, there are no business users to
-involve — so **do not ask** the involvement question (INV-006/INV-012). State briefly that the
-scenario is bootcamp-generated, so you will self-direct the UAT: spot-check 5–10 cross-source
-entities and document findings in `docs/uat_results.md`, then proceed to step 26.
+⛔ **Branch on scenario provenance first — never ask a bootcamper to convene business users for a
+business case the bootcamp invented.** Read `docs/business_problem.md`: if it carries the
+bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
+accepted in Module 1), or otherwise records no real stakeholders, take 25a. Otherwise take 25b.
 
-Otherwise (a real business problem with stakeholders), offer to involve business users — pin the
-question verbatim:
+### 25a. Bootcamp-generated scenario (marker present, or no real stakeholders recorded)
+
+There are no business users to involve, so **do not ask** the involvement question
+(INV-006/INV-012). State briefly that the scenario is bootcamp-generated and that you will
+self-direct the UAT, then spot-check 5–10 cross-source entities, document the findings in
+`docs/uat_results.md`, and proceed to step 26.
+
+⛔ **This branch correctly ends with NO 👉 question, and must stay that way.** Do not borrow 25b's
+question to balance the two branches — manufacturing a question here breaches INV-006 in the
+opposite direction. This step is not a turn ending on this path: continue in the same turn to the
+next step that actually asks (`ground-rules.md` → "A results presentation is not a turn ending",
+INV-225).
+
+### 25b. Real business problem with real stakeholders
+
+**Only when `docs/business_problem.md` records real stakeholders and carries no
+`> 🤖 Bootcamp-generated business case` marker** — offer to involve business users. Pin the
+question verbatim (INV-056):
 
 👉 **Would you like to involve business users in testing the cross-source results?** (respond yes or no)
 
