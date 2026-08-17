@@ -84,7 +84,9 @@ When the bootcamper hits an error during this module:
 By default, the bootcamper already has Senzing's **built-in evaluation license**: the capacity
 that applies when no custom license is configured. Treat it as the default the session already
 has, presented as a choice rather than a wall. Before any license-based capacity or sampling
-decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (Step 8a writes it
+decision — ⛔ **and "choosing how many records to GENERATE" is one of them, not only "sampling an
+existing dataset down"** — **read `license_record_limit` from `config/bootcamp_progress.json`**
+(Step 8a writes it
 after a custom license is configured — but that gate is **volume-gated**, so an absent value means
 it has not run, never that no custom license exists) and drive the decision from that effective
 limit: never from a remembered or hardcoded figure:
@@ -256,6 +258,28 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   This is what lets the next module state the contrast it is teaching, and it is what lets a later run
   tell a **generation** fault from a **scoring** fault — without it, a source that scores 100 is
   indistinguishable from a source that was meant to.
+
+  ⛔ **How many records to generate is a LICENSE-CAPACITY decision — do not choose it before the
+  limit is measured.** (INV-244) Follow *"License limit and dataset size (canonical framing)"* above
+  before fixing any record count here. ⚠️ **Do not re-derive or restate its measurement procedure at
+  this step** — route to it, exactly as that block routes to Step 8a. A copy here would be the third,
+  and a rule stated three times drifts in two of them.
+
+  ⚠️ **Sizing a dataset into existence does not feel like a capacity decision, which is why this
+  directive exists.** Nothing is being cut, so the framing's "sampling" language does not obviously
+  apply — and the measurement is several steps downstream of the point the counts are chosen. One run
+  sized a generated dataset **down from 538 records to 466** to stay under the built-in 500-record
+  evaluation limit, reasoning that an absent `license_record_limit` meant no custom license was
+  configured. It then reached Step 8a, measured as instructed, and found the workstation carried a
+  custom EVAL license with **`recordLimit: 0` — no record cap at all**. The downsizing was
+  unnecessary and was withdrawn. ⛔ That is exactly the inference INV-244 forbids: an absent
+  `license_record_limit` means **never measured**, never "no custom license".
+
+  **On a measured `recordLimit: 0`, size the generated data by what the SCENARIO needs** — the
+  cross-source overlap, the quality bands and the mapping complexity required above — and not by any
+  cap. Say so plainly rather than leaving the branch as a warning: with no cap there is nothing to
+  size against except the teaching goal, and under-generating here is what leaves Modules 6 and 7
+  with too little overlap to demonstrate cross-source resolution (INV-150).
 
 ⚠️ **Both are bootcamp-generated, so both skip the question.** Reading `cord` as the only generated
 provenance is what produced a provision question per source on a synthetic scenario — four
