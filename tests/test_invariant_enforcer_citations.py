@@ -175,7 +175,17 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: the corpus is what is being judged — so the pair records an enforcer of the rule, not a
 #: detector of every breach of it.
 #:   INV-253 -> test_us_english_spelling.py                        (the house spelling)
-EXPECTED_PAIRS = 66
+#:
+#: 66 -> 73 on 2026-08-16: the bootcamp-notes feature registered five invariants
+#: (INV-254..INV-258), two of which name two enforcers each — INV-254 is split between the
+#: hook's trigger vocabulary and the shipped flow's prose, and INV-258 between the Markdown
+#: fold at graduation and the rendered PDF. Re-derived by running the extractor.
+#:   INV-254 -> test_feedback_capture_triggers.py, test_bootcamp_notes_flow.py
+#:   INV-255 -> test_bootcamp_notes_flow.py                        (the 📌 banners)
+#:   INV-256 -> test_bootcamp_notes_flow.py                        (append, then verify)
+#:   INV-257 -> test_bootcamp_notes_flow.py                        (their words stay theirs)
+#:   INV-258 -> test_bootcamp_notes_flow.py, test_recap_notes_section.py
+EXPECTED_PAIRS = 73
 
 
 def pairs():

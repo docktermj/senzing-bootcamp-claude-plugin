@@ -529,8 +529,35 @@ none of these are covered by it:
 3. **Captions that cannot be checked.** If an embedded filename carries no recognized tab slug, warn
    that its caption cannot be verified against a tab and should be confirmed by opening the image.
 
-**Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
-Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
+**Fold the Bootcamper's notes into the recap (after reconcile, before normalize and render).**
+If `docs/bootcamp_notes.md` exists and carries at least one `### ` note, append its notes to
+`docs/bootcamp_recap.md` **after the last module section**, fenced exactly like this
+(INV-258):
+
+```markdown
+<!-- BOOTCAMP-NOTES:START -->
+## Notes, Ideas and Questions
+
+{the note entries, in capture order, exactly as written in docs/bootcamp_notes.md}
+<!-- BOOTCAMP-NOTES:END -->
+```
+
+⛔ **The fence is what makes this safe, not the heading text.** Every `## ` heading in the recap
+is parsed as a module, so a notes section recognized by its *title* would be one renamed module
+away from being mis-parsed — and a Bootcamper's private note one heading away from being printed
+on their Certificate of Completion (INV-100). The generator lifts this block out **before** module
+parsing begins, so nothing inside it can become a module.
+
+- **Append-only and idempotent (INV-085).** Re-running graduation must not duplicate the section:
+  if the fence is already present, replace its contents rather than appending a second block. It
+  never touches a module section.
+- ⛔ **With no notes, write nothing** — no fence, no heading, no "(none)" page. An empty notes
+  section on a keepsake is worse than an absent one.
+- **`docs/bootcamp_notes.md` itself survives graduation intact.** The fold copies; it never moves,
+  empties or deletes the bootcamper's notes file.
+
+**Normalize the Markdown (once, before rendering).** Now — after reconcile and the notes fold, and
+**before** the Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
 `docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
 `docs/feedback/`, and never rewrite, empty, or delete the bootcamper's feedback file**
 (`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
@@ -773,8 +800,12 @@ Create `production/database/.gitkeep` as an empty placeholder (never copy the
 eval database itself).
 
 **Exclude (never copy):** `config/bootcamp_progress.json`,
-`config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `data/samples/`,
-`data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+`config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `docs/bootcamp_notes.md`,
+`data/samples/`, `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+
+⛔ **`docs/bootcamp_notes.md` is a bootcamp artifact, not production content** — exactly as
+`docs/bootcamp_recap.md` and `docs/feedback/` are. It holds the bootcamper's own ideas and
+reminders about learning the tool; it has no place in a project they hand to their team.
 
 ⛔ **`data/raw/` is excluded, so a CORD fast-pathed source's input is not carried over.** A
 fast-pathed source loads straight from `data/raw/` with no mapping (INV-040/INV-041), so its loader

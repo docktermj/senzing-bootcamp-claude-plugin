@@ -665,6 +665,21 @@ the 👉 protocol above).
   visually distinct from the bootcamp. Then return them to exactly where they left off. Feedback
   is saved locally only, never submitted externally unless they explicitly ask. (The plugin's
   `UserPromptSubmit` hook surfaces this automatically during a bootcamp.)
+- **Make a note:** whenever the bootcamper says "make a note", "note to self", "jot this down",
+  "remind me", "don't let me forget", "add a to-do", "for my notes", or invokes
+  `/bootcamp-note`, run the note workflow in `notes.md` and append the entry to
+  `docs/bootcamp_notes.md`. The workflow opens with a pinned 📌 **BOOTCAMP NOTE** entry banner
+  and closes with a pinned 📌 **NOTE SAVED — BACK TO THE BOOTCAMP** exit banner (a statement)
+  before the pending 👉 question resumes (INV-254, INV-255). Notes are folded into the recap at
+  graduation and appear in `docs/bootcamp_recap.pdf`. (The plugin's `UserPromptSubmit` hook
+  surfaces this automatically during a bootcamp.)
+  - ⛔ **A note is the bootcamper's own thought, not a report about the plugin.** It is never
+    routed, never triaged, and never sent anywhere — there is no upstream offer, and
+    `submit_feedback` is unreachable from it. When a message is *both* ("make a note that the
+    bootcamp is broken"), it is **feedback**: naming the bootcamp as the thing at fault makes it
+    an attributed defect report, and routing it to notes would bury it in a private keepsake.
+  - ⛔ **Do not ask what they want to note when they already said it.** "Remind me to check the
+    truth-set counts" *is* the note (INV-006).
 - **Change verbosity:** whenever they ask for more or less detail, update the `verbosity` key in
   `config/bootcamp_preferences.yaml`, confirm the new setting in one sentence, and continue.
 - **Repeat the question:** if they ask to hear the current question again ("repeat that", "what

@@ -392,6 +392,12 @@ class TestPdfMatchesItsSource(unittest.TestCase):
             # renderer actually draws; the value is also the part that detects staleness,
             # since the label itself repeats once per module.
             line = re.sub(r"(?i)^why it matters:\s*", "", line)
+            # `Elaboration:` splits the same way, and its label additionally carries the
+            # attribution ("written by the bootcamp") that INV-257 requires on the page —
+            # so the drawn label is not the source label, and only the value is comparable.
+            # `Context:` needs no rule: its label is drawn immediately before its value, so
+            # the squashed run still matches.
+            line = re.sub(r"(?i)^elaboration:\s*", "", line)
             if len(line) >= 60 and " " in line:
                 keep.append(line)
         return keep

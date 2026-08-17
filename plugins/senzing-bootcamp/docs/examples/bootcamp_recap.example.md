@@ -539,3 +539,39 @@
 **Why it matters:** You can now answer "who is who across these two systems?" with evidence for every claim — and just as importantly, explain precisely why 128 pairs *cannot* be answered yet, which is the difference between a result you can act on and a number you have to trust.
 
 ---
+
+<!-- BOOTCAMP-NOTES:START -->
+## Notes, Ideas and Questions
+
+### Idea: map dba_name as a second NAME rather than payload
+
+**Captured:** 2026-07-15T11:42:00-05:00
+**Module:** Data Quality, Mapping, and Transformation
+**Type:** idea
+
+The ENFORMION file has a `dba_name` column I mapped to payload. Trading names are how
+half these businesses are actually known, so a second NAME_ORG might resolve the ATLAS
+FOODS ambiguity without touching anything else.
+
+**Context:** Data Quality, Mapping, and Transformation, step 4; pending question was "Ready to map the remaining columns?"
+
+### Question: does whyEntities need a flag I have not set?
+
+**Captured:** 2026-07-15T15:08:00-05:00
+**Module:** Query, Visualize and Discover
+**Type:** question
+
+The why output does not show record-level detail. Am I missing a flag, or is that
+detail simply not in this response?
+
+**Elaboration:** The default flag set omits record data; a flags argument controls how much of the record payload the response carries.
+
+### Reminder: check the counts against the source system before trusting them
+
+**Captured:** 2026-07-15T16:20:00-05:00
+**Module:** Query, Visualize and Discover
+**Type:** reminder
+
+4,971 entities from 5,241 records is a plausible number, not a verified one. Reconcile
+against the source system's own customer count before quoting it to anyone.
+<!-- BOOTCAMP-NOTES:END -->

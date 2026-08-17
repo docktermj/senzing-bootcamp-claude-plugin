@@ -356,20 +356,68 @@ depends on it.
 
 ## Invariants introduced
 
-- `INV-253` — At any time, a Bootcamper can capture a note (idea, question, reminder, to-do or memo),
+⚠️ **The five ids shifted up by one at implementation time.** `us-english-spelling-is-unregistered-and-unguarded`
+landed first and took `INV-253`, so these were re-derived per @INVARIANTS.md's "next unused
+`INV-NNN`" rule. The wording is unchanged from what this spec drafted.
+
+- `INV-254` — At any time, a Bootcamper can capture a note (idea, question, reminder, to-do or memo),
   from onboarding, any module, or graduation. (The inward counterpart to INV-010.)
-- `INV-254` — The note capture flow MUST be bracketed by pinned-verbatim banners — a 📌 "BOOTCAMP
+- `INV-255` — The note capture flow MUST be bracketed by pinned-verbatim banners — a 📌 "BOOTCAMP
   NOTE" entry banner before its first 👉 question, and a 📌 "NOTE SAVED — BACK TO THE BOOTCAMP" exit
   banner (a statement) after the note is confirmed saved and before the pending bootcamp 👉 question
   is re-presented — using a glyph distinct from the feedback flow's 📝 (INV-074).
-- `INV-255` — Every approved note MUST be appended to `docs/bootcamp_notes.md` and confirmed present
+- `INV-256` — Every approved note MUST be appended to `docs/bootcamp_notes.md` and confirmed present
   on disk by a re-read before the Bootcamper is told it was saved.
-- `INV-256` — A note MUST be recited to the Bootcamper for approval before it is saved, MUST be
+- `INV-257` — A note MUST be recited to the Bootcamper for approval before it is saved, MUST be
   stored in the Bootcamper's own words, and any bootcamp-authored elaboration or context MUST be
   stored under its own label, never merged into the Bootcamper's text.
-- `INV-257` — When the recap carries a `<!-- BOOTCAMP-NOTES:START/END -->` section, the recap PDF
+- `INV-258` — When the recap carries a `<!-- BOOTCAMP-NOTES:START/END -->` section, the recap PDF
   MUST render it between the last module page and the Certificate of Completion in both renderers
   (INV-066), MUST list it in the table of contents where the renderer has one, MUST count its
   characters toward the content-retention figure (INV-110), and MUST NOT treat it as a module — it
   never appears in the certificate's module citation (INV-100), in either renderer's cover module
   list, or in the four-subsection check (INV-103).
+
+## Deviations from this spec, and why (2026-08-16)
+
+1. **The five invariants are `INV-254`–`INV-258`, not `INV-253`–`INV-257`**, as recorded above.
+
+2. ⛔ **An unterminated fence now runs to end of text, which this spec did not specify.** The first
+   implementation treated a missing `<!-- BOOTCAMP-NOTES:END -->` as "no fence present" — and that
+   is the one failure mode this whole section is designed to prevent: the `## Notes, Ideas and
+   Questions` heading is then parsed as a **module**, which puts a Bootcamper's private note on
+   their Certificate of Completion (INV-100). Since graduation appends the block *after* the last
+   module section, everything past the opening marker is notes, so running to end of text is both
+   safe and correct. Caught by a negative control written for the opposite expectation.
+
+3. **Retention is accounted at parse time from the lines the parser placed, not recomposed from the
+   fields.** Summing `title + type + captured + module + body + context + elaboration` undercounts
+   every note by its label markup — `**Captured:** ` is 14 characters the renderer draws as a stamp
+   rather than as literal text — so retention fell measurably with each note added (0.94 → 0.89 on
+   the test fixture). That is the exact direction of failure criterion 14 forbids, merely too small
+   to cross `MIN_CONTENT_RETENTION` on a short file. Lines the parser could **not** place stay
+   uncounted, so a note that fails to parse still registers as content loss.
+
+4. **`tests/test_example_recap_sync.py` needed its sampler taught about `Elaboration:`** — not in
+   `## Affected files`, but required. That sampler compares each source line against the PDF's
+   extracted text, and the renderer draws the elaboration's label separately from its value (the
+   label carries the "written by the bootcamp" attribution INV-257 requires on the page). This is
+   the same shape as the existing `Why it matters:` carve-out immediately above it, for the same
+   reason. `Context:` needed no rule: its label is drawn immediately before its value, so the
+   squashed run still matches.
+
+5. **`tests/test_invariant_enforcer_citations.py` needed `EXPECTED_PAIRS` raised 66 → 73** — also
+   unlisted, also required, since each new invariant names its enforcing test and that guard pins
+   the invariant→test pair count deliberately rather than tracking it.
+
+6. **A second guard file was added beyond the two the spec names.** `tests/test_recap_notes_section.py`
+   covers the generator as specified; `tests/test_bootcamp_notes_flow.py` covers the shipped
+   **prose** contract — the banners and their glyph, the no-routing/no-upstream boundary, the
+   attribution rule, the graduation fold and the `production/` exclusion. Without it INV-255,
+   INV-256 and INV-257 would have been registered with no enforcer at all, since every one of them
+   governs a rule that lives in Markdown rather than in code.
+
+7. ⚠️ **Nothing here is runtime-verified as a conversation.** Whether a live turn presents the
+   banner, asks exactly one 👉, and re-presents the pending question verbatim cannot be tested by
+   an offline suite (INV-108) — it needs `dry-run` phase 3. The static half is fully asserted; the
+   conversational half is disclosed, not ticked.

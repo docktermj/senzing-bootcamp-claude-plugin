@@ -122,6 +122,20 @@ CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
 RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 
+# Fence markers graduation wraps the Bootcamper's own notes in (INV-258).
+#
+# ⛔ THE FENCE IS THE DISCRIMINATOR, NOT THE HEADING TEXT. Every `## ` heading in a recap
+# is parsed as a module (`parse_recap`), so a notes section recognized by its *title*
+# would be one renamed module away from being mis-parsed — and a Bootcamper's private
+# note is then one heading away from being cited on their Certificate of Completion.
+# The block is lifted out of the source before module parsing begins, so no `## ` inside
+# it can ever reach `Recap.modules`.
+BOOTCAMP_NOTES_START = "<!-- BOOTCAMP-NOTES:START -->"
+BOOTCAMP_NOTES_END = "<!-- BOOTCAMP-NOTES:END -->"
+
+#: Default heading for the notes section when the folded block carries none.
+BOOTCAMP_NOTES_TITLE = "Notes, Ideas and Questions"
+
 # Recap image references: `![alt](path)` on a line of its own.
 # An embedded screenshot: ``![alt](path)`` alone on its line.
 #
@@ -223,10 +237,64 @@ class ModuleSection:
 
 
 @dataclass
+class NoteEntry:
+    """One note the Bootcamper captured during the run (INV-257).
+
+    ``body`` is **their** words. ``elaboration`` is the bootcamp's expansion and
+    ``context`` is machine-composed, so both are kept in their own fields and rendered
+    under their own labels — never folded into ``body``. This is a keepsake with their
+    name on the certificate; a paragraph they did not write, indistinguishable from one
+    they did, is the plugin putting words in their mouth permanently.
+    """
+
+    title: str
+    type: str = ""
+    captured: str = ""
+    module: str = ""
+    body: List[str] = field(default_factory=list)
+    context: str = ""
+    elaboration: str = ""
+
+
+@dataclass
+class NotesSection:
+    """The Bootcamper's notes, folded into the recap at graduation.
+
+    Deliberately NOT a ``ModuleSection``: it is never a module, so it never reaches the
+    certificate's module citation (INV-100), either renderer's cover module list, or the
+    four-subsection completeness check (INV-103).
+    """
+
+    title: str = BOOTCAMP_NOTES_TITLE
+    entries: List[NoteEntry] = field(default_factory=list)
+    #: Source characters this section actually accounted for — the stripped length of
+    #: every line the parser assigned to the title or to an entry.
+    #:
+    #: ⚠️ Counted at PARSE time rather than recomputed from the fields, and the difference
+    #: is load-bearing. `**Captured:** <value>` is 14 characters of label the renderer
+    #: draws as a stamp rather than as literal markup; summing the field values instead
+    #: undercounts every note by its label overhead, so retention falls a little further
+    #: with each note the Bootcamper writes. Lines the parser could NOT place stay
+    #: uncounted, so a note that fails to parse still shows up as content loss — which is
+    #: the whole point of the retention figure (INV-110).
+    source_chars: int = 0
+
+    def __bool__(self) -> bool:
+        """Falsey when empty, so ``if recap.notes`` means "there is something to render".
+
+        An empty notes section on a keepsake is worse than an absent one, and every
+        render/TOC/pagination site below gates on exactly this.
+        """
+        return bool(self.entries)
+
+
+@dataclass
 class Recap:
     title: str
     meta: List[Tuple[str, str]]  # ("Bootcamper", "Ada"), ...
     modules: List[ModuleSection]
+    # Defaulted so every existing construction site and test keeps working unchanged.
+    notes: Optional[NotesSection] = None
 
 
 # The suffix the durability hooks leave on a folded-but-unfinalized section, in place of
@@ -522,7 +590,111 @@ def _normalize_heading(name: str) -> str:
     return n
 
 
+_NOTE_HEADING_RE = re.compile(r"^###\s+(.*)$")
+_NOTE_LABEL_RE = re.compile(r"^\*\*(.+?):?\*\*:?\s*(.*)$")
+
+
+def _parse_notes_block(inner: str) -> NotesSection:
+    """Parse the inside of a BOOTCAMP-NOTES fence into a :class:`NotesSection`."""
+    section = NotesSection()
+    current: Optional[NoteEntry] = None
+
+    def close() -> None:
+        nonlocal current
+        if current is not None:
+            while current.body and not current.body[-1].strip():
+                current.body.pop()
+            while current.body and not current.body[0].strip():
+                current.body.pop(0)
+            section.entries.append(current)
+        current = None
+
+    def account(line: str) -> None:
+        """Record a line as content this section carries into the PDF."""
+        section.source_chars += len(line.strip())
+
+    for raw in inner.splitlines():
+        line = raw.rstrip("\n")
+        h2 = re.match(r"^##\s+(.*)$", line)
+        if h2 and current is None:
+            title = h2.group(1).strip()
+            if title:
+                section.title = title
+            account(line)
+            continue
+        h3 = _NOTE_HEADING_RE.match(line)
+        if h3:
+            close()
+            heading = h3.group(1).strip()
+            ntype, _, rest = heading.partition(":")
+            if rest.strip():
+                current = NoteEntry(title=rest.strip(), type=ntype.strip())
+            else:
+                current = NoteEntry(title=heading)
+            account(line)
+            continue
+        if current is None:
+            # Stray text between the fence and the first note. Deliberately NOT
+            # accounted: it reaches no field and renders nowhere, so counting it would
+            # hide exactly the content loss this figure exists to surface.
+            continue
+        label = _NOTE_LABEL_RE.match(line.strip())
+        if label:
+            key = _normalize_heading(label.group(1))
+            val = label.group(2).strip()
+            handled = True
+            if key == "captured":
+                current.captured = val
+            elif key == "module":
+                current.module = val
+            elif key == "type":
+                current.type = current.type or val
+            elif key == "context":
+                current.context = val
+            elif key == "elaboration":
+                current.elaboration = val
+            else:
+                handled = False
+            if handled:
+                account(line)
+                continue
+        current.body.append(line)
+        account(line)
+
+    close()
+    return section
+
+
+def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
+    """Lift the BOOTCAMP-NOTES fence out of ``text`` before any module parsing.
+
+    Returns ``(text_without_the_block, notes_or_None)``. Removing it up front is what
+    makes the fence — not the heading text — the discriminator: the ``## `` inside it
+    never reaches the module loop, so no renamed module can collide with it and no note
+    can be promoted to a module section.
+    """
+    start = text.find(BOOTCAMP_NOTES_START)
+    if start == -1:
+        return text, None
+    end = text.find(BOOTCAMP_NOTES_END, start)
+    if end == -1:
+        # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
+        # Graduation appends this block AFTER the last module section, so everything past
+        # the opening marker is notes; treating the marker as absent instead would let
+        # the notes heading be parsed as a module and put a Bootcamper's private note on
+        # their Certificate of Completion (INV-100). Losing the fence must cost the
+        # notes' formatting at worst, never the modules and never the certificate.
+        inner = text[start + len(BOOTCAMP_NOTES_START):]
+        notes = _parse_notes_block(inner)
+        return text[:start], (notes if notes.entries else None)
+    inner = text[start + len(BOOTCAMP_NOTES_START):end]
+    remainder = text[:start] + text[end + len(BOOTCAMP_NOTES_END):]
+    notes = _parse_notes_block(inner)
+    return remainder, (notes if notes.entries else None)
+
+
 def parse_recap(text: str) -> Recap:
+    text, notes = _extract_notes_block(text)
     lines = text.splitlines()
 
     title = "Senzing Bootcamp Recap"
@@ -614,7 +786,7 @@ def parse_recap(text: str) -> Recap:
             while content and not content[0].strip():
                 content.pop(0)
 
-    return Recap(title=title, meta=meta, modules=modules)
+    return Recap(title=title, meta=meta, modules=modules, notes=notes)
 
 
 # --------------------------------------------------------------------------- #
@@ -688,6 +860,11 @@ def _source_content_chars(text: str) -> int:
         line = raw.strip()
         if not line or line == "---":
             continue
+        # The notes fence markers are structure, not content: the renderers drop them
+        # exactly as they drop `---`, so counting them would understate retention on a
+        # recap whose only difference is that the Bootcamper wrote something down.
+        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END):
+            continue
         total += len(line)
     return total
 
@@ -706,6 +883,13 @@ def _rendered_content_chars(recap: Recap) -> int:
         for heading, lines in mod.subsections:
             total += len(heading)
             total += sum(len(line.strip()) for line in lines if line.strip())
+    # ⚠️ The notes section MUST be counted (INV-258). Omitting it makes the retention
+    # figure fall with every note the Bootcamper writes — their own words counted
+    # against them as content the PDF "lost" — and a long enough notes file crosses
+    # MIN_CONTENT_RETENTION and makes the generator REFUSE to render their recap
+    # (INV-110). The keepsake would be destroyed by the feature meant to enrich it.
+    if recap.notes:
+        total += recap.notes.source_chars
     return total
 
 
@@ -1495,20 +1679,27 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         # numbers. Because both passes paginate identically, the numbers are
         # correct. This is deterministic and avoids fpdf2's insert_toc_placeholder
         # 2-pass render, which duplicated ("ghosted") text in the field report.
+        # ⚠️ Both passes MUST render the notes page. Rendering it in one and not the
+        # other shifts every page number the TOC reports after it (INV-258).
         measure = new_pdf()
         epw = measure.w - measure.l_margin - measure.r_margin
         _render_cover(measure, epw, recap)
         if recap.modules:
-            _render_toc(measure, epw, recap, None)
+            _render_toc(measure, epw, recap, None, None)
         starts = [_render_module_page(measure, epw, mod) for mod in recap.modules]
+        notes_start = (
+            _render_notes_page(measure, epw, recap.notes) if recap.notes else None
+        )
         _render_certificate(measure, recap)
 
         pdf = new_pdf()
         _render_cover(pdf, epw, recap)
         if recap.modules:
-            _render_toc(pdf, epw, recap, starts)
+            _render_toc(pdf, epw, recap, starts, notes_start)
         for mod in recap.modules:
             _render_module_page(pdf, epw, mod)
+        if recap.notes:
+            _render_notes_page(pdf, epw, recap.notes)
         _render_certificate(pdf, recap)
 
         _ensure_parent(output)
@@ -2265,7 +2456,8 @@ def _render_certificate(pdf, recap: Recap) -> None:
     # Leave suppress_footer set: this is the last page.
 
 
-def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> None:
+def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]],
+                notes_start: Optional[int] = None) -> None:
     """Render the table of contents. ``starts`` is None in the measure pass
     (placeholder page numbers, identical layout) and the real per-module start
     pages in the final pass, so both passes paginate identically."""
@@ -2291,6 +2483,19 @@ def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> N
         pdf.set_text_color(*BLUE)
         pdf.set_font("Helvetica", "B", 11)
         pdf.cell(16, 8, "" if starts is None else str(starts[i]), align="R")
+        pdf.ln(8)
+
+    # The notes row goes AFTER the module rows, mirroring where the page itself sits
+    # (INV-258). It is a row in the contents, never a module: nothing else in this file
+    # reads the TOC, so listing it here cannot leak it into the certificate or the cover.
+    if recap.notes:
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 11)
+        pdf.cell(epw - 16, 8, _clip(_safe(recap.notes.title), 66))
+        pdf.set_text_color(*BLUE)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(16, 8, "" if notes_start is None else str(notes_start), align="R")
         pdf.ln(8)
 
 
@@ -2326,6 +2531,78 @@ def _render_module_page(pdf, epw: float, mod) -> int:
             _normalize_heading(r) for r in REQUIRED_SECTIONS
         }:
             _render_subsection(pdf, epw, sub_h, content)
+    return start
+
+
+def _render_notes_page(pdf, epw: float, notes: NotesSection) -> int:
+    """Render the Bootcamper's notes onto a fresh page; return its start page.
+
+    Styled like a module page but visibly its own thing — its own header band color and
+    a heading that reads as the Bootcamper's rather than the bootcamp's — because this
+    is the one section of the keepsake they wrote.
+    """
+    pdf.add_page()
+    start = pdf.page_no()
+    pdf.set_fill_color(*ACCENT)
+    pdf.rect(0, 0, pdf.w, 24, style="F")
+    pdf.set_xy(pdf.l_margin, 6)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(epw, 9, _clip(_safe(notes.title), 62))
+    pdf.set_xy(pdf.l_margin, 15)
+    pdf.set_font("Helvetica", "", 9)
+    count = len(notes.entries)
+    pdf.cell(epw, 5, _safe(
+        "In your own words — %d note%s captured during the bootcamp"
+        % (count, "" if count == 1 else "s")))
+    pdf.ln(24)
+
+    for note in notes.entries:
+        pdf.ln(3)
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*NAVY)
+        pdf.set_font("Helvetica", "B", 12)
+        heading = f"{note.type}: {note.title}" if note.type else note.title
+        pdf.multi_cell(epw, 6, _safe(heading))
+
+        stamp = " · ".join(p for p in (note.captured, note.module) if p)
+        if stamp:
+            pdf.set_x(pdf.l_margin)
+            pdf.set_text_color(*SLATE)
+            pdf.set_font("Helvetica", "I", 8.5)
+            pdf.multi_cell(epw, 4.6, _safe(stamp))
+
+        body = [line for line in note.body if line.strip()]
+        if body:
+            pdf.ln(0.8)
+            pdf.set_x(pdf.l_margin)
+            pdf.set_text_color(*INK)
+            pdf.set_font("Helvetica", "", 10.5)
+            for line in body:
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(epw, 5.2, _safe(_md_inline_to_text(line.strip())))
+
+        # ⛔ Context and Elaboration carry their own labels because neither is the
+        # Bootcamper's writing (INV-257). The elaboration says whose words it is on the
+        # page, not merely in the source, so the distinction survives printing.
+        for label, value in (("Context", note.context),
+                             ("Elaboration (written by the bootcamp)",
+                              note.elaboration)):
+            if not value:
+                continue
+            pdf.ln(0.8)
+            pdf.set_x(pdf.l_margin + 4)
+            pdf.set_text_color(*SLATE)
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.multi_cell(epw - 4, 4.6, _safe(label.upper()))
+            pdf.set_x(pdf.l_margin + 4)
+            pdf.set_font("Helvetica", "", 9.5)
+            pdf.multi_cell(epw - 4, 4.8, _safe(_md_inline_to_text(value)))
+
+        pdf.ln(2)
+        pdf.set_draw_color(*LINE)
+        y = pdf.get_y()
+        pdf.line(pdf.l_margin, y, pdf.l_margin + epw, y)
     return start
 
 
@@ -2891,6 +3168,30 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                     _normalize_heading(r) for r in REQUIRED_SECTIONS
                 }:
                     _stdlib_subsection(add, add_wrapped, h, content)
+
+        # The Bootcamper's notes, after the last module and before the certificate —
+        # which is appended as its own page below, so "after the module loop" here is
+        # the same position the fpdf2 renderer uses (INV-066 parity, INV-258).
+        if recap.notes:
+            add("", "F1", 10, 0)
+            add_wrapped(recap.notes.title, "F2", 15, 0)
+            for note in recap.notes.entries:
+                add("", "F1", 4, 0)
+                heading = f"{note.type}: {note.title}" if note.type else note.title
+                add_wrapped(heading, "F2", 12, 0)
+                stamp = " - ".join(p for p in (note.captured, note.module) if p)
+                if stamp:
+                    add_wrapped(stamp, "F1", 9, 6)
+                for line in note.body:
+                    if line.strip():
+                        add_wrapped(_md_inline_to_text(line.strip()), "F1", 10, 6)
+                if note.context:
+                    add_wrapped(f"Context: {_md_inline_to_text(note.context)}",
+                                "F1", 9.5, 12)
+                if note.elaboration:
+                    add_wrapped(
+                        "Elaboration (written by the bootcamp): "
+                        f"{_md_inline_to_text(note.elaboration)}", "F1", 9.5, 12)
 
         # Paginate tokens into pages of content streams.
         pages: List[str] = []
