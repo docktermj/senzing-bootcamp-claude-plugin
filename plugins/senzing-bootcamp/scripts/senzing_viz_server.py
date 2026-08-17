@@ -94,8 +94,66 @@ import glob
 import json
 import os
 import sys
+import urllib.request
+import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
+
+#: The loopback address this server binds, never the wildcard.
+#:
+#: ⛔ A wildcard bind does NOT collide with an existing loopback listener on the same port:
+#: both binds succeed, two processes listen, and either may answer a localhost request.
+#: Observed 2026-08-17 on macOS with an unrelated three-week-old server holding
+#: 127.0.0.1:8080 — this one bound *:8080 happily, and only luck decided which answered.
+#: Widening this to "" or "0.0.0.0" reintroduces a defect whose symptom is a stranger's
+#: data rendered under the Bootcamper's project title, with nothing indicating anything is
+#: wrong. See the any-language contract's "Binding the port (required)".
+BIND_HOST = "127.0.0.1"
+
+#: Unique to this process, exposed on /api/stats so a caller can confirm the server that
+#: answered is the one it started. See `confirm_server_identity` below.
+SERVER_NONCE = uuid.uuid4().hex
+
+
+def confirm_server_identity(port, host=BIND_HOST, timeout=5.0):
+    """True when `/api/stats` on `port` is answered by THIS process.
+
+    ⛔ A successful bind is not proof the port was free. A foreign **wildcard**-bound
+    listener coexists with our loopback bind, both succeed, and either process may answer
+    a localhost request — so the only way to know whose data the Bootcamper is about to
+    see is to ask the port which server is there.
+
+    ⚠️ Compares a per-process **nonce**, deliberately not the record count: two runs of the
+    same project agree on the count, which is exactly the case where the stale listener is
+    the Bootcamper's own earlier server.
+
+    Prints the conflict and returns False on disagreement. A probe that cannot complete
+    (timeout, connection error, unparseable body) is also a failure: this gate exists
+    because the failure mode looks like success, so an unanswerable question is not
+    permission to proceed.
+    """
+    url = f"http://{host}:{port}/api/stats"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            answered = json.loads(response.read().decode("utf-8")).get("server_nonce")
+    except Exception as exc:  # noqa: BLE001 - any failure here must stop the handover
+        sys.stderr.write(
+            f"ERROR: could not confirm which server is answering {url} ({exc}).\n"
+            "Not handing over the URL: if another process holds this port, the page "
+            "would show its data under this project's title.\n"
+        )
+        return False
+    if answered == SERVER_NONCE:
+        return True
+    sys.stderr.write(
+        f"ERROR: port {port} is answered by a DIFFERENT server.\n"
+        f"  this process: {SERVER_NONCE}\n"
+        f"  answered by:  {answered or '(no server_nonce in the response)'}\n"
+        "Two processes are listening on this port — a wildcard bind does not collide "
+        "with a loopback one. The page would show the other server's data under this "
+        "project's title. Stop the other server, or use --port for a free port.\n"
+    )
+    return False
 
 # Brand tokens ship in this same directory. Import them so the visualization shares
 # the Senzing style guide's palette with the recap PDF; fall back to an inlined copy
@@ -334,6 +392,11 @@ class Model:
             # counts and histogram duplicated this payload (contract:
             # "De-duplication (required)"). Rendered beneath the histogram.
             "sample_entities": self._sample_entities(),
+            # Identifies THIS process, so a caller can confirm the server answering a
+            # localhost request is the one it just started. A record count cannot do
+            # that job: two runs of the same project agree on it, which is exactly the
+            # case where the stale listener is the Bootcamper's own earlier server.
+            "server_nonce": SERVER_NONCE,
         }
 
     def _sample_entities(self, cap=10):
@@ -1885,14 +1948,40 @@ def main(argv=None):
         return 0
 
     handler = make_handler(model, engine, flags, sz, args.title)
-    httpd = ThreadingHTTPServer(("127.0.0.1", args.port), handler)
+    try:
+        httpd = ThreadingHTTPServer((BIND_HOST, args.port), handler)
+    except OSError as exc:
+        sys.stderr.write(
+            f"ERROR: could not bind {BIND_HOST}:{args.port} ({exc}).\n"
+            "Another server already holds that port on the loopback interface. Stop it, "
+            "or start this one on a different port with --port.\n"
+        )
+        return 1
+
+    # ⛔ Serve in the background just long enough to ask WHICH server answers this port,
+    # before the URL is printed for anyone to open. A successful bind is not proof the
+    # port was free: a foreign WILDCARD listener coexists with this loopback bind, and
+    # then either process may answer. The loopback bind above covers the opposite case
+    # (a colliding loopback listener fails cleanly); only this probe covers both.
+    import threading
+
+    serving = threading.Thread(target=httpd.serve_forever, daemon=True)
+    serving.start()
+    if not confirm_server_identity(args.port):
+        httpd.shutdown()
+        httpd.server_close()
+        return 1
+
     print(f"Visualization running: http://localhost:{args.port}")
     print("Press Ctrl+C to stop.")
     try:
-        httpd.serve_forever()
+        serving.join()
     except KeyboardInterrupt:
         print("\nStopping server.")
     finally:
+        # `shutdown` stops the serve_forever loop in the worker thread; without it
+        # `server_close` releases the socket while that loop is still running.
+        httpd.shutdown()
         httpd.server_close()
     return 0
 

@@ -529,6 +529,18 @@ find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPor
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
 
+⛔ **A port that binds is not a port that was free, so never read a successful start as proof.**
+The server the bootcamper writes here MUST bind the loopback interface explicitly and MUST confirm,
+before the URL is handed over, that the process answering `/api/stats` is the one just started —
+both required by the any-language contract (`visualization-api-reference.md` → "Binding the port"
+and "Confirming the server that answers is yours"). ⚠️ **A wildcard bind coexists with an existing
+loopback listener on the same port:** both succeed, two processes listen, and either may answer.
+Observed 2026-08-17 — a three-week-old server from an unrelated project held the port, this
+module's server bound alongside it, and only luck decided which one the browser reached. The other
+outcome shows the bootcamper **a stranger's dataset under their own project's title**, with every
+figure wrong and the recap screenshots capturing it. If the identity check disagrees, stop and
+report the conflict; do not hand over the URL with a warning attached.
+
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
 (offered/accepted, the artifact path, and — while the server is up — the port and pid it was started
 on, e.g. `{"offered": true, "accepted": true, "artifact":

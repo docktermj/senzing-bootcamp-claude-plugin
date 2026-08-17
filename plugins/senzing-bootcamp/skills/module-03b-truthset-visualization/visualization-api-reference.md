@@ -992,6 +992,48 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+### Binding the port (required — behavior, in every language)
+
+⛔ **Bind the LOOPBACK interface explicitly — `127.0.0.1` — never the wildcard address.** In Java
+that is `new InetSocketAddress("127.0.0.1", port)`, not `new InetSocketAddress(port)`; in Node
+`server.listen(port, "127.0.0.1")`; in C# a loopback `IPAddress.Loopback` endpoint. The idiomatic
+one-argument form in most languages is a **wildcard** bind, so this is the rule an otherwise faithful
+port of the reference will get wrong by writing the shorter thing.
+
+⚠️ **The reason is not tidiness, and an implementer who "simplifies" it back reintroduces a defect
+that cannot be seen.** A wildcard bind does **not** collide with an existing loopback listener on the
+same port — both binds succeed, two processes listen on one port, and either may answer a localhost
+request. Observed on macOS, 2026-08-17: a three-week-old `VizServer` from an unrelated project held
+`127.0.0.1:8080`, the bootcamp's server bound `*:8080` successfully, and the first `/api/stats` probe
+happened to reach the new one. Had the browser reached the other, the Bootcamper would have been
+shown **a stranger's dataset under their own project's title**, with every number on the page
+someone else's and the keepsake screenshots capturing it. A loopback bind is also the correct
+security posture for a server holding the Bootcamper's resolved data — a second reason not to leave
+it to the language's default.
+
+⛔ **A successful bind is NOT proof the port was free.** Any guidance that treats a port conflict as
+a *bind failure* is describing only one of the two cases. A failure stops the step; this succeeds and
+produces nondeterministic results, which is strictly worse.
+
+### Confirming the server that answers is yours (required)
+
+⛔ **After binding and before handing the URL to the Bootcamper, probe `/api/stats` and confirm the
+responder is the server just started.** Mint a **nonce** at startup — any value unique to this
+process — expose it on `/api/stats`, and compare. ⚠️ **Compare the nonce, not the record count:** two
+runs of the same project agree on record count, so a count check passes in exactly the case where a
+stale listener is most likely to be the Bootcamper's own earlier server.
+
+**On disagreement, STOP and report the conflict** — the port, and both servers' identifying figures —
+and do not hand over the URL. ⛔ It must not degrade to a warning printed above a working-looking
+link: the entire failure mode is that everything looks fine, so a message the Bootcamper scrolls past
+is the same as no message.
+
+⚠️ **The probe is required even though the bind rule above is followed, because they cover opposite
+directions.** A loopback bind makes a colliding *loopback* listener fail cleanly; it does nothing
+when the pre-existing listener is itself **wildcard**-bound — then your loopback bind is the one that
+succeeds alongside it. Only asking which server answered covers both. Socket coexistence rules differ
+across platforms, so the probe, not the bind, is what must hold on Linux, macOS and Windows alike.
+
 ### Identifying the server process (required)
 
 ⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.**
