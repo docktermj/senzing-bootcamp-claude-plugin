@@ -48,8 +48,16 @@ UAT_QUESTION = ("👉 **Would you like to involve business users in testing the 
                 "cross-source results?** (respond yes or no)")
 
 #: Instructions that suppress a question on one branch.
+#:
+#: ⚠️ Widened 2026-08-16 beyond the "do not ask" phrasings of the reported instance. A step
+#: that suppresses its question by saying it "asks nothing", or forbids a *re*-ask because
+#: an earlier step already decided, carries exactly the same exposure — the suppressed path
+#: ends in prose and the alternative path ends in the only pinned question on the page. The
+#: Phase C merge produced one of each on the day this guard was written, and the original
+#: pattern saw neither.
 SUPPRESS = re.compile(
-    r"do not ask|do NOT ask|don't ask|do not offer|do NOT offer|never ask|MUST NOT ask",
+    r"do not ask|do NOT ask|don't ask|do not offer|do NOT offer|never ask|MUST NOT ask|"
+    r"do not re-?ask|asks? nothing|ask nothing",
     re.I)
 
 #: How close a suppression must be to count as governing the question below it. Beyond
@@ -102,13 +110,25 @@ def qualifying_sites():
     return found
 
 
-def preceding_context(lines, index, count=3):
-    """The `count` non-blank lines immediately above `index`."""
+def preceding_context(lines, index):
+    """The single paragraph directly above `index` — the prose introducing the question.
+
+    ⛔ **A paragraph, not a fixed line count, and the difference is load-bearing.** A
+    self-contained precondition is prose and wraps, so a 3-line window missed a real
+    4-line one; widening to 5 lines then let the ORIGINAL defect pass, because the window
+    reached back into the *suppressed* branch, whose own text ("If it carries the
+    bootcamp-generated marker…") matched the self-contained pattern. The guard was
+    reading one branch's condition as though it governed the other branch's question —
+    the exact confusion this whole spec is about. Stopping at the blank line cannot do
+    that: it is the prose a reader meets between the question and the paragraph break
+    above it, however that prose happens to wrap.
+    """
     out = []
     j = index - 1
-    while j >= 0 and len(out) < count:
-        if lines[j].strip():
-            out.append(lines[j])
+    while j >= 0 and not lines[j].strip():   # skip blank lines just above the question
+        j -= 1
+    while j >= 0 and lines[j].strip():       # collect the contiguous paragraph
+        out.append(lines[j])
         j -= 1
     return out
 
