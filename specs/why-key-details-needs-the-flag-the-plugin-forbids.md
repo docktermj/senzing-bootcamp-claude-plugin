@@ -172,3 +172,27 @@ rules out "this SDK does not implement the breakdown" and leaves the flag as the
 Where the field is absent for the flags in force, fall back to `FEATURE_SCORES`, which
 carries the same per-feature evidence and was fully populated in both runs — so the step renders the
 equivalent evidence alongside the explicit "not returned" line, rather than an empty section.
+
+## Upstream: submitted 2026-08-17
+
+**Sent** via `submit_feedback(category='bug')` on **2026-08-17**, with the maintainer's explicit
+approval on the exact message text (they reviewed it in full before it went).
+
+⚠️ **This is a deliberate possible duplicate, and the reasoning is on record.** This spec's
+`Upstream:` line noted that a second feedback entry claims `submitted 2026-08-16`, that nothing in
+this repo records that submission, and that `submit_feedback` is anonymous so no receipt exists to
+check either way. The maintainer's call was that a duplicate costs Senzing seconds of triage while
+the gap costs every SDK caller a silent blank — so it was re-sent rather than assumed filed. Do not
+send a third.
+
+**What was reported:** the server documents `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` and
+attributes it to **no flag** — all 29 flags applying to `why_records` name other `response_paths`,
+`SZ_WHY_RECORDS_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES` alone, and
+`SZ_INCLUDE_MATCH_KEY_DETAILS`' documented effect is on `RELATED_ENTITIES[]` — while the field was
+absent without that flag on SDK 4.3.4 and 4.3.2 and present with it on 4.3.4. The report states
+explicitly that no with-flag arm was run on 4.3.2, so it claims no version boundary.
+
+**Server response, verbatim:** *"Thank you! Your feedback has been submitted to the maintainer."* —
+with the standard notice that submissions are anonymous, the Senzing team cannot follow up, and
+`support@senzing.com` is the channel with a return path. **No receipt or ticket id exists**, so this
+note is the only record that it was sent.
