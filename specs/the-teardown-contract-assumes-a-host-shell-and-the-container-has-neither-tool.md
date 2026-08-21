@@ -155,3 +155,46 @@ container always is, whatever the host.
   `specs/container-lifecycle-hooks-assume-docker.md`,
   `specs/docker-container-lifecycle-teardown-and-resume.md`,
   `specs/the-viz-contract-never-states-the-bind-host-so-a-port-conflict-can-succeed.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**All five changes are implemented. Two acceptance criteria are not runtime-verified and are
+disclosed rather than ticked, both for the same missing thing: a reachable Docker daemon.**
+
+- **Criterion 6** — *"Verified on the Docker path with a real container: the teardown stops the
+  server and the port stops answering."* `docker info` fails on this machine, so no container was
+  built and no teardown was executed. The route is written and test-asserted; it is **not** shown to
+  work end to end. This belongs to `dry-run` on a host with Docker.
+- **Criterion 7** — *"The `procps`/`lsof` absences are confirmed against the actual base image at
+  implementation time."* ⛔ **Not done, and the distinction matters.** The absences rest on the
+  **field observation** quoted in this spec — a container run returning
+  `exec: "…": executable file not found in $PATH` — not on an inspection of `debian:bookworm-slim`
+  performed today. That is real evidence and it is not the same evidence the criterion asked for. It
+  is recorded this way rather than ticked because a package list can change between image tags, and
+  an unconfirmed absence is exactly the claim shape this repo has been bitten by twice.
+
+**One thing the spec did not name, added anyway: the pid's namespace.** Criterion 1 asks for a
+container variant covering "both pid capture (container namespace) and termination", and the
+parenthetical turns out to carry the substance. A server started with `docker exec` yields a
+**container-namespace** pid, which is the only kind `docker exec … kill` can signal; a host pid from
+`docker run` identifies the *container*, so signaling it stops everything. The contract now says to
+capture the pid in the namespace the teardown will signal in and to record which one it is.
+
+**Change 3 decided, not deferred:** `procps` is **not** added to the container build. The shell
+builtin `kill` and the `python3` the SDK install already brings answer both questions, and every
+package added to that image is one more way Module 2's install phase can fail — the module with the
+most failure modes already. The decision is stated in the contract and asserted by the guard, so a
+later reversal has to be deliberate.
+
+**Establishes no invariant — INV-223 already governs all of it**, and this was checked rather than
+assumed. INV-223 requires capturing the pid, terminating by it, falling back to the port, and states
+*"the port being free is the exit condition"*, which forecloses trusting a kill's exit status by
+construction: an exit code is not the port being free. Every rule added here is the container
+application of that invariant, and each cites it at the rule.
+
+⚠️ **The INV-223 guard caught my prose twice while implementing this.** `test_viz_server_process_handle`
+requires every `pkill` mention to sit within 400 characters of a forbidding token, and my first draft
+quoted the failing `docker exec … pkill -f …` command as field evidence with no prohibition nearby —
+re-teaching a command the contract bans. Restructured so the prohibition leads the block and the
+absent-tool inventory carries `never` / `MUST NOT` with it. A British spelling (`signaling`) was
+also caught by INV-253's guard.

@@ -146,3 +146,62 @@ consistent with Stop being the only event whose failures are shown.
   this spec questions), `specs/stop-nudge-partial-flush.md`, `specs/stop-hook-false-positive.md` and
   `specs/stop-hook-issue.md` (both about what the nudge *says* once it runs — neither about the hook
   failing to launch).
+
+## Deviations from this spec, and why (2026-08-21)
+
+⛔ **This spec stays OPEN. Changes 1, 3, 4 and 5 are discharged; change 2's precondition was never
+established, and one acceptance criterion cannot be satisfied without a live host.**
+
+### What was settled
+
+**The root-cause mechanism is confirmed, byte-for-byte, on Claude Code 2.1.238.** Both arms were
+run 2026-08-21:
+
+| Launched as | Result |
+|---|---|
+| `python3` with the argument dropped, Stop payload on stdin | `File "<stdin>", line 1` → `NameError: name 'false' is not defined` — the bootcamper's error exactly |
+| `python3 <script>`, same payload | `stop-nudge.py` runs and emits its `{"decision": "block", …}` JSON |
+
+⚠️ **The second arm needed a third attempt to mean anything.** The first two runs exited 0 with no
+output, which is indistinguishable from a no-op — the ambiguity this repo's own tooling warns about.
+`stop-nudge.py`'s gate 2 is *"no `config/bootcamp_progress.json` → not a bootcamp; never touch
+unrelated projects"*, and the plugin's source tree is not a bootcamp project, so silence was correct
+behavior. Satisfying the gate in a throwaway directory produced the decision JSON and proved
+execution.
+
+So **the configuration is correct** and the defect is located in how that one host launched it.
+
+### What was not settled, and why change 2 does not apply
+
+**Whether every host honors `command` + `args` for a `type: command` hook is still unestablished.**
+The plugin is not enabled on this machine — `~/.claude/settings.json` → `enabledPlugins` lists only
+the two official LSP plugins — so its hooks cannot be observed firing here. Change 2 is conditional
+on `args` **not** being honored; that was not shown, so per change 3 — *"Do not edit `hooks.json` on
+a hypothesis"* — **`hooks.json` is unedited**, and INV-052 is not amended.
+
+⚠️ **Weak counter-evidence, recorded rather than leaned on.** The maintainer's own working hooks in
+`~/.claude/settings.json` put the script path inside `command` with no `args` at all. That is a
+statement about the shape they chose, not about what the schema honors, and it is not evidence for
+either reading.
+
+### Criteria status
+
+- [x] **Criterion 3** — piping a Stop payload into the configured command runs `stop-nudge.py` and
+      does not execute the payload as Python. Verified both arms above.
+- [x] **Criterion 4** — INV-052 still describes the executing form, so it is not amended; a dated
+      verification note recording the 2026-08-21 check was appended in place.
+- [x] **Criterion 5** — `tests/test_hook_entries_name_a_script.py`, 4 tests, deriving the hook set
+      from the file rather than listing events (INV-246). Negative-controlled with four mutations,
+      all verified to land and all caught: dropping `args` from the Stop hook (**the reported
+      defect**), a script path that does not resolve, a script with a syntax error, and gutting the
+      file to one entry.
+- [x] **Criterion 6** — cross-platform and language-agnostic: the guard reads JSON with the stdlib
+      and imports nothing under `plugins/` (INV-108).
+- [ ] **Criterion 1** — *partially.* The shape is verified to execute **when launched as
+      configured**; that Claude Code itself launches it that way is not verified.
+- [ ] **Criterion 2** — *first half only.* All seven hooks use the shape, now test-asserted. **None
+      is observed to run its script**, which needs the plugin enabled in a live session.
+
+⛔ **Both open criteria are live-observation work and belong to `dry-run` phase 3**, not to another
+static pass. The stake is stated in the spec's own root cause and has not changed: if `args` is
+being dropped host-wide, the write gate is not gating and feedback capture is not capturing.

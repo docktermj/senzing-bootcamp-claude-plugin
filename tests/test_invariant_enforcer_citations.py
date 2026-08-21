@@ -194,10 +194,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #:   INV-259 -> test_graph_colors_by_source_combination.py    (color by the source SET)
 #:   INV-260 -> test_viz_server_bind_and_identity.py          (loopback + identity probe)
 #:   INV-261 -> test_group_score_is_not_a_join_prediction.py  (measured or unmeasured)
-# 79 as of 2026-08-21: INV-262, INV-263 and INV-264 (datastore mount-crossing measurement) was registered at the
+# 80 as of 2026-08-21: INV-262, INV-263 and INV-264 were registered at the maintainer's
+# sign-off, and INV-052's dated verification note now names
+# `test_hook_entries_name_a_script.py` as its enforcer. Re-derived by running the extractor,
+# not relaxed. (datastore mount-crossing measurement) was registered at the
 # maintainer's sign-off and names `test_datastore_mount_crossing_is_measured.py`. Re-derived
 # by running the extractor, not relaxed.
-EXPECTED_PAIRS = 79
+EXPECTED_PAIRS = 80
 
 
 def pairs():

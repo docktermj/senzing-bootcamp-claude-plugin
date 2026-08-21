@@ -99,6 +99,12 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      the recorded port instead: `lsof -ti:<port>` on Linux/macOS,
      `Get-NetTCPConnection -LocalPort <port> | Select-Object -ExpandProperty OwningProcess` in
      PowerShell.
+   - ⛔ **On the `docker` path both of those are host-shell routes and the container has neither
+     tool (INV-223 still governs: terminate by pid, confirm the port)** — no `procps`, no `lsof`. Signal through the shell builtin
+     (`docker exec <container> sh -c 'kill <pid>'`) using the pid INV-223 required the launch to
+     record, and probe the port with `python3`, never with `lsof`. **The kill's exit status is not evidence the server stopped; the port is.** Full rule
+     and the reason, stated once:
+     `visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".
    - ⛔ **Never `pkill -f <script name>`** (or any other command-line pattern match). The pattern
      appears in the matching command's own command line, so it signals the invoking shell: on a dry
      run this killed the shell mid-teardown with exit code 144, leaving the records loaded, the

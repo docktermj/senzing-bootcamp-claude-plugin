@@ -646,7 +646,10 @@ and record it in the `m7_visualizations` checkpoint below, with the port it boun
 signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own
 command line and signals the caller, and this module's server is generated in the bootcamper's
 chosen language (INV-090), so there is no script name to match on anyway. When the pid is missing,
-find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). Full rule:
+find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). ⛔ **On
+the `docker` path neither `lsof` nor a `kill` binary exists in the container (INV-223)** — signal through the
+shell builtin using the pid INV-223 required the launch to record, and probe the port with `python3`, and treat the port's answer as the observation
+rather than the kill's exit status. Full rule:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
 

@@ -1119,10 +1119,63 @@ port that *is* recorded: `lsof -ti:<port>` (Linux/macOS) or `Get-NetTCPConnectio
 Select-Object -ExpandProperty OwningProcess` (PowerShell). The port is bound by exactly the process
 serving it, which is the property the command line lacks.
 
+⛔ **On the `docker` path both routes above are host-shell routes, and the container has neither
+tool — while the command-line match stays forbidden for its own reason, unsoftened by any tool
+being absent.** The bootcamp's own container follows the `linux_apt` steps inside a Debian slim
+image (`module-02-sdk-setup/SKILL.md` → the `docker` path), which ships no `procps` and no `lsof`,
+so every process-identification binary those routes reach for is **never** present inside it, and
+MUST NOT be reached for there — `ps`, `pkill` and `lsof` alike. A run that reached for the forbidden match in a container got
+`exec: "…": executable file not found in $PATH`, and **the Bootcamper had already been told the
+server would be stopped while it kept serving** — found only when the port was probed and still
+answered 200. Two faults are live at once: the wrong identification route, and no tool to run it
+with. Fixing only the second would leave a working command that signals the invoking shell.
+
+Use the two things a Debian slim container is guaranteed to have — a POSIX shell, and the `python3`
+the SDK install brings in:
+
+- **Record the pid from inside the container, and know which namespace it belongs to.** A server
+  started with `docker exec <container> …` yields a **container-namespace** pid, which is the only
+  kind `docker exec … kill` can signal; a host pid from `docker run` identifies the *container*, not
+  the server inside it, and signaling it stops the whole container. Capture the pid in the same
+  namespace the teardown will signal in, and record which one it is beside the port (INV-223 requires
+  the pid and port in one checkpoint object; this says the pid needs its namespace to be usable).
+- **Signal the recorded pid through the shell's builtin**, not through a `kill` binary:
+  `docker exec <container> sh -c 'kill <pid>'`. `kill` is a shell builtin, so this needs no
+  `procps`; `/bin/kill` is a `procps` binary and is not there. The pid is the one INV-223 requires
+  the launch to have recorded.
+- **Probe the port with `python3`**, since `lsof` is absent: a short `socket` connect against the
+  port, run with `docker exec <container> python3 -c …`. `python3` is present because the SDK
+  install put it there, and this is the same probe the host path makes with `lsof` — the same
+  question asked by the only tool available.
+
+⚠️ **`procps` is deliberately NOT added to the container build.** It would be a package installed
+into the Bootcamper's image for the convenience of one teardown step, when the shell builtin and
+`python3` already answer both questions — and every package added to that image is one more thing
+that can fail during Module 2's install phase, which is the module with the most ways to go wrong
+already. If a later change needs `ps` output for its own reasons, that is the change that should
+argue for the package.
+
+**Never treat the kill's own exit status as evidence the server stopped.** `docker exec … kill`
+reports whether the *signal was delivered*, not whether the process died and released the port — a
+server mid-request can take the signal and keep the socket briefly, and a wrong pid exits non-zero
+for a reason that looks identical to a server that was never running. This is the same
+verify-the-artifact-not-the-exit-code discipline INV-129 requires of a rendered deliverable and
+INV-218 requires of an install, applied to a process: **the port answering or not answering is the
+observation; the exit code is not.**
+
 **Confirm the port is free before continuing, rather than waiting a fixed interval.** Poll the port
 until nothing is listening, up to 5 seconds; then force-stop and re-check. Treat *the port being
 free* as the exit condition — a sleep asserts nothing, and any step that follows teardown (a data
 purge above all) then runs on an assumption instead of an observation.
+
+**When teardown cannot confirm, say so plainly and do not claim the server stopped.** If the port
+still answers after the force-stop and re-check, tell the Bootcamper exactly that — the port, that
+something is still listening on it, and that the records may still be loaded — then continue without
+the purge rather than purging on an unverified stop. ⛔ **A teardown that reports success while the
+port answers is worse than one that reports failure (INV-223).** the Bootcamper walks away believing their
+machine is clean, and INV-131 makes teardown the last action of the module, so nothing downstream
+will notice. Where the container is the host for the server, name the `docker exec` form that was
+tried, so the Bootcamper can see what was attempted rather than only that it failed (INV-111).
 
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is
