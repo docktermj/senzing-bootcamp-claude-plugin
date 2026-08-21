@@ -32,6 +32,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 <!-- New entries go directly below this line. Format:
 
+## the-audit-skills-baselines-and-required-reading-are-stale
+
+- **Implemented:** 2026-08-21
+- **Files changed:** `.claude/skills/production-readiness-audit/SKILL.md`, `tests/test_audit_skill_states_no_stale_count.py`
+- **MCP re-check:** n/a (no Senzing fact) — the subject is a maintainer skill file and the repository's own counts. No MCP route is relevant and none was called.
+- **Summary:** Step 1's required reading is now a rule over the most recent audit entries with the command that produces today's list, naming no fixed count or set; the `deep-dive-audit-*` series stays cited as the origin of the Step 7 classes, marked historical. Every measured baseline was **removed** rather than refreshed — the invariant count, the enumerating proportion, the size and duplication figures, and the illustrative word count — because a fresh figure rots identically; each scan's own output is now the authority. Step 2 states plainly that a full forward sweep is no longer feasible in one run and prescribes four ways to scope one. **Establishes no invariant:** everything changed is under `.claude/`, which `propagate.sh` does not ship, so no shipped guarantee is created. Guard: `tests/test_audit_skill_states_no_stale_count.py`, 5 tests, asserting **agreement rather than absence** — a count may appear if it matches `INVARIANTS.md` or the ledger — negative-controlled with six mutations, all verified to land and all caught: restoring the 194-invariant figure, restoring a fixed reading list, restoring the counted-set claim in the header, deleting the list-producing command, deleting the not-feasible statement, and inserting a wrong audit-entry count. **Deviations, recorded on the spec:** (1) two figures in the spec are themselves wrong — there are **32** prior audit runs, not thirty-one, and **seven** `deep-dive-audit-*` entries, not six, which means the skill's reading list was incomplete on the day it was written and not merely stale; (2) change 2 was implemented as its stated fallback — figures removed — rather than by adding a committed baseline file, because a baseline file is a second source of truth that goes stale when a run forgets it, and removal makes the staleness unrepresentable instead of merely detected. `.claude/skills/production-readiness-audit/conformance.py` is therefore **untouched**: the spec predicted it only for change 2's mechanical form ("the previous-value comparison, if change 2 is taken mechanically"), and it was not. Its one stale baseline — the 2026-07-31 `rules` figure — was already removed under `conformance-rules-cannot-see-a-new-rule-beside-an-old-citation`, so nothing stale remains in it to fix here.
+- **Commit:** uncommitted
+
 ## conformance-rules-cannot-see-a-new-rule-beside-an-old-citation
 
 - **Implemented:** 2026-08-21

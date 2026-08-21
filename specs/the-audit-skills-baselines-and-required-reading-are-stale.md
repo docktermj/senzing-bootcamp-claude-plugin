@@ -115,3 +115,32 @@ untouched.
 - Related specs: `specs/guards-pinning-a-dated-negative-outlive-it.md`,
   `specs/refresh-reverified-provenance-stamps.md`,
   `specs/scaffold-snippet-count-and-group-list-are-stale.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Two figures in this spec are themselves wrong**, which is the defect it describes occurring in
+its own text:
+
+- *"There are now thirty-one prior runs"* → measured from the ledger, **32** across the two
+  series (7 `deep-dive-audit-*` + 25 `production-readiness-audit-*`, the latter running
+  2026-08-11 to 2026-08-21 inclusive).
+- *"the six `deep-dive-audit-*` entries"* → there are **seven**. The skill's header list omitted
+  `deep-dive-audit-2026-07-29-minor-fixes`, so the required-reading list was not merely stale, it
+  was **incomplete on the day it was written** and no reader could have known. That strengthens
+  change 1 rather than weakening it: a fixed set in prose is unverifiable by construction.
+
+**Change 2 was implemented as the stated fallback, not the preferred mechanism.** The spec
+prefers having `conformance.py` print the previous run's value from a committed baseline file.
+Instead every figure was **removed**, with each scan's own output made the authority and the
+surrounding sentences rewritten to stop reasoning from proportions. Reasons, recorded so the
+choice can be revisited:
+
+- A baseline file is a second source of truth for numbers the scans already compute, and it goes
+  stale the moment a run forgets to update it — reintroducing the class one level down.
+- Removal makes the staleness **unrepresentable** rather than **detected**, which is the stronger
+  fix for a defect whose whole character is reading authoritative while wrong.
+- The guard (`tests/test_audit_skill_states_no_stale_count.py`) asserts *agreement*, not absence,
+  so a future run may state a count if it is correct. Nothing is foreclosed.
+
+The `conformance.py rules` baseline named in change 2 was already removed while implementing
+`conformance-rules-cannot-see-a-new-rule-beside-an-old-citation`; the rest went here.
