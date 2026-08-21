@@ -432,6 +432,15 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 - Never drive interactive Senzing CLI tools (`sz_configtool`, `sz_explorer`): they require
   human input. Generate SDK code via `generate_scaffold` instead.
 - Senzing publishes native ARM64 images, so no x86 emulation is needed on Apple Silicon.
+- ⛔ **On this path, a syntax error in a file you just wrote is retried once before it is
+  believed** — files are written host-side and run container-side across the bind mount you set up
+  in the previous bullet, and a partially-synced read reports a parse error at a well-formed line.
+  The rule, the in-container compile check that confirms it, and why a host/container
+  version split is *not* the first explanation are in
+  `../bootcamp-onboarding/ground-rules.md` → "Running a file you just wrote, when the run happens
+  somewhere else". Do not restate them here (INV-183): the rule applies from this module through
+  query programs, so it lives with the cross-cutting execution rules and is linked from the step
+  that creates the condition.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
   give it a stable `--name` and append an entry to a `docker_containers` list in
   `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
@@ -588,7 +597,7 @@ the inline pointers here.
 
 | Cause | Failure signal | Fix reference ("Common Environment Issues") |
 |---|---|---|
-| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" |
+| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" — ⚠️ **on the `docker` path, rule out bind-mount propagation lag first**: retry once (see the Phase 1 `docker` bullets), because a version conflict reproduces and lag does not |
 | `NATIVE_ADDON` | `gyp ERR! build error`, `Cannot find module '.../*.node'` | "Native Addon Build Failures (node-gyp)" |
 | `TOOLCHAIN` | missing C++ compiler, missing Rust toolchain, or missing Visual Studio Build Tools | "Native Addon Build Failures (node-gyp)" plus the Windows note above in this Phase 3 |
 | `MODULE_SYSTEM` | `ERR_REQUIRE_ESM`, `Cannot use import statement outside a module` | "ESM vs CommonJS Module Resolution" |

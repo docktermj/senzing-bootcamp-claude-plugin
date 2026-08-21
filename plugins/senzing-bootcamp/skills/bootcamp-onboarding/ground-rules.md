@@ -472,6 +472,33 @@ the platform's **default** shell — not only in bash. On macOS that shell is **
 - **Verify the resolved path before using it, and name it when it is wrong.** Silently exporting a
   variable computed from a wrong root is the failure this prevents.
 
+## Running a file you just wrote, when the run happens somewhere else
+
+On the `docker` install path the bootcamper's project is bind-mounted into the container, so files
+are written **host-side** and executed **container-side** — many times per module, from SDK setup
+through query programs. Propagation across that mount is not instantaneous.
+
+- ⛔ **A syntax or parse error in a file you just wrote is retried ONCE before it is believed.** The
+  container can read a partially-synced file and report an error at a line that is well-formed.
+  Re-run the identical command: **if it succeeds, it was propagation lag, not the code** — say so
+  and move on. If it fails identically, it is a real error. One retry, not a backoff loop.
+- **Confirm it with a compile, not by re-reading the source.** Syntax-check the file *inside* the
+  container in the bootcamper's chosen language (INV-090) — `python3 -m py_compile <file>`,
+  `node --check <file>`, `javac`, `tsc --noEmit`. That separates "the container cannot see the whole
+  file yet" from "the code is wrong" in one cheap step, and re-reading the source on the host cannot:
+  the host's copy was always complete.
+- ⚠️ **A host/container language-version split is normal here and is NOT the first explanation.**
+  The container runs whatever its install steps put there and the host runs its own version, so a
+  version story is always available and more satisfying — and usually wrong. A genuine
+  incompatibility **reproduces on retry**, which is what makes the retry a discriminator rather than
+  a way of dodging the question. Observed 2026-08-18 on macOS Docker Desktop: a well-formed file
+  failed once with `SyntaxError: unterminated string literal`, succeeded on an identical re-run, and
+  an in-container `compile()` confirmed it parsed — after a verification round trip spent on a PEP
+  701 f-string hypothesis that was plausible and false.
+- **Do not add a fixed sleep instead.** A wait asserts nothing about whether the file arrived; the
+  retry plus the compile does. Same reason the visualization teardown polls the port rather than
+  sleeping.
+
 ## Markdown files
 
 - **Write plain, functional Markdown during the bootcamp; defer CommonMark prettification to
