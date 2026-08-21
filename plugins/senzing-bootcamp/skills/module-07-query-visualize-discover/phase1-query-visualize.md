@@ -394,9 +394,64 @@ Based on the assessment — evidence first, wording second:
   entities. Quality looks good — let's proceed to visualizations."
 - **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
   sampled entities and pairs with their match keys, then ask whether to proceed or iterate.)
-- **Poor:** "The results suggest mapping improvements would help." (Show the entities or possible-match
-  pairs that demonstrate it — naming the match key pattern the near-misses share, since that is what
-  points at the unmapped feature — then give recommendations and offer the Module 5 feedback loop.)
+- **Poor:** a high possible-match rate is a **finding, not a verdict on the mapping.** Show the
+  possible-match pairs and name the match-key pattern they share, then run the test below before
+  saying anything about mapping. ⛔ **The band says to look hard; it does not say what you will
+  find.**
+
+⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5.** This mirrors the
+match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
+"Report a high-share cross-source suppressor as a FINDING, never a pass/fail"), and for the same
+reason: the possible-match rate is driven mostly by things a remap cannot change — how populated each
+field is in the source, how common the names are, and how large the dataset is. On the
+generated-scenario path the plugin **creates** those characteristics itself: INV-239 requires a source
+gapped into the 70-79% band, and gapped contact fields are the first thing that produces near-misses
+no remap can fix.
+
+**What the server actually says** (`reporting_guide(topic='evaluation', language='<chosen_language>')`
+— the call this step already makes above — server **1.33.0, 2026-08-21**), quoted rather than
+paraphrased, because the plugin used to assert what the server hedges:
+
+> **UNDER-MATCHING:** … **If many near-misses are concentrated on one match key pattern, this likely
+> indicates a mapping issue** (e.g., phone numbers not mapped).
+
+and, from the same response's evaluation anti-patterns:
+
+> if many near-misses share the same match key pattern, a feature is likely **unmapped or has data
+> quality issues**.
+
+Three things follow: the diagnosis is conditional on **concentration**, not on the rate; it is
+**likely**, not certain; and it has **two** causes, of which only the first is mapping-actionable.
+
+⛔ **Run the sanity comparison first — it is the discriminator, and this step already has both
+numbers.** The same response prescribes it: *"Compare compression rates against source profiler
+uniqueness stats from the data profiling step. … If profiler showed 30% duplicate names but
+compression is only 2%, likely under-matching."* Compare against Module 5's profile for that source.
+A dataset that genuinely contains many similar people is not a mapping defect.
+
+Then route on what the evidence shows:
+
+1. **Mapping-actionable** — near-misses concentrated on one match-key pattern that a mapping change
+   would affect. Report it, give recommendations, and offer the Module 5 feedback loop below.
+2. **Not mapping-actionable** — the cause is a data characteristic. **Say plainly that remapping
+   would not change it**, record the finding, and continue to **3c**. Two causes are common enough to
+   name so they are recognized rather than rediscovered:
+   - **Source field sparsity** — a correctly-mapped field whose values are simply absent from the
+     source. Check the **populated share per field**: Module 5 already measured it as `completeness`,
+     so read that figure rather than inventing a measurement.
+   - **Name-only collisions** in small or synthetic datasets, from a limited name pool. On a
+     generated scenario the plugin built that pool.
+3. **Could not determine** — say so, record it, and continue to **3c**. Do not guess in either
+   direction; an unsupported "mapping looks fine" is the same defect as an unsupported remap.
+
+⛔ **Outcomes 2 and 3 do NOT ask the Module 5 question** — they end by continuing into 3c, whose
+pinned visualization offer closes the turn, exactly as the **Acceptable** branch already does. Do not
+invent a question for a branch that has none (the unsatisfiable-instruction class
+`module5-quality-gate-demands-a-question-its-best-branch-lacks` records).
+
+⛔ **A non-actionable Poor finding still goes in the module recap.** It is a real result about the
+Bootcamper's data — "48.9% possible matches, driven by 46% phone population in one source, not by the
+mapping" is worth keeping — and a finding that routed nowhere must not be silently discarded.
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
