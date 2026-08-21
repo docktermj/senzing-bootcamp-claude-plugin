@@ -357,6 +357,15 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > **`MATCH_KEY_DETAILS`** object inside each resolution step's `MATCH_INFO`. Both contain
 > `CONFIRMATIONS` (and optionally `DENIALS`). Reusing one parser for both silently yields nothing.
 >
+> ⚠️ **They differ in POPULATION as well as in name, so one being empty is not evidence the other
+> parser is wrong.** They are separate documented paths for separate calls
+> (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` returns
+> both, server **1.33.0, 2026-08-21**), and on a 2026-08-18 run every `why_records` call returned
+> `WHY_KEY_DETAILS` with an **empty** `CONFIRMATIONS[]` while `how_entity`'s
+> `MATCH_KEY_DETAILS.CONFIRMATIONS[]` populated **on the same entity** (observation-only —
+> whether a given rule produces confirmations is a live-engine fact no MCP route reports).
+> Fall back to `FEATURE_SCORES`, which carries the same evidence.
+>
 > ⚠️ **The "with the flag" in that sentence is load-bearing on a why call, and this file was right
 > about it when Module 7 was not.** Module 7 briefly forbade the flag on why calls, claiming the
 > breakdown was there without it; on **SDK 4.3.4** `WHY_KEY_DETAILS` was **absent** until the flag

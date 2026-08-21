@@ -200,6 +200,14 @@ field from the same response object reads fine, suspect the **flags** before the
 by OR-ing in the missing sub-flag, not by switching to a different field and not by re-verifying a
 name that is already correct.
 
+⛔ **One exception to that discriminator, because it points the wrong way there: a container the
+schema documents can be PRESENT and EMPTY.** Then the key exists, the path is confirmed, a sibling
+reads fine — every signal the rule uses to say "suspect the flags" — and adding flags cannot fill an
+array the engine had nothing to put in. Distinguish **absent** (the key is missing → cause 2, flags)
+from **present but empty** (the key is there with no members → cause 3, data). The worked instance is
+`WHY_KEY_DETAILS.CONFIRMATIONS[]`, whose three states and fallback are stated once in
+`phase2-discover.md` step 4b.3 (INV-179).
+
 Verify against `response_schemas` or a dumped raw response before rendering. Never render a blank
 value as though it were a real result — say "no value returned for X" so the failure is visible.
 
@@ -292,7 +300,17 @@ presentations are built from (it applies to all four methods; `get_sdk_reference
 filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default flags, note what
 additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
 read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, never from a `MATCH_KEY_DETAILS` field** —
-that field name is the one this module already corrected, and it is still wrong here. ⚠️ **Getting
+that field name is the one this module already corrected, and it is still wrong here.
+⛔ **And the rename is the whole `MATCH_*` family, not just that details object: its two sibling
+scalars are `WHY_RESULTS[].MATCH_INFO.WHY_KEY` and `WHY_RESULTS[].MATCH_INFO.WHY_ERRULE_CODE`.**
+`MATCH_KEY` and `ERRULE_CODE` are the **entity-side** names — real, but on
+`RESOLVED_ENTITY.RECORDS[]` and `RELATED_ENTITIES[]`. Carrying them across from a `get_entity` or
+export parser is the habit that produces the error, and all three fields render blank rather than
+raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` —
+the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
+2026-08-21).
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: this IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same call returns those three names on the entity side under RESOLVED_ENTITY.RECORDS[] and RELATED_ENTITIES[], which is what makes the absence a rename rather than a gap (absence negative) — server 1.33.0, 2026-08-21 -->
+⚠️ **Getting
 `WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
 flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
 (observation-only). If it is missing for the flags in force, say so explicitly and fall back to

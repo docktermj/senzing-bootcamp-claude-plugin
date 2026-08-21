@@ -125,6 +125,30 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      `SCORE_BUCKET`. That is the path to parse for step 5
      (`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
      2026-08-14).
+   - ⛔ **Its two sibling scalars are renamed the same way: `WHY_KEY` and `WHY_ERRULE_CODE`.**
+     `MATCH_INFO` on a why response carries exactly four scalar-or-object members —
+     `MATCH_LEVEL_CODE`, `WHY_ERRULE_CODE`, `WHY_KEY` and `WHY_KEY_DETAILS` — beside
+     `CANDIDATE_KEYS`, `DISCLOSED_RELATIONS` and `FEATURE_SCORES`. `MATCH_KEY` and `ERRULE_CODE` are
+     the **entity-side** names, carried on `RESOLVED_ENTITY.RECORDS[]` and `RELATED_ENTITIES[]`
+     instead. So the rename is the whole `MATCH_*` family, not just the details object: a parser
+     carried across from `get_entity` or from an export reads all three fields off the wrong names
+     and each one renders blank rather than raising
+     (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')`,
+     server **1.33.0, 2026-08-21** — that enumeration is the complete member list it returned).
+   - ⚠️ **`CONFIRMATIONS[]` has a third state, and it is neither of the two above: present and
+     empty.** Observed on every `why_records` call of a 2026-08-18 run — rules `SNAME_SSTAB` and
+     `SF1_PNAME_CFF`, `SZ_INCLUDE_FEATURE_SCORES` in force — while `how_entity`'s
+     `MATCH_KEY_DETAILS.CONFIRMATIONS[]` populated on the same entity (observation-only,
+     INV-080/INV-149: no MCP route reports whether a given rule produces confirmations).
+     **An empty array is a data/rule outcome, not a flag problem and not a parse error** — do not add
+     flags for it and do not re-verify a path `response_schemas` confirms. **Fall back to
+     `FEATURE_SCORES`**, which carries the same evidence (the feature, its score, its bucket) and
+     populated normally on that run, so step 5's demonstration completes instead of being abandoned.
+     Say that this pair's match key has no per-feature confirmation detail *on this data* and show the
+     feature scores — never *"no value returned"*, which reads as a failure, and never an empty
+     section rendered as a result. ⚠️ **Do not reconcile this with the absent case below into one
+     absolute** (INV-169): the two were seen under different data, rules and SDK builds, and both are
+     recorded with their conditions.
    - ⛔ **`WHY_KEY_DETAILS` may need `SZ_INCLUDE_MATCH_KEY_DETAILS` to appear at all — pass it,
      with a relations flag.** Two separate things are known here and neither governs the other
      (INV-169); read both before choosing flags.

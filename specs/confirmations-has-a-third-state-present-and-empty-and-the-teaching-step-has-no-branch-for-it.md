@@ -146,3 +146,26 @@ block already does well for its own pair of observations.
   `specs/why-response-carries-why-key-details-not-match-key-details.md`,
   `specs/response-schemas-now-documents-match-info-depth.md`,
   `specs/why-match-info-scalars-are-why-key-and-why-errule-code.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Implemented together with its sibling Module 7 spec, in one commit.** Both edit the same two
+regions of `phase1-query-visualize.md` and `phase2-discover.md`, and the region is guarded by four
+existing test files. Splitting them would have produced commits that individually fail, for the same
+reason the Module 5 batch did.
+
+**Three reworkings were forced by existing guards, and each produced better text than the first
+attempt.** (1) `phase1`'s warning keeps the full dotted `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`
+path: a first rewording split it across two sentences and broke `test_module07_why_flags` and
+`test_why_key_details_flag_claim_is_withdrawn`, which require the whole path at that site — and a
+parser-writer wants it whole. (2) The new co-occurrence guard matches each field however it is
+qualified rather than pinning a bare `` `WHY_KEY` ``; pinning the bare form put it in direct conflict
+with those two guards over one sentence. (3) `phase1`'s absence claim carries an `MCP-NEGATIVE`
+marker with its `owner:` clause, while `phase2` states the positive instead — the negatives scanner
+flagged both, and `implement-spec` prefers asserting what is true, the negative being the form that
+expires.
+
+**One site outside the Affected files list was changed** (`phase1-query-visualize.md`'s
+defensive-parsing discriminator), because the spec's root cause explains why that rule misleads on
+this case. Recorded in the ledger entry; INV-246's point exactly — a spec lists where its author
+noticed the defect, not where it lives.
