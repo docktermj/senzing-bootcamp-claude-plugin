@@ -43,7 +43,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **INVARIANTS.md deliberately unchanged.** The spec suggested INV-239 gain the completeness target "if the band figure is to be binding rather than illustrative". That is an invariant amendment, the spec drafts no wording for one, and inventing invariant wording unattended is outside what this run was authorized to do — **flagged as a candidate, not minted.** ⚠️ **Consequence stated:** the 30-43% target is now binding in Module 4's prose and guarded by a test, but INV-239 still describes the band only as a band, so the two could drift if INV-239 is later edited without reference to this.
 - **The open design question the spec surfaced is left open, deliberately.** Reaching 70-79 honestly means about a third of all field values absent — heavier degradation than a real CRM or POS export usually carries. The shipped text now **states that cost plainly** instead of hiding it behind gentler example rates, and says that whether the **band** or the **weights** should move is a design decision. That is the maintainer's call and is not taken here.
 - **Establishes no invariant** — the new ⛔s cite INV-174, INV-179 and INV-239, all existing; `conformance.py rules` uncited count unchanged at 1.
-- **Commit:** uncommitted
+- **Commit:** `fb5386f`
 
 ## registration-code-rests-on-two-configure-behaviors-the-server-does-not-have
 
