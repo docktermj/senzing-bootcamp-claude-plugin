@@ -145,6 +145,30 @@ found by reading the rules, not by counting them. Recorded here because the wron
 carried as prose with nothing re-measuring it — the audit's own Step 7 class 4, occurring in the
 audit's output. Read 26/25 wherever this file says 37.
 
-**Change 2 (the INV-122 citation at both capture blocks) is already implemented** — see the
-`production-readiness-audit-2026-08-21` ledger entry. Changes 1, 3 and 4 remain open: change 1
-needs the maintainer's sign-off on three drafted invariants and MUST NOT be minted without it.
+### Status of each change, 2026-08-21
+
+⛔ **This spec stays OPEN. Change 1 is the blocker and it is the maintainer's call alone.**
+
+- **Change 1 — three invariants: OPEN, awaiting sign-off.** Drafted above and deliberately not
+  minted. `INVARIANTS.md` is untouched.
+- **Change 2 — the INV-122 citation at both capture blocks: DONE**, commit `9481e58`. Each rule was
+  also reflowed so its stop sign starts its line, because a mid-line `⛔` was invisible to every
+  conformance view — which is how `the-hard-rule-detector-misses-every-rule-not-first-on-its-line`
+  was found.
+- **Change 3 — sweep the run's remaining hard rules: DONE, and wider than asked.** Rather than
+  re-reading only this run's additions, the whole corpus was swept once the detector was fixed:
+  `conformance.py rules` went 1 → 7 (six rules had been invisible) → **0**. All seven were
+  *registered but uncited*, triaged in
+  `specs/six-rules-become-visible-when-the-detector-is-fixed.md` and now cited. So the sweep found
+  **no fourth unregistered subject** beyond the three named here.
+- **Change 4 — correct the ledger entries: DONE.** Three entries carried a wrong "Establishes no
+  invariant" claim and each now carries a dated `⚠️ Correction appended 2026-08-21` note beside it,
+  appended and never rewritten:
+  `datastore-goes-in-the-project-directory-which-on-wsl2-is-the-slow-one`,
+  `registration-code-rests-on-two-configure-behaviors-the-server-does-not-have`, and
+  `poor-band-offers-the-remap-loop-before-anything-establishes-a-mapping-cause`.
+  ⚠️ **The spec says "eleven ledger entries"; three needed correcting.** Eleven entries recorded
+  "Establishes no invariant"; that claim was wrong for exactly the three subjects named here, and
+  correct for the other eight. The spec's own wording — *"Correct the eleven ledger entries **that
+  recorded** … for a subject that turns out to be unregistered"* — describes the smaller set, so
+  the count in the sentence was loose rather than the instruction being unmet.
