@@ -171,3 +171,76 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
     not subtract `DECLINED.md`, as `implement-spec` Step 3 requires; `tests/test_declined_ledger.py`
     caught it. Noted here so the next reader knows this entry has been tested against the guard and
     survived, rather than wondering why the git history touches it.
+
+## how-heard-is-fixed-by-context-and-should-not-cost-a-turn
+
+- **Declined:** 2026-08-21
+- **Decided by:** maintainer, on the triage run's own recommendation against it
+- **Reason:** The cost/benefit is poor against what it touches. It modifies the plugin's **only**
+  PII-transmitting step (INV-135) to save one turn, on a branch most Bootcampers never reach — the
+  in-flow license request fires only above the 500-record cap with no key already applied. Two things
+  undercut the saving. Defaulting `how_heard` means the plugin **authors a statement submitted in the
+  Bootcamper's name** alongside their real work email; it is factually true (they are taking the
+  bootcamp) but it is not something they said. And INV-135 requires the pinned consent question to
+  state what is sent, so the default must be **displayed** — the Bootcamper still reads a line about
+  `how_heard`, and most of the friction the entry objected to survives the change. That leaves a
+  one-turn saving bought with edits to the step where
+  `license-request-omits-a-required-field-the-server-demands` already found a defect. The one real
+  argument the other way, recorded because it is not weak: a uniform `"Senzing Bootcamp"` value is
+  arguably better attribution data for Senzing than free text, and the Bootcamper's own answer ("I am
+  taking the bootcamp") is what the default would say.
+- **Revisit if:** the license-request flow is being reworked for another reason and the field list is
+  already in hand (fold it in then, at near-zero marginal risk); or `submit_feedback` gains a way to
+  mark a value as caller-supplied rather than requester-supplied, which removes the authorship
+  objection entirely.
+
+## every-module5-gate-checks-shape-and-none-checks-what-a-value-IS
+
+- **Declined:** 2026-08-21
+- **Decided by:** maintainer, on the triage run's recommendation against the spec as written
+- **Reason:** The **diagnosis is the strongest in its batch and is not what is being declined** — the
+  spec establishes a real fourth unchecked axis (structure, fidelity, intent are named in
+  `phase2-data-mapping.md:619-626`; semantic *kind* is not), and it is backed by a confirmed false
+  negative: a `-PASSPORT` conflict from Japanese issuance notes blocked two records of the same
+  sanctioned individual from resolving while NAME, DOB, ADDRESS, PLACE_OF_BIRTH and RECORD_TYPE all
+  scored 100. What is declined is the **remedy**, on false-positive grounds. The name-frequency
+  heuristic ("a name repeating far above the source's own distribution is a placeholder until proven
+  otherwise") would fire constantly on legitimate data — common surnames dominate real national
+  datasets, so Kim, Nguyen, Wang and Smith are distributional outliers by construction. The bootcamp
+  is a teaching tool; a gate that cries wolf on ordinary data degrades every run to catch one case.
+  The identifier check's "script outside the expected range" clause has the same problem more
+  narrowly: legitimate non-Latin identifiers exist and full-width digits would trip it.
+- **Revisit if:** re-specced as the two **safe** halves the analysis supports, which is the expected
+  path rather than a remote one: (1) the identifier **no-digits-at-all** test alone, which enforces
+  the Entity Specification's own documented rule — *"You may encounter document dates …, risk
+  categories/statuses, or free-text notes. Do not map these as identifiers (including `OTHER_ID`)"*
+  (`search_docs(category='data_mapping')`, server 1.33.0, 2026-08-21) — a prohibition the mapping
+  gates do not currently test for, as the spec's root-cause section establishes against the shipped
+  files; and (2) **surfacing** the top name values with their occurrence counts at the step-3 gate,
+  with no judgment attached. The second is what would have let the
+  Bootcamper see "The bearer" themselves: it was the single most frequent name in the source at 73
+  occurrences, in plain sight in the profile, and never shown to them.
+
+## the-bootcamp-asks-where-the-output-is-going-and-never-gets-it-there
+
+- **Declined:** 2026-08-21
+- **Decided by:** maintainer, on the triage run's recommendation to block rather than build
+- **Reason:** Blocked on two inputs it cannot be built correctly without, not on the merit of the
+  finding. The finding stands: Module 1 Step 10a asks which downstream systems the output feeds and
+  holds `integration_targets` under INV-097; graduation's `production/` then copies `src/query/**`
+  and `data/senzing-ready/**` — code and *input* data — so the loop the bootcamp opens has no closing
+  end, and two of the three mechanisms are confirmed server-side (`RELATED_ENTITIES` is
+  flag-conditional; `SZ_ENTITY_INCLUDE_RECORD_JSON_DATA` is `applies_to: ["get_record"]` with
+  `JSON_DATA.AMOUNT` and `JSON_DATA.STATUS` among its own `response_paths`, so payload cannot come
+  back from an entity-level export however the flags are set). What is missing is (1) the **pptx the
+  reporter referenced and never sent**, which is their definition of a correct artifact and therefore
+  what the acceptance criteria must be written against — building without it risks producing, again,
+  something that is not the thing that did the job; and (2) a **scope decision** that is the
+  maintainer's: Modules 8–11 do not exist (`advanced-modules-8-11-scope`, implemented), so an
+  output-handoff step lands in the core path or nowhere. A third mechanism — REL_* pointer/anchor
+  hashes failing to link under `record_id_source: RECORD_HASH` — is still a hypothesis and needs the
+  reporter's `mapping_spec.json` and one exported row.
+- **Revisit if:** the pptx arrives (or another statement of what the artifact must contain does), or
+  the scope call is made to put an output handoff in the core path. Either alone is enough to reopen
+  it; the spec's analysis and MCP citations are current as of server 1.33.0, 2026-08-21 and need only
+  re-verification, not re-derivation.
