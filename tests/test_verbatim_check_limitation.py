@@ -294,8 +294,9 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
             self.text, r"(?i)Freshness, per limitation",
             "freshness must be stated per limitation, not as one blanket caveat")
         self.assertRegex(
-            self.text, r"(?i)only 2 is still un-re-run",
-            "the entry that is still unverified must be named")
+            self.text, r"(?i)all three are CURRENT behavior",
+            "the freshness of each entry must be stated; limitation 2 was confirmed end to "
+            "end on 2026-08-18, so pinning it as un-re-run would assert a disproved claim")
         self.assertRegex(
             self.text, r"(?i)does not depend on re-running a mapping",
             "a re-check must disclose what kind of check it was, or 'CONFIRMED CURRENT' "
@@ -393,33 +394,52 @@ class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
         for section, label in ((self.profile, "profile step"), (self.mapping, "mapping step")):
             with self.subTest(section=label):
                 self.assertRegex(section, r"(?i)reported upstream 2026-07-31")
-                self.assertRegex(section, r"(?i)not re-run",
-                                 "must say the observation was not re-verified")
+                self.assertRegex(
+                    section, r"(?i)(not re-run|CONFIRMED CURRENT|CONFIRMED END TO END|"
+                            r"is confirmed, not un-re-run)",
+                    "must state the observation's freshness either way — un-re-run, or "
+                    "confirmed with its date. Silence reads as a currency claim.")
 
     def test_the_prescriptions_carry_current_mcp_provenance(self):
         """What *was* re-verified: the schema still declares derived and type_discriminator."""
         self.assertRegex(self.mapping, r"(?i)1\.32\.3")
         self.assertRegex(self.mapping, r"(?i)derived_as")
 
-    def test_the_field_count_block_leads_with_the_negative_re_check(self):
-        """Re-checked 2026-08-14 on server 1.32.9: the warning did not fire.
+    def test_the_field_count_block_leads_with_the_split_re_check(self):
+        """Updated 2026-08-21: the counter is half fixed, and the block must say which half.
 
-        The block must lead with that rather than still promising the warning, and must not
-        re-assert the universal quantifier its own re-check falsified — a ⛔ whose stated
-        trigger demonstrably does not occur erodes the load-bearing ⛔s around it.
+        Was "the warning no longer fires" (1.32.9, 2026-08-14) — true of the `derived` half and
+        never tested on the other, because that walk had no per-record type field. A 1.33.0 run
+        with a `type_discriminator` whose `field_overrides` declared a source field DID fire, so
+        a flat "no longer fires" now understates it in the one configuration that reaches it.
+        The block must lead with the split rather than with either half alone.
         """
-        self.assertRegex(self.mapping, r"(?i)field-count warning no longer fires")
-        self.assertRegex(self.mapping, r"(?i)1\.32\.9, 2026-08-14")
+        self.assertRegex(self.mapping, r"(?i)field-count warning is half fixed")
+        self.assertRegex(self.mapping, r"(?i)1\.33\.0, 2026-08-21")
+        self.assertRegex(
+            self.mapping, r"(?i)derived=2 are synthesized and not source fields",
+            "the server's own arithmetic is what proves the derived half is fixed rather "
+            "than merely quiet — quote it")
         self.assertNotRegex(
             self.mapping,
             r"(?i)on \*\*every\*\* mapping that uses `derived` entries",
             "the falsified universal quantifier is back",
         )
 
-    def test_the_type_discriminator_half_is_marked_not_re_run(self):
-        """One re-check retires one half. The walk had no per-record type field."""
-        self.assertRegex(self.mapping, r"(?i)Only the `derived` half was re-run")
-        self.assertRegex(self.mapping, r"(?i)field_overrides` declare at least one source field")
+    def test_the_type_discriminator_half_is_marked_confirmed(self):
+        """Inverted 2026-08-21: the experiment the old text asked for was run.
+
+        It named exactly what would settle the open half — *a source with a per-record
+        entity-type field, mapped with a `type_discriminator` whose `field_overrides` declare
+        at least one source field* — and that mapping fired the warning on server 1.33.0. The
+        block must record the confirmation, and must not still call the half un-re-run.
+        """
+        self.assertRegex(self.mapping, r"(?i)is confirmed, not un-re-run")
+        self.assertRegex(self.mapping, r"(?i)field_overrides` declare at least one\s*source field")
+        self.assertNotRegex(
+            self.mapping, r"(?i)Only the `derived` half was re-run",
+            "the block still calls the type_discriminator half un-re-run, which a 1.33.0 "
+            "run disproved")
 
     def test_the_disposition_counts_are_marked_server_derived(self):
         """So a later reader does not 'fix' the plugin by sending them."""
@@ -429,10 +449,23 @@ class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
         )
         self.assertRegex(self.mapping, r"(?i)the server derives them")
 
-    def test_the_negative_carries_an_owned_mcp_marker(self):
-        """An absence claim needs the route that owns it named (INV-194)."""
-        self.assertIn("MCP-NEGATIVE:", self.mapping)
-        self.assertRegex(self.mapping, r"owner: the step-3 advance response is the only route")
+    def test_the_retired_negative_is_replaced_by_the_affirmative(self):
+        """Retired 2026-08-21: the server stopped being silent, so the negative expired.
+
+        The marker recorded that a step-3 advance carrying three `derived` entries produced no
+        field-count warning (1.32.9, 2026-08-14) — a correctly-owned absence negative at the
+        time. On 1.33.0 the counter states the same fact affirmatively in its own warning text
+        (`derived=N are synthesized and not source fields`), so there is no absence left to
+        mark. A dated negative kept past the point the server answers it is exactly the shape
+        `guards-pinning-a-dated-negative-outlive-it` was written about.
+        """
+        self.assertNotRegex(
+            self.mapping, r"owner: the step-3 advance response is the only route",
+            "the retired absence negative is back; the server now answers it affirmatively")
+        self.assertRegex(
+            self.mapping, r"(?i)derived=2 are synthesized and not source fields",
+            "the affirmative that replaced the negative must be quoted, or the retirement "
+            "leaves nothing asserting the derived half is handled correctly")
 
     def test_it_forbids_forking_the_profiler(self):
         self.assertRegex(self.profile, r"(?i)do not ship a patched profiler")

@@ -324,6 +324,12 @@ deterministic hash over that entity's stable IDENTITY fields only — never the 
 whole-record hash re-keys on any change, creating duplicate/stale entities)"*. It is the same hash the
 EMBEDDED MASTER RULES below require, reached from the plan side.
 
+⚠️ **Choosing the sentinel here decides a step-4 outcome: it widens the verbatim check's REL_*
+rejection to include `REL_ANCHOR_KEY` and `REL_POINTER_KEY`.** A hashed RECORD_ID appears nowhere in
+the source, so the keys mirroring it are unharvestable too. That is expected, not a mapping defect —
+limitation 2 under "Three further limitations" has the condition and the offender-count check that
+distinguishes it from one.
+
 On success the server **moves the field count**: the embedded entry's `field_count` is subtracted from
 the parent's, so a 19-field source declaring 1 embedded field returns `parent: 18, embedded: 1`. Seeing
 the parent shrink is the confirmation that the declaration took.
@@ -482,6 +488,28 @@ step 2 with `action='advance'`, carrying `master_schemas` (at least one, each wi
 `data_source` in UPPERCASE, `record_type`, `record_id_source`) and `support_schemas` (lookups,
 relationships, children) in `data`. Tell the user: explain the entity type decision, which fields
 map vs. skip and why.
+
+⛔ **On a mixed-type source, send an enum-valid `record_type` and declare the mixture at step 3 —
+the step-2 prose asks for a value its own schema rejects.** Both halves are in the **same response**
+(re-read live, server **1.33.0, 2026-08-21**): the instructions say *"If a schema has mixed entity
+types discriminated by a field (e.g., type=person/company), set record_type to `"MIXED"` and note the
+discriminator field"*, while that response's `advance_schema` declares
+`record_type` as `enum: ["PERSON", "ORGANIZATION", "VESSEL", "AIRCRAFT"]` — and the typed `payload`
+branch for `for_step 2` carries the same enum, so a client using constrained decoding **cannot emit**
+the documented value at all.
+
+Sending `MIXED` is accepted and warns: `status: "ok"` plus, in `warnings[]`,
+`schema_plan[0] (<your schema>): record_type 'MIXED' is non-standard — expected one of: PERSON,
+ORGANIZATION, VESSEL, AIRCRAFT` (reproduced on the same server and date). So send the source's
+predominant type and let step 3's `type_discriminator` do the typing — which is
+what the tool's own prose says happens anyway (*"The type_discriminator details will be defined in
+Step 3 mapping"*), so nothing is lost.
+
+⚠️ **If a warning like that reaches you, it is not your error and not a mapping defect** — record it
+as expected and proceed (INV-048/INV-173). This is **one** known-bad interaction, and it does not
+license ignoring step-2 warnings generally: the others are real. And note the prose's *"must be PERSON or
+ORGANIZATION"* is wrong against its own enum — `VESSEL` and `AIRCRAFT` are valid, which a watchlist
+source can genuinely need. **Retire this note once step 2's prose and its `advance_schema` agree.**
 
 ⛔ **Before you advance, check the profile for a second entity hiding in a column.** This is the
 one structural thing step 2 commits to that step 3 cannot add later, and the profile report you read
@@ -645,15 +673,29 @@ something must check the behavior was actually obtained.
 > mapping defect. Read "⛔ A value derived from a source *field name*…" later in this step **before**
 > you get there, so an expected exit 1 does not read as a bug in your mapper.
 
-⚠️ **The field-count warning no longer fires — if one still reaches you, do not chase it.**
-Re-checked on server **1.32.9, 2026-08-14**: a step-3 advance for a 6-field master schema
-(4 `feature`, 1 `payload`, 1 `ignore`) carrying **three** `derived` entries — `DATA_SOURCE`,
-`RECORD_ID` and `RECORD_TYPE` — returned `{"status":"ok","step":4,…}` with **no field-count warning
-anywhere in the response**. That mapping is squarely inside the scope the earlier observation called
-unavoidable, so the counter appears to have been fixed upstream. Read the rest of this block as a
-conditional: it tells you what the warning meant, if you ever see it.
+⚠️ **The field-count warning is half fixed. The `derived` half is gone; the `type_discriminator`
+half still fires — and the warning now tells you which.** Both halves re-checked on server
+**1.33.0, 2026-08-21**.
 
-<!-- MCP-NEGATIVE: mapping_workflow(action='advance') from step 3 with three derived entries (DATA_SOURCE, RECORD_ID, RECORD_TYPE) — no field-count warning appears anywhere in the response — owner: the step-3 advance response is the only route that can carry this warning, and it was asked directly rather than inferred from a sibling call; it returned status ok to step 4 with no warning text (absence negative) — server 1.32.9, 2026-08-14 -->
+The **`derived` half is fixed**, and the counter now says so in its own text rather than merely
+falling silent: it reports `derived=N are synthesized and not source fields`, which is exactly the
+correct treatment.
+
+The **`field_overrides` half reproduces.** A step-3 advance for an 8-field master schema carrying a
+`type_discriminator` on one field, whose `types.*.field_overrides` declared one further source field,
+returned `{"status":"ok","step":4,…}` with:
+
+```text
+Schema 'watchlist_pep': mapping covers 7 of the 8 profiled source fields
+(dispositions: feature=2, payload=3, ignore=1, extract=0, code_mapping=0,
+ discriminator=1; derived=2 are synthesized and not source fields)
+```
+
+**Check the arithmetic against your own mapping — that is the confirmation, and you can run it
+yourself.** `feature + payload + ignore + extract + code_mapping + discriminator` sums to **7**
+against a `field_count` of 8. `discriminator=1` counts the discriminator field alone; the field
+declared only inside `type_discriminator.types.*.field_overrides` is counted by nothing. Expect the
+count to fall short by exactly the number of `field_overrides`-only fields you declared.
 
 **The earlier observation, kept as history.** Through server **1.32.3** (verified **2026-07-31**)
 step 3 emitted "mapped N fields … but profile reported M fields" on mappings using `derived` entries
@@ -664,17 +706,17 @@ wrong in both directions. Measured 2026-07-27 across four sources on SDK **4.3.3
 reported as 13 (high), and 16 reported as 14 (low), with every source field dispositioned in both
 cases. Reported upstream 2026-07-31.
 
-**Both mechanisms the diagnosis rests on are still in the schema** — re-read on server **1.32.9,
-2026-08-14**: a `derived` entry still requires a `derived_as` key whose enum is `DATA_SOURCE`,
+**Both mechanisms the diagnosis rests on are still in the schema** — re-read on server **1.33.0,
+2026-08-21**: a `derived` entry still requires a `derived_as` key whose enum is `DATA_SOURCE`,
 `RECORD_ID`, `RECORD_TYPE`, `REL_ANCHOR`, `REL_POINTER`, and `type_discriminator` is still a step-3
-field carrying its own `field_overrides`. So the shapes that produced the miscount have not gone
-away; only the warning has. That is the reason to keep this block rather than delete it — an absent
-warning today is not proof it never fires.
+field carrying its own `field_overrides`. So the diagnosis was right in **both** directions, and one
+direction has since been fixed.
 
-⚠️ **Only the `derived` half was re-run.** The 2026-08-14 walk used a single-type source, so it
-carried no `type_discriminator` and settles nothing about that half of the original claim. What would
-confirm or retire it: a source with a per-record entity-type field, mapped with a
-`type_discriminator` whose `field_overrides` declare at least one source field.
+✅ **The `type_discriminator` half is confirmed, not un-re-run.** An earlier version of this block
+called it the one half never re-run and named what would settle it: *a source with a per-record
+entity-type field, mapped with a `type_discriminator` whose `field_overrides` declare at least one
+source field*. That is exactly the mapping run on **1.33.0, 2026-08-21**, and it fires — see the
+quoted warning and its arithmetic at the top of this block.
 
 **What to do:** confirm every source field carries a disposition — that is the real question the
 warning gestures at, and it holds whether or not the counter is wrong — and if it does, record any
@@ -789,16 +831,16 @@ no MCP server version, so every bootcamper is on the current server and this is 
 observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`OPENSANCTIONS_PEP`,
 `OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`); all three reported upstream the same day.
 
-⚠️ **Freshness, per limitation — 1 and 3 are CURRENT behavior; only 2 is still un-re-run.**
+⚠️ **Freshness, per limitation — all three are CURRENT behavior.**
 Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
 the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
 'sz_routing_report.py'])`, whose response is a **listing of URLs, not the scripts**, so reading them
 means fetching each `url` first (`ground-rules.md` → "Working examples") — and the live
 `mapping_workflow` step-3 schema. That is a check of the
 **mechanism**, which is what these entries assert, and it does not depend on re-running a mapping.
-Limitation **2** is the only one still carrying the old "expect this, and check" caveat: verifying it
-needs a source with **disclosed relationships**, which the re-check did not have. If you are mapping
-one, that is the entry to confirm and report on.
+Limitation **2** was confirmed end to end on **2026-08-18** by a run that finally had a source with
+**disclosed relationships** — and that run also **widened** it: see the entry itself, which now
+states the condition under which the KEY attributes fail too.
 
 1. **Any correct `extract` output is rejected. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.** The
    workflow documents `extract` for prose fields
@@ -815,20 +857,47 @@ one, that is the entry to confirm and report on.
    `'BNC'.`. **Any** substring pulled from prose fails the same way. Emitting `'BNC'.` to satisfy it
    would write quotes and a period into a name field; dropping the alias loses real data. Take the
    exemption path instead.
-2. **`REL_ANCHOR_DOMAIN`, `REL_POINTER_DOMAIN` and `REL_POINTER_ROLE` are rejected.**
-   ⚠️ **This is the one entry still NOT re-run** — "expect this, and check". Confirming it needs a
-   source carrying disclosed relationships. (The waiver mechanism it turns on *was* re-read on
-   1.32.9, 2026-08-14: `is_exempt()` is still `attr in {"DATA_SOURCE", "RECORD_ID"} or
-   attr.endswith("_TYPE")`, so these three are still outside it — but whether the rejection still
-   fires end to end is unverified.) These are
-   structural constants that by definition have no source value, so the harvester cannot see them and
-   `is_exempt()`'s waiver — `DATA_SOURCE`, `RECORD_ID`, and any attribute ending `_TYPE` — does not
-   cover them. `REL_ANCHOR_KEY` and `REL_POINTER_KEY` **pass**, because those do carry source values,
-   which is what identifies the cause. Observed: 31 offenders across 21 records, every one of those
-   three attributes. The Entity Specification defines all of them — its *Feature: REL_ANCHOR* and
-   *Feature: REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and
-   `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with rules and worked examples (`search_docs`, server 1.32.3,
-   docs index 2026-07-31 20:21 UTC) — so the gate rejects scaffolding the specification prescribes.
+2. **Every REL_* attribute whose value the harvester cannot see is rejected. CONFIRMED END TO END —
+   2026-08-18, engine-side observation.** `REL_ANCHOR_DOMAIN`, `REL_POINTER_DOMAIN` and
+   `REL_POINTER_ROLE` always; `REL_ANCHOR_KEY` and `REL_POINTER_KEY` **conditionally** — read the
+   next paragraph before you conclude your keys are wrong.
+
+   The DOMAIN and ROLE attributes are structural constants that by definition have no source value,
+   so the harvester cannot see them and `is_exempt()`'s waiver — `DATA_SOURCE`, `RECORD_ID`, and any
+   attribute ending `_TYPE` (re-read on 1.32.9, 2026-08-14: `is_exempt()` is still `attr in
+   {"DATA_SOURCE", "RECORD_ID"} or attr.endswith("_TYPE")`) — does not cover them.
+
+   <!-- MCP-NEGATIVE-SCAN: not-a-tool-claim — "a computed value that appears nowhere in the source"
+        is a fact about the Bootcamper's own data and their mapper's output, not about any MCP tool's
+        content, so it needs no MCP-NEGATIVE marker. The tool claims in this entry are POSITIVE and
+        cited inline: `record_id_source`'s RECORD_HASH sentinel and step 4's deterministic-hash
+        prescription, both re-read live from mapping_workflow on server 1.33.0, 2026-08-21. Triaged
+        2026-08-21 from `coverage_reports.py unmarked`. -->
+   ⛔ **`REL_ANCHOR_KEY` and `REL_POINTER_KEY` pass only when `record_id_source` names a source
+   field. On the `RECORD_HASH` sentinel they fail alongside the others** — and that is the *normal*
+   case for an `embedded_master`, which is the disposition that produces REL_* scaffolding in the
+   first place (see "`record_id_source` is `RECORD_HASH` for the embedded entity" earlier in this
+   step). A REL_*_KEY mirrors the RECORD_ID it points at; when that RECORD_ID is a deterministic hash
+   over identity fields, the key is a **computed value that appears nowhere in the source**, so the
+   harvester cannot see it either. The condition is current: `mapping_workflow`'s step-2 advance
+   schema documents `record_id_source` as *"field name of the stable natural key (PREFERRED), or
+   RECORD_HASH only when no stable unique field exists"*, and step 4 still prescribes *"a
+   deterministic hash over that entity's stable IDENTITY fields only"* on the sentinel (both re-read
+   live, server **1.33.0, 2026-08-21**).
+
+   **The offender count is how you tell this limitation from a real mapping defect, and you can
+   check it yourself.** It reconciles to `records × REL_* attributes per record`, and every offender
+   is scaffolding rather than a data value. Two measurements, both engine-side observations with
+   their conditions: 31 offenders across 21 records on a source whose keys came from source fields
+   (DOMAIN and ROLE only, 2026-07-27, SDK 4.3.3.26191); and **83,338** offenders on a `RECORD_HASH`
+   embedded master — `25,000 senders × 3 pointer attributes + 4,169 beneficiaries × 2 anchor
+   attributes`, the KEY attributes included (2026-08-18). If your count reconciles that way, record
+   the exemption and proceed; if it does not, look at your mapping.
+
+   The Entity Specification defines all of them — its *Feature: REL_ANCHOR* and *Feature:
+   REL_POINTER* sections give `REL_ANCHOR_DOMAIN`/`KEY` and `REL_POINTER_DOMAIN`/`KEY`/`ROLE` with
+   rules and worked examples (`search_docs`, server 1.32.3, docs index 2026-07-31 20:21 UTC) — so the
+   gate rejects scaffolding the specification prescribes.
 3. **Neither script runs on a CSV source. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.**
    `sz_verbatim_check.py` and `sz_routing_report.py` both
    define `load_jsonl(path)` as `json.loads(ln)` over the file's non-blank lines, with **no** CSV
@@ -855,6 +924,21 @@ around them and re-check whether the workaround is still needed.
 Do not ship a patched copy of `sz_verbatim_check.py`: it is delivered by the MCP server, so the fix
 arrives from upstream and a fork would mask it (INV-080). The numeric case is the worked example —
 reported 2026-07-28, fixed in 1.32.2 — and a fork would still be carrying the workaround today.
+
+**One mechanism, three known reachings — recognize the fourth on sight rather than filing it as a
+discovery.** `sz_verbatim_check.py` harvests the allowed set from source **values**, and every
+entry in this block is that one scope limit reached by a different route:
+
+| The emitted value is derived from… | Where it is documented here |
+|---|---|
+| a source value stored as a **JSON number** (non-string) | the non-string-values entry above |
+| a source **field name** | this entry |
+| a **hash** over identity fields (`RECORD_HASH`) | limitation 2's REL_*_KEY condition |
+
+Any value the mapper computes rather than copies will be absent from the allowed set, whatever
+produced it. If you meet a fourth route, the resolution is the same four steps — confirm
+faithfulness on the Entity Specification's terms, record the exemption and its reason, proceed, and
+never alter a source value to satisfy the tool (INV-048/INV-173).
 
 ⛔ **A value derived from a source *field name* is a second, distinct cause of the same failure —
 and unlike the cases above it has no correct alternative emission.** The allowed set is built from

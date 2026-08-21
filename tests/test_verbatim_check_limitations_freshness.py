@@ -20,11 +20,19 @@ mapping:
   limitation 3. The `JSONDecodeError` text therefore depends on the CSV's first line, which is why
   quoting one message invites "different message, different problem".
 * `is_exempt()` is still `attr in {"DATA_SOURCE", "RECORD_ID"} or attr.endswith("_TYPE")`, so
-  limitation 2's three attributes remain outside the waiver — but whether the rejection still fires
-  end to end needs a source with **disclosed relationships**, which was not available. It stays
-  caveated.
+  limitation 2's attributes remain outside the waiver — limitation 2.
 
-Source spec: `specs/reverify-the-three-verbatim-check-limitations.md`.
+**Updated 2026-08-21: limitation 2 is no longer caveated, and the caveat's own condition is why.**
+This file used to assert that limitation 2 stayed flagged as un-re-run because verifying it needed
+a source with **disclosed relationships** that was not available. A 2026-08-18 run had one. The
+rejection fired, and it **widened** the entry: `REL_ANCHOR_KEY` and `REL_POINTER_KEY` fail too
+whenever `record_id_source` is the `RECORD_HASH` sentinel, because the key then mirrors a derived
+hash that is not a value anywhere in the source. The three assertions that pinned the caveat were
+inverted rather than deleted — a guard that keeps asserting a claim its own trigger condition
+disproved is worse than no guard, and the new assertions cover the refinement instead.
+
+Source specs: `specs/reverify-the-three-verbatim-check-limitations.md`,
+`specs/rel-key-attributes-fail-the-verbatim-gate-too-whenever-record-id-is-a-hash.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -79,8 +87,7 @@ class TheBlanketCaveatIsReplacedByPerLimitationFreshness(unittest.TestCase):
     def test_freshness_is_stated_per_limitation(self):
         self.assertRegex(
             self.block,
-            r"(?i)Freshness, per limitation — 1 and 3 are CURRENT behavior; only 2 is still "
-            r"un-re-run",
+            r"(?i)Freshness, per limitation — all three are CURRENT behavior",
             "the block does not say which entries are current")
 
     def test_the_re_verification_route_is_named(self):
@@ -109,25 +116,64 @@ class TheBlanketCaveatIsReplacedByPerLimitationFreshness(unittest.TestCase):
                     r"%s\. CONFIRMED CURRENT — server 1\.32\.9, 2026-08-14" % re.escape(label),
                     "limitation %d is not marked as confirmed current" % number)
 
-    def test_limitation_2_is_named_as_the_only_unverified_one(self):
+    def test_limitation_2_is_marked_confirmed_end_to_end(self):
+        """Inverted 2026-08-21: the condition this test used to wait for was met.
+
+        It previously asserted limitation 2 was flagged as the one entry NOT re-run, and
+        that the block named what would settle it — *a source carrying disclosed
+        relationships*. A 2026-08-18 run had one, the rejection fired, and the entry is now
+        confirmed. Asserting the old caveat would pin a claim the run disproved.
+        """
         self.assertRegex(
             self.block,
+            r"(?i)CONFIRMED END TO END — 2026-08-18",
+            "limitation 2 is not marked as confirmed end to end, so a reader cannot tell "
+            "it apart from an entry that is still only predicted")
+        self.assertNotRegex(
+            self.block,
             r"(?i)This is the one entry still NOT re-run",
-            "limitation 2 is not flagged, so a reader cannot tell it apart")
+            "limitation 2 is still flagged as un-re-run, which a 2026-08-18 run disproved")
+
+    def test_the_key_attributes_are_never_called_an_unconditional_pass(self):
+        """The refinement the confirming run produced, and the reason it matters.
+
+        The block used to say `REL_ANCHOR_KEY` and `REL_POINTER_KEY` **pass**, full stop,
+        "because those do carry source values". That holds only when `record_id_source` names
+        a source field. On the `RECORD_HASH` sentinel — the normal case for an
+        `embedded_master`, which is the disposition that produces REL_* scaffolding at all —
+        the key is a derived hash and both KEY attributes fail with the others. A reader
+        following the old text would read their failure as a mapping defect and iterate on
+        correct code, which is what INV-048/INV-173 exist to prevent.
+        """
         self.assertRegex(
-            self.block, r"(?i)needs a\s*source carrying disclosed relationships",
-            "what limitation 2 needs in order to be verified is not stated, so the next "
-            "run does not know what to target")
+            self.block,
+            r"(?i)pass only when `record_id_source` names a source\s*field",
+            "the KEY attributes are not stated conditionally, so their failure on a hashed "
+            "RECORD_ID reads as a mapping defect")
+        self.assertRegex(
+            self.block, r"(?i)RECORD_HASH",
+            "the condition under which the KEY attributes fail is not named")
 
     def test_limitation_2_records_what_was_checkable(self):
-        """Partial verification stated as partial, not rounded up or down."""
+        """Verification stated with its evidence, not asserted.
+
+        The `is_exempt()` re-read still stands and is still the mechanism. What replaced the
+        old "unverified end to end" disclosure is the offender-count reconciliation — the
+        check a reader can run on their own mapping to tell this limitation from a real
+        defect, which is strictly more useful than being told it was never confirmed.
+        """
         self.assertRegex(
             self.block,
             r"(?i)`is_exempt\(\)` is still `attr in \{\"DATA_SOURCE\", \"RECORD_ID\"\} or",
             "the waiver mechanism was re-read and that is not recorded")
         self.assertRegex(
-            self.block, r"(?i)whether the rejection still\s*fires end to end is unverified",
-            "the partial check could be mistaken for full verification")
+            self.block,
+            r"(?i)reconciles to `records × REL_\* attributes per record`",
+            "the offender-count reconciliation is missing, so a reader has no way to tell "
+            "this limitation from a mapping defect of their own")
+        self.assertIn(
+            "83,338", self.block,
+            "the measured offender count on a RECORD_HASH embedded master is not recorded")
 
 
 class TheEvidenceForTheMechanismIsQuoted(unittest.TestCase):

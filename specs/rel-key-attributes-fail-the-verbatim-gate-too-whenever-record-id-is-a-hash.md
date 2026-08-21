@@ -149,3 +149,21 @@ particular mapping. Record it with its conditions — SDK/plugin version, `embed
   `specs/verbatim-check-cannot-see-field-name-derived-values.md`,
   `specs/verbatim-check-rejects-extract-and-relationship-scaffolding.md`,
   `specs/verbatim-check-numeric-source-values.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Implemented as one commit with its two sibling Module 5 specs, not three.** All three edit
+`phase2-data-mapping.md`, and their changes interleave inside one block — the freshness header, the
+field-count block, limitation 2 and step 10. Splitting them into three commits would have produced
+**red intermediate commits**: each prose change has a guard pinning the claim it replaces, so a
+commit carrying the prose without its guard update (or the reverse) fails the suite. The repo's
+one-commit-per-spec pattern assumes specs touch disjoint files; here it would trade a clean history
+for commits that do not individually pass. The commit message names all three specs.
+
+**Eight guard assertions were inverted rather than deleted.** Across
+`tests/test_verbatim_check_limitation.py` and `tests/test_verbatim_check_limitations_freshness.py`,
+assertions pinning "limitation 2 is un-re-run", "the field-count warning no longer fires" and the
+retired `MCP-NEGATIVE` marker asserted claims these changes disprove. Each was rewritten to assert
+the new claim with a docstring recording what changed and why keeping the old one would be worse
+than no guard — the freshness guard had even written down its own trigger condition (*"needs a source
+with disclosed relationships, which was not available"*), and that condition was met on 2026-08-18.
