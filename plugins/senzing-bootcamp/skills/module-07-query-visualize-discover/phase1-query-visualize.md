@@ -516,6 +516,33 @@ of the Truth Set. It MUST:
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.
+
+  ⛔ **The capture tool is bundled — run it, do not assess whether automation exists.**
+  `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
+  `../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
+  writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
+
+  ```bash
+  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
+    --url "http://localhost:<the port 3b actually bound>" \
+    --name results_visualization --tabs all --query "<a name present in the loaded data>"
+  ```
+
+  ⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
+  first.** Enter the silent-skip path on its **exit code** — it distinguishes its reasons — and never
+  on an assumption that browser automation is unavailable. A guide that skipped capture here on that
+  assumption, without running this script, lost twelve recap images; the same script then captured
+  6 of 6 tabs first try against plain headless Chrome. The procedure (backends, exit codes,
+  `--single`, the caption rule) stays stated once in `module-completion.md` — this is the tool's
+  identity, not a copy of its manual (INV-179).
+
+  ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
+  filename-discovery order.** The ordering authority is the tab table in
+  `../module-03b-truthset-visualization/visualization-api-reference.md`, whose row order *is* the
+  order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+  ⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
+  captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
+  having nothing in it (INV-123).
 - ⛔ **If the visualization changes after the snapshot is written — a bootcamper request, a fix, a
   styling tweak — rebuild the snapshot and re-capture its screenshots.** The snapshot is the retained
   artifact and the one the recap embeds; the server is disposable. A change present only on the

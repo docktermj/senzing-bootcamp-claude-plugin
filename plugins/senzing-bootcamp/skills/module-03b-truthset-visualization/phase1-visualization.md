@@ -292,6 +292,32 @@ inert. `{name}` = `truthset_verification`. Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
 rule that every caption is derived from the opened image and its tab label, never from the plan.
 
+⛔ **The capture tool is bundled — run it, do not assess whether automation exists.**
+`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
+`../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
+writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
+  --url "http://localhost:<the port 2.3 actually bound>" \
+  --name truthset_verification --tabs all --query "<a name present in the Truth Set>"
+```
+
+⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
+first.** Enter the silent-skip path on its **exit code**, never on an assumption that browser
+automation is unavailable — and here that assumption is **unrecoverable**: this module purges its
+records at close, so a live capture missed now cannot be re-taken by anyone, ever. Module 7's
+equivalent was recovered at graduation only because its server could be restarted; this one was
+permanently lost on the run that found this defect.
+
+⛔ **Embed in the app's own tab order — never in capture or append order, and never in
+filename-discovery order.** The ordering authority is the tab table in
+`visualization-api-reference.md`, whose row order *is* the
+order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
+captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
+having nothing in it (INV-123).
+
 If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
 and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
 is available it skips silently; otherwise **keep every captured tab and embed them all** in this
