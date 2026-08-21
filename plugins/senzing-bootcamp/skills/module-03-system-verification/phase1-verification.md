@@ -410,7 +410,7 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    - Be **safe to re-run:** the whole sequence — load, register each code, export,
      register the config, replace the default config ID — must tolerate a second run,
      so re-running Module 3 or resuming mid-module still passes. ⛔ **Build that in;
-     do not make it depend on catching an error.** Registering an identical
+     do not make it depend on catching an error (INV-263).** Registering an identical
      configuration returns the existing config ID rather than failing (Senzing release
      notes: *"Fix `G2ConfigMgr.addConfig` function to return success and the ConfigID
      if the configuration already exists"*), so re-runnability comes from the sequence,

@@ -1,5 +1,12 @@
 """The datastore's location is measured before it is created, not assumed.
 
+Enforces **INV-262** — where the SDK runs in a Linux environment while the project resides on
+a mounted host filesystem, the datastore's placement MUST be measured before it is created,
+using the diagnostic the server prescribes, and the measurement MUST be reported. Registered
+2026-08-21 at the maintainer's sign-off, after the 2026-08-21 audit found the rule shipped and
+unregistered; the wording was narrowed at sign-off so the relocation clause could not read as
+authorizing what INV-200 forbids.
+
 `database/G2C.db` inside the project directory is right on every platform except one: when the SDK
 runs in a Linux environment while the project lives on the host's filesystem, the database is
 reached over a translation layer. The signature cases are WSL2 with the project under `/mnt/` and a

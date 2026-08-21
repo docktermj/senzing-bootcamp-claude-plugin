@@ -310,7 +310,7 @@ Truth Set visualization module already run.
    it, register the new config, and replace the default config ID — and the **whole sequence must be
    safe to re-run**, so re-runs and multi-source orchestration stay safe.
 
-   ⛔ **Build re-runnability into the sequence; do not make it depend on catching an error.**
+   ⛔ **Build re-runnability into the sequence; do not make it depend on catching an error (INV-263).**
    Registering an identical configuration returns the **existing** config ID rather than failing —
    Senzing's release notes record *"Fix `G2ConfigMgr.addConfig` function to return success and the
    ConfigID if the configuration already exists"* — so the sequence is idempotent one call **later**

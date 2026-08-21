@@ -348,7 +348,7 @@ which is exactly the gap the UAT percentages below leave open.
    reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a
    probable wrong reader before it is real absent data).
 
-4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
+4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail (INV-264).** If one feature
    is detracting on a large share of cross-source comparisons, say so plainly and ask the
    bootcamper to check whether the two sources' fields for that feature genuinely measure the same
    thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two

@@ -561,7 +561,7 @@ provides), and it must not be hidden inside an aggregate.
 
 ⛔ **Extend the uniformity sanity-check above with this case: a low completeness score on a source
 whose NAME and ADDRESS coverage is high is a probable applicability error, not a data problem.**
-Check the record-type mix before reporting the score or routing anyone to remediation. The presence
+Check the record-type mix before reporting the score or routing anyone to remediation (INV-264). The presence
 rules above are unchanged — they decide whether a *value* is there; this decides whether the feature
 belonged in the denominator at all.
 

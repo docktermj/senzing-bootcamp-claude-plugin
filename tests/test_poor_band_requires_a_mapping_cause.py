@@ -1,5 +1,9 @@
 """A high possible-match rate is a finding; only a mapping-actionable one reaches Module 5.
 
+Enforces **INV-264** — a quality band MUST NOT by itself route the Bootcamper into remediation;
+the step MUST establish whether the cause is a data characteristic or a mapping defect first.
+Registered 2026-08-21 at the maintainer's sign-off, with all three band-routing sites recorded.
+
 Step 3b bands the possible-match rate and routed **Poor** (>15%) straight to *"The results suggest
 mapping improvements would help"* plus the Module 5 remap loop. A run measured **48.9%** and the
 sampled evidence showed the cause was not a mapping defect: about half the near-misses came from one

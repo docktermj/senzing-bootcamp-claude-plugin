@@ -149,8 +149,34 @@ audit's output. Read 26/25 wherever this file says 37.
 
 ⛔ **This spec stays OPEN. Change 1 is the blocker and it is the maintainer's call alone.**
 
-- **Change 1 — three invariants: OPEN, awaiting sign-off.** Drafted above and deliberately not
-  minted. `INVARIANTS.md` is untouched.
+- **Change 1 — three invariants: DONE, signed off 2026-08-21.** Registered as **INV-262** (datastore
+  mount-crossing measurement), **INV-263** (registration idempotency by construction) and **INV-264**
+  (a quality band does not by itself route into remediation), each with its index entry in the same
+  edit, provenance, and a back-citation added to its enforcing test.
+
+  ⚠️ **Two of the three wordings changed at sign-off, and both changes came from checking the draft
+  against the ruleset rather than from review of the prose.**
+
+  - **INV-262** dropped the clause *"the default location MUST NOT change without their explicit
+    consent"*, which read as though consent could authorize what **INV-200** forbids — every file the
+    bootcamp writes lives inside the project directory, consent or not. Replaced with *"any
+    relocation offered MUST remain within the project directory (INV-200)"*. Placement is INV-200's;
+    INV-262 owns the measuring and the reporting.
+  - **INV-263** is **not a new subject.** `INVARIANTS.md` already required registration
+    *"idempotently"* at **INV-089** — the *property* — and was silent on the *mechanism*, which is
+    the actual gap. So INV-263 is worded as a narrowing of INV-089 with both binding, the shape
+    INV-184 used for INV-107, rather than an edit to an append-only invariant. Its absence clause
+    also gained its owning route (`get_sdk_reference(topic='parameters',
+    filter='register_data_source')`, server 1.33.0, 2026-08-21), since a dated negative with no owner
+    named is the shape INV-194 forbids.
+
+  ⚠️ **This spec's site counts were wrong for two of the three, and the measurements are what the
+  invariants record.** The registration rule: this spec says *"five sites, two statement and three
+  referring"*; measured, **7 files** — 2 stating, 5 referring. The band rule: this spec named the
+  Module 7 site only; measured, **3 sites**, each honoring the rule by a different mechanism
+  (module-07's three outcomes, module-05's record-type applicability check, module-06's
+  report-as-a-FINDING). INV-264 is stated as a property rather than a procedure precisely so it
+  reaches all three — INV-246 in action.
 - **Change 2 — the INV-122 citation at both capture blocks: DONE**, commit `9481e58`. Each rule was
   also reflowed so its stop sign starts its line, because a mid-line `⛔` was invisible to every
   conformance view — which is how `the-hard-rule-detector-misses-every-rule-not-first-on-its-line`

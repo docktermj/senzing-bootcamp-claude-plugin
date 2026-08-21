@@ -1,5 +1,10 @@
 """Data-source registration is re-runnable by construction, not by catching an error.
 
+Enforces **INV-263** — registration MUST be safe to re-run by construction, never by catching
+an error for an already-registered code. Registered 2026-08-21 at the maintainer's sign-off;
+it narrows INV-089, which requires idempotency as a property and is silent on the mechanism.
+Both bind.
+
 Two Senzing facts the plugin implicitly relied on, neither of which holds. Both re-confirmed on
 **server 1.33.0, 2026-08-21** before this guard was written.
 

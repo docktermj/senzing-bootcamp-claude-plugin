@@ -399,7 +399,7 @@ Based on the assessment — evidence first, wording second:
   saying anything about mapping. ⛔ **The band says to look hard; it does not say what you will
   find.**
 
-⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5.** This mirrors the
+⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5 (INV-264).** This mirrors the
 match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
 "Report a high-share cross-source suppressor as a FINDING, never a pass/fail"), and for the same
 reason: the possible-match rate is driven mostly by things a remap cannot change — how populated each
