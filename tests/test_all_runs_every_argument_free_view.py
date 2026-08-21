@@ -92,18 +92,66 @@ class AllRunsEveryArgumentFreeView(unittest.TestCase):
 class SinceCanComputeItsOwnRef(unittest.TestCase):
     """Both call sites used to pass a placeholder no run could resolve."""
 
-    def test_since_last_audit_resolves_from_the_ledger(self):
+    def test_since_last_audit_either_resolves_a_real_commit_or_refuses_loudly(self):
+        """⚠️ Asserts the PROPERTY, because the outcome depends on the ledger's live state.
+
+        A first version asserted exit 0 and failed within the hour: an audit writes its own
+        ledger entry with `Commit: uncommitted` before committing, so right after an audit run
+        the newest entry has no hash. The resolver now skips such entries to the newest one that
+        does have a resolvable commit -- but "no audit entry has one" is still a legitimate
+        refusal, and a test that demands success would fail on a fresh clone with a truncated
+        ledger. What must never happen is a silent zero, and that is what this asserts.
+        """
         out = run("since", "--since-last-audit")
-        self.assertEqual(0, out.returncode, out.stderr)
-        self.assertIn("resolved from the newest audit entry", out.stdout,
-                      "the flag did not report where it got the ref:\n%s" % out.stdout)
+        if out.returncode != 0:
+            self.assertEqual(2, out.returncode, out.stderr)
+            self.assertIn("resolvable commit", out.stderr,
+                          "a refusal must say what it read:\n%s" % out.stderr)
+            return
         m = re.search(r"added to shipped markdown since ([0-9a-f]{7,40})", out.stdout)
         self.assertIsNotNone(m, "the resolved ref is not reported:\n%s" % out.stdout)
+        self.assertRegex(out.stdout, r"\(ref [0-9a-f]{7,40} from ledger entry \S+\)",
+                         "the flag must name the entry it took the ref from:\n%s" % out.stdout)
         # The ref must be a real commit, not a plausible-looking string.
         rev = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % m.group(1)],
                              cwd=str(REPO_ROOT), capture_output=True, text=True)
         self.assertEqual(0, rev.returncode,
                          "the resolved ref %r is not a commit in this repo" % m.group(1))
+
+    def test_it_skips_an_uncommitted_entry_rather_than_failing(self):
+        """The case the flag exists for: an audit resolving a ref during its own run.
+
+        ⛔ Does NOT self-skip when the resolver refuses. If the newest audit entry is
+        `uncommitted` and an older one carries a real hash, resolving is REQUIRED -- stopping at
+        the newest is the bug this test exists for, and a self-skip would hide it.
+        """
+        ledger = (REPO_ROOT / "specs" / "IMPLEMENTED.md").read_text(encoding="utf-8")
+        entries = re.findall(r"(?m)^## (production-readiness-audit\S*)\n(.*?)(?=\n## |\Z)",
+                             ledger, re.S)
+        self.assertTrue(entries, "no audit entry in the ledger")
+        hashed = [n for n, b in entries
+                  if re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?[0-9a-f]{7,40}`?\s*$", b)]
+        if not hashed:
+            self.skipTest("no audit entry carries a commit hash in this checkout")
+
+        newest_name, newest_body = entries[0]
+        newest_field = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", newest_body)
+        newest_has_hash = newest_name in hashed
+
+        out = run("since", "--since-last-audit")
+        self.assertEqual(
+            0, out.returncode,
+            "an audit entry carries a resolvable commit (%s), so --since-last-audit MUST resolve. "
+            "Refusing here is the defect: an audit writes its own entry as `uncommitted` before "
+            "committing, so stopping at the newest entry makes the flag unusable in exactly the "
+            "situation it was added for.\nstderr: %s" % (hashed[0], out.stderr))
+
+        if not newest_has_hash:
+            self.assertIn(
+                "skipped %s" % newest_name, out.stdout,
+                "the newest entry (%s, Commit: %s) was skipped without saying so; a silent skip "
+                "hides which range was measured:\n%s"
+                % (newest_name, newest_field.group(1).strip() if newest_field else "?", out.stdout))
 
     def test_a_bare_since_with_no_range_refuses(self):
         out = run("since")

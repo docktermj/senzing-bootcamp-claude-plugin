@@ -252,41 +252,47 @@ def cmd_per_rule(args):
 
 
 def last_audit_ref(repo):
-    """The commit of the newest `## production-readiness-audit-*` ledger entry, or None.
+    """The newest audit entry with a resolvable commit, or None.
 
-    Both call sites for `since` used to pass a placeholder -- `<last audit>`, `<this run's base>` --
-    with no way to obtain it, so the session that wrote them reverse-engineered its own base with a
-    `git log --since=<timestamp>` heuristic. The ledger already holds the boundary both wanted.
+    Walks audit entries newest-first and takes the first whose `Commit:` field names a commit this
+    repo has, reporting which entry it used. \u26d4 It does NOT stop at the newest entry: an audit
+    writes its own ledger entry with `Commit: uncommitted` before committing, so the newest entry
+    has no hash during the run that needs this most -- and failing there would make the flag
+    unusable in exactly the situation it was added for. Skipping to the previous audit is still
+    reading a recorded hash, not guessing a range.
 
-    \u26d4 Fails loudly rather than guessing. An unresolvable ref reported as "0 rules added" is
-    indistinguishable from a clean range (INV-110/INV-115), and the whole point of this view is to
-    be believed about what a run added.
+    Fails loudly when NO entry has a resolvable commit. An unresolvable ref reported as "0 rules
+    added" is indistinguishable from a clean range (INV-110/INV-115), and the point of this view is
+    to be believed about what a run added.
     """
     ledger = repo / "specs" / "IMPLEMENTED.md"
     if not ledger.is_file():
         sys.stderr.write("no specs/IMPLEMENTED.md under %s — cannot resolve the last audit\n" % repo)
         return None
     text = ledger.read_text(encoding="utf-8")
-    m = re.search(r"(?m)^## (production-readiness-audit\S*)\n(.*?)(?=\n## |\Z)", text, re.S)
-    if not m:
-        sys.stderr.write("no `## production-readiness-audit-*` entry in the ledger\n")
+    entries = re.findall(r"(?m)^## (production-readiness-audit\S*)\n(.*?)(?=\n## |\Z)", text, re.S)
+    if not entries:
+        sys.stderr.write("no audit entry found in the ledger\n")
         return None
-    name, body = m.group(1), m.group(2)
-    c = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?([0-9a-f]{7,40})`?\s*$", body)
-    if not c:
-        raw = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", body)
-        sys.stderr.write(
-            "the newest audit entry (%s) has no resolvable commit hash: Commit: %s\n"
-            % (name, (raw.group(1).strip() if raw else "<field absent>")))
-        return None
-    ref = c.group(1)
-    check = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % ref],
-                           cwd=str(repo), capture_output=True, text=True)
-    if check.returncode != 0:
-        sys.stderr.write("the newest audit entry (%s) names commit %s, which this repo does not "
-                         "have\n" % (name, ref))
-        return None
-    return ref
+    skipped = []
+    for name, body in entries:
+        c = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?([0-9a-f]{7,40})`?\s*$", body)
+        if not c:
+            raw = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", body)
+            skipped.append("%s (%s)" % (name, raw.group(1).strip() if raw else "no Commit: field"))
+            continue
+        ref = c.group(1)
+        ok = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % ref],
+                            cwd=str(repo), capture_output=True, text=True)
+        if ok.returncode != 0:
+            skipped.append("%s (%s — not a commit here)" % (name, ref))
+            continue
+        print("   (ref %s from ledger entry %s)" % (ref, name))
+        for s in skipped:
+            print("   (skipped %s)" % s)
+        return ref
+    sys.stderr.write("no audit entry has a resolvable commit; skipped: %s\n" % "; ".join(skipped))
+    return None
 
 
 def cmd_since(args):
@@ -303,7 +309,6 @@ def cmd_since(args):
         ref = last_audit_ref(repo)
         if ref is None:
             return 2
-        print("   (ref resolved from the newest audit entry in specs/IMPLEMENTED.md)")
     if not ref:
         sys.stderr.write("since needs --ref <git-ref> or --since-last-audit\n")
         return 2
