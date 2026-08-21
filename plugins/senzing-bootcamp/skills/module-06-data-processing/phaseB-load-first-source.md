@@ -84,8 +84,8 @@ hardcoded figure:
   `SzProduct.get_license()`, parse `recordLimit`, confirm it actually moved, and route again on the
   new value — a license reporting `0` lands on the first branch and the whole cap discussion
   dissolves. ⚠️ Do **not** state the evaluation license's size or duration from this file: those
-  figures have changed before and two MCP tools have disagreed about them, so take them from a
-  runtime lookup at the moment of use or say they are unavailable.
+  figures change between releases, so take them from a runtime lookup at the moment of use or say
+  they are unavailable.
 
   End the turn on this single pinned question (INV-056), which replaces the improvised one — it is
   **one** 👉 (INV-251) and it is **not** a second License Key gate (INV-093: that decision was asked

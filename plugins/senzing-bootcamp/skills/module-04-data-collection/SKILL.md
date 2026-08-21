@@ -835,20 +835,12 @@ training data.
    license_request)"*, and `get_capabilities`' manifest lists *"firstname (required), lastname
    (optional), email (work email required …), and how_heard"*.
 
-   ⛔ **Never state the license's duration — the server contradicts itself about it, so no figure
-   is citable.** Verified on **MCP server 1.32.9, 2026-08-12**, both in one session:
-   `submit_feedback`'s own tool description (via `get_capabilities`) says *"A **10-day**, 250K-record
-   eval license is generated and emailed"*, while `sdk_guide(topic='install', platform='macos_arm',
-   language='java')` offers *"a free **5-day** evaluation license (250K records)"* in the same
-   paragraph that points at `submit_feedback` to request it. Two tools, one server, one session, two
-   answers — so "source the figure from MCP at runtime" does **not** disambiguate here, and a
-   duration written into this file would carry a real citation while having a coin-flip chance of
-   being wrong. Say **time- and volume-limited** and let Senzing's email state the terms. Reported
-   upstream as `category='bug'` on 2026-08-12 with the maintainer's approval; **retire this note
-   outright — do not amend it — once the two tools agree.** The **500-record no-license cap** is
-   unaffected and stays MCP-cited: today's `sdk_guide` response confirms it verbatim (*"Without a
-   license, Senzing is limited to 500 Distinct Source Records (DSRs). Loading record 501 fails with
-   SENZ9000|LIMIT"*).
+   **The 500-record no-license cap, MCP-cited.** Re-confirmed on **MCP server 1.33.0, 2026-08-21**:
+   `sdk_guide(topic='load', language='python', platform='linux_apt', record_count=1000)` returns
+   *"Without a license, Senzing is limited to 500 Distinct Source Records (DSRs). Loading record 501
+   fails with SENZ9000|LIMIT"*. The evaluation license's own terms — its duration and its record
+   volume — come from a runtime lookup at the moment of use (INV-080), not from this file: they have
+   changed before.
 
    Those are the
    Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every

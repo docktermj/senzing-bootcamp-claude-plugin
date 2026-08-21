@@ -150,3 +150,31 @@ tools now agree.
   implemented 2026-08-12), `specs/guards-pinning-a-dated-negative-outlive-it.md`,
   `specs/module02-dated-negatives-about-sdk-guide-carry-no-marker.md`,
   `specs/refresh-reverified-provenance-stamps.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**The note was not removed wholesale — the 500-record cap's citation was kept, as its own
+statement.** Two of this spec's own instructions collide at the text level, and the collision is
+only visible once you open the file. Change 1 says *"Remove the note, per its own instruction — do
+not amend it"*; the acceptance criteria say *"The 500-record no-license cap and its
+`SENZ9000|LIMIT` citation are untouched"*. But that citation lived **inside** the note's final
+clause, and it was module-04's **only** MCP citation for the cap — while the same file discusses the
+cap in prose three times (`:292`, `:913`, `:939-940`). Deleting the paragraph outright would
+therefore have satisfied change 1 by breaking a criterion, leaving Step 8a reasoning about a
+500-record limit with no cited source anywhere in the module.
+
+What shipped: the duration contradiction is gone in full — no `5-day` figure, no "the server
+contradicts itself", no "no figure is citable", no upstream-report reference — and the cap statement
+remains as a short, plainly-worded citation re-confirmed this session on **server 1.33.0,
+2026-08-21** via `sdk_guide(topic='load', language='python', platform='linux_apt',
+record_count=1000)`.
+
+**It is deliberately no longer a ⛔.** The old paragraph was a hard rule enforced by a guard; the
+replacement is a citation plus a routing statement ("the evaluation license's own terms … come from a
+runtime lookup at the moment of use (INV-080), not from this file"). Verified with
+`conformance.py rules`, which stayed at its baseline of one uncited hard-rule section rather than
+rising — the retirement removed a rule and added none.
+
+**`phaseB-load-first-source.md:86-87` was restated, not deleted, as change 3 directed.** Its reason
+changed from *"two MCP tools have disagreed about them"* — now historical — to *"those figures change
+between releases"*, which is the durable reason and is INV-080 correctly applied.
