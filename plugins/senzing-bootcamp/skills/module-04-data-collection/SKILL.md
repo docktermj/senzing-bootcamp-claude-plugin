@@ -244,9 +244,43 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   a formality — in the module whose first phase is *Quality Assessment*. So the generated data must
   also carry:
 
-  - **missing values in non-key fields**, at a rate that puts **at least one source in the 70-79%
-    band** — a phone absent on roughly a third of its records, an address missing on a handful. That
-    band is the one that opens the remediation conversation, so it has to be reachable.
+  - **missing values in non-key fields**, enough to put **at least one source in the 70-79%
+    band**. ⛔ **State this as a completeness target, not as per-field rates:** leave **30-43% of all
+    applicable field slots empty** across that source — mean per-record completeness of roughly
+    **57-70%**. That band opens the remediation conversation, so it has to be reachable.
+
+    ⛔ **No single field can get you there, at any rate.** On `n` applicable fields, a field absent
+    from **every** record moves the score by at most `0.70 × 100/n` — 10 points on a seven-field
+    source, when the band starts 21 points below 100. Reaching it means gapping most non-key fields
+    substantially, not one field heavily. Worked, for seven applicable fields with clean formatting
+    and distinct keys (so the score reduces to `100 − 10m`, where `m` is the summed per-field absence
+    expressed in whole fields — a field missing on 30% of records contributes 0.30):
+
+    | Gapping | `m` | completeness | score |
+    |---|---|---|---|
+    | phone 30%, address 5% | 0.35 | 95.0% | **96.5** |
+    | one field missing on every record | 1.00 | 85.7% | **90.0** |
+    | five of seven fields, each 30% | 1.50 | 78.6% | **85.0** |
+    | **the 70-79 band** | **2.1 – 3.0** | **70.0% – 57.1%** | **79 – 70** |
+
+    ⚠️ **The arithmetic is Module 5's, not this step's — read it there rather than trusting this
+    table.** The composite formula and the per-`RECORD_TYPE` completeness denominator are stated once
+    in `../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 6 (INV-174); this step
+    carries only the target and one worked illustration, so the two cannot drift (INV-179).
+
+    ⚠️ **Reaching this band honestly means about a third of all field values absent, which is heavier
+    degradation than a real CRM or POS export usually carries.** That is a consequence of pairing a
+    0.70 completeness weight with a band that must be reachable on synthetic data, and it is stated
+    here rather than hidden in gentler example rates. Whether the **band** or the **weights** should
+    move is a design question, not something to solve by generating gentler data and recording the
+    band anyway.
+
+    ⛔ **Verify the generated data against the band before this module closes.** You control the data
+    completely and the formula is fully specified, so this is the one point where the recorded intent
+    and the actual outcome are both available. Score the generated source using Module 5's formula; if
+    it missed the band, **widen the gaps and regenerate** — never adjust a score. Inventing or nudging
+    a measurement the Bootcamper is told is real is the line INV-239 draws; correcting the data before
+    anything scores it is this generator's own job.
   - **off-pattern values in at least one field per source** — a date in a second format among
     ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
     `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
@@ -273,8 +307,26 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     provenance: synthesized
     quality_intent:
       target_band: "70-79"        # one of: ">=80", "70-79", "<70"
-      gaps: ["phone missing ~30% of records", "created_date in two formats"]
+      # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on a
+      # seven-field source that is a summed absence of 2.1-3.0 fields, not one gappy field.
+      gaps:
+        - "phone missing ~60% of records"
+        - "address_line1 missing ~50%"
+        - "city missing ~45%"
+        - "postal_code missing ~35%"
+        - "state missing ~30%"
+        - "created_date in two formats"   # lowers format_consistency, not completeness
+      measured_score: 78.0          # written by the self-check, never by hand
   ```
+
+  ⚠️ **Check a sample like this before copying it.** Those five absence rates sum to **2.20** of seven
+  applicable fields → completeness **68.6%** → score **78.0**, inside the recorded band. The previous
+  version of this sample paired `target_band: "70-79"` with `gaps: ["phone missing ~30% of records"]`
+  — a summed absence of about 0.35, arithmetically incapable of that band by roughly a factor of six
+  — so the file shipped the inconsistency twice, once as an instruction and once as a sample of a
+  recorded result. **Record the rates you actually generated, and let the self-check above write
+  `measured_score`.** A `quality_intent` whose gaps could not have produced its `target_band` is
+  exactly what makes a generation fault indistinguishable from a scoring fault later.
 
   This is what lets the next module state the contrast it is teaching, and it is what lets a later run
   tell a **generation** fault from a **scoring** fault — without it, a source that scores 100 is
