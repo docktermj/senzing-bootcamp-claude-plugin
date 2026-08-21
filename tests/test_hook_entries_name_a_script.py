@@ -13,25 +13,36 @@ process was the interpreter with the script path missing, parsing the payload it
 source code. `stop-nudge.py` never ran, which is the invisible half: whatever the Stop hook was
 for, it did not happen.
 
-⛔ **What this file does NOT test, stated because the distinction is the whole finding.** It cannot
-establish whether the host honors `command` + `args` for a `type: command` hook. That needs the
-plugin enabled and its hooks observed firing, and on this machine `~/.claude/settings.json` →
-`enabledPlugins` lists only the two official LSP plugins. Verified 2026-08-21 against Claude Code
-**2.1.238**: the configured form runs the script when launched as configured, and the same payload
-with the argument dropped reproduces the bootcamper's traceback byte-for-byte. Those two facts
-together say the **configuration is correct** and locate the defect in how that host launched it —
-they do not say the schema is honored everywhere, and `hooks.json` was deliberately left unedited
-rather than rewritten on a hypothesis.
+**Resolved 2026-08-21 (`/dry-run` phase 2): `args` is not part of the `type: command` schema, so the
+launch was never going to work.** Anthropic's own `plugin-dev` plugin documents a command hook as
+"Execute bash commands" with the script inside `command`
+(`plugin-dev/skills/hook-development/SKILL.md:44-51`), and `args` appears nowhere in that skill.
+Across seventeen `hooks.json` files in the official marketplaces, none uses `args` — including the
+`every-marketplace` fixture that enumerates 15 events and every hook variant, and
+`security-guidance`, which passes a second argument *inside* the command string. Every `"args"` key
+on that machine belongs to an `.mcp.json`, where it genuinely is the schema. `hooks.json` now puts
+each script inside `command`, quoted so a `${CLAUDE_PLUGIN_ROOT}` containing a space survives.
 
-So what IS guarded here: a config regression that would make the defect reachable by construction —
-an entry naming an interpreter with no script, a script path that does not resolve, or a script the
-interpreter cannot run. Those are the failure modes the suite could not see before: `hooks.json` is
-valid JSON and valid against INV-052, and the original failure lived entirely in the launch.
+⛔ **What this file still does NOT test.** Claude Code has not been observed firing these hooks — that
+needs the plugin in `enabledPlugins` and a live session. Windows is unverified from a Linux suite.
+What IS guarded: the config regressions that would make the defect reachable again — an entry naming
+a bare interpreter with no script, a script path that does not resolve, a script the interpreter
+cannot run, and a **reintroduced `args` array**, which would silently move the script back out of the
+channel the host reads.
+
+This file is INV-052's named enforcer: it pins the corrected `command`-string form that invariant
+now requires, and fails if an entry moves a script back into `args`.
+
+⚠️ **Two of these tests were vacuous for one commit** and it is worth knowing why: they keyed off
+`resolved_args()`, so moving the script into `command` emptied their input and they passed while
+asserting nothing (the tell was a 0.000s run that spawned no subprocess). A guard that reads the
+shape it was written against, rather than the shape in the file, certifies whatever it finds.
 
 Run:  python3 -m unittest discover -s tests
 """
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -68,10 +79,31 @@ def hook_entries():
     return out
 
 
-def resolved_args(hook):
+def _expand(text):
     root = str(PLUGIN)
-    return [a.replace("${CLAUDE_PLUGIN_ROOT}", root).replace("$CLAUDE_PLUGIN_ROOT", root)
-            for a in (hook.get("args") or [])]
+    return text.replace("${CLAUDE_PLUGIN_ROOT}", root).replace("$CLAUDE_PLUGIN_ROOT", root)
+
+
+def resolved_args(hook):
+    return [_expand(a) for a in (hook.get("args") or [])]
+
+
+def resolved_command(hook):
+    """The command string as the host would run it, with the plugin root expanded."""
+    return _expand((hook.get("command") or "").strip())
+
+
+def script_paths(hook):
+    """Every script path the entry names, from EITHER channel.
+
+    ⛔ Read both, always. Keying only on `args` is what made two tests here vacuous the moment the
+    scripts moved into `command`: the input went empty and the assertions passed on nothing.
+    """
+    found = []
+    for token in shlex.split(resolved_command(hook)) + resolved_args(hook):
+        if token.endswith((".py", ".js", ".sh", ".mjs")):
+            found.append(token)
+    return found
 
 
 class TheScanReachesTheHooks(unittest.TestCase):
@@ -107,13 +139,35 @@ class NoEntryNamesAnInterpreterWithNoScript(unittest.TestCase):
 
     def test_every_named_script_exists(self):
         missing = []
+        named = 0
         for event, hook in hook_entries():
-            for arg in resolved_args(hook):
-                if arg.endswith((".py", ".js", ".sh", ".mjs")) and not Path(arg).is_file():
-                    missing.append("%s: %s" % (event, arg))
+            for path in script_paths(hook):
+                named += 1
+                if not Path(path).is_file():
+                    missing.append("%s: %s" % (event, path))
         self.assertEqual([], missing,
                          "a hook names a script that does not exist, so the interpreter would "
                          "fail at launch:\n  %s" % "\n  ".join(missing))
+        # Anti-vacuity: this test passed on an empty input set for one commit.
+        self.assertGreaterEqual(named, 5,
+                                "only %d script paths found across all hook entries; the scan is "
+                                "vacuous and would pass while naming nothing" % named)
+
+    def test_no_entry_relies_on_an_args_array(self):
+        """`args` is not in the `type: command` schema — a hook using it runs a bare interpreter.
+
+        Anthropic's `plugin-dev/skills/hook-development/SKILL.md` documents a command hook as a
+        shell command string and never mentions `args`; no official plugin uses it. An entry that
+        puts the script there launches `python3` with nothing to run, which then reads the event
+        payload as its program — the 2026-08-17 bootcamper defect, silent on six of seven events.
+        """
+        offenders = ["%s: args=%r" % (event, hook["args"])
+                     for event, hook in hook_entries() if hook.get("args")]
+        self.assertEqual(
+            [], offenders,
+            "a hook entry carries an `args` array. The host reads `command` as a shell string and "
+            "ignores `args`, so the script never runs and the interpreter parses the payload "
+            "instead. Put the script inside `command`, quoted:\n  %s" % "\n  ".join(offenders))
 
 
 class TheConfiguredCommandRunsTheScript(unittest.TestCase):
@@ -128,10 +182,11 @@ class TheConfiguredCommandRunsTheScript(unittest.TestCase):
 
     def test_no_hook_parses_its_payload_as_source(self):
         offenders = []
+        launched = 0
         for event, hook in hook_entries():
-            command = (hook.get("command") or "").strip()
+            command = resolved_command(hook)
             args = resolved_args(hook)
-            if not command or not args:
+            if not command:
                 continue
             payload = json.dumps({
                 "session_id": "test",
@@ -144,11 +199,14 @@ class TheConfiguredCommandRunsTheScript(unittest.TestCase):
             # "not a bootcamp — never touch unrelated projects" path and writes nothing.
             with tempfile.TemporaryDirectory() as cwd:
                 try:
-                    proc = subprocess.run([command] + args, input=payload, capture_output=True,
-                                          text=True, cwd=cwd, timeout=30)
-                except FileNotFoundError:
-                    offenders.append("%s: interpreter %r not found" % (event, command))
-                    continue
+                    # Launched the way the host does: `command` as a shell string. `args` is
+                    # appended only so a regression that puts the script back there is still
+                    # exercised rather than skipped — it must not be how the script is found.
+                    proc = subprocess.run(
+                        " ".join([command] + [shlex.quote(a) for a in args]),
+                        shell=True, input=payload, capture_output=True,
+                        text=True, cwd=cwd, timeout=30)
+                    launched += 1
                 except subprocess.TimeoutExpired:
                     offenders.append("%s: %r did not exit within 30s" % (event, command))
                     continue
@@ -162,6 +220,10 @@ class TheConfiguredCommandRunsTheScript(unittest.TestCase):
             [], offenders,
             "a hook did not run its script cleanly when launched exactly as configured:\n  %s"
             % "\n  ".join(offenders))
+        # Anti-vacuity: this test skipped every hook for one commit, passing in 0.000s.
+        self.assertGreaterEqual(launched, 5,
+                                "only %d hooks were actually launched; the behavioral test is "
+                                "vacuous" % launched)
 
 
 if __name__ == "__main__":

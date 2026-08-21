@@ -205,3 +205,74 @@ either reading.
 ⛔ **Both open criteria are live-observation work and belong to `dry-run` phase 3**, not to another
 static pass. The stake is stated in the spec's own root cause and has not changed: if `args` is
 being dropped host-wide, the write gate is not gating and feedback capture is not capturing.
+
+## Change 2's precondition is now established — `args` is not in the schema (2026-08-21, `/dry-run` phase 2)
+
+**`args` is not part of the `type: command` hook schema.** The evidence is documentary and
+corpus-wide rather than a live observation, which is why the previous pass could not reach it:
+it does not require the plugin to be enabled. Claude Code **2.1.239**.
+
+**1. Anthropic's official documentation of the hook object says command hooks are shell commands.**
+`~/.claude/plugins/marketplaces/claude-plugins-official/plugins/plugin-dev/skills/hook-development/SKILL.md:44-51`
+— the `plugin-dev` plugin exists to teach plugin authors this exact file:
+
+> ### Command Hooks
+> Execute bash commands for deterministic checks:
+> ```json
+> { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/validate.sh", "timeout": 60 }
+> ```
+
+`grep -rn '\bargs\b'` across that entire skill — `SKILL.md`, `references/patterns.md`,
+`references/migration.md` — returns **no hits**. Roughly ten worked examples there and in
+`plugin-structure/examples/standard-plugin.md`, every one with interpreter and script inside a
+single `command` string.
+
+**2. No plugin on this machine uses `args`, including the fixture that enumerates the schema.**
+Seventeen `hooks.json` files across `claude-plugins-official`, `claude-code-plugins` and
+`every-marketplace`: every `type: command` entry carries interpreter + script in one `command`
+string; not one has an `args` key. Two are decisive on their own:
+
+- `every-marketplace/tests/fixtures/sample-plugin/hooks/hooks.json` is a fixture whose purpose is to
+  cover the schema surface — 15 events, plus the `prompt`, `agent`, `timeout`, `async`,
+  `asyncRewake` and `if` variants — and it still passes arguments inside `command` (`echo before two`).
+- `claude-plugins-official/plugins/security-guidance/hooks/hooks.json` passes a **second argument** to
+  its script: `bash "${CLAUDE_PLUGIN_ROOT}/hooks/sg-python.sh" "${CLAUDE_PLUGIN_ROOT}/hooks/ensure_agent_sdk.py"`.
+  An official plugin needing to pass an argument is precisely where `args` would appear if it existed.
+
+**3. Every `"args"` key on this machine belongs to an `.mcp.json`,** the stdio MCP-server config where
+`args` genuinely is the schema. That is the probable origin of the confusion: two adjacent plugin
+config files, one of which takes `command` + `args`.
+
+**4. The silent-failure mechanism, measured.** Bare `python3` fed each event's real payload:
+
+| Event | Result |
+|---|---|
+| SessionStart, UserPromptSubmit, PreToolUse, PreCompact, SessionEnd | **exit 0, no output** |
+| Stop | exit 1, `NameError: name 'false' is not defined` |
+
+Six of the seven hooks are indistinguishable from `hooks/README.md:10`'s documented "no-ops unless a
+`config/bootcamp_progress.json` file exists" — a valid Python expression on stdin evaluates and the
+interpreter exits 0. Only `Stop` fails visibly, because `stop_hook_active`'s JSON `false` is the one
+payload token that is not a Python name. **That asymmetry is why three audits and 3,277 tests never
+saw it:** the defect's signature is silence, and silence is also the correct gated behavior.
+
+**5. INV-052's premise is false.** It requires exec form "so hook execution has no shell dependency",
+and `hooks/README.md:34-38` asserts exec form "spawns the interpreter directly with **no shell
+involved on any platform** (documented Claude Code behavior)". The documented behavior is the
+opposite — command hooks *are* shell commands. There is no shell-free hook form to choose, so INV-052
+was protecting a property the host never offered.
+
+### Why this is acted on now rather than held for a live observation
+
+⛔ **The corrective change is safe under both hypotheses, which removes the reason to wait.** Moving
+the script path into `command` is the form every official plugin ships and the official docs
+prescribe, so it runs whether or not `args` is *additionally* honored. Leaving `args` only works if
+it is. Change 3's *"do not edit `hooks.json` on a hypothesis"* was the right call when both readings
+were open; it no longer applies to a change that is correct either way.
+
+⚠️ **What is still not observed, stated plainly.** Claude Code has not been watched firing these
+hooks — that needs the plugin in `enabledPlugins` and a new session, which is the maintainer's call,
+not a dry run's. Criterion 2's second half stays open. **Windows is unverified** and cannot be
+checked from this Linux machine; the mitigation carried into the fix is the official corpus's own —
+quote `"${CLAUDE_PLUGIN_ROOT}/..."` so a path containing a space survives, which is the concrete
+hazard change 2 named.

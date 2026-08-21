@@ -22,7 +22,7 @@ are hooks whose stdout is a structured channel (``UserPromptSubmit`` returns JSO
 a status line on stdout would corrupt the payload.
 
 This is NOT a hook itself. It is imported by the PreCompact, SessionEnd, SessionStart
-and UserPromptSubmit hook scripts, which run in exec form (``python3 <hook>.py``);
+and UserPromptSubmit hook scripts, which run as ``python3 "<hook>.py"``;
 Python puts each hook script's own directory (this ``scripts/`` directory) on
 ``sys.path``, so ``import recap_checkpoint`` resolves here on Linux, macOS, and
 Windows alike.

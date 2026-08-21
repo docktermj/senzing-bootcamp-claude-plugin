@@ -7,7 +7,8 @@ down, or to change verbosity, inject guidance so those "at any time" requests ar
 handled the same way anywhere in the bootcamp. Emits nothing otherwise, so the plugin
 never alters unrelated Claude Code sessions.
 
-Cross-platform: invoked in exec form (``python3 <path>``) so no shell is required.
+Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the
+interpreter and this script, quoted (``python3 "<path>"``), per INV-052.
 """
 import json
 import os

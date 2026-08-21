@@ -319,11 +319,14 @@ class TheWiringAndTheGuidanceAgree(unittest.TestCase):
         with open(HOOKS, encoding="utf-8") as fh:
             data = json.load(fh)
         hooks = data.get("hooks", data)
+        # Read BOTH channels. Keying only on `args` made this assertion blind the moment the
+        # scripts moved into `command` (INV-052, corrected 2026-08-21) — the shape a guard
+        # was written against is not the shape in the file.
         args = [
-            arg
+            token
             for group in hooks["UserPromptSubmit"]
             for hook in group.get("hooks", [])
-            for arg in hook.get("args", [])
+            for token in ([hook.get("command") or ""] + list(hook.get("args") or []))
         ]
         self.assertTrue(
             any("checkpoint-tick.py" in arg for arg in args),
