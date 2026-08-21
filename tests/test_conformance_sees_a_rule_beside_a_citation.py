@@ -23,6 +23,7 @@ behavior of the script rather than a reimplementation of its regex (stdlib only,
 
 Run:  python3 -m unittest discover -s tests
 """
+import importlib.util
 import re
 import subprocess
 import sys
@@ -32,6 +33,24 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance.py"
+
+
+def shipped_hard_rule_pattern():
+    """The script's OWN pattern, loaded rather than copied.
+
+    A copy here would be a second definition of "hard rule" -- the exact duplication the
+    acceptance criterion forbids across the three views, reintroduced by the test that checks
+    it. The first draft of this file did copy it, and the copy's escaping was wrong, so the
+    test reported a line starting with a stop sign as "not a hard rule". Loading the module is
+    stdlib-only and reaches nothing under `plugins/` (INV-108).
+    """
+    spec = importlib.util.spec_from_file_location("_conformance", CONFORMANCE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.HARD_RULE
+
+
+HARD_RULE_SHAPE = shipped_hard_rule_pattern()
 
 # A section that cites an invariant for a reason unrelated to the rule added below it. This is
 # the shape that hides a new rule: the citation is correct, present, and about something else.
@@ -150,15 +169,94 @@ class ARuleBesideAnUnrelatedCitation(unittest.TestCase):
 
 
 class TheSinceViewFiltersByRef(unittest.TestCase):
+    """Asserts the PROPERTY, not a count.
+
+    ⛔ **An earlier version of this class asserted `since --ref HEAD` reports 0**, which is only
+    true when the working tree has no uncommitted change under `plugins/`. It failed within the
+    hour, on the commit that reflowed two capture blocks — so it would fail for any maintainer
+    with work in progress, and its message would blame the diff parse. A test whose result
+    depends on uncommitted work is not a guard; the count semantics are covered below against a
+    synthetic repo where the tree is controlled.
+    """
+
     def test_it_reports_only_hard_rules_and_only_from_shipped_markdown(self):
         proc = run_conformance(REPO_ROOT, "since", "--ref", "HEAD")
         self.assertEqual(0, proc.returncode, proc.stderr)
         m = re.search(r"(\d+) hard-rule line\(s\) added since HEAD", proc.stdout)
         self.assertIsNotNone(m, "`since` output did not parse:\n%s" % proc.stdout)
-        self.assertEqual(0, int(m.group(1)),
-                         "diffing against HEAD reported added rules with a clean-of-plugins "
-                         "tree; the diff parse is picking up context or removed lines:\n%s"
-                         % proc.stdout)
+
+        reported, current = [], None
+        for line in proc.stdout.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("plugins/"):
+                current = stripped
+            elif stripped.startswith("+ "):
+                reported.append((current, stripped[2:]))
+        self.assertEqual(
+            int(m.group(1)), len(reported),
+            "the printed total disagrees with the lines printed:\n%s" % proc.stdout)
+        for path, body in reported:
+            self.assertIsNotNone(path, "a reported rule has no file heading above it")
+            self.assertTrue(path.endswith(".md"),
+                            "reported a non-markdown file %r: the .md filter is not applied" % path)
+            self.assertTrue(
+                HARD_RULE_SHAPE.search(body),
+                "reported a line that is not a hard rule (%r from %s); the diff parse is "
+                "picking up context or removed lines" % (body[:80], path))
+
+    def test_it_counts_only_ADDED_lines_in_a_repo_it_controls(self):
+        """The count semantics, on a tree this test owns rather than the maintainer's.
+
+        ⚠️ **Two fixture flaws had to be fixed before this test could fail.** The first draft
+        created the non-markdown file without `git add`, so it was untracked and never reached
+        `git diff` at all -- removing the `.md` filter changed nothing and the test still passed.
+        The second removed an ordinary prose line rather than a hard rule, so dropping the
+        added-lines-only filter also changed nothing. Both mutants now fail this test. A fixture
+        that cannot reach the code path under test is indistinguishable from a correct
+        implementation, which is the whole reason the mutation is run.
+        """
+        old_rule = "⛔ **The old rule MUST be removed by this change.**\n"
+        new_rule = "⛔ **The new rule MUST be added by this change.**\n"
+        with tempfile.TemporaryDirectory() as td:
+            repo = make_repo(Path(td), SECTION + "\n" + old_rule)
+            skill = repo / "plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md"
+
+            def git(*a):
+                return subprocess.run(["git"] + list(a), cwd=str(repo),
+                                      capture_output=True, text=True)
+
+            git("init", "-q")
+            git("config", "user.email", "t@example.com")
+            git("config", "user.name", "t")
+            git("add", "-A")
+            git("commit", "-q", "-m", "base")
+            base = git("rev-parse", "HEAD").stdout.strip()
+            self.assertTrue(base, "the synthetic repo has no HEAD; git init/commit failed")
+
+            # Remove a HARD RULE (not ordinary prose) and add a different one, so a parse that
+            # counted removed lines would report 2 instead of 1.
+            skill.write_text(SECTION + "\n" + new_rule, encoding="utf-8")
+            # A hard rule in a NON-markdown file, and `git add`ed so it is actually in the diff.
+            (skill.parent / "notes.txt").write_text(new_rule, encoding="utf-8")
+            git("add", "-A")
+
+            diff = git("diff", base, "--", "plugins/senzing-bootcamp").stdout
+            self.assertIn("notes.txt", diff,
+                          "fixture broken: the non-markdown file is not in the diff, so the "
+                          ".md filter is not being exercised at all")
+
+            proc = run_conformance(repo, "since", "--ref", base)
+            self.assertEqual(0, proc.returncode, proc.stderr)
+            m = re.search(r"(\d+) hard-rule line\(s\) added since", proc.stdout)
+            self.assertIsNotNone(m, proc.stdout)
+            self.assertEqual(
+                1, int(m.group(1)),
+                "expected exactly the one added markdown hard rule -- not the REMOVED rule, "
+                "not the .txt file:\n%s" % proc.stdout)
+            self.assertNotIn("notes.txt", proc.stdout,
+                             "a non-markdown file was reported:\n%s" % proc.stdout)
+            self.assertNotIn("old rule", proc.stdout,
+                             "a REMOVED hard rule was reported as added:\n%s" % proc.stdout)
 
     def test_a_bad_ref_fails_loudly_rather_than_reporting_zero(self):
         proc = run_conformance(REPO_ROOT, "since", "--ref", "no-such-ref-exists-here")

@@ -310,6 +310,10 @@ records at close, so a live capture missed now cannot be re-taken by anyone, eve
 equivalent was recovered at graduation only because its server could be restarted; this one was
 permanently lost on the run that found this defect.
 
+⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
+"no headless capability" from "no requested tab exists" — which is why its exit code is the
+authority here and your own assessment is not.
+
 ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
 filename-discovery order.** The ordering authority is the tab table in
 `visualization-api-reference.md`, whose row order *is* the

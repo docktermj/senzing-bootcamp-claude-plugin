@@ -591,6 +591,10 @@ of the Truth Set. It MUST:
   `--single`, the caption rule) stays stated once in `module-completion.md` — this is the tool's
   identity, not a copy of its manual (INV-179).
 
+  ⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
+  "no headless capability" from "no requested tab exists" — which is exactly why its exit code is
+  the authority here and your own assessment is not.
+
   ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
   filename-discovery order.** The ordering authority is the tab table in
   `../module-03b-truthset-visualization/visualization-api-reference.md`, whose row order *is* the
