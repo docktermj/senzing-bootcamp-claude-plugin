@@ -407,8 +407,26 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    - Set the updated configuration as the new default, so `verify_pipeline` and every
      later SDK session see the codes. Use the exact config classes/methods returned by
      `sdk_guide`/`generate_scaffold` — never hardcode SDK names from memory.
-   - Be **idempotent:** a code that is already registered is treated as success,
-     not an error, so re-running Module 3 or resuming mid-module still passes.
+   - Be **safe to re-run:** the whole sequence — load, register each code, export,
+     register the config, replace the default config ID — must tolerate a second run,
+     so re-running Module 3 or resuming mid-module still passes. ⛔ **Build that in;
+     do not make it depend on catching an error.** Registering an identical
+     configuration returns the existing config ID rather than failing (Senzing release
+     notes: *"Fix `G2ConfigMgr.addConfig` function to return success and the ConfigID
+     if the configuration already exists"*), so re-runnability comes from the sequence,
+     one call later than the per-code registration. **No route documents a raised error
+     for re-registering a code, in any binding** —
+     `get_sdk_reference(topic='parameters', filter='register_data_source',
+     language='python')` returns the signature with no error condition (server
+     **1.33.0, 2026-08-21**) — so a per-code catch is a permitted fallback, never the
+     mechanism, and no binding's exception type is a contract (INV-002). The full
+     reasoning, including the community-versus-official `search_docs` hazard, is stated
+     once at `../module-06-data-processing/phaseA-build-loading.md` step 4a item 2
+     (INV-179); do not restate it here.
+   - ⛔ **Pass `data_sources` so the registration snippet is primary, then substitute
+     your codes into it** — the parameter selects the snippet and fills in nothing, so
+     the returned code still carries the sample tuple. Locate it by `source_path`. Same
+     step 4a item 2 for the detail and the citation.
 3. **Build the registration code if the language requires it** (compiled languages
    — Java, C#, Rust, TypeScript), using the same per-language build command as
    Step 5. Enforce a 120-second build timeout.

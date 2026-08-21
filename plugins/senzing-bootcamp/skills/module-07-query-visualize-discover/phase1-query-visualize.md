@@ -309,7 +309,7 @@ export parser is the habit that produces the error, and all three fields render 
 raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` —
 the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
 2026-08-21).
-<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: this IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same call returns those three names on the entity side under RESOLVED_ENTITY.RECORDS[] and RELATED_ENTITIES[], which is what makes the absence a rename rather than a gap (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same call returns those three names on the entity side under RESOLVED_ENTITY.RECORDS[] and RELATED_ENTITIES[], which is what makes the absence a rename rather than a gap (absence negative) — server 1.33.0, 2026-08-21 -->
 ⚠️ **Getting
 `WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
 flag is *documented* to populate it, yet it was absent without that flag on two SDK builds

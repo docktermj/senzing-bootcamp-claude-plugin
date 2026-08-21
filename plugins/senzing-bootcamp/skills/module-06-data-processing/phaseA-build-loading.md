@@ -281,13 +281,57 @@ Truth Set visualization module already run.
    already-Senzing-ready sources — cross-checked against the source's entry in
    `config/data_sources.yaml`. Never register a code that is not present in the data.
 2. **Generate the registration code from the MCP server** (never hand-write it): call
-   `sdk_guide(topic='configure')` (and `generate_scaffold` if it exposes a data-source
-   registration workflow) in the language read from `programming_language` in
-   `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it to
-   `src/load/register_data_sources.[ext]` (INV-018). The generated code MUST load the current
-   default config, register each code from step 1, set the updated config as the new default, and
-   be **idempotent** — a code already registered is treated as success, not an error, so re-runs
-   and multi-source orchestration stay safe.
+   `sdk_guide(topic='configure', language=<from `programming_language`>, data_sources=[<the codes
+   from step 1>])` (and `generate_scaffold` if it exposes a data-source registration workflow),
+   reading the language from `config/bootcamp_preferences.yaml` (never a hardcoded default). Save it
+   to `src/load/register_data_sources.[ext]` (INV-018).
+
+   <!-- MCP-NEGATIVE: sdk_guide(topic='configure', language='python', data_sources=['ECOMMERCE_ORDERS','POS_LOYALTY','EMAIL_MARKETING']) — none of the three supplied codes appears anywhere in the response; the returned snippet still carries the hardcoded sample tuple — owner: sdk_guide(topic='configure', data_sources=[...]) IS the route that would carry substituted codes — data_sources is its own documented parameter ("Data sources to register (for configure topic)"), so this call was asked WITH the codes rather than inferred from a sibling call, and its response selected the registration snippet correctly while substituting nothing (absence negative) — server 1.33.0, 2026-08-21 -->
+   ⛔ **`data_sources` SELECTS the snippet and SUBSTITUTES nothing — you must fill in the codes
+   yourself.** Passing it makes the registration snippet primary
+   (`source_path: python/configuration/register_data_sources.py`); omitting it returns the
+   **seeding** snippet (`init_default_config.py`) instead, which is not what this step needs. But the
+   returned code still hardcodes the sample tuple `("CUSTOMERS", "REFERENCE", "WATCHLIST")`, and its
+   own `notes` say *"Replace sample data source names with your own"* — the codes you passed appear
+   nowhere in the response. Locate the snippet by its **`source_path`**, not by position among the
+   alternatives, then substitute the step-1 codes into it. Shipping it unsubstituted registers three
+   codes the Bootcamper does not have and leaves the first load failing `SENZ2207` on the codes they
+   do — which is what item 1 above exists to prevent. (Re-verified with the three codes passed
+   explicitly: `sdk_guide(topic='configure', language='python', data_sources=[…])`, server
+   **1.33.0, 2026-08-21**.)
+
+   ⚠️ **On a freshly schema-created datastore, call it WITHOUT `data_sources` first.** The
+   registration snippet reads the *current* default config, so it assumes one is already registered;
+   the same response's `compatibility_notes` say that on a fresh datastore
+   `get_default_config_id()` returns 0 and `create_config_from_config_id(0)` raises SENZ7221. The
+   no-`data_sources` call returns the seeding snippet that creates one.
+
+   The generated code MUST load the current default config, register each code from step 1, export
+   it, register the new config, and replace the default config ID — and the **whole sequence must be
+   safe to re-run**, so re-runs and multi-source orchestration stay safe.
+
+   ⛔ **Build re-runnability into the sequence; do not make it depend on catching an error.**
+   Registering an identical configuration returns the **existing** config ID rather than failing —
+   Senzing's release notes record *"Fix `G2ConfigMgr.addConfig` function to return success and the
+   ConfigID if the configuration already exists"* — so the sequence is idempotent one call **later**
+   than the per-code registration, by construction. ⛔ **No route documents a raised error for
+   re-registering a code, for any binding:**
+   `get_sdk_reference(topic='parameters', filter='register_data_source', language='python')` returns
+   `register_data_source(data_source_code: str) -> str` with warnings only about argument types
+   across bindings and no error condition (server **1.33.0, 2026-08-21**). A per-code error catch is
+   therefore a permitted **fallback** and must not be the mechanism: code whose idempotency rests on
+   it is untested by construction and will fail in exactly the case it was written for. Read the
+   signature for the chosen binding and build for re-runnability; do not name any binding's
+   exception type as a contract (INV-002).
+
+   ⛔ **`search_docs(category='sdk')` indexes community-maintained wrapper docs alongside the
+   official ones, so an error contract found there may not be your binding's.** `get_capabilities`
+   states the index covers "Python, Java, C# official; Rust, TypeScript/Node.js community … not
+   official Senzing SDKs". A search for this method's failure mode returns, as its top hit, a
+   community Rust trait doc stating `SzError::BadInput` for an already-existing code — which
+   describes that wrapper, not the official Python binding, and the result does not say so.
+   `get_sdk_reference(…, language=<binding>)` is the route that answers per binding. It already warns
+   about name and type divergence; **error-condition divergence is the gap this note covers.**
 3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
    Rust, TypeScript), using the same per-language build command as the loader.
 4. **Execute it before the Phase B load.** On success, record the registered codes in
