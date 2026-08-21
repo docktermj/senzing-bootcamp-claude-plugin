@@ -145,3 +145,15 @@ available.
 - Related specs: `specs/auto-detect-platform.md`,
   `specs/sqlite-branch-says-no-additional-setup-but-the-schema-is-required.md`,
   `specs/harden-write-gate.md`, `specs/inv200-overstates-what-the-write-gate-blocks.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Implemented PARTIALLY, by maintainer decision, during an unattended run.** The maintainer reviewed
+this spec before implementation and held part of it for their return. What shipped and what did not
+is recorded in the `specs/IMPLEMENTED.md` entry, criterion by criterion; the held criteria are
+**not ticked** there.
+
+**The partiality is enforced by a guard, not just documented.** A half-implemented spec whose
+boundary lives only in prose drifts the moment someone lands the other half — so the held portion is
+pinned by a test that fails if it arrives without the shipped side being revisited. That is the
+difference between "we did half of this" and "we did half of this and the seam will hold".

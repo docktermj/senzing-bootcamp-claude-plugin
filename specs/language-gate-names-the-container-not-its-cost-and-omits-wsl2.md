@@ -148,3 +148,15 @@ language set and the Bootcamper chooses; the change is disclosure, not steering 
   Senzing could act on.
 - Related specs: `specs/language-gate-does-not-say-where-its-options-render.md`,
   `specs/auto-detect-platform.md`, `specs/senzing-python-sdk-must-not-be-pip-installed.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Implemented PARTIALLY, by maintainer decision, during an unattended run.** The maintainer reviewed
+this spec before implementation and held part of it for their return. What shipped and what did not
+is recorded in the `specs/IMPLEMENTED.md` entry, criterion by criterion; the held criteria are
+**not ticked** there.
+
+**The partiality is enforced by a guard, not just documented.** A half-implemented spec whose
+boundary lives only in prose drifts the moment someone lands the other half — so the held portion is
+pinned by a test that fails if it arrives without the shipped side being revisited. That is the
+difference between "we did half of this" and "we did half of this and the seam will hold".
