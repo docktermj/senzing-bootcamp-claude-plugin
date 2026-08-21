@@ -104,8 +104,12 @@ class ARuleBesideAnUnrelatedCitation(unittest.TestCase):
             repo = make_repo(Path(td), body)
             sec = run_conformance(repo, "rules")
             self.assertEqual(0, sec.returncode, sec.stderr)
-            m = re.search(r"(\d+) hard-rule lines, (\d+) in a section citing no invariant",
-                          sec.stdout)
+            # Tolerant of the anchored/mid-line split `rules` grew on 2026-08-21: the
+            # parenthetical is optional here so this test asserts the SEMANTICS (does the
+            # section count move) rather than the exact headline format. The first version
+            # pinned the old wording and broke the hour the format changed.
+            m = re.search(r"(\d+) hard-rule lines(?: \([^)]*\))?, (\d+) in a section "
+                          r"citing no invariant", sec.stdout)
             self.assertIsNotNone(m, "`rules` output did not parse:\n%s" % sec.stdout)
             per = run_conformance(repo, "per-rule", "--uncited")
             self.assertEqual(0, per.returncode, per.stderr)

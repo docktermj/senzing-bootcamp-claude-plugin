@@ -121,3 +121,46 @@ them understate by an unknown amount in two dimensions at once.
   independent, compounding defect in the same detector),
   `specs/guards-enforce-class-scoped-rules-from-hardcoded-site-sets.md`,
   `specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**One claim in this spec is wrong and the correction widens the finding.** It says of the
+numbered-list shape: *"The pattern admits `-` before `⛔` but not `1.`"* Measured, the anchor
+admits **neither**:
+
+```text
+'⛔ **Never x.**'     -> True        '- ⛔ **Never x.**'   -> False
+'> ⛔ **Never x.**'   -> True        '2. ⛔ **Never x.**'  -> False
+```
+
+The optional `-` belongs to the *bolded-MUST* alternative (`^\s*-?\s*\*\*…`), not the
+stop-sign one (`^\s*>?\s*⛔`). So **every** `- ⛔ …` list item was in the missed population too,
+not only ordered ones — and dash lists are more common than numbered ones in this corpus. Both
+shapes are now covered by the test.
+
+**The spec's fixture path was also wrong**: `model-selection.md` is under
+`plugins/senzing-bootcamp/docs/`, not `skills/bootcamp-onboarding/`. The measurement that
+produced the citation printed bare filenames and the directory was inferred.
+
+**Measured outcome, which the spec could not predict.** Fixing the detector took the
+section-scoped uncited count from **1 to 7** — six rules that no view could see:
+
+| File | Line | Rule |
+|---|---|---|
+| `bootcamp-onboarding/ground-rules.md` | 463 | `${BASH_SOURCE[0]}` is bash-only, empty under zsh |
+| `bootcamp-onboarding/ground-rules.md` | 470 | a sourced script must never `exit` or `set -e` |
+| `module-03-system-verification/phase1-verification.md` | 95 | a reachability probe must not be a blocking gate |
+| `module-05-data-quality-mapping/phase2-data-mapping.md` | 98 | the source qualifier is required, not tidiness |
+| `module-05-data-quality-mapping/phase2-data-mapping.md` | 1147 | `workspace_dir` is a required parameter |
+| `module-06-data-processing/phaseA-build-loading.md` | 22 | do not run the test load here |
+
+⛔ **These six are findings, not fixed by this spec.** Each is either an unregistered rule or a
+missing citation, and deciding which requires reading the rule against `INVARIANTS.md` — the
+judgment change 2 explicitly declines to mechanize. They are filed in
+`specs/six-rules-become-visible-when-the-detector-is-fixed.md`.
+
+Population totals after the change: **483** hard-rule lines = **349** line-anchored + **134**
+mid-line. The spec's measurement said 191 mid-line stop signs; 134 of those classify as rules,
+32 are the stop sign used as a noun, 21 exist only inside a code span, and the remainder are
+end-of-line wraps. That the raw 191 is larger than the 134 counted is the discriminator working
+as change 1 intended, not a shortfall.

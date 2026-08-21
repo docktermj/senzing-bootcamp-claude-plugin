@@ -30,11 +30,64 @@ INV_ID = re.compile(r"INV-\d{3}")
 # The repo's own convention for a deliberate hard rule: a ⛔ lead-in, or a bolded
 # MUST/NEVER/ALWAYS. Bare prose "must" is excluded — it is ordinary instruction, and
 # including it took the candidate list from 16 to 202, which no one reads.
-HARD_RULE = re.compile(
+#
+# ⛔ ANCHORED is the historical pattern and is kept EXACTLY as it was, because every figure
+# in the ledger's audit entries was measured with it. Changing it in place would make every
+# recorded count look like a regression. Mid-line rules are a second population, reported
+# separately — see MID_LINE_RULE and `classify`.
+ANCHORED_RULE = re.compile(
     r"^\s*>?\s*⛔"
     r"|\*\*[^*]*\b(?:MUST|NEVER|ALWAYS)\b[^*]*\*\*"
     r"|^\s*-?\s*\*\*.*?\*\*.*\b(?:MUST|NEVER)\b"
 )
+
+# Kept as an alias: `HARD_RULE` is the name other tooling and tests reach for, and it means
+# "is this line a hard rule at all" — which is now `classify(line) is not None`.
+HARD_RULE = ANCHORED_RULE
+
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+# A ⛔ that is not first on its line. Measured 2026-08-21 across shipped markdown: 191 such
+# lines, against 347 the anchored pattern matched — and NONE of the 191 was caught by the
+# bolded-MUST alternatives either, because a rule like `⛔ **Strip everything identifying.**`
+# has no MUST inside its bold span. Three shapes recur, and two are ordinary house style: a
+# numbered-list item (`2. ⛔ **...**` — the anchor admits `-` but not `1.`), a rule appended to
+# a list item's prose, and a rule continuing a sentence.
+#
+# The discriminator is what FOLLOWS the stop sign, not where it sits: a rule leads into a
+# bolded span, a capitalized word, or an imperative. Dropping the anchor without this would
+# add real rules and real noise together, and a count nobody trusts is the defect `rules`
+# already had.
+IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
+              r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+
+# The stop sign used as a NOUN is prose about the convention, not a rule: "a ⛔ gate", "the old
+# ⛔", "Steps marked `⛔`". 32 such lines, correctly excluded.
+NOUN_USE = re.compile(
+    r"(?:\b(?:a|an|the|its|any|each|every|marked|old|same)\s+(?:\w+\s+)?)⛔"
+    r"|⛔\s*(?:gates?|convention|marker|lead-in|sign|glyphs?)\b",
+    re.IGNORECASE)
+
+
+def classify(line):
+    """"anchored", "mid-line", or None — the single definition every view uses.
+
+    ⛔ No view keeps its own copy of this. Three views inheriting three copies of a pattern is
+    how one of them silently stops meaning the same thing as the others.
+    """
+    if ANCHORED_RULE.search(line):
+        return "anchored"
+    if "⛔" not in line:
+        return None
+    # A ⛔ that survives only inside a code span is discussion of the glyph itself (21 lines),
+    # and one at end-of-line has nothing after it to be the rule.
+    bare = CODE_SPAN.sub("", line)
+    if "⛔" not in bare or bare.rstrip().endswith("⛔"):
+        return None
+    if NOUN_USE.search(bare):
+        return None
+    return "mid-line" if MID_LINE_RULE.search(bare) else None
 
 
 def paths(args):
@@ -82,33 +135,41 @@ def cmd_rules(args):
     """
     repo, plugin, _ = paths(args)
     print("== hard rules whose section cites no invariant\n")
-    total = hits = 0
+    counts = collections.Counter()
+    hits = 0
     by_file = collections.OrderedDict()
     for path in shipped_markdown(plugin):
         lines = path.read_text(encoding="utf-8").splitlines()
         enclosing = sections(lines)
         for i, line in enumerate(lines):
-            if not HARD_RULE.search(line):
+            kind = classify(line)
+            if kind is None:
                 continue
-            total += 1
+            counts[kind] += 1
             start, end = enclosing(i)
             if INV_ID.search("\n".join(lines[start:end])):
                 continue
             hits += 1
-            by_file.setdefault(rel(path, repo), []).append((i + 1, line.strip()))
+            by_file.setdefault(rel(path, repo), []).append((i + 1, kind, line.strip()))
     for name, rows in by_file.items():
         print("   %s" % name)
-        for lineno, text in rows:
-            print("     :%-5d %s" % (lineno, text[:110]))
-    print("\n   %d hard-rule lines, %d in a section citing no invariant, across %d file(s)"
-          % (total, hits, len(by_file)))
+        for lineno, kind, text in rows:
+            print("     :%-5d %-9s %s" % (lineno, kind, text[:100]))
+    anchored, midline = counts["anchored"], counts["mid-line"]
+    print("\n   %d hard-rule lines (%d line-anchored + %d mid-line), %d in a section citing no "
+          "invariant, across %d file(s)"
+          % (anchored + midline, anchored, midline, hits, len(by_file)))
+    print("   ^ figures in ledger entries before 2026-08-21 counted the LINE-ANCHORED number")
+    print("     only; compare against %d, not the total. Mid-line rules -- a stop sign that is"
+          % anchored)
+    print("     not first on its line -- were invisible to every view until then.")
     print("   ^ each is EITHER an unregistered rule (propose an invariant) OR a missing")
     print("     citation to one that exists. Both are findings; they need different fixes.")
     print()
     print("   \u26d4 This is NOT a count of unregistered rules, and MUST NOT be read as one.")
     print("     The unit is the SECTION. A brand-new unregistered rule does not appear here")
     print("     if it lands anywhere near an unrelated INV-nnn -- and it reads clean more")
-    print("     reliably as citations get denser. Measured 2026-08-21: a run added 37 hard-rule")
+    print("     reliably as citations get denser. Measured 2026-08-21: a run added 26 hard-rule")
     print("     lines, this count held at 1, and three of those rules were on subjects")
     print("     INVARIANTS.md covers nowhere. Use `per-rule` for the worklist and")
     print("     `since --ref <git-ref>` for what a single run actually added.")
@@ -118,7 +179,7 @@ def cmd_rules(args):
 def rule_rows(lines):
     """Yield (index, line) for every hard-rule line, in order."""
     for i, line in enumerate(lines):
-        if HARD_RULE.search(line):
+        if classify(line) is not None:
             yield i, line
 
 
@@ -163,7 +224,7 @@ def cmd_per_rule(args):
         lines = path.read_text(encoding="utf-8").splitlines()
         rows = []
         for i, line in enumerate(lines):
-            if not HARD_RULE.search(line):
+            if classify(line) is None:
                 continue
             total += 1
             own = own_citations(lines, i)
@@ -182,6 +243,11 @@ def cmd_per_rule(args):
     print("   ^ a worklist to READ. For each, search INVARIANTS.md for the rule's SUBJECT:")
     print("     registered but uncited -> add the citation (INV-183); not registered ->")
     print("     draft an invariant and get sign-off. Neither is decidable mechanically.")
+    print()
+    print("   \u26a0 Residual limitation: a hard rule written with NO stop sign and no bolded")
+    print("     MUST/NEVER/ALWAYS is invisible to all three views. Bare prose \"must\" is excluded")
+    print("     deliberately -- including it took the candidate list from 16 to 202 -- so this")
+    print("     is a floor on what the reverse contract can see mechanically, not a ceiling.")
     return 0
 
 
@@ -191,7 +257,7 @@ def cmd_since(args):
     A corpus-wide count answers "how many rules exist", and what a run needs to know is
     "which rules did I just add". Those differ by exactly the amount that makes the
     section-scoped count useless for the job `implement-spec` Step 5 gives it: on
-    2026-08-21 the count did not move at all while 37 hard-rule lines were added.
+    2026-08-21 the count did not move at all while 26 hard-rule lines were added.
     """
     repo, plugin, _ = paths(args)
     ref = args.ref
@@ -214,7 +280,7 @@ def cmd_since(args):
         if not raw.startswith("+") or raw.startswith("+++"):
             continue
         body = raw[1:]
-        if current and current.endswith(".md") and HARD_RULE.search(body):
+        if current and current.endswith(".md") and classify(body) is not None:
             added.setdefault(current, []).append(body.strip())
             count += 1
     for name, rows in added.items():
@@ -224,7 +290,7 @@ def cmd_since(args):
     print("\n   %d hard-rule line(s) added since %s, across %d file(s)"
           % (count, ref, len(added)))
     print("   ^ read every one. This is the set a run is answerable for; the corpus-wide")
-    print("     `rules` count cannot see them (it did not move for the 37 added 2026-08-21).")
+    print("     `rules` count cannot see them (it did not move for the 26 added 2026-08-21).")
     print("   \u26a0 Line-level: a rule MOVED between files shows as added here. That is the")
     print("     right default for review -- a relocated rule still needs its citation to")
     print("     travel with it -- but it is not the same as a NEW guarantee.")

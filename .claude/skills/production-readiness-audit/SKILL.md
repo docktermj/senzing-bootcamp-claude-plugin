@@ -147,8 +147,11 @@ All three list hard rules — the repo's own `⛔` / bolded MUST/NEVER conventio
 the **unit**, and the unit is the whole story. Each prints its own current counts; read them off
 the run rather than from a figure written here, which is how the previous baseline went stale.
 
-- **`rules`** asks whether the *enclosing section* cites any invariant. Its history is
-  comparable across runs, and that is most of its value.
+- **`rules`** asks whether the *enclosing section* cites any invariant. It prints two
+  populations: **line-anchored** hits, which is what every figure in a ledger entry before
+  2026-08-21 counted, and **mid-line** hits — a stop sign that is not first on its line, which
+  the pattern missed entirely until then. ⛔ **Compare a past figure against the line-anchored
+  number, not the total**, or a fixed detector reads as a regression.
 - **`per-rule`** asks whether a reader **at that line** can name the governing rule — the
   invariants cited in the rule itself or the sentence beside it. This is what INV-183 requires,
   and it is a much larger number than `rules` reports.
