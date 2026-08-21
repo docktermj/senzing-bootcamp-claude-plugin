@@ -104,7 +104,7 @@ Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "
 versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
 observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
 version through the SDK rather than concluding the SDK is missing.
-<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.33.0, 2026-08-21 -->
 
 **If the SDK is found and version is V4.0+:**
 
@@ -202,11 +202,11 @@ same coverage gap reported upstream on 2026-08-13 — the server documents insta
      feature request WAS sent on 2026-07-31, but for the stdio-mode / private-deployment route — a
      different subject — and the two had been conflated, so 2026-08-13 is this gap's first report
      rather than a duplicate. Full evidence chain in the maintainer's development record. -->
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.33.0, 2026-08-21 -->
 
 **Linux, apt (`linux_apt`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```bash
 # plugin-owned — sdk_guide documents neither of these
@@ -229,7 +229,7 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 
 **macOS, Homebrew cask (`macos_arm`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```bash
 # ALL plugin-owned — sdk_guide documents no brew version-management command:
@@ -255,7 +255,7 @@ paths still resolve.
 
 **Windows, Scoop (`windows`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```powershell
 # plugin-owned — sdk_guide documents no scoop version-management command:
@@ -340,7 +340,7 @@ topic (re-checked 2026-08-13). So whether a point release needs any schema or co
 **undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
 has a populated repository, mention that the update touches the SDK and not their data — then let
 them decide.
-<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.33.0, 2026-08-21 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -888,7 +888,7 @@ carry that expectation across.
 that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
 all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.9,
 2026-08-13).
-<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.32.9, 2026-08-13 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.33.0, 2026-08-21 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
 about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
 adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
 instead — that path is confirmed working.
@@ -908,7 +908,7 @@ troubleshooting.
 > **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
 > CONFIGPATH → the built-in evaluation license.
 >
-> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.32.9, 2026-08-13 -->
+> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.33.0, 2026-08-21 -->
 > ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
 > it — do not go looking for it anywhere else.** (INV-208) It appears in the `compatibility_notes` of
 > `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
@@ -960,7 +960,7 @@ written into this skill on purpose.** The route that answers it is `sdk_guide` w
 sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
 ```
 
-<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.33.0, 2026-08-21 -->
 `search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
 EULA and pricing prose with no figure (re-checked 2026-08-13), which is why the tool is named here
 rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
@@ -1217,7 +1217,7 @@ raise an error, it just leaves you with the bootstrap code and nothing to config
 bootcamper's platform. If the response has no `environment` key, that is what happened — re-issue
 the call with `platform` rather than reconstructing the paths by hand.
 
-MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.32.9, 2026-08-15
+MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.33.0, 2026-08-21
 
 **Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
 carries both — **provided `platform` was passed** (above). `default_paths` gives plain, correct
@@ -1292,7 +1292,7 @@ call for exactly this reason.
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
 > (Observed 1.32.9, 2026-08-12.)
-> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.32.9, 2026-08-13 -->
+> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.33.0, 2026-08-21 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
 > input data" would send the reader to inspect something that does not yet exist — which is exactly

@@ -109,3 +109,67 @@ document. The problem is that nothing distinguishes the three from the one.
 - Related specs: `specs/mcp-negative-markers-must-name-the-owning-route.md`,
   `specs/guards-pinning-a-dated-negative-outlive-it.md`,
   `specs/the-eval-license-duration-tools-now-agree-so-retire-the-note-and-its-guard.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+⛔ **This spec's headline claim is WRONG, including its filename. No marker was false.** All 21
+were re-asked against server 1.33.0 on 2026-08-21 and **all 21 hold**.
+
+### How the wrong claim was reached
+
+The marker at `module-05-data-quality-mapping/SKILL.md:82` records that
+**`search_docs(query='globalization')`** — a bare query, no category — returns no
+UTF-8/supported-languages answer in its top hits, and that its highest-ranked Guide hit is a
+title-only stub. The audit "disproved" it by calling
+`search_docs(query='UTF-8 supported languages non-Latin scripts', category='globalization')` — **a
+different query with a category filter** — and treating that answer as evidence about the bare
+query.
+
+Re-asking the actual route returns: hit 1 *"Senzing Globalization Guide"* whose entire excerpt is
+`# Senzing Globalization Guide` — the title-only stub the marker names — then Guide sections on
+*name* and *address* comparisons. No "What languages does Senzing support?" in the top hits. The
+marker is correct, verbatim, down to the stub detail.
+
+⚠️ **This is INV-194's wrong-route error, committed by the audit that exists to catch it**, and it
+is the fourth occurrence of the class in this repository. The prose immediately above the marker
+*already* says *"With `category='globalization'` the on-topic rows come back first"* — so the plugin
+had the routing right all along, and the audit's "finding" was re-deriving the plugin's own
+correction and mistaking it for a contradiction.
+
+⛔ **Consequently `module-05:82` was NOT changed.** There is nothing wrong with it. Change 2 of
+this spec is void.
+
+### What survives, and it is most of the spec
+
+- **The staleness-visibility gap is real.** 21 of 23 markers were dated `server 1.32.9` against a
+  live 1.33.0 and none had been re-asked, while three audit runs the same day read the report as
+  clean — because it answers "is every marker well-formed?" and not "has any expired". Change 1 is
+  implemented: `negatives` now takes `--server <version>` and splits DUE from current.
+- **Change 3 is done properly: all 21 re-asked individually**, each against its own recorded route,
+  each outcome recorded. That is the work the spec forbade shortcutting, and it is what produced
+  the correction above.
+- **Change 4 is decided report-only** by the maintainer: no suite failure on a stale marker.
+
+### Bonus findings from the sweep, recorded rather than acted on
+
+1. **`szBuildVersion.json`'s Windows location is now MCP-documented.**
+   `sdk_guide(topic='install', platform='windows', language='java')` states the support data —
+   naming `szBuildVersion.json` — installs to `<scoop-app-dir>\data`, a **sibling** of `er`. The
+   plugin currently marks that location an *"environment observation, not an MCP-sourced fact"*
+   (`module-02-sdk-setup/SKILL.md:107` context). It can be upgraded to MCP-sourced for Windows;
+   macOS remains unknown.
+2. **The server contradicts itself on repository count** — `find_examples` says "37 indexed Senzing
+   GitHub repositories", `get_capabilities` says "42 GitHub repositories". The plugin cites neither,
+   so nothing is wrong here; noted because a future citation would have to pick one.
+3. **`generate_scaffold`'s undeclared `inline` is now acknowledged upstream.** Its `access_steps`
+   step 3 says the call works only if "your client forwards arguments that are not in a tool's
+   declared schema" and that "clients that validate arguments against the declared schema cannot
+   use this step" — so the mismatch `module-02:891` records is documented rather than hidden.
+4. **`mapping_workflow` step 1 contradicts its own schema.** Its prose `ADVANCE FORMAT` shows
+   `profile_summary` as an object keyed by schema name; the JSON Schema beneath it declares an
+   **array** of `{schema_name, record_count, field_count}`. INV-136 tells the guide to satisfy
+   required parameters "as the live schema states them", so the schema governs — but a reader
+   following the prose would send the wrong shape.
+5. **INV-177's basis re-confirmed.** Step 1 still writes exactly `profile_report.md`,
+   `schema_hints.md` and `JOURNAL.md` into `workspace_dir`, and still calls `JOURNAL.md`
+   APPEND-ONLY.

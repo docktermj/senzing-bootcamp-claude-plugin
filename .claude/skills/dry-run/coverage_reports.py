@@ -694,7 +694,39 @@ def report_unmarked(repo):
     return found
 
 
-def report_negatives(repo):
+def version_tuple(version):
+    """(major, minor, patch) from a marker's recorded server version, or None if unparseable."""
+    parts = re.findall(r"\d+", version or "")
+    if not parts:
+        return None
+    return tuple(int(x) for x in (parts + ["0", "0", "0"])[:3])
+
+
+def negatives_due(found, current):
+    """Split markers into (due, current_ones) against a CURRENT server version.
+
+    ⚠️ `current` is supplied by the caller, never guessed. This scan is offline (INV-108) and
+    MUST NOT pretend to know what the live server is running — a version it inferred would be
+    the same silent-staleness defect one level down. With no `--server` argument the split is
+    not attempted and every marker is reported unlabeled, as before.
+
+    Why this exists: on 2026-08-21 three audit runs in one day each read this report as CLEAN
+    while 21 of 23 markers were dated `server 1.32.9` against a live 1.33.0, none re-asked.
+    The report answered "is every marker well-formed?" and was read as "has any expired?" —
+    so an eight-day-stale marker was indistinguishable from one re-asked that morning. One of
+    the four sampled was already false.
+    """
+    ref = version_tuple(current)
+    if ref is None:
+        return [], list(found)
+    due, ok = [], []
+    for row in found:
+        v = version_tuple(row[1])
+        (due if v is None or v < ref else ok).append(row)
+    return due, ok
+
+
+def report_negatives(repo, current_server=None):
     """Dated 'this tool does not contain X' claims, oldest server version first."""
     found = find_negatives(repo)
     print("== Dated MCP negatives, oldest server version first ==")
@@ -727,12 +759,36 @@ def report_negatives(repo):
         print("  A marker with no `owner:` clause does NOT parse, by design: it is reported")
         print("  above as malformed rather than silently accepted.")
         return found
-    print("markers: %d" % len(found))
+    due, ok = negatives_due(found, current_server)
+    if current_server:
+        print("markers: %d — %d DUE (recorded below server %s), %d current"
+              % (len(found), len(due), current_server, len(ok)))
+        print("   ⛔ DUE means the marker was recorded against an OLDER server than the one")
+        print("     supplied, so its claim has not been re-asked since. It does NOT mean the")
+        print("     claim is wrong — three of four sampled on 2026-08-21 still held. It means")
+        print("     nothing knows either way, which is the state this label exists to end.")
+        print("   ⛔ Re-ask each one INDIVIDUALLY. Re-dating in bulk makes every marker look")
+        print("     reviewed at the cost of reviewing none.")
+    else:
+        print("markers: %d" % len(found))
+        print("   ⚠️ No --server given, so no staleness split was attempted: this listing says")
+        print("     every marker is well-formed and nothing about whether any has expired.")
+        print("     Pass --server <version> (from get_capabilities) to get the DUE count.")
     print()
-    for _key, version, date, claim, owner, relpath, lineno in found:
-        print("  server %-8s %s  %s:%d" % (version, date, relpath, lineno))
-        print("      %s" % claim)
-        print("      owner: %s" % owner)
+    for label, rows in (("DUE", due), ("current", ok)):
+        if not rows or not current_server:
+            continue
+        print("  --- %s (%d) ---" % (label, len(rows)))
+        for _key, version, date, claim, owner, relpath, lineno in rows:
+            print("  %-7s server %-8s %s  %s:%d" % (label, version, date, relpath, lineno))
+            print("      %s" % claim)
+            print("      owner: %s" % owner)
+        print()
+    if not current_server:
+        for _key, version, date, claim, owner, relpath, lineno in found:
+            print("  server %-8s %s  %s:%d" % (version, date, relpath, lineno))
+            print("      %s" % claim)
+            print("      owner: %s" % owner)
     return found
 
 
@@ -742,6 +798,10 @@ def main(argv=None):
     ap.add_argument("report",
                     choices=("invariants", "shipped", "affected", "negatives", "unmarked",
                              "both"))
+    ap.add_argument("--server", default=None,
+                    help="current MCP server version (from get_capabilities); enables the "
+                         "DUE/current split on the negatives report. Never inferred — an "
+                         "offline scan must not guess what the live server runs.")
     ap.add_argument("--repo", default=os.getcwd(),
                     help="repo root (default: current directory)")
     args = ap.parse_args(argv)
@@ -762,7 +822,7 @@ def main(argv=None):
     if args.report == "both":
         print()
     if args.report in ("negatives", "both"):
-        report_negatives(repo)
+        report_negatives(repo, args.server)
     if args.report == "both":
         print()
     if args.report in ("unmarked", "both"):

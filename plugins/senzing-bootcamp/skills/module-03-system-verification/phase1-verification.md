@@ -248,7 +248,7 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    bootcamper's chosen language.
 2. **Fetch the snippet, then** save it to `src/system_verification/verify_init.[ext]` where `[ext]`
    matches the chosen-language file extension (`.py`, `.java`, `.cs`, `.rs`, `.ts`).
-   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.32.9, 2026-08-13 -->
+   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.33.0, 2026-08-21 -->
    ⛔ `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
    `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
    1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. **Never pass

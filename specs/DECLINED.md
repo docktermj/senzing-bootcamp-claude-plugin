@@ -123,7 +123,7 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
     reaches `senzing.com/docs/agentic`, the MCP server's own page, which returns an overview and
     carries no setup or self-hosting content. So "named but undocumented" is now established via the
     owning route rather than by a query that merely missed.
-    MCP-NEGATIVE: search_docs(query='sz-mcp-coworker selfcheck airgap binary stdio mode') — no indexed document names sz-mcp-coworker at all (10 hits at the default max_results, every one unrelated: a Scala SelfCheck.scala in brianmacy/sz_spark, the @senzing/sdk-* npm prebuilt-binary tables, assorted loaders) — owner: search_docs IS the route that would carry it, and the one the Revisit-if condition is written against, so this empty result is the answer rather than a miss (absence negative) — server 1.32.9, 2026-08-13
+    MCP-NEGATIVE: search_docs(query='sz-mcp-coworker selfcheck airgap binary stdio mode') — no indexed document names sz-mcp-coworker at all (10 hits at the default max_results, every one unrelated: a Scala SelfCheck.scala in brianmacy/sz_spark, the @senzing/sdk-* npm prebuilt-binary tables, assorted loaders) — owner: search_docs IS the route that would carry it, and the one the Revisit-if condition is written against, so this empty result is the answer rather than a miss (absence negative) — server 1.33.0, 2026-08-21
   - **The stdio *install* citation is gone; the mode itself is still named.** At 1.32.3 `sdk_guide`'s
     description named a **stdio mode** whose package URL was a local `sz-mcp-coworker extract`
     command. At 1.32.9 that text is gone: `sdk_guide(topic='install', platform='linux_apt')` offers
@@ -132,7 +132,7 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
     still a live branch the server expects a client to handle — `mapping_workflow(action='start')`
     step-1 resource instructions: *"either a 'url' (HTTP mode — download from it) or a 'fetch'
     command (**stdio/airgap mode** — run it in your shell to extract the file)"*.
-    MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — no stdio mode and no sz-mcp-coworker extract command, where the 1.32.3 tool description the spec cited had both — owner: mapping_workflow(action='start') step-1 instructions still name stdio/airgap mode as a live branch, and explain_error_code('SENZ9000') still names the binary, so the mode did not go away — only its install citation did (routing negative) — server 1.32.9, 2026-08-13
+    MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — no stdio mode and no sz-mcp-coworker extract command, where the 1.32.3 tool description the spec cited had both — owner: mapping_workflow(action='start') step-1 instructions still name stdio/airgap mode as a live branch, and explain_error_code('SENZ9000') still names the binary, so the mode did not go away — only its install citation did (routing negative) — server 1.33.0, 2026-08-21
   - **The binary is still named, on two surfaces this sweep did not ask.** `get_capabilities` returns
     it as the server's own name — `server_info.server_name = "sz-mcp-coworker"`, in the same response
     object this note cites for the version — and `explain_error_code('SENZ9000')` names it as

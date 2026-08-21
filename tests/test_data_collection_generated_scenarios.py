@@ -254,8 +254,14 @@ class TheLoadTimeWarningUsesTheLoadableTotal(unittest.TestCase):
         self.assertIn("owner:", text, "the marker names no owning route (INV-194)")
         self.assertIn("hardware sizing capacity planning", text,
                       "the owner clause does not name the query that carries the figures")
-        self.assertRegex(text, r"server 1\.32\.9, 2026-08-\d\d",
-                         "the marker carries no server version and date")
+        # ⛔ Asserts a version and date are PRESENT and well-formed — not which ones. Pinning
+        # `1.32.9` made every legitimate re-verification break the suite, so the guard punished
+        # exactly the re-asking the marker exists to prompt. It fired on 2026-08-21 when all 21
+        # DUE markers were re-asked against 1.33.0 and re-dated. Rescoped rather than re-pinned,
+        # per `specs/guards-pinning-a-dated-negative-outlive-it.md`: a guard that has to be
+        # edited every time a claim is honestly re-checked will be worked around instead.
+        self.assertRegex(text, r"server \d+\.\d+\.\d+, 20\d\d-\d\d-\d\d",
+                         "the marker carries no well-formed server version and date")
 
     def test_the_never_substitute_rule_survives(self):
         self.assertRegex(

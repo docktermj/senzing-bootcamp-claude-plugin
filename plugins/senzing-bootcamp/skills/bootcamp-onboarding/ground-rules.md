@@ -250,7 +250,7 @@ steering files.)
     therefore permitted here — after the fetch fails, not instead of it — and it costs context,
     because the whole resource then arrives inside the response.
 
-  <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.32.9, 2026-08-14 -->
+  <!-- MCP-NEGATIVE: the declared schemas of find_examples (query, repo, file_path, list_files, language, max_lines) and generate_scaffold (language, version, workflow) — neither declares an inline parameter, while download_resource's schema does declare it — owner: each tool's declared schema as the server advertises it in the tool manifest is the authority on what that tool accepts, and all three were read there directly rather than inferred from response prose or from a sibling tool (routing negative — the schema is the route, the response's own access_steps prose is not) — server 1.33.0, 2026-08-21 -->
 
   ⛔ **Read this as a consequence of the schema, never as a ban on the word `inline`.** Stated as
   "never pass `inline`" the rule generalizes wrongly, and a guide that internalized it that way will

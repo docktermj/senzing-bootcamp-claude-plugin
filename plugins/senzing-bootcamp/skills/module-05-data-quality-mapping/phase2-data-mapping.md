@@ -315,7 +315,7 @@ legacy shape with five keys — `schema_name`, `disposition`, `data_source`, `re
 `'embedded_master' requires 'record_id_source'` / `'embedded_master' requires 'embedded_in'`. Because
 no response text names it, **`embedded_in` is discoverable only by sending a payload without it and
 reading the error** — so send it from the start.
-<!-- MCP-NEGATIVE: mapping_workflow(action='advance', from step 2) — step-2 instructions never name the required embedded_in key — owner: the step-2 validator's rejection names it ('embedded_master' requires 'embedded_in'), so the error is the only route — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: mapping_workflow(action='advance', from step 2) — step-2 instructions never name the required embedded_in key — owner: the step-2 validator's rejection names it ('embedded_master' requires 'embedded_in'), so the error is the only route — server 1.33.0, 2026-08-21 -->
 
 **`record_id_source` is `RECORD_HASH` for the embedded entity**, because a name embedded in someone
 else's row has no per-record natural key of its own. That sentinel is not a placeholder — step 4
@@ -621,7 +621,7 @@ anyway — so the Bootcamper's explicit routing answer was honored in form and n
 as a strong local observation, not as a documented rule, and re-confirm before relying on it
 elsewhere (INV-080/INV-149).
 
-MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and it returned the *Payload attributes (optional)* and *Mapping identifiers* sections, which establish that payload and registered features are distinct categories and that choosing between them is a mapping decision, but state no precedence for a colliding root-level key (absence negative) — server 1.32.9, 2026-08-17
+MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and it returned the *Payload attributes (optional)* and *Mapping identifiers* sections, which establish that payload and registered features are distinct categories and that choosing between them is a mapping decision, but state no precedence for a colliding root-level key (absence negative) — server 1.33.0, 2026-08-21
 
 **On a collision, do NOT silently re-route or override the answer (INV-006).** Their intent — *do
 not match on this* — is achievable; only the key **name** is wrong. Say what will actually happen
