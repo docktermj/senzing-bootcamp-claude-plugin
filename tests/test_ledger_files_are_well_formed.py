@@ -76,6 +76,14 @@ class NoLiteralEscapeSequenceOutsideCode(unittest.TestCase):
 class EveryHeadingStartsALine(unittest.TestCase):
     """A heading mid-line is invisible to every entry-level guard rather than invalid."""
 
+    # ⚠️ **This binds what a ledger ENTRY may write, and that is deliberate.** An entry needing
+    # to mention a heading pattern in prose must write the slug without the `## ` prefix --
+    # `` `production-readiness-audit-*` `` rather than `` `## production-readiness-audit-*` `` --
+    # because the second is indistinguishable from the corruption this detects. It fired on
+    # exactly that, on 2026-08-21, against an entry describing the ref resolver. Rewording the
+    # prose costs nothing; relaxing the check would give back the code-span blind spot that let
+    # the original corruption pass 3,141 tests.
+
     def test_no_entry_heading_appears_mid_line(self):
         for p in LEDGERS:
             with self.subTest(file=p.name):

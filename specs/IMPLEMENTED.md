@@ -32,6 +32,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 <!-- New entries go directly below this line. Format:
 
+## the-new-conformance-views-are-not-reachable-from-the-paths-that-prescribe-them
+
+- **Implemented:** 2026-08-21
+- **Files changed:** `.claude/skills/production-readiness-audit/conformance.py`, `.claude/skills/production-readiness-audit/SKILL.md`, `.claude/skills/implement-spec/SKILL.md`, `tests/test_all_runs_every_argument_free_view.py`
+- **MCP re-check:** n/a (no Senzing fact) — maintainer tooling and the repository's own ledger. No MCP route is relevant and none was called.
+- **Summary:** `all` now runs every subcommand that needs no argument — `rules`, `per-rule`, `enumerations`, `size`, `duplication` — with `rules` and `per-rule` adjacent because the difference between their counts is the finding, and it prints a closing block naming `since` as not run and how to run it. `since` gained `--since-last-audit`, resolving the ref from the newest `production-readiness-audit-*` heading's `Commit:` field; it reports where it got the ref and refuses loudly when the field is absent, `uncommitted`, or names a commit this repo does not have. Verified: it resolves to `0383cf4`, the same commit the previous session found by hand with a `git log --since=<timestamp>` heuristic. All three call sites — the audit's Step 1.3 and Step 3, and `implement-spec` Step 5 — now pass the flag instead of a placeholder, and Step 1.3 no longer calls `all` "every lead generator" without saying what that covers. **Establishes no invariant:** everything changed is under `.claude/`, which `propagate.sh` does not ship. Guard: `tests/test_all_runs_every_argument_free_view.py`, 6 tests. It **derives** the subcommand set from the script's own `--help` rather than listing it, so a view added later is covered without editing the test — a listed set would certify the views someone remembered, which is the shape of the defect being fixed (INV-246) — and it asserts the parser still declares the four views it reasons about, so the derivation cannot go vacuous. The `since` exclusion is asserted with its reason rather than assumed. Negative-controlled with three mutations, all verified to land and all caught: dropping `per-rule` from `all`, deleting the not-run notice, and making the ref resolver return a plausible-looking non-commit. **Not runtime-verified:** nothing here needs a live engine; every criterion was exercised by running the script.
+- **Commit:** uncommitted
+
 ## six-rules-become-visible-when-the-detector-is-fixed
 
 - **Implemented:** 2026-08-21

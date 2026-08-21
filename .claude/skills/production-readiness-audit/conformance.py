@@ -251,6 +251,44 @@ def cmd_per_rule(args):
     return 0
 
 
+def last_audit_ref(repo):
+    """The commit of the newest `## production-readiness-audit-*` ledger entry, or None.
+
+    Both call sites for `since` used to pass a placeholder -- `<last audit>`, `<this run's base>` --
+    with no way to obtain it, so the session that wrote them reverse-engineered its own base with a
+    `git log --since=<timestamp>` heuristic. The ledger already holds the boundary both wanted.
+
+    \u26d4 Fails loudly rather than guessing. An unresolvable ref reported as "0 rules added" is
+    indistinguishable from a clean range (INV-110/INV-115), and the whole point of this view is to
+    be believed about what a run added.
+    """
+    ledger = repo / "specs" / "IMPLEMENTED.md"
+    if not ledger.is_file():
+        sys.stderr.write("no specs/IMPLEMENTED.md under %s — cannot resolve the last audit\n" % repo)
+        return None
+    text = ledger.read_text(encoding="utf-8")
+    m = re.search(r"(?m)^## (production-readiness-audit\S*)\n(.*?)(?=\n## |\Z)", text, re.S)
+    if not m:
+        sys.stderr.write("no `## production-readiness-audit-*` entry in the ledger\n")
+        return None
+    name, body = m.group(1), m.group(2)
+    c = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?([0-9a-f]{7,40})`?\s*$", body)
+    if not c:
+        raw = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", body)
+        sys.stderr.write(
+            "the newest audit entry (%s) has no resolvable commit hash: Commit: %s\n"
+            % (name, (raw.group(1).strip() if raw else "<field absent>")))
+        return None
+    ref = c.group(1)
+    check = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % ref],
+                           cwd=str(repo), capture_output=True, text=True)
+    if check.returncode != 0:
+        sys.stderr.write("the newest audit entry (%s) names commit %s, which this repo does not "
+                         "have\n" % (name, ref))
+        return None
+    return ref
+
+
 def cmd_since(args):
     """Hard-rule lines a git ref introduced -- the unit an unattended run needs.
 
@@ -261,6 +299,14 @@ def cmd_since(args):
     """
     repo, plugin, _ = paths(args)
     ref = args.ref
+    if getattr(args, "since_last_audit", False):
+        ref = last_audit_ref(repo)
+        if ref is None:
+            return 2
+        print("   (ref resolved from the newest audit entry in specs/IMPLEMENTED.md)")
+    if not ref:
+        sys.stderr.write("since needs --ref <git-ref> or --since-last-audit\n")
+        return 2
     print("== hard-rule lines added to shipped markdown since %s\n" % ref)
     proc = subprocess.run(
         ["git", "diff", "--unified=0", "--no-color", ref, "--", "plugins/senzing-bootcamp"],
@@ -435,7 +481,9 @@ def main(argv=None):
                      help="show only rules citing no invariant at the rule itself")
 
     since = sub.add_parser("since", help="hard-rule lines added since a git ref")
-    since.add_argument("--ref", required=True, help="git ref to diff against")
+    since.add_argument("--ref", default=None, help="git ref to diff against")
+    since.add_argument("--since-last-audit", action="store_true",
+                       help="resolve the ref from the newest audit entry's Commit: field")
 
     dup = sub.add_parser("duplication", help="passages repeated across shipped files")
     dup.add_argument("--words", type=int, default=14, help="shingle length (default 14)")
@@ -461,11 +509,21 @@ def main(argv=None):
         return 2
 
     if args.cmd == "all":
-        for fn in (cmd_rules, cmd_enumerations, cmd_size):
+        # ⛔ Every subcommand with no required argument runs here. `rules` and `per-rule` are
+        # adjacent on purpose: the two counts differ, and the difference is the finding. An
+        # earlier `all` ran `rules` alone while Step 1.3 called it "every lead generator", so a
+        # run that followed Step 1 got only the view documented as unable to see the class.
+        args.uncited = True
+        for fn in (cmd_rules, cmd_per_rule, cmd_enumerations, cmd_size):
             fn(args)
             print()
         args.words, args.top = 14, 12
         cmd_duplication(args)
+        print()
+        print("== not run by `all`: since")
+        print("   `since` needs a range, and guessing one would report the wrong answer silently.")
+        print("   Run it separately — the ref is computable from the ledger:")
+        print("     conformance.py since --since-last-audit")
         return 0
 
     return {

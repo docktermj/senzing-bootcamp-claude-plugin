@@ -140,7 +140,7 @@ Run the mechanical half — **all three views** — then read every hit:
 ```bash
 python3 .claude/skills/production-readiness-audit/conformance.py rules      # section-scoped
 python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
-python3 .claude/skills/production-readiness-audit/conformance.py since --ref <last audit>
+python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
 ```
 
 All three list hard rules — the repo's own `⛔` / bolded MUST/NEVER convention. They differ in
@@ -155,7 +155,8 @@ the run rather than from a figure written here, which is how the previous baseli
 - **`per-rule`** asks whether a reader **at that line** can name the governing rule — the
   invariants cited in the rule itself or the sentence beside it. This is what INV-183 requires,
   and it is a much larger number than `rules` reports.
-- **`since --ref`** lists the hard rules a given range *added*. For a run following an
+- **`since --since-last-audit`** lists the hard rules added since the newest audit entry's
+  recorded commit, resolved from the ledger rather than guessed. For a run following an
   unattended implement session, this is the set that session is answerable for.
 
 Each hit is *either* an unregistered rule (propose an invariant) *or* a missing citation to one
@@ -204,10 +205,12 @@ removing it silently breaks every citation that resolved to it.
    Their value is historical: they describe a much smaller ruleset and no
    `production-readiness-audit-*` history. Read them for the classes, not for the state.
 
-3. **Run every lead generator**, then read the hits:
+3. **Run every lead generator**, then read the hits. `all` runs every view that needs no
+   argument — including `per-rule`; `since` needs a range and is a separate call:
 
    ```bash
    python3 .claude/skills/production-readiness-audit/conformance.py all
+   python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
    python3 .claude/skills/dry-run/coverage_reports.py both          # unguarded surface
    python3 .claude/skills/compact-dev-environment/citations.py verify   # referential integrity
    ```
@@ -261,7 +264,8 @@ still reads authoritative. Check every enumeration against what the plugin ships
 
 ## Step 3: Sweep the invariants, reverse
 
-Work the output of all three views (`rules`, `per-rule --uncited`, `since --ref`). For each
+Work the output of all three views (`rules` and `per-rule` come from `all`; `since
+--since-last-audit` is its own call). For each
 hit, decide between:
 
 - **Unregistered rule** → the plugin guarantees something the ruleset does not record.

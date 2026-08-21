@@ -522,11 +522,13 @@ So an implementation that ships a hard rule — a ⛔, a bolded MUST/NEVER, anyt
 question, so do not check it alone:**
 
 ```bash
-python3 .claude/skills/production-readiness-audit/conformance.py since --ref <this run's base>
+python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
 python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
 ```
 
-`since` is the one that matters here: it lists the hard-rule lines **this run added**, which is
+`since` is the one that matters here: it lists the hard-rule lines added since the newest audit
+entry's recorded commit — resolved from the ledger, not guessed — which for a run following an
+audit is **this run's own additions**. That is
 exactly the set the run is answerable for. `per-rule` gives the standing worklist, scoped to the
 invariants cited *at* each rule rather than anywhere in its section.
 
