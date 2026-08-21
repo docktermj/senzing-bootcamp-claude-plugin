@@ -41,7 +41,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **The finding this makes visible, beyond the spec's own framing.** The plugin held **both numbers** for the server's discriminator and never compared them: Module 5 measures per-field `completeness`, step 3b measures the possible-match rate, and nothing put them side by side — so a 48.9% rate driven by a 46%-populated phone field read identically to one driven by an unmapped feature. Worse, on the generated-scenario path **the plugin manufactures that sparsity itself**: INV-239 requires a source gapped into the 70-79% band, and gapped contact fields are the first thing to produce near-misses no remap can fix. The bootcamp built the condition and then diagnosed it as a mapping defect. That link is now stated at the branch.
 - **Predicted file checked, not changed:** `tests/test_quality_verdict_needs_evidence.py`. The spec listed it to be re-run rather than edited, because it asserts the sample-and-show requirement that `step3b-quality-lookup-misroutes-and-omits-the-evidence-requirement` added to **every** branch — including the Poor branch this change restructured. **13 tests, all passing**, so the evidence requirement survived the restructure intact: the three new outcomes each still sample and show before saying anything. That is the check worth having here, since this change moved the branch those assertions land on.
 - **Establishes no invariant** — the new ⛔s cite INV-239 and the existing phaseD finding-not-gate pattern; `conformance.py rules` uncited count unchanged at 1.
-- **Commit:** uncommitted
+- **Commit:** `1f799d6`
 
 ## module4-example-gap-rates-cannot-reach-the-band-they-illustrate
 
