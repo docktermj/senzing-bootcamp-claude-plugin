@@ -20,6 +20,7 @@ import argparse
 import collections
 import pathlib
 import re
+import subprocess
 import sys
 
 DEFAULT_REPO = pathlib.Path(__file__).resolve().parents[3]
@@ -103,6 +104,130 @@ def cmd_rules(args):
           % (total, hits, len(by_file)))
     print("   ^ each is EITHER an unregistered rule (propose an invariant) OR a missing")
     print("     citation to one that exists. Both are findings; they need different fixes.")
+    print()
+    print("   \u26d4 This is NOT a count of unregistered rules, and MUST NOT be read as one.")
+    print("     The unit is the SECTION. A brand-new unregistered rule does not appear here")
+    print("     if it lands anywhere near an unrelated INV-nnn -- and it reads clean more")
+    print("     reliably as citations get denser. Measured 2026-08-21: a run added 37 hard-rule")
+    print("     lines, this count held at 1, and three of those rules were on subjects")
+    print("     INVARIANTS.md covers nowhere. Use `per-rule` for the worklist and")
+    print("     `since --ref <git-ref>` for what a single run actually added.")
+    return 0
+
+
+def rule_rows(lines):
+    """Yield (index, line) for every hard-rule line, in order."""
+    for i, line in enumerate(lines):
+        if HARD_RULE.search(line):
+            yield i, line
+
+
+def own_citations(lines, i):
+    """Invariant IDs cited by the rule ITSELF or the sentence immediately adjacent.
+
+    Deliberately narrower than `cmd_rules`' enclosing section, because the two answer
+    different questions. The section scope asks "is this subject covered anywhere near
+    here"; this asks "can a reader at this line name the rule that governs it", which is
+    what INV-183 requires. The window is the rule's own line plus one non-blank line
+    either side -- a continuation of the same bolded rule, or the sentence that explains
+    it -- and no further: widening it back toward the section reintroduces the blind spot.
+    """
+    window = [lines[i]]
+    for step in (-1, 1):
+        j = i + step
+        while 0 <= j < len(lines) and not lines[j].strip():
+            j += step
+        if 0 <= j < len(lines):
+            window.append(lines[j])
+    return sorted(set(INV_ID.findall("\n".join(window))))
+
+
+def cmd_per_rule(args):
+    """Every hard rule with the invariants cited AT it -- a worklist, not a verdict.
+
+    \u26d4 This does NOT decide whether a rule is registered. No regex can match a rule's
+    subject against 260 invariants' prose, and one that tried would produce a confident
+    wrong answer -- worse than the current silence, because it would be believed. The
+    output is a list to read: the rule, what it cites at the point of use, and where it is.
+
+    The section-scoped `rules` count stays, and its history stays comparable across runs.
+    This is the second question, which needs the finer unit: on 2026-08-21 the section
+    count held at its baseline of 1 while a run shipped three rules on subjects
+    INVARIANTS.md covers nowhere, because each landed beside an unrelated citation.
+    """
+    repo, plugin, _ = paths(args)
+    only = getattr(args, "uncited", False)
+    print("== every hard rule, with the invariants cited AT it (worklist, not a verdict)\n")
+    total = bare = 0
+    for path in shipped_markdown(plugin):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        rows = []
+        for i, line in enumerate(lines):
+            if not HARD_RULE.search(line):
+                continue
+            total += 1
+            own = own_citations(lines, i)
+            if not own:
+                bare += 1
+            elif only:
+                continue
+            rows.append((i + 1, own, line.strip()))
+        if rows:
+            print("   %s" % rel(path, repo))
+            for lineno, own, text in rows:
+                print("     :%-5d %-24s %s"
+                      % (lineno, ",".join(own) if own else "(no citation at the rule)",
+                         text[:88]))
+    print("\n   %d hard-rule lines, %d citing no invariant at the rule itself" % (total, bare))
+    print("   ^ a worklist to READ. For each, search INVARIANTS.md for the rule's SUBJECT:")
+    print("     registered but uncited -> add the citation (INV-183); not registered ->")
+    print("     draft an invariant and get sign-off. Neither is decidable mechanically.")
+    return 0
+
+
+def cmd_since(args):
+    """Hard-rule lines a git ref introduced -- the unit an unattended run needs.
+
+    A corpus-wide count answers "how many rules exist", and what a run needs to know is
+    "which rules did I just add". Those differ by exactly the amount that makes the
+    section-scoped count useless for the job `implement-spec` Step 5 gives it: on
+    2026-08-21 the count did not move at all while 37 hard-rule lines were added.
+    """
+    repo, plugin, _ = paths(args)
+    ref = args.ref
+    print("== hard-rule lines added to shipped markdown since %s\n" % ref)
+    proc = subprocess.run(
+        ["git", "diff", "--unified=0", "--no-color", ref, "--", "plugins/senzing-bootcamp"],
+        cwd=str(repo), capture_output=True, text=True)
+    if proc.returncode != 0:
+        sys.stderr.write("git diff against %r failed: %s\n" % (ref, proc.stderr.strip()))
+        return 2
+    current = None
+    added = collections.OrderedDict()
+    count = 0
+    for raw in proc.stdout.splitlines():
+        if raw.startswith("+++ b/"):
+            current = raw[6:]
+            continue
+        if raw.startswith("+++") or raw.startswith("---") or raw.startswith("+++ /dev/null"):
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        body = raw[1:]
+        if current and current.endswith(".md") and HARD_RULE.search(body):
+            added.setdefault(current, []).append(body.strip())
+            count += 1
+    for name, rows in added.items():
+        print("   %s" % name)
+        for text in rows:
+            print("     + %s" % text[:110])
+    print("\n   %d hard-rule line(s) added since %s, across %d file(s)"
+          % (count, ref, len(added)))
+    print("   ^ read every one. This is the set a run is answerable for; the corpus-wide")
+    print("     `rules` count cannot see them (it did not move for the 37 added 2026-08-21).")
+    print("   \u26a0 Line-level: a rule MOVED between files shows as added here. That is the")
+    print("     right default for review -- a relocated rule still needs its citation to")
+    print("     travel with it -- but it is not the same as a NEW guarantee.")
     return 0
 
 
@@ -238,6 +363,14 @@ def main(argv=None):
 
     sub.add_parser("rules", help="hard rules no invariant covers (reverse direction)")
 
+    per = sub.add_parser("per-rule",
+                         help="every hard rule + the invariants cited AT it (worklist)")
+    per.add_argument("--uncited", action="store_true",
+                     help="show only rules citing no invariant at the rule itself")
+
+    since = sub.add_parser("since", help="hard-rule lines added since a git ref")
+    since.add_argument("--ref", required=True, help="git ref to diff against")
+
     dup = sub.add_parser("duplication", help="passages repeated across shipped files")
     dup.add_argument("--words", type=int, default=14, help="shingle length (default 14)")
     dup.add_argument("--top", type=int, default=12, help="file pairs to show (default 12)")
@@ -271,6 +404,8 @@ def main(argv=None):
 
     return {
         "rules": cmd_rules,
+        "per-rule": cmd_per_rule,
+        "since": cmd_since,
         "duplication": cmd_duplication,
         "enumerations": cmd_enumerations,
         "size": cmd_size,

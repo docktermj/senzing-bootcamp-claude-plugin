@@ -329,6 +329,28 @@ hash in on the next `implement-spec` run**: before writing a new entry, scan the
 how 66 entries went stale at once, leaving the field unable to answer the one question it
 exists for.
 
+⛔ **Verify the entry LANDED before doing anything else — the editing tool's own report is
+not evidence.** Confirm the heading is at a line start and the count grew by exactly the
+number of entries you wrote:
+
+```bash
+grep -c '^## ' specs/IMPLEMENTED.md          # compare against the count before your write
+grep -n '^## <spec-name>' specs/IMPLEMENTED.md   # must print a line; empty means it did not land
+python3 .claude/skills/implement-spec/list_specs.py   # the open count must DROP by that many
+```
+
+⚠️ **This exists because a write reported success while mangling the artifact.** On
+2026-08-21 two entries were inserted with literal `\n` text instead of newlines, spliced into
+the middle of an unrelated entry's `- **Summary:**` line — so their `## ` headings were not at a
+line start, a third entry was cut in half, and the inserting script printed "2 entries
+prepended" from its own `print`. The full suite passed, 3,141 tests, and it was committed. It
+was found only because `list_specs.py` reported `open: 11` immediately after two specs had
+been implemented. One `grep -n '^## '` would have caught it at the moment of writing. This is
+the same shape Step 4 already warns about for the other case — *a tool that exits 0 but
+creates/modifies NO files did not do its job* — and the write half needed saying too.
+`tests/test_ledger_files_are_well_formed.py` now guards the file, but the guard runs when the
+suite runs; this check runs when the damage happens.
+
 ⛔ **Re-run `citations.py verify` AFTER the entry is written — it is the last action of this
 step, not part of the criterion walk.**
 
@@ -496,17 +518,35 @@ So an implementation that ships a hard rule — a ⛔, a bolded MUST/NEVER, anyt
 - an explicit **deferral in the ledger entry**, naming the rule, the site, and why it was not
   registered — so the next `production-readiness-audit` reads it as known rather than discovering it.
 
-⚠️ **Check before writing the entry, not after:**
+⚠️ **Check before writing the entry, not after** — and ⛔ **`rules` alone cannot answer this
+question, so do not check it alone:**
 
 ```bash
-python3 .claude/skills/production-readiness-audit/conformance.py rules
+python3 .claude/skills/production-readiness-audit/conformance.py since --ref <this run's base>
+python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
 ```
 
-A run that raises this count owes a line in the ledger for each new hit. On 2026-08-17 an
-unattended run took the count from **1 to 10** across eighteen implementations, entirely by applying
-the policy above consistently; the audit found it the same day
-(`specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md`). Flagging loudly is the remedy —
-not letting the rule ship unmentioned.
+`since` is the one that matters here: it lists the hard-rule lines **this run added**, which is
+exactly the set the run is answerable for. `per-rule` gives the standing worklist, scoped to the
+invariants cited *at* each rule rather than anywhere in its section.
+
+⛔ **`conformance.py rules` is section-scoped and MUST NOT be read as a count of unregistered
+rules.** A new rule does not appear in it if it lands anywhere near an unrelated `INV-nnn` — and it
+gets *harder* to see as citations grow denser, which is the opposite of what a maturing plugin needs.
+Both directions are on record:
+
+- **2026-08-17** — the count went **1 → 10** across eighteen implementations and the audit found
+  seven genuinely unregistered rules the same day
+  (`specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md`). Those seven were visible only
+  because they happened to land in sections with no citation at all; nothing establishes that seven
+  was the whole set.
+- **2026-08-21** — seventeen implementations added **26 hard-rule lines** (net +25) and the count
+  **did not move at all**, holding at its session baseline of 1, while three of those rules were on
+  subjects `INVARIANTS.md` covers nowhere
+  (`specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md`).
+
+A run that adds a hard rule owes a ledger line for it whether or not any count moved. Flagging
+loudly is the remedy — not letting the rule ship unmentioned.
 
 ## Step 6: Report
 

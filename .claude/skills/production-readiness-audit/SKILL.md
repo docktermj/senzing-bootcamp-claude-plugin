@@ -126,18 +126,38 @@ notices when a later change contradicts it. Both of these are real:
 - **INV-155** — two specs removed visualization tabs and registered no invariant, so the
   shipped app contradicted INV-104's still-standing enumeration.
 
-Run the mechanical half, then read every hit:
+Run the mechanical half — **all three views** — then read every hit:
 
 ```bash
-python3 .claude/skills/production-readiness-audit/conformance.py rules
+python3 .claude/skills/production-readiness-audit/conformance.py rules      # section-scoped
+python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
+python3 .claude/skills/production-readiness-audit/conformance.py since --ref <last audit>
 ```
 
-It lists hard rules — the repo's own `⛔` / bolded MUST/NEVER convention — whose
-enclosing section cites no invariant. Measured 2026-07-31: **162 hard-rule lines, 16 in
-a section citing no invariant, across 11 files.** Each hit is *either* an unregistered
-rule (propose an invariant) *or* a missing citation to one that exists (fix the
-citation). Both are findings and they need different fixes; deciding which requires
-reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
+All three list hard rules — the repo's own `⛔` / bolded MUST/NEVER convention. They differ in
+the **unit**, and the unit is the whole story. Each prints its own current counts; read them off
+the run rather than from a figure written here, which is how the previous baseline went stale.
+
+- **`rules`** asks whether the *enclosing section* cites any invariant. Its history is
+  comparable across runs, and that is most of its value.
+- **`per-rule`** asks whether a reader **at that line** can name the governing rule — the
+  invariants cited in the rule itself or the sentence beside it. This is what INV-183 requires,
+  and it is a much larger number than `rules` reports.
+- **`since --ref`** lists the hard rules a given range *added*. For a run following an
+  unattended implement session, this is the set that session is answerable for.
+
+Each hit is *either* an unregistered rule (propose an invariant) *or* a missing citation to one
+that exists (fix the citation). Both are findings, they need different fixes, and deciding which
+requires reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
+
+⛔ **`rules` is section-scoped, so its count is NOT a count of unregistered rules and MUST NOT be
+reported as one.** A new rule is invisible to it whenever it lands anywhere near an unrelated
+`INV-nnn` — and it gets harder to see as citations grow denser. On 2026-08-21 a run added 26
+hard-rule lines (net +25) and this count did not move at all, while three of those rules were on
+subjects `INVARIANTS.md` covers nowhere. Both prior findings of this class
+(`seven-hard-rules-shipped-in-one-run-with-no-invariant`, 2026-08-17, and
+`the-2026-08-21-run-shipped-three-unregistered-guarantees`) were found by reading, not by the
+count moving — and in the first case nothing establishes that the seven found were the whole set.
 
 ⛔ **Never propose deleting or renumbering an invariant.** `INVARIANTS.md` is
 append-only; a superseded invariant is *marked* superseded, and a wrong one gets a dated
@@ -199,7 +219,8 @@ plugin ships **today**.
 
 ## Step 3: Sweep the invariants, reverse
 
-Work the `conformance.py rules` output. For each hit, decide between:
+Work the output of all three views (`rules`, `per-rule --uncited`, `since --ref`). For each
+hit, decide between:
 
 - **Unregistered rule** → the plugin guarantees something the ruleset does not record.
   Draft the invariant, get the maintainer's sign-off on the wording (never record one

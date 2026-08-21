@@ -102,3 +102,34 @@ that assistance covers.
 - Related specs: `specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md` (what it missed),
   `specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md` (what it caught, and why that set
   may be incomplete), `specs/guards-enforce-class-scoped-rules-from-hardcoded-site-sets.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**The "37 new hard-rule lines" figure in this spec is wrong.** Measured mechanically against
+the session's base commit (`0941021^`), the 2026-08-21 run added **26** hard-rule lines to
+`plugins/senzing-bootcamp` and removed 1, for a net of **+25** — confirmed two independent
+ways: `conformance.py since --ref` reports 26 added, and counting `HARD_RULE` matches across
+every shipped `.md` at the base revision versus HEAD gives 322 → 347. `.claude/` was unchanged
+at 47 either way, so the figure is not explained by maintainer-side files.
+
+Where 37 came from is not recoverable — it was written into the audit report as prose and
+nothing re-derived it. That is precisely the defect class the audit's own Step 7 lists as
+class 4, occurring inside the audit's output, and it is why the acceptance criterion below was
+implemented against the measurement rather than the number:
+
+- Criterion *"run against the 2026-08-21 session range it lists all 37"* → implemented and
+  verified as **26 added / 25 net**, the mechanical count. The criterion's intent — that
+  `since` surfaces the run's additions where the corpus count showed nothing — holds
+  completely: `rules` reported 1 before and after.
+
+Everything else was implemented as specified. Two further notes:
+
+- **`conformance.py rules`' hardcoded 2026-07-31 baseline was removed rather than refreshed**
+  ("162 hard-rule lines, 16 … across 11 files"; today 347 / 1 / 1). Writing a fresh number
+  there would rot the same way, so Step 1 now says to read the counts off the run. This
+  overlaps `the-audit-skills-baselines-and-required-reading-are-stale`, which owns the
+  baseline-file mechanism.
+- **The per-rule view reports a far larger number than `rules`** — 235 of 347 hard-rule lines
+  cite no invariant at the rule itself, against 1 by section scope. That is a worklist, not
+  235 findings; most are rules whose governing invariant is cited elsewhere in the section.
+  Change 2's "do not decide registration automatically" is honored: no view claims otherwise.

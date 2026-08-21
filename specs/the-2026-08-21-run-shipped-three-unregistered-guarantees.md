@@ -130,3 +130,21 @@ agreement with its own ruleset. No MCP route was consulted and none is relevant.
 - Related specs: `specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md` (the same finding,
   previous run, three invariants still awaiting sign-off),
   `specs/conformance-rules-cannot-see-a-new-rule-beside-an-old-citation.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**The "37 new hard-rule lines" figure in this spec's `## Problem` is wrong**, and the finding
+it supports is not. Measured mechanically against the session's base commit (`0941021^`), the
+run added **26** hard-rule lines to `plugins/senzing-bootcamp` and removed 1, for a net of
+**+25** — confirmed by `conformance.py since --ref` (26 added) and by counting `HARD_RULE`
+matches across every shipped `.md` at the base revision versus HEAD (322 → 347). `.claude/` was
+unchanged at 47.
+
+The three unregistered subjects and the two wrong-cited capture blocks are unaffected: they were
+found by reading the rules, not by counting them. Recorded here because the wrong figure was
+carried as prose with nothing re-measuring it — the audit's own Step 7 class 4, occurring in the
+audit's output. Read 26/25 wherever this file says 37.
+
+**Change 2 (the INV-122 citation at both capture blocks) is already implemented** — see the
+`production-readiness-audit-2026-08-21` ledger entry. Changes 1, 3 and 4 remain open: change 1
+needs the maintainer's sign-off on three drafted invariants and MUST NOT be minted without it.
