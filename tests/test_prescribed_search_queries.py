@@ -65,6 +65,19 @@ VERIFIED_QUERIES = {
         "retrieve an answer. NOTE: the highest-scoring result overall was an off-topic "
         "pricing document ('Data Source Records (DSRs) Explained', 105.0) despite "
         "category='data_mapping', so the category filter did not exclude it",
+    # Executed 2026-08-21 on server 1.33.0 (docs index 2026-08-20 17:33 UTC), for the datastore
+    # mount-crossing guidance added to module-02 Step 7.
+    "loading":
+        "ON TARGET for the two anti-patterns the step relays, though neither is the #1 hit: "
+        "with category='anti_patterns' the ranking was 'Senzing Anti-Patterns: Configuration "
+        "and Initialization' (12.6), then 'Senzing Anti-Patterns: Architecture and "
+        "Performance' (12.0). The first carries 'Do Not Skip check_repository_performance() "
+        "Before Production' with the SzDiagnostic signature; the second carries 'Do Not Use "
+        "Low-IOPS Storage' with the avoid-network-attached-storage rule. Both are quoted at "
+        "the call site. NOTE: a single-word query is BM25-fragile by nature -- it works here "
+        "only because category='anti_patterns' narrows the corpus to a handful of documents, "
+        "and the top hit by raw relevance was a Rust code example (35.4) that the category "
+        "filter did NOT exclude. Re-check the two titles rather than the ordering",
     "entity resolution business value":
         "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases'; "
         "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",

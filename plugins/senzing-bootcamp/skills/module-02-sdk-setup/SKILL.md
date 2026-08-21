@@ -383,8 +383,17 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
 
 **Routing rules (apply in order):**
 
-1. Chosen language is Python AND OS is macOS or Windows → **`platform='docker'`**. The Python
-   SDK is only supported on Linux; on macOS/Windows it must run in a container.
+1. Chosen language is Python AND OS is macOS or Windows → a **Linux environment**, and there are
+   two, not one. The Python SDK is supported on Linux only, so it needs one either way:
+   - **A container** → **`platform='docker'`**. Available on macOS and Windows.
+   - **WSL2 (Windows only)** → the SDK installs natively *inside* the Linux distribution, so the
+     platform resolves to **`platform='linux_apt'`** and the rest of this module follows the
+     `linux_apt` path unchanged. This is the route a Bootcamper who wants a native-feeling
+     toolchain will pick, and Bootcamp preparation now names its cost at the language gate.
+   Both are what the server offers: `sdk_guide(topic='install', platform='windows',
+   language='python')` returns *"use Docker or WSL2 to run Python inside a Linux container"*
+   (server **1.33.0, 2026-08-21**). ⚠️ On macOS only the container route exists — the same server
+   sentence appears under `platform='macos_arm'` and its WSL2 half is wrong there.
 2. macOS Intel → **`platform='docker'`**. There is no native Intel-Mac install: the Homebrew
    tap is Apple Silicon (ARM64) only.
 3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. If the chosen language runs
@@ -998,6 +1007,45 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 *(Internal: end the turn on this question and wait.)*
 
 **For SQLite** (recommended for bootcamp):
+
+⛔ **Before creating it, check whether the project sits on a mounted host filesystem — measure the
+datastore, do not assume it.** The datastore always goes in the project directory
+(`database/G2C.db`, INV-200), which is right on every platform except one: when the SDK runs in a
+Linux environment while the project lives on the host's filesystem, the database is reached over a
+translation layer instead of a native one. The signature cases are **WSL2 with the project under
+`/mnt/`** and a Docker bind mount. Nothing fails; it is simply one to two orders of magnitude
+slower, and a Bootcamper has no reason to suspect storage.
+
+1. **Detect the crossing.** WSL2 with the project path under `/mnt/` is the case to look for; the
+   Docker path has the equivalent via its bind mount. Say plainly what it means before the datastore
+   is created, not after the load is slow.
+2. **Measure it rather than asserting it.** Senzing's own instrument answers this in seconds:
+   `check_repository_performance` on `SzDiagnostic` reports an insert rate. Take the call and its
+   argument from the server at the point of use rather than from this file (INV-080) — it is a
+   diagnostic-hub call, not an engine one. Report the number to the Bootcamper. **Non-blocking:** if
+   it cannot run, say so in one line and continue (INV-048); an unavailable measurement is not a
+   reason to stall setup.
+3. **Senzing owns the reason, so relay it rather than re-deriving it.**
+   `search_docs(query='loading', category='anti_patterns')` returns *"Do Not Use Low-IOPS Storage"* —
+   *"Senzing entity resolution is I/O intensive … Avoid network-attached storage (NAS/NFS) for the
+   database data directory … Run `check_repository_performance()` to validate your storage meets
+   requirements"* — and *"Do Not Skip check_repository_performance() Before Production"*, which says
+   to run it **before** a large load (re-verified server **1.33.0, 2026-08-21**). A mount crossed by
+   a translation layer is that case.
+
+⚠️ **Observation-only, one workstation, recorded with its conditions rather than asserted as a rule:**
+on Windows 11 + WSL2 Ubuntu with Senzing SDK 4.3.4 and SQLite, `check_repository_performance(5)`
+reported **1,112** inserts on `/mnt/c/...` against **326,606** on a WSL-native path, and end-to-end
+load throughput moved from **3 records/second** to **138–180** — about 7.5 hours down to about 9
+minutes for 83,338 records, same code, same data, same machine (2026-08-18). Treat the shape as
+indicative and the number as this one machine's; the measurement in rung 2 is what speaks for the
+Bootcamper's.
+
+⛔ **Do not relocate the datastore out of the project directory on your own initiative.** INV-200
+exists because files appearing where the Bootcamper did not put them is its own defect, and the
+trade-off is real: a datastore outside the project is not alongside their other artifacts and is not
+picked up by copying the project folder. Report the measurement and let them decide; the default
+stays `database/G2C.db`.
 
 ⛔ **SQLite is not "no setup". The database file is not auto-created and its schema is not
 auto-applied** — the same as PostgreSQL, and for the same reason. Skipping the schema does not fail
