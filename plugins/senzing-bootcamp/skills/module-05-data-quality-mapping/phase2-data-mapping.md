@@ -95,7 +95,7 @@ ground-rules file-placement contract:
   `docs/mapping/{source_name}_JOURNAL.md`. Mapping working data (`*_mapping_spec.json`, the
   per-source `{source}_sample.jsonl`, intermediate analyzer JSONL) → `data/mapping/`. Final
   transformed, load-ready JSONL stays in `data/senzing-ready/`.
-  - ⛔ **The source qualifier is required, not tidiness.** Every source's `mapping_workflow` run
+  - ⛔ **The source qualifier is required, not tidiness (INV-177).** Every source's `mapping_workflow` run
     uses the **same** `workspace_dir` (`data/mapping`, per step 8), and the workflow writes those
     three files there under **fixed** names — verified against the live tool: step 1's instructions
     name `<workspace_dir>/profile_report.md`, `<workspace_dir>/schema_hints.md` and
@@ -1145,8 +1145,12 @@ in `../module-02-sdk-setup/SKILL.md` → "The launch environment".
 
 Run on 10-100 records from `data/samples/`. Validate with
 `analyze_record(workspace_dir='data/mapping')` — ⛔ `workspace_dir` is a **required** parameter on
-this tool as well, and it is where the analyzer script and its reports are written, so it takes the
-same project-local mapping directory as the workflow. Tell the user: pass/fail, output file path,
+this tool as well (INV-136), and it is where the analyzer script and its reports are written, so it
+takes the same project-local mapping directory as the workflow, which INV-200 requires of every
+tool argument naming a writable directory. Re-confirmed on MCP server 1.33.0, 2026-08-21:
+`get_capabilities` describes `analyze_record` as taking a "REQUIRED parameter: `workspace_dir` (a
+writable directory where the analyzer script and any reports are saved); do NOT assume /tmp
+exists". Tell the user: pass/fail, output file path,
 sample record, any observations.
 
 > **Presentation (conditional on `mapping_verbosity`):**

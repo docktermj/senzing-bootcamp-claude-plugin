@@ -36,7 +36,7 @@ CONFORMANCE = REPO_ROOT / ".claude/skills/production-readiness-audit/conformance
 
 
 def shipped_hard_rule_pattern():
-    """The script's OWN pattern, loaded rather than copied.
+    """The script's OWN classifier, loaded rather than copied.
 
     A copy here would be a second definition of "hard rule" -- the exact duplication the
     acceptance criterion forbids across the three views, reintroduced by the test that checks
@@ -47,10 +47,12 @@ def shipped_hard_rule_pattern():
     spec = importlib.util.spec_from_file_location("_conformance", CONFORMANCE)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.HARD_RULE
+    # classify(), not the anchored pattern: `since` reports mid-line rules too, and pinning
+    # ANCHORED_RULE here made this test reject the very lines the detector fix made visible.
+    return mod.classify
 
 
-HARD_RULE_SHAPE = shipped_hard_rule_pattern()
+HARD_RULE_SHAPE = shipped_hard_rule_pattern()   # a callable: line -> kind or None
 
 # A section that cites an invariant for a reason unrelated to the rule added below it. This is
 # the shape that hides a new rule: the citation is correct, present, and about something else.
@@ -204,7 +206,7 @@ class TheSinceViewFiltersByRef(unittest.TestCase):
             self.assertTrue(path.endswith(".md"),
                             "reported a non-markdown file %r: the .md filter is not applied" % path)
             self.assertTrue(
-                HARD_RULE_SHAPE.search(body),
+                HARD_RULE_SHAPE(body) is not None,
                 "reported a line that is not a hard rule (%r from %s); the diff parse is "
                 "picking up context or removed lines" % (body[:80], path))
 

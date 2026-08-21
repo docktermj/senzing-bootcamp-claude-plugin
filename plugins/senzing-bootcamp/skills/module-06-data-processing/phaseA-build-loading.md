@@ -20,7 +20,7 @@ Read `config/data_sources.yaml` and check `test_load_status` per source:
 - **`skipped` or missing**, note that a brief test load is **owed** for that source, and say so:
   "You skipped the sandbox test load in Data Quality, Mapping, and Transformation, so we'll do a
   quick one before the full load." ⛔ **Do not run it here.** Phase B step 5 runs it, and it
-  cannot run any earlier: it needs the loading program, which step 3 builds from the volume tier
+  cannot run any earlier (INV-089 is why the ordering is not a preference): it needs the loading program, which step 3 builds from the volume tier
   captured at step 1, and the registered `DATA_SOURCE` codes, which step 4a creates — without
   which the load fails with `SENZ2207`, the exact error step 4a exists to prevent.
 

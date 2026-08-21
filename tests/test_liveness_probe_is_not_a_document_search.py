@@ -53,7 +53,14 @@ PROHIBITION = re.compile(
 )
 
 WINDOW = 260
-PROHIBITION_REACH = 120
+
+# ⚠️ Widened from 120 on 2026-08-21, because at 120 this guard FAILED when the rule it protects
+# gained the citation INV-183 requires. Adding "(INV-204)" -- ten characters -- pushed the
+# `search_docs` mention in the rule's own explanation past the reach, so the prohibition stopped
+# being seen and correct, newly-compliant prose was reported as an offense. A guard that
+# penalizes satisfying another invariant is measuring distance, not correctness. 200 leaves room
+# for a citation and a short clause without reaching into a neighboring paragraph.
+PROHIBITION_REACH = 200
 
 
 def shipped_markdown():

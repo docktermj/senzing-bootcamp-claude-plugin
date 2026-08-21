@@ -460,14 +460,14 @@ PowerShell form — never a copied `&&`.
 A script the bootcamper is told to `source` runs in **their** interactive shell, so it MUST work in
 the platform's **default** shell — not only in bash. On macOS that shell is **zsh**.
 
-- ⛔ **`${BASH_SOURCE[0]}` is bash-only and expands to *empty* under zsh.** A script that locates
+- ⛔ **`${BASH_SOURCE[0]}` is bash-only and expands to *empty* under zsh (INV-175).** A script that locates
   itself that way resolves its project root to the wrong directory under zsh and carries on, so the
   error surfaces later and elsewhere. Branch on `${ZSH_VERSION}` and use `${(%):-%x}` in the zsh
   branch — the canonical idiom, with the fail-loudly root check that goes with it, is in
   `../module-02-sdk-setup/SKILL.md` under
   [the env script's path resolution](../module-02-sdk-setup/SKILL.md#env-script-path-resolution).
   Do not restate it; link to it.
-- ⛔ **A sourced script must never `exit` or `set -e`.** It shares the bootcamper's shell, so `exit`
+- ⛔ **A sourced script must never `exit` or `set -e` (INV-175).** It shares the bootcamper's shell, so `exit`
   closes their terminal and `set -e` leaks into the rest of their session. Use `return`.
 - **Verify the resolved path before using it, and name it when it is wrong.** Silently exporting a
   variable computed from a wrong root is the failure this prevents.

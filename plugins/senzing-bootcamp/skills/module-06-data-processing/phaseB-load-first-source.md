@@ -21,7 +21,7 @@ Phase A's pre-load check reads this field to decide whether a test load is owed,
 is not recorded is a run that Phase A will ask for again on a resumed session.
 
 ⛔ **This is the earliest point the test load can run, which is why it lives here and not in
-Phase A's pre-load checks.** It needs two things Phase A produces: the loading program itself,
+Phase A's pre-load checks (INV-089).** It needs two things Phase A produces: the loading program itself,
 built at step 3 from the volume tier captured at step 1, and the registered `DATA_SOURCE` codes
 from step 4a — without which the load fails with `SENZ2207` (*"Data source code [{0}] does not
 exist"*, `explain_error_code('SENZ2207')`, server 1.32.9, 2026-08-14), the exact error step 4a

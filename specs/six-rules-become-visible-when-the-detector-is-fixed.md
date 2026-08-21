@@ -99,3 +99,40 @@ records.
 - Related specs: `specs/the-hard-rule-detector-misses-every-rule-not-first-on-its-line.md` (the
   fix that surfaced these), `specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md`,
   `specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**The triage found no unregistered rule.** All six were **registered but uncited** — the second of
+the three Step 3 verdicts, and the cheapest — so change 3's sign-off gate never engaged and nothing
+was drafted. The spec expected the zsh and sourced-script rules to be the strongest candidates for
+*registration*; in fact **INV-175** already states both of them almost verbatim, including
+`${BASH_SOURCE[0]}` expanding to empty under zsh and the `return`-never-`exit`/`set -e` requirement.
+That is the spec reasoning from the absence of a citation to the absence of a rule, which is the
+same inference shape INV-194 forbids one level up.
+
+| Rule | Verdict | Invariant |
+|---|---|---|
+| `${BASH_SOURCE[0]}` is bash-only under zsh | uncited | INV-175 |
+| a sourced script must never `exit` or `set -e` | uncited | INV-175 |
+| a reachability probe must not be a document search | uncited | INV-204 |
+| the source qualifier is required | uncited | INV-177 |
+| `workspace_dir` required on `analyze_record` | uncited | INV-136, + INV-200 for the location |
+| do not run the test load in Phase A | uncited | INV-089 |
+
+**A seventh rule was triaged beyond the spec's scope.** `phaseB-load-first-source.md:23` was the
+long-standing single hit that made up the session baseline of 1, and it is governed by INV-089 for
+the same reason as the Phase A rule. Citing it took `conformance.py rules` to **0 in a section
+citing no invariant** — the first time this repository has measured zero.
+
+**The MCP re-check confirmed the one Senzing fact.** `get_capabilities` on server **1.33.0**
+(2026-08-21) describes `analyze_record` as taking a *"REQUIRED parameter: `workspace_dir` (a
+writable directory where the analyzer script and any reports are saved); do NOT assume /tmp
+exists"*. `get_capabilities` is the owning route because `workspace_dir` is a parameter of the
+**MCP tool**, not of an SDK method, so `get_sdk_reference(topic='parameters')` would not carry it.
+The provenance line was added beside the rule.
+
+**Acceptance criterion not met as written:** *"`conformance.py rules` reports fewer uncited
+sections afterwards, or the ones remaining are recorded as judged-not-durable."* It reports zero,
+which satisfies the first branch, but the spec's expectation that some of the six would be judged
+*not a durable rule* did not hold — all six were durable and registered. Nothing was judged
+not-durable, so nothing needed recording under that head.
