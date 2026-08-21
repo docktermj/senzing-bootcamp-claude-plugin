@@ -144,3 +144,18 @@ leaving the branch looking like the Module 6 branch INV-244 was written against.
   `specs/mcp-negative-markers-must-name-the-owning-route.md`,
   `specs/a-spec-asserting-server-absence-must-name-the-owning-route.md`,
   `specs/single-license-gate-at-data-processing.md`
+
+## Deviations from this spec, and why (2026-08-21)
+
+**Implemented PARTIALLY, by maintainer decision.** Changes 1, 2 and 4 shipped; change 3 — the
+repo-wide sweep of every "source this from MCP" instruction, plus the possible new invariant for the
+class — was held for review, on the grounds that the sweep could cascade into many edits and that an
+invariant is permanent. The `specs/IMPLEMENTED.md` entry records which acceptance criteria are met
+and which are not, and the guard's docstring states its own scope so it is not mistaken for
+corpus-wide coverage.
+
+**The unregistered rule is named rather than left implicit.** The class this spec identified —
+INV-194's shape applied to a *positive* claim, where a **value** rather than an absence is concluded
+from the wrong route — is not in `INVARIANTS.md`. INV-080 forbids stating a Senzing fact from memory
+and INV-194 requires scoping a negative to the route asked; neither says *a positive instruction must
+name its route*, which is precisely the gap the reported failure walked through.

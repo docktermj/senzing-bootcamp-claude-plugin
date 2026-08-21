@@ -240,9 +240,37 @@ session; normally absent at this point):
   Key — record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Otherwise
   leave it unset. Either way, proceed to Step 6.
 - **Present and = 0** (no cap): no license concern → proceed to Step 6.
-- **Absent/null:** compare the total against the built-in evaluation capacity, confirmed via the
-  Senzing MCP server (never a hardcoded figure). If the total exceeds it, record
-  `license_guidance_deferred: true`; otherwise leave it unset. Either way, proceed to Step 6.
+- **Absent/null:** compare the total against the built-in evaluation capacity. ⛔ **Get that figure
+  from the one route that carries it — do not ask "the MCP server" generally, and never use a
+  remembered number.** It is in the `compatibility_notes` and `engine_config_notes` of
+  `sdk_guide(topic='load', language='<chosen_language>', platform='<detected_platform>',
+  record_count=<a value above the limit>)`; a `record_count` under the limit does not surface it.
+  Re-ask it here rather than copying a figure from this file (INV-080). If the total exceeds the
+  capacity, record `license_guidance_deferred: true`; otherwise leave it unset. Either way,
+  proceed to Step 6.
+
+  ⛔ **Two different Senzing licenses have two different capacities, and confusing them is the
+  recorded failure.** The **built-in** one — active by default, no request needed — is the small
+  figure this comparison needs. The **requestable** evaluation license, obtained via
+  `submit_feedback(category='license_request')`, is far larger and is described in that tool's own
+  description, which you may well have read earlier in the session for another reason. On
+  2026-08-18 the larger figure was attributed to the built-in license here, the comparison passed
+  when it should have failed, `license_guidance_deferred` was left unset, and Module 4's gate — the
+  one thing that would have warned the Bootcamper before they hit the cap mid-load — never fired.
+  ⛔ **Ask the route above; do not reason from the other license's number.**
+
+  ⚠️ **This branch assumes the built-in capacity because nothing has measured the installed
+  license yet, and that is deliberate rather than the INV-244 error.** `license_record_limit` is
+  written only by Module 4's Step 8a gate, which is volume-gated by design, so its absence here
+  means *not yet measured* — not *no custom license*. INV-093 forbids a license prompt at this
+  point, and this step only sets a deferral flag for a later gate to resolve, so assuming the
+  built-in figure is the correct conservative reading. Say so if it matters to the Bootcamper;
+  never present it as a detected value.
+
+⛔ **What this comparison decides.** Leaving `license_guidance_deferred` unset **suppresses**
+Module 4's Step 8a License Key gate — the single volume-gated prompt in the whole bootcamp. Getting
+this comparison wrong therefore removes the warning rather than producing a wrong one, which is why
+the figure has to come from the route above and not from recall.
 
 **The bootcamp does not ask about a Senzing License Key here.** The single, volume-gated License
 Key prompt is presented once — at the start of Data collection (Module 4), after the actual data
