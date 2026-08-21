@@ -1485,10 +1485,15 @@ def dropped_character_warning() -> Optional[str]:
         f"PDF's built-in fonts and were dropped from the page: {shown}. "
         f'First affected passage: "{where}". The PDF was still written and the content is '
         f"otherwise intact, but those characters are GONE from it: check the page before "
-        f"sharing it. To fix: use each entity's verified Latin-script name or alias instead "
-        f"of its non-Latin primary name (especially inside fenced/monospace blocks), and use "
-        f"ASCII connectors (| and v) in ASCII diagrams. Never substitute a guess for a name "
-        f"you have not verified.\n"
+        f"sharing it. Which fix applies depends on what the dropped text WAS. "
+        f"(a) If it NAMES an entity: use that entity's verified Latin-script name or alias "
+        f"instead of its non-Latin primary name, especially inside fenced/monospace blocks -- "
+        f"and never substitute a guess for a name you have not verified. "
+        f"(b) If the dropped text IS the subject rather than a label -- a field value the "
+        f"passage is about, with no Latin-script equivalent to substitute -- do NOT remove it: "
+        f"keep it verbatim and add an ASCII description of it alongside, so the page still "
+        f"carries the meaning. "
+        f"Either way, use ASCII connectors (| and v) in ASCII diagrams.\n"
     )
 
 
