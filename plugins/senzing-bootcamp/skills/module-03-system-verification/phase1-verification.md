@@ -299,7 +299,7 @@ Verify the MCP server can generate a full pipeline script in the chosen language
      demo whose records are hardcoded in the source. For Python those are
      `loading/add_records_loop.py` (reads `INPUT_FILE`) versus `loading/add_records.py`
      (hardcoded records, no file input); every language's set has the same pair, so match on the
-     **shape** — does it open a data file? — never on position in the list.
+     **shape** — does it open a data file? — never on position in the list (INV-267).
    - **The server states this as its own anti-pattern for this workflow**, at severity `error`:
      *"Hardcoded John Doe / TEST / 1001 records"* → *"Records read line-by-line from JSONL"*, and
      *"/opt/senzing/er/testdata/truth-sets/..."* → *"User's input_file"* (returned inline in the

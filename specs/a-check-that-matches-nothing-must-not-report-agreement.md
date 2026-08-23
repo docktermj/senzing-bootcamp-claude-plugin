@@ -128,3 +128,9 @@ it needs no MCP call to resolve.
   (absent rather than invalid to the parser),
   `specs/the-hard-rule-detector-misses-every-rule-not-first-on-its-line.md` (a detector reading
   clean on an incomplete pattern)
+
+## Invariants introduced
+
+- `INV-265` — Any check performed by matching, counting or comparing MUST establish its input is non-empty before reporting a result, and MUST report an empty match as a failed or unrun check rather than as agreement; both sides asserted where two are compared, and a test whose assertion can be satisfied by an empty input carries an explicit anti-vacuity assertion (recorded in `specs/INVARIANTS.md`, group *Generator behavior: rendering, encoding, reporting*, alongside INV-129).
+
+Wording signed off by the maintainer on 2026-08-23 ("all"). Two clauses were added beyond the spec's draft, both because the draft was weaker than what is built: the **rendered-first** clause (the collector is keyed by character and returns early on a repeat, so exempting at report time rather than record time would let an exempt passage consume the slot a genuine later occurrence needs — this is INV-266's mechanism, cited here because the same reasoning produced both), and the explicit naming of the four instances on record, so the rule cannot be re-argued as hypothetical.

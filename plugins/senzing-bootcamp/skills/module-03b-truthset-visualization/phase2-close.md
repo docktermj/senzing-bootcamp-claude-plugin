@@ -24,7 +24,7 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >   ⛔ **Match on `id="tab-<name>"` — that is the marker the identifiers are written with**, and the
 >   set is the six of INV-155 (`tab-graph`, `tab-stats`, `tab-matchkeys`, `tab-features`,
 >   `tab-overlap`, `tab-probe`). ⛔ **A comparison that finds ZERO identifiers on both sides has not
->   passed — it has not run.** On a dry run the first attempt matched `data-tab="…"`, found none in
+>   passed — it has not run (INV-265).** On a dry run the first attempt matched `data-tab="…"`, found none in
 >   either file, and reported "tab sets match: True"; `data-tab` appears **nowhere** in the
 >   generated app. So assert a non-zero count on both sides before comparing them, and treat an
 >   empty match as a broken check rather than agreement — a check that passes by comparing nothing

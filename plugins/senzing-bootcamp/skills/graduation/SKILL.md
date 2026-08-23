@@ -1003,7 +1003,7 @@ the **Markdown**; nothing reads it from the PDF. So do not substitute a name, do
 description, and above all do not edit the marker out of the Markdown to quiet the renderer — four
 files match that exact string and changing it breaks them silently.
 
-⛔ **This exemption is the marker line and nothing else.** The renderer suppresses only the tally
+⛔ **This exemption is the marker line and nothing else (INV-266).** The renderer suppresses only the tally
 entry whose passage *is* that line; a ROBOT FACE anywhere else in the document, and every other
 unrenderable character, still warns and still needs the warning's own guidance. If the warning
 names a dropped character and you cannot place it on the marker line, treat it as a real finding.

@@ -1450,7 +1450,7 @@ _DROP_NAMES_SHOWN = 8
 # A guaranteed warning with no correct response is what teaches that warnings are ignorable,
 # which is the cost this suppresses.
 #
-# ⛔ Scoped to this exact line, deliberately. The character is still DROPPED from the page --
+# ⛔ Scoped to this exact line, deliberately (INV-266). The character is still DROPPED from the page --
 # only the tally entry is skipped -- and a ROBOT FACE anywhere else in the document still
 # warns, because the guard is the passage, not the character. `tests/test_recap_pdf_guard.py`
 # pins both directions.

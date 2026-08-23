@@ -113,3 +113,9 @@ the plugin's own marker convention, so it needs no MCP call to resolve.
   `specs/the-cjk-drop-remedy-assumes-the-non-latin-text-is-a-label-not-the-finding.md` (the two
   remedy branches, neither of which applies to a marker),
   `specs/generators-warn-on-dropped-unencodable-characters.md` (INV-159's origin)
+
+## Invariants introduced
+
+- `INV-266` — An exemption from a generator's dropped-character report MUST be scoped to an identified passage, never to a character; MUST leave the character dropped from the page; MUST be evaluated against the full normalized passage before any excerpt truncation; MUST NOT prevent the same character being reported elsewhere in the document, including when the exempt passage is rendered first; and is admissible only for a plugin-mandated machine-readable marker read from the source rather than the artifact (recorded in `specs/INVARIANTS.md`, group *Generator behavior: rendering, encoding, reporting*, alongside INV-143 and INV-159).
+
+Wording signed off by the maintainer on 2026-08-23 ("all"), as drafted in this spec.

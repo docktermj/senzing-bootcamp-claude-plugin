@@ -29,7 +29,15 @@ generator exempts, so the two cannot drift apart.
 One string serves all three generators: `generate_document_pdf.py` aliases
 `generate_discoveries_pdf.main`, which imports the folding machinery from `generate_recap_pdf.py`.
 
-Source spec: `specs/generated-scenario-marker-is-dropped-from-the-keepsake-pdf.md`.
+Also enforces **INV-266** (an exemption from a generator's dropped-character report is scoped to
+an identified passage, never a character; leaves the character dropped from the page; is evaluated
+before excerpt truncation; does not prevent the same character being reported elsewhere, including
+when the exempt passage is rendered first; and is admissible only for a plugin-mandated
+machine-readable marker read from the source rather than the artifact), which names this file.
+`TheExemptSetIsTheReviewedOne` is the half that keeps the exemption from widening.
+
+Source spec: `specs/generated-scenario-marker-is-dropped-from-the-keepsake-pdf.md`;
+INV-266 from `specs/a-renderer-warning-exemption-must-be-scoped-to-a-passage.md`.
 
 Run:  python3 -m unittest discover -s tests
 """
@@ -188,6 +196,61 @@ class TheMarkerStringIsUnchanged(unittest.TestCase):
             MARKER, author.read_text(encoding="utf-8"),
             "the module that WRITES the marker no longer contains it, so every reader "
             "branches on a string nothing produces")
+
+
+class TheExemptSetIsTheReviewedOne(unittest.TestCase):
+    """INV-266: an exemption is admissible only for a plugin-mandated marker, argued for.
+
+    The exemption mechanism is a hole in the dropped-character report by construction, and that
+    report is the only thing between a Bootcamper and silent content loss on the artifact they
+    frame. So the count is pinned: a second exemption fails here until someone raises this
+    number deliberately, which is the review step.
+
+    ⛔ This is the same deliberate friction the `search_docs` prose exemption uses, and for the
+    same reason — a self-declared exemption is indistinguishable from silencing a real finding.
+    """
+
+    #: How many passages the generator may exempt. Raising this is the review.
+    REVIEWED_EXEMPT_PASSAGES = 1
+
+    def setUp(self):
+        self.gen = load("generate_recap_pdf")
+
+    def test_exactly_one_passage_is_exempt(self):
+        exempt = self.gen._EXPECTED_DROP_PASSAGE
+        self.assertIsInstance(
+            exempt, str,
+            "`_EXPECTED_DROP_PASSAGE` is no longer a single string (%r). A collection means the "
+            "exemption widened, and INV-266 makes each one admissible only for a "
+            "plugin-mandated marker read from the source — raise "
+            "REVIEWED_EXEMPT_PASSAGES here as part of arguing for the new one" % type(exempt))
+        self.assertEqual(
+            self.REVIEWED_EXEMPT_PASSAGES, 1,
+            "the reviewed exempt count was changed without this assertion being updated")
+
+    def test_a_second_plugin_marker_is_not_silently_exempt(self):
+        """A plausible next candidate must NOT already be covered."""
+        self.gen.reset_dropped_characters()
+        try:
+            other = "> %s Bootcamp-generated data scenario" % ROBOT_FACE
+            self.gen._fold_to_latin1(other)
+            self.assertIsNotNone(
+                self.gen.dropped_character_warning(),
+                "a marker line that is NOT the reviewed one was exempted. The exemption must "
+                "match the identified passage, so a second plugin marker has to be argued for "
+                "rather than inheriting the first one's waiver (INV-266)")
+        finally:
+            self.gen.reset_dropped_characters()
+
+    def test_the_generator_cites_the_invariant_beside_its_constant(self):
+        """INV-183: the rule must be lookup-able where the exemption is implemented."""
+        source = (SCRIPTS / "generate_recap_pdf.py").read_text(encoding="utf-8")
+        block = source[source.index("_EXPECTED_DROP_PASSAGE") - 2000:
+                       source.index("_EXPECTED_DROP_PASSAGE") + 400]
+        self.assertIn(
+            "INV-266", block,
+            "the exemption's implementation does not cite INV-266, so a later editor widening "
+            "it cannot look up what constrains it")
 
 
 class GraduationSaysTheDropNeedsNoAction(unittest.TestCase):

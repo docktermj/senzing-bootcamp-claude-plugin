@@ -116,3 +116,9 @@ engine-creating). What is missing is a plugin-side rule, so this needs no MCP ca
   created the second site and recorded "establishes no invariant"),
   `specs/scaffold-snippet-count-and-group-list-are-stale.md` (the count that moved),
   `specs/download-resource-returns-a-url-not-the-specification.md` (INV-234's origin)
+
+## Invariants introduced
+
+- `INV-267` — Where a step must choose one item from an MCP tool's listing response, the selection criterion MUST be a testable property of the item and MUST NOT be its position, the list's length, or its filename; the step MUST name that property and at least one listed item the property excludes wherever a plausible near-miss exists; a quoted count or group list is illustration only and MUST be marked as such (recorded in `specs/INVARIANTS.md`, group *MCP sourcing and tool contracts*, alongside INV-160, INV-212 and INV-234).
+
+Wording signed off by the maintainer on 2026-08-23 ("all"). The draft was extended with the **"creates an engine" cautionary example**, because that phrase — the one the earlier spec `a-step-names-what-to-select-without-naming-the-route` asked Module 2 Step 9 to use — is itself not a property: both `initialization/engine_priming.py` and `initialization/abstract_factory.py` call `create_engine()`. Recording it in the invariant is what stops the same non-criterion being reached for again.

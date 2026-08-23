@@ -1470,7 +1470,8 @@ here is what moves that failure back to the step designed to catch it.
 This constrains **which class the generated check touches**, not where the code comes from: keep
 using `generate_scaffold(workflow='initialize')` (INV-080). Do not hand-write it.
 
-⛔ **The response is a LISTING and nothing in it marks which snippet does this — pick by shape.**
+⛔ **The response is a LISTING and nothing in it marks which snippet does this — pick by shape
+(INV-267).**
 On server 1.33.0 (verified 2026-08-23) `generate_scaffold(language='python', workflow='initialize')`
 returned **14** snippets with `content` absent — only `file_path`, `raw_url`, `size_bytes` and
 `line_count` — and no field flagging any of them as engine-creating. So:
@@ -1482,7 +1483,8 @@ returned **14** snippets with `content` absent — only `file_path`, `raw_url`, 
   `create_configmanager()`, `create_diagnostic()` and `create_product()` and then never uses any of
   them — that satisfies "creates an engine" and **not** the ⛔ above, which requires the check to
   *use* one.
-- ⛔ **A count or a position in the listing is NOT the selector**, and neither is the filename. The
+- ⛔ **A count or a position in the listing is NOT the selector (INV-267)**, and neither is the
+  filename. The
   snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
   `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
   the body invoke an engine method? — and fetch a candidate's `raw_url` to check rather than
