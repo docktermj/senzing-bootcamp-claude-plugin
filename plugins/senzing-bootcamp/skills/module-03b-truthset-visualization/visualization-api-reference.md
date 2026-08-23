@@ -1100,6 +1100,15 @@ guess available is worse than the handle you threw away. Recording it costs one 
 | POSIX shells (Linux, macOS, Git Bash, WSL) | `$!` immediately after backgrounding with `&` |
 | PowerShell (Windows) | `$proc = Start-Process … -PassThru`, then `$proc.Id` |
 
+⛔ **In a POSIX shell, `$!` names the server only when the server is the *sole* backgrounded
+command on its line.** Written `A && B &` — the shape any prerequisite invites, and this bootcamp
+requires the project env sourced before anything that touches the Senzing library — the `&` binds
+to the whole `&&` list: the shell backgrounds a **subshell**, `$!` is that subshell, and the server
+is its child with a different pid. Source the env as its own statement, then background only the
+server. Measured on bash: composed with `&&`, `kill <recorded pid>` exits 0, the subshell dies, and
+the port stays bound by the still-running server. PowerShell is unaffected — `-PassThru` returns
+the process object, not a shell job.
+
 The port is already recorded (INV-172) — record the pid in the same checkpoint object, so a resumed
 session can still stop what a previous one started.
 
@@ -1113,8 +1122,13 @@ principle for this bootcamp: the server is written in the Bootcamper's chosen la
 there is no script name to match on in general, and a second bootcamp running in another directory
 would match too.
 
-**Terminate by pid; fall back to the port, never to the name.** When the recorded pid is missing —
-a session resumed across the change, or a server someone else started — look the listener up by the
+**Terminate by pid; fall back to the port, never to the name.** The fallback covers **two** cases,
+and only the first is obvious: the recorded pid is *missing* (a session resumed across the change, or
+a server someone else started), or the recorded pid is *wrong* — it terminated successfully and the
+port is still bound. A wrong pid is the worse of the two precisely because it presents as presence:
+nothing looks like it needs a fallback. ⛔ **So the exit condition is the port, never the kill's
+status** — poll the port after signaling, and if it still answers, run the port lookup as though no
+pid had been recorded at all. Look the listener up by the
 port that *is* recorded: `lsof -ti:<port>` (Linux/macOS) or `Get-NetTCPConnection -LocalPort <port> |
 Select-Object -ExpandProperty OwningProcess` (PowerShell). The port is bound by exactly the process
 serving it, which is the property the command line lacks.

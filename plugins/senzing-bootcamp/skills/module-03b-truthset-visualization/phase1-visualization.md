@@ -338,6 +338,9 @@ Start the server as a background process you can stop later in Step 4 (Cleanup),
 records on port 8080. For Python:
 
 ```bash
+# Source the project env in the CURRENT shell, as its own statement (see the hazard below).
+. src/scripts/senzing-env.sh
+
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
   --title "Senzing Truth Set" \
@@ -345,6 +348,22 @@ python3 <viz-server-path> \
   --port 8080 &
 VIZ_PID=$!
 ```
+
+⛔ **Source the env on its own line. If the launch is written `A && B &`, `$!` is the subshell, not
+the server.** `&` binds to the whole `&&` list, so the shell backgrounds a subshell and the server
+becomes its child with a different pid — and Step 2 requires the env sourced before anything that
+touches the Senzing library, which makes `. src/scripts/senzing-env.sh && python3 <server> … &` the
+obvious way to write it. Measured on bash: composed that way the recorded pid and the server's pid
+differ by two, `kill <recorded pid>` **exits 0**, the subshell disappears, and the port stays bound
+by the still-running server. Written as above, `$!` and the server's pid are the same number.
+
+⛔ **Record the pid only from a line whose sole backgrounded command IS the server.** A silently
+wrong pid is worse here than a missing one: `phase2-close.md`'s port-based fallback triggers on
+**absence**, and this failure presents as **presence** — a handle that looks recorded, kills
+something, and reports success.
+
+The PowerShell counterpart does not have this hazard: `Start-Process … -PassThru` returns the
+process object itself, so `$proc.Id` is the server whatever preceded it on the line.
 
 For any other language, start your server's equivalent. It should report a URL like
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the

@@ -95,8 +95,13 @@ permanent. Work through 1–4 in order; do not hoist the purge.
    lifetime" → "Identifying the server process":
    - Send a termination signal to the **pid recorded in Phase 1 (2.3)**, in
      `truthset_visualization.checks.web_service.pid`.
-   - If no pid was recorded (a session resumed across older progress state), find the listener by
-     the recorded port instead: `lsof -ti:<port>` on Linux/macOS,
+   - **Fall back to the port whenever the pid does not stop the server — a missing pid is only
+     one of the two cases.** The other is a pid that *is* recorded, whose kill **exits 0**, and
+     whose port stays bound: the recorded value was a subshell rather than the server (see
+     `phase1-visualization.md` 2.3). Treat "the recorded pid is gone but the port still answers"
+     exactly like "no pid was recorded" — the same port lookup resolves both, and this is the case
+     that actually occurred on a dry run. Find the listener by
+     the recorded port: `lsof -ti:<port>` on Linux/macOS,
      `Get-NetTCPConnection -LocalPort <port> | Select-Object -ExpandProperty OwningProcess` in
      PowerShell.
    - ⛔ **On the `docker` path both of those are host-shell routes and the container has neither
