@@ -60,8 +60,8 @@ replies.
 ## What to teach (not Senzing-proprietary, plain language — still MCP-sourced)
 
 ⛔ **"Not Senzing-proprietary" describes where the IDEA comes from. It is never an exemption from
-the pre-response checklist.** Everything below is an entity-resolution technical detail, so
-`ground-rules.md`'s MCP-first rule applies to it exactly as it applies to the Senzing-specific
+the pre-response checklist (INV-080).** Everything below is an entity-resolution technical detail,
+so `ground-rules.md`'s MCP-first rule applies to it exactly as it applies to the Senzing-specific
 subsection beneath: a reply covering blocking, scoring, classification or clustering requires an
 MCP call **on that turn**. The two labels sit on different axes — *attribution* (is this
 proprietary to Senzing?) versus *sourcing* (is this a claim about how entity resolution works?) —
@@ -71,8 +71,8 @@ that at face value presents the pipeline from training data, and it will usually
 right, which is exactly why nobody notices when it is not.
 
 **Nothing is lost by requiring the call:** the material is fully retrievable, and the two queries
-that reach it are in the suggested list above (verified on server 1.33.0, docs index 2026-08-20
-17:33 UTC, 2026-08-23). One caveat on reading those results: for both queries the on-topic section
+that reach it are in the suggested list above — the requirement travels with its route, per
+INV-212 (verified on server 1.33.0, docs index 2026-08-20 17:33 UTC, 2026-08-23). One caveat on reading those results: for both queries the on-topic section
 is **not** the top hit — a Verisk case study and other marketing pages outrank it — so read down
 the list for *"What Is Entity Resolution? How It Works & Why It Matters."* rather than presenting
 the first row.
