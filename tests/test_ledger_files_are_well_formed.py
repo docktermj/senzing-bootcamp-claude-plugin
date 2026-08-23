@@ -152,6 +152,87 @@ class EveryHeadingStartsALine(unittest.TestCase):
 # which entries are specs.
 
 
+class NoEntryIsSwallowedByTheFormatComment(unittest.TestCase):
+    """A whole REGION of the ledger commented out -- the same blind spot, one level up.
+
+    Both ledgers open their entry area with `<!-- New entries go directly below this line.
+    Format:`, a template, and `-->`. Taken literally, "directly below this line" points INSIDE
+    the comment -- and on 2026-08-22 that is where every entry prepended to
+    `specs/IMPLEMENTED.md` since the file was created had gone: the comment opened at line 33
+    and closed at line 293, with the format template drifted to the *end* of the span, so
+    **29 real entries** -- all of 2026-08-21's work and four `production-readiness-audit-*`
+    records -- sat inside it and rendered as nothing.
+
+    ⛔ **Every existing guard passed, including this file's siblings, and so did the full
+    suite.** An HTML comment does not move a heading off its line, so `(?m)^## (\\S+)$` finds
+    all 456 headings and `grep -c '^## '` agrees; the two-parse cross-check agrees too, because
+    both parses are line-based and neither models comments. `list_specs.py` also reads lines, so
+    the open-set arithmetic was correct throughout. Nothing in the repo distinguished
+    "recorded" from "recorded where no reader will ever see it".
+
+    `specs/DECLINED.md` had the intended shape the whole time -- comment 33-42, template only --
+    which is what identified `IMPLEMENTED.md` as the file that had drifted rather than the
+    convention being ambiguous. The repair was a pure move of the template and `-->` above the
+    entries; the assertion below is what keeps the next prepend from landing inside again.
+    """
+
+    #: The comment the ledgers use to document their entry format.
+    OPENER = "<!-- New entries go directly below this line. Format:"
+
+    def _comment_span(self, path):
+        lines = path.read_text(encoding="utf-8").split("\n")
+        try:
+            opened = next(i for i, l in enumerate(lines) if l.startswith(self.OPENER))
+        except StopIteration:
+            self.fail("%s no longer carries the format comment this guard reads; either the "
+                      "convention changed or the header was rewritten" % path.name)
+        rest = lines[opened + 1:]
+        for offset, line in enumerate(rest):
+            if line.rstrip().endswith("-->"):
+                return lines, opened, opened + 1 + offset
+        self.fail("%s opens a format comment at line %d that is never terminated, so the rest "
+                  "of the file is commented out" % (path.name, opened + 1))
+
+    def test_the_format_comment_encloses_nothing_but_its_template(self):
+        for p in LEDGERS:
+            with self.subTest(file=p.name):
+                lines, opened, closed = self._comment_span(p)
+                swallowed = [
+                    "%s:%d" % (p.name, i + 1)
+                    for i, line in enumerate(lines[opened:closed], start=opened)
+                    if line.startswith("## ") and PLACEHOLDER not in line]
+                self.assertEqual(
+                    [], swallowed,
+                    "%d real entry heading(s) sit INSIDE %s's format comment, so they render as "
+                    "nothing while every line-based guard still counts them: %s. The comment "
+                    "must contain only its `## %s` template — move the template and `-->` above "
+                    "the entries" % (len(swallowed), p.name, swallowed[:5], PLACEHOLDER))
+
+    def test_the_comment_is_short_enough_to_be_a_template(self):
+        """A belt-and-braces bound: a template is ~10 lines, not ~260."""
+        for p in LEDGERS:
+            with self.subTest(file=p.name):
+                _, opened, closed = self._comment_span(p)
+                span = closed - opened + 1
+                self.assertLess(
+                    span, 30,
+                    "%s's format comment spans %d lines. It is meant to hold one `## %s` "
+                    "template; at this size it has swallowed content" % (p.name, span,
+                                                                        PLACEHOLDER))
+
+    def test_entries_exist_outside_the_comment(self):
+        """Anti-vacuity: the checks above pass trivially on a ledger with no entries at all."""
+        for p in LEDGERS:
+            with self.subTest(file=p.name):
+                lines, _, closed = self._comment_span(p)
+                after = [l for l in lines[closed + 1:]
+                         if l.startswith("## ") and PLACEHOLDER not in l]
+                self.assertGreater(
+                    len(after), 0,
+                    "%s has no entry heading after its format comment; this guard is inspecting "
+                    "an empty set" % p.name)
+
+
 class TheInventoryArithmeticHolds(unittest.TestCase):
     """`list_specs.py` is what caught the corruption. Make it a test, not a human comparison."""
 
