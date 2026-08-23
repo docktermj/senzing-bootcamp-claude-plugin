@@ -459,7 +459,8 @@ Until 2026-08-23 this note said the prose form *"does NOT work"*, verified on **
 2026-08-12** where the array form advanced. Re-measured on **server 1.33.0, 2026-08-23**: the
 object-keyed prose payload **also advances**, returning `status: "ok"` at step 2 with no
 `ENFORCEMENT NOTICE` and no `grammar_violation_count`. So the server now accepts both shapes.
-⛔ **This changes nothing about which to send.** Acceptance is not a contract and can be withdrawn;
+⛔ **This changes nothing about which to send (INV-136 — the guide calls a tool as its live schema
+states, not as the server happens to tolerate).** Acceptance is not a contract and can be withdrawn;
 the declared schema is the contract, and it still says array. What the change does show is that a
 caution phrased as *"that one fails"* expires while a caution phrased as *"the schema declares this"*
 does not — which is why the labels above name the contract rather than the outcome.
