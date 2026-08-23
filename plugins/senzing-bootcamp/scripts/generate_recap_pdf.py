@@ -1437,11 +1437,44 @@ _DROP_EXCERPT_CHARS = 60
 _DROP_NAMES_SHOWN = 8
 
 
+# The one dropped character that is expected, harmless, and has no available remedy.
+#
+# Module 1 Step 11 writes `> \U0001f916 Bootcamp-generated business case` under the title of
+# `docs/business_problem.md` on every run that accepts the Business Case Offer -- the common
+# Core path -- and graduation Step 5b renders that file as a keepsake PDF. ROBOT FACE has no
+# Latin-1 core-font glyph, so it is dropped, and NEITHER branch of the warning's guidance
+# applies: the marker does not name an entity, and it is not the subject of its passage. It is
+# a machine-readable flag that four shipped files match on, read from the MARKDOWN and never
+# from the PDF, so its loss from the page costs nothing and there is no correct action to take.
+#
+# A guaranteed warning with no correct response is what teaches that warnings are ignorable,
+# which is the cost this suppresses.
+#
+# ⛔ Scoped to this exact line, deliberately. The character is still DROPPED from the page --
+# only the tally entry is skipped -- and a ROBOT FACE anywhere else in the document still
+# warns, because the guard is the passage, not the character. `tests/test_recap_pdf_guard.py`
+# pins both directions.
+_EXPECTED_DROP_PASSAGE = "> \U0001f916 Bootcamp-generated business case"
+_EXPECTED_DROP_CHAR = "\U0001f916"
+
+
+def _is_expected_marker_drop(ch: str, excerpt: str) -> bool:
+    """True only for ROBOT FACE in the generated-scenario marker line itself."""
+    if ch != _EXPECTED_DROP_CHAR:
+        return False
+    return excerpt.startswith(_EXPECTED_DROP_PASSAGE)
+
+
 def _record_dropped_character(ch: str, context: str) -> None:
     """Remember one character `_fold_to_latin1` had to drop, and where it was."""
     if ch in _DROPPED_CHARACTERS:
         return
     excerpt = re.sub(r"\s+", " ", context).strip()
+    # Checked BEFORE truncation, against the full normalized passage: the marker is 45
+    # characters and _DROP_EXCERPT_CHARS is 60, so truncation would not currently reach it,
+    # but a shorter excerpt cap later must not silently widen what this exempts.
+    if _is_expected_marker_drop(ch, excerpt):
+        return
     if len(excerpt) > _DROP_EXCERPT_CHARS:
         excerpt = excerpt[:_DROP_EXCERPT_CHARS].rstrip() + "..."
     _DROPPED_CHARACTERS[ch] = excerpt

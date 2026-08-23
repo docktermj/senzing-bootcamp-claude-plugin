@@ -993,6 +993,21 @@ Character handling is unchanged from the discoveries path — the renderer repor
 had to drop (INV-143/INV-159). This step must not become a route that bypasses that report: if it
 names dropped characters, repeat them in the warning rather than only in the PDF.
 
+⚠️ **One exception, and it needs no action: the generated-scenario marker's ROBOT FACE.** When
+`docs/business_problem.md` carries `> 🤖 Bootcamp-generated business case` — Module 1 Step 11
+writes it on every run that accepts the Business Case Offer, which is the common Core path — the
+emoji cannot be set in the PDF's Latin-1 core fonts and is dropped from that line. **That loss is
+expected and harmless.** The marker is a machine-readable flag for the plugin's own branches
+(Module 4 Step 2, Module 6 Phase C step 13, Module 7 step 25a), every one of which reads it from
+the **Markdown**; nothing reads it from the PDF. So do not substitute a name, do not add an ASCII
+description, and above all do not edit the marker out of the Markdown to quiet the renderer — four
+files match that exact string and changing it breaks them silently.
+
+⛔ **This exemption is the marker line and nothing else.** The renderer suppresses only the tally
+entry whose passage *is* that line; a ROBOT FACE anywhere else in the document, and every other
+unrenderable character, still warns and still needs the warning's own guidance. If the warning
+names a dropped character and you cannot place it on the marker line, treat it as a real finding.
+
 ## Step 6: Save the revisit/resume bundle
 
 Silently preserve everything a returning bootcamper needs to pick the bootcamp back up — so
