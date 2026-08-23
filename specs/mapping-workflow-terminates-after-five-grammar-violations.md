@@ -79,3 +79,42 @@ reader can re-check whether the limit still applies.
   terminates") is the server's own wording, not an inference.
 - Upstream: not applicable — this is server behavior the plugin should document, not a server defect.
 - Related specs: `specs/a-step-names-what-to-select-without-naming-the-route.md`
+
+## Deviations from this spec, and why (2026-08-23)
+
+⛔ **The spec's central claim about the counter is false on the current server, and the shipped
+text says the opposite of what the spec asked for.**
+
+The spec states the count is *"cumulative and does not reset"* on a subsequent valid advance, and
+frames the hazard as "five cumulative mistakes across a multi-source run". Re-run end to end
+against **server 1.33.0, 2026-08-23**, echoing the returned `state` verbatim at every call:
+
+1. A step-3-shaped payload sent at step 2 → `step2_missing_plan_key`, *"This is grammar-impossible
+   advance **1** of 5 before this workflow terminates"*, and `grammar_violation_count: 1` in the
+   returned `state` (alongside `last_advance_hash` and `dup_advance_count: 1`, two fields the spec
+   does not mention).
+2. The next **valid** advance (a well-formed step-2 `master_schemas` payload) succeeded, and the
+   returned `state` **omitted `grammar_violation_count` entirely.**
+3. A second malformed payload, now at step 3 → `step3_missing_schema_mappings`, and
+   *"grammar-impossible advance **1** of 5"* again, with `grammar_violation_count: 1` — **not 2.**
+
+So the counter does not survive a successful advance. From the caller's side — which is the only
+side that exists, since `state` is opaque and must be echoed verbatim — it counts **consecutive**
+failures. What shipped says that, with the sequence dated.
+
+**Why this mattered rather than being a wording nit:** implementing the spec faithfully would have
+written a false Senzing fact into the plugin (INV-080) with a spec file making it look reviewed,
+and it would have *overstated* the hazard — losing a run needs five misses in a row, not five
+spread across a multi-source session. The budget itself (5, and the enforcement notice's wording)
+is confirmed exactly as the spec reported it.
+
+⚠️ **One claim about mechanism was deliberately NOT made.** Whether the server resets a counter or
+simply rebuilds `state` per step and omits fields not set on that call is indistinguishable from
+the client, so the text says the effect and says the mechanism is not observable, rather than
+picking one.
+
+**Established beyond the spec, and shipped because it bounds what a rejection proves:** step 1's
+prose `ADVANCE FORMAT` shows `profile_summary` as an object keyed by schema name while its own
+embedded schema declares an **array** — and the object form advanced cleanly with `status: ok` and
+no enforcement notice. So a shape the schema does not describe is not necessarily a violation, and
+a rejection is evidence about that payload rather than a general map of what the tool tolerates.

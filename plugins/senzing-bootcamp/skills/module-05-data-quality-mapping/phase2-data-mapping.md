@@ -114,9 +114,10 @@ scripts are a later porting phase: place files directly per the contract above f
 
 ## Calling `mapping_workflow` correctly (⛔ read before step 8)
 
-Verified against the live tool schema on 2026-07-26. Three details the workflow **cannot run
-without** — each one was wrong or missing here before, and each fails at the first call rather than
-degrading.
+Verified against the live tool schema on 2026-07-26; rule 4 added and re-verified on server
+1.33.0, 2026-08-23. Rules 1-3 are details the workflow **cannot run without** — each one was wrong
+or missing here before, and each fails at the first call rather than degrading. Rule 4 is what a
+mistake **costs**.
 
 1. ⛔ **`start` requires BOTH `file_paths` and `data.workspace_dir`.** The tool's own contract:
    "The call WILL FAIL without both", and "do NOT assume `/tmp` exists". Pass the project-local
@@ -143,6 +144,35 @@ degrading.
    opaque `state` object; pass it back exactly, never reconstructed from memory or from this
    bootcamp's own checkpoint file. (The checkpoint above is for *bootcamper-facing resume*, not a
    substitute for the server's state.) If the state is lost, restart with `action='start'`.
+
+4. ⛔ **A malformed advance costs one of five, and five ends the run.** A payload the published
+   advance schema forbids is rejected with an `ENFORCEMENT NOTICE` that names a machine-readable
+   reason code — `step2_missing_plan_key`, `step3_missing_schema_mappings` — and states the budget
+   in the server's own words: *"This is grammar-impossible advance N of 5 before this workflow
+   terminates."* The count comes back as `grammar_violation_count` in the returned `state`.
+
+   **A successful advance clears it.** Verified on server **1.33.0, 2026-08-23** by reproducing the
+   whole sequence: a bad payload at step 2 returned *"advance 1 of 5"* and
+   `grammar_violation_count: 1`; the next **valid** advance returned a `state` with the field
+   **absent**; a second bad payload, at step 3, reported *"advance 1 of 5"* again — not 2. So from
+   the caller's side it counts **consecutive** failures, not failures per run. (Whether the server
+   resets a counter or simply rebuilds `state` per step is not observable from here, and the effect
+   is the same either way, because rule 3 requires echoing the returned `state` verbatim.)
+
+   ⛔ **On a rejection, re-read the response's `advance_schema` and match it field for field —
+   do not retry a variant.** The rejection carries the exact schema for the step you are advancing
+   *from*; a second guess spends a second violation, and five in a row ends the workflow. This
+   module runs one workflow **per source**, so the budget is per source rather than per module — but
+   because the count resets, losing a run needs five consecutive misses, not five across the
+   session.
+
+   ⚠️ **A rejection is evidence about that payload, never a general map of what the tool
+   tolerates.** Not every payload the published schema fails to describe is refused — some are
+   accepted with `status: ok` and no notice at all (observed on the same server and date). So do
+   not infer from one enforcement notice which other shapes are safe, and do not infer from a
+   silent acceptance that the schema sanctions what you sent. ⛔ **Follow each step's stated shape
+   regardless** — at step 1 that means the **array** form of `profile_summary`, per the step-1
+   caution later in this file.
 
 **If a step's guidance arrives truncated mid-sentence, suspect the client read cap before the
 server.** The tool embeds each step's advance schema verbatim in `instructions` and keeps any single
