@@ -118,11 +118,28 @@ class TheOverviewHasNoUngovernedBullet(unittest.TestCase):
         )
 
     def test_it_keeps_the_fresh_bootcamp_caveat(self):
-        """The reduced forms are unreachable on a fresh run; saying so prevents a false bug."""
+        """The reduced forms are unreachable on a fresh run; saying so prevents a false bug.
+
+        ⚠️ **This assertion used to accept `all ten` as an alternative, and that made it a guard
+        that punished its own repair.** The overview's bullet count went stale — the row said
+        "all ten" over a list of eleven — and removing the literal per
+        `specs/overview-bullet-count-is-stale-after-the-note-bullet.md` failed this test, because
+        the surviving alternative, `correct rather than an oversight`, straddles a line break and
+        `.{0,120}` does not cross newlines without `re.S`. So the only branch that could match was
+        the stale count itself.
+
+        Fixed both halves: the count is no longer an accepted spelling (blessing it here would
+        let it back in past `tests/test_overview_bullets_are_not_counted.py`), and the match runs
+        on whitespace-flattened text so the caveat's wrapping is not load-bearing. What is
+        asserted is the caveat's *content* — a fresh run has no preset, so the unreduced overview
+        is correct — which is what the test was always for.
+        """
+        flat = re.sub(r"\s+", " ", self.text)
         self.assertRegex(
-            self.text, r"(?i)fresh.{0,120}(all ten|correct rather than an oversight)",
-            "step 3 must keep the caveat that a fresh bootcamp has no preset, so showing all ten "
-            "is correct — otherwise the next audit reads it as a bug",
+            flat, r"(?i)\*\*fresh\*\* bootcamp no preset exists yet,.{0,120}"
+                  r"correct rather than an oversight",
+            "step 3 must keep the caveat that a fresh bootcamp has no preset, so the full "
+            "overview is correct — otherwise the next audit reads it as a bug",
         )
 
 

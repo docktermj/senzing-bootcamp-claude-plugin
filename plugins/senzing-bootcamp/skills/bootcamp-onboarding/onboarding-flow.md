@@ -157,11 +157,11 @@ so there is no bullet whose behavior under a preset is left to guesswork:
 |---|---|
 | `minimal` | the **module list** plus the **how-long-it-takes** bullet, and nothing else — orientation only |
 | `concise` | all bullets except *guided discovery* and *unfamiliar terms*, each trimmed to one line |
-| `standard` / `detailed` | all ten, as written |
+| `standard` / `detailed` | every bullet below, as written |
 
 The split is orientation versus encouragement: the module list and the resume-and-time facts are
 what a bootcamper needs to navigate, and the rest is framing an expert moving fast does not. On a
-**fresh** bootcamp no preset exists yet, so all ten are shown and that is correct rather than an
+**fresh** bootcamp no preset exists yet, so every bullet is shown and that is correct rather than an
 oversight (INV-075/INV-133) — the reduced forms are reachable only on a resumed run or a pre-seeded
 file.
 

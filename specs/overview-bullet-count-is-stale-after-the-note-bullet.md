@@ -67,3 +67,23 @@ Apply the same treatment to any other place that counts this list.
 - MCP re-check: n/a (no Senzing fact)
 - Upstream: not applicable
 - Related specs: none
+
+## Deviations from this spec, and why (2026-08-23)
+
+One file was changed that this spec's `## Affected files` does not list, and it had to be:
+
+- **`tests/test_minimal_verbosity_scope.py`** — its `test_it_keeps_the_fresh_bootcamp_caveat`
+  asserted `(?i)fresh.{0,120}(all ten|correct rather than an oversight)`. Removing the literal
+  `all ten` as this spec requires made that test **fail**, because the surviving alternative
+  straddles a line break and `.{0,120}` does not cross a newline without `re.S` — so the only
+  branch that could match was the stale count itself. The guard punished its own repair, the
+  pattern `specs/guards-pinning-a-dated-negative-outlive-it.md` describes.
+
+  Repaired rather than relaxed: the count is no longer an accepted spelling (blessing it there
+  would readmit it past this spec's new guard), and the match now runs on whitespace-flattened
+  text so the caveat's line wrapping is not load-bearing. What it asserts is unchanged — that
+  step 3 keeps the caveat that a fresh run has no preset — and it was re-verified to still fail
+  when the caveat is deleted.
+
+Nothing else differed. The four acceptance criteria were met as written, and the `minimal` and
+`concise` rows are untouched (the shipped file's diff is 2 insertions / 2 deletions).
