@@ -1484,8 +1484,7 @@ returned **14** snippets with `content` absent — only `file_path`, `raw_url`, 
   them — that satisfies "creates an engine" and **not** the ⛔ above, which requires the check to
   *use* one.
 - ⛔ **A count or a position in the listing is NOT the selector (INV-267)**, and neither is the
-  filename. The
-  snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
+  filename. The snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
   `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
   the body invoke an engine method? — and fetch a candidate's `raw_url` to check rather than
   inferring from its name.
