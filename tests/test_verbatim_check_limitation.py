@@ -362,13 +362,35 @@ class Step1ProfilerLimitationsAreDocumentedAtTheirSteps(unittest.TestCase):
         self.mapping = self._flatten(raw[raw.index("### 11. Map"):raw.index("### 12.")])
         self.all = flat(PHASE2)
 
-    def test_the_multi_file_output_collision_is_at_the_profile_step(self):
-        self.assertRegex(self.profile, r"(?i)same output path",
-                         "the colliding -o path is not documented where the profiler runs")
-        self.assertRegex(self.profile, r"(?i)only the second file's profile survives",
-                         "the consequence — silent loss of the first profile — is not stated")
-        self.assertRegex(self.profile, r"profile_report_<stem>\.md",
-                         "the distinct-path workaround is not given")
+    def test_the_conditional_profile_report_filename_is_at_the_profile_step(self):
+        """⚠️ **Rewritten 2026-08-23: this asserted a limitation that no longer exists.**
+
+        It required the profile step to document a shared `-o` path, "only the second file's
+        profile survives", and a concatenate-them workaround. On server 1.33.0 a multi-file
+        `mapping_workflow(action='start')` emits one profiler invocation per input, each writing
+        `profile_report_<stem>.md` — so the collision is fixed, and the workaround this test
+        demanded would **reintroduce** it by collapsing the per-file reports back into one.
+
+        A guard that pins a fixed upstream defect keeps the workaround shipped. What the profile
+        step must document now is the conditional filename, which is what this asserts. See
+        `specs/profile-report-filename-is-conditional-on-file-count.md`.
+        """
+        self.assertRegex(
+            self.profile, r"(?i)filename depends on how many files you pass",
+            "the profile step does not document that the report's name is conditional on the "
+            "input count, which is the current behavior a reader needs")
+        self.assertRegex(
+            self.profile, r"profile_report_<stem>\.md",
+            "the suffixed filename a multi-file start produces is not named at the step where "
+            "the profiler runs")
+        self.assertNotRegex(
+            self.profile, r"(?i)only the second file's profile survives",
+            "the retired collision claim is back at the profile step; on 1.33.0 the server "
+            "writes one report per input")
+        self.assertNotRegex(
+            self.profile, r"(?i)profile_report_<stem>\.md`\) and\s+concatenate",
+            "the concatenate workaround is back — it recreates the single-schema file the "
+            "retired entry existed to prevent")
 
     def test_the_headerless_csv_limitation_is_at_the_profile_step(self):
         self.assertRegex(self.profile, r"(?i)headerless CSV")

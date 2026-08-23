@@ -125,3 +125,39 @@ from this run (a dry run does not call `submit_feedback`).
 - Upstream: not applicable — the plugin-side defect is a stale note; the residual server prose/commands
   mismatch was not filed (a dry run does not call `submit_feedback`)
 - Related specs: `specs/module-05-shared-workspace-transient-filename-collision.md` (INV-177's origin)
+
+## Deviations from this spec, and why (2026-08-23)
+
+The spec was implemented as written; three things beyond its `## Affected files` had to change, and
+one of its own claims was re-verified rather than trusted.
+
+**1. Two existing guards had to be updated, and one of them pinned the retired defect.**
+
+- `tests/test_verbatim_check_limitation.py` →
+  `test_the_multi_file_output_collision_is_at_the_profile_step` **required** the profile step to
+  document a shared `-o` path, *"only the second file's profile survives"*, and the
+  concatenate-them workaround. Retiring the limitation failed it. ⛔ **A guard that pins a fixed
+  upstream defect keeps its workaround shipped** — and this workaround is the one that
+  *reintroduces* the collision. Rewritten to assert the conditional filename instead, plus two
+  negative assertions so the retired claim and the concatenate instruction cannot come back.
+- `tests/test_invariant_enforcer_citations.py` → `EXPECTED_PAIRS` 80 → 81, because INV-177's
+  correction note names its enforcing test. Re-derived by running the extractor and confirming
+  the new `(INV-177, test_profile_report_relocation_covers_both_filenames.py)` pair, not relaxed.
+
+**2. A list-nesting defect I introduced, caught and fixed.** The first version of the relocation
+sub-bullet was inserted mid-parent-bullet, leaving *"Mapping working data (…) → `data/mapping/`"*
+stranded inside the new sub-bullet and then dedenting. No test caught it — it renders wrongly
+rather than failing — so it is recorded here: the sub-bullet now follows the parent bullet's full
+text.
+
+**3. The transient-artifacts list gained the suffixed form too**, which the spec's change 3 did not
+mention. `phase2-data-mapping.md`'s *"Do NOT relocate, delete, or redirect these mid-run"* list
+named only `profile_report.md`; the per-stem reports are equally transient, and leaving them out
+made the rule non-uniform across the three places it is stated. This is INV-246's shape again —
+the spec named two relocation sites and there are three.
+
+**4. The spec's "not re-run since" flag on the surviving limitation was left as it stands.** The
+headerless-CSV entry is still dated 2026-07-27 / reported 2026-07-31, and this run did not re-ask
+it: the spec's scope was limitation 1, and re-verifying limitation 2 needs a headerless fixture and
+a profiler run rather than a `mapping_workflow` call. The lead-in still tells a reader to check
+rather than assume, which is the honest state.

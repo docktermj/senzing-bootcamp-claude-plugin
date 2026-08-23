@@ -200,7 +200,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # not relaxed. (datastore mount-crossing measurement) was registered at the
 # maintainer's sign-off and names `test_datastore_mount_crossing_is_measured.py`. Re-derived
 # by running the extractor, not relaxed.
-EXPECTED_PAIRS = 80
+# 81 as of 2026-08-23: INV-177's dated premise correction names
+# `test_profile_report_relocation_covers_both_filenames.py` as its enforcer. Re-derived by
+# running the extractor, not relaxed.
+EXPECTED_PAIRS = 81
 
 
 def pairs():

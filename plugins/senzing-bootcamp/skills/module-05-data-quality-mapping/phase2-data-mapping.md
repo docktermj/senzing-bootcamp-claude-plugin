@@ -87,7 +87,8 @@ ground-rules file-placement contract:
   `.md` → `docs/`; config JSON → `config/`; data → `data/`.
 - **Transient run artifacts stay in the workspace while the run is in progress:** the workflow
   reads and writes them for its own use. Do NOT relocate, delete, or redirect these mid-run:
-  `profile_report.md`, `schema_hints.md`, `JOURNAL.md`, and generated JSONL output.
+  `profile_report.md` (or the `profile_report_<stem>.md` files a multi-file start writes),
+  `schema_hints.md`, `JOURNAL.md`, and generated JSONL output.
 - **After the run for a source completes (after the iterate/finalize step), relocate the
   transient artifacts to their durable homes — and source-qualify the three mapping-phase
   Markdown filenames as you do:** `profile_report.md` → `docs/mapping/{source_name}_profile_report.md`,
@@ -95,6 +96,16 @@ ground-rules file-placement contract:
   `docs/mapping/{source_name}_JOURNAL.md`. Mapping working data (`*_mapping_spec.json`, the
   per-source `{source}_sample.jsonl`, intermediate analyzer JSONL) → `data/mapping/`. Final
   transformed, load-ready JSONL stays in `data/senzing-ready/`.
+  - ⛔ **The profile report has TWO possible filenames, and BOTH must be relocated.** A single-file
+    start writes `profile_report.md`; a multi-file start writes one
+    `profile_report_<stem>.md` **per input** (server 1.33.0, verified 2026-08-23 — see "the
+    profile-report filename depends on how many files you pass"). Relocate whichever the workspace
+    actually received: `profile_report.md` → `docs/mapping/{source_name}_profile_report.md`, and
+    each `profile_report_<stem>.md` → `docs/mapping/{source_name}_profile_report_<stem>.md`.
+    ⛔ **The rule is that NO profile report is left in the shared workspace, whatever the server
+    named it** — list the workspace and relocate every `profile_report*` file rather than matching
+    one literal name. A suffixed report left behind is the exact overwrite INV-177 exists to
+    prevent, arriving through a filename the invariant's original text did not cover.
   - ⛔ **The source qualifier is required, not tidiness (INV-177).** Every source's `mapping_workflow` run
     uses the **same** `workspace_dir` (`data/mapping`, per step 8), and the workflow writes those
     three files there under **fixed** names — verified against the live tool: step 1's instructions
@@ -443,20 +454,32 @@ and re-confirmed the same day before this note was written. Step 2's own prose a
 agree, so this is specific to step 1. Reported upstream; re-check whether it still applies rather
 than assuming, and if the prose is corrected, retire this note rather than inverting it.
 
-⛔ **Two profiler limitations to expect, both of which produce a wrong profile rather than an
-error.** Observed 2026-07-27 on SDK 4.3.3.26191; **reported upstream 2026-07-31** and **not re-run
-since**, so check whether they still apply rather than assuming — the numeric-value entry later in
-this file is the precedent for retiring one once the server fixes it.
+**The profile-report filename depends on how many files you pass, and the server handles the
+multi-file case itself.** Verified on server **1.33.0, 2026-08-23** by calling
+`mapping_workflow(action='start')` twice and reading the emitted `commands` both times:
 
-1. **For a multi-file source, the emitted commands write to the same output path.** A
-   `mapping_workflow(action='start', file_paths=[…, …])` returned two `sz_schema_generator.py`
-   invocations both using `-o <workspace_dir>/profile_report.md`. Run as issued, **only the second
-   file's profile survives** — and step 3 then tells you to consult `profile_report.md` for how
-   *each* source file is structured. The failure is silent: the file exists, is well-formed, and
-   describes one schema. **Profile each input to its own path** (`profile_report_<stem>.md`) and
-   concatenate, or pass all inputs to one invocation if it accepts them. Multi-file sources are
-   exactly where the profile matters most — join keys and per-schema field sets.
-2. **A headerless CSV is profiled by consuming its first data row as column names.** The profiler
+- **one** `file_paths` entry → a single invocation writing `-o <workspace_dir>/profile_report.md`;
+- **more than one** → one invocation per input, each writing
+  `-o <workspace_dir>/profile_report_<stem>.md` (`profile_report_crm.md`,
+  `profile_report_orders.md`).
+
+Run the commands as issued. ⛔ **Do not concatenate the per-file reports into one
+`profile_report.md`** — that recreates the single-schema file whose silent wrongness this entry
+used to warn about, and the relocation contract above already covers both filenames.
+
+⚠️ **Server-side inconsistency, observation-only (INV-080).** At 1.33.0 step 1's *prose* still
+hardcodes the unsuffixed name in both places it names a report — *"the profiler writes a detailed
+markdown report to `<workspace_dir>/profile_report.md`"* and *"Read
+`<workspace_dir>/profile_report.md`"* — while the emitted `commands` for a multi-file start write
+the suffixed names. For a multi-file source the prose therefore points at a file that is never
+created. **Read the `commands` array, not the prose.** The plugin cannot fix this; it can only stop
+depending on the prose.
+
+⛔ **One profiler limitation to expect, and it produces a wrong profile rather than an
+error.** Observed 2026-07-27 on SDK 4.3.3.26191; **reported upstream 2026-07-31** and **not re-run
+since**, so check whether it still applies rather than assuming.
+
+1. **A headerless CSV is profiled by consuming its first data row as column names.** The profiler
    assumes a header row. On a documented headerless source (the free-data catalog ships one, with 12
    positional columns in its README) that means **one record disappears** and every column is
    mislabeled with a value from that row. Nothing fails — you get a confident, wrong profile, and
@@ -1385,7 +1408,8 @@ production load still happens in Data processing regardless.
 Each source gets its own transformation program and its own `mapping_workflow` run.
 
 ⛔ **Before starting the next source's `mapping_workflow(action='start')`, confirm this source's
-`profile_report.md`, `schema_hints.md` and `JOURNAL.md` have already been relocated to
+profile report (`profile_report.md`, or every `profile_report_<stem>.md` when several files were
+profiled), `schema_hints.md` and `JOURNAL.md` have already been relocated to
 `docs/mapping/` under their source-qualified names** (`{source_name}_profile_report.md`,
 `{source_name}_schema_hints.md`, `{source_name}_JOURNAL.md` — see "File placement during the
 workflow"). This is INV-177: relocation under a source-qualified name happens **before** the next
