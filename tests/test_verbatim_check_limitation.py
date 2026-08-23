@@ -30,6 +30,15 @@ import re
 import unittest
 from pathlib import Path
 
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 PHASE2 = PLUGIN / "skills" / "module-05-data-quality-mapping" / "phase2-data-mapping.md"
@@ -193,7 +202,7 @@ class TheEmissionChoiceIsSpecDriven(unittest.TestCase):
     """The Entity Specification decides the form, not what the checker can see."""
 
     def test_it_routes_the_type_question_to_the_specification(self):
-        self.assertRegex(flat(PHASE2), r"search_docs\(category='data_mapping'\)")
+        self.assertRegex(flat(PHASE2), ROUTE_DATA_MAPPING)
 
     def test_it_reports_that_the_spec_mandates_no_type(self):
         text = flat(PHASE2)

@@ -623,7 +623,14 @@ the inline pointers here.
 
 **5. Sourcing (no hardcoded URLs).** For the detailed fix steps, use the Senzing MCP server:
 `sdk_guide(topic='install', platform='<user_platform>', language='typescript')` and
-`search_docs(category='anti_patterns')`. Never paste external URLs into this recovery flow; all
+`search_docs(query='community wrapper not the official SDK package registry',
+category='anti_patterns')`. ⛔ **`query` is `search_docs`' only REQUIRED parameter — a bare
+`category=` is a call a schema-respecting client cannot construct at all**, so the retrieval
+vocabulary belongs here rather than being left to the reader (INV-212). That query returns
+*Senzing Anti-Patterns: Ecosystem and Dependencies* as its top hit — official-vs-community
+packages, repository choice, and the `senzing-garage` caution — which is the on-point article
+when a community wrapper's from-source build has just failed (verified server 1.33.0,
+2026-08-23). Never paste external URLs into this recovery flow; all
 external/toolchain knowledge comes from the MCP tools (and, once ported, the `lang-typescript.md`
 reference). If an MCP tool is unavailable, the fallback path still applies, so guidance degrades
 gracefully rather than dead-ending.

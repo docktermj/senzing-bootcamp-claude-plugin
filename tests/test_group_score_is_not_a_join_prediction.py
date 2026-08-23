@@ -32,8 +32,18 @@ Source spec: `specs/a-shared-feature-group-is-read-as-a-shared-attribute-when-pr
 
 Run:  python3 -m unittest discover -s tests
 """
+import re
 import unittest
 from pathlib import Path
+
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PHASE1 = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills" /
@@ -68,7 +78,7 @@ class TheGroupScoreIsScopedWhereItIsDefined(unittest.TestCase):
     def test_the_grouped_family_is_sourced_from_the_entity_specification(self):
         """INV-080 — the attribute names are the server's, with provenance recorded."""
         text = flat()
-        self.assertIn("search_docs(category='data_mapping')", text)
+        self.assertRegex(text, ROUTE_DATA_MAPPING)
         self.assertIn("server 1.32.9, 2026-08-17", text)
 
 

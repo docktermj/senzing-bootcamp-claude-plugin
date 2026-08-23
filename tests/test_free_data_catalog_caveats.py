@@ -28,6 +28,15 @@ import re
 import unittest
 from pathlib import Path
 
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins" / "senzing-bootcamp"
 MODULE_04 = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
@@ -35,7 +44,14 @@ MODULE_04 = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
 CATALOG = "senzing-bootcamp-free-data"
 # How far past a recommendation the caveat may sit and still be found by a reader
 # following that recommendation.
-WINDOW = 40
+#
+# ⚠️ **Raised 40 -> 55 on 2026-08-23.** A fixed-line window is brittle to any edit inside it:
+# giving the REL_ANCHOR/REL_POINTER citation at `module-04-data-collection/SKILL.md:504` the
+# `query` that `search_docs` actually requires added three lines, which pushed
+# "upstream condition" from offset 40 to exactly the boundary and failed a guard that had nothing
+# to do with the change. The headroom is deliberate; if a future edit pushes it out again, widen
+# it rather than trimming the caveat to fit a test.
+WINDOW = 55
 
 
 def text():
@@ -158,7 +174,7 @@ class TheSenzingFactCarriesItsProvenance(unittest.TestCase):
 
     def test_the_lookup_that_established_it_is_named_with_its_server_version(self):
         chunk = flat(text())
-        self.assertIn("search_docs(category='data_mapping')", chunk)
+        self.assertRegex(chunk, ROUTE_DATA_MAPPING)
         self.assertRegex(chunk, r"MCP server 1\.\d+\.\d+")
 
 

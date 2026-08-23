@@ -28,6 +28,15 @@ import re
 import unittest
 from pathlib import Path
 
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PHASE_1 = (
     REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -195,7 +204,7 @@ class TheSenzingFactsCarryTheirProvenance(unittest.TestCase):
         squashed = flat(step_5a())
         self.assertIn("Entity Specification, *Feature: NAME*", squashed)
         self.assertIn("Usage types and payload (optional attributes)", squashed)
-        self.assertIn("search_docs(category='data_mapping')", squashed)
+        self.assertRegex(squashed, ROUTE_DATA_MAPPING)
 
     def test_the_dispositions_are_attributed_to_the_tool_schema(self):
         self.assertIn("confirmed against the live tool schema", flat(step_5a()))

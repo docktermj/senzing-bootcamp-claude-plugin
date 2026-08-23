@@ -255,7 +255,11 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    `ADDR_LINE1`/`ADDR_CITY`/… (Entity Specification, *Feature: NAME*; and *Usage types and payload
    (optional attributes)*, which defines a usage type as "a short label that distinguishes multiple
    instances of the same feature on one entity" — both confirmed via
-   `search_docs(category='data_mapping')`, MCP server 1.32.8, docs index 2026-08-11). Resolve each
+   `search_docs(query='usage type distinguishes multiple instances payload optional attributes',
+   category='data_mapping')` for the usage-type half and
+   `search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` for
+   *Feature: NAME*, MCP server 1.32.8, docs index 2026-08-11; both queries re-verified as top hits
+   on 1.33.0, 2026-08-23). Resolve each
    key against the specification you hold, and where a key is a catalog attribute carrying such a
    label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
    is an observed shape, not something the indexed specification states — so where you cannot
@@ -504,7 +508,9 @@ not exist.
 ⛔ **A GROUP score is not evidence that two sources share an ATTRIBUTE, and MUST NOT be read as a
 cross-source join prediction.** Completeness for a grouped family — the Entity Specification's
 *Identifiers* section groups `NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI_NUMBER` and `TRUSTED_ID`
-(verified via `search_docs(category='data_mapping')`, server 1.32.9, 2026-08-17) — counts the group
+(verified via `search_docs(query='Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group',
+category='data_mapping')`, server 1.32.9, 2026-08-17; query re-verified on 1.33.0, 2026-08-23,
+returning the *Identifiers* feature sections) — counts the group
 as present when **any** member is populated. That is the right answer to *does this record carry an
 identifier at all*. It is not evidence for *will these two sources join*, because a join needs
 presence-of-**same**, not presence-of-any.

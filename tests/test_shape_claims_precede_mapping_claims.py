@@ -37,6 +37,15 @@ import re
 import unittest
 from pathlib import Path
 
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 MODULE1 = SKILLS / "module-01-business-problem" / "phase1-discovery.md"
@@ -134,7 +143,7 @@ class TheNameFullRuleIsStatedWhereItChangesGeneration(unittest.TestCase):
 
     def test_the_rule_carries_its_route_version_and_date(self):
         """INV-080 — quoted from the specification, not adopted."""
-        self.assertIn("search_docs(category='data_mapping')", self.branch)
+        self.assertRegex(self.branch, ROUTE_DATA_MAPPING)
         self.assertIn("server 1.32.9, 2026-08-17", self.branch)
 
     def test_the_quoted_rule_is_the_one_the_corpus_returns(self):

@@ -324,6 +324,9 @@ Truth Set visualization module already run.
    signature for the chosen binding and build for re-runnability; do not name any binding's
    exception type as a contract (INV-002).
 
+   <!-- SEARCH-DOCS-CATEGORY-PROSE: this names the `sdk` category to describe WHAT IT INDEXES,
+        not to instruct a call, so it carries no `query`. `tests/test_search_docs_calls_pass_a_query.py`
+        exempts a reference carrying this marker; the marker must sit on the line above it. -->
    ⛔ **`search_docs(category='sdk')` indexes community-maintained wrapper docs alongside the
    official ones, so an error contract found there may not be your binding's.** `get_capabilities`
    states the index covers "Python, Java, C# official; Rust, TypeScript/Node.js community … not

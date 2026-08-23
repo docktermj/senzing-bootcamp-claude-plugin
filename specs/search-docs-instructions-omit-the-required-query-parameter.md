@@ -111,3 +111,53 @@ indexes, names no call, and is out of scope.
 - Related specs: `specs/pattern-gallery-asks-for-more-than-mcp-can-supply.md` (INV-212's origin),
   `specs/the-negatives-backlog-was-never-re-asked-and-one-claim-is-now-false.md` (the wrong-route
   error this ambiguity caused), `specs/mcp-negative-markers-must-name-the-owning-route.md`
+
+## Deviations from this spec, and why (2026-08-23)
+
+**1. The spec's site enumeration was incomplete — nine named, ten found.** Scanning shipped
+markdown for `search_docs(` with a `category=` and no `query=` returned **ten** references. Nine
+match the spec's list (its line numbers had drifted by ~30 in `phase2-data-mapping.md`, which the
+same run had just edited). The tenth is `phase2-data-mapping.md`'s single-name-field authority
+block — the ⛔ *"A single name field maps to `NAME_FULL` — it is not split"* citation, which no
+list mentioned. This is INV-246 exactly: a guard given the spec's paths would have certified nine
+fixes and been structurally blind to the tenth, so the guard derives its site set by scanning.
+
+**2. All six citation sites already named a destination section**, so criterion 2's second branch
+was satisfied before this run — `Name > Feature: NAME`, `Feature: REL_ANCHOR`/`REL_POINTER`,
+`Usage types and payload (optional attributes)`, the `Identifiers` section, `Feature: ACCOUNT`.
+Each still gained a query anyway, because a named destination does not fix the *call*: the text
+still spelled out `search_docs(category='data_mapping')`, a call a schema-respecting client cannot
+construct. Naming the destination and naming the route are different repairs and the sites needed
+both.
+
+**3. Seven existing guards had to be updated, and five were the same defect.** Files changed
+beyond the spec's `## Affected files`:
+
+- `tests/test_fastpath_gates_on_full_mapping.py`, `tests/test_free_data_catalog_caveats.py`,
+  `tests/test_group_score_is_not_a_join_prediction.py`,
+  `tests/test_shape_claims_precede_mapping_claims.py`, `tests/test_verbatim_check_limitation.py`
+  each asserted the **literal** `search_docs(category='data_mapping')`. Adding the required
+  parameter broke all five — guards failing on the correction they should welcome, the pattern
+  `specs/guards-pinning-a-dated-negative-outlive-it.md` describes. Each now matches the **route**
+  (`search_docs(…category='data_mapping')`) rather than an exact argument string, which is what
+  they existed to assert.
+- `tests/test_free_data_catalog_caveats.py` also uses a **fixed 40-line window** after each
+  catalog recommendation. Giving the REL_* citation its query added three lines and pushed
+  `"upstream condition"` to exactly the boundary, failing a guard with no connection to this
+  change. Widened to 55 with headroom and the reason recorded.
+- `tests/test_prescribed_search_queries.py` required each newly prescribed query to be
+  **executed and its result written down**. Correct, and satisfied: all seven distinct queries
+  are registered in `VERIFIED_QUERIES` with their observed top hit and relevance score. Two
+  entries record something a paraphrase would have hidden — the `Identifiers` section heading is
+  not a separately indexed chunk, so its member features are the evidence; and a first attempt at
+  the anti-patterns query phrased around TypeScript ranked the PostgreSQL/container article first,
+  because the corpus has no TypeScript-specific anti-pattern article and the vocabulary that
+  works names the **packaging** concern, not the language.
+
+**4. The exemption mechanism is a content marker, not a path list.** The spec asked for "a narrow,
+commented exemption" for `phaseA-build-loading.md`'s prose about the `sdk` category. Hardcoding
+that path would breach INV-246, so the site declares itself with a
+`SEARCH-DOCS-CATEGORY-PROSE:` comment the guard finds by scanning. ⚠️ **A negative control showed
+why that needs a cap:** a self-declared exemption can silence a real offender, and adding the
+marker above one did exactly that and passed. The guard now pins the exemption count to the single
+reviewed site, so any new exemption fails and has to be argued for.

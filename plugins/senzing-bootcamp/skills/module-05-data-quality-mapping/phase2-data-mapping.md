@@ -613,8 +613,10 @@ Data collection route here for, so state it before mapping any name column. The 
 documents `NAME_FULL` as the *"Single-field name when type (person vs org) is unknown or only a full
 name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
 (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
-when the type is unknown or only a single field exists"* (`search_docs(category='data_mapping')` →
-*Name > Feature: NAME*, server 1.32.9, 2026-08-17). "When available" means **the source provides
+when the type is unknown or only a single field exists"*
+(`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` →
+*Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on 1.33.0,
+2026-08-23). "When available" means **the source provides
 separate fields** — so one `full_name` column is a direct mapping to `NAME_FULL`, and a
 `"Last, First"` column is too, however parseable it looks.
 
@@ -844,7 +846,11 @@ no MCP server version, so every bootcamper is on the current server and this is 
    not evidence about your data. Confirm separately that the emitted value is faithful to the source:
    same value, and a JSON type you chose deliberately.
 2. **Choose the emission on the Entity Specification's terms, not the checker's.** Confirm the
-   attribute's expected form via `search_docs(category='data_mapping')` at the time you map it — for
+   attribute's expected form via `search_docs(query='REL_ANCHOR_KEY REL_POINTER disclosed relationship keys',
+   category='data_mapping')` at the time you map it — `query` is the tool's only required
+   parameter, so a bare category is not a callable form, and naming the vocabulary is what makes
+   the check re-runnable (INV-212). Swap the query for the attribute you are actually confirming.
+   For
    the relationship keys, the specification's JSON examples show string values (`"ORG1001"`,
    `"ACME-1001"`) while its `REL_ANCHOR_KEY` guidance column shows a bare `1001`, so it does not
    mandate a type (verified 2026-07-28). Neither emission is made correct or incorrect by what the
@@ -991,8 +997,10 @@ Follow that exactly on a source whose fields are `"Digital Currency Address - XB
 (reproduced 2026-07-29: two records → `rec0 ACCOUNT_DOMAIN='XBT'; rec1 ACCOUNT_DOMAIN='LTC'`,
 exit 1). `ACCOUNT_DOMAIN` is not in `EXEMPT_KEYS` and does not end `_TYPE`, so there is no waiver.
 The mapping is **right** — `ACCOUNT_DOMAIN` is defined as "Domain/system for the account number"
-(`search_docs(category='data_mapping')`, Entity Specification, Feature: ACCOUNT, verified
-2026-07-29), and a currency/network code is exactly that.
+(`search_docs(query='ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature',
+category='data_mapping')`, Entity Specification, *Identifiers > Feature: ACCOUNT*, verified
+2026-07-29; query re-verified as top hit on 1.33.0, 2026-08-23, returning "Domain/system for the
+account number" verbatim), and a currency/network code is exactly that.
 
 **What to do:**
 
@@ -1038,7 +1046,11 @@ in as many words:
 > schema that has just one list for all features."
 
 Re-confirm that statement from the MCP server rather than trusting this file (a sourcing floor)
-(`search_docs(category='data_mapping')`, or `download_resource(filename='senzing_entity_specification.md')`
+(`search_docs(query='recommended JSON schema FEATURES list multiple values sub-list',
+category='data_mapping')` — that query returns the *Recommended JSON schema* section carrying the
+sentence above as its top hit, verified server 1.33.0, 2026-08-23; `query` is the tool's only
+required parameter, so the vocabulary is part of the instruction (INV-212) — or
+`download_resource(filename='senzing_entity_specification.md')`
 — that second call returns a **listing**, so fetch its `url` before reading, per `ground-rules.md` →
 "Working examples") — INV-080 applies to this claim as much as to any attribute name.
 

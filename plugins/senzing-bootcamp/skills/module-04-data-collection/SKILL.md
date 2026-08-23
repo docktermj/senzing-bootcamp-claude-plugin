@@ -227,7 +227,9 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   or only a full name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
   (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
   when the type is unknown or only a single field exists"*
-  (`search_docs(category='data_mapping')` → *Name > Feature: NAME*, server 1.32.9, 2026-08-17). So a
+  (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')`
+  → *Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on 1.33.0,
+  2026-08-23). So a
   source carrying **one** name field maps to `NAME_FULL` — a direct field-to-attribute mapping. ⛔ **A
   joined name is therefore NOT a transformation waiting to happen**, and generating one on the
   assumption that the next module will split it builds the scenario on a plan the specification does
@@ -501,7 +503,10 @@ before they map it.** Checked directly against `docktermj/senzing-bootcamp-free-
    `REL_ANCHOR`/`REL_POINTER` family — `REL_ANCHOR_DOMAIN`/`REL_ANCHOR_KEY` on the record being
    pointed at, `REL_POINTER_DOMAIN`/`REL_POINTER_KEY`/`REL_POINTER_ROLE` on the record pointing at
    it (Senzing Entity Specification, *Feature: REL_ANCHOR* and *Feature: REL_POINTER*; confirmed via
-   `search_docs(category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11). Mapping
+   `search_docs(query='REL_ANCHOR_KEY REL_POINTER disclosed relationship keys',
+   category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11 — query re-verified
+   on 1.33.0, 2026-08-23, returning *Disclosed relationship mapping guidance* and both feature
+   sections). Mapping
    `relationships-sample.csv` anyway fails silently: the files parse, the mapping validates, the
    load succeeds, and nothing relates.
 3. **The workable alternative on this source is `service_provider`**, populated on all 10 rows of
