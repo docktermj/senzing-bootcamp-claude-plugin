@@ -25,6 +25,7 @@ Suggested queries:
 - "entity resolution ambiguous match possible match"
 - "Senzing differentiators real-time explainability attribution"
 - "entity resolution pipeline standardization blocking scoring clustering"
+- "entity resolution false positives false negatives accuracy"
 
 ⛔ **Prefer these queries, and when a query returns nothing relevant, RE-QUERY with the
 documentation's own phrasing before concluding the material is not covered.** (INV-212 — the
@@ -56,12 +57,36 @@ claim cannot be corroborated, say so and present only what the MCP server suppor
 MCP-only — never fall back to training data. Scope this to substantive claims, not conversational
 replies.
 
-## What to teach (generic concept, plain language)
+## What to teach (not Senzing-proprietary, plain language — still MCP-sourced)
+
+⛔ **"Not Senzing-proprietary" describes where the IDEA comes from. It is never an exemption from
+the pre-response checklist.** Everything below is an entity-resolution technical detail, so
+`ground-rules.md`'s MCP-first rule applies to it exactly as it applies to the Senzing-specific
+subsection beneath: a reply covering blocking, scoring, classification or clustering requires an
+MCP call **on that turn**. The two labels sit on different axes — *attribution* (is this
+proprietary to Senzing?) versus *sourcing* (is this a claim about how entity resolution works?) —
+and only the second decides whether a call is needed. The heading used to read "generic concept",
+which licensed this material as prose while the checklist required it be sourced; a guide taking
+that at face value presents the pipeline from training data, and it will usually be roughly
+right, which is exactly why nobody notices when it is not.
+
+**Nothing is lost by requiring the call:** the material is fully retrievable, and the two queries
+that reach it are in the suggested list above (verified on server 1.33.0, docs index 2026-08-20
+17:33 UTC, 2026-08-23). One caveat on reading those results: for both queries the on-topic section
+is **not** the top hit — a Verisk case study and other marketing pages outrank it — so read down
+the list for *"What Is Entity Resolution? How It Works & Why It Matters."* rather than presenting
+the first row.
 
 - **What entity resolution is:** deciding whether different records refer to the *same
   real-world entity* (person or organization), then matching, relating, and deduplicating them.
 - **Two failure modes:** false negatives (same entity split apart) and false positives
-  (different entities merged).
+  (different entities merged). The documentation carries a sharper framing of the second worth
+  using — an **ambiguous match** (a record that could legitimately belong to more than one
+  entity) which most systems assign arbitrarily, producing an **invisible false positive** that
+  "looks correct on inspection" and is undetectable until more information arrives; the
+  well-designed behavior is to hold it as a *possible match* until a distinguishing attribute
+  breaks the tie. Reached by the false-positives query above (`search_docs` →
+  *"What Are Ambiguous Matches and Invisible False Positives?"*).
 - **The conceptual pipeline:** ingestion/standardization -> candidate selection (blocking) ->
   comparison/scoring -> classification (match / no-match / possible-match) -> entity clustering.
 - **Disclosed vs. discovered relationships.**
