@@ -10,7 +10,7 @@ common path through Module 1.
 ⛔ **Neither branch of the warning's remedy applied.** It branches on "if it NAMES an entity"
 (use the verified Latin-script name) and "if the dropped text IS the subject" (keep it and add an
 ASCII description). The marker is neither: it is a machine-readable flag the plugin writes for
-its own branches -- Module 4 Step 2, Module 6 Phase C step 13, Module 7 step 25a -- every one of
+its own branches -- Module 4 Step 2, Module 6 Phase C step 15, Module 6 Phase D step 25a -- every one of
 which reads it from the **Markdown**. Nothing reads it from the PDF. A guaranteed warning with no
 correct response is the shape that teaches warnings are ignorable, which is what this suppresses.
 
