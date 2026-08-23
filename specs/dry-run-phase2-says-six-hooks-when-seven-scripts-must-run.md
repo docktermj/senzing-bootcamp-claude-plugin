@@ -93,3 +93,36 @@ skill.
 - Upstream: not applicable.
 - Related specs: `specs/the-audit-skills-baselines-and-required-reading-are-stale.md` (the same
   class in the audit skill), `specs/scaffold-snippet-count-and-group-list-are-stale.md`
+
+## Deviations from this spec, and why (2026-08-23)
+
+**The spec's own one-liner was stale and could not run.** Change 1 supplies this command:
+
+```bash
+python3 -c "... h['args'][0].split('/')[-1] ... for h in (e.get('hooks') or [e])"
+```
+
+`args` no longer exists in `hooks.json`. `4fb1107` (*"#1 fix(hooks): run each hook script from
+the command string"*) moved every script **into the `command` string**, because `args` is not
+part of the `type: command` hook schema at all — the correction INV-052 now records. So the
+spec's command would have printed seven copies of a `KeyError`, or with `.get`, nothing.
+
+The implemented command reads `command` instead, and prints the event beside each script plus
+the entry-and-event totals, so the reader sees the two-hooks-on-one-event fact in the output
+rather than only in the prose above it:
+
+```text
+UserPromptSubmit   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.py"
+UserPromptSubmit   python3 "${CLAUDE_PLUGIN_ROOT}/scripts/checkpoint-tick.py"
+...
+7 hook entries across 6 events
+```
+
+⚠️ **This is the spec's own defect class, one level down.** The spec was written against a
+manifest shape that had already changed, exactly as the phase files were written against a
+manifest that later gained an entry. Verified by running the corrected command against the live
+`hooks.json`.
+
+Nothing else differed. All six acceptance criteria were met as written; `hooks/README.md` is
+untouched, and `TheShippedReadmeStillEnumerates` now asserts every script `hooks.json` declares
+is named in its table, so the enumeration cannot silently fall behind either.

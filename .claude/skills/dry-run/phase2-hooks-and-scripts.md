@@ -1,9 +1,36 @@
 # Phase 2 — Hooks and bundled scripts
 
-Execute all six hooks and every bundled script against a **realistic** bootcamp
-project. The realism is the whole point: an empty directory exercises the gating
-branch and nothing else, and most of these scripts only misbehave when the state
-they read is mid-flight.
+Execute **every hook entry** in `plugins/senzing-bootcamp/hooks/hooks.json` and every
+bundled script against a **realistic** bootcamp project. The realism is the whole point: an
+empty directory exercises the gating branch and nothing else, and most of these scripts only
+misbehave when the state they read is mid-flight.
+
+⛔ **Iterate hook ENTRIES, not events — one event carries a second hook.** A reader who
+walks the event names runs one script per event and never reaches the second entry under
+`UserPromptSubmit`, which is `checkpoint-tick.py` — the script driving the durability
+checkpoint the fold hooks depend on. This phase's whole value is executing *every* hook, and
+under-covering it reports phase 2 complete having skipped one.
+
+⛔ **Do not state a hook count in this file.** Ask the manifest, so the instruction cannot
+disagree with it — a literal was wrong here for exactly as long as it took someone to add a
+second `UserPromptSubmit` entry:
+
+```bash
+python3 -c "
+import json
+d = json.load(open('plugins/senzing-bootcamp/hooks/hooks.json'))['hooks']
+n = 0
+for event, groups in d.items():
+    for group in groups:
+        for hook in group['hooks']:
+            n += 1
+            print('%-18s %s' % (event, hook['command']))
+print()
+print('%d hook entries across %d events' % (n, len(d)))
+"
+```
+
+Every line it prints is a script this phase must run.
 
 ## Build the project first
 
@@ -35,8 +62,8 @@ writing anything. Each fixture is there because a naive one hid a defect:
 ### 1. Hooks outside a bootcamp (the gating claim)
 
 `hooks/README.md` claims every hook "no-ops unless a `config/bootcamp_progress.json`
-file exists". Test that first, from a directory with no such file: all six must exit
-0 and emit nothing. A hook that fires in an unrelated session is a serious defect —
+file exists". Test that first, from a directory with no such file: every entry the command
+above listed must exit 0 and emit nothing. A hook that fires in an unrelated session is a serious defect —
 the plugin is installed globally.
 
 ### 2. Hooks inside the bootcamp

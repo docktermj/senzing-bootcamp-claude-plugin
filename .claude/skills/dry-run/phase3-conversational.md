@@ -224,7 +224,7 @@ reads as broader coverage than it had.
 - **The hooks do not fire.** They are installed globally with the plugin, not by running
   these files, so `SessionStart` / `Stop` / `UserPromptSubmit` stay silent in a walk. In
   particular the `Stop` hook's closing-question safety net is untested here — phase 2
-  executes all six directly instead.
+  executes every hook entry directly instead.
 - **Anything past the SDK.** The walk stops where a real Senzing install is needed, so the
   loads, the live visualization server, and graduation's deliverables are out of reach.
 - **The assistant's own compliance is not evidence.** A walk shows that following the files
