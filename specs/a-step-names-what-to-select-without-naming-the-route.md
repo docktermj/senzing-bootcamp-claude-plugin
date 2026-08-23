@@ -109,3 +109,49 @@ Give each step its route, in the shape the plugin already uses elsewhere:
   claim was contradicted by the server — the gap is in the plugin's instructions.
 - Upstream: not applicable
 - Related specs: `specs/overview-bullet-count-is-stale-after-the-note-bullet.md` (same walk)
+
+## Deviations from this spec, and why (2026-08-23)
+
+**1. The spec's own count is inconsistent, and four sites were fixed.** Its `## Problem` lists
+**four** numbered sites and its `## Root cause` says *"These three steps state the *what*"* — a
+stale count left when the fourth (the `phase2-close.md` tab check) was added. All four are
+implemented; the acceptance criteria correctly list four.
+
+**2. Module 2 Step 9's discriminator is not "creates an engine", and the spec's own wording would
+not have distinguished the snippets.** The spec asks Step 9 to "name the initialization snippet
+that creates an engine and the property that identifies it". Reading the two candidates' sources
+(fetched from their `raw_url`, server 1.33.0, 2026-08-23):
+
+- `python/initialization/abstract_factory.py` builds the factory and calls `create_engine()` —
+  alongside `create_configmanager()`, `create_diagnostic()` and `create_product()` — then uses
+  none of them.
+- `python/initialization/engine_priming.py` builds the factory, calls `create_engine()`, then
+  calls `sz_engine.prime_engine()`.
+
+**Both create an engine.** "Creates an engine" is therefore not a discriminator, and a reader given
+only that phrase is back to guessing — which is what the walk did. The shipped discriminator is
+*does the body invoke a method **on** the engine*, which is exactly what Step 9's existing ⛔ already
+demands ("MUST create **and use** an `SzEngine`"). So the fix aligns the selection rule with the
+rule the step already states, rather than adding the spec's weaker one. ⚠️ **The walk's guess was
+right, which is the trap:** a correct answer reached by inference leaves no evidence that the
+instruction was insufficient.
+
+**3. `concepts.md`'s hazard is stated as wrong-altitude, not wrong.** The spec calls the A1ES
+article "precisely the wrong-altitude retrieval". Re-asking the query (server 1.33.0, docs index
+2026-08-20 17:33 UTC, 2026-08-23) confirms the hits — an A1ES FAQ at relevance 354.2, then ~8 KB of
+`addFeature` / `sz_configtool` / `FTYPE_FREQ` stewardship material — and shows the FAQ **does**
+correctly name all three dimensions. So the shipped note says the material is accurate and aimed at
+another audience, rather than implying it is incorrect: describing correct material as wrong is how
+a later editor "fixes" the warning away.
+
+**4. The tab marker was verified against the app, not taken from the spec.**
+`grep 'id="tab-[a-z-]*"'` over `senzing_viz_server.py` returns exactly six identifiers —
+`tab-graph`, `tab-stats`, `tab-matchkeys`, `tab-features`, `tab-overlap`, `tab-probe`, matching
+INV-155 — and `data-tab` appears **zero** times, reproducing the vacuous pass the spec reports. The
+guard asserts **both** halves against the generator, so a rename of either the markup or the
+guidance fails rather than reproducing the same defect with a fresh string.
+
+**5. One extra edit the criteria did not ask for:** the new ⛔ in `concepts.md` landed in a section
+citing no invariant and took `conformance.py rules` from 0 → 1, caught by
+`test_the_seven_triaged_rules_keep_their_citations`. INV-212 is now cited at the rule and the guard
+asserts the citation.

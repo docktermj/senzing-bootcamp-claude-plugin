@@ -107,8 +107,21 @@ an MCP tool actually produced.
 
 👉 **Do any of these patterns match your situation?**
 
-If they pick one, use it as a template (pre-fill source types, suggest matching criteria,
-adapt to their context). If none fit, they can accept the Business Case Offer in Step 4.
+If they pick one, use it as a template — and ⛔ **pre-fill it from the `search_docs` response that
+supplied that gallery entry, never from what you know about the pattern (INV-080/INV-212).** The
+source types come from that entry's **typical sources** attribute, which the gallery already
+retrieved (see "Problem, goal and typical sources" above); the matching criteria come from the same
+entry's problem and goal wording. If the entry you presented did not carry typical sources — a
+`[Read More]` stub supplies none of the four attributes — **re-query with the documentation's own
+vocabulary before pre-filling anything**, and if it is still unreached, say so and ask the
+bootcamper for their sources rather than proposing a plausible list.
+
+⚠️ **This is the step where invention is least visible.** A pattern's typical sources are exactly
+the kind of detail that reads right when invented — "CRM, billing, support tickets" is plausible for
+almost any pattern — and Step 3 has already told the bootcamper the gallery is Senzing-sourced, so a
+guessed pre-fill inherits that attribution.
+
+If none fit, they can accept the Business Case Offer in Step 4.
 
 **Checkpoint:** write step 3.
 

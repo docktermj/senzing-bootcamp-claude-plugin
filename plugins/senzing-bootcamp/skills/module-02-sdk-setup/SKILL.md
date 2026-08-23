@@ -1468,8 +1468,27 @@ engine call, several steps later, where the cause is no longer obvious. Exercisi
 here is what moves that failure back to the step designed to catch it.
 
 This constrains **which class the generated check touches**, not where the code comes from: keep
-using `generate_scaffold(workflow='initialize')` and pick the snippet that creates an engine
-(INV-080). Do not hand-write it.
+using `generate_scaffold(workflow='initialize')` (INV-080). Do not hand-write it.
+
+⛔ **The response is a LISTING and nothing in it marks which snippet does this — pick by shape.**
+On server 1.33.0 (verified 2026-08-23) `generate_scaffold(language='python', workflow='initialize')`
+returned **14** snippets with `content` absent — only `file_path`, `raw_url`, `size_bytes` and
+`line_count` — and no field flagging any of them as engine-creating. So:
+
+- **Pick the snippet whose body CALLS A METHOD ON the engine, not merely one that creates it.** For
+  Python that is `initialization/engine_priming.py`: it builds the factory, calls
+  `create_engine()`, then calls `sz_engine.prime_engine()`. Compare
+  `initialization/abstract_factory.py`, which calls `create_engine()` alongside
+  `create_configmanager()`, `create_diagnostic()` and `create_product()` and then never uses any of
+  them — that satisfies "creates an engine" and **not** the ⛔ above, which requires the check to
+  *use* one.
+- ⛔ **A count or a position in the listing is NOT the selector**, and neither is the filename. The
+  snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
+  `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
+  the body invoke an engine method? — and fetch a candidate's `raw_url` to check rather than
+  inferring from its name.
+- Every language's set has the same pair, so apply the shape test in whichever language was chosen
+  rather than transliterating the Python filenames (INV-090).
 
 Never generate direct SQL against `database/G2C.db`; all access goes through Senzing SDK
 methods (per ground-rules).

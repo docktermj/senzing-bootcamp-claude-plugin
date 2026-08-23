@@ -99,6 +99,24 @@ Cover, using `search_docs` results: principle-based matching (frequency, exclusi
 stability); pre-configured for people and organizations; differentiators (real-time, no model
 training required, explainability, scalability).
 
+⛔ **Use `"Senzing principle-based entity resolution approach"` for this, and do NOT compose a query
+from the words "frequency exclusivity stability" (INV-212 — the retrieval strategy belongs at the
+step, and a step that names an outcome without a route leaves the guide to invent one).** The suggested query returns *"What is Principle
+Based Entity Resolution?"* → *"Benefits of the Senzing Principle Based Approach"*, which is primer
+altitude and carries the idea plainly — principles are "based on the expected behaviors of entity
+attributes", with the worked contrast that SSNs "typically point to only one person" while dates of
+birth "are shared by many people".
+
+⚠️ **The obvious self-composed query lands at the wrong altitude.**
+`search_docs('Senzing principles frequency exclusivity stability attribute behavior')` returns the
+**A1ES behavior-code** material as its top hits (verified server 1.33.0, docs index 2026-08-20
+17:33 UTC, 2026-08-23): an FAQ on composite behavior codes, then ~8 KB of `addFeature`,
+`sz_configtool`, `FTYPE_FREQ`/`FTYPE_EXCL`/`FTYPE_STAB` and stewardship guidance aimed at someone
+customizing an engine configuration. It is not wrong — it does name all three dimensions — but it is
+**configuration guidance, not primer material**, and presenting it here buries a simple idea under
+`MDM_ID` and `A1ES`. This is the self-composed-query hazard the hard rule above describes, with a
+measured instance: use the three words to *explain* the concept, never as the query.
+
 ## Invite questions/discussion (before the knowledge check)
 
 After the primer above and **before** the optional knowledge-check offer below, give the

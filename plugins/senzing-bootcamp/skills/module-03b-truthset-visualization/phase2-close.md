@@ -20,7 +20,15 @@ Continues from Phase 1 (`phase1-visualization.md`). Follow `../bootcamp-onboardi
 >
 > - **The snapshot agrees with the app the bootcamper saw:** its tab set matches the running
 >   server's current tab set. Both are generated from the same source, so this is a cheap textual
->   comparison — count and compare the tab identifiers in the saved HTML against the server's. A
+>   comparison — count and compare the tab identifiers in the saved HTML against the server's.
+>   ⛔ **Match on `id="tab-<name>"` — that is the marker the identifiers are written with**, and the
+>   set is the six of INV-155 (`tab-graph`, `tab-stats`, `tab-matchkeys`, `tab-features`,
+>   `tab-overlap`, `tab-probe`). ⛔ **A comparison that finds ZERO identifiers on both sides has not
+>   passed — it has not run.** On a dry run the first attempt matched `data-tab="…"`, found none in
+>   either file, and reported "tab sets match: True"; `data-tab` appears **nowhere** in the
+>   generated app. So assert a non-zero count on both sides before comparing them, and treat an
+>   empty match as a broken check rather than agreement — a check that passes by comparing nothing
+>   certifies exactly what it never looked at. A genuine
 >   divergence means the visualization changed after the snapshot was built (Phase 1, 2.4b) and the
 >   snapshot was never rebuilt.
 >
