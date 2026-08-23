@@ -50,28 +50,6 @@ This are ideas for future specs.
   reader to discount every suite figure by 11, which would have made every count reported since
   wrong. Verified with `git ls-files` and `git log --diff-filter=A`.
 
-- **Step 1's "the object form does NOT work" is stale on server 1.33.0.**
-  `module-05-data-quality-mapping/phase2-data-mapping.md:426` marks the prose-shaped
-  `{"profile_summary": {"<schema>": {...}}}` payload `← prose, does NOT work`, dated **server
-  1.32.9, 2026-08-12**. Measured on **1.33.0, 2026-08-23** while implementing
-  `mapping-workflow-terminates-after-five-grammar-violations`: that exact object-keyed payload
-  **advanced from step 1 to step 2** with `status: ok`, no `ENFORCEMENT NOTICE`, and no
-  `grammar_violation_count` in the returned `state`. So the server now accepts both shapes.
-
-  ⛔ **The plugin's advice is still right and MUST NOT be inverted.** The array is what the
-  embedded schema declares, and `tests/test_tool_directives_do_not_override_interaction.py`
-  (`test_it_names_the_array_as_the_working_form`) exists to stop exactly that inversion. What is
-  stale is the narrower claim that the object form *fails* — a reader who tries it and succeeds
-  learns the file's dated claims are unreliable, which is the cost.
-
-  **Why it was not fixed in that run:** the same guard pins `1.32.9` and `2026-08-12` as the
-  caution's provenance (`test_it_carries_dated_provenance`), so correcting the claim means
-  re-dating the caution and updating the guard together — a change to a dated MCP claim and its
-  enforcing test, outside that spec's scope and worth its own spec. The scope question for the
-  maintainer is whether the caution should say "the array is the declared contract; the object
-  form is currently tolerated and may stop being" or drop the works/does-not-work framing
-  entirely in favor of "send the array because the schema says array".
-
 - **Senzing web app as a curriculum option.** Bootcamper suggestion, 2026-07-27 (Module 0), no detail
   given before they returned to the bootcamp — recorded in `feedback/PROCESSED.jsonl` as
   `needs-clarification`. The curriculum is SDK-code-focused; `truthset_visualization` is the one
