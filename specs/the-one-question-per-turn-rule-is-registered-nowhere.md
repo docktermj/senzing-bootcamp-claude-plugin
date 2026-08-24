@@ -38,13 +38,13 @@ case**, not the general rule:
   yielding turn, never combined with another 👉 question". Scoped to that nudge.
 - **INV-064** — the accepted-switch continuation, "ending that turn on that step's single 👉
   question". Scoped to that continuation.
-- **INV-135** — the licence-request PII path, "requested one question per turn". Scoped to that flow.
+- **INV-135** — the license-request PII path, "requested one question per turn". Scoped to that flow.
 - **INV-225** — cites *"System verification contains exactly one 👉 in the whole module"* as
   supporting evidence for the non-yielding-step rule. An observation, not a condition.
 
-So the bootcamp's most-emphasised interaction guarantee exists in the product, is stated in
+So the bootcamp's most-emphasized interaction guarantee exists in the product, is stated in
 **13 shipped places** (swept below), is enforced with ⛔ zero-tolerance framing, and is checked at
-runtime by `auto-test`'s transcript linter — while being bound by no invariant, and labelled
+runtime by `auto-test`'s transcript linter — while being bound by no invariant, and labeled
 everywhere with IDs that govern something else.
 
 ## Root cause
@@ -59,7 +59,7 @@ invisible:
    `inv077-supersession-dropped-the-visualization-verification-guarantee` earlier today.
 2. **The one place that *does* enforce it embeds the wrong ID in its output.**
    `.claude/skills/auto-test/transcript_lint.py` lints real transcripts and counts 👉 per turn —
-   correctly, and it is the only mechanism in the repo that checks the rule as *behaviour* rather
+   correctly, and it is the only mechanism in the repo that checks the rule as *behavior* rather
    than as text:
 
    ```python
@@ -137,7 +137,7 @@ conclude the count applies only where an invariant says so — which is precisel
    none, and at the remaining seven sites per INV-183.
 
 4. ⛔ **Correct the audit skill's own charter text.** `.claude/skills/production-readiness-audit/SKILL.md`
-   summarises INV-005–INV-009 as including "one 👉 question". It does not ship, but it is the file
+   summarizes INV-005–INV-009 as including "one 👉 question". It does not ship, but it is the file
    that tells the next auditor what to check, and it currently teaches the misattribution.
 
 5. **Re-label `transcript_lint.py`'s check and its finding code** to the new ID. The check itself
@@ -145,9 +145,9 @@ conclude the count applies only where an invariant says so — which is precisel
    is what a maintainer reads in an auto-test report. ⚠️ **Changing a finding code is a visible
    output change**, so say so where auto-test's codes are documented rather than renaming silently.
 
-6. **Do not write an offline test asserting the runtime behaviour.** It is a live-turn property; a
+6. **Do not write an offline test asserting the runtime behavior.** It is a live-turn property; a
    guard can assert the rule *ships and is cited correctly*, and must say that is all it does. The
-   behavioural check already exists and belongs where it is — in `auto-test`, against transcripts.
+   behavioral check already exists and belongs where it is — in `auto-test`, against transcripts.
 
 ## Acceptance criteria
 
@@ -233,7 +233,7 @@ conclude the count applies only where an invariant says so — which is precisel
   section, `test_no_host_control_is_offered_as_a_question.py` pinned *"which INV-005 forbids"* in
   the two-turn-shapes clause, and `EXPECTED_PAIRS` went 63 → 64. All three failures were the guards
   working, not collateral damage.
-- **`transcript_lint.py` was RELABELLED, never rewritten.** Its finding code moved
+- **`transcript_lint.py` was RELABELED, never rewritten.** Its finding code moved
   `INV-005-multi-question` → `INV-251-multi-question` at **two** sites — the emitter and the
   self-test's expected-code set — which an `assert count == 1` caught before writing. The counting
   logic is untouched, `test_the_counting_logic_is_unchanged` guards that, and the linter's own
@@ -244,6 +244,6 @@ conclude the count applies only where an invariant says so — which is precisel
   or gate contains. That is an observation about content, not a statement of the rule, and citing
   INV-251 there would imply the rule is what makes it true.
 - ⛔ **Not runtime-verified, and the guard says so.** Whether a guide ends a turn on one question is
-  a live-turn property. The only behavioural check is `auto-test`'s transcript linter, against real
+  a live-turn property. The only behavioral check is `auto-test`'s transcript linter, against real
   transcripts; `dry-run` phase 3 judges a live turn. Seven mutations prove the rule is registered
   and correctly cited — nothing proves it is obeyed.

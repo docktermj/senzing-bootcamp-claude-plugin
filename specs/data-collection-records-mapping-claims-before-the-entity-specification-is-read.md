@@ -77,7 +77,7 @@ inference a guide draws from them.
    will be split.
 3. **Reconcile Module 1's invariant.** `phase1-discovery.md:145-146` requires "at least one
    transformation"; it must be satisfiable by something the specification actually calls for. Either
-   name the qualifying kinds (date normalisation, code/value standardisation, splitting a field the
+   name the qualifying kinds (date normalization, code/value standardization, splitting a field the
    spec *does* take as components, composing a `RECORD_ID`) or restate the invariant as
    *cross-source mapping divergence*, which is what the teaching actually needs. ⛔ Do not leave it
    as an unqualified "transformation" — that is the wording that produced the reversal.
@@ -119,7 +119,7 @@ inference a guide draws from them.
 - Priority: Medium — no code was written, but the wrong plan was committed to two documents and the failure it would have produced is silent.
 - MCP re-check: **server 1.32.9, 2026-08-16 — still reproduces, and the re-check widened the finding.** `search_docs(query='NAME_FULL single name field do not parse NAME_FIRST NAME_LAST', category='data_mapping')` returns the Senzing Entity Specification; the full document fetched from `https://mcp.senzing.com/resources/senzing_entity_specification.md` (the URL `download_resource(filename='senzing_entity_specification.md')` returns) carries the quoted rule verbatim, plus the parallel `ADDR_FULL` single-field form. The entry quoted the rule accurately. What the entry did not report, and this re-check established, is that Module 4's own two examples are direct mappings under that specification rather than transformations — cause 2 above.
 - Upstream: not applicable — routed `plugin`. The specification is correct and unambiguous; the plugin contradicts it.
-- Related specs: `specs/step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it.md` (when and how the specification is reachable), `specs/download-resource-returns-a-url-not-the-specification.md` (confirmed again here — `download_resource` returned a `mode: "url"` manifest, not content), `specs/synthesized-scenarios-make-the-quality-gate-unreachable.md` and `specs/generated-dataset-is-sized-before-anything-measures-the-licence.md` (siblings in the same branch), `specs/completeness-denominator-has-two-readings-on-a-raw-source.md`
+- Related specs: `specs/step3-makes-the-73kb-spec-authoritative-while-the-workflow-forbids-reading-it.md` (when and how the specification is reachable), `specs/download-resource-returns-a-url-not-the-specification.md` (confirmed again here — `download_resource` returned a `mode: "url"` manifest, not content), `specs/synthesized-scenarios-make-the-quality-gate-unreachable.md` and `specs/generated-dataset-is-sized-before-anything-measures-the-license.md` (siblings in the same branch), `specs/completeness-denominator-has-two-readings-on-a-raw-source.md`
 
 ## Ordering, stated generally
 
@@ -129,3 +129,40 @@ produced downstream: the examples the module hands the generator were themselves
 the specification, so they encode the same assumption the Bootcamper is then led into. Fixing the
 sequencing without fixing the examples would leave the module still teaching that a joined name is a
 transformation waiting to happen.
+
+## Deviations from this spec, and why (2026-08-17)
+
+1. ⚠️ **The quoted specification sentence could not be verified and was NOT shipped.** This spec
+   quotes the rule as *"do NOT attempt to parse a single name field—use NAME_FULL for single-field
+   names (even if they appear parseable, like \"Smith, Robert\")"*, attributed to the full 73KB
+   document fetched from `https://mcp.senzing.com/resources/senzing_entity_specification.md`. Two
+   `search_docs(category='data_mapping')` calls on server **1.32.9, 2026-08-17** return the
+   *Name > Feature: NAME* section, whose rule reads:
+
+   > "Prefer parsed person names (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for
+   > organizations; use `NAME_FULL` only when the type is unknown or only a single field exists"
+
+   — with `NAME_FULL` documented as the *"Single-field name when type (person vs org) is unknown or
+   only a full name is provided"*. **The stronger "do not parse" prohibition and the
+   `"Smith, Robert"` example appear in neither.** They may exist in the full document, which is a
+   different artifact from the indexed chunks; but INV-080 forbids copying a Senzing fact from a
+   spec into shipped guidance without re-confirming it, so the plugin now carries the **verified**
+   wording. ⚠️ **The conclusion is unaffected** — "when available" means the source provides
+   separate fields, so one name column maps to `NAME_FULL` — and every claim this spec rests on
+   still holds. Only the quotation changed.
+
+2. **Three adjacent rules from the same section were added**, because the re-check surfaced them and
+   each fails silently: do not mix `NAME_FULL` with parsed name fields in one `NAME` object, do not
+   mix `NAME_ORG` with parsed person fields, and do not split one name across two `NAME` objects.
+   The specification marks all three ❌ with worked examples.
+
+3. **Module 5's `phase2-data-mapping.md` gained a stated rule, not just a confirmation.** The spec
+   asks to "confirm the `NAME_FULL` rule is stated there as the authority this spec routes to" — it
+   was **not** stated, only demonstrated in two examples (`full_name -> NAME_FULL`). An authority
+   that exists only as an example is not one a reader can be routed to, so the rule is now written
+   out with its provenance.
+
+4. **Three existing tests were updated** — not in `## Affected files`, but required, since they
+   pinned the exact wording this spec replaces (`mapping-complexity-rich (needs at least one
+   transformation` in two files, `Generate the mapping complexity the scenario promised` in a
+   third). Their intent is unchanged and still asserted; each now records the rewording and why.

@@ -130,7 +130,7 @@ attempt — which is the spec's own thesis, demonstrated.** The command the spec
 (`grep -rn "not documented\\|undocumented\\|..." plugins/`) returned 6 hits and **missed
 `visualization-api-reference.md:322`**, because that line reads `are **not** documented` — the
 emphasis markers split the phrase. Re-running with emphasis and backticks stripped before matching
-returned **18** hits. The sweep that shipped is therefore the normalised one:
+returned **18** hits. The sweep that shipped is therefore the normalized one:
 
 ```bash
 python3 - <<'EOF'

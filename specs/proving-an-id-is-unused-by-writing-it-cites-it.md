@@ -165,7 +165,7 @@ FAILED (failures=1, skipped=3)
 `Ran 1792 tests` line, and the `FAILED (failures=1, skipped=3)` line **directly beneath it was not
 read.** That is also, precisely, how a red suite came to be recorded as green — one cause, not two.
 
-⚠️ **The mislabelled figures are still in the ledger, deliberately.** Two entries state "1792 passed,
+⚠️ **The mislabeled figures are still in the ledger, deliberately.** Two entries state "1792 passed,
 3 skipped". Correcting them means editing prose across entries this spec's criteria bound to
 byte-identical, and the spec's ⛔ says the number is *evidence of what was measured* — so the label is
 now diagnosed and the repair is left as the maintainer's call rather than taken unilaterally. Both

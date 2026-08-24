@@ -364,7 +364,7 @@ def png_rows(path):
     ⛔ The pixels are decoded, not just the header, because **height alone does not prove
     the page is in the image** — and that is not a hypothetical. The first fix measured
     `scrollHeight` and screenshotted at exactly that height, producing a PNG whose height
-    equalled the page height while the footer was still missing: under `--headless=new`
+    equaled the page height while the footer was still missing: under `--headless=new`
     Chrome's `--window-size` includes window chrome, so the viewport was ~87px shorter than
     the image and the bottom of the page was never rendered into it. A height-only
     assertion passes that build. Looking at the bottom pixels is what fails it.
@@ -421,7 +421,7 @@ def png_rows(path):
 
 
 def count_footer_rows(path, rgb=TALL_PAGE_FOOTER_RGB, tolerance=24):
-    """How many rows contain the footer's colour at mid-width."""
+    """How many rows contain the footer's color at mid-width."""
     width, height, channels, rows = png_rows(path)
     x = (width // 2) * channels
     found = 0
@@ -460,7 +460,7 @@ class SinglePageCapturesTheWholeDocument(unittest.TestCase):
         self.assertGreater(
             height, self.helper._WINDOW[1],
             "the capture is still viewport-height, so a document taller than 900px is "
-            "cropped and labelled as if it were not",
+            "cropped and labeled as if it were not",
         )
 
     def test_the_bottom_of_the_page_is_actually_in_the_image(self):

@@ -90,14 +90,14 @@ the tool's signature rather than from a call that was run and inspected.
 4. **Guard it.** A test asserting that every prescribed `search_docs(query=…)` literal in shipped
    skill text is either (a) accompanied by a re-query/fallback instruction within the same step, or
    (b) listed in an allowlist of phrasings verified against the server with a date. That is the
-   durable form and it generalises past this one step.
+   durable form and it generalizes past this one step.
 
 ## Acceptance criteria
 
 - [ ] Step 14 carries a re-query instruction for an empty or off-topic result, and an explicit
       fallback that forbids inventing value claims and permits saying less.
 - [ ] Step 14's prescribed query is either validated against the live server for the recognized
-      categories, or generalised so it does not depend on substituting a category that returns
+      categories, or generalized so it does not depend on substituting a category that returns
       code examples. Record the server version and date for whatever is asserted.
 - [ ] No shipped step prescribes a `search_docs` query as its **only** instruction without either a
       re-query rule or a dated validation.

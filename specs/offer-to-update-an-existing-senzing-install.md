@@ -43,7 +43,7 @@ install_command: sudo apt install ./senzingsdk-runtime_4.3.3-26191_amd64.deb
 
 So "what is available" is `4.3.3-26191`, obtainable from the filename.
 
-**The installed side is directly comparable — after one normalisation.** Observed on a real
+**The installed side is directly comparable — after one normalization.** Observed on a real
 install in this environment, 2026-07-31:
 
 | Source | Value |
@@ -93,8 +93,8 @@ working unless the Bootcamper says otherwise.
 
 1. **Determine the installed version**, preferring the package manager over the JSON file
    where available (`dpkg-query`/`rpm -q` give the same `4.3.3-26191` form the server
-   publishes, so no normalisation is needed). Fall back to `szBuildVersion.json`'s
-   `BUILD_VERSION` and **normalise the separator** before comparing.
+   publishes, so no normalization is needed). Fall back to `szBuildVersion.json`'s
+   `BUILD_VERSION` and **normalize the separator** before comparing.
 2. **Determine the available version** from `sdk_guide(topic='install', platform=…)`'s
    `direct_download` filenames. Where the platform returns no `direct_download` — macOS,
    Windows, Docker — **skip the check and say so** (INV-163). Do not guess, and do not treat
@@ -135,7 +135,7 @@ working unless the Bootcamper says otherwise.
 
 - [ ] Step 1's V4.0+ branch compares the installed version against the version the server
       publishes, instead of only against the V4.0 floor.
-- [ ] The comparison normalises `szBuildVersion.json`'s `4.3.3.26191` against the package
+- [ ] The comparison normalizes `szBuildVersion.json`'s `4.3.3.26191` against the package
       form `4.3.3-26191`, so an up-to-date install is never reported as out of date. A test
       asserts this specific pair.
 - [ ] The available version comes from `sdk_guide`'s `direct_download` filenames, and the
@@ -168,7 +168,7 @@ working unless the Bootcamper says otherwise.
 ## Affected files
 
 - `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — Step 1's V4.0+ branch (`:85-95`), and the EULA reuse at `:207-212`.
-- `tests/` — the version-normalisation assertion, the skipped-platform assertion, and the one-question/declining-is-safe assertions.
+- `tests/` — the version-normalization assertion, the skipped-platform assertion, and the one-question/declining-is-safe assertions.
 
 ## Source
 
@@ -248,7 +248,7 @@ Five further things the spec did not know, all found while implementing:
    unofficial tap) records the path changing, so env vars must be re-exported after an update
    rather than assumed.
 5. **On Windows `szBuildVersion.json` is not under `%SENZING_DIR%`** — it installs to the
-   *sibling* `data` directory. The spec's normalisation advice was right but its location
+   *sibling* `data` directory. The spec's normalization advice was right but its location
    assumption was Linux-shaped.
 
 **Criteria affected.** The criterion "on a platform with no `direct_download`, the check is

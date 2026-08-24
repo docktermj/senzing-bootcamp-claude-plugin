@@ -431,7 +431,7 @@ class TestTheLedgerIsVerifiedAfterItIsWritten(unittest.TestCase):
             "walk, the entry was written afterwards, and the entry was what broke it.")
 
     def test_step_four_says_why_the_ordering_matters(self):
-        """Without the reason, the ordering reads as ceremony and gets optimised away."""
+        """Without the reason, the ordering reads as ceremony and gets optimized away."""
         section = self.step_four()
         self.assertRegex(
             section, r"(?i)ledger is (\*\*)?inside(\*\*)? the corpus|inside the corpus",

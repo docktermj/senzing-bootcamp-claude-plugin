@@ -278,8 +278,18 @@ accepted, not only the recommended one):
   `No NAME features found` as evidence that names are absent — they are extracted normally at load.
 
 The arbiter is this phase's own instrument: load one unmodified record and read back the features
-Senzing extracted. Extracted features settle it in favour of loadability, whatever the analyzer's
+Senzing extracted. Extracted features settle it in favor of loadability, whatever the analyzer's
 exit code was.
+
+⚠️ **One SCHEMA finding is NOT a conformance notice, and it belongs one phase earlier.** A
+`disposition: payload` field emitted at the record root under a **registered feature attribute's
+name** is reported here as a schema finding — but it is not a question of recommended-versus-flat
+shape. It means the Bootcamper's routing answer was not honored: at the record root that name is
+extracted as a feature regardless of the payload intent (observation-only, 2026-08-17 — see
+`phase2-data-mapping.md` step 11, which carries the full marker and its evidence). If it reaches
+this phase at all, step 11's collision check did not run or was skipped; resolve it as step 11
+prescribes — offer the rename, never silently re-route — rather than filing it under the conformance
+split above and continuing.
 
 ## Encoding
 

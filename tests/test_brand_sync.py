@@ -203,9 +203,9 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         """The key the browser actually draws.
 
         A stroke appears only when a stroke width is set, so `stroke` alone overstates the
-        space: a source with no stroke still carries a stroke *colour* in the returned dict.
+        space: a source with no stroke still carries a stroke *color* in the returned dict.
         This mirrors the served JS exactly — `srcStrokeW(src) ? srcStroke(src) : null` for
-        the colour, `srcStrokeW(src) || null` for the width — which is the whole point:
+        the color, `srcStrokeW(src) || null` for the width — which is the whole point:
         asserting on the returned tuple instead is what certified 6×3 combinations while
         the canvas had 6×4.
         """
@@ -227,7 +227,7 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         It stopped at `len(FALLBACK_COLORS) + 3` = 9, which never approaches the encoding
         space, and it compared `(fill, stroke)`, which at n=9 agrees with the rendered key
         only by accident — no source has reached the wrap where a no-stroke entry and a
-        stroked entry share a stroke colour. Both under-scopings hid the same defect: the
+        stroked entry share a stroke color. Both under-scopings hid the same defect: the
         25th source rendered identically to the 7th.
         """
         capacity = self.bt.SOURCE_ENCODING_CAPACITY
@@ -266,9 +266,9 @@ class SourceColorsComeFromTheData(unittest.TestCase):
         """Up to 24 sources the old encoding was right, so nothing may move there.
 
         Re-derives the pre-fix rendering — stroke drawn only when the wrap counter is
-        non-zero, colour `SOURCE_STROKES[cycle % 3]`, width always 1.5 — and requires the
+        non-zero, color `SOURCE_STROKES[cycle % 3]`, width always 1.5 — and requires the
         new code to agree with it exactly. Without this, widening the space is free to
-        recolour every existing bootcamp's graph.
+        recolor every existing bootcamp's graph.
         """
         strokes = self.bt.SOURCE_STROKES
         for n in (2, 3, 6, 7, 12, 18, 24):
@@ -377,14 +377,22 @@ class VizServerUsesTheAssignedColors(unittest.TestCase):
                          "counter, so widths and shades never render")
 
     def test_the_legend_and_the_node_use_the_same_expression(self):
-        """Criterion: swatch and mark must agree for the same source above 24 sources."""
+        """Criterion: swatch and mark must agree for the same key above 24 sources.
+
+        ⚠️ The node's expression changed on 2026-08-17 from `d.data_sources[0]` to
+        `srcKeyOf(d)` — a node is colored by its whole source COMBINATION, not by whichever
+        of its sources sorts first. The criterion is unchanged: both sides still resolve
+        through `srcStyle`, so a swatch and the marks it describes cannot disagree. For a
+        single-source entity `srcKeyOf(d)` degenerates to that source code, which is why
+        the single-source legend rows still key on `s`.
+        """
         page = self.viz.render_page("T", sources=["A", "B"])
-        node = 'return srcStrokeW(d.data_sources[0])?srcStroke(d.data_sources[0]):null;'
+        node = 'var k=srcKeyOf(d);return srcStrokeW(k)?srcStroke(k):null;'
         legend = 'srcStrokeW(s)?("inset 0 0 0 "+srcStrokeW(s)+"px "+srcStroke(s)):null'
         self.assertIn(node, page, "the node stroke is not derived from the width channel")
         self.assertIn(legend, page,
                       "the legend swatch does not mirror the node's stroke and width, so "
-                      "the two can describe different appearances for one source")
+                      "the two can describe different appearances for one key")
 
     def test_model_reports_its_data_sources_sorted(self):
         model = self.viz.Model()

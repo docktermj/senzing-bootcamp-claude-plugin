@@ -87,7 +87,7 @@ class ProjectSetupCreatesTheReadme(unittest.TestCase):
             "the two sections are created and the rest of the README is left undefined, "
             "which is half the original ambiguity")
 
-    def test_it_does_not_authorise_other_root_markdown(self):
+    def test_it_does_not_authorize_other_root_markdown(self):
         self.assertRegex(
             squash(self.section),
             r"(?i)only\*?\*? `?\.md`? permitted at the project\s*root|only\*?\*? `\.md` permitted",

@@ -122,7 +122,7 @@ again — in which case record that and stop.
       for a named code. Negative-controlled, with the mutation verified to land.
 - [ ] The SENZ2027 guidance is **untouched** — `explain_error_code('SENZ2027')` was a stub as of
       2026-07-30 and this spec is scoped to 7426. Confirm by `git diff` showing no SENZ2027 change,
-      and re-check 2027 separately before generalising anything across codes.
+      and re-check 2027 separately before generalizing anything across codes.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md). The macOS
       and Windows SUPPORTPATH cases are **documentation** here; neither is runtime-verified without
       a host of each.
@@ -203,7 +203,7 @@ regression, so the fix went in as designed. Four things differed in the doing.
    emphasis, and is negative-controlled against **the exact historical sentence**. Two
    false-positive classes are carved out with their reasons in the test: corroboration requirements
    (*"do not present the first `search_docs` result as-is: make a second, confirming call"* — the
-   opposite of suppression) and descriptions of server behaviour (*"most topics withhold their
+   opposite of suppression) and descriptions of server behavior (*"most topics withhold their
    content unless `language` is passed"*).
 
 4. **Criterion 5 verified as specified:** `git diff` contains no `SENZ2027` line. That guidance is

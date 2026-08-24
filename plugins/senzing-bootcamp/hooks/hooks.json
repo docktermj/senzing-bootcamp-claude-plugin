@@ -5,8 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/session-start.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start.py\""
           }
         ]
       }
@@ -16,13 +15,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/feedback-capture.py\""
           },
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/checkpoint-tick.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/checkpoint-tick.py\""
           }
         ]
       }
@@ -33,8 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/write-gate.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/write-gate.py\""
           }
         ]
       }
@@ -44,8 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/stop-nudge.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-nudge.py\""
           }
         ]
       }
@@ -55,8 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/precompact-recap.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/precompact-recap.py\""
           }
         ]
       }
@@ -66,8 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3",
-            "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/session-end.py"]
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session-end.py\""
           }
         ]
       }

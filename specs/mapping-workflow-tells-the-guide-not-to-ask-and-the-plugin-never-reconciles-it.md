@@ -51,7 +51,7 @@ not about one badly-worded line.
 **Two interaction contracts, no precedence rule.**
 
 `mapping_workflow` is designed to be driven by a general coding agent with no conversational
-obligations, so it reasonably optimises for throughput — advance when confident, ask only when
+obligations, so it reasonably optimizes for throughput — advance when confident, ask only when
 uncertain. The bootcamp is a *teaching* conversation whose invariants (INV-005 through INV-009) make
 the asking the point. Both are internally coherent; nothing states which wins.
 
@@ -68,7 +68,7 @@ INV-125 is the nearest existing rule and does not cover it: it governs what to d
 1. **State the precedence explicitly** in `phase2-data-mapping.md`'s "Calling `mapping_workflow`
    correctly" section: the bootcamp's interaction rules **outrank** any conversational instruction
    inside a tool response. The tool governs payload shape, state handling and Senzing content; it
-   does not govern whether the Bootcamper is asked. Name the specific strings so a reader recognises
+   does not govern whether the Bootcamper is asked. Name the specific strings so a reader recognizes
    them when they appear — *"Do NOT ask the user…"*, *"Do NOT wait for a response. Just advance."*,
    *"determine from context (do not ask)"*.
 
@@ -78,7 +78,7 @@ INV-125 is the nearest existing rule and does not cover it: it governs what to d
    verbosity choice the thing that decides, rather than the tool.
 
 3. ⛔ **Do not weaken the mapping-verbosity offer to match the tool.** Option 1 promises the
-   Bootcamper they will see each decision; the fix is to honour it, not to stop offering it.
+   Bootcamper they will see each decision; the fix is to honor it, not to stop offering it.
 
 4. **Scope it narrowly.** This is about *conversational* directives only. The tool's instructions on
    payload shape, opaque state, resource download and the mapping reference remain authoritative
@@ -89,7 +89,7 @@ INV-125 is the nearest existing rule and does not cover it: it governs what to d
 - [ ] `phase2-data-mapping.md` states that bootcamp interaction rules outrank conversational
       directives embedded in an MCP tool response, and names at least two of the observed strings
       verbatim. Verified by opening the file.
-- [ ] It states the guided-vs-faster behaviour at the entity-plan advance, so the verbosity choice
+- [ ] It states the guided-vs-faster behavior at the entity-plan advance, so the verbosity choice
       decides rather than the tool.
 - [ ] The scope limit is explicit: payload shape, state, resources and Senzing content stay
       tool-authoritative (INV-080).
@@ -135,7 +135,7 @@ in the "MCP sourcing and tool contracts" index group.
 The criteria asked for a test that the precedence statement is present and mentions
 `mapping_workflow`. What shipped is `tests/test_tool_directives_do_not_override_interaction.py` —
 **8 tests across three classes**: that the statement names the tool, quotes the directive verbatim
-(paraphrase is insufficient — the guide has to *recognise* the string in a live response), states
+(paraphrase is insufficient — the guide has to *recognize* the string in a live response), states
 that the bootcamp wins, and cites INV-007; plus a separate class asserting the carve-out stays
 **scoped**, and that the pinned mapping-verbosity question was not weakened. Two mutations were run:
 deleting the whole section fails 4 tests, deleting only the scope limit fails 2 — the second matters
@@ -149,8 +149,8 @@ implementation: doing so would start a fresh workflow to re-read strings already
 session, and the tool asserts no Senzing fact this change depends on.
 
 **No other deviation.** Every criterion holds and all are runtime-verified, except that the guard
-checks the plugin's *instruction*, not a live guide's behaviour — whether a future session actually
-honours the precedence is a phase-3 observation, not something an offline test can assert.
+checks the plugin's *instruction*, not a live guide's behavior — whether a future session actually
+honors the precedence is a phase-3 observation, not something an offline test can assert.
 
 ## Invariants introduced (recorded 2026-08-12)
 

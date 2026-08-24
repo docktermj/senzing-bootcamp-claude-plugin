@@ -32,7 +32,7 @@ being about something else.
 Vocabulary drift with no guard. The one-word form is the older spelling — it survives in
 the module's **directory** name (`module-03b-truthset-visualization`, correctly lowercase
 and permanent, since renaming a skill directory breaks every relative cross-reference) and
-in the three files that were written earliest. Later work standardised on the two-word
+in the three files that were written earliest. Later work standardized on the two-word
 form, including the shipped example recap (`3642` in the ledger records the residual
 "TruthSet-acquisition" being removed from it), but the three files above were never swept,
 and nothing asserts a single spelling.

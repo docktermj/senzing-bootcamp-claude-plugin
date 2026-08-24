@@ -111,7 +111,7 @@ literal is illustrative and INV-188 governs its wording separately.
       wider guard and does not weaken the reference-server one.
 - [ ] Full suite passes (baseline **1743 passed, 3 skipped, 1342 subtests**). Record the new total.
 - [ ] Stdlib-only, no `plugins/` import (INV-108); the rule is language-agnostic (INV-002/INV-090),
-      so it is stated as behaviour and not as a Python detail.
+      so it is stated as behavior and not as a Python detail.
 
 ## Affected files
 

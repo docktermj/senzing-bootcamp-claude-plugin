@@ -28,6 +28,15 @@ import re
 import unittest
 from pathlib import Path
 
+# ⚠️ **Matches the ROUTE, not the exact argument string.** These assertions pinned the literal
+# `search_docs(category='data_mapping')`, which stopped matching when
+# `specs/search-docs-instructions-omit-the-required-query-parameter.md` gave every shipped
+# reference the `query` the tool actually requires -- so the guards failed on the correction they
+# should have welcomed, the pattern `specs/guards-pinning-a-dated-negative-outlive-it.md`
+# describes. What they exist to assert is that the claim names its route; the route is still named.
+ROUTE_DATA_MAPPING = re.compile(
+    r"search_docs\([^)]*?category='data_mapping'\)")
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PHASE_1 = (
     REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
@@ -74,7 +83,7 @@ class BothQuestionsAreAsked(unittest.TestCase):
             "Perform the coverage check: is every field actually decided about?", step_5a()
         )
 
-    def test_the_structural_result_is_labelled_as_the_entry_condition_only(self):
+    def test_the_structural_result_is_labeled_as_the_entry_condition_only(self):
         squashed = flat(step_5a())
         self.assertIn("This is the entry condition, not the fast-path condition", squashed)
         self.assertIn(
@@ -139,7 +148,7 @@ class AnUndecidedSourceIsRoutedToMappingWithItsColumnsNamed(unittest.TestCase):
 
     def test_every_column_must_be_named_not_counted(self):
         squashed = flat(step_5a())
-        self.assertIn("Name every unrecognised column", squashed)
+        self.assertIn("Name every unrecognized column", squashed)
         self.assertIn(
             "A count alone tells the bootcamper a decision exists without telling them what it "
             "is about",
@@ -156,7 +165,7 @@ class AnUndecidedSourceIsRoutedToMappingWithItsColumnsNamed(unittest.TestCase):
 class TheThresholdIsStatedWithItsReasoning(unittest.TestCase):
     def test_the_rule_is_a_count_not_a_proportion(self):
         self.assertIn(
-            "The threshold is a count, not a proportion: zero unrecognised keys, or no "
+            "The threshold is a count, not a proportion: zero unrecognized keys, or no "
             "fast-path offer.",
             flat(step_5a()),
         )
@@ -178,7 +187,7 @@ class TheThresholdIsStatedWithItsReasoning(unittest.TestCase):
     def test_it_says_why_this_does_not_re_introduce_pointless_work(self):
         squashed = flat(step_5a())
         self.assertIn("Why this does not re-introduce pointless work", squashed)
-        self.assertIn("has zero unrecognised keys and still fast-paths", squashed)
+        self.assertIn("has zero unrecognized keys and still fast-paths", squashed)
 
     def test_exact_string_matching_is_ruled_out_with_its_counter_example(self):
         """An exact match against the catalog fails a genuinely-mapped source."""
@@ -195,7 +204,7 @@ class TheSenzingFactsCarryTheirProvenance(unittest.TestCase):
         squashed = flat(step_5a())
         self.assertIn("Entity Specification, *Feature: NAME*", squashed)
         self.assertIn("Usage types and payload (optional attributes)", squashed)
-        self.assertIn("search_docs(category='data_mapping')", squashed)
+        self.assertRegex(squashed, ROUTE_DATA_MAPPING)
 
     def test_the_dispositions_are_attributed_to_the_tool_schema(self):
         self.assertIn("confirmed against the live tool schema", flat(step_5a()))

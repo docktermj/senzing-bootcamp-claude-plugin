@@ -85,12 +85,12 @@ class TheScanIsNotVacuous(unittest.TestCase):
         self.assertIsNotNone(
             SUBSTEP_CITATION.search(
                 "per `../bootcamp-onboarding/module-completion.md` Step 2 (2b/2c):"),
-            "the scanner does not recognise the citation it exists to catch")
+            "the scanner does not recognize the citation it exists to catch")
 
 
 class NoSkillNarrowsStepTwoPastItsCreateSubstep(unittest.TestCase):
     def test_every_substep_citation_includes_2a(self):
-        offences = []
+        offenses = []
         for path in sorted(SKILLS.rglob("*.md")):
             flat = squash(read(path))
             for match in SUBSTEP_CITATION.finditer(flat):
@@ -106,14 +106,14 @@ class NoSkillNarrowsStepTwoPastItsCreateSubstep(unittest.TestCase):
                 # order to forbid it; quoting a defect is not committing it.
                 if re.search(r"(?i)may narrow|that cites|forbid", before):
                     continue
-                offences.append("%s: Step 2 (%s)"
+                offenses.append("%s: Step 2 (%s)"
                                 % (path.relative_to(REPO_ROOT), listed))
         self.assertEqual(
-            [], offences,
+            [], offenses,
             "a skill cites module-completion Step 2 with a substep list that omits 2a — "
             "the substep that CREATES the recap header. Whichever module appends first "
             "owns the creation, and a narrowed citation is how it gets skipped:\n  "
-            + "\n  ".join(offences))
+            + "\n  ".join(offenses))
 
     def test_module_00_no_longer_narrows_it(self):
         """Named explicitly: a corpus scan passes if the file is simply renamed."""

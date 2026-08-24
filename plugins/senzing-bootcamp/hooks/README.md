@@ -4,8 +4,9 @@ The plugin ships these hooks (registered in `hooks.json`). Following the bootcam
 convention, each hook's purpose is phrased beginning with the word "to", from the
 bootcamper's point of view. In the Kiro Power these were named hook files
 (e.g. "to review what you said"); in the Claude plugin they are `command`-type
-hooks wired to small **Python** scripts under `../scripts/`, invoked in exec form
-(`python3 <script>`) so no shell is required on any platform.
+hooks wired to small **Python** scripts under `../scripts/`, each invoked by a
+`command` string naming the interpreter and the script, quoted
+(`python3 "${CLAUDE_PLUGIN_ROOT}/scripts/<script>.py"`).
 
 Every hook is gated on an active bootcamp. Each script no-ops unless a
 `config/bootcamp_progress.json` file exists in the working directory, so the
@@ -14,7 +15,7 @@ plugin never alters unrelated Claude Code sessions.
 | Event | Script | Purpose |
 |-------|--------|---------|
 | `SessionStart` | `scripts/session-start.py` | to resume an in-progress bootcamp (offers to continue from the last recorded module, and folds any in-progress recap checkpoint into the recap). |
-| `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback and verbosity changes at any time (routes "bootcamp feedback" and "change verbosity" requests to the right workflow). |
+| `UserPromptSubmit` | `scripts/feedback-capture.py` | to capture bootcamp feedback, bootcamper notes and verbosity changes at any time (routes "bootcamp feedback", "make a note" and "change verbosity" requests to the right workflow). |
 | `UserPromptSubmit` | `scripts/checkpoint-tick.py` | to keep the in-progress recap checkpoint durable (creates `docs/progress/recap_checkpoint.md` as an empty scaffold within a turn of the bootcamp starting, and reminds the guide once to keep it current). Runs per turn because a bootcamp becomes active *after* `SessionStart` has already run; silent on every turn after the file exists. |
 | `PreToolUse` (Write, Edit) | `scripts/write-gate.py` | to keep your files in the project (blocks writes whose resolved target is outside the project — system temp and Downloads get a more specific message — and obvious hardcoded secrets, during a bootcamp). |
 | `Stop` | `scripts/stop-nudge.py` | to review what you said and end each turn with one leading question (a loop-safe safety net for the closing 👉 question). |
@@ -32,11 +33,17 @@ ambiguity between the purpose-phrasing and emitted-message readings.
 
 ## Runtime prerequisites (per platform)
 
-The hooks are **Python 3** scripts, invoked in Claude Code **exec form**
-(`{"command": "python3", "args": ["…/scripts/<hook>.py"]}`). Exec form spawns the
-interpreter directly with **no shell involved on any platform** (documented Claude
-Code behavior), so the hooks do **not** depend on `bash`, Git Bash, or WSL — even on
-Windows.
+The hooks are **Python 3** scripts, invoked as `type: command` hooks whose `command`
+string names both the interpreter and the script, with the plugin root **quoted**
+(`{"command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/<hook>.py\""}`). The quoting is
+what keeps a plugin root containing a space working.
+
+> ⚠️ **Corrected 2026-08-21.** This section previously described an *exec form*
+> (`{"command": "python3", "args": [...]}`) and claimed it spawned the interpreter with
+> no shell on any platform. That was wrong: `args` is not part of the `type: command`
+> schema, so every hook launched a bare `python3`, which read the event payload as its
+> program and never ran the script. A command hook is a shell command string by design,
+> so there is no shell-free form to prefer. INV-052 carries the corrected form.
 
 The only requirement is a `python3` on `PATH`, and it is **not a new dependency** —
 the bootcamp already requires `python3` for the graduation recap PDF
@@ -48,10 +55,11 @@ INV-090), so any machine that can run the bootcamp can run the hooks.
 |----------|-------------|-------|
 | Linux | `python3` on `PATH` | Already required by the bootcamp. |
 | macOS | `python3` on `PATH` | Already required by the bootcamp. The per-user temp dir under `$TMPDIR` is handled by the write-gate. |
-| Windows | `python3` on `PATH` | No shell (Git Bash/WSL) required — exec form spawns Python directly. The command name must be `python3` (the name the rest of the plugin already uses); if only `python`/`py` is installed, add a `python3` entry to `PATH`. |
+| Windows | `python3` on `PATH` | The command name must be `python3` (the name the rest of the plugin already uses); if only `python`/`py` is installed, add a `python3` entry to `PATH`. |
 
 Environment-variable substitution (`${CLAUDE_PLUGIN_ROOT}`) is performed by Claude
-Code identically on all three platforms, including inside `args`.
+Code identically on all three platforms. Keep it quoted inside the `command` string:
+the expanded path can contain a space, and unquoted it would split into two arguments.
 
 ## Design notes
 

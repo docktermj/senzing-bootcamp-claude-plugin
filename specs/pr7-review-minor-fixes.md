@@ -12,7 +12,7 @@ them.
 
 1. **`generate_recap_pdf.py` falls back to the inlined palette in silence** —
    `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py:831-853`. The `brand_tokens` import is
-   wrapped in a bare `except Exception:` that assigns the nine fallback colours and writes
+   wrapped in a bare `except Exception:` that assigns the nine fallback colors and writes
    **nothing** to stderr. INV-111 requires a generator that drops to a lesser path to say on
    stderr which case occurred, distinguishing "not importable" from "present but unusable", so a
    degraded render is never inferred from silence. The sibling generator does exactly that:
@@ -45,8 +45,8 @@ them.
    `_capture_one` and read by `_capture_chrome_cli` through `_virtual_time_ms(_CURRENT_TAB)`. The
    existing comment explains *why* the global exists (backends are invoked through a uniform
    two-argument signature) but not the condition that makes it **correct**: captures run strictly
-   one at a time from `capture()`'s loop. Parallelising that loop for speed — an obvious future
-   optimisation on a step that shells out to a browser per tab — would silently apply one tab's
+   one at a time from `capture()`'s loop. Parallelizing that loop for speed — an obvious future
+   optimization on a step that shells out to a browser per tab — would silently apply one tab's
    virtual-time budget to another tab's capture, and the symptom is a subtly under-settled PNG,
    not an error. INV-122 requires each file to show the tab it is named after; a wrong settle
    budget is the quiet way to violate it.
@@ -85,9 +85,9 @@ and a detector never aimed at the corpus.
    merge order**, dropping and `console.warn`-ing the rest exactly as now. A rejected search must
    not reject the batch — each candidate's failure stays that candidate's failure.
 3. Extend the `_CURRENT_TAB` comment to state the precondition ("`_capture_one` runs one capture
-   at a time; parallelising `capture()`'s loop requires threading the tab through the backend
+   at a time; parallelizing `capture()`'s loop requires threading the tab through the backend
    signature instead"), and pin it with a test in `tests/test_capture_tabs.py` so a future
-   parallelisation fails a test rather than producing a mis-settled PNG.
+   parallelization fails a test rather than producing a mis-settled PNG.
 4. Run `mojibake_lines()` over every shipped `.md` in `tests/test_markdown_hygiene.py`, reusing
    the glob already there, reporting `path:line` for each hit. Keep the existing
    not-vacuous guard covering the new check, so a drifted glob cannot make it pass silently.
@@ -102,14 +102,14 @@ and a detector never aimed at the corpus.
 - [ ] `tests/test_brand_sync.py` still passes and still asserts the fallback equals `brand_tokens`
       (INV-107/INV-184), through the helper rather than around it.
 - [ ] Example-chip verification issues its searches concurrently; the chips offered, their order,
-      the six-chip cap, and the drop-with-`console.warn` behaviour are unchanged from the serial
+      the six-chip cap, and the drop-with-`console.warn` behavior are unchanged from the serial
       version, and one failing search does not lose the others.
 - [ ] `tests/test_organization_search.py::ChipsAreVerifiedBeforeBeingOffered` still passes.
 - [ ] The `_CURRENT_TAB` comment names the sequential-only precondition, and a test in
       `tests/test_capture_tabs.py` fails if a capture is started while another is in flight.
 - [ ] `tests/test_markdown_hygiene.py` reports mojibake in any shipped `.md`, is covered by the
       existing not-vacuous guard, and passes on the current tree.
-- [ ] No bootcamper-facing behaviour changes (INV-012): every item is a stderr diagnostic, a
+- [ ] No bootcamper-facing behavior changes (INV-012): every item is a stderr diagnostic, a
       latency improvement, a comment, or a test.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
@@ -172,7 +172,7 @@ re-open them:
   `_CAPTURE_IN_FLIGHT`: `_capture_one` now warns on stderr (never raises — INV-052/INV-048) if a
   capture begins while another is in flight, and clears the flag in a `finally` so a backend that
   raises cannot leave it set. Without it the "test" could only assert the comment's text; with it
-  the hazard is detected at runtime in a parallelised future, which is what the spec's "announces
+  the hazard is detected at runtime in a parallelized future, which is what the spec's "announces
   itself" actually requires.
 - **Item 3's engine cost, measured.** The spec predicted the worst case is unchanged and the
   typical case costs a few more searches. Confirmed under a Node harness on a ten-candidate
@@ -184,7 +184,7 @@ re-open them:
 
 - Claude Code Review, `Senzing/senzing-bootcamp-claude-plugin` PR #7 (comment 5135083534),
   Parts 1-3. Part 3 found no defects.
-- Priority: Low — no bootcamper-facing behaviour changes.
+- Priority: Low — no bootcamper-facing behavior changes.
 - Related specs: `specs/search-attribute-fallback-survives-a-failed-attempt.md` (the one
   correctness bug from the same review), `specs/pr4-review-minor-fixes.md` (the same exercise for
   PR #4, which established INV-107), and the `deep-dive-audit-2026-07-30` entry in

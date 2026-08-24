@@ -79,7 +79,7 @@ the explanation of *what* it computes and *why*; run the script to get the answe
 only `IMPLEMENTED.md`, reported a **declined** spec as open, recommended it to the maintainer,
 and implemented it; `tests/test_declined_ledger.py` caught the contradiction afterwards, but
 nothing caught the listing. The instruction below was correct at the time and was simply not
-followed — which is the argument for mechanising it rather than restating it more firmly
+followed — which is the argument for mechanizing it rather than restating it more firmly
 (INV-207).
 
 1. **List** `specs/*.md` and drop the meta files above → the candidate set.
@@ -258,7 +258,7 @@ claim, and nothing downstream re-checks it.** For each `- [ ]` in `## Acceptance
 name what proves it: a `file:line` you changed, a test that asserts it, or a command you
 ran. A criterion you cannot prove is **not** ticked — it is either implemented-but-not-
 runtime-verified (say what it needs, in both the report and the entry) or a deviation
-(Step 3.6). Do not summarise the *narrative* of the work in place of this walk: the
+(Step 3.6). Do not summarize the *narrative* of the work in place of this walk: the
 narrative is what a spec's `## Proposed change` already says, and the criteria are what
 was actually promised.
 
@@ -328,6 +328,28 @@ hash in on the next `implement-spec` run**: before writing a new entry, scan the
 `uncommitted` fields whose work has since been committed and update them. Skipping that is
 how 66 entries went stale at once, leaving the field unable to answer the one question it
 exists for.
+
+⛔ **Verify the entry LANDED before doing anything else — the editing tool's own report is
+not evidence.** Confirm the heading is at a line start and the count grew by exactly the
+number of entries you wrote:
+
+```bash
+grep -c '^## ' specs/IMPLEMENTED.md          # compare against the count before your write
+grep -n '^## <spec-name>' specs/IMPLEMENTED.md   # must print a line; empty means it did not land
+python3 .claude/skills/implement-spec/list_specs.py   # the open count must DROP by that many
+```
+
+⚠️ **This exists because a write reported success while mangling the artifact.** On
+2026-08-21 two entries were inserted with literal `\n` text instead of newlines, spliced into
+the middle of an unrelated entry's `- **Summary:**` line — so their `## ` headings were not at a
+line start, a third entry was cut in half, and the inserting script printed "2 entries
+prepended" from its own `print`. The full suite passed, 3,141 tests, and it was committed. It
+was found only because `list_specs.py` reported `open: 11` immediately after two specs had
+been implemented. One `grep -n '^## '` would have caught it at the moment of writing. This is
+the same shape Step 4 already warns about for the other case — *a tool that exits 0 but
+creates/modifies NO files did not do its job* — and the write half needed saying too.
+`tests/test_ledger_files_are_well_formed.py` now guards the file, but the guard runs when the
+suite runs; this check runs when the damage happens.
 
 ⛔ **Re-run `citations.py verify` AFTER the entry is written — it is the last action of this
 step, not part of the criterion walk.**
@@ -480,6 +502,53 @@ otherwise draft it. For each new invariant:
 
 If one implementation establishes several invariants, add one entry per
 invariant using consecutive IDs.
+
+⛔ **Declining to mint an invariant does NOT decline to ship the rule — and that gap has been
+walked into once, at scale.** When the maintainer is unavailable and step 2's sign-off cannot be
+obtained, the safe-looking move is "do not record an invariant they have not agreed to". It is only
+half safe: if the implementation's *fix* is a hard rule, the rule ships anyway, and the run has then
+produced exactly the unregistered guarantee the reverse contract forbids — a rule in the product,
+nothing in the ruleset, nothing binding future work to it (INV-134 and INV-155 are the precedents,
+each wrong for weeks).
+
+So an implementation that ships a hard rule — a ⛔, a bolded MUST/NEVER, anything
+`conformance.py rules` would count — owes **one of two things, never silence**:
+
+- the invariant, recorded; or
+- an explicit **deferral in the ledger entry**, naming the rule, the site, and why it was not
+  registered — so the next `production-readiness-audit` reads it as known rather than discovering it.
+
+⚠️ **Check before writing the entry, not after** — and ⛔ **`rules` alone cannot answer this
+question, so do not check it alone:**
+
+```bash
+python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
+python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
+```
+
+`since` is the one that matters here: it lists the hard-rule lines added since the newest audit
+entry's recorded commit — resolved from the ledger, not guessed — which for a run following an
+audit is **this run's own additions**. That is
+exactly the set the run is answerable for. `per-rule` gives the standing worklist, scoped to the
+invariants cited *at* each rule rather than anywhere in its section.
+
+⛔ **`conformance.py rules` is section-scoped and MUST NOT be read as a count of unregistered
+rules.** A new rule does not appear in it if it lands anywhere near an unrelated `INV-nnn` — and it
+gets *harder* to see as citations grow denser, which is the opposite of what a maturing plugin needs.
+Both directions are on record:
+
+- **2026-08-17** — the count went **1 → 10** across eighteen implementations and the audit found
+  seven genuinely unregistered rules the same day
+  (`specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md`). Those seven were visible only
+  because they happened to land in sections with no citation at all; nothing establishes that seven
+  was the whole set.
+- **2026-08-21** — seventeen implementations added **26 hard-rule lines** (net +25) and the count
+  **did not move at all**, holding at its session baseline of 1, while three of those rules were on
+  subjects `INVARIANTS.md` covers nowhere
+  (`specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md`).
+
+A run that adds a hard rule owes a ledger line for it whether or not any count moved. Flagging
+loudly is the remedy — not letting the rule ship unmentioned.
 
 ## Step 6: Report
 

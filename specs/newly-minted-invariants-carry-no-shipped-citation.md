@@ -69,7 +69,7 @@ The evidence that this is a recurring class, not a one-off: `aa013dc` (2026-08-1
 day before these eight accrued.
 
 **No Senzing fact is at issue.** This is the plugin's own citation discipline; nothing
-here asserts engine or server behaviour (INV-080 untouched).
+here asserts engine or server behavior (INV-080 untouched).
 
 ## Proposed change
 

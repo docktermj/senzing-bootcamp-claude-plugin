@@ -62,12 +62,18 @@ class TheScanIsNotVacuous(unittest.TestCase):
         self.assertIn("get_sample_data", step_4b(),
                       "the located section is not Step 4b")
 
-    def test_step_4a_still_requires_mapping_complexity(self):
-        """The invariant `truthset` cannot satisfy. If it goes, the exclusion is moot."""
+    def test_step_4a_still_requires_cross_source_mapping_divergence(self):
+        """The invariant `truthset` cannot satisfy. If it goes, the exclusion is moot.
+
+        ⚠️ Reworded 2026-08-17 from "mapping-complexity-rich (needs at least one
+        transformation)" — that wording was unsatisfiable by the examples the modules gave
+        for it. The Truth Set is pre-mapped and uniform, so it fails the reworded
+        requirement exactly as it failed the old one; only the phrasing moved.
+        """
         self.assertRegex(
             squash(DISCOVERY.read_text(encoding="utf-8")),
-            r"(?i)mapping-complexity-rich \(needs at least one transformation",
-            "Step 4a's mapping-complexity invariant is gone")
+            r"(?i)cross-source\*{0,2} mapping divergence",
+            "Step 4a's cross-source mapping-divergence invariant is gone")
 
 
 class TruthsetIsIneligible(unittest.TestCase):

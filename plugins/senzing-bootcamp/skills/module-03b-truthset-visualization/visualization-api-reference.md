@@ -321,9 +321,10 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > |---|---|
 > | `get_entity_by_entity_id` / `get_entity_by_record_id` | `RESOLVED_ENTITY.ENTITY_ID`, `.ENTITY_NAME`, `.FEATURES`, `.RECORD_SUMMARY`, `.RECORDS[]` with `.DATA_SOURCE` / `.RECORD_ID` / `.MATCH_KEY` / `.MATCH_LEVEL_CODE` / `.ERRULE_CODE`; `RELATED_ENTITIES[]` with `.ENTITY_ID` / `.MATCH_LEVEL_CODE` / `.MATCH_KEY` / `.IS_DISCLOSED` / `.IS_AMBIGUOUS` |
 > | `why_entities` / `why_records` / `why_record_in_entity` | `WHY_RESULTS[]`, `ENTITIES[]` — and the `MATCH_INFO` interior is documented too: `.CANDIDATE_KEYS.<KEY_TYPE>[]`, `.FEATURE_SCORES.<FAMILY>[]`, `.WHY_KEY_DETAILS.CONFIRMATIONS[]`, `.MATCH_LEVEL_CODE`, `.WHY_ERRULE_CODE`, `.WHY_KEY` (re-verified on MCP server 1.32.8, docs indexed 2026-08-11 13:35 UTC, 2026-08-11 — partial, ask for the full `fields[]`) |
-> | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE` |
+> | `how_entity_by_entity_id` | `HOW_RESULTS.RESOLUTION_STEPS[]`, `HOW_RESULTS.FINAL_STATE`. ⛔ **A step's two sides are `VIRTUAL_ENTITY_1` / `VIRTUAL_ENTITY_2`** — *objects*, each with `.VIRTUAL_ENTITY_ID` and `.MEMBER_RECORDS[]` (`.INTERNAL_ID`, `.RECORDS[].DATA_SOURCE` / `.RECORD_ID`). The similar `INBOUND_VIRTUAL_ENTITY_ID` is a **string ID** on the step, paired with `RESULT_VIRTUAL_ENTITY_ID`; **no `CANDIDATE_VIRTUAL_ENTITY` exists at any depth**. The `INBOUND_`/`CANDIDATE_` pairing is real but lives one level deeper as `INBOUND_FEAT_DESC` / `CANDIDATE_FEAT_DESC` under `MATCH_INFO.FEATURE_SCORES.<FAMILY>[]` and `MATCH_INFO.MATCH_KEY_DETAILS.CONFIRMATIONS[]` — generalizing it up to the step level lands on a key that exists at the wrong type, so the lookup appears to confirm it and the parser renders every step blank (re-verified on MCP server 1.32.9, 2026-08-17) |
 > | `search_by_attributes` | `RESOLVED_ENTITIES[]` (each carries `MATCH_INFO` and `ENTITY`) |
 > | `find_path_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, **`ENTITY_PATH_LINKS[]`** — *not* `ENTITY_NETWORK_LINKS[]`; each link element carries the **same seven fields** as the network row below (re-verified on MCP server 1.32.2, docs indexed 2026-07-29 11:11 UTC, 2026-07-31). The element fields are identical and only the array name differs, so a parser carried over from `find_network` returns every edge blank |
+> | `ENTITY_PATHS[]` (in **both** `find_path_*` and `find_network_*`) | `START_ENTITY_ID`, `END_ENTITY_ID`, `ENTITIES[]` — three fields, and the endpoints are **directed**. ⛔ **A `find_network` response therefore carries TWO endpoint conventions at once:** paths are `START_`/`END_`, links are `MIN_`/`MAX_` (undirected, normalized low-to-high). A link is an unordered pair and a path is not, which is the reason — and `START_`/`END_` is the natural wrong guess for a link precisely because the sibling array in the same response uses it. Reading path endpoint names off a link element printed **38 edges as `null -> null` with no error** (re-verified on MCP server 1.32.9, 2026-08-17, `get_sdk_reference(topic='response_schemas', filter='find_network', language='java')`) |
 > | `find_network_*` | `ENTITY_PATHS[]`, `ENTITIES[]`, `ENTITY_NETWORK_LINKS[]`; each link element (**now documented by `response_schemas` — re-verified on MCP server 1.32.2, 2026-07-30 — and corroborated by a dump on SDK 4.3.3, 2026-07-28**) carries `MIN_ENTITY_ID` / `MAX_ENTITY_ID` (endpoints, normalized low-to-high), `MATCH_LEVEL_CODE`, `MATCH_KEY`, `ERRULE_CODE`, `IS_DISCLOSED`, `IS_AMBIGUOUS` |
 > | `get_record` | `DATA_SOURCE`, `RECORD_ID`, `JSON_DATA.*` — **the only place `JSON_DATA` is obtainable**; see the get_entity trap below |
 >
@@ -355,6 +356,24 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > **`WHY_KEY_DETAILS`** object inside `MATCH_INFO`, while `how_entity_by_entity_id` puts a
 > **`MATCH_KEY_DETAILS`** object inside each resolution step's `MATCH_INFO`. Both contain
 > `CONFIRMATIONS` (and optionally `DENIALS`). Reusing one parser for both silently yields nothing.
+>
+> ⚠️ **They differ in POPULATION as well as in name, so one being empty is not evidence the other
+> parser is wrong.** They are separate documented paths for separate calls
+> (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` returns
+> both, server **1.33.0, 2026-08-21**), and on a 2026-08-18 run every `why_records` call returned
+> `WHY_KEY_DETAILS` with an **empty** `CONFIRMATIONS[]` while `how_entity`'s
+> `MATCH_KEY_DETAILS.CONFIRMATIONS[]` populated **on the same entity** (observation-only —
+> whether a given rule produces confirmations is a live-engine fact no MCP route reports).
+> Fall back to `FEATURE_SCORES`, which carries the same evidence.
+>
+> ⚠️ **The "with the flag" in that sentence is load-bearing on a why call, and this file was right
+> about it when Module 7 was not.** Module 7 briefly forbade the flag on why calls, claiming the
+> breakdown was there without it; on **SDK 4.3.4** `WHY_KEY_DETAILS` was **absent** until the flag
+> (plus a relations flag) was passed, and absent again without it on **4.3.2** — observation-only,
+> 2026-08-16 (INV-080/INV-149). Note that **no flag is *documented* to populate it**: all 29 flags
+> applying to `why_records` name other `response_paths` (`get_sdk_reference(topic='flags',
+> filter='why_records')`, server 1.32.9, 2026-08-17). So pass the flag, and still check the keys you
+> actually got.
 >
 > **Both are documented — look them up rather than dumping first.**
 > `get_sdk_reference(topic='response_schemas', filter='why_entities')` returns the `data[]` entry
@@ -715,7 +734,7 @@ the artifact they keep.
 CLI takes (the Python reference spells it `--dataset`; INV-090 leaves the spelling to you) — and the
 **caller MUST pass it**: Truth Set visualization passes "the Senzing Truth Set", Query, Visualize and
 Discover passes wording describing the Bootcamper's own sources. Accepting it and defaulting to
-neutral wording is only half the requirement; a snapshot that could have been labelled and was not
+neutral wording is only half the requirement; a snapshot that could have been labeled and was not
 is a vaguer keepsake than the data warranted.
 
 Headline counts belong in the page-level summary strip and appear **once**. A tab MUST NOT repeat
@@ -800,7 +819,7 @@ helper is safe in text and attribute position alike. Those are the names in the 
 **not** the requirement — implement the equivalent for your language (INV-090). ⛔ **Whatever you
 implement, cover the quotes.** Until 2026-07-30 the reference escaped only the three, matching case 2's
 text half while this very paragraph promised the attribute half: every call site happened to be a text
-node, so nothing rendered wrong, and an implementer modelling the helper rather than the rule would
+node, so nothing rendered wrong, and an implementer modeling the helper rather than the rule would
 have inherited an attribute-position hole with no symptom to find it by (the INV-164 pattern — a
 divergence between the reference and the written rule reaches generated code). A server that skips
 this ships a stored-XSS vector in a shared keepsake, which is why it is a ⛔ and not a nicety
@@ -896,7 +915,7 @@ Applies to **Entity Graph** in both of its modes.
   about what the browser draws.** Every draw site must key on a property that reaches the canvas. A
   wrap counter does not: it decides *whether* a second channel appears and *which* value it takes,
   and two sources with different counters can still be drawn identically. That is what happened in
-  the Python reference — six fills × three stroke colours read as more than enough, the renderer
+  the Python reference — six fills × three stroke colors read as more than enough, the renderer
   applied a stroke only when the counter was non-zero, and the actual space was 6 × 4 = **24**
   rendered appearances. The returned map stayed collision-free at any size because each entry
   carried a distinct counter, so nothing looked wrong; the 25th source simply came out identical to
@@ -992,6 +1011,84 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+### Coloring graph nodes (required — behavior, in every language, INV-259)
+
+⛔ **A node is colored by its whole source set — never by one member of it (INV-259).** The key is the
+entity's data sources, sorted and joined (`GLEIF|LEI`, not `GLEIF`), so a cross-source entity is
+visually distinct from every single-source entity. **Fill, stroke and stroke width all derive from
+that key**; leaving any one of the three reading the first source keeps a partial version of the
+same misencoding.
+
+⚠️ **Where an entity has one source the key degenerates to that source code**, so single-source
+entities are unchanged. That is the compatibility guarantee — and it is why this defect survived:
+on the Truth Set most entities sit in one source, so "first source" *is* the entity's source and
+the encoding looks correct at that scale.
+
+**The failure it prevents:** a real run rendered **1,951 cross-source entities in the single-source
+`GLEIF` color**, with a legend implying they were GLEIF-only. Nothing looked broken — the graph
+drew, the legend populated, every count was right, and the headline result of the bootcamp was
+invisible in the tab built to show it.
+
+⛔ **The palette MUST be allocated in a single pass over the full key set** (INV-259) — every source and every
+combination together, one call. Two calls each restart at the top of the palette and reproduce the
+collision this fixes; that is the error made while repairing it by hand, not a hypothetical.
+
+**The legend MUST name each combination** it colors (INV-259), labeled as a combination and counted over the
+nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
+
+### The graph payload is bounded, and says so (required)
+
+The graph endpoint MUST cap the nodes it emits and carry **`total`** and whether a cap was applied,
+so the UI can state what it is showing rather than implying it is everything. Rank candidates by
+**source span first** — entities spanning most sources are the ones worth seeing — then by
+connectivity, then deterministically, so a re-rendered snapshot does not disagree with the recap
+prose describing it. ⚠️ This is about the **size and portability** of the payload and the
+self-contained snapshot, which embeds it whole; the *legibility* half is already handled by the
+scale-aware subgraph default below, and the client filtering what it draws does not bound what the
+server ships.
+
+### Binding the port (required — behavior, in every language, INV-260)
+
+⛔ **Bind the LOOPBACK interface explicitly — `127.0.0.1` — never the wildcard address (INV-260).** In Java
+that is `new InetSocketAddress("127.0.0.1", port)`, not `new InetSocketAddress(port)`; in Node
+`server.listen(port, "127.0.0.1")`; in C# a loopback `IPAddress.Loopback` endpoint. The idiomatic
+one-argument form in most languages is a **wildcard** bind, so this is the rule an otherwise faithful
+port of the reference will get wrong by writing the shorter thing.
+
+⚠️ **The reason is not tidiness, and an implementer who "simplifies" it back reintroduces a defect
+that cannot be seen.** A wildcard bind does **not** collide with an existing loopback listener on the
+same port — both binds succeed, two processes listen on one port, and either may answer a localhost
+request. Observed on macOS, 2026-08-17: a three-week-old `VizServer` from an unrelated project held
+`127.0.0.1:8080`, the bootcamp's server bound `*:8080` successfully, and the first `/api/stats` probe
+happened to reach the new one. Had the browser reached the other, the Bootcamper would have been
+shown **a stranger's dataset under their own project's title**, with every number on the page
+someone else's and the keepsake screenshots capturing it. A loopback bind is also the correct
+security posture for a server holding the Bootcamper's resolved data — a second reason not to leave
+it to the language's default.
+
+⛔ **A successful bind is NOT proof the port was free (INV-260).** Any guidance that treats a port conflict as
+a *bind failure* is describing only one of the two cases. A failure stops the step; this succeeds and
+produces nondeterministic results, which is strictly worse.
+
+### Confirming the server that answers is yours (required — INV-260)
+
+⛔ **After binding and before handing the URL to the Bootcamper, probe `/api/stats` and confirm the
+responder is the server just started (INV-260).** Mint a **nonce** at startup — any value unique to this
+process — expose it on `/api/stats`, and compare. ⚠️ **Compare the nonce, not the record count:** two
+runs of the same project agree on record count, so a count check passes in exactly the case where a
+stale listener is most likely to be the Bootcamper's own earlier server.
+
+**On disagreement, STOP and report the conflict** — the port, and both servers' identifying figures —
+and do not hand over the URL. ⛔ It must not degrade to a warning printed above a working-looking
+link: the entire failure mode is that everything looks fine, so a message the Bootcamper scrolls past
+is the same as no message.
+
+⚠️ **The probe is required even though the bind rule above is followed, because they cover opposite
+directions.** A loopback bind makes a colliding *loopback* listener fail cleanly; it does nothing
+when the pre-existing listener is itself **wildcard**-bound — then your loopback bind is the one that
+succeeds alongside it. Only asking which server answered covers both. Socket coexistence rules differ
+across platforms, so the probe, not the bind, is what must hold on Linux, macOS and Windows alike.
+
 ### Identifying the server process (required)
 
 ⛔ **Capture the server's process id at launch and record it in the checkpoint beside the port.**
@@ -1002,6 +1099,15 @@ guess available is worse than the handle you threw away. Recording it costs one 
 |---|---|
 | POSIX shells (Linux, macOS, Git Bash, WSL) | `$!` immediately after backgrounding with `&` |
 | PowerShell (Windows) | `$proc = Start-Process … -PassThru`, then `$proc.Id` |
+
+⛔ **In a POSIX shell, `$!` names the server only when the server is the *sole* backgrounded
+command on its line.** Written `A && B &` — the shape any prerequisite invites, and this bootcamp
+requires the project env sourced before anything that touches the Senzing library — the `&` binds
+to the whole `&&` list: the shell backgrounds a **subshell**, `$!` is that subshell, and the server
+is its child with a different pid. Source the env as its own statement, then background only the
+server. Measured on bash: composed with `&&`, `kill <recorded pid>` exits 0, the subshell dies, and
+the port stays bound by the still-running server. PowerShell is unaffected — `-PassThru` returns
+the process object, not a shell job.
 
 The port is already recorded (INV-172) — record the pid in the same checkpoint object, so a resumed
 session can still stop what a previous one started.
@@ -1016,16 +1122,74 @@ principle for this bootcamp: the server is written in the Bootcamper's chosen la
 there is no script name to match on in general, and a second bootcamp running in another directory
 would match too.
 
-**Terminate by pid; fall back to the port, never to the name.** When the recorded pid is missing —
-a session resumed across the change, or a server someone else started — look the listener up by the
+**Terminate by pid; fall back to the port, never to the name.** The fallback covers **two** cases,
+and only the first is obvious: the recorded pid is *missing* (a session resumed across the change, or
+a server someone else started), or the recorded pid is *wrong* — it terminated successfully and the
+port is still bound. A wrong pid is the worse of the two precisely because it presents as presence:
+nothing looks like it needs a fallback. ⛔ **So the exit condition is the port, never the kill's
+status** — poll the port after signaling, and if it still answers, run the port lookup as though no
+pid had been recorded at all. Look the listener up by the
 port that *is* recorded: `lsof -ti:<port>` (Linux/macOS) or `Get-NetTCPConnection -LocalPort <port> |
 Select-Object -ExpandProperty OwningProcess` (PowerShell). The port is bound by exactly the process
 serving it, which is the property the command line lacks.
+
+⛔ **On the `docker` path both routes above are host-shell routes, and the container has neither
+tool — while the command-line match stays forbidden for its own reason, unsoftened by any tool
+being absent.** The bootcamp's own container follows the `linux_apt` steps inside a Debian slim
+image (`module-02-sdk-setup/SKILL.md` → the `docker` path), which ships no `procps` and no `lsof`,
+so every process-identification binary those routes reach for is **never** present inside it, and
+MUST NOT be reached for there — `ps`, `pkill` and `lsof` alike. A run that reached for the forbidden match in a container got
+`exec: "…": executable file not found in $PATH`, and **the Bootcamper had already been told the
+server would be stopped while it kept serving** — found only when the port was probed and still
+answered 200. Two faults are live at once: the wrong identification route, and no tool to run it
+with. Fixing only the second would leave a working command that signals the invoking shell.
+
+Use the two things a Debian slim container is guaranteed to have — a POSIX shell, and the `python3`
+the SDK install brings in:
+
+- **Record the pid from inside the container, and know which namespace it belongs to.** A server
+  started with `docker exec <container> …` yields a **container-namespace** pid, which is the only
+  kind `docker exec … kill` can signal; a host pid from `docker run` identifies the *container*, not
+  the server inside it, and signaling it stops the whole container. Capture the pid in the same
+  namespace the teardown will signal in, and record which one it is beside the port (INV-223 requires
+  the pid and port in one checkpoint object; this says the pid needs its namespace to be usable).
+- **Signal the recorded pid through the shell's builtin**, not through a `kill` binary:
+  `docker exec <container> sh -c 'kill <pid>'`. `kill` is a shell builtin, so this needs no
+  `procps`; `/bin/kill` is a `procps` binary and is not there. The pid is the one INV-223 requires
+  the launch to have recorded.
+- **Probe the port with `python3`**, since `lsof` is absent: a short `socket` connect against the
+  port, run with `docker exec <container> python3 -c …`. `python3` is present because the SDK
+  install put it there, and this is the same probe the host path makes with `lsof` — the same
+  question asked by the only tool available.
+
+⚠️ **`procps` is deliberately NOT added to the container build.** It would be a package installed
+into the Bootcamper's image for the convenience of one teardown step, when the shell builtin and
+`python3` already answer both questions — and every package added to that image is one more thing
+that can fail during Module 2's install phase, which is the module with the most ways to go wrong
+already. If a later change needs `ps` output for its own reasons, that is the change that should
+argue for the package.
+
+**Never treat the kill's own exit status as evidence the server stopped.** `docker exec … kill`
+reports whether the *signal was delivered*, not whether the process died and released the port — a
+server mid-request can take the signal and keep the socket briefly, and a wrong pid exits non-zero
+for a reason that looks identical to a server that was never running. This is the same
+verify-the-artifact-not-the-exit-code discipline INV-129 requires of a rendered deliverable and
+INV-218 requires of an install, applied to a process: **the port answering or not answering is the
+observation; the exit code is not.**
 
 **Confirm the port is free before continuing, rather than waiting a fixed interval.** Poll the port
 until nothing is listening, up to 5 seconds; then force-stop and re-check. Treat *the port being
 free* as the exit condition — a sleep asserts nothing, and any step that follows teardown (a data
 purge above all) then runs on an assumption instead of an observation.
+
+**When teardown cannot confirm, say so plainly and do not claim the server stopped.** If the port
+still answers after the force-stop and re-check, tell the Bootcamper exactly that — the port, that
+something is still listening on it, and that the records may still be loaded — then continue without
+the purge rather than purging on an unverified stop. ⛔ **A teardown that reports success while the
+port answers is worse than one that reports failure (INV-223).** the Bootcamper walks away believing their
+machine is clean, and INV-131 makes teardown the last action of the module, so nothing downstream
+will notice. Where the container is the host for the server, name the `docker exec` form that was
+tried, so the Bootcamper can see what was attempted rather than only that it failed (INV-111).
 
 **The teardown gate.** Before stopping the server — and before any data purge that accompanies it —
 ask a pinned question (INV-056) and end the turn on it. The gate MUST name **exactly** what is

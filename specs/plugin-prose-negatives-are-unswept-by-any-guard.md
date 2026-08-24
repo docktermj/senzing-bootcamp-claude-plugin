@@ -29,7 +29,7 @@ second time the stale claim was in the **guards** too, so correcting the prose f
 
 The convention was built from the test side. `test_dated_negatives_are_marked.py` was written when
 the observed defect was a *guard* encoding a stale claim, so its corpus is `tests/`. The report was
-built to prioritise re-checking, so its input is markers. Neither was ever pointed at the largest
+built to prioritize re-checking, so its input is markers. Neither was ever pointed at the largest
 surface — 42 shipped markdown files, 127,803 words — and INV-217 closed the gap for `DECLINED.md`
 only, because that file had the additional property of having no re-verification path at all.
 
@@ -73,7 +73,7 @@ is evadable by paraphrase. Say so in the guard, as `tests/test_declined_ledger.p
       widened into uselessness.
 - [ ] The marker grammar is **imported** from `.claude/skills/dry-run/coverage_reports.py`, not
       restated.
-- [ ] The `quoted-history` escape is honoured, so a correction can restate what it corrects.
+- [ ] The `quoted-history` escape is honored, so a correction can restate what it corrects.
 - [ ] The guard's docstring states that the vocabulary is a phrase list and evadable by paraphrase,
       and names the marker as the durable route.
 - [ ] Stdlib-only, imports nothing from `plugins/`, exits via `unittest` (INV-108).
@@ -117,7 +117,7 @@ Two deviations, and the first changed what shipped.
    *changed* — or excluding them, which is the silent cap this repo has learned to refuse.
 
    So the mechanism landed as `coverage_reports.py unmarked`, in the same shape and for the same
-   stated reason as `invariants` and `affected`: read-only, exit 0, judgement required. The six are
+   stated reason as `invariants` and `affected`: read-only, exit 0, judgment required. The six are
    its **named output**, and the verify-and-mark work is
    `specs/verify-and-mark-the-six-unmarked-prose-negatives.md`. **The gate remains unbuilt and is not
    claimed** — it becomes worth building once the report reads zero, at which point a regression is

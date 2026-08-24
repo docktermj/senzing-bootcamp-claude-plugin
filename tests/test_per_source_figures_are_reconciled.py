@@ -43,7 +43,7 @@ SKILLS = REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
 #: A block that PERSISTS a per-source figure into the registry: the literal field, the
 #: registry file, and a write verb. Deliberately narrow. `record count` in prose is
 #: overloaded — `phase2-discover.md` uses it for an entity's record count and Module 4 for a
-#: licence limit — and a guard that sweeps those fails on correct content, which is worse
+#: license limit — and a guard that sweeps those fails on correct content, which is worse
 #: than one that misses. The registry write is the action INV-243 actually triggers on.
 FIELD = "`record_count`"
 REGISTRY = "data_sources.yaml"

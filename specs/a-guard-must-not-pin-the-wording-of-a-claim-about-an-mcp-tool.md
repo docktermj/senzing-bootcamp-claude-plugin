@@ -75,7 +75,7 @@ the server moves.
 
 ⛔ **A mechanical guard for this is explicitly out of scope, with the reason stated.** Detecting "an
 assertion pins wording rather than a property" requires distinguishing the two, which is the same
-judgement the rule asks a human to make — a scan keying on "assertion line contains a long verbatim
+judgment the rule asks a human to make — a scan keying on "assertion line contains a long verbatim
 quote and a tool name" would flag `:195`'s corrected form (which legitimately quotes a label) and
 miss a paraphrased pin. Registering the rule and citing it in review is the remedy; proposing a
 scanner that cannot work would be worse than none.
@@ -159,7 +159,7 @@ precisely what INV-219 requires and what the old pin would have failed. Every mu
 land; restored from a `cp` backup.
 
 **A mechanical guard for INV-219 remains deliberately unbuilt**, with the reason this spec gave:
-detecting "this assertion pins wording rather than a property" requires making the same judgement the
+detecting "this assertion pins wording rather than a property" requires making the same judgment the
 rule asks a human to make. A scan keying on "assertion line contains a long verbatim quote and a tool
 name" would flag `:195`'s *corrected* form, which legitimately quotes an ownership label, and would
 miss a paraphrased pin. Registering the rule and citing it in review is the remedy; a scanner that

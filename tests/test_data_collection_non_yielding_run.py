@@ -3,12 +3,12 @@
 On the generated-scenario path — the one a Bootcamper who accepted the Business Case Offer
 takes — Data collection asks nothing until Step 9's transition. Steps 1-8b are all
 non-yielding: Step 2's marker/provenance guard skips the provision question and generates the
-files, Step 8a's volume-skip passes when the collected total is inside the licence limit, and
+files, Step 8a's volume-skip passes when the collected total is inside the license limit, and
 Step 8b is silent below its threshold. Observed 2026-08-14 with three generated sources, 36
 records against a 500-record limit: zero 👉 questions across nine steps, exactly as the file
 requires.
 
-That behaviour is correct under INV-225. What was missing is the **marking**. The module the
+That behavior is correct under INV-225. What was missing is the **marking**. The module the
 plugin holds up as the example of this shape says it twice — `module-03-system-verification`
 carries a ⚠️ naming its single 👉, and `phase1-verification.md` opens with a ⛔ — while Data
 collection carried neither, so a guide reading it step by step had nothing local telling it
@@ -20,7 +20,7 @@ verification is *always* non-yielding, so a reader learns it once; Data collecti
 non-yielding only on the generated-scenario path, so a reader who learned the module on the
 bring-your-own-data path (where Step 2 does ask) meets the run of nine unexpectedly.
 
-No new invariant: INV-225 already requires the behaviour, the single write and the partial-turn
+No new invariant: INV-225 already requires the behavior, the single write and the partial-turn
 fallback. This adds the local marking that makes it followable from inside the module, and the
 fourth instance to the run list in `ground-rules.md`.
 
@@ -132,7 +132,7 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
 
     def test_the_run_list_says_this_one_is_path_dependent(self):
         # The other three are unconditional; recording that difference is what stops a
-        # reader generalising "Data collection never asks".
+        # reader generalizing "Data collection never asks".
         self.assertRegex(
             squash(GROUND_RULES),
             r"(?i)that\s+one is path-dependent: the bring-your-own-data path does ask, at Step 2",
@@ -152,7 +152,7 @@ class TheGroundRulesListNamesTheFourthInstance(unittest.TestCase):
         )
 
 
-class NoStepBehaviourChanged(unittest.TestCase):
+class NoStepBehaviorChanged(unittest.TestCase):
     """Criterion 5 — this adds marking only."""
 
     def test_the_step_2_provision_question_is_unchanged(self):
@@ -173,7 +173,7 @@ class NoStepBehaviourChanged(unittest.TestCase):
         self.assertRegex(block, r"(?i)Ask nothing, recommend no CORD alternative")
         self.assertRegex(block, r"(?i)Both are bootcamp-generated, so both skip the question")
 
-    def test_the_8a_licence_gate_is_unchanged(self):
+    def test_the_8a_license_gate_is_unchanged(self):
         self.assertIn(
             "### 8a. Senzing License Key gate (single, volume-gated — INV-093)",
             COLLECTION.read_text(encoding="utf-8"),

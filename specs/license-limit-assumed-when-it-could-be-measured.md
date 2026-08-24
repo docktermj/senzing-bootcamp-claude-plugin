@@ -1,9 +1,9 @@
-# Phase A assumes the default licence limit on the one path where nothing ever measures it
+# Phase A assumes the default license limit on the one path where nothing ever measures it
 
 ## Problem
 
 `module-06-data-processing/phaseA-build-loading.md:155-171` reconciles `sdk_guide`'s
-record-count-derived `LICENSE REQUIRED` note against the licence the bootcamp has detected, reading
+record-count-derived `LICENSE REQUIRED` note against the license the bootcamp has detected, reading
 `license_record_limit` from `config/bootcamp_progress.json`. Its three branches are:
 
 - `0` (no cap) or ≥ dataset size → suppress the note entirely;
@@ -12,13 +12,13 @@ record-count-derived `LICENSE REQUIRED` note against the licence the bootcamp ha
   assumption. Relay it."**
 
 The third branch is reached on the common path and is wrong there. The only writer of
-`license_record_limit` is Module 4's Step 8a licence gate
+`license_record_limit` is Module 4's Step 8a license gate
 (`module-04-data-collection/SKILL.md:663`, "single, volume-gated"), which by design fires **only**
 when the collected volume approaches the limit. A bootcamper with a small dataset never triggers it,
-so `license_record_limit` is absent — regardless of what licence is actually installed.
+so `license_record_limit` is absent — regardless of what license is actually installed.
 
 The result is that the guide relays a 500-record default-limit note, and `sdk_guide`'s sampling
-prescription with it, to a bootcamper whose installed licence has no cap at all.
+prescription with it, to a bootcamper whose installed license has no cap at all.
 
 **Measured on this walk (2026-08-14).** `SzProduct.getLicense()` on the installed SDK 4.3.4 returned:
 
@@ -43,14 +43,14 @@ It also contradicts a higher-precedence rule. `bootcamp-onboarding/ground-rules.
 > limit, the installed SDK version, the platform — the detected value decides, the generic note is
 > suppressed rather than relayed (INV-012)
 
-The licence record limit is named there explicitly. Phase A's absent-branch relays generic guidance
+The license record limit is named there explicitly. Phase A's absent-branch relays generic guidance
 about exactly that value without ever measuring it, on a machine where it is one SDK call away.
 
 ## Root cause
 
 `license_record_limit` is treated as "the detected limit", but it is really "the limit Module 4
 happened to record while asking a volume question". Absent means *not asked*, not *no custom
-licence*. Nothing in Phase A converts "not asked" into "go and measure it".
+license*. Nothing in Phase A converts "not asked" into "go and measure it".
 
 ## Proposed change
 
@@ -75,7 +75,7 @@ noted rather than proposed here.
 
 ## Acceptance criteria
 
-- `phaseA-build-loading.md`'s absent/null branch instructs measuring the licence before assuming a
+- `phaseA-build-loading.md`'s absent/null branch instructs measuring the license before assuming a
   limit, and names `SzProduct.getLicense()` / `recordLimit` as the route.
 - The measured value is persisted to `license_record_limit` in `config/bootcamp_progress.json`.
 - The default-limit assumption survives only as the failure fallback, and is stated as an
@@ -99,7 +99,7 @@ in Phase A reappears one phase later.
 ## Source
 
 `/dry-run` phase 3, 2026-08-14. Analysis started at Data processing; modules 1–8 fast-forwarded.
-Licence JSON measured live on the walk's own install (Senzing SDK 4.3.4, Java binding). MCP server
+License JSON measured live on the walk's own install (Senzing SDK 4.3.4, Java binding). MCP server
 1.32.9, docs indexed 2026-08-11 20:52 UTC.
 
 ## Invariants introduced
@@ -118,7 +118,7 @@ Implemented as proposed, both locations, all four criteria. Four notes.
 1. **The signature is server-confirmed; the payload field is not, and the plugin already says so.**
    `get_sdk_reference(topic='response_schemas', filter='getLicense')` on server 1.32.9 (2026-08-14)
    returns `SzProduct` `getLicense() -> String` for every binding — Java, Python, C#, Rust,
-   TypeScript — so the spec's citation is confirmed and generalised beyond Java. But its `data`
+   TypeScript — so the spec's citation is confirmed and generalized beyond Java. But its `data`
    array is **empty**: the server does not document the license JSON's fields, so `recordLimit` is
    not server-established. Asked the prose route as well, per INV-194:
    `search_docs(query='license recordLimit getLicense record limit JSON')` returns only EULA,
@@ -167,8 +167,8 @@ writer is gated on**:
 
 - `test_load_status`'s writer **is** the test load, so nothing having written it means no test
   load ran — absence is sound evidence, and that branch is legal.
-- `license_record_limit`'s writer is a **volume gate**, not a licence check, so its silence
-  carries no information about the licence.
+- `license_record_limit`'s writer is a **volume gate**, not a license check, so its silence
+  carries no information about the license.
 
 **Maintainer decision: add a scope carve-out rather than rewrite the condition.** The approved
 sentence is kept verbatim — `INVARIANTS.md` permits in-place edits only where meaning is

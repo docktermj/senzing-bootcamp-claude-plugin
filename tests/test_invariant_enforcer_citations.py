@@ -168,7 +168,43 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 #: defect was a question improvised at runtime that exists in no file, so the pair records an
 #: enforcer of the rule, not a detector of the symptom.
 #:   INV-247 -> test_no_host_control_is_offered_as_a_question.py   (close the question set)
-EXPECTED_PAIRS = 65
+#:
+#: 65 -> 66 on 2026-08-16: INV-253 (US English is the only spelling written in this
+#: repository) names its new guard, tests/test_us_english_spelling.py. Re-derived by
+#: running the extractor. ⚠️ That guard's vocabulary is hardcoded and cannot be otherwise —
+#: the corpus is what is being judged — so the pair records an enforcer of the rule, not a
+#: detector of every breach of it.
+#:   INV-253 -> test_us_english_spelling.py                        (the house spelling)
+#:
+#: 66 -> 73 on 2026-08-16: the bootcamp-notes feature registered five invariants
+#: (INV-254..INV-258), two of which name two enforcers each — INV-254 is split between the
+#: hook's trigger vocabulary and the shipped flow's prose, and INV-258 between the Markdown
+#: fold at graduation and the rendered PDF. Re-derived by running the extractor.
+#:   INV-254 -> test_feedback_capture_triggers.py, test_bootcamp_notes_flow.py
+#:   INV-255 -> test_bootcamp_notes_flow.py                        (the 📌 banners)
+#:   INV-256 -> test_bootcamp_notes_flow.py                        (append, then verify)
+#:   INV-257 -> test_bootcamp_notes_flow.py                        (their words stay theirs)
+#:   INV-258 -> test_bootcamp_notes_flow.py, test_recap_notes_section.py
+#:
+#: 73 -> 76 on 2026-08-17: the production-readiness audit found seven hard rules shipped
+#: with no invariant in one unattended run; the maintainer approved three invariants for
+#: them (INV-259 graph source encoding, INV-260 viz bind/identity, INV-261 cross-source
+#: join predictions), each naming the guard that already existed for its rule. Re-derived
+#: by running the extractor.
+#:   INV-259 -> test_graph_colors_by_source_combination.py    (color by the source SET)
+#:   INV-260 -> test_viz_server_bind_and_identity.py          (loopback + identity probe)
+#:   INV-261 -> test_group_score_is_not_a_join_prediction.py  (measured or unmeasured)
+# 80 as of 2026-08-21: INV-262, INV-263 and INV-264 were registered at the maintainer's
+# sign-off, and INV-052's dated verification note now names
+# `test_hook_entries_name_a_script.py` as its enforcer. Re-derived by running the extractor,
+# not relaxed. (datastore mount-crossing measurement) was registered at the
+# maintainer's sign-off and names `test_datastore_mount_crossing_is_measured.py`. Re-derived
+# by running the extractor, not relaxed.
+# 82 as of 2026-08-23: INV-266 names `test_generated_scenario_marker_drop_is_exempt.py` as its
+# enforcer. INV-265 and INV-267 were registered in the same edit and name no test in their own
+# text — their guards cite them rather than the reverse — so they add no pair here. Re-derived by
+# running the extractor, not relaxed.
+EXPECTED_PAIRS = 82
 
 
 def pairs():

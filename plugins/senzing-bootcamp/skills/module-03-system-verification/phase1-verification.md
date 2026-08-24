@@ -93,7 +93,7 @@ The following rules are mandatory for the agent executing this module:
 Verify MCP server connectivity before code generation operations.
 
 1. Call `get_capabilities` with a 10-second timeout. ⛔ A reachability probe must **not** be a
-   document search: this step discards the content and keeps only "did the server answer", so a
+   document search (INV-204): this step discards the content and keeps only "did the server answer", so a
    `search_docs` query pays for retrieval it throws away. See
    [`../bootcamp-onboarding/onboarding-flow.md`](../bootcamp-onboarding/onboarding-flow.md) →
    "MCP health check", which states the reasoning; do not restate it here, and do not restore a
@@ -188,7 +188,7 @@ names/addresses).
    attribute names, confirm them via the MCP server (`search_docs` / `mapping_workflow`) — never
    guess (INV-080). Design them so resolution is deterministic and known in advance:
    - **A merge cluster:** 2–3 records for the **same** synthetic person, designed to resolve into
-     **one** entity. ⛔ **Make this unambiguous by construction, not by judgement** — "enough
+     **one** entity. ⛔ **Make this unambiguous by construction, not by judgment** — "enough
      features, with only trivial variation" is exactly the phrase that produced a false verification
      failure, because two reasonable readings of it give opposite verdicts.
 
@@ -218,7 +218,7 @@ names/addresses).
      Step 7 reported FAILED. The same three records with the first name identical throughout and only
      phone/address *formatting* varied resolved to **2 entities** with a 3-record cluster, and passed.
      The engine was right both times; only the prediction changed. (This is an observation of this
-     install's behaviour, not an MCP claim — INV-080/INV-149.)
+     install's behavior, not an MCP claim — INV-080/INV-149.)
    - **At least one distractor:** 1+ record for a **different** synthetic person that must stay a
      **singleton** (its own entity).
    - Give every record a `DATA_SOURCE` of `VERIFY` (one synthetic source code is enough) and a
@@ -248,7 +248,7 @@ Verify the Senzing SDK initializes correctly and connects to the database.
    bootcamper's chosen language.
 2. **Fetch the snippet, then** save it to `src/system_verification/verify_init.[ext]` where `[ext]`
    matches the chosen-language file extension (`.py`, `.java`, `.cs`, `.rs`, `.ts`).
-   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.32.9, 2026-08-13 -->
+   <!-- MCP-NEGATIVE: generate_scaffold(language='python', workflow='initialize') — its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and line_count with no content field at all — owner: generate_scaffold IS the route that would return source text, and it returns a listing plus an ordered access_steps (fetch raw_url, else git clone) instead, so fetching raw_url is the documented route (routing negative) — server 1.33.0, 2026-08-21 -->
    ⛔ `generate_scaffold` returns a **listing**, not code — `file_path`, `source_url`, `raw_url`,
    `size_bytes`, `line_count` per snippet, with no source text. Follow its own `access_steps` step
    1 and fetch each `raw_url`; use step 2's `git clone` if the fetch is blocked. **Never pass
@@ -299,7 +299,7 @@ Verify the MCP server can generate a full pipeline script in the chosen language
      demo whose records are hardcoded in the source. For Python those are
      `loading/add_records_loop.py` (reads `INPUT_FILE`) versus `loading/add_records.py`
      (hardcoded records, no file input); every language's set has the same pair, so match on the
-     **shape** — does it open a data file? — never on position in the list.
+     **shape** — does it open a data file? — never on position in the list (INV-267).
    - **The server states this as its own anti-pattern for this workflow**, at severity `error`:
      *"Hardcoded John Doe / TEST / 1001 records"* → *"Records read line-by-line from JSONL"*, and
      *"/opt/senzing/er/testdata/truth-sets/..."* → *"User's input_file"* (returned inline in the
@@ -407,8 +407,26 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
    - Set the updated configuration as the new default, so `verify_pipeline` and every
      later SDK session see the codes. Use the exact config classes/methods returned by
      `sdk_guide`/`generate_scaffold` — never hardcode SDK names from memory.
-   - Be **idempotent:** a code that is already registered is treated as success,
-     not an error, so re-running Module 3 or resuming mid-module still passes.
+   - Be **safe to re-run:** the whole sequence — load, register each code, export,
+     register the config, replace the default config ID — must tolerate a second run,
+     so re-running Module 3 or resuming mid-module still passes. ⛔ **Build that in;
+     do not make it depend on catching an error (INV-263).** Registering an identical
+     configuration returns the existing config ID rather than failing (Senzing release
+     notes: *"Fix `G2ConfigMgr.addConfig` function to return success and the ConfigID
+     if the configuration already exists"*), so re-runnability comes from the sequence,
+     one call later than the per-code registration. **No route documents a raised error
+     for re-registering a code, in any binding** —
+     `get_sdk_reference(topic='parameters', filter='register_data_source',
+     language='python')` returns the signature with no error condition (server
+     **1.33.0, 2026-08-21**) — so a per-code catch is a permitted fallback, never the
+     mechanism, and no binding's exception type is a contract (INV-002). The full
+     reasoning, including the community-versus-official `search_docs` hazard, is stated
+     once at `../module-06-data-processing/phaseA-build-loading.md` step 4a item 2
+     (INV-179); do not restate it here.
+   - ⛔ **Pass `data_sources` so the registration snippet is primary, then substitute
+     your codes into it** — the parameter selects the snippet and fills in nothing, so
+     the returned code still carries the sample tuple. Locate it by `source_path`. Same
+     step 4a item 2 for the detail and the citation.
 3. **Build the registration code if the language requires it** (compiled languages
    — Java, C#, Rust, TypeScript), using the same per-language build command as
    Step 5. Enforce a 120-second build timeout.

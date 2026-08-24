@@ -42,7 +42,7 @@ This is a design, not a bug.
 **It has also spread beyond `find_examples`.** `generate_scaffold(language='python',
 workflow='initialize')` on 1.32.8 returns the same `access_steps` block and **no inline code at all**
 — only `snippets[]` with `file_path`, `raw_url`, `size_bytes`, `line_count`. INV-160's scope
-("`find_examples` file retrieval") is now narrower than the behaviour it governs.
+("`find_examples` file retrieval") is now narrower than the behavior it governs.
 
 **What has NOT changed:** the `inline` parameter is still **undeclared** in the live
 `find_examples` schema (`file_path`, `language`, `list_files`, `max_lines`, `query`, `repo` — no
@@ -56,10 +56,10 @@ Verdict: **`retire-workaround`** — the *premise* retires, the *conclusion* sta
 
 INV-160 was written 2026-07-28 against server 1.32.1, where an empty `content` beside a non-zero
 `content_length` had no accompanying signal and was indistinguishable from a broken retrieval. The
-project filed it upstream as a `bug` (2026-07-28, follow-up 2026-07-30). The behaviour was not
+project filed it upstream as a `bug` (2026-07-28, follow-up 2026-07-30). The behavior was not
 reverted; it was **documented** — the server added `content_elided` and `access_steps` to say "this
-is deliberate, here is how to get the file". A workaround written against an undeclared behaviour
-survives its own justification when the behaviour becomes declared, because nothing re-reads the
+is deliberate, here is how to get the file". A workaround written against an undeclared behavior
+survives its own justification when the behavior becomes declared, because nothing re-reads the
 premise once the remedy works.
 
 ## Proposed change
@@ -68,7 +68,7 @@ premise once the remedy works.
 
 1. **`ground-rules.md:113-119`** — keep "search mode is the reliable route" and "fetch the `raw_url`",
    which the server's own `access_steps` step 1 now prescribes. Replace "the retrieval **failed**"
-   with what the response says: file retrieval elides `content` **by design**, signalled by
+   with what the response says: file retrieval elides `content` **by design**, signaled by
    `content_elided: true`, and `access_steps` lists the route (fetch `raw_url` → clone → *not* the
    inline step, which needs an undeclared parameter INV-136 forbids). Delete the promise that "this
    caution goes away when the retrieval does" — it will not; the caution is now permanent guidance,
@@ -82,7 +82,7 @@ premise once the remedy works.
 4. **INV-160 — append, never edit away.** Per `INVARIANTS.md`'s own rules and this skill's guardrail,
    add a dated clause: the failed-retrieval premise no longer holds as of server 1.32.8
    (2026-08-11), the elision is declared by `content_elided: true` with an `access_steps` route, the
-   behaviour now extends to `generate_scaffold`, and **every MUST in the invariant stands** — fall
+   behavior now extends to `generate_scaffold`, and **every MUST in the invariant stands** — fall
    back to `raw_url`/clone, never tell the Bootcamper the file is empty, never adopt an undeclared
    parameter. Do **not** delete or renumber it. Whether the changed premise warrants a *new*
    superseding invariant rather than a dated clause is the maintainer's call at implementation time;
@@ -135,7 +135,7 @@ better-sourced one and leaves the access path identical.
   prescribes is the one the server prescribes — but an invariant carries a false premise, and
   invariants are load-bearing in a way ordinary prose is not.
 - Upstream: previously filed as a `bug` (2026-07-28, follow-up 2026-07-30). **Close it out**: the
-  behaviour is now documented rather than reverted, so no further report is warranted. One residual
+  behavior is now documented rather than reverted, so no further report is warranted. One residual
   worth a separate `bug` if the maintainer wants it — `find_examples(repo=…, list_files=true)`
   returns a truncated README ending *"[README truncated. Use find_examples with file_path='README.md'
   for full content.]"*, and that `file_path` call returns elided content. The instruction does not do

@@ -93,7 +93,7 @@ affected` compares a spec's predicted paths against the entry's `Files changed:`
 3. **Name both PDFs in INV-050's layout tree**, beside `bootcamp_recap.pdf` and
    `bootcamp_data_discoveries.pdf`, as a dated in-place clarification recording what the flow
    produces. This is the same correction the 2026-07-26 audit made for three other deliverables
-   and changes no behaviour.
+   and changes no behavior.
 4. **Close the class, not just the instance.** Add a test that every artifact graduation is
    instructed to *produce* is also named in its closing announcement — so the next artifact added
    to graduation cannot repeat this. That is the durable half; items 1-3 are the instance.

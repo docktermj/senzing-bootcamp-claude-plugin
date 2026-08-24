@@ -201,7 +201,7 @@ For each new spec, write `specs/<kebab-case-title>.md` using the template in
 - **Pick a filename that does not collide** with an existing spec. Match the terse, developer-facing tone of the current specs.
 - **Ground it in code.** Root cause cites real `file:line`; affected-files lists real paths.
 - **Ground every Senzing fact in Step 5's result, with its provenance.** Name the tool and parameters that established it, the server version, and the date — e.g. "`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_JSON_DATA')` reports `applies_to: ["get_record"]` (server 1.32.1, verified 2026-07-28)". Where the entry and the server disagree, state both and which governs. Where the fact is observation-only, mark it so.
-- **Say when the current server changed the spec.** If re-verification narrowed, widened, redirected or cancelled what the entry asked for, put that in the spec rather than silently writing the corrected version — the next reader needs to know the report and the spec differ, and why.
+- **Say when the current server changed the spec.** If re-verification narrowed, widened, redirected or canceled what the entry asked for, put that in the spec rather than silently writing the corrected version — the next reader needs to know the report and the spec differ, and why.
 - **Make acceptance criteria observable and testable**, and always include a criterion that the change holds on Linux, macOS, and Windows and stays language-agnostic (the invariants). For a fact that only a live engine can confirm, say so in the criterion rather than writing one that cannot be run.
 - **Link the source**: name the feedback file, the entry title, its date, module, and priority.
 
@@ -311,6 +311,6 @@ submission's outcome (sent / declined / already-filed), and offer next steps
 for the unclear items?"). Do not start implementing unless asked.
 
 **Call out anything the re-check changed.** If the current server narrowed, redirected or
-cancelled what an entry asked for, say so in the report as well as in the spec — that is
+canceled what an entry asked for, say so in the report as well as in the spec — that is
 the highest-value output of a triage run, and it is invisible if it only lives in a file
 the maintainer has not opened yet.

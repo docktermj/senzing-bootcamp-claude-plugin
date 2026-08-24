@@ -86,7 +86,7 @@ class EveryBindingInvariantIsCited(unittest.TestCase):
             "the artifact filter's display-name half is nearly empty, so the check above would "
             "pass by seeing no artifacts rather than by finding every rule cited")
 
-    def test_the_filter_still_recognises_a_display_name(self):
+    def test_the_filter_still_recognizes_a_display_name(self):
         """⚠️ Added after a negative control escaped: parsing the names is not using them.
 
         Emptying the display-name half of `shipped_artifact_re` left `module_display_names`
@@ -104,7 +104,7 @@ class EveryBindingInvariantIsCited(unittest.TestCase):
                     "nothing about the display-name half")
                 self.assertTrue(
                     artifact_re.search(phrase),
-                    "the composed filter no longer recognises a module by its display name, so "
+                    "the composed filter no longer recognizes a module by its display name, so "
                     "every display-name invariant is invisible to the check above")
 
 

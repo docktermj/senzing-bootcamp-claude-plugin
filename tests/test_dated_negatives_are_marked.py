@@ -346,7 +346,7 @@ class NoTestAssertsAnUnmarkedNegative(unittest.TestCase):
             "what IS true:\n  " + "\n  ".join(found),
         )
 
-    def test_the_detector_recognises_the_historical_offenders(self):
+    def test_the_detector_recognizes_the_historical_offenders(self):
         """Pinned so the detector cannot be quietly narrowed into uselessness."""
         for line in (
             '        self.assertRegex(text, r"(?i)explain_error_code\\(\'SENZ7426\'\\)'

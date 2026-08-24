@@ -25,7 +25,7 @@ when the server can technically answer the question.
 
 ## What this skill is not
 
-Three neighbours overlap; keeping them distinct keeps all four useful.
+Three neighbors overlap; keeping them distinct keeps all four useful.
 
 | Skill | Asks |
 |---|---|
@@ -60,7 +60,7 @@ systematic version of both, and it is the only one of the four that reads the pl
   `retire-workaround`).
 - **Deduplicate** against existing specs and against the ledger before writing.
 - **Respect the invariants.** Every generated spec references `@INVARIANTS.md`. A
-  delegation that would break cross-platform behaviour, language-agnosticism, or an
+  delegation that would break cross-platform behavior, language-agnosticism, or an
   offline guarantee is not a valid recommendation.
 
 ## Step 1: Record both of the server's versions, and what it now covers
@@ -213,7 +213,7 @@ had to retract twice.
 **`retire-workaround` usually touches an invariant.** Workarounds here are pinned:
 INV-160 (a `find_examples` retrieval returning empty `content` alongside a non-zero
 `content_length` is a failed retrieval) and INV-173 (a validation gate that cannot
-represent a legitimate input) both encode server behaviour. When such behaviour is
+represent a legitimate input) both encode server behavior. When such behavior is
 fixed:
 
 - **Never delete or renumber the invariant.** Per `INVARIANTS.md`'s own rules, propose
@@ -241,7 +241,7 @@ Only for sites the server covers. **All six must pass** before the verdict is
    reinterpret a long generic response to get the sentence it needs, the plugin is
    adding value, not duplicating.
 3. **Is the plugin's version narrower on purpose?** A generic server note that the
-   Bootcamp has already *measured* for this installation must stay suppressed in favour
+   Bootcamp has already *measured* for this installation must stay suppressed in favor
    of the measured value (INV-150). Delegating re-introduces the noise.
 4. **Does an invariant require the text at that step?** INV-183 requires a step that
    generates an artifact to name every governing rule *at that step*, not one file away.
@@ -253,7 +253,7 @@ Only for sites the server covers. **All six must pass** before the verdict is
    free; a round-trip the Bootcamper waits through to be told something the flow could
    have stated is friction (INV-012).
 
-One pattern deserves recognising rather than deleting, because it already does the right
+One pattern deserves recognizing rather than deleting, because it already does the right
 thing. `module-05-data-quality-mapping/phase1-quality-assessment.md` inlines a table of
 which features apply to `PERSON` vs `ORGANIZATION`, and labels it: verified against a
 named server version on a named date, explicitly **partial**, and followed by "re-read
@@ -323,7 +323,7 @@ python3 .claude/skills/delegate-to-mcp-server/coverage_ledger.py record \
 The ledger is `specs/mcp-coverage.jsonl`, append-only and read last-wins, so a verdict
 is revised by appending a new row with the same key — never by editing history. The key
 is a **stable slug describing the claim**, not a path: files move and line numbers
-churn, and a decision keyed to a location is lost the moment the file is reorganised.
+churn, and a decision keyed to a location is lost the moment the file is reorganized.
 
 **Record `--index` even though it is optional.** A verdict with no index provenance
 cannot be proved current against a later re-index, so it expires on the next check that

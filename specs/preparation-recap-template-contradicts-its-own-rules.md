@@ -51,7 +51,7 @@ abbreviated. So the ambiguity cannot be fixed by renaming the modules; it has to
 separator.
 
 **The plugin already solved this exact problem elsewhere, which is what makes it an oversight rather
-than a judgement call.** `generate_recap_pdf.py --check --expect-modules` takes a **semicolon**
+than a judgment call.** `generate_recap_pdf.py --check --expect-modules` takes a **semicolon**
 separated list, and `dry-run/phase2-hooks-and-scripts.md` spells out why: *"with **semicolons** (two
 module names contain commas)"*. The Step 7 template inherits the bug that flag was designed to
 avoid.

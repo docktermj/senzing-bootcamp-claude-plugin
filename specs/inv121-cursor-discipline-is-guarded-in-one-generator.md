@@ -16,7 +16,7 @@ Two bundled generators render a bootcamper-facing PDF: `generate_discoveries_pdf
 **Only the discoveries generator is guarded.** `tests/test_discoveries_pdf.py` is the sole test
 mentioning cursor position at all, and it imports `generate_discoveries_pdf` only.
 
-**The behaviour is correct in both** — this is a coverage gap, not a conformance defect, and it
+**The behavior is correct in both** — this is a coverage gap, not a conformance defect, and it
 should not be reported as the latter. `generate_recap_pdf.py` resets before every full-width write
 using the same idiom the invariant permits (`pdf.set_x(pdf.l_margin)` / `set_xy(pdf.l_margin, …)`
 at `:1558`, `:2278`, `:2413`, `:2419`, `:2457`, `:2461`, and `set_xy(pdf.l_margin, …)` throughout
@@ -51,7 +51,7 @@ the invariant's, which is only visible by reading what the test imports.
 ## Proposed change
 
 1. **Extend the cursor-discipline assertion to `generate_recap_pdf.py`.** The check should be
-   behavioural rather than a source scan where possible — render a document whose blocks follow one
+   behavioral rather than a source scan where possible — render a document whose blocks follow one
    another and assert every drawn text run's x lies inside the page's text column, which is the
    verification standard INV-121 itself names ("Verification MUST be positional … not a
    text-extraction presence check").
@@ -104,7 +104,7 @@ Only a positional check distinguishes them.
 - **Found by `production-readiness-audit`, 2026-07-31** — the first run of that skill, via Step 7
   class 3 (a guard narrower than the invariant it claims to enforce), by listing the 16 invariants
   that name a test file and checking each named test's scope against its invariant's.
-- Priority: **Low.** No live defect: both generators honour the rule today, verified by reading
+- Priority: **Low.** No live defect: both generators honor the rule today, verified by reading
   every full-width write path in each. The value is that the class INV-121 exists to close is
   currently closed in one file of two, in the smaller one, and the unguarded file is the one with
   the fixed-layout certificate page.

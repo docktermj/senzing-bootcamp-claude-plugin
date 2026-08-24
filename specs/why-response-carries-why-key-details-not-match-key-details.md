@@ -123,7 +123,7 @@ presentation and the parse agree on one documented path.
 ## Follow-up: the same defect was in a second file (2026-08-14)
 
 This spec's criterion 4 names `phase2-discover.md` and only that file, and the first
-implementation (`d880b63`) honoured it literally. Working an unrelated spec in the same module
+implementation (`d880b63`) honored it literally. Working an unrelated spec in the same module
 surfaced **three more sites in `phase1-query-visualize.md`**, all reachable by the same guide on
 the same walk. A guard scoped to one filename could not see any of them.
 
@@ -160,4 +160,4 @@ on a why call it has no surface (the prohibition), and anywhere else it needs a 
 positive** on this spec's own prohibition bullet — the citation sits far enough below the ⛔ that
 the window missed it. Replaced with blank-line-bounded block detection: a fixed window is the
 wrong length by construction, too short to reach a qualifier three sentences up and long enough
-to borrow one from an unrelated neighbour.
+to borrow one from an unrelated neighbor.

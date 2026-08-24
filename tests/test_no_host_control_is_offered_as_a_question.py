@@ -88,7 +88,7 @@ SANCTIONED_SLASH = frozenset({"model", "effort"})
 # ⚠️ SNAPSHOT, NOT A CLOSED SET — dated 2026-08-15, the Claude Code CLI's affordances at that
 # date. The CLI ships independently of this plugin, so this list expires silently and an
 # offline suite cannot notice. EXTEND it when a new control appears, and do not read a pass
-# here as "no host control is offered" — SLASH_COMMAND above is the check that generalises.
+# here as "no host control is offered" — SLASH_COMMAND above is the check that generalizes.
 HOST_CONTROL = re.compile(
     r"(?i)auto[-\s]?mode"
     r"|auto[-\s]?accept"
@@ -370,7 +370,7 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
 
         The dialog offers "Don't show again". Naming it would direct the bootcamper to
         operate a SECOND Claude-interface control, and the model/effort switch is the only
-        one INV-247 allows. The prohibition must ship, not merely be honoured today.
+        one INV-247 allows. The prohibition must ship, not merely be honored today.
         """
         controls = section(self.text, "## Any-time bootcamper controls")
         self.assertRegex(
@@ -385,13 +385,13 @@ class TheRuleShipsWhereItBinds(unittest.TestCase):
         The recovery rule says "any interruption", then enumerates a compaction, a session
         boundary, the feedback detour and a tangent — all conversational, all visible to the
         guide. A host dialog is neither, and INV-205's own maintenance note records what
-        happens to an enumeration generalised from the instances its author had seen.
+        happens to an enumeration generalized from the instances its author had seen.
         """
         controls = section(self.text, "## Any-time bootcamper controls")
         self.assertRegex(
             controls, r"(?i)host-rendered prompt from their Claude interface",
             "the interruption list does not name a host-rendered prompt, leaving the observed "
-            "case to a reader's generalisation from four conversational examples (INV-007)")
+            "case to a reader's generalization from four conversational examples (INV-007)")
 
     def test_no_shipped_text_claims_the_GUIDE_asked_about_auto_mode(self):
         """No run has shown that. INV-247 is prophylaxis, not a repair of an observed defect.

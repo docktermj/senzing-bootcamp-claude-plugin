@@ -322,13 +322,13 @@ class TestTablesRenderAsAGrid(unittest.TestCase):
     def test_the_alignment_row_is_dropped(self):
         self.assertNotIn("---", [t.strip() for _x, _y, t in self.runs])
 
-    def test_a_ragged_row_does_not_desynchronise_the_grid(self):
+    def test_a_ragged_row_does_not_desynchronize_the_grid(self):
         """Short and over-long rows are padded/truncated to the header width."""
         texts = [t.strip() for _x, _y, t in self.runs]
         self.assertIn("+RAGGED", texts, "the short row vanished")
         self.assertIn("+NAME+ADDRESS+EXTRA", texts, "the over-long row vanished")
         # The extra 4th cell has nowhere to go in a 3-column grid; dropping it is
-        # correct, but it must not shift a neighbouring row's cells along.
+        # correct, but it must not shift a neighboring row's cells along.
         xs = {t: x for x, _y, t in self.runs}
         self.assertAlmostEqual(
             xs["+NAME+ADDRESS+EXTRA"], xs["+NAME+ADDRESS+ID01"], delta=0.5,
@@ -562,7 +562,7 @@ class TestEverythingRendersInsideThePage(unittest.TestCase):
                 self.assertLess(hits[0][0], 40.0, f"meta line {key} drawn off-column")
 
 
-class TestLabelledBulletsStayReadable(unittest.TestCase):
+class TestLabeledBulletsStayReadable(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -580,7 +580,7 @@ class TestLabelledBulletsStayReadable(unittest.TestCase):
     def test_long_bold_label_breaks_to_its_own_line(self):
         label = self._run_with("ABC AUTOMOTIVE INVESTMENTS")
         body = self._run_with("these two agree on name")
-        self.assertLess(body[1], label[1], "long-labelled body did not break to a new line")
+        self.assertLess(body[1], label[1], "long-labeled body did not break to a new line")
         self.assertLess(body[0], A4_W_PT / 3, "body did not return to (near) the left margin")
 
     def test_short_label_keeps_its_body_inline(self):
@@ -659,7 +659,7 @@ class TestRefusesToShipAnEmptyDeliverable(unittest.TestCase):
         return result
 
     def test_recap_shaped_document_is_refused(self):
-        """Wording generalised 2026-07-31 ("required findings sections" -> "required
+        """Wording generalized 2026-07-31 ("required findings sections" -> "required
         sections") because the list is now a parameter: with `--require-sections` the
         expected headings are not findings at all, so the old phrase would be wrong for
         every document but one. The actionable half — naming what was looked for — is
@@ -686,7 +686,7 @@ class TestRefusesToShipAnEmptyDeliverable(unittest.TestCase):
 
 
 class TestPartialDocumentStillRenders(unittest.TestCase):
-    """Incomplete but recognisable: warn, render, exit 0 — never block."""
+    """Incomplete but recognizable: warn, render, exit 0 — never block."""
 
     def test_warns_and_renders(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -694,7 +694,7 @@ class TestPartialDocumentStillRenders(unittest.TestCase):
             result = run([], tmp)
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertIn(SUCCESS_LINE, result.stdout)
-            # Generalised with the flag (2026-07-31); the named sections are the point.
+            # Generalized with the flag (2026-07-31); the named sections are the point.
             self.assertIn("missing sections", result.stderr)
 
 
@@ -929,7 +929,7 @@ class TestAnyDocumentCanRenderWithItsOwnSections(unittest.TestCase):
             self.assertEqual(0, run(["--output", out], tmp).returncode)
             self.assertIn("What Senzing found in your data", pdf_text(os.path.join(tmp, out)))
 
-    def test_both_renderers_honour_the_subtitle(self):
+    def test_both_renderers_honor_the_subtitle(self):
         """INV-066: the fallback writer must not keep the discoveries cover line."""
         module = load_generator_module()
         doc = module.parse_discoveries(OTHER_DOC)
@@ -948,7 +948,7 @@ class TestAnyDocumentCanRenderWithItsOwnSections(unittest.TestCase):
 
         The renderer is the same one, so this is a guard against a future change routing
         the new path around `_safe`/`dropped_character_warning` rather than a new
-        behaviour. `->` and `>=` are what the reader should see; a `(cid:` artefact or a
+        behavior. `->` and `>=` are what the reader should see; a `(cid:` artifact or a
         vanished clause is the failure.
         """
         doc = (
@@ -1023,7 +1023,7 @@ class TestTheRendererIsFindable(unittest.TestCase):
             self.assertIn(SUCCESS_LINE, result.stdout)
             self.assertTrue(os.path.exists(os.path.join(tmp, out)))
 
-    def test_the_wrapper_adds_no_behaviour_of_its_own(self):
+    def test_the_wrapper_adds_no_behavior_of_its_own(self):
         """It must not be able to drift from the script it wraps: no argument parsing,
         no defaults, no rendering — just a delegated `main`."""
         with open(WRAPPER, encoding="utf-8") as handle:

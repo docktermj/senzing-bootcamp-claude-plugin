@@ -26,7 +26,7 @@ What these tests pin, all verified against server 1.32.2 on 2026-07-31:
 * the version comparison, including the one-character trap — `szBuildVersion.json` writes
   `4.3.3.26191` with a **dot** where every package manager writes `4.3.3-26191` with a
   **hyphen**, and Step 1's filesystem fallback reads exactly that file
-* a distinct mechanism named for each platform family, not one generalised command
+* a distinct mechanism named for each platform family, not one generalized command
 * the offer is a single 👉 question, declining is safe and not re-asked (INV-006/INV-012)
 * macOS's zero-exit-code trap, which makes post-update verification mandatory not advisory
 * the per-platform EULA variable, where a wrong name or value is silently ignored
@@ -83,7 +83,7 @@ class TheStepExistsAndIsReachable(unittest.TestCase):
 
 
 class EachPlatformFamilyHasItsOwnMechanism(unittest.TestCase):
-    """One generalised command would be wrong on three platforms out of four."""
+    """One generalized command would be wrong on three platforms out of four."""
 
     def setUp(self):
         self.section = step_1b()
@@ -232,7 +232,7 @@ class CommandOwnershipIsDistinguished(unittest.TestCase):
             with self.subTest(marker=fence_marker[:46]):
                 self.assertIn(fence_marker, self.section)
 
-    def test_the_yum_prose_form_is_labelled_too(self):
+    def test_the_yum_prose_form_is_labeled_too(self):
         """It is prose rather than a fence, so it needs its own marking."""
         self.assertRegex(self.flat, r"(?i)\*?plugin-owned\*?\s+—\s+`rpm -q")
         self.assertRegex(self.flat, r"(?i)\*?Server-documented\*?\s+—\s+`sudo yum install")
@@ -279,7 +279,7 @@ class TheVersionComparisonTrapIsStated(unittest.TestCase):
 
     def test_it_says_which_source_to_prefer(self):
         self.assertRegex(self.flat, r"(?i)Prefer the package manager's version string")
-        self.assertRegex(self.flat, r"(?i)normalise the separator before comparing")
+        self.assertRegex(self.flat, r"(?i)normalize the separator before comparing")
 
     def test_the_windows_json_location_differs(self):
         """On Windows szBuildVersion.json is a sibling of er, not under SENZING_DIR."""
@@ -361,7 +361,7 @@ class TheSilentFailureModesAreGuarded(unittest.TestCase):
         self.assertIn("I_ACCEPT_THE_SENZING_EULA", self.section)
 
     def test_the_macos_variable_is_marked_lowercase(self):
-        """The one detail most likely to be normalised away by a later editor."""
+        """The one detail most likely to be normalized away by a later editor."""
         self.assertRegex(self.flat, r"(?i)i_accept_the_senzing_eula.{0,40}lowercase")
 
     def test_the_eula_question_is_reused_not_duplicated(self):

@@ -58,7 +58,7 @@ alternative.
 ## Proposed change
 
 1. Add a ⛔ rule to `ground-rules.md`'s "File placement" section, immediately after the
-   INV-200 path-override rule it generalises, forbidding `internal://` for the bootcamp's
+   INV-200 path-override rule it generalizes, forbidding `internal://` for the bootcamp's
    `CONNECTION` and giving the reason in terms the assistant can check: the bootcamp runs the
    visualization server as a separate process against the same datastore, so the datastore
    must be persistent and shareable. State that this holds even though `sdk_guide` recommends

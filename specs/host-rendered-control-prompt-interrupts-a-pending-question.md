@@ -50,7 +50,7 @@ interruption that left a 👉 question hanging" — but its enumeration names fo
 compaction, a session boundary, the feedback detour, or the bootcamper going off on a tangent and
 coming back") that are all *conversational* and all *visible to the guide*. A host dialog is
 neither. This repo has already recorded that hazard against itself: INV-205's own maintenance note
-describes a rule "generalised from one instance" whose enumeration "broke on the next, one workflow
+describes a rule "generalized from one instance" whose enumeration "broke on the next, one workflow
 step later".
 
 ### 2. `ground-rules.md` and the guard both assert a defect nobody has observed
@@ -97,7 +97,7 @@ displaced 👉, and the accuracy of a citation the plugin ships.
 
 1. **Name the host interruption in the recovery enumeration** (`ground-rules.md:677-684`). Add the
    host-rendered prompt to the list of interruptions that leave a 👉 hanging, so the case does not
-   depend on a reader generalising from four conversational examples:
+   depend on a reader generalizing from four conversational examples:
 
    > […] a compaction, a session boundary, the feedback detour, a host-rendered prompt from their
    > Claude interface appearing over the bootcamp, or the bootcamper going off on a tangent and
@@ -147,7 +147,7 @@ satisfying one.
 ## Acceptance criteria
 
 - [ ] The recovery rule's interruption list names a host-rendered prompt appearing over the
-      bootcamp, so the case is not left to generalisation from conversational examples.
+      bootcamp, so the case is not left to generalization from conversational examples.
 - [ ] The any-time-controls host-control bullet fires when the bootcamper **raises** a host control
       in any form, not only when they ask a question about one.
 - [ ] Neither `ground-rules.md` nor the guard docstring states or implies that the guide asked the
@@ -236,5 +236,5 @@ satisfying one.
 - ⛔ **The runtime half remains unverified, exactly as the spec's own criterion states.** Whether a
   guide re-presents the pending 👉 after a host dialog interrupts is a live-turn property, and the
   guide may never observe the dialog at all. The six mutations prove the text says the right
-  thing, never that the behaviour follows. `dry-run` phase 3 is owed, and even there the case is
+  thing, never that the behavior follows. `dry-run` phase 3 is owed, and even there the case is
   reachable only by simulating the bootcamper mentioning it.

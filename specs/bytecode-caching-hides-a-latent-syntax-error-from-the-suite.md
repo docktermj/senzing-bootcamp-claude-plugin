@@ -11,7 +11,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
         This used to also pin `never \`brew upgrade --cask\` or \`scoop update\`` — the verbatim
 ```
 
-`\`` is not a recognised Python escape. Today that is a **`SyntaxWarning`**; Python has scheduled
+`\`` is not a recognized Python escape. Today that is a **`SyntaxWarning`**; Python has scheduled
 it to become a **`SyntaxError`**, at which point the file stops importing and the suite stops
 running.
 
@@ -33,7 +33,7 @@ bytecode. `conformance.py`, `citations.py` and `coverage_reports.py` all read fi
 There is no check whose failure mode is "this file no longer compiles cleanly".
 
 That makes this a **runtime-relative defect (class 2)**: the string is wrong only relative to the
-interpreter's caching behaviour, and correct-looking to every text-based scan the repo owns.
+interpreter's caching behavior, and correct-looking to every text-based scan the repo owns.
 
 **The class is one instance today, and that was measured, not assumed.** Compiling every `.py`
 under `tests/`, `plugins/`, `.claude/` and `scripts/` from source with `warnings.simplefilter
@@ -74,7 +74,7 @@ instance:
       `scripts/`) so the reach is proven per-root, not by one representative.
 - [ ] The guard stays stdlib-only and imports nothing from `plugins/` (INV-108).
 - [ ] ⛔ Not runtime-verified: this proves the files *compile* cleanly under the Python running
-      the suite. It does not prove they run correctly, and it cannot prove behaviour under a
+      the suite. It does not prove they run correctly, and it cannot prove behavior under a
       future Python that has promoted the warning to an error — it only ensures the repo is
       already clean when that lands.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
@@ -124,12 +124,12 @@ instance:
   defect was planted in each of `tests/`, `plugins/`, `.claude/` and `scripts/` separately; all
   four reddened **and named the offending file**, which is what makes the failure actionable. The
   two docstring disclosures were mutated independently. All plants removed, tree verified clean.
-- **Establishes no invariant, and that is a judgement worth stating.** "Python must compile
+- **Establishes no invariant, and that is a judgment worth stating.** "Python must compile
   cleanly" is a standing rule, but it is **INV-004 (production-ready)** applied rather than a new
   guarantee, and the guard carries it with its own reasoning. Registering an invariant for it
   would add an ID without adding a constraint. ⚠️ Raise it with the maintainer if a future run
   finds the rule being argued about — that is the signal it needs its own ID.
 - ⛔ **Not runtime-verified, and the guard says so.** This proves the files *compile* under the
-  Python running the suite. It does not prove they run correctly, and it cannot prove behaviour
+  Python running the suite. It does not prove they run correctly, and it cannot prove behavior
   under a future Python that has promoted the warning to an error — it only ensures the repo is
   already clean when that lands.

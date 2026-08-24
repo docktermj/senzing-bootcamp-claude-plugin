@@ -66,7 +66,7 @@ not the number of links the Markdown happens to contain.
    with the reason. Capture stays non-blocking (INV-122); the manifest records what it did.
 2. **`generate_recap_pdf.py --check` reads the manifest** where one exists and fails when a
    section embeds fewer images than the manifest recorded as captured, naming the missing
-   tab slugs. Absent manifest → current behaviour, reported as such rather than as a pass
+   tab slugs. Absent manifest → current behavior, reported as such rather than as a pass
    (INV-163).
 3. **The success line reports against the manifest** when one exists, e.g.
    `embedded 12 of 12 images (12 of 12 captured tabs)`, so the denominator is visibly not
@@ -164,7 +164,7 @@ One test **pinned wording this spec deliberately changes**:
 "visualization-producing module with no image", which named a check that fired only at
 zero — the very shortcoming being fixed. It now asserts the requirement (shortfall, not
 only zero) rather than the heading, following the reasoning already recorded on its
-neighbour `test_module_completion_requires_one_image_per_tab`; the zero case is asserted
+neighbor `test_module_completion_requires_one_image_per_tab`; the zero case is asserted
 separately so it cannot be lost.
 
 The success line now reads, e.g.: `rendered 686 of 707 source characters (97%), embedded 6

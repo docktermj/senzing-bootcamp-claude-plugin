@@ -464,7 +464,7 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
     LICENSE_STEP = PLUGIN / "skills" / "module-04-data-collection" / "SKILL.md"
 
     def license_window(self):
-        """The licence-request step's text, from its first mention to well past the gate.
+        """The license-request step's text, from its first mention to well past the gate.
 
         Deliberately generous: the window is measured from the first `license_request`
         occurrence, and the section grew when the `how_heard` requirement and its provenance
@@ -508,7 +508,7 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
             with self.subTest(field=needed):
                 self.assertIn(
                     needed, window,
-                    "the licence step does not name %r — %s. INV-135 requires the consent "
+                    "the license step does not name %r — %s. INV-135 requires the consent "
                     "question to state what is sent, so an incomplete field list means the "
                     "Bootcamper consents to a payload that is not the payload." % (needed, why))
 
@@ -560,7 +560,7 @@ class TestLicenseRequestIsConsentGated(unittest.TestCase):
                       "the contract entry stopped naming how_heard — if the server changed, "
                       "update the shipped step too and re-verify against it")
         self.assertIn("how_heard", self.license_window(),
-                      "the contract entry names how_heard as required and the shipped licence "
+                      "the contract entry names how_heard as required and the shipped license "
                       "step does not — these must not drift apart again")
 
     def test_the_defect_report_path_scopes_its_stripping_rule(self):

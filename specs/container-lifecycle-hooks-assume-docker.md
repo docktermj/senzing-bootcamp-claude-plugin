@@ -95,7 +95,7 @@ they were told was stopped.
 
 ## Affected files
 
-- `plugins/senzing-bootcamp/scripts/docker_lifecycle.py` — `_load()` normalisation (`:55-59`),
+- `plugins/senzing-bootcamp/scripts/docker_lifecycle.py` — `_load()` normalization (`:55-59`),
   `docker_available()`, `stop_started_containers()` (`:72`), `resume_summary()` (`:123`).
 - `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md` — the two registration sites
   (`:383`, `:827`).
@@ -115,7 +115,7 @@ they were told was stopped.
   was called; stated rather than skipped per INV-080.
 - Upstream: not applicable (plugin-side, as the entry itself routes it).
 - Related specs: `specs/docker-container-lifecycle-teardown-and-resume.md` (INV-101's source, which
-  established the Docker-only design this generalises).
+  established the Docker-only design this generalizes).
 
 ## Deviations from this spec, and why (2026-08-11)
 
@@ -132,7 +132,7 @@ not mistaken for what shipped.
    reports state `unknown`. Evidence: Apple's `container` CLI is absent on this Linux
    development machine, so its list syntax could not be verified here; guessing it would ship
    exactly the kind of unexercised guidance the spec's first ⚠️ forbids.
-2. **The runtime set is a closed allowlist, and an unrecognised runtime is reported but never
+2. **The runtime set is a closed allowlist, and an unrecognized runtime is reported but never
    executed.** The spec names `docker | container | podman`; the implementation additionally
    refuses to resolve a CLI for any other recorded string, so a value in
    `config/bootcamp_progress.json` cannot become a binary the hook invokes. Such an entry is
@@ -147,7 +147,7 @@ not mistaken for what shipped.
    `out.append(entry)` to `_load()` at `:55-59`; the function is actually
    `tracked_containers()` and the append was at `:53`. The claim it supports — that dict
    entries are appended whole, so a `runtime` key already survives storage — was correct.
-   Entries are now normalised through a copy, so `runtime` is always resolved on read while
+   Entries are now normalized through a copy, so `runtime` is always resolved on read while
    `image`/`purpose` and any other recorded keys are preserved.
 
 **Not runtime-verified:** dispatch to Apple's `container` is asserted at the
@@ -161,5 +161,5 @@ stub.
   started it, and every lifecycle action MUST dispatch on that recorded runtime rather than
   assuming Docker; an entry with no `runtime` is treated as `docker`, a runtime outside the
   recorded set is reported but never executed, and no session-boundary message may name a
-  tool that did not start the container. Generalises INV-101 (recorded in
+  tool that did not start the container. Generalizes INV-101 (recorded in
   `specs/INVARIANTS.md`, maintainer-approved 2026-08-11).

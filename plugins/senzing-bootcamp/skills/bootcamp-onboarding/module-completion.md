@@ -103,6 +103,16 @@ bootcamper's point of view:
 Rules for the four subsections (all four must be present for every module: the
 graduation PDF renders exactly these four labeled sections per module):
 
+- ⛔ **All four are `###` headings, and the heading level is load-bearing.** Write
+  `### Information Shared`, not `**Information Shared**`. The generator recognizes a subsection by
+  its H3 heading, so a bold label produces a `## {Name}` section carrying **no recognized
+  sub-section at all** — and the whole module's content is dropped from the keepsake. ⚠️ **This is
+  the drift a visual read cannot catch:** bold labels and H3 headings look near-identical in every
+  Markdown viewer, so the recap reads correctly at every point during the bootcamp and fails only
+  when the PDF is rendered. One run wrote bold labels at its first module and reproduced them
+  faithfully for all nine, discovering it at graduation as *"0 of 9 '##' sections carry any
+  recognized sub-section"* — a structural rewrite of the entire keepsake, in the turn that was
+  supposed to render it. Step 2c now checks this at every module so the cost cannot compound.
 - **Information Shared** and **Actions Taken** carry real content from this module, never placeholders.
 - **Questions & Responses:** each substantive 👉 question you asked this module, paired with the bootcamper's actual answer, in ask order. If a module asked no substantive questions, write `- {none this module}`.
 - **End-of-Module Summary:** the same What you accomplished / Files produced / Why it matters shown in the bootcamper-facing epilog (Step 3), persisted here as the permanent keepsake record (this subsection replaced the former Journal — INV-103); the **Bootcamper's takeaway** line is optional — include it only when the bootcamper gave a genuine takeaway, otherwise omit the line entirely (never write "N/A").
@@ -155,6 +165,33 @@ the module's own work is still in context, whereas graduation has to reconstruct
 weeks of session-time later. Never invent a file that was not produced; write
 "(no files — {reason})" when there genuinely were none.
 
+**Then run the structural check — every module, after the append:**
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/generate_recap_pdf.py" --check
+# or, if CLAUDE_PLUGIN_ROOT is unset: python3 <this-skill-dir>/../../scripts/generate_recap_pdf.py --check
+```
+
+It reads `docs/bootcamp_recap.md` and writes no PDF. This is the same validator graduation runs,
+moved to where a finding still costs one correction instead of eleven.
+
+- **On a finding:** rewrite the just-appended section to the Step 2b template's shape — H3
+  subsection headings, the three labeled summary blocks — and re-run until it is clean. The
+  module's own work is still in context, which is the whole reason this runs here.
+- ⛔ **Non-blocking and Bootcamper-invisible (INV-012/INV-048).** A finding is a correction you make
+  to the recap you just wrote, not a gate and not output. The Bootcamper sees the same
+  `Recap updated: {Name}.` line either way, and the module completes whether or not the check can
+  run. If the script is missing or fails to execute, continue silently.
+- ⚠️ **Findings about *other* modules' sections are not this step's business** — fix only the
+  section just appended, and leave the rest for graduation, which reconciles the whole file.
+
+⚠️ **The general shape, worth recognizing again.** A validator whose only invocation is at the end
+of an eleven-module run cannot bound the cost of anything it detects: every finding is already N
+repetitions old when it fires. The three labeled summary blocks were pulled forward into this step
+for exactly this reason, and the enclosing heading — the thing that actually broke — was left
+behind because it had not been the failure observed at the time. When a graduation-time check next
+proves useful, consider moving it here rather than adding it there.
+
 Only then display the one-line confirmation: `Recap updated: {Name}.`
 
 (The recap PDF is not rendered per-module: it is rendered once at graduation by
@@ -197,7 +234,7 @@ python3 <helper> --html docs/visualizations/{name}.html --out-dir docs/visualiza
 
 ⛔ **`--single`, not "no `--tabs`".** An omitted `--tabs` does not mean "no tabs", it means **all
 six** — so the helper requests six tabs the page does not have, skips each one and reports it
-(INV-122, correct behaviour), and writes nothing. That is how every single-page deliverable used to
+(INV-122, correct behavior), and writes nothing. That is how every single-page deliverable used to
 miss the recap silently. `--single` and `--tabs` cannot be combined; the helper refuses both together
 rather than guessing.
 
@@ -259,7 +296,7 @@ a short `{name}`):
    unique content. Delete only a true duplicate: two images of the *same* tab, which per-tab capture
    should not produce. Judging which shots are worth keeping is what previously dropped Merge
    Statistics, Match Keys and Feature Scores from a six-tab app — the three *analytical* tabs, since
-   any such judgement pulls toward the most visually striking. The recap then showed the same three
+   any such judgment pulls toward the most visually striking. The recap then showed the same three
    tabs in both visualization sections and the app looked narrower than it was.
 
    ⛔ **Embed in the app's tab order, never in capture or append order.** The order is the row order

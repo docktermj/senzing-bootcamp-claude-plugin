@@ -3,11 +3,11 @@
 `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py` used to print
 `PDF generated:` and exit 0 even when it had dropped essentially all of its
 input — body text is kept only under a module section's `### ` sub-headings, so a
-document with `## ` headings and no recognised sub-headings rendered as headings
+document with `## ` headings and no recognized sub-headings rendered as headings
 with empty bodies. A success message plus a plausibly-sized PDF is the failure
 nobody checks, so these tests pin the two outcome classes apart:
 
-* recognisable but imperfect recap  -> warn, render, exit 0 (non-blocking)
+* recognizable but imperfect recap  -> warn, render, exit 0 (non-blocking)
 * not a recap / catastrophic loss   -> no PDF, no success line, exit non-zero
 
 Each case runs the generator as a subprocess (mirroring `test_write_gate.py`) so
@@ -65,7 +65,7 @@ follow this one, and confirmed the two failure modes with the knowledge check.
 loading work has words for what it is doing.
 """
 
-# H2 headings but no recognised H3 sub-headings: the shape of the discoveries
+# H2 headings but no recognized H3 sub-headings: the shape of the discoveries
 # document that originally produced a 6-page PDF containing none of its findings.
 NON_RECAP = """# Bootcamp Data Discoveries
 
@@ -144,7 +144,7 @@ class NonRecapInputFails(unittest.TestCase):
 
 
 class ValidRecapSucceeds(unittest.TestCase):
-    """The non-blocking guarantee: a recognisable recap always renders."""
+    """The non-blocking guarantee: a recognizable recap always renders."""
 
     def test_complete_recap_renders(self):
         code, stdout, _, pdf_exists = run(GOOD_RECAP)
@@ -157,7 +157,7 @@ class ValidRecapSucceeds(unittest.TestCase):
         self.assertIn("source characters", stdout)
 
     def test_incomplete_recap_still_renders_and_exits_zero(self):
-        # One missing sub-section is the "imperfect but recognisable" class: it
+        # One missing sub-section is the "imperfect but recognizable" class: it
         # must warn and still ship the PDF, because graduation is non-blocking.
         incomplete = GOOD_RECAP.replace("### Actions Taken\n", "")
         code, stdout, stderr, pdf_exists = run(incomplete)
@@ -407,7 +407,7 @@ class CertificateCarriesThePluginVersion(unittest.TestCase):
         """
         module = load_generator()
         runs = drawn_runs(render_to(SPACING_RECAP))
-        # Landscape A4 is 210 mm tall. The card's bottom edge is stroked, centred on the
+        # Landscape A4 is 210 mm tall. The card's bottom edge is stroked, centered on the
         # path, so the ink reaches half a line width past it; both attribution lines must
         # sit above the top of that stroke.
         border_top = (
@@ -433,7 +433,7 @@ class CertificateCarriesThePluginVersion(unittest.TestCase):
 
 
 class ListItemsAreSpacedWhereItHelps(unittest.TestCase):
-    """Bullets ended with no trailing gap, so the space between two items equalled the
+    """Bullets ended with no trailing gap, so the space between two items equaled the
     space inside one wrapped item and multi-line bullets ran together."""
 
     def setUp(self):
@@ -794,7 +794,7 @@ class UnfinalizedModuleIsReported(unittest.TestCase):
     removal leaves two copies of the module, and the markers are HTML comments
     that the renderers drop — so the keepsake PDF renders the module twice with
     nothing on stderr to say why. Neither symptom blocks graduation (INV-110
-    keeps a recognisable recap renderable), but both must be *reported*.
+    keeps a recognizable recap renderable), but both must be *reported*.
     """
 
     def duplicated(self):
@@ -932,7 +932,7 @@ class TablesInTheRecapRenderAsTables(unittest.TestCase):
             with self.subTest(cell=cell):
                 self.assertIn(cell, self.texts, f"{cell!r} is not its own drawn cell")
 
-    def test_a_ragged_row_does_not_desynchronise_the_grid(self):
+    def test_a_ragged_row_does_not_desynchronize_the_grid(self):
         """Short rows are padded and over-long rows truncated to the header width."""
         self.assertIn("+RAGGED", self.texts, "the short row vanished")
         self.assertNotIn("extra", self.texts, "a 3rd cell rendered in a 2-column grid")

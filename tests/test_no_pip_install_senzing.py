@@ -103,22 +103,22 @@ class TheScanIsNotVacuous(unittest.TestCase):
 
 class NoShippedFileInstructsIt(unittest.TestCase):
     def test_every_occurrence_is_a_prohibition_or_a_record(self):
-        offences = []
+        offenses = []
         for path in shipped_files():
             flat = squash(read(path))
             for match in PIP_INSTALL.finditer(flat):
                 window = flat[max(0, match.start() - REACH):match.end() + 120]
                 if FORBIDDING.search(window):
                     continue
-                offences.append("%s: …%s…"
+                offenses.append("%s: …%s…"
                                 % (path.relative_to(REPO_ROOT),
                                    flat[max(0, match.start() - 90):match.end() + 60]))
         self.assertEqual(
-            [], offences,
+            [], offenses,
             "a shipped file instructs a pip install of the Senzing SDK. The senzing and "
             "senzing_core packages ship inside senzingsdk-runtime; the PyPI packages "
             "shadow them and the failure surfaces a module later as a library-load "
-            "error:\n  " + "\n  ".join(offences))
+            "error:\n  " + "\n  ".join(offenses))
 
     def test_module_2_step_3_no_longer_installs_it(self):
         """Named explicitly, so a corpus scan cannot pass by the file being renamed."""
@@ -190,7 +190,7 @@ class ModuleTwoSaysWhatToDoInstead(unittest.TestCase):
             "INV-066's scope is not stated here, so a future reader can conclude that "
             "`python3 -m pip install senzing` is compliant with it")
         self.assertRegex(
-            self.flat, r"(?i)never authorises pip for the Senzing SDK",
+            self.flat, r"(?i)never authorizes pip for the Senzing SDK",
             "the carve-out is implied rather than stated")
 
     def test_the_other_languages_are_unchanged(self):

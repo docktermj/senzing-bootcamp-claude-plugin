@@ -68,7 +68,7 @@ claim to Module 5.
 **Priority:** Medium
 **Routing:** plugin — Phase C steps 13 and 15 each pin their own confirm-style question on the
 generated-scenario path. Neither depends on the Senzing MCP server, and neither involves the Claude
-interface; a perfect MCP server would not change this. The behaviour is exactly what the skill files
+interface; a perfect MCP server would not change this. The behavior is exactly what the skill files
 prescribe, so it is a design issue in the plugin rather than a deviation from it.
 
 ### Context

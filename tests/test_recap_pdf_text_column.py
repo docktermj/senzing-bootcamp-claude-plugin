@@ -6,7 +6,7 @@ and names `tests/test_discoveries_pdf.py` as its enforcement. That test imports
 of two, and the unguarded one is the larger (3,366 lines against 945) and the one carrying the
 certificate page, where the auto page-break is off and INV-121's failure mode is worst.
 
-The behaviour was already correct in both — this closes a coverage gap, not a live defect. The
+The behavior was already correct in both — this closes a coverage gap, not a live defect. The
 recap generator resets via `pdf.set_x(pdf.l_margin)` / `set_xy(pdf.l_margin, …)` throughout. What
 was missing is anything that fails if a future block forgets.
 

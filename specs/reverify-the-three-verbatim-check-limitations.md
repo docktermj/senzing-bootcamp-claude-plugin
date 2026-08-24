@@ -9,10 +9,10 @@ labels them honestly as stale:
 
 > These are **field observations from 2026-07-27** on SDK 4.3.3.26191 … They were
 > **not** re-run against the current server, so treat them as "expect this, and
-> check" rather than as current behaviour
+> check" rather than as current behavior
 
 Two of the three have now been re-run and both reproduce exactly. The block should
-carry that, so a reader gets current behaviour rather than a caveat inviting them to
+carry that, so a reader gets current behavior rather than a caveat inviting them to
 re-derive it. The plugin asks for this check by name; this is the check.
 
 ## Root cause
@@ -66,10 +66,10 @@ it stays "expect this, and check".
 ## Proposed change
 
 1. Re-date limitations **1** and **3** to server 1.32.9 / SDK 4.3.4, 2026-08-14,
-   and move them out of the "not re-run" caveat — they are current behaviour.
+   and move them out of the "not re-run" caveat — they are current behavior.
 2. Keep limitation **2** under the caveat, and say explicitly that it is the only
    one still unverified, so the next run knows what to target.
-3. Generalise the `JSONDecodeError` quote to "a `json.decoder.JSONDecodeError` whose
+3. Generalize the `JSONDecodeError` quote to "a `json.decoder.JSONDecodeError` whose
    text depends on the CSV's first line".
 4. Consider promoting limitation 1 in the reader's path. `extract` is not exotic —
    any prose field with an embedded address, DOB or identifier reaches it, and the
@@ -83,7 +83,7 @@ it stays "expect this, and check".
 - [ ] Limitations 1 and 3 carry the 2026-08-14 / 1.32.9 / SDK 4.3.4 verification and
       are no longer flagged as un-re-run.
 - [ ] Limitation 2 is named as the only one still unverified.
-- [ ] The `JSONDecodeError` text is generalised rather than quoted exactly.
+- [ ] The `JSONDecodeError` text is generalized rather than quoted exactly.
 - [ ] A guide reading the `extract` disposition reaches the "do not iterate, record
       the exemption, proceed" guidance before running the step-4 gate.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).

@@ -75,7 +75,7 @@ runs at all.
 ## Acceptance criteria
 
 - [ ] The required-section list is settable from the CLI; omitting it reproduces today's
-      behaviour exactly for the discoveries document.
+      behavior exactly for the discoveries document.
 - [ ] The content-retention floor still applies and is not weakened by the section flag.
 - [ ] Graduation renders both PDFs after Step 5a, verifies each by text extraction, announces
       them, and continues on failure without blocking.
@@ -166,7 +166,7 @@ discoveries document equally): the two renderers transliterate out-of-font chara
 differently. fpdf2 renders `≥` as `>=`; the stdlib fallback renders it as `?`. Both are
 silent — `dropped_character_warning()` fires for neither. That is an INV-143/INV-159 question
 worth its own spec; this change neither introduces nor worsens it, and
-`test_character_handling_is_unchanged_on_the_new_path` pins the fpdf2 behaviour so a future
+`test_character_handling_is_unchanged_on_the_new_path` pins the fpdf2 behavior so a future
 refactor cannot route the new path around `_safe` unnoticed.
 
 **Criterion 4 is verified for a synthetic document, not for a real bootcamp's.** Page count

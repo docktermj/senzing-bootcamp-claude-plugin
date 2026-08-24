@@ -1,6 +1,6 @@
 """The container lifecycle must act on the runtime that actually started the container.
 
-These tests are the coverage for **INV-195**, which generalises INV-101 beyond Docker:
+These tests are the coverage for **INV-195**, which generalizes INV-101 beyond Docker:
 every container is recorded with the `runtime` that started it, every lifecycle action
 dispatches on that recorded runtime, an entry with no `runtime` is treated as `docker`,
 a runtime outside the recorded set is reported but never executed, and no
@@ -21,7 +21,7 @@ with a restart offer that would have called a binary not present on the machine.
 
 What these tests pin:
 
-1. A ``docker`` entry still dispatches to ``docker`` — the existing behaviour.
+1. A ``docker`` entry still dispatches to ``docker`` — the existing behavior.
 2. A non-``docker`` entry dispatches to its own CLI and is never described as Docker.
 3. A legacy entry with no ``runtime`` (dict or bare string) is treated as ``docker``,
    so progress files written by earlier runs are unaffected.

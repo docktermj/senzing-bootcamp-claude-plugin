@@ -122,7 +122,7 @@ Keep it language-agnostic: the rule is "fold on the key pair", not a Python idio
 ## Deviations from this spec, and why (2026-07-29)
 
 - **No material deviation.** Both Senzing facts were re-confirmed at implementation before being
-  written into the plugin: the replace-on-repeated-key behaviour via `search_docs` ("Data Source
+  written into the plugin: the replace-on-repeated-key behavior via `search_docs` ("Data Source
   Records (DSRs) Explained" — *"the new record replaces the current one in Senzing and doesn't
   contribute to the DSR count"*) and the `(data_source_code, record_id)` identity via
   `get_sdk_reference(topic='parameters', filter='add_record', language='python')` (server

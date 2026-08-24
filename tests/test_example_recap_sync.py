@@ -102,7 +102,7 @@ def pdf_text_without_page_footers(path):
 
     Dropping digit-only fragments cannot hide staleness: a sentence that is genuinely
     missing from the PDF is still missing from this haystack. (Added 2026-08-11, when
-    a wording change in Module 0 shifted pagination and pushed the licence-measurement
+    a wording change in Module 0 shifted pagination and pushed the license-measurement
     line onto a page boundary — INV-181: fix the assertion's model of the artifact,
     not the artifact.)
     """
@@ -392,6 +392,12 @@ class TestPdfMatchesItsSource(unittest.TestCase):
             # renderer actually draws; the value is also the part that detects staleness,
             # since the label itself repeats once per module.
             line = re.sub(r"(?i)^why it matters:\s*", "", line)
+            # `Elaboration:` splits the same way, and its label additionally carries the
+            # attribution ("written by the bootcamp") that INV-257 requires on the page —
+            # so the drawn label is not the source label, and only the value is comparable.
+            # `Context:` needs no rule: its label is drawn immediately before its value, so
+            # the squashed run still matches.
+            line = re.sub(r"(?i)^elaboration:\s*", "", line)
             if len(line) >= 60 and " " in line:
                 keep.append(line)
         return keep

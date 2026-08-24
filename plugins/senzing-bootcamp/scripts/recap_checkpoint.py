@@ -22,7 +22,7 @@ are hooks whose stdout is a structured channel (``UserPromptSubmit`` returns JSO
 a status line on stdout would corrupt the payload.
 
 This is NOT a hook itself. It is imported by the PreCompact, SessionEnd, SessionStart
-and UserPromptSubmit hook scripts, which run in exec form (``python3 <hook>.py``);
+and UserPromptSubmit hook scripts, which run as ``python3 "<hook>.py"``;
 Python puts each hook script's own directory (this ``scripts/`` directory) on
 ``sys.path``, so ``import recap_checkpoint`` resolves here on Linux, macOS, and
 Windows alike.
@@ -62,7 +62,7 @@ def bootcamp_active():
     programming-language gate — so on the next session the `SessionStart` hook announced
     "a bootcamp is in progress … offer to resume from the last recorded module" on a
     project with no recorded module, telling the guide to do something impossible where
-    the correct behaviour was to run onboarding from the top.
+    the correct behavior was to run onboarding from the top.
 
     An empty progress file is therefore the **normal** state for that window, not a
     corruption: this returns False and every caller stays silent, which is what a fresh

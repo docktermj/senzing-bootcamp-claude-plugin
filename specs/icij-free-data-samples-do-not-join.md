@@ -32,7 +32,7 @@ that exercise is impossible.
 
 **The failure is silent.** A bootcamper who follows the join keys in good faith gets zero resolved
 relationships and no error — the files parse, the mapping is valid, the load succeeds, and nothing
-relates. The reporting bootcamper recovered by modelling the `service_provider` column instead, which
+relates. The reporting bootcamper recovered by modeling the `service_provider` column instead, which
 is present on all ten entity rows, but that is a different exercise from the one the source was
 chosen for.
 

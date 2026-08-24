@@ -38,7 +38,7 @@ bootcamper through setup and into the numbered module skills, one guided step at
    the progress file *records a module*, never on whether it exists.) Testing only for the file's
    existence is
    what produced "offer to resume from the last recorded module" on a project with no recorded
-   module — an instruction the guide cannot follow, on a project whose correct behaviour was to
+   module — an instruction the guide cannot follow, on a project whose correct behavior was to
    start over. `recap_checkpoint.bootcamp_active()` now encodes this same three-way rule, so the
    hooks stay silent in that window.
 

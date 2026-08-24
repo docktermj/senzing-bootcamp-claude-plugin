@@ -166,7 +166,7 @@ def _tab_label(tab: str) -> str:
     records in `_FULL_PAGE_OUTCOME` — read here rather than threaded through, for the same
     reason `_CURRENT_TAB` is a global: `_BACKENDS` is called uniformly and tests substitute
     two-argument callables. See the note on `_CURRENT_TAB` for why serial capture makes that
-    safe, and what to do if capture is ever parallelised.
+    safe, and what to do if capture is ever parallelized.
     """
     if tab == SINGLE_PAGE_ID:
         return _single_page_label(
@@ -317,9 +317,9 @@ def _page_stats(source: str, target: str, is_url: bool) -> dict:
       ``senzing_viz_server.write_snapshot``), so ``stats`` is parsed straight out of it;
     * a live server serves ``/api/stats``, so it is fetched.
 
-    ``{}`` on any failure — an unreadable or unrecognised page must never block capture
+    ``{}`` on any failure — an unreadable or unrecognized page must never block capture
     (INV-122 is best-effort by contract), and an empty dict makes every tab applicable,
-    which is exactly today's behaviour.
+    which is exactly today's behavior.
     """
     marker = "const __DATA__="
     at = source.find(marker)
@@ -370,7 +370,7 @@ def _tabs_applicable(stats: dict, tabs) -> tuple:
     """Split ``tabs`` into (applicable, suppressed) according to the app's own rule.
 
     With no stats every tab is applicable, so an unreadable page degrades to today's
-    behaviour rather than capturing nothing.
+    behavior rather than capturing nothing.
     """
     if not stats:
         return list(tabs), []
@@ -803,11 +803,11 @@ _BACKENDS = (
 #
 # This is correct ONLY because captures run strictly one at a time: `capture()` walks the
 # tabs in a loop, and `_capture_one` owns the global for the duration of exactly one
-# capture. Parallelising that loop — the obvious optimisation on a step that shells out to
+# capture. Parallelizing that loop — the obvious optimization on a step that shells out to
 # a browser per tab — would apply one tab's virtual-time budget to another tab's capture,
 # and the symptom is a subtly under-settled PNG rather than an error: the quiet way to
 # break INV-122's guarantee that each file shows the tab it is named after. If capture is
-# ever parallelised, thread the tab through the backend signature instead of this global.
+# ever parallelized, thread the tab through the backend signature instead of this global.
 # `_capture_one` says so on stderr if a second capture begins while one is in flight, so
 # the change announces itself instead of silently mis-sizing a settle budget.
 _CURRENT_TAB = ""
@@ -838,7 +838,7 @@ def _record_full_page(outcome: str, page_height=None, captured_height=None) -> N
     if outcome == FULL_PAGE_CLAMPED:
         sys.stderr.write(
             "capture_screenshots: page is %spx tall, above the %dpx clamp — captured the "
-            "top %dpx and labelled it as clamped, not as the full page.\n"
+            "top %dpx and labeled it as clamped, not as the full page.\n"
             % (page_height, _MAX_FULL_PAGE_PX, _MAX_FULL_PAGE_PX)
         )
         return
@@ -949,6 +949,71 @@ def manifest_path(out_dir: Path, name: str) -> Path:
     return Path(out_dir) / f"{name}-tabs.json"
 
 
+def _merge_manifest(prior: dict, payload: dict) -> dict:
+    """Fold this run's `payload` into the `prior` manifest, per tab.
+
+    ⛔ **A targeted re-capture must not erase the tabs it did not touch.** This run's
+    entries replace the prior ones for **every tab it touched** — in whichever list they
+    now belong, so a tab moving between ``captured``, ``failed`` and ``not_applicable``
+    between runs leaves exactly one entry — and every entry for an untouched tab is kept.
+
+    The failure this prevents: capture six tabs, then re-capture one because its query
+    returned nothing, and the manifest describes **one**. Graduation's coverage check then
+    reports full coverage on a 1-of-1 denominator, and would report it just as cheerfully
+    if five of the six images had been lost. The manifest is the only number in the system
+    that does not come from the recap Markdown (INV-122), so there is no second denominator
+    on the consumer side to catch it — a partial write and a complete write are
+    indistinguishable in the format.
+    """
+    touched = set(payload["requested"])
+    merged = dict(payload)
+    prior_requested = [t for t in prior.get("requested", []) if isinstance(t, str)]
+    merged["requested"] = prior_requested + [
+        t for t in payload["requested"] if t not in prior_requested
+    ]
+    for key in ("captured", "not_present", "not_applicable", "failed"):
+        kept = [
+            entry for entry in prior.get(key, [])
+            if isinstance(entry, dict) and entry.get("tab") not in touched
+        ]
+        merged[key] = kept + list(payload[key])
+    merged["captured_count"] = len(merged["captured"])
+    merged["requested_count"] = len(merged["requested"])
+    return merged
+
+
+def _prior_manifest(target: Path) -> "dict | None":
+    """The manifest already at `target`, or None when there is nothing safe to merge.
+
+    ⚠️ Merging into a corrupt or foreign file is never attempted: an absent, unreadable,
+    unparseable or schema-mismatched manifest is reported and then overwritten, exactly as
+    before this merge existed. A merge that could fail the run would be worse than the
+    defect it fixes — the PNGs are the deliverable (INV-122).
+    """
+    try:
+        with open(target, encoding="utf-8") as handle:
+            prior = json.load(handle)
+    except FileNotFoundError:
+        return None
+    except (OSError, ValueError) as exc:
+        print(
+            f"the existing tab manifest {target} could not be read ({exc}); "
+            "writing this run's tabs only, so it no longer describes earlier captures.",
+            file=sys.stderr,
+        )
+        return None
+    if not isinstance(prior, dict) or prior.get("schema") != MANIFEST_SCHEMA:
+        print(
+            f"the existing tab manifest {target} has schema "
+            f"{prior.get('schema') if isinstance(prior, dict) else 'unknown'!r}, not "
+            f"{MANIFEST_SCHEMA!r}; writing this run's tabs only, so it no longer "
+            "describes earlier captures.",
+            file=sys.stderr,
+        )
+        return None
+    return prior
+
+
 def write_manifest(
     out_dir: Path, name: str, requested, absent, written, missed, suppressed=()
 ) -> bool:
@@ -958,6 +1023,10 @@ def write_manifest(
     reported on stderr and never fails the run — the PNGs are the deliverable. But it
     is reported, because a silently absent manifest downgrades the coverage check to
     "skipped" much later, in graduation, where the cause is no longer visible.
+
+    ⚠️ **Merges with any existing manifest rather than replacing it** (see
+    `_merge_manifest`), so re-capturing a single tab does not discard the record of the
+    other five.
     """
     suppressed = list(suppressed)
     slug_of = {
@@ -1000,6 +1069,9 @@ def write_manifest(
     payload["captured_count"] = len(payload["captured"])
     payload["requested_count"] = len(payload["requested"])
     target = manifest_path(Path(out_dir), name)
+    prior = _prior_manifest(target)
+    if prior is not None:
+        payload = _merge_manifest(prior, payload)
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         with open(target, "w", encoding="utf-8") as fh:
@@ -1165,7 +1237,7 @@ def main(argv=None) -> int:
     if not tabs and not _has_tab_controls(source):
         # Safety net: the page has no tab bar at all, so this is a single-page document
         # rather than a tabbed app whose tabs were misnamed. Capture it whole instead of
-        # exiting empty — exiting was the behaviour that silently cost every single-page
+        # exiting empty — exiting was the behavior that silently cost every single-page
         # deliverable its recap image.
         print(
             "This page has no tab controls, so none of the requested tabs could exist; "

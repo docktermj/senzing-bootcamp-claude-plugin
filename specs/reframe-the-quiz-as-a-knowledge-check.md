@@ -115,7 +115,7 @@ with the INV-181 docstring the criterion asks for. Side effect worth naming: INV
 guarantee this spec depends on — **was cited by no test in the suite**; it now is.
 
 **2. The example PDF regeneration broke an unrelated test, and the test was fixed, not the source.**
-Re-rendering shifted pagination enough to push the licence-measurement line onto a page boundary.
+Re-rendering shifted pagination enough to push the license-measurement line onto a page boundary.
 `test_example_recap_sync.test_source_lines_appear_in_the_pdf` compares a 50-character window of each
 source line, and the page-number footer landed inside it — `…assuming it 23 recordLimit: 0…` — so a
 line that is genuinely in the PDF read as missing. That module's own `sampled_lines` docstring

@@ -1,4 +1,4 @@
-# Step 2 fixes the generated dataset's size before anything in the module measures the licence
+# Step 2 fixes the generated dataset's size before anything in the module measures the license
 
 Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
@@ -6,20 +6,20 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 On the synthesized-scenario path, the guide sized the generated dataset **down** — 538 records to
 466 — specifically to stay under the 500-record built-in evaluation limit, reasoning that an absent
-`license_record_limit` meant no custom licence was configured. It then reached Step 8a, followed
+`license_record_limit` meant no custom license was configured. It then reached Step 8a, followed
 its instruction to *measure* the limit rather than assume it, and found the workstation carries a
-custom EVAL licence with `recordLimit: 0` — no record cap at all. The downsizing was unnecessary
+custom EVAL license with `recordLimit: 0` — no record cap at all. The downsizing was unnecessary
 and was withdrawn.
 
 This is the exact inference **INV-244** forbids — reading an absent `license_record_limit` as "no
-custom licence" rather than "never measured" — reached **on a module that already states the rule
+custom license" rather than "never measured" — reached **on a module that already states the rule
 in full**. `module-04-data-collection/SKILL.md:96-116` was corrected on 2026-08-14 by
 `inv244-absent-license-branch-exists-in-module-4-too`, and the run that produced this report was on
 plugin 0.5.1 with that fix in place. The text is right and it did not bind.
 
 ⚠️ **The harm this time was zero and that is not reassurance.** 466 records with 60 three-way and
 93 two-way cross-source overlaps was ample for the scenario. The same mechanism on a scenario that
-genuinely needed volume produces exactly the harm INV-244 records — a bootcamper whose licence has
+genuinely needed volume produces exactly the harm INV-244 records — a bootcamper whose license has
 no cap steered to a smaller dataset — one module before Modules 6 and 7 have to demonstrate
 cross-source resolution on it.
 
@@ -52,19 +52,19 @@ Two things make the miss natural rather than careless:
 Nothing upstream pins the size either: Module 1 Step 4a's generated-scenario invariants
 (`module-01-business-problem/phase1-discovery.md:139-151`) require "at least two distinctly named
 data sources, each with ≥1 record" and say nothing about a total. So the count is genuinely
-first decided in Module 4 Step 2, at the site with no licence guidance.
+first decided in Module 4 Step 2, at the site with no license guidance.
 
 ## Proposed change
 
 1. **Route Step 2's synthesized branch to the framing, at the point of decision.** Add a directive
    in the `provenance: synthesized` branch, alongside the existing generation directives, that
-   choosing the generated record counts **is** a licence-capacity decision and must not precede the
+   choosing the generated record counts **is** a license-capacity decision and must not precede the
    measurement — citing INV-244 and pointing at the canonical framing block above rather than
    restating its procedure (the same route-don't-restate discipline `:102-104` already uses).
 2. **Make the framing's trigger name generation explicitly.** `:86`'s "Before any license-based
    capacity or sampling decision" should say, in as many words, that **choosing how many records to
    generate** is such a decision. Sizing a dataset into existence and sampling one down are the
-   same decision under this rule, and only one of them is currently recognisable in the wording.
+   same decision under this rule, and only one of them is currently recognizable in the wording.
 3. **Say what the answer usually is.** On a measured `recordLimit: 0` the generated dataset is
    sized by what the *scenario* needs, not by any cap — state that outcome, so the branch resolves
    rather than merely warning.
@@ -76,13 +76,13 @@ mistake one level down; what is missing is a **reference** at the decision site,
 ## Acceptance criteria
 
 - [ ] `module-04-data-collection/SKILL.md`'s `provenance: synthesized` branch states that choosing
-      the generated record counts is a licence-capacity decision, cites INV-244, and routes to the
+      the generated record counts is a license-capacity decision, cites INV-244, and routes to the
       canonical framing block rather than restating the measurement procedure.
 - [ ] The canonical framing's trigger sentence (`:86`) names **generating** a dataset, not only
       sampling one, as a decision it governs.
 - [ ] The branch states the `recordLimit: 0` outcome plainly: size the generated data by what the
       scenario needs.
-- [ ] A test asserts the synthesized branch carries a licence-capacity reference, and fails if it
+- [ ] A test asserts the synthesized branch carries a license-capacity reference, and fails if it
       is removed — pinning the *mechanism* (measure before sizing) rather than merely that a token
       appears somewhere in the file, per the guard-strengthening note in
       `license-limit-assumed-when-it-could-be-measured`.

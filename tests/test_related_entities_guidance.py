@@ -168,7 +168,7 @@ class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
         )
 
     def test_phase_d_stays_correctly_scoped(self):
-        """The sibling site was already right — it must not be 'harmonised' to the wrong form."""
+        """The sibling site was already right — it must not be 'harmonized' to the wrong form."""
         text = read(PHASE_D)
         self.assertIn("`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members", text)
         self.assertNotIn("SZ_INCLUDE_MATCH_KEY_DETAILS", text)

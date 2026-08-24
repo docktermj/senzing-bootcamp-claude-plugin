@@ -55,3 +55,18 @@ This are ideas for future specs.
   `needs-clarification`. The curriculum is SDK-code-focused; `truthset_visualization` is the one
   existing web-app-based module. Needs a scoping conversation — which modules, alongside or instead
   of generated SDK code — before it can be specced.
+
+- **Point Module 7's query-program guidance at the factory-lifetime rule.** The rule is already
+  shipped and correct — `bootcamp-onboarding/ground-rules.md:322`, landed 2026-07-26 by `341bbe4`
+  from `factory-must-outlive-every-engine-it-creates` — and it still did not bind: a 2026-08-18 run
+  on plugin 0.5.1 wrote a shared helper that created `SzAbstractFactoryCore` as a local and returned
+  only the engine, which failed on the first call with `SzSdkError - engine object has been
+  destroyed and can no longer be used, create a new one`. Factoring engine setup into a helper is
+  the first move anyone makes when writing five query programs, so
+  `module-07-query-visualize-discover/phase1-query-visualize.md` Step 2 (Create query programs) is
+  the point of use and carries no pointer. One line there, next to the existing INV-115 response-shape
+  block. Source: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK_Joel.md` → "an SzAbstractFactoryCore kept as a
+  local destroys its engine when it goes out of scope" (`self-observed`, Medium). Senzing's own
+  `search_docs(query='loading', category='anti_patterns')` covers the adjacent thread-safety rule
+  ("Do Not Initialize Factory or Environment Per Call or Thread") and not the object-lifetime angle
+  — re-checked server 1.33.0, 2026-08-21.

@@ -1,6 +1,6 @@
 ---
 name: production-readiness-audit
-description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honoured, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
+description: 'Audit the whole Senzing Bootcamp plugin for production readiness — the last static gate before dry-run. Verifies the plugin is consistent, coherent, complete and concise, and checks INVARIANTS.md against the plugin in BOTH directions: every invariant is honored, and every durable rule the plugin states is registered as an invariant. Use when the maintainer asks for a deep dive, a conformance or coherence audit, whether the plugin conforms to every invariant, whether it is consistent/coherent/complete, or whether it is ready to ship. Maintainer tool — never invoked during a bootcamp.'
 ---
 
 # Production-readiness audit
@@ -12,10 +12,19 @@ It is the **final static gate before `dry-run`**. When it passes, the SBCP shoul
 consistent, coherent, complete and concise enough that a Bootcamper's experience is
 excellent — and whatever is left wrong is something only running the thing can find.
 
-This skill continues the `deep-dive-audit-*` series in `specs/IMPLEMENTED.md`
-(`2026-07-26`, `-27`, `-28`, `-28b`, `-30`, `-30b`). **Those six entries are required
-reading before a run** — see Step 1. They are the only record of what this audit
-actually finds, and re-deriving their findings is the most common way to waste a run.
+This skill continues the `deep-dive-audit-*` series in `specs/IMPLEMENTED.md`, which is
+where the Step 7 defect classes come from. Those entries are the **origin** of the method;
+the `production-readiness-audit-*` entries that follow them are the current record. **Reading
+the most recent of them is required before a run** — see Step 1. Re-deriving a finding that is
+already recorded is the most common way to waste a run.
+
+⛔ **Do not enumerate those entries here, and do not state how many there are.** An earlier
+version of this paragraph named six by date and called them "the only record"; by 2026-08-21
+there were **thirty-two** entries across the two series, the newest of which carried the
+guardrail a run following an unattended session most needs — and the list still pointed at the
+six oldest. It was also wrong when written: the `deep-dive-audit-*` series has **seven**
+entries, and `deep-dive-audit-2026-07-29-minor-fixes` was never in the list. A fixed set in
+prose goes stale silently, because it keeps reading authoritative.
 
 ## Why this exists
 
@@ -48,7 +57,7 @@ existing tests could see."* A sample of what a green suite shipped:
 
 ## What this skill is not
 
-Five neighbours overlap. Keeping them distinct keeps all five useful.
+Five neighbors overlap. Keeping them distinct keeps all five useful.
 
 | Skill | Asks |
 |---|---|
@@ -84,7 +93,7 @@ can satisfy all three and still be unusable through sheer bulk.
 | **Consistent** | no two places disagree | `module-07/SKILL.md` described the retired A/B/C track model while its own `phase1` file described the current one |
 | **Coherent** | the parts compose into one thing that makes sense in order | a cross-reference citing INV-077 where INV-129 governs; a rule described in vocabulary retired two invariants ago |
 | **Complete** | everything promised exists, and every surface is reachable | two of three shipped slash commands documented nowhere; install docs covering macOS and Linux while INV-001 requires Windows |
-| **Concise** | not too much definition, not too little — *just right* | one rule restated in four files; a 10,850-word skill file where the reader needs the first screen |
+| **Concise** | not too much definition, not too little — *just right* | one rule restated in four files; a skill file so long the governing sentence sits below the fold |
 
 **On concision — the Goldilocks Principle.** Under-definition and over-definition fail
 the same way: the model does the wrong thing. Too little and it improvises; too much
@@ -108,7 +117,7 @@ new invariant — do not read one into INV-003.
 
 This is the part no other skill does, and the direction that has repeatedly cost weeks.
 
-**Forward — does the plugin honour `INVARIANTS.md`?** For each invariant, find every
+**Forward — does the plugin honor `INVARIANTS.md`?** For each invariant, find every
 site it binds and check them *all*. The dominant failure is not a rule ignored; it is a
 rule **applied incompletely**. INV-142 said "a bundled generator" and was implemented in
 one of two. INV-146's superseded "2-3 screenshots" survived in three places. INV-153 was
@@ -126,18 +135,42 @@ notices when a later change contradicts it. Both of these are real:
 - **INV-155** — two specs removed visualization tabs and registered no invariant, so the
   shipped app contradicted INV-104's still-standing enumeration.
 
-Run the mechanical half, then read every hit:
+Run the mechanical half — **all three views** — then read every hit:
 
 ```bash
-python3 .claude/skills/production-readiness-audit/conformance.py rules
+python3 .claude/skills/production-readiness-audit/conformance.py rules      # section-scoped
+python3 .claude/skills/production-readiness-audit/conformance.py per-rule --uncited
+python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
 ```
 
-It lists hard rules — the repo's own `⛔` / bolded MUST/NEVER convention — whose
-enclosing section cites no invariant. Measured 2026-07-31: **162 hard-rule lines, 16 in
-a section citing no invariant, across 11 files.** Each hit is *either* an unregistered
-rule (propose an invariant) *or* a missing citation to one that exists (fix the
-citation). Both are findings and they need different fixes; deciding which requires
-reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
+All three list hard rules — the repo's own `⛔` / bolded MUST/NEVER convention. They differ in
+the **unit**, and the unit is the whole story. Each prints its own current counts; read them off
+the run rather than from a figure written here, which is how the previous baseline went stale.
+
+- **`rules`** asks whether the *enclosing section* cites any invariant. It prints two
+  populations: **line-anchored** hits, which is what every figure in a ledger entry before
+  2026-08-21 counted, and **mid-line** hits — a stop sign that is not first on its line, which
+  the pattern missed entirely until then. ⛔ **Compare a past figure against the line-anchored
+  number, not the total**, or a fixed detector reads as a regression.
+- **`per-rule`** asks whether a reader **at that line** can name the governing rule — the
+  invariants cited in the rule itself or the sentence beside it. This is what INV-183 requires,
+  and it is a much larger number than `rules` reports.
+- **`since --since-last-audit`** lists the hard rules added since the newest audit entry's
+  recorded commit, resolved from the ledger rather than guessed. For a run following an
+  unattended implement session, this is the set that session is answerable for.
+
+Each hit is *either* an unregistered rule (propose an invariant) *or* a missing citation to one
+that exists (fix the citation). Both are findings, they need different fixes, and deciding which
+requires reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
+
+⛔ **`rules` is section-scoped, so its count is NOT a count of unregistered rules and MUST NOT be
+reported as one.** A new rule is invisible to it whenever it lands anywhere near an unrelated
+`INV-nnn` — and it gets harder to see as citations grow denser. On 2026-08-21 a run added 26
+hard-rule lines (net +25) and this count did not move at all, while three of those rules were on
+subjects `INVARIANTS.md` covers nowhere. Both prior findings of this class
+(`seven-hard-rules-shipped-in-one-run-with-no-invariant`, 2026-08-17, and
+`the-2026-08-21-run-shipped-three-unregistered-guarantees`) were found by reading, not by the
+count moving — and in the first case nothing establishes that the seven found were the whole set.
 
 ⛔ **Never propose deleting or renumbering an invariant.** `INVARIANTS.md` is
 append-only; a superseded invariant is *marked* superseded, and a wrong one gets a dated
@@ -149,14 +182,35 @@ removing it silently breaks every citation that resolved to it.
 1. **Confirm the suite is green first.** `python3 -m pytest tests/ -q`. Every prior
    audit began green; a red suite means you are debugging, not auditing, and findings
    will be attributed to the wrong cause.
-2. **Read the six `deep-dive-audit-*` ledger entries** in `specs/IMPLEMENTED.md`. They
-   name what was already found, which invariants each established, and — most useful —
-   the *classes* that recur. Re-finding a fixed defect wastes the run; missing that a
-   class recurs wastes more.
-3. **Run every lead generator**, then read the hits:
+2. **Read the most recent audit entries in `specs/IMPLEMENTED.md`** — the newest five or so
+   `## production-readiness-audit-*` / `## deep-dive-audit-*` headings, whichever they are on
+   the day you run, **plus any entry the generators in step 3 point at**. Get the list from the
+   file, not from here:
+
+   ```bash
+   grep -n '^## \(production-readiness-audit\|deep-dive-audit\)' specs/IMPLEMENTED.md | tail -8
+   ```
+
+   They name what was already found, which invariants each established, and — most useful — the
+   *classes* that recur. Re-finding a fixed defect wastes the run; missing that a class recurs
+   wastes more.
+
+   ⚠️ **The newest entry matters most after an unattended run**, which is the case this
+   instruction exists for. On 2026-08-17 the newest entry recorded a reverse-contract defect
+   produced *specifically* by an unattended implement run and added the `implement-spec`
+   guardrail a later run is supposed to follow. A reading list fixed at the oldest six routed
+   around exactly that.
+
+   The `deep-dive-audit-*` entries stay worth reading as the **origin** of the Step 7 classes.
+   Their value is historical: they describe a much smaller ruleset and no
+   `production-readiness-audit-*` history. Read them for the classes, not for the state.
+
+3. **Run every lead generator**, then read the hits. `all` runs every view that needs no
+   argument — including `per-rule`; `since` needs a range and is a separate call:
 
    ```bash
    python3 .claude/skills/production-readiness-audit/conformance.py all
+   python3 .claude/skills/production-readiness-audit/conformance.py since --since-last-audit
    python3 .claude/skills/dry-run/coverage_reports.py both          # unguarded surface
    python3 .claude/skills/compact-dev-environment/citations.py verify   # referential integrity
    ```
@@ -177,29 +231,42 @@ removing it silently breaks every citation that resolved to it.
 
 ## Step 2: Sweep the invariants, forward
 
-Read `specs/INVARIANTS.md` in full — 194 invariants, and the per-module outcome blocks
-(INV-028–INV-049) are the ones most likely to have quietly stopped being true.
+Read `specs/INVARIANTS.md`. The per-module outcome blocks (INV-028–INV-049) are the ones most
+likely to have quietly stopped being true.
 
-For each invariant, ask two questions and prefer the second:
+⛔ **A full forward sweep of every invariant is no longer feasible in one run, and a run that
+implies it did one is reporting something it did not do.** The ruleset has grown past the point
+where reading each rule and checking every site it binds fits in a session — the 2026-08-17 run
+recorded plainly that it *"did not sweep the invariants one by one"*, which is an honest
+disclosure, not a shortfall. So **scope the sweep deliberately and say what you scoped it to**:
 
-1. Is it honoured **where I first look**?
-2. **What is the full set of sites it binds, and is it honoured in all of them?**
+- the invariants the step-3 generators put hits against;
+- the enumerating subset below, which rots fastest;
+- everything an invariant binds that the diff since the last audit entry touched;
+- the per-module outcome blocks, on a rotation, so no block goes unread for long.
 
-Use the enumeration scan to prioritise, because enumerations rot fastest:
+For each invariant in scope, ask two questions and prefer the second:
+
+1. Is it honored **where I first look**?
+2. **What is the full set of sites it binds, and is it honored in all of them?**
+
+Use the enumeration scan to prioritize, because enumerations rot fastest:
 
 ```bash
 python3 .claude/skills/production-readiness-audit/conformance.py enumerations
 ```
 
-Measured 2026-07-31: **24 of 194 invariants enumerate something** — an exact count, a
-closed list, or a series of three or more literals. An invariant stating a *property* survives
-change; one *listing members* breaks the moment a member moves, and it breaks silently
-because the list still reads authoritative. Check every enumeration against what the
-plugin ships **today**.
+It reports how many invariants enumerate something — an exact count, a closed list, or a
+series of three or more literals. **Read the number off the run**; it grows with the ruleset,
+and the proportion has been rising. An invariant stating a *property* survives change; one
+*listing members* breaks the moment a member moves, and it breaks silently because the list
+still reads authoritative. Check every enumeration against what the plugin ships **today**.
 
 ## Step 3: Sweep the invariants, reverse
 
-Work the `conformance.py rules` output. For each hit, decide between:
+Work the output of all three views (`rules` and `per-rule` come from `all`; `since
+--since-last-audit` is its own call). For each
+hit, decide between:
 
 - **Unregistered rule** → the plugin guarantees something the ruleset does not record.
   Draft the invariant, get the maintainer's sign-off on the wording (never record one
@@ -251,9 +318,11 @@ python3 .claude/skills/production-readiness-audit/conformance.py size
 python3 .claude/skills/production-readiness-audit/conformance.py duplication
 ```
 
-Measured 2026-07-31: **42 shipped markdown files, 114,576 words**, the heaviest being
-`graduation/SKILL.md` at 10,850 and `module-02-sdk-setup/SKILL.md` at 9,335; **130
-repeated passages across 91 file pairs**.
+Both scans print their own current totals — the shipped file and word counts, the heaviest
+files, and the repeated passages with their file pairs. **Read them off the run.** A figure
+copied into this file becomes a baseline nobody re-measures: the previous one sat here for
+three weeks while every number in it moved, and the sentences around it went on reasoning from
+the stale proportions.
 
 Neither number is a target. Use them to find:
 
@@ -263,7 +332,7 @@ Neither number is a target. Use them to find:
   forward sweep's incomplete-application class, approached from the other end.
 - **A governing rule buried below the fold** of a long file, where the model reaches the
   action before the constraint. Moving it up is a concision fix that removes nothing.
-- **Definition too thin** — a step that assumes a judgement the guidance never states.
+- **Definition too thin** — a step that assumes a judgment the guidance never states.
   Goldilocks cuts both ways, and this half is easy to forget because nothing looks wrong.
 
 ## Step 7: The defect classes worth hunting, in value order
@@ -275,7 +344,7 @@ Drawn from the six prior audits. The first three produced the highest-severity f
 2. **A string that is wrong only relative to a working directory or a runtime.** A bare
    `scripts/…` path that works in the repo and fails in the Bootcamper's project; an
    f-string interpolated at runtime so the `⛔ RESERVED` framing above the dict never
-   travelled with the value. Tests that model neither cannot see these.
+   traveled with the value. Tests that model neither cannot see these.
 3. **A guard narrower than the invariant it claims to enforce.** The INV-146 guard's
    regex required "most"|"best" after "2-3" and scanned two of three call sites, so it
    passed while three violations shipped. Read what a guard *asserts*, not its name.
@@ -285,7 +354,7 @@ Drawn from the six prior audits. The first three produced the highest-severity f
    comment claimed `test_brand_sync.py` asserted its palette; it did not.
 7. **An inlined constant diverging from its source of truth** — a fallback palette, a
    duplicated table, a figure hardcoded where the guidance says to look it up.
-8. **A claim about behaviour that the code stopped doing** — "silently skips" where the
+8. **A claim about behavior that the code stopped doing** — "silently skips" where the
    script now names each drop on stderr.
 
 ## Step 8: What to do with a finding

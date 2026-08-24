@@ -24,7 +24,7 @@ Step 9 transition question. Every step in between is non-yielding:
 So a faithful walk generates three files, validates them, writes four documents and a `.gitignore`,
 and runs two gate checks inside the single turn that ends on Step 9's question.
 
-That is correct behaviour under INV-225. The problem is that **nothing in this module says so**,
+That is correct behavior under INV-225. The problem is that **nothing in this module says so**,
 while the module the plugin holds up as the example of this shape says it twice.
 `ground-rules.md` → the 👉 protocol names the shape and its instances explicitly:
 
@@ -91,8 +91,8 @@ fourth.
    last completed step, not nine writes inside it, with the partial-turn fallback (write what
    completed before stopping, so resume lands on the right step).
 
-⚠️ **Scope note:** no step's behaviour changes. This adds the marking that makes the existing
-behaviour followable from inside the module.
+⚠️ **Scope note:** no step's behavior changes. This adds the marking that makes the existing
+behavior followable from inside the module.
 
 ## Acceptance criteria
 
@@ -122,7 +122,7 @@ behaviour followable from inside the module.
 - Feedback: none — found by `/dry-run` phase 3 on 2026-08-14 by walking Data collection with a
   bootcamp-generated three-source scenario and observing that Steps 1–8b produced no 👉 question
   (`Source: self-observed (assistant retrospective)`).
-- Priority: **Low.** Nothing is broken and the general rule covers the behaviour; this closes a
+- Priority: **Low.** Nothing is broken and the general rule covers the behavior; this closes a
   marking gap in the one module that reaches System verification's shape without System
   verification's warnings. It is the cheapest kind of fix and the kind that stops a future guide
   ending a turn on Step 3 with zero 👉.
@@ -131,7 +131,7 @@ behaviour followable from inside the module.
 
 ## Invariants introduced
 
-**None.** INV-225 already requires the behaviour, the single write and the partial-turn fallback;
+**None.** INV-225 already requires the behavior, the single write and the partial-turn fallback;
 what was missing was the local marking, which is documentation rather than a new rule.
 
 ⚠️ **Candidate recorded as a stop-marker, deliberately not registered.** The rule *"a module whose

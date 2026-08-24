@@ -14,7 +14,7 @@ written to protect are gone and a test file named after them would mislead.
 | INV-137 | unconditional again; the preference and its question retired |
 | **2026-07-26** | the trigger becomes the Bootcamper's *current setting*, not the previous stage |
 
-So the risk this file guards is specific and has materialised before: a future edit
+So the risk this file guards is specific and has materialized before: a future edit
 quietly reinstating one of the retired shapes, or a stale `model_guidance` read
 surviving in a file nobody thought to check. What must hold now:
 

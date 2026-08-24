@@ -52,7 +52,7 @@ Mirror INV-209 one level up, into the spec format.
 1. **`feedback-to-specs/spec-template.md`** — add `server does not cover it` to the `MCP re-check`
    outcome vocabulary, and require that when the outcome is an absence, the line also carries
    `owner-checked: <route that would carry the fact> — <what it returned>`. Same shape and same
-   wording as the marker's `owner:` clause, so the two are recognisably one rule.
+   wording as the marker's `owner:` clause, so the two are recognizably one rule.
 2. **`feedback-to-specs/SKILL.md`** — state the requirement where specs are authored, with the
    reason: an empty result from a tool that never carried the fact is a true statement about that
    tool and no evidence for the negative (INV-194).
@@ -97,12 +97,12 @@ precise vacuity that let a stubbed detector pass earlier in the same session.
 
 ## Source
 
-- Feedback: none — dry run 2026-08-13, generalising the session's own repeated error at the
+- Feedback: none — dry run 2026-08-13, generalizing the session's own repeated error at the
   maintainer's request (`Source: self-observed (assistant retrospective)`)
 - Priority: High — it is the input path to implementation, and it has already produced a shipped
   false invariant with a guard enforcing it.
 - MCP re-check: **n/a (no Senzing fact)** — this concerns the spec format and this repo's authoring
-  discipline; no Senzing behaviour is asserted. Server version for the session was 1.32.9.
+  discipline; no Senzing behavior is asserted. Server version for the session was 1.32.9.
 - Upstream: not applicable.
 - Related specs: `specs/mcp-negative-markers-must-name-the-owning-route.md` (INV-209, the same rule
   for shipped prose), `specs/no-license-path-environment-variable.md` (instance 1),

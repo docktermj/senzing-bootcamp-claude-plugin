@@ -43,7 +43,7 @@ class TestUnactionableRejectionIsHandled(unittest.TestCase):
         self.assertRegex(
             section,
             r"(?s)names no field and carries no\s*\n?\s*line or pointer",
-            "'unactionable' must be defined observably, not left to judgement",
+            "'unactionable' must be defined observably, not left to judgment",
         )
 
     def test_retry_is_bounded_at_two_attempts(self):
@@ -121,7 +121,7 @@ class TestFallbackKeepsEveryGate(unittest.TestCase):
         self.assertRegex(
             self.section,
             r"(?s)\*\*never\*\* from training data",
-            "INV-080 must be restated where the fallback is authorised",
+            "INV-080 must be restated where the fallback is authorized",
         )
 
     def test_all_three_quality_gates_still_run(self):

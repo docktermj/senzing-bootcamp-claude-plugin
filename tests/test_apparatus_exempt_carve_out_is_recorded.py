@@ -88,7 +88,7 @@ class EveryEachModuleInvariantRecordsTheCarveOut(unittest.TestCase):
                     "modules. If they are exempt, a reader auditing this against Bootcamp "
                     "preparation finds a violation that is not one — or 'fixes' that module and "
                     "breaches INV-075. If they are not, say so: silence beside carved-out "
-                    "neighbours reads as the same carve-out" % ident)
+                    "neighbors reads as the same carve-out" % ident)
 
     def test_each_one_cites_the_invariants_that_create_the_exemption(self):
         for ident, body in self.found:

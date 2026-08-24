@@ -60,13 +60,13 @@ per INV-108), which the Bootcamper neither authors nor maintains.
 
 Then name the boundary test that resolves the ambiguous case, because that is the half with
 teeth: **if a rule constrains something the Bootcamper's code must do, it MUST be stated as
-behaviour in the any-language contract and not only in a Python reference implementation**
+behavior in the any-language contract and not only in a Python reference implementation**
 (INV-090/INV-106/INV-124, and the pattern INV-164 and INV-190 had to state case by case). A
 rule that reaches generated code only through the Python reference is an INV-002 violation
 even though the reference itself is exempt.
 
 This is an in-place clarification under rule 2 — the scope is already what the ruleset
-implements, and no behaviour changes. It makes an unstated premise explicit rather than
+implements, and no behavior changes. It makes an unstated premise explicit rather than
 altering a requirement.
 
 ⚠️ **Do not "fix" this by rewriting the apparatus in another language or by making the hooks
@@ -81,7 +81,7 @@ out of the public mirror. Both stay.
 - [ ] The clarification names the exempting invariants (INV-052, INV-108) and the invariant
       that shows the intent (INV-090).
 - [ ] The clarification states the boundary test — a rule constraining bootcamper code MUST
-      appear as behaviour in the any-language contract, never only in the Python reference —
+      appear as behavior in the any-language contract, never only in the Python reference —
       and cites the invariants that already apply it (INV-164, INV-190, INV-106, INV-124).
 - [ ] INV-052, INV-108 and INV-090 are unchanged; no apparatus is rewritten and no hook
       becomes language-selectable.

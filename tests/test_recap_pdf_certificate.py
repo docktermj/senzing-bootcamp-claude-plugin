@@ -232,7 +232,7 @@ class TheCitationCountsTheModulesActuallyCompleted(unittest.TestCase):
         self.assertIn("2 modules", text)
         self.assertNotIn("10 modules", text)
 
-    def test_a_single_module_is_not_pluralised(self):
+    def test_a_single_module_is_not_pluralized(self):
         module = load_generator()
         self.assertIn("1 module of", module._cert_citation(["Concepts"]))
         self.assertIn("2 modules of", module._cert_citation(["Concepts", "SDK"]))

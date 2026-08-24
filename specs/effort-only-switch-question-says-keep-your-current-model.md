@@ -92,7 +92,7 @@ than just the stem.
   keep your current model", and the spec's Affected-files section named only
   `ground-rules.md`. Fixing the ground rules alone would have left the identical defect at
   the final stage of the bootcamp — the second-consumer omission `implement-spec` Step 4
-  exists to catch. `plugins/senzing-bootcamp/docs/model-selection.md`'s nudge-behaviour
+  exists to catch. `plugins/senzing-bootcamp/docs/model-selection.md`'s nudge-behavior
   table was updated for the same reason: it describes the question's shape and would
   otherwise have described the pre-fix hint.
 - **Option 1 was taken, not option 2.** The spec ranked substitution first and

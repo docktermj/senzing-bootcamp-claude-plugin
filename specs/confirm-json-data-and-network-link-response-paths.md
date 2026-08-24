@@ -94,7 +94,7 @@ already filed and out of scope here.
 
 2. **Keep the dump rule primary.** Documenting the keys must not weaken the instruction to dump one
    element before parsing (INV-115/INV-149) — the keys are now a documented expectation to check
-   against, not a licence to skip the dump. Reduce the `:268-273` caution to a pointer at the
+   against, not a license to skip the dump. Reduce the `:268-273` caution to a pointer at the
    documented list plus the dump requirement, rather than deleting the warning: the failure mode
    (endpoints blank, `MATCH_KEY` renders, row reads as real) is still the reason the rule exists
    (INV-148).

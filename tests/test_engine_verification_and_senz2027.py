@@ -146,7 +146,7 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
     The condition regex accepted only `scoop|windows`, so it rejected a correct macOS claim.
     The *requirement* is unchanged — a pairing must carry a platform condition **and** the tool
     — only the set of platforms the server documents has grown. Widening the regex rather than
-    the rule is the point: an unconditioned pairing is still an offence.
+    the rule is the point: an unconditioned pairing is still an offense.
     """
 
     def test_senz7426_is_never_tied_to_supportpath_unconditionally(self):
@@ -218,7 +218,7 @@ class TheRetractedClaimStaysRetracted(unittest.TestCase):
         """The masking claim is no longer unverified — but it still needs attributing.
 
         This asserted, until 2026-07-31, that the plugin must NOT state the per-class
-        masking behaviour, because no MCP source did. One now does:
+        masking behavior, because no MCP source did. One now does:
         `sdk_guide(topic='install', platform='windows')` says a wrong SUPPORTPATH makes
         every SzEngine/SzDiagnostic call fail "while SzProduct keeps working — so the
         install looks healthy". Banning the claim would now suppress a sourced fact, so

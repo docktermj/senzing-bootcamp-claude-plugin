@@ -91,7 +91,7 @@ class TheTriggerIsANamedCondition(unittest.TestCase):
     def test_the_rule_exists_in_the_ground_rules(self):
         self.assertIn("Reversed decisions: file them when they happen", self.rules)
 
-    def test_it_rejects_a_disposition_in_favour_of_a_condition(self):
+    def test_it_rejects_a_disposition_in_favor_of_a_condition(self):
         self.assertRegex(
             self.flatrules, r"(?i)The trigger is a named condition, not a disposition"
         )

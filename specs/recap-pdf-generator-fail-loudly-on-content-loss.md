@@ -58,8 +58,8 @@ report named. The fix below addresses the real cause.
 
 ## Proposed change
 
-1. **Fail loudly on structural mismatch.** If the input has no recognisable recap sections, exit non-zero
-   with a clear message ("input does not look like a bootcamp recap; N of M sections had no recognised
+1. **Fail loudly on structural mismatch.** If the input has no recognizable recap sections, exit non-zero
+   with a clear message ("input does not look like a bootcamp recap; N of M sections had no recognized
    sub-sections"). **Never print `PDF generated:` after dropping most of the content.**
 2. **Report a content-retention figure** — e.g. "rendered 3,947 of 41,000 source characters" — so truncation
    is visible without manually extracting text. Fail when retention falls below a stated threshold. This is
@@ -80,8 +80,8 @@ report named. The fix below addresses the real cause.
 requirement: a missing subsection in an otherwise-good recap must not block graduation, and INV-066 requires
 a PDF to be produced with or without `fpdf2`. So separate the two failure classes:
 
-- **Incomplete but recognisable** (a module missing a subsection) → warn, render, exit 0. Unchanged.
-- **Unrecognisable, or catastrophic content loss** (no module sections, or retention below threshold) →
+- **Incomplete but recognizable** (a module missing a subsection) → warn, render, exit 0. Unchanged.
+- **Unrecognizable, or catastrophic content loss** (no module sections, or retention below threshold) →
   fail, exit non-zero, and do **not** claim success. This case is not "an imperfect recap"; it is the wrong
   input, and rendering it produces a deliverable that is worse than no deliverable.
 
@@ -95,7 +95,7 @@ distinguishable by exit code, and a regression here is invisible by construction
 
 ## Acceptance criteria
 
-- [ ] Input with no recognisable `## {Module name}` recap sections exits non-zero with a message naming the
+- [ ] Input with no recognizable `## {Module name}` recap sections exits non-zero with a message naming the
       mismatch, and does **not** print `PDF generated:`.
 - [ ] The tool reports a content-retention figure and fails when retention falls below a stated threshold.
 - [ ] A valid-but-incomplete recap still warns, renders, and exits 0 — the non-blocking guarantee is intact.
@@ -136,7 +136,7 @@ distinguishable by exit code, and a regression here is invisible by construction
 - `INV-110` — A bundled generator that produces a terminal bootcamper deliverable MUST NOT report success
   after dropping a material share of its input's content: it MUST audit the input before rendering, report a
   content-retention figure, and — on structural mismatch or retention below its stated minimum — write no
-  output file, emit no success line, and exit non-zero. A recognisable-but-incomplete input stays
+  output file, emit no success line, and exit non-zero. A recognizable-but-incomplete input stays
   non-blocking. (Recorded in `specs/INVARIANTS.md`.)
 - `INV-111` — When a bundled generator falls back from its preferred renderer or an optional dependency to a
   lesser path, it MUST state on stderr which case occurred and why — distinguishing "not installed for this
@@ -150,8 +150,8 @@ Two findings from implementing this, recorded because they affect other specs:
 1. **This spec's root-cause paragraph overstates one branch.** `verify_recap`'s `if not recap.modules` check
    never fired on the reported input — the discoveries document *did* parse 3 `##` sections. The actual
    content-loss mechanism is `parse_recap` (`generate_recap_pdf.py:198-200`), which appends body lines only
-   `if current_sub is not None`, so any line under a `##` but not under a recognised `###` is discarded. The
-   proposed fix ("0 of N sections carry any recognised sub-section") targeted this correctly, so the
+   `if current_sub is not None`, so any line under a `##` but not under a recognized `###` is discarded. The
+   proposed fix ("0 of N sections carry any recognized sub-section") targeted this correctly, so the
    implementation is unaffected.
 2. **The generic-vs-sibling-renderer question was decided: sibling.** This generator now *rejects* non-recap
    input and documents its required structure, rather than becoming a general-purpose Markdown renderer.

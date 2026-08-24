@@ -17,7 +17,7 @@ rather than producing a wrong answer — but it is avoidable, and every bootcamp
 will look for that constant.
 
 ⚠️ **Corrected 2026-07-26.** This finding was originally filed, and originally written up here, as
-"`SZ_EXPORT_ALL_FLAGS` does not exist". That generalisation is wrong.
+"`SZ_EXPORT_ALL_FLAGS` does not exist". That generalization is wrong.
 `get_sdk_reference(topic='flags', filter='export_json_entity_report')` returns the constant with
 `applies_to: ["export_json_entity_report", "export_csv_entity_report"]` and the description "All
 export flags combined", sourced from the **Java SDK's flag enum**. So the composite *is* documented

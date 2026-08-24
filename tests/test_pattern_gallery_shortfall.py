@@ -105,12 +105,12 @@ class Step3NamesTheHomonymTraps(unittest.TestCase):
         self.assertRegex(
             self.body, r"V3.{0,4}V4",
             "Step 3 must say that 'Data Migration' returns the V3->V4 SDK migration. Naming the "
-            "trap without naming the wrong content it yields leaves the guide unable to recognise "
+            "trap without naming the wrong content it yields leaves the guide unable to recognize "
             "it — and the wrong content is plausible and well-formed.",
         )
         self.assertRegex(
             self.body, r"(?i)sz_dbupgrade|sz_configupgrade|migration guides",
-            "name at least one concrete artifact the wrong result contains, so it is recognisable",
+            "name at least one concrete artifact the wrong result contains, so it is recognizable",
         )
 
 
@@ -129,7 +129,7 @@ class Step3ForbidsInventedDetail(unittest.TestCase):
         self.assertRegex(
             self.body, r"(?i)name it as available",
             "an unreached category must be named as available, with an offer to look it up — the "
-            "behaviour the step previously left to improvisation",
+            "behavior the step previously left to improvisation",
         )
 
     def test_a_link_stub_is_declared_not_to_be_content(self):
@@ -138,7 +138,7 @@ class Step3ForbidsInventedDetail(unittest.TestCase):
             "Step 3 must say a bare link stub is not substantive content — the shape most likely "
             "to be mistaken for coverage",
         )
-        self.assertIn("Read More", self.body, "quote the stub shape so it is recognisable")
+        self.assertIn("Read More", self.body, "quote the stub shape so it is recognizable")
 
     def test_the_step_no_longer_promises_all_ten_categories(self):
         self.assertRegex(
@@ -149,7 +149,7 @@ class Step3ForbidsInventedDetail(unittest.TestCase):
 
 
 def flat(chunk):
-    """Whitespace-normalised, so a line-wrapped category name still matches.
+    """Whitespace-normalized, so a line-wrapped category name still matches.
 
     Both lists wrap: phase1 breaks "Data\\n  Migration" mid-name. A naive substring check reports
     that as a missing category — a false positive on correct text, which is worse than no guard

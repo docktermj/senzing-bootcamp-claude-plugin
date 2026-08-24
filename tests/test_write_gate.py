@@ -8,7 +8,7 @@ allowances that make it usable (a project-relative path, and a real project that
 beneath a temp directory). **INV-109** governs the secret half, which fails closed
 regardless of path.
 
-INV-200 was registered 2026-08-11: the behaviour and these tests long predated it, so the
+INV-200 was registered 2026-08-11: the behavior and these tests long predated it, so the
 guarantee was enforced here and recorded in no rule — INV-109's own text scoped itself away
 from "the location logic" without anything picking it up. Cited here so `coverage_reports.py
 invariants` can see the enforcement that already existed.

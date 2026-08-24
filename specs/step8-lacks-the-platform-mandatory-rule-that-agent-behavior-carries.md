@@ -30,11 +30,11 @@ four; only the literal `platform=` is present.
 ⚠️ **The asymmetry looks deliberate in one direction and accidental in the other.** The Agent
 Behavior bullet explicitly defers the `engine_config` brace-doubling detail downward — *"(Step 8
 states both corrections it needs, and its failure modes)"* — so the author was pairing the two
-sites consciously. The ⛔ platform rule travelled the opposite way and no pointer was left behind.
+sites consciously. The ⛔ platform rule traveled the opposite way and no pointer was left behind.
 
 ## Root cause
 
-**A rule governing an artifact lives only in a general behaviour summary, not at the step that
+**A rule governing an artifact lives only in a general behavior summary, not at the step that
 produces the artifact — which is INV-183 exactly:**
 
 > A step that instructs the guide to generate a bootcamper-facing artifact MUST, **at that step**,

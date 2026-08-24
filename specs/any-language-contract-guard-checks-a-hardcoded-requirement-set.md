@@ -5,7 +5,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 ## Problem
 
 `tests/test_any_language_contract_complete.py` enforces the INV-002/INV-090 boundary rule: a
-requirement constraining the server **the Bootcamper builds** must be stated as behaviour in
+requirement constraining the server **the Bootcamper builds** must be stated as behavior in
 `visualization-api-reference.md`, not only in the Python reference implementation. It checks a
 hardcoded dict of five requirements:
 
@@ -14,7 +14,7 @@ hardcoded dict of five requirements:
 "HTML escaping of data-sourced strings (INV-106)": [...]
 "offline rendering / no CDN (INV-091)": [...]
 "tab identifiers and deep-linking (INV-124)": [...]
-"data-source colours assigned from the data (INV-127)": [...]
+"data-source colors assigned from the data (INV-127)": [...]
 ```
 
 A **sixth** requirement — a new invariant binding the Bootcamper-built server, stated only in
@@ -24,7 +24,7 @@ precisely the failure the guard's own docstring records having already happened 
 > Offline rendering (INV-091) is stated in the build guidance in plain terms. **Escaping was not.**
 
 ⚠️ **There is no live gap today.** Every visualization-group invariant was checked against the
-contract on 2026-08-15 and each is either stated as behaviour, or is plugin-side apparatus the
+contract on 2026-08-15 and each is either stated as behavior, or is plugin-side apparatus the
 Bootcamper does not build (and so is INV-002-exempt):
 
 | Invariant | Disposition |
@@ -49,7 +49,7 @@ necessarily the whole set — re-derive by scanning rather than trusting these f
 
 ⚠️ **INV-246 does not cleanly bind it, which is why it survived that sweep.** INV-246 requires a
 guard to derive its **site set** by scanning; here the members are *requirements*, and "a requirement
-that binds the Bootcamper-built server" is a semantic judgement, not something a corpus scan
+that binds the Bootcamper-built server" is a semantic judgment, not something a corpus scan
 returns. The detector used earlier (module-level tuples of shipped-file constants, iterated) could
 not see this file at all, for the same reason it missed `test_brand_sync.py`.
 
@@ -60,12 +60,12 @@ carries phrase-level detail a scan cannot reproduce:
 
 1. Derive the candidate set by scanning `specs/INVARIANTS.md` for invariants in the
    **"Visualization and screenshots"** index group (the group is already declared in the file, so the
-   membership is data, not judgement).
+   membership is data, not judgment).
 2. For each, assert it is **either** referenced in `visualization-api-reference.md` (by ID or by an
    explicitly registered content phrase) **or** listed in a small, commented `APPARATUS_EXEMPT` set
    naming why the Bootcamper does not build it — capture helpers, PDF generators, the Python
    fallback constants.
-3. The exempt set is the judgement half and must stay **small, explicit and reasoned**: an invariant
+3. The exempt set is the judgment half and must stay **small, explicit and reasoned**: an invariant
    added to it without a reason is how this rule would quietly become unenforceable. Adding a new
    visualization invariant then forces a deliberate choice — state it in the contract, or record why
    the Bootcamper does not build it — rather than defaulting to silence.
@@ -86,7 +86,7 @@ guards already tried.
       failure, then revert.
 - [ ] The scan carries a non-vacuity floor, so a changed index-group heading fails loudly rather
       than reducing the guard to silence.
-- [ ] No `plugins/` behaviour changes — this is entirely test-side.
+- [ ] No `plugins/` behavior changes — this is entirely test-side.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
 ## Affected files
@@ -113,14 +113,14 @@ guards already tried.
 
 ## Deviations from this spec, and why (2026-08-15)
 
-- ⚠️ **Criterion 6 ("no `plugins/` behaviour changes") is NOT met as written — two shipped
+- ⚠️ **Criterion 6 ("no `plugins/` behavior changes") is NOT met as written — two shipped
   citations were added.** `INV-155` (the six-tab set and its row order) and `INV-171` (`activate()`
   must be idempotent) bind the app the Bootcamper builds and were **stated in full** in the contract
   with no ID beside them. The spec offered "by ID **or** by an explicitly registered content
   phrase"; registering a content phrase would have encoded the wording as a second place to keep in
   sync, while adding the two IDs satisfies **INV-183** at the point the rule binds and makes the
   derived check trivially true. `INV-147` was cited in the same clause, since it is the rule that
-  makes the tab table the recap's ordering authority. No behaviour changed — these are citations.
+  makes the tab table the recap's ordering authority. No behavior changed — these are citations.
 - **The derived check runs against `build_guidance()`, not `visualization-api-reference.md` alone.**
   That helper already existed in the file and is defined as contract **+** `phase1-visualization.md`,
   which together are what an any-language implementer reads. Checking the contract alone would have
@@ -130,7 +130,7 @@ guards already tried.
   server lifetime, scale principle). Nothing turns on the count — the defect is that the set is
   written rather than derived — so it is recorded rather than corrected here.
 - **A fourth assertion was added beyond the spec: `test_no_exemption_is_stale`.** An `APPARATUS_EXEMPT`
-  entry for an invariant that has left the visualization group is a judgement carried about a rule
+  entry for an invariant that has left the visualization group is a judgment carried about a rule
   that moved, and it would silently keep excusing something nobody re-checked.
 - ⚠️ **The first attempt broke an existing guard, which caught it.** Rewording the tab-table intro to
   lead with "The tab set below is exactly six" displaced a phrase

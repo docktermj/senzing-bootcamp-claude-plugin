@@ -173,11 +173,127 @@ class TheVerbosityBranchToleratesQualifiers(unittest.TestCase):
                               "no verbosity guidance injected for %r" % prompt)
 
 
+#: Must enter the NOTE flow. Every one is an imperative to record something.
+NOTE_HITS = (
+    "make a note",
+    "take a note",
+    "note to self: the vendor file has two name columns",
+    "jot this down",
+    "jot that down for me",
+    "write this down",
+    "remind me to check the truth-set counts before I trust this",
+    "don't let me forget to ask Legal about the third source",
+    "dont let me forget this",
+    "add a to-do",
+    "put this on my list",
+    "for my notes: dba_name could be a second NAME",
+    "make a memo",
+    "capture this idea",
+    "bootcamp note",
+    "remember to check the counts",
+    "make notes",
+    "add a reminder",
+)
+
+#: ⛔ Must stay quiet. "note" and "remember" are ordinary words in a debugging turn, and
+#: Modules 5–7 are nothing but debugging turns.
+NOTE_MISSES = (
+    "do you remember what module 3 covered",
+    "remember when we loaded the truth set",
+    "i remember that the engine resolved these",
+    "note that the engine resolved 3 entities",
+    "as noted above, the flag is required",
+    "the tests are noted in the file",
+    "can you write the loader for me",
+    "i need to take a break",
+)
+
+
+class TheNoteBranchCatchesTheImperativeAndNothingElse(unittest.TestCase):
+    """The inward counterpart to the feedback flow, with the same asymmetry.
+
+    Enforces **INV-254**: the note control exists at any time, its trigger is anchored on
+    an imperative to record something rather than on the bare verb, and a message
+    satisfying both vocabularies is feedback.
+    """
+
+    def test_every_note_phrasing_enters_the_note_flow(self):
+        for prompt in NOTE_HITS:
+            with self.subTest(prompt=prompt):
+                _code, out = run_hook(prompt)
+                self.assertIn("bootcamp note workflow", out.lower(),
+                              "no note workflow injected for %r" % prompt)
+
+    def test_bare_recall_language_does_not_enter_it(self):
+        """⛔ A spurious capture here derails the turn; a missed one costs a slash command."""
+        for prompt in NOTE_MISSES:
+            with self.subTest(prompt=prompt):
+                _code, out = run_hook(prompt)
+                self.assertNotIn("bootcamp note workflow", out.lower(),
+                                 "the note flow fired on %r" % prompt)
+
+    def test_the_injection_carries_the_notes_guarantees(self):
+        _code, out = run_hook("make a note")
+        for needle in ("docs/bootcamp_notes.md", "APPEND", "verify it landed",
+                       "never merged", "never sent anywhere"):
+            with self.subTest(needle=needle):
+                self.assertIn(needle, out,
+                              "the injected note guidance dropped %r" % needle)
+
+    def test_it_does_not_ask_for_a_note_the_message_already_carries(self):
+        """INV-006 — they already said it; asking is the pointless question."""
+        _code, out = run_hook("remind me to check the counts")
+        self.assertIn("do NOT ask what they would like to note", out)
+
+    def test_a_note_is_never_routed_or_forwarded_like_feedback(self):
+        _code, out = run_hook("make a note")
+        self.assertNotIn("submit_feedback", out,
+                         "a note must never reach the upstream offer")
+        self.assertIn("no routing verdict", out.lower())
+
+
+class FeedbackWinsWhenBothVocabulariesMatch(unittest.TestCase):
+    """⛔ "make a note that the bootcamp is broken" is an attributed defect report.
+
+    Routing it to notes would drop a defect report into a private keepsake the maintainer
+    never sees. Feedback is also durable, also banner-bracketed, and also resumes the
+    pending question, so nothing is lost by preferring it.
+    """
+
+    OVERLAPPING = (
+        "make a note that the bootcamp is broken",
+        "remind me that module 3 is wrong",
+        "jot down that the plugin has a bug",
+    )
+
+    def test_an_overlapping_message_enters_the_feedback_flow(self):
+        for prompt in self.OVERLAPPING:
+            with self.subTest(prompt=prompt):
+                _code, out = run_hook(prompt)
+                self.assertIn("bootcamp feedback workflow", out.lower(),
+                              "%r did not reach the feedback flow" % prompt)
+                self.assertNotIn("bootcamp note workflow", out.lower(),
+                                 "%r reached the note flow instead" % prompt)
+
+    def test_the_precedence_is_stated_and_not_left_to_branch_order(self):
+        source = HOOK.read_text(encoding="utf-8")
+        flat = source.replace("\n#", " ").replace("\n", " ")
+        self.assertIn("PRECEDENCE IS STATED HERE, NOT LEFT TO BRANCH ORDER", flat,
+                      "the precedence decision has no reason recorded beside it, so the "
+                      "next editor reorders the branches and silently changes it")
+
+
 class TheReasoningIsRecordedAtThePattern(unittest.TestCase):
     """The regex will be edited again; the reasoning will not be rediscovered."""
 
     def setUp(self):
         self.source = HOOK.read_text(encoding="utf-8")
+
+    def test_the_note_asymmetry_is_explained_too(self):
+        flat = self.source.replace("\n#", " ").replace("\n", " ")
+        self.assertIn("THE SAME ASYMMETRY APPLIES HERE", flat,
+                      "the note vocabulary carries no record of why it is anchored on an "
+                      "imperative rather than on the bare verb")
 
     def test_the_asymmetry_is_explained(self):
         self.assertIn("THE TWO HALVES OF THIS VOCABULARY ARE NOT SYMMETRIC", self.source,

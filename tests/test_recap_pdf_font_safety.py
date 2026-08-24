@@ -282,7 +282,7 @@ class TestRealisticRecapUsesThePreferredRenderer(unittest.TestCase):
 # Dropping a character the core fonts cannot encode is correct (INV-143 forbids `?`).
 # Doing it SILENTLY is the defect. `_safe`'s own docstring already promised the generator
 # "drops, warns" — but the warn existed for the certificate name only, so a Cyrillic
-# organisation name in a discoveries document rendered as `"- "` at exit 0 with
+# organization name in a discoveries document rendered as `"- "` at exit 0 with
 # `content retained: 96%`. Retention structurally cannot catch it: it is measured over
 # parsed SOURCE characters, before `_safe` runs at render time.
 # --------------------------------------------------------------------------------------
@@ -427,7 +427,7 @@ class TheDropIsNeverSilent(unittest.TestCase):
     def test_discoveries_is_silent_on_latin1_only_content(self):
         code, _out, err, _pdf = run_generator(
             DISCOVERIES_GENERATOR,
-            discoveries_doc("The network centres on Gazprom Media Holding and affiliates."),
+            discoveries_doc("The network centers on Gazprom Media Holding and affiliates."),
             "bootcamp_data_discoveries.md",
         )
         self.assertEqual(0, code, err)
@@ -493,7 +493,7 @@ class TheWarningSurvivesAnyConsole(unittest.TestCase):
         """fpdf2 renders in two passes and may then fall back to the stdlib writer.
 
         Counting occurrences would report two or three times the real loss, so the count
-        must not move when the same content is sanitised again.
+        must not move when the same content is sanitized again.
         """
         GEN._safe(CYRILLIC_ORG)
         first = GEN.dropped_character_warning()
@@ -502,10 +502,10 @@ class TheWarningSurvivesAnyConsole(unittest.TestCase):
         self.assertEqual(first, GEN.dropped_character_warning())
 
     def test_it_names_a_locating_passage(self):
-        GEN._safe(f"The network centres on {CYRILLIC_ORG} and its affiliates.")
+        GEN._safe(f"The network centers on {CYRILLIC_ORG} and its affiliates.")
         warning = GEN.dropped_character_warning()
         self.assertIn("First affected passage", warning)
-        self.assertIn("The network centres on", warning)
+        self.assertIn("The network centers on", warning)
 
 
 if __name__ == "__main__":

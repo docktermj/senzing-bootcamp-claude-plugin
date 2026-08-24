@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and implement the following 
 
 ## Problem
 
-`ground-rules.md` tells the guide how to recognise a `reporting_guide` language gate, and names the
+`ground-rules.md` tells the guide how to recognize a `reporting_guide` language gate, and names the
 response fields that come back empty when it fires:
 
 > ⛔ **Always pass `language` to `reporting_guide` — every call, whatever the topic** (INV-192).
@@ -50,10 +50,10 @@ names to make one point that does not depend on any of them.
 
 ## Proposed change
 
-**Stop naming the content fields; name the behaviour, which is what the rule actually rests on.**
+**Stop naming the content fields; name the behavior, which is what the rule actually rests on.**
 In `ground-rules.md:108-115`, replace the parenthetical enumeration with the gate's own signal:
 
-- The gate is recognised by **`needs_input`** naming the parameter it wants — that is the field the
+- The gate is recognized by **`needs_input`** naming the parameter it wants — that is the field the
   rule turns on, it is stable, and INV-192 already defines it as "a gate, not a result".
 - State that the response's **content arrays come back empty** when it fires, without listing them.
   If a concrete example is wanted, cite exactly what was observed and scope it: on 1.32.9,
@@ -73,7 +73,7 @@ already depends on `reporting_guide`.
 ## Acceptance criteria
 
 - [ ] `ground-rules.md` no longer names `design_concepts`, and no longer enumerates
-      `reporting_guide`'s content fields as the way to recognise a gate; it names `needs_input`.
+      `reporting_guide`'s content fields as the way to recognize a gate; it names `needs_input`.
 - [ ] Any field names that remain are scoped to the topic and server version they were observed on,
       not stated as the response's general shape.
 - [ ] The ⛔ "always pass `language`, every call, whatever the topic" instruction, the
@@ -103,7 +103,7 @@ already depends on `reporting_guide`.
 - Ledger key: `reporting-guide-design-concepts-field-renamed` (verdict `contradicted`); found while
   re-checking `reporting-guide-gates-on-language`, which itself **holds**.
 - Priority: Low-Medium. Nothing a Bootcamper does breaks — the instruction is right and the gate is
-  still recognisable by `needs_input`. It is a stale server-owned field name inside a dated citation,
+  still recognizable by `needs_input`. It is a stale server-owned field name inside a dated citation,
   which is the exact shape this skill exists to find, and it went two minor versions unnoticed.
 - Upstream: not applicable — this is our stale citation, not a server defect.
 - Related: `specs/reporting-guide-topics-gate-on-language.md` (established the clause on 1.32.2),

@@ -2,7 +2,7 @@
 
 `deep-dive-audit-2026-07-30b`. Three path defects of one shape, none of which any existing
 test could see, because each is a *string in prose* that is only wrong relative to a working
-directory no test had modelled.
+directory no test had modeled.
 
 1. **A bundled script invoked by a bare project-relative path.** Module 7 said:
 
@@ -79,6 +79,87 @@ def invocation_lines():
             if any(name in line for name in BUNDLED_SCRIPTS):
                 out.append((path, i, line.strip()))
     return out
+
+
+#: Flags that belong to bundled helpers and to nothing else the guide runs. An instruction that
+#: supplies these is parameterizing a bundled tool, whether or not it names one.
+#:
+#: ⚠️ **This exists because the sweep above cannot see the worse failure.** `invocation_lines()`
+#: discovers invocations BY SCRIPT NAME, so it catches a *wrong* resolution and is blind to a
+#: *missing* one. On 2026-08-18 both steps that require screenshot capture supplied `--url`,
+#: `--tabs`, `--name` and `--query` and named no executable, deferring the identity to another
+#: file — and a guide concluded capture was impossible "because browser automation was
+#: unavailable" without ever looking for the tool the plugin ships. Twelve recap images were
+#: lost, one module's unrecoverably, and the same script then captured 6 of 6 tabs first try.
+#: The guard was built for a wrong path; the defect was no path at all.
+HELPER_ONLY_FLAGS = ("--tabs", "--single", "--out-dir")
+
+#: A line is exempt when it resolves a bundled script by any documented route, or is prose about
+#: the flags rather than an instruction to run them.
+RESOLVED_MARKERS = ("${CLAUDE_PLUGIN_ROOT}", "../../scripts/", "<helper>")
+
+
+#: Distinguishes a COMMAND from PROSE ABOUT a command. Without this the sweep fires on
+#: `module-completion.md`'s own explanation of what `--single` does, and on any sentence that
+#: mentions a flag in backticks — five false positives on first run, all of them documentation
+#: doing its job. A line is an instruction to run something when it sits in a fenced block or
+#: carries an interpreter token; prose may discuss flags freely.
+_RUNNER = re.compile(r"(?:^|\s)(?:python3?|py -3|[\w./\\-]*/(?:python3?|bin/python))\s")
+
+
+def parameterized_without_a_script():
+    """(path, lineno, line) for COMMANDS using helper-only flags with no resolved script path."""
+    out = []
+    for path in prose_files():
+        lines = path.read_text(encoding="utf-8").splitlines()
+        in_fence = False
+        for i, line in enumerate(lines, 1):
+            if line.lstrip().startswith("```"):
+                in_fence = not in_fence
+                continue
+            if not any(f in line for f in HELPER_ONLY_FLAGS):
+                continue
+            if not (in_fence or _RUNNER.search(line)):
+                continue  # prose about the flags, not an instruction to run them
+            # A fenced invocation commonly names the script on a preceding continuation line.
+            window = "\n".join(lines[max(0, i - 8):i + 3])
+            if any(m in window for m in RESOLVED_MARKERS):
+                continue
+            if any(n in window for n in BUNDLED_SCRIPTS):
+                continue
+            out.append((path, i, line.strip()))
+    return out
+
+
+class AParameterizedInvocationNamesItsScript(unittest.TestCase):
+    """INV-185's blind spot: flags supplied, executable never identified.
+
+    Negative-controlled 2026-08-21 by deleting the script name from Module 3b's invocation and
+    confirming this fails, then restoring it.
+    """
+
+    def test_the_flag_vocabulary_is_still_present_somewhere(self):
+        """Non-vacuity: if no shipped step uses these flags, the check asserts nothing."""
+        users = [
+            (p, i) for p in prose_files()
+            for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+            if any(f in line for f in HELPER_ONLY_FLAGS)
+        ]
+        self.assertTrue(
+            users,
+            "no shipped file uses %s, so this sweep is vacuous — either the flags were renamed "
+            "or the capture instructions were removed" % (HELPER_ONLY_FLAGS,))
+
+    def test_no_step_parameterizes_a_helper_without_naming_it(self):
+        found = parameterized_without_a_script()
+        self.assertEqual(
+            [], ["%s:%d  %s" % (p.relative_to(REPO_ROOT), i, line) for p, i, line in found],
+            "a step supplies bundled-helper flags without naming a resolved script. The flags "
+            "then read as 'what the procedure will need' rather than 'what this bundled tool "
+            "accepts', and a guide can conclude the capability is unavailable without ever "
+            "looking for it — which is how twelve recap images were lost on 2026-08-18, one "
+            "module's unrecoverably. Name the script with ${CLAUDE_PLUGIN_ROOT} and its "
+            "skill-relative fallback (INV-185, INV-252) at the point of use.")
 
 
 class BundledScriptsAreInvokedByAResolvedPath(unittest.TestCase):

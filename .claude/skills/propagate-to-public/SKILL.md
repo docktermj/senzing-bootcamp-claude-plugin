@@ -32,8 +32,8 @@ than being hand-run each time.
 - `.claude-plugin/marketplace.json` — required for `claude plugin marketplace add`.
 - `README.md` — user-facing (Claude Desktop install instructions).
 - `docs/` — user-facing (`docs/README.md`, Claude Code CLI install). Treated as
-  a **user-facing** directory and mirrored wholesale; do **not** put
-  maintainer-only notes here.
+  a **user-facing** directory and mirrored wholesale **except `docs/development.md`**
+  (see Excluded); do **not** put maintainer-only notes here.
 
 **Excluded** (development-only — never propagated):
 
@@ -41,6 +41,13 @@ than being hand-run each time.
   `settings.local.json`. (The plugin's own `plugins/senzing-bootcamp/skills/`
   *is* the bootcamp payload and **is** propagated — do not confuse the two.)
 - `specs/**` — spec-driven development artifacts.
+- `docs/development.md` — the development-loop index (`/feedback-to-specs`,
+  `/implement-spec`, `/dry-run`, `/propagate-to-public`, …). ⚠️ **The one exception
+  inside an otherwise user-facing directory.** Every skill it names is excluded from
+  this mirror, so publishing it hands users a list of commands their install does not
+  have. It reached the public working tree on 2026-08-16 because "`docs/` is
+  user-facing" was a convention stated here rather than a rule enforced in
+  `propagate.sh`; it is now an `rsync --exclude`.
 - `feedback/**` — the processed-feedback archive and its ledger. Carries raw bootcamper
   text (usernames, workstation details, dataset names), so it is **never** mirrored to a
   public repo. Committed in this repo for durability; excluded here for privacy.

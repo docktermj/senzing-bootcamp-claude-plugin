@@ -510,6 +510,16 @@ none of these are covered by it:
      shortfall, naming the missing tab slugs; if `--check` reported
      `SKIPPED: tab-coverage check`, no manifest was found and this check has **not** run — say so
      rather than treating it as passed (INV-163).
+
+     ⚠️ **`--check` also reports a manifest that *undercounts*** — one recording fewer captured tabs
+     than there are `<name>-*.png` files beside it — as `the manifest undercounts`. Read that as the
+     coverage check above having measured against too small a denominator, not as a missing image.
+     The usual cause is a **targeted re-capture**: re-running capture for one tab used to rewrite the
+     manifest from scratch, leaving `captured_count: 1` where six tabs had been captured, after which
+     coverage passed on a 1-of-1 denominator and would have passed just as cheerfully with five of
+     the six images lost. `write_manifest` now merges instead of replacing, so this should not recur;
+     the count against the PNGs is what notices if that merge is ever bypassed. Fix the manifest (or
+     re-run the full capture) and re-check rather than reading the coverage line as a pass.
    - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
      visualization's base name and compare against the section's image lines.
 
@@ -529,8 +539,35 @@ none of these are covered by it:
 3. **Captions that cannot be checked.** If an embedded filename carries no recognized tab slug, warn
    that its caption cannot be verified against a tab and should be confirmed by opening the image.
 
-**Normalize the Markdown (once, before rendering).** Now — after reconcile and **before** the
-Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
+**Fold the Bootcamper's notes into the recap (after reconcile, before normalize and render).**
+If `docs/bootcamp_notes.md` exists and carries at least one `### ` note, append its notes to
+`docs/bootcamp_recap.md` **after the last module section**, fenced exactly like this
+(INV-258):
+
+```markdown
+<!-- BOOTCAMP-NOTES:START -->
+## Notes, Ideas and Questions
+
+{the note entries, in capture order, exactly as written in docs/bootcamp_notes.md}
+<!-- BOOTCAMP-NOTES:END -->
+```
+
+⛔ **The fence is what makes this safe, not the heading text.** Every `## ` heading in the recap
+is parsed as a module, so a notes section recognized by its *title* would be one renamed module
+away from being mis-parsed — and a Bootcamper's private note one heading away from being printed
+on their Certificate of Completion (INV-100). The generator lifts this block out **before** module
+parsing begins, so nothing inside it can become a module.
+
+- **Append-only and idempotent (INV-085).** Re-running graduation must not duplicate the section:
+  if the fence is already present, replace its contents rather than appending a second block. It
+  never touches a module section.
+- ⛔ **With no notes, write nothing** — no fence, no heading, no "(none)" page. An empty notes
+  section on a keepsake is worse than an absent one.
+- **`docs/bootcamp_notes.md` itself survives graduation intact.** The fold copies; it never moves,
+  empties or deletes the bootcamper's notes file.
+
+**Normalize the Markdown (once, before rendering).** Now — after reconcile and the notes fold, and
+**before** the Step 1b render — make a single best-effort CommonMark pass over `docs/*.md`, including
 `docs/bootcamp_recap.md`. Scope it to top-level `docs/*.md` only: **never recurse into
 `docs/feedback/`, and never rewrite, empty, or delete the bootcamper's feedback file**
 (`docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` must survive graduation intact — INV-015).
@@ -627,6 +664,15 @@ The script reads `docs/bootcamp_recap.md` and writes `docs/bootcamp_recap.pdf`.
 - **`WARNING: … some sections are incomplete` with exit 0** means the recap was recognizable but a section is missing a subsection. The PDF was still written and is still valid — backfill per 1a and re-render if you can, but this never blocks graduation.
 - **`ERROR: refusing to render …` with a non-zero exit means NO PDF was written.** The generator refuses when the input is not a bootcamp recap (no `## {Module name}` sections, or no section carrying its `### ` subsections) or when most of the content would be dropped — because an empty-looking-but-valid PDF is worse than none. Do **not** announce a PDF. Say plainly that the recap PDF could not be generated and why, then fix the cause: confirm `docs/bootcamp_recap.md` really is the recap (not some other Markdown file) and that its sections carry the four subsections, then re-render. If it cannot be fixed, fall back to the inline render below — never leave graduation with the bootcamper believing a PDF exists when it does not.
 - **Content check (optional, non-blocking):** run the script with `--check --expect-modules "<semicolon-separated display names of the modules reconciled in Step 1a>"` — this confirms each present section carries the four required subsections, that every **End-of-Module Summary** carries its three labeled blocks (What you accomplished / Files produced / Why it matters — backfill per 1a if it reports any missing), flags any `![](…)` image target that resolves to no file (reported as `embedded image not found: …`, so a lost screenshot surfaces here rather than in the finished PDF), **and** flags any completed module missing its section entirely. Separate the names with **semicolons**, not commas, since some names contain commas (e.g. "Query, Visualize and Discover" and "Data Quality, Mapping, and Transformation" — the latter contains two). (The names are the same ones Step 1a ensured have sections, so pass them directly; whole-module presence is primarily guaranteed by that reconcile.) If it reports gaps, backfill per 1a and re-render. A gap never blocks graduation.
+
+  ⚠️ **This is no longer the first time `--check` runs, and its findings should normally be empty.**
+  `../bootcamp-onboarding/module-completion.md` Step 2c runs the same check after every module's
+  append, so a structural fault — most importantly a subsection written as a bold label rather than
+  an `###` heading, which renders identically to a human and drops the whole section from the PDF —
+  is caught at the module that wrote it. A finding **here** therefore means something Step 2c could
+  not see: a section damaged after its module closed, a module whose Step 2c check could not run, or
+  a whole-file property (image targets, tab coverage, `--expect-modules`) that only exists at
+  graduation. Treat a structural finding at this point as a signal worth reading, not routine.
 - **If the bundled script cannot be located or run:** do not stop. Generate the PDF inline instead: parse `docs/bootcamp_recap.md` and render a cover page plus one page per module (each with Information Shared, Questions & Responses, Actions Taken, End-of-Module Summary) using `fpdf2` if importable, else a minimal valid PDF. The recap Markdown at `docs/bootcamp_recap.md` is always the source of truth, so content is never lost.
 
 ⛔ **Verify the artifact, not the exit code.** A `PDF generated:` line, a zero exit, and a high
@@ -773,8 +819,12 @@ Create `production/database/.gitkeep` as an empty placeholder (never copy the
 eval database itself).
 
 **Exclude (never copy):** `config/bootcamp_progress.json`,
-`config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `data/samples/`,
-`data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+`config/bootcamp_preferences.yaml`, `docs/bootcamp_recap.md`, `docs/bootcamp_notes.md`,
+`data/samples/`, `data/raw/`, `logs/`, `backups/`, and `docs/feedback/`.
+
+⛔ **`docs/bootcamp_notes.md` is a bootcamp artifact, not production content** — exactly as
+`docs/bootcamp_recap.md` and `docs/feedback/` are. It holds the bootcamper's own ideas and
+reminders about learning the tool; it has no place in a project they hand to their team.
 
 ⛔ **`data/raw/` is excluded, so a CORD fast-pathed source's input is not carried over.** A
 fast-pathed source loads straight from `data/raw/` with no mapping (INV-040/INV-041), so its loader
@@ -942,6 +992,21 @@ or a to-do for the bootcamper.
 Character handling is unchanged from the discoveries path — the renderer reports any character it
 had to drop (INV-143/INV-159). This step must not become a route that bypasses that report: if it
 names dropped characters, repeat them in the warning rather than only in the PDF.
+
+⚠️ **One exception, and it needs no action: the generated-scenario marker's ROBOT FACE.** When
+`docs/business_problem.md` carries `> 🤖 Bootcamp-generated business case` — Module 1 Step 11
+writes it on every run that accepts the Business Case Offer, which is the common Core path — the
+emoji cannot be set in the PDF's Latin-1 core fonts and is dropped from that line. **That loss is
+expected and harmless.** The marker is a machine-readable flag for the plugin's own branches
+(Module 4 Step 2, Module 6 Phase C step 15, Module 6 Phase D step 25a), every one of which reads it from
+the **Markdown**; nothing reads it from the PDF. So do not substitute a name, do not add an ASCII
+description, and above all do not edit the marker out of the Markdown to quiet the renderer — four
+files match that exact string and changing it breaks them silently.
+
+⛔ **This exemption is the marker line and nothing else (INV-266).** The renderer suppresses only the tally
+entry whose passage *is* that line; a ROBOT FACE anywhere else in the document, and every other
+unrenderable character, still warns and still needs the warning's own guidance. If the warning
+names a dropped character and you cannot place it on the marker line, treat it as a real finding.
 
 ## Step 6: Save the revisit/resume bundle
 

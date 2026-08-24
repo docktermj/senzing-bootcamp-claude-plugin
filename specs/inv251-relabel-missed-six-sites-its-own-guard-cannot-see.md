@@ -4,7 +4,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 
 ## Problem
 
-`993df3a` registered **INV-251** (a turn MUST NOT carry two or more 👉) and relabelled the sites
+`993df3a` registered **INV-251** (a turn MUST NOT carry two or more 👉) and relabeled the sites
 that had been citing INV-005 for the count. It shipped with a guard,
 `tests/test_one_question_per_turn_is_registered.py`, that sweeps shipped Markdown for lines stating
 the count and fails any that cite INV-005/008/009.
@@ -173,4 +173,4 @@ INV-246's reasoning applied to phrasing rather than to paths.
   already registered and their conditions are untouched.
 - ⛔ **Not runtime-verified.** Whether a guide ends a turn on one question remains a live-turn
   property — INV-251's own disclosure. This work fixed *labels* and the guard's reach, nothing
-  about behaviour.
+  about behavior.

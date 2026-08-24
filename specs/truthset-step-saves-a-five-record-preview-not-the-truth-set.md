@@ -8,7 +8,7 @@ Truth Set visualization Step 1.1 says, on the primary path: "**Available (primar
 path):** save the MCP records to `src/system_verification/truthset_data.jsonl`".
 `get_sample_data` does not return the records — it returns a **five-record
 preview** and a URL for the rest. A guide following the step as written saves
-**15 of 159 records** and builds the module's "wow moment" on nine per cent of the
+**15 of 159 records** and builds the module's "wow moment" on nine percent of the
 data.
 
 Nothing catches it. The step already retrieves the true per-source counts in the

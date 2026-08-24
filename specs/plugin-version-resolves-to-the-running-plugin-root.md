@@ -55,7 +55,7 @@ when `$CLAUDE_PLUGIN_ROOT` is unset there is no specified next step and the guid
 
 "Use Unknown if unreadable" does not cover this case. The path was not *unreadable*: with
 `$CLAUDE_PLUGIN_ROOT` empty it expanded to `/.claude-plugin/plugin.json`, which is simply a
-different, absent file — and the guide treated a miss as licence to go looking rather than as
+different, absent file — and the guide treated a miss as license to go looking rather than as
 the "Unknown" branch.
 
 **The fallback pattern already exists in this plugin and was never extended to manifest

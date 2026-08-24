@@ -9,7 +9,7 @@ every field is populated and every value is uniformly formatted.
 Module 5 then scores that at 100.0. Observed live 2026-08-14 on a three-source generated
 Customer 360 scenario: 100.0 / 100.0 / 100.0, zero empty applicable fields, sanity-checked
 against sample values per step 6's own ⛔ — the scores were genuine, not a measurement
-artefact. Every source therefore reached the ≥80% branch, and **two of the three gate branches
+artifact. Every source therefore reached the ≥80% branch, and **two of the three gate branches
 were unreachable on a first-class path** (the Business Case Offer produces `synthesized` by
 design for every customer-facing category). Lost with them: the per-field completeness
 breakdown, the format-consistency diagnosis, the `issues` list below 70, and the
@@ -71,7 +71,7 @@ class TheSynthesizedBranchRequiresQualityGaps(unittest.TestCase):
         self.assertRegex(branch, r"(?i)so the quality\s+assessment has something to find")
         self.assertRegex(
             branch, r"(?i)helpfully.{0,30}produces clean data defeats the module",
-            "the intent clause is what stops a generator from optimising the gaps away",
+            "the intent clause is what stops a generator from optimizing the gaps away",
         )
 
     def test_it_says_the_two_kinds_of_complexity_are_additive(self):
@@ -117,7 +117,7 @@ class TheGeneratedSetSpansTheBands(unittest.TestCase):
             synthesized_branch(),
             r"(?i)keeps its \*\*distinct\*\* keys",
             "the existing per-campaign duplicate requirement must not be read as "
-            "licence to duplicate a RECORD_ID",
+            "license to duplicate a RECORD_ID",
         )
 
 
@@ -152,8 +152,14 @@ class ThePromiseAndTheGenerationAgree(unittest.TestCase):
             "requirement has no authority behind it",
         )
 
-    def test_step_4a_still_requires_mapping_complexity(self):
-        self.assertRegex(squash(DISCOVERY), r"(?i)mapping-complexity-rich")
+    def test_step_4a_still_requires_cross_source_mapping_divergence(self):
+        """⚠️ Was "mapping-complexity-rich"; reworded 2026-08-17, same requirement.
+
+        The old phrasing said "needs at least one transformation", which was unsatisfiable
+        by its own examples — a joined name is a DIRECT mapping to NAME_FULL. The
+        requirement that generated data not be clean and uniform is unchanged.
+        """
+        self.assertRegex(squash(DISCOVERY), r"(?i)cross-source\*{0,2} mapping divergence")
 
     def test_step_4a_cites_the_invariant(self):
         self.assertIn("INV-239", squash(DISCOVERY))

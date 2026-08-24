@@ -14,7 +14,7 @@ test knew the rule existed.
 That is this plugin's recurring defect shape rather than a one-off: a lesson learned in one
 module and never carried across a skill boundary. The 2026-08-12 dry run found **three**
 instances in a single walk (this one, `step14-value-proposition-query-is-bm25-hostile-with-no-
-fallback`, and `preparation-summarises-the-model-nudge-trigger-as-the-forbidden-comparison`).
+fallback`, and `preparation-summarizes-the-model-nudge-trigger-as-the-forbidden-comparison`).
 A guard is what converts one module's reasoning into a property of the whole plugin.
 
 Note what this does NOT forbid: `search_docs` itself, which is the right tool wherever content
@@ -46,21 +46,28 @@ PROBE_VOCAB = re.compile(
 #: "Do **not** probe with `search_docs`" and Module 3's "do not restore a `search_docs` probe".
 #: So a negated mention is exempt, and the negation must sit CLOSE to the tool (see
 #: PROHIBITION_REACH): searched across the whole 260-char window, any unrelated "do not"
-#: elsewhere in the paragraph would exempt a real offence.
+#: elsewhere in the paragraph would exempt a real offense.
 PROHIBITION = re.compile(
     r"(?i)(?:do\s+[*_`]{0,2}not[*_`]{0,2}|must\s+[*_`]{0,2}not[*_`]{0,2}|never|avoid)\s+"
     r"(?:probe|use|restore|be|specify)"
 )
 
 WINDOW = 260
-PROHIBITION_REACH = 120
+
+# ⚠️ Widened from 120 on 2026-08-21, because at 120 this guard FAILED when the rule it protects
+# gained the citation INV-183 requires. Adding "(INV-204)" -- ten characters -- pushed the
+# `search_docs` mention in the rule's own explanation past the reach, so the prohibition stopped
+# being seen and correct, newly-compliant prose was reported as an offense. A guard that
+# penalizes satisfying another invariant is measuring distance, not correctness. 200 leaves room
+# for a citation and a short clause without reaching into a neighboring paragraph.
+PROHIBITION_REACH = 200
 
 
 def shipped_markdown():
     return sorted(PLUGIN.rglob("*.md"))
 
 
-def offences():
+def offenses():
     found = []
     tools = re.compile(r"(?i)(%s)" % "|".join(CONTENT_TOOLS))
     for path in shipped_markdown():
@@ -84,7 +91,7 @@ class NoProbeIsADocumentSearch(unittest.TestCase):
         self.assertRegex(corpus, PROBE_VOCAB, "no probe vocabulary found — scan is vacuous")
 
     def test_no_liveness_probe_uses_a_content_returning_tool(self):
-        found = offences()
+        found = offenses()
         self.assertEqual(
             [],
             found,

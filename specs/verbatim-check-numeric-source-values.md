@@ -72,7 +72,7 @@ JSON type matches the source's.
    (INV-080).
 4. **Keep the gate's value intact.** The check exists to stop invented values reaching Senzing, and it
    is right about strings. The exemption is narrow — a value whose source form is non-string — and must
-   be stated as such, not as licence to skip the gate.
+   be stated as such, not as license to skip the gate.
 
 ## Acceptance criteria
 
@@ -195,7 +195,7 @@ admitting them would let a case transform slip through rather than catch one.
 **Why the guidance was retired rather than version-conditioned.** The plugin pins no MCP *server*
 version — every `version` parameter it passes is the Senzing SDK version (`'current'`), and the server
 is a hosted service. A bootcamper therefore always reaches whatever is deployed, so text describing
-1.32.1's behaviour cannot help anyone and actively misleads: it told them to record an exemption for
+1.32.1's behavior cannot help anyone and actively misleads: it told them to record an exemption for
 a gate that is now green.
 
 What changed, at the maintainer's explicit direction (2026-07-29):
@@ -222,8 +222,8 @@ the perishable part. The sibling case that *does* still fail is
 
 ## Invariants introduced
 
-- `INV-181` — When the MCP server changes behaviour the plugin documents, every place the plugin
-  states the superseded behaviour MUST be corrected to the current behaviour — including test
+- `INV-181` — When the MCP server changes behavior the plugin documents, every place the plugin
+  states the superseded behavior MUST be corrected to the current behavior — including test
   assertions and docstrings that pin it — and MUST NOT be left version-conditioned to an older
   server, because the plugin pins no MCP **server** version. A superseded claim MUST be recorded by
   appending to its originating spec (as the section above does), never by editing that spec's text,

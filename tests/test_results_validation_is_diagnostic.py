@@ -20,7 +20,7 @@ Two causes compound, and the fix has to address both:
 * **Nothing could distinguish a wrong prediction from an engine fault**, so every mismatch read as
   the latter.
 
-⛔ This is also the one place the module asks the guide to assert engine behaviour unaided — the
+⛔ This is also the one place the module asks the guide to assert engine behavior unaided — the
 class of claim INV-080 exists to prevent. The remedy is not to fetch the prediction from somewhere
 (there is nowhere) but to make the construction unambiguous and then let the engine explain itself
 when the outcome differs.
@@ -100,9 +100,9 @@ class TheMergeClusterIsUnambiguousByConstruction(unittest.TestCase):
             r"only trivial variation\)",
             "the phrase that produced two opposite verdicts is still doing all the work")
 
-    def test_it_says_construction_not_judgement(self):
+    def test_it_says_construction_not_judgment(self):
         self.assertRegex(
-            self.step, r"(?i)Make this unambiguous by construction, not by judgement",
+            self.step, r"(?i)Make this unambiguous by construction, not by judgment",
             "nothing states the principle the constraints below implement")
 
     def test_the_sameness_constraints_are_explicit(self):
@@ -137,7 +137,7 @@ class TheMergeClusterIsUnambiguousByConstruction(unittest.TestCase):
             "the ban is stated without its mechanism, so it reads as arbitrary")
         self.assertRegex(
             self.step, r"(?i)defensible resolution decision, not a fault",
-            "nothing says the engine declining to merge is correct behaviour")
+            "nothing says the engine declining to merge is correct behavior")
 
     def test_the_worked_counter_example_is_present(self):
         """The spec's fourth proposal: a real case makes 'trivial' concrete."""
@@ -152,11 +152,11 @@ class TheMergeClusterIsUnambiguousByConstruction(unittest.TestCase):
             "the counter-example does not state its conclusion")
 
     def test_the_observation_is_marked_as_an_observation(self):
-        """INV-080/INV-149: engine behaviour seen on one install is not an MCP claim."""
+        """INV-080/INV-149: engine behavior seen on one install is not an MCP claim."""
         self.assertRegex(
             self.step,
-            r"(?i)observation of this\s*install's behaviour, not an MCP claim",
-            "a measured engine behaviour is stated without being marked observation-only")
+            r"(?i)observation of this\s*install's behavior, not an MCP claim",
+            "a measured engine behavior is stated without being marked observation-only")
 
 
 class AMismatchIsDiagnosed(unittest.TestCase):

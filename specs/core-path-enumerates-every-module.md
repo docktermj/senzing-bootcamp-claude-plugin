@@ -34,7 +34,7 @@ YAML example (`SKILL.md:235-237`) shows `entity_resolution_concepts` annotated
 the opposite direction on the Core path.
 
 So the agent must derive an eleven-token ordered list by translating display names into state
-tokens with no canonical list to copy. That derivation dropped the one module labelled
+tokens with no canonical list to copy. That derivation dropped the one module labeled
 "optional" — exactly the failure the reasoning invites. The skill's documented *behavior* is
 correct; the skill gives the agent no literal artifact to reproduce it from.
 

@@ -20,6 +20,7 @@ import argparse
 import collections
 import pathlib
 import re
+import subprocess
 import sys
 
 DEFAULT_REPO = pathlib.Path(__file__).resolve().parents[3]
@@ -29,11 +30,64 @@ INV_ID = re.compile(r"INV-\d{3}")
 # The repo's own convention for a deliberate hard rule: a ⛔ lead-in, or a bolded
 # MUST/NEVER/ALWAYS. Bare prose "must" is excluded — it is ordinary instruction, and
 # including it took the candidate list from 16 to 202, which no one reads.
-HARD_RULE = re.compile(
+#
+# ⛔ ANCHORED is the historical pattern and is kept EXACTLY as it was, because every figure
+# in the ledger's audit entries was measured with it. Changing it in place would make every
+# recorded count look like a regression. Mid-line rules are a second population, reported
+# separately — see MID_LINE_RULE and `classify`.
+ANCHORED_RULE = re.compile(
     r"^\s*>?\s*⛔"
     r"|\*\*[^*]*\b(?:MUST|NEVER|ALWAYS)\b[^*]*\*\*"
     r"|^\s*-?\s*\*\*.*?\*\*.*\b(?:MUST|NEVER)\b"
 )
+
+# Kept as an alias: `HARD_RULE` is the name other tooling and tests reach for, and it means
+# "is this line a hard rule at all" — which is now `classify(line) is not None`.
+HARD_RULE = ANCHORED_RULE
+
+CODE_SPAN = re.compile(r"`[^`]*`")
+
+# A ⛔ that is not first on its line. Measured 2026-08-21 across shipped markdown: 191 such
+# lines, against 347 the anchored pattern matched — and NONE of the 191 was caught by the
+# bolded-MUST alternatives either, because a rule like `⛔ **Strip everything identifying.**`
+# has no MUST inside its bold span. Three shapes recur, and two are ordinary house style: a
+# numbered-list item (`2. ⛔ **...**` — the anchor admits `-` but not `1.`), a rule appended to
+# a list item's prose, and a rule continuing a sentence.
+#
+# The discriminator is what FOLLOWS the stop sign, not where it sits: a rule leads into a
+# bolded span, a capitalized word, or an imperative. Dropping the anchor without this would
+# add real rules and real noise together, and a count nobody trusts is the defect `rules`
+# already had.
+IMPERATIVE = (r"never|always|do not|don't|use|keep|prefer|treat|stop|ask|read|write|check"
+              r"|state|name|strip|report|verify|cite|record|leave|derive|scope")
+MID_LINE_RULE = re.compile(r"⛔\s*(?:\*\*|[A-Z]|(?:%s)\b)" % IMPERATIVE, re.IGNORECASE)
+
+# The stop sign used as a NOUN is prose about the convention, not a rule: "a ⛔ gate", "the old
+# ⛔", "Steps marked `⛔`". 32 such lines, correctly excluded.
+NOUN_USE = re.compile(
+    r"(?:\b(?:a|an|the|its|any|each|every|marked|old|same)\s+(?:\w+\s+)?)⛔"
+    r"|⛔\s*(?:gates?|convention|marker|lead-in|sign|glyphs?)\b",
+    re.IGNORECASE)
+
+
+def classify(line):
+    """"anchored", "mid-line", or None — the single definition every view uses.
+
+    ⛔ No view keeps its own copy of this. Three views inheriting three copies of a pattern is
+    how one of them silently stops meaning the same thing as the others.
+    """
+    if ANCHORED_RULE.search(line):
+        return "anchored"
+    if "⛔" not in line:
+        return None
+    # A ⛔ that survives only inside a code span is discussion of the glyph itself (21 lines),
+    # and one at end-of-line has nothing after it to be the rule.
+    bare = CODE_SPAN.sub("", line)
+    if "⛔" not in bare or bare.rstrip().endswith("⛔"):
+        return None
+    if NOUN_USE.search(bare):
+        return None
+    return "mid-line" if MID_LINE_RULE.search(bare) else None
 
 
 def paths(args):
@@ -81,28 +135,216 @@ def cmd_rules(args):
     """
     repo, plugin, _ = paths(args)
     print("== hard rules whose section cites no invariant\n")
-    total = hits = 0
+    counts = collections.Counter()
+    hits = 0
     by_file = collections.OrderedDict()
     for path in shipped_markdown(plugin):
         lines = path.read_text(encoding="utf-8").splitlines()
         enclosing = sections(lines)
         for i, line in enumerate(lines):
-            if not HARD_RULE.search(line):
+            kind = classify(line)
+            if kind is None:
                 continue
-            total += 1
+            counts[kind] += 1
             start, end = enclosing(i)
             if INV_ID.search("\n".join(lines[start:end])):
                 continue
             hits += 1
-            by_file.setdefault(rel(path, repo), []).append((i + 1, line.strip()))
+            by_file.setdefault(rel(path, repo), []).append((i + 1, kind, line.strip()))
     for name, rows in by_file.items():
         print("   %s" % name)
-        for lineno, text in rows:
-            print("     :%-5d %s" % (lineno, text[:110]))
-    print("\n   %d hard-rule lines, %d in a section citing no invariant, across %d file(s)"
-          % (total, hits, len(by_file)))
+        for lineno, kind, text in rows:
+            print("     :%-5d %-9s %s" % (lineno, kind, text[:100]))
+    anchored, midline = counts["anchored"], counts["mid-line"]
+    print("\n   %d hard-rule lines (%d line-anchored + %d mid-line), %d in a section citing no "
+          "invariant, across %d file(s)"
+          % (anchored + midline, anchored, midline, hits, len(by_file)))
+    print("   ^ figures in ledger entries before 2026-08-21 counted the LINE-ANCHORED number")
+    print("     only; compare against %d, not the total. Mid-line rules -- a stop sign that is"
+          % anchored)
+    print("     not first on its line -- were invisible to every view until then.")
     print("   ^ each is EITHER an unregistered rule (propose an invariant) OR a missing")
     print("     citation to one that exists. Both are findings; they need different fixes.")
+    print()
+    print("   \u26d4 This is NOT a count of unregistered rules, and MUST NOT be read as one.")
+    print("     The unit is the SECTION. A brand-new unregistered rule does not appear here")
+    print("     if it lands anywhere near an unrelated INV-nnn -- and it reads clean more")
+    print("     reliably as citations get denser. Measured 2026-08-21: a run added 26 hard-rule")
+    print("     lines, this count held at 1, and three of those rules were on subjects")
+    print("     INVARIANTS.md covers nowhere. Use `per-rule` for the worklist and")
+    print("     `since --ref <git-ref>` for what a single run actually added.")
+    return 0
+
+
+def rule_rows(lines):
+    """Yield (index, line) for every hard-rule line, in order."""
+    for i, line in enumerate(lines):
+        if classify(line) is not None:
+            yield i, line
+
+
+def own_citations(lines, i):
+    """Invariant IDs cited by the rule ITSELF or the sentence immediately adjacent.
+
+    Deliberately narrower than `cmd_rules`' enclosing section, because the two answer
+    different questions. The section scope asks "is this subject covered anywhere near
+    here"; this asks "can a reader at this line name the rule that governs it", which is
+    what INV-183 requires. The window is the rule's own line plus one non-blank line
+    either side -- a continuation of the same bolded rule, or the sentence that explains
+    it -- and no further: widening it back toward the section reintroduces the blind spot.
+    """
+    window = [lines[i]]
+    for step in (-1, 1):
+        j = i + step
+        while 0 <= j < len(lines) and not lines[j].strip():
+            j += step
+        if 0 <= j < len(lines):
+            window.append(lines[j])
+    return sorted(set(INV_ID.findall("\n".join(window))))
+
+
+def cmd_per_rule(args):
+    """Every hard rule with the invariants cited AT it -- a worklist, not a verdict.
+
+    \u26d4 This does NOT decide whether a rule is registered. No regex can match a rule's
+    subject against 260 invariants' prose, and one that tried would produce a confident
+    wrong answer -- worse than the current silence, because it would be believed. The
+    output is a list to read: the rule, what it cites at the point of use, and where it is.
+
+    The section-scoped `rules` count stays, and its history stays comparable across runs.
+    This is the second question, which needs the finer unit: on 2026-08-21 the section
+    count held at its baseline of 1 while a run shipped three rules on subjects
+    INVARIANTS.md covers nowhere, because each landed beside an unrelated citation.
+    """
+    repo, plugin, _ = paths(args)
+    only = getattr(args, "uncited", False)
+    print("== every hard rule, with the invariants cited AT it (worklist, not a verdict)\n")
+    total = bare = 0
+    for path in shipped_markdown(plugin):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        rows = []
+        for i, line in enumerate(lines):
+            if classify(line) is None:
+                continue
+            total += 1
+            own = own_citations(lines, i)
+            if not own:
+                bare += 1
+            elif only:
+                continue
+            rows.append((i + 1, own, line.strip()))
+        if rows:
+            print("   %s" % rel(path, repo))
+            for lineno, own, text in rows:
+                print("     :%-5d %-24s %s"
+                      % (lineno, ",".join(own) if own else "(no citation at the rule)",
+                         text[:88]))
+    print("\n   %d hard-rule lines, %d citing no invariant at the rule itself" % (total, bare))
+    print("   ^ a worklist to READ. For each, search INVARIANTS.md for the rule's SUBJECT:")
+    print("     registered but uncited -> add the citation (INV-183); not registered ->")
+    print("     draft an invariant and get sign-off. Neither is decidable mechanically.")
+    print()
+    print("   \u26a0 Residual limitation: a hard rule written with NO stop sign and no bolded")
+    print("     MUST/NEVER/ALWAYS is invisible to all three views. Bare prose \"must\" is excluded")
+    print("     deliberately -- including it took the candidate list from 16 to 202 -- so this")
+    print("     is a floor on what the reverse contract can see mechanically, not a ceiling.")
+    return 0
+
+
+def last_audit_ref(repo):
+    """The newest audit entry with a resolvable commit, or None.
+
+    Walks audit entries newest-first and takes the first whose `Commit:` field names a commit this
+    repo has, reporting which entry it used. \u26d4 It does NOT stop at the newest entry: an audit
+    writes its own ledger entry with `Commit: uncommitted` before committing, so the newest entry
+    has no hash during the run that needs this most -- and failing there would make the flag
+    unusable in exactly the situation it was added for. Skipping to the previous audit is still
+    reading a recorded hash, not guessing a range.
+
+    Fails loudly when NO entry has a resolvable commit. An unresolvable ref reported as "0 rules
+    added" is indistinguishable from a clean range (INV-110/INV-115), and the point of this view is
+    to be believed about what a run added.
+    """
+    ledger = repo / "specs" / "IMPLEMENTED.md"
+    if not ledger.is_file():
+        sys.stderr.write("no specs/IMPLEMENTED.md under %s — cannot resolve the last audit\n" % repo)
+        return None
+    text = ledger.read_text(encoding="utf-8")
+    entries = re.findall(r"(?m)^## (production-readiness-audit\S*)\n(.*?)(?=\n## |\Z)", text, re.S)
+    if not entries:
+        sys.stderr.write("no audit entry found in the ledger\n")
+        return None
+    skipped = []
+    for name, body in entries:
+        c = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*`?([0-9a-f]{7,40})`?\s*$", body)
+        if not c:
+            raw = re.search(r"(?m)^\s*-\s+\*\*Commit:\*\*\s*(.+)$", body)
+            skipped.append("%s (%s)" % (name, raw.group(1).strip() if raw else "no Commit: field"))
+            continue
+        ref = c.group(1)
+        ok = subprocess.run(["git", "rev-parse", "--verify", "%s^{commit}" % ref],
+                            cwd=str(repo), capture_output=True, text=True)
+        if ok.returncode != 0:
+            skipped.append("%s (%s — not a commit here)" % (name, ref))
+            continue
+        print("   (ref %s from ledger entry %s)" % (ref, name))
+        for s in skipped:
+            print("   (skipped %s)" % s)
+        return ref
+    sys.stderr.write("no audit entry has a resolvable commit; skipped: %s\n" % "; ".join(skipped))
+    return None
+
+
+def cmd_since(args):
+    """Hard-rule lines a git ref introduced -- the unit an unattended run needs.
+
+    A corpus-wide count answers "how many rules exist", and what a run needs to know is
+    "which rules did I just add". Those differ by exactly the amount that makes the
+    section-scoped count useless for the job `implement-spec` Step 5 gives it: on
+    2026-08-21 the count did not move at all while 26 hard-rule lines were added.
+    """
+    repo, plugin, _ = paths(args)
+    ref = args.ref
+    if getattr(args, "since_last_audit", False):
+        ref = last_audit_ref(repo)
+        if ref is None:
+            return 2
+    if not ref:
+        sys.stderr.write("since needs --ref <git-ref> or --since-last-audit\n")
+        return 2
+    print("== hard-rule lines added to shipped markdown since %s\n" % ref)
+    proc = subprocess.run(
+        ["git", "diff", "--unified=0", "--no-color", ref, "--", "plugins/senzing-bootcamp"],
+        cwd=str(repo), capture_output=True, text=True)
+    if proc.returncode != 0:
+        sys.stderr.write("git diff against %r failed: %s\n" % (ref, proc.stderr.strip()))
+        return 2
+    current = None
+    added = collections.OrderedDict()
+    count = 0
+    for raw in proc.stdout.splitlines():
+        if raw.startswith("+++ b/"):
+            current = raw[6:]
+            continue
+        if raw.startswith("+++") or raw.startswith("---") or raw.startswith("+++ /dev/null"):
+            continue
+        if not raw.startswith("+") or raw.startswith("+++"):
+            continue
+        body = raw[1:]
+        if current and current.endswith(".md") and classify(body) is not None:
+            added.setdefault(current, []).append(body.strip())
+            count += 1
+    for name, rows in added.items():
+        print("   %s" % name)
+        for text in rows:
+            print("     + %s" % text[:110])
+    print("\n   %d hard-rule line(s) added since %s, across %d file(s)"
+          % (count, ref, len(added)))
+    print("   ^ read every one. This is the set a run is answerable for; the corpus-wide")
+    print("     `rules` count cannot see them (it did not move for the 26 added 2026-08-21).")
+    print("   \u26a0 Line-level: a rule MOVED between files shows as added here. That is the")
+    print("     right default for review -- a relocated rule still needs its citation to")
+    print("     travel with it -- but it is not the same as a NEW guarantee.")
     return 0
 
 
@@ -238,6 +480,16 @@ def main(argv=None):
 
     sub.add_parser("rules", help="hard rules no invariant covers (reverse direction)")
 
+    per = sub.add_parser("per-rule",
+                         help="every hard rule + the invariants cited AT it (worklist)")
+    per.add_argument("--uncited", action="store_true",
+                     help="show only rules citing no invariant at the rule itself")
+
+    since = sub.add_parser("since", help="hard-rule lines added since a git ref")
+    since.add_argument("--ref", default=None, help="git ref to diff against")
+    since.add_argument("--since-last-audit", action="store_true",
+                       help="resolve the ref from the newest audit entry's Commit: field")
+
     dup = sub.add_parser("duplication", help="passages repeated across shipped files")
     dup.add_argument("--words", type=int, default=14, help="shingle length (default 14)")
     dup.add_argument("--top", type=int, default=12, help="file pairs to show (default 12)")
@@ -262,15 +514,27 @@ def main(argv=None):
         return 2
 
     if args.cmd == "all":
-        for fn in (cmd_rules, cmd_enumerations, cmd_size):
+        # ⛔ Every subcommand with no required argument runs here. `rules` and `per-rule` are
+        # adjacent on purpose: the two counts differ, and the difference is the finding. An
+        # earlier `all` ran `rules` alone while Step 1.3 called it "every lead generator", so a
+        # run that followed Step 1 got only the view documented as unable to see the class.
+        args.uncited = True
+        for fn in (cmd_rules, cmd_per_rule, cmd_enumerations, cmd_size):
             fn(args)
             print()
         args.words, args.top = 14, 12
         cmd_duplication(args)
+        print()
+        print("== not run by `all`: since")
+        print("   `since` needs a range, and guessing one would report the wrong answer silently.")
+        print("   Run it separately — the ref is computable from the ledger:")
+        print("     conformance.py since --since-last-audit")
         return 0
 
     return {
         "rules": cmd_rules,
+        "per-rule": cmd_per_rule,
+        "since": cmd_since,
         "duplication": cmd_duplication,
         "enumerations": cmd_enumerations,
         "size": cmd_size,

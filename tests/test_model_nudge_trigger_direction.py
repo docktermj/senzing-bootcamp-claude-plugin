@@ -6,12 +6,12 @@ the *previous stage's recommendation* would find "unchanged" for someone demonst
 stronger model and never offer them the switch — "silently defeating the purpose of the invariant
 this superseded" (INV-138, superseding INV-137's trigger).
 
-`bootcamp-preparation/SKILL.md` Step 3a summarised that as "when the recommendation changes …
+`bootcamp-preparation/SKILL.md` Step 3a summarized that as "when the recommendation changes …
 when it is unchanged", which is the stage-to-stage comparison the ⛔ forbids by name.
 
 This was not hypothetical. The stage table recommends Sonnet 5 at medium effort for four
 consecutive stages — Onboarding, Bootcamp preparation, Entity Resolution Concepts and Discover
-the Business Problem — so on a live walk (2026-08-12) the two files produced different behaviour
+the Business Problem — so on a live walk (2026-08-12) the two files produced different behavior
 at the same moment: reading `ground-rules.md`, a bootcamper on Opus 5 was asked to switch;
 reading the summary, the recommendation was "unchanged" and no question was asked. For the first
 four stages of every Core run the summary suppressed the question entirely.
@@ -56,7 +56,7 @@ def shipped_markdown():
     return sorted(PLUGIN.rglob("*.md"))
 
 
-def offences():
+def offenses():
     found = []
     for path in shipped_markdown():
         flat = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
@@ -79,7 +79,7 @@ class TheTriggerIsSessionRelativeEverywhere(unittest.TestCase):
         self.assertRegex(corpus, NUDGE_VOCAB, "no nudge vocabulary found — scan is vacuous")
 
     def test_no_file_describes_the_trigger_as_a_stage_to_stage_change(self):
-        found = offences()
+        found = offenses()
         self.assertEqual(
             [],
             found,

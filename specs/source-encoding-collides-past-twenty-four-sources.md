@@ -24,7 +24,7 @@ for the legend swatch at `:999`.
 So the rendered encoding is `fill` × `{no stroke, #18160F, #FAF8F3, #FFFFFF}` —
 6 fills × 4 states = **24 distinct visual encodings**. `cycle` itself never reaches
 the canvas as a distinguishable property; it only decides *whether* a stroke is drawn
-and *which* of three colours it takes. Measured directly against the shipped module:
+and *which* of three colors it takes. Measured directly against the shipped module:
 
 | sources | dict encodings | distinct as rendered |
 |---|---|---|

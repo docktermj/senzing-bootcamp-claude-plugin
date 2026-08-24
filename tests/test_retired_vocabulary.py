@@ -1,9 +1,9 @@
 """Retired vocabulary may appear only on a line that marks it as retired.
 
 Three full audits have now found the same defect class, and it is the largest one by
-count: an invariant supersedes another, the new behaviour is implemented, and prose
+count: an invariant supersedes another, the new behavior is implemented, and prose
 somewhere else keeps describing the retired model. Nothing catches it, because every
-test asserts the *new* behaviour and the stale sentence is grammatical, plausible, and
+test asserts the *new* behavior and the stale sentence is grammatical, plausible, and
 sitting in a file nobody edited.
 
 The worst instance found so far shipped for eight days through two audits.

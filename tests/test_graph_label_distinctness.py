@@ -14,7 +14,7 @@ The maintainer settled the scope question on 2026-07-29: the general clause bind
 
 Two halves are tested, because either alone leaves the defect reachable:
 
-1. **The property**, against the transcribed labelling logic. The naive head-only cut is
+1. **The property**, against the transcribed labeling logic. The naive head-only cut is
    asserted to *fail* it, so the regression cannot return looking reasonable.
 2. **The contract**, because a server generated in another language (INV-090/INV-124) is
    built from ``visualization-api-reference.md`` and never reads the Python. A rule living

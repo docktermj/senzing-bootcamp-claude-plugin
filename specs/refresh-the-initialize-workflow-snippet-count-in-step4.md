@@ -119,7 +119,7 @@ spec reports. Three things went further than it asked.
 1. **Criterion 6 was satisfied by checking Java, not by scoping the claim to Python — and Java
    changed the reasoning.** `generate_scaffold(language='java', workflow='initialize')` on the same
    server returns **5** snippets under `java/snippets/initialization/` and
-   `java/snippets/configuration/`, again with no version printer. So the conclusion generalises while
+   `java/snippets/configuration/`, again with no version printer. So the conclusion generalizes while
    the inventory varies **per language in both size and path**, not merely over time. That is a
    stronger argument against ever stating a count than this spec's (which reasons only from the
    widening), and the shipped ⛔ now says so explicitly.

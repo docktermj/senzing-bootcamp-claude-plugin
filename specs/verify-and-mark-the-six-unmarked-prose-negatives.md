@@ -25,7 +25,7 @@ each turned out to be wrong. Nothing in the offline suite (INV-108) can notice.
 ⚠️ **One is a likely false positive and must be triaged, not marked.**
 `module-02-sdk-setup/SKILL.md:1211`'s "the datastore has no default configuration" is a statement
 about the Bootcamper's *datastore*, not about a tool's content — the report's own header says a hit
-needs judgement. Its correct outcome is a recorded verdict of *not a tool-content claim*, and if the
+needs judgment. Its correct outcome is a recorded verdict of *not a tool-content claim*, and if the
 vocabulary can be tightened to exclude it without losing a true positive, that is the better fix.
 
 ## Root cause
@@ -146,8 +146,8 @@ negative sometimes inverts. Three deviations, none affecting that result.
    bearing for two **true** positives ("declared schema has no `inline` parameter", "has no such
    parameter"), so tightening would lose them, and a verdict recorded only in a ledger entry leaves
    the report flagging the site forever — which would keep `unmarked` above zero and make the eventual
-   gate unbuildable. So `MCP-NEGATIVE-SCAN: not-a-tool-claim` was added, honoured alongside
-   `quoted-history`, and declared at the site with its reasoning. It converts a judgement into a
+   gate unbuildable. So `MCP-NEGATIVE-SCAN: not-a-tool-claim` was added, honored alongside
+   `quoted-history`, and declared at the site with its reasoning. It converts a judgment into a
    greppable, reviewable decision, which is exactly why `quoted-history` exists.
 
    ⚠️ **Implementing it exposed a real inconsistency in the report:** the escapes were checked inside

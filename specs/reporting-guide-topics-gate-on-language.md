@@ -63,7 +63,7 @@ a call can satisfy INV-136 completely and still return nothing usable.
    this right for `topic='quality'`. Keep `version='current'` where it is already passed.
 2. **Make the two elided prose references name the parameter** rather than `...`, so a
    literal copy produces a working call.
-3. **Record the behaviour where the plugin routes `reporting_guide` calls** — one line in
+3. **Record the behavior where the plugin routes `reporting_guide` calls** — one line in
    `bootcamp-onboarding/ground-rules.md`'s tool-routing entry noting that several topics
    withhold content until `language` is supplied, and that a `needs_input` response is a
    gate rather than an answer. This is the durable half: the six call sites are today's

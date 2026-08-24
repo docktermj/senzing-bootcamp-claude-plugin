@@ -85,7 +85,7 @@ required — this spec is the guard, not the fix:
    (`_normalize_heading` in the recap generator, `_normalize` in the discoveries generator), so a
    key edited into a form that no longer matches fails loudly instead of silently disabling the
    fix.
-4. **Assert the layout, not the millimetres.** Test that the value starts on a line after the
+4. **Assert the layout, not the millimeters.** Test that the value starts on a line after the
    label and is indented relative to it; do not hardcode `12` or `_ITEM_GAP_MM * 2`, so a
    deliberate design tweak stays possible while an accidental collapse back to inline fails.
 
@@ -101,7 +101,7 @@ required — this spec is the guard, not the fix:
 - [ ] A test asserts every `_NEW_LINE_LABELS` key in each generator matches its intended label
       text through that generator's own normalizer, so a key edited into a non-matching form
       fails.
-- [ ] The tests assert relative layout (later line, greater indent), not specific millimetre
+- [ ] The tests assert relative layout (later line, greater indent), not specific millimeter
       constants.
 - [ ] The full existing suites still pass, including
       `test_consecutive_paragraphs_have_a_blank_line_between_them` and
@@ -161,9 +161,9 @@ required — this spec is the guard, not the fix:
   names this as regression route #2 but no criterion covered it, and it is invisible to a
   rendered assertion: with the guard removed the value still starts below its label, so
   every layout test above still passes while the hanging indent returns. Asserted on source
-  rather than position because the resulting shift is a few millimetres, which would make a
+  rather than position because the resulting shift is a few millimeters, which would make a
   rendered assertion brittle — exactly what the spec's "assert the layout, not the
-  millimetres" criterion warns against.
+  millimeters" criterion warns against.
 - **Each guard was mutation-tested rather than assumed.** Three mutations were applied to
   the working tree and reverted: emptying the recap allowlist (caught by the layout test and
   the key test), rewriting a discoveries key to its visible, non-normalized form

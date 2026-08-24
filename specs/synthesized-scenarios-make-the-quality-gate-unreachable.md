@@ -33,7 +33,7 @@ run, 2026-08-14, on a three-source generated Customer 360 scenario:
 | MERIDIAN_REWARDS (10) | 100.0% | 100.0% | 0.0% | **100.0 ✅** |
 
 Zero empties in any applicable field, confirmed by printing sample values per the step's own
-100%-sanity-check ⛔ — the scores are real, not a measurement artefact.
+100%-sanity-check ⛔ — the scores are real, not a measurement artifact.
 
 **The consequence: both gating branches of step 7 are dead on this path.** The gate has three
 branches — ≥80% (statement, no question), 70–79% (👉, two options), <70% (👉, two options) — and a

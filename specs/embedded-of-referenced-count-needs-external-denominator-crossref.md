@@ -20,7 +20,7 @@ completeness evidence, and its worked example **is** that metric:
 
 So one invariant mandates a figure the other says must not be cited as proof of
 completeness, and **neither mentions the other** — verified: `INV-193` does not appear in
-INV-162's text and `INV-162` does not appear in INV-193's. INV-193 names its neighbours
+INV-162's text and `INV-162` does not appear in INV-193's. INV-193 names its neighbors
 carefully (*"Distinct from INV-110 … Complements INV-110 and INV-163"*) and omits the one
 invariant whose requirement it directly constrains.
 
@@ -40,7 +40,7 @@ the constraint lives in code comments that a non-Python implementation never rea
 ## Root cause
 
 `embedded-image-count-needs-an-external-denominator` (implemented 2026-07-31) fixed the
-defect in the generator and generalised the lesson into INV-193, but did not sweep the
+defect in the generator and generalized the lesson into INV-193, but did not sweep the
 existing invariants for the requirement it had just qualified. INV-162's text was left as the
 unqualified mandate it had been since 2026-07-28.
 
@@ -59,7 +59,7 @@ invariant **named** the older one. Here it did not, so nothing links them.
 2. **Annotate INV-193** with the reciprocal reference — that it constrains INV-162's count —
    so its "Complements" list is complete and a reader arriving from either direction finds
    the other.
-3. **State the division of labour once, in words a non-Python implementer can act on**:
+3. **State the division of labor once, in words a non-Python implementer can act on**:
    `embedded N of M` answers *"did anything referenced fail to embed?"*; the external
    manifest answers *"were all captured views referenced in the first place?"*. INV-162's
    note is the right home, since INV-183 requires a rule to be reachable where the artifact
@@ -88,7 +88,7 @@ exit 0.
       external-denominator rule still applies to any completeness claim.
 - [ ] No invariant is deleted or renumbered; both edits are recorded as dated in-place
       clarifications with no meaning change.
-- [ ] `generate_recap_pdf.py` is confirmed unchanged in behaviour — this spec edits the
+- [ ] `generate_recap_pdf.py` is confirmed unchanged in behavior — this spec edits the
       ruleset only, and the criterion is checked by running the existing recap tests, not by
       inspecting the diff.
 - [ ] A test asserts INV-162 and INV-193 reference each other, so the pair cannot drift apart

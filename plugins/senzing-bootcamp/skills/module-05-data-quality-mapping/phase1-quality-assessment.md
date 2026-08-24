@@ -244,29 +244,33 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
    - **specification attributes** — keys that resolve to an attribute in the Entity Specification
      you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
-   - **unrecognised keys** — everything else.
+   - **unrecognized keys** — everything else.
 
    ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
    catalog attribute can arrive carrying a leading label, and an exact match reports it as
-   unrecognised — which would route a genuinely fully-mapped source into mapping, the pointless work
+   unrecognized — which would route a genuinely fully-mapped source into mapping, the pointless work
    the fast-path exists to remove. This is not hypothetical: `get_sample_data(dataset='las-vegas',
    source='PPP_LOANS')` ships `BUSINESS_NAME_ORG` and `BUSINESS_ADDR_LINE1`/`CITY`/`STATE`/
    `POSTAL_CODE`, while the specification's catalog names the attributes `NAME_ORG` and
    `ADDR_LINE1`/`ADDR_CITY`/… (Entity Specification, *Feature: NAME*; and *Usage types and payload
    (optional attributes)*, which defines a usage type as "a short label that distinguishes multiple
    instances of the same feature on one entity" — both confirmed via
-   `search_docs(category='data_mapping')`, MCP server 1.32.8, docs index 2026-08-11). Resolve each
+   `search_docs(query='usage type distinguishes multiple instances payload optional attributes',
+   category='data_mapping')` for the usage-type half and
+   `search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')` for
+   *Feature: NAME*, MCP server 1.32.8, docs index 2026-08-11; both queries re-verified as top hits
+   on 1.33.0, 2026-08-23). Resolve each
    key against the specification you hold, and where a key is a catalog attribute carrying such a
    label, count it as a specification attribute. ⛔ The label **encoding** on a flat attribute name
    is an observed shape, not something the indexed specification states — so where you cannot
-   resolve a key with confidence, treat it as unrecognised and let step 6 name it, or use the
+   resolve a key with confidence, treat it as unrecognized and let step 6 name it, or use the
    optional `getRecordPreview` check above to ask Senzing directly how it reads the record.
 
-   **The threshold is a count, not a proportion: zero unrecognised keys, or no fast-path offer.**
+   **The threshold is a count, not a proportion: zero unrecognized keys, or no fast-path offer.**
    Recorded here with its reasoning, because it is a decision and not an obvious default:
 
    - **Why not a percentage.** A proportion has to be tuned against how wide the source happens to
-     be. `PPP_LOANS` is 11 unrecognised of 19 keys and any threshold catches it; a source with one
+     be. `PPP_LOANS` is 11 unrecognized of 19 keys and any threshold catches it; a source with one
      undecided column in thirty passes an 80%-coverage rule while still hiding a decision from the
      bootcamper. The number of columns nobody decided about is the thing that matters, and it does
      not get less important because the record is wide.
@@ -281,12 +285,12 @@ obtained via the `get_sample_data` MCP tool in Module 4):
      source loses nothing by going through mapping: mapping is where "this is payload" is actually
      recorded, rather than assumed by a gate that cannot see intent.
    - **Why this does not re-introduce pointless work.** A genuinely fully-mapped source — the
-     `truthset` class the fast-path was built for — has zero unrecognised keys and still fast-paths
+     `truthset` class the fast-path was built for — has zero unrecognized keys and still fast-paths
      with no extra question. Nothing changed for it.
 
 4. **Record the result:** In `config/data_sources.yaml`, set the source's `senzing_loadable` and
    `fully_mapped` fields to `true` or `false`, record `unmapped_fields` as the sorted list of
-   unrecognised keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
+   unrecognized keys (an empty list when `fully_mapped` is `true`), and update `updated_at`.
 
    *(These replace the single `senzing_ready` field, which recorded only the structural test while
    the offer was presented on it. On a resumed bootcamp whose registry still carries
@@ -317,7 +321,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    > attributes — [list them] — so nothing has been decided about them yet. We'll map this one, and
    > those fields are the exercise: some will become features, some payload, some ignored."
 
-   Name every unrecognised column. A count alone tells the bootcamper a decision exists without
+   Name every unrecognized column. A count alone tells the bootcamper a decision exists without
    telling them what it is about. For `PPP_LOANS` those columns are `Business_Type`, `CD`,
    `DateApproved`, `JobsReported`, `Lender`, `Loan_Range`, `NAICS_Code`, `NonProfit`, `OwnedBy`,
    `OwnedByRaceEthnicity`, `OwnedByVeteran` — eleven real decisions the fast-path used to skip.
@@ -369,7 +373,7 @@ transformations:
     records_rejected: 0
     quality_score: null  # Quality assessment skipped
     fast_pathed: true
-    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognised fields"
+    fast_path_reason: "CORD source structurally loadable and fully mapped: no unrecognized fields"
 ```
 
 **Invariants:** every fast-path lineage entry MUST satisfy: `source_file == output_file` (the
@@ -501,6 +505,32 @@ profiling.
 apply to a record is not missing data, and averaging it in penalizes the source for data that could
 not exist.
 
+⛔ **A GROUP score is not evidence that two sources share an ATTRIBUTE, and MUST NOT be read as a
+cross-source join prediction.** Completeness for a grouped family — the Entity Specification's
+*Identifiers* section groups `NATIONAL_ID`, `PASSPORT`, `TAX_ID`, `LEI_NUMBER` and `TRUSTED_ID`
+(verified via `search_docs(query='Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group',
+category='data_mapping')`, server 1.32.9, 2026-08-17; query re-verified on 1.33.0, 2026-08-23,
+returning the *Identifiers* feature sections) — counts the group
+as present when **any** member is populated. That is the right answer to *does this record carry an
+identifier at all*. It is not evidence for *will these two sources join*, because a join needs
+presence-of-**same**, not presence-of-any.
+
+⚠️ **The guards above all protect the number's accuracy; this one protects its interpretation, and
+that is a different failure.** Two sources both scored **IDENTIFIER 100%**, and the evaluation report
+named them the highest-confidence cross-source pair, "both carrying LEI". One carried **2,375** LEI
+values; the other carried **one**, across 137 records — its identifiers were national IDs and
+passports. Exactly one LEI value was shared in the whole dataset: the prediction was wrong by ~38x on
+the attribute it named, and nothing disproved it until **after loading**, when the match keys showed
+LEI in a single match key. ⛔ **The 0%/100% sanity-check above does not catch this**: it fires on a
+suspiciously uniform figure as a probable *measurement* failure, and here the 100% was entirely real
+— so a guide following that instruction confirms the number and proceeds with the wrong inference
+intact.
+
+**So, before naming any expected cross-source pair:** count the **distinct values shared on the named
+attribute**, not the group scores. The profiling pass already holds the values, so this is cheap. If
+that count was not run, write the pair as a *candidate on group coverage, overlap unmeasured* — a
+prediction is still useful, but an unmarked one is what did the damage.
+
 This is not a corner case. Mixed person/organization sources are the norm in KYC, AML, sanctions
 screening, vendor MDM and beneficial-ownership work — several of this bootcamp's headline use cases.
 One sanctions list with **NAME and ADDRESS on 100% of records** scored **52% completeness / 69%
@@ -537,7 +567,7 @@ provides), and it must not be hidden inside an aggregate.
 
 ⛔ **Extend the uniformity sanity-check above with this case: a low completeness score on a source
 whose NAME and ADDRESS coverage is high is a probable applicability error, not a data problem.**
-Check the record-type mix before reporting the score or routing anyone to remediation. The presence
+Check the record-type mix before reporting the score or routing anyone to remediation (INV-264). The presence
 rules above are unchanged — they decide whether a *value* is there; this decides whether the feature
 belonged in the denominator at all.
 
@@ -616,7 +646,7 @@ saved, kept, and shareable, exactly like the Truth Set app's snapshot. See
 and `../module-03b-truthset-visualization/visualization-api-reference.md` → "Rendering contract" for
 the third; both are the statements of record, so read them rather than reconstructing the rules here.
 
-1. **Brand tokens, not an ad hoc palette** (INV-081): take colours and typography from
+1. **Brand tokens, not an ad hoc palette** (INV-081): take colors and typography from
    `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (skill-relative fallback
    `../../scripts/brand_tokens.py`, INV-252), degrading gracefully if the module cannot be
    imported.
@@ -672,7 +702,25 @@ Create `docs/data_source_evaluation.md`:
 ## Mapping Priority
 1. [Data source] - [Reason for priority]
 2. [Data source] - [Reason for priority]
+
+## Cross-Source Outlook
+- [Source A] × [Source B] — **[measured | candidate, overlap unmeasured]**
+  - Shared attribute: [the named attribute, e.g. `LEI_NUMBER`]
+  - Distinct values shared: [count] (of [A count] in A, [B count] in B)
 ```
+
+⛔ **Every named cross-source pair in this report carries one of two labels, and neither is
+optional (INV-261).** `measured` requires a **distinct-value overlap count on the named attribute**; anything
+else is `candidate, overlap unmeasured`. ⚠️ **A group completeness score is not a measurement for
+this purpose** — see the ⛔ at the completeness definition above. Two sources at IDENTIFIER 100% were
+once written up as the highest-confidence pair "both carrying LEI" when exactly **one** LEI value was
+shared in the entire dataset; the group scores were correct and the inference was wrong by ~38x.
+
+⚠️ **This report is a deliverable the Bootcamper keeps** — it is rendered to
+`docs/data_source_evaluation.pdf` at graduation and it shapes the load-order rationale — so an
+unmarked prediction reads as a finding long after the run. Nothing between writing it and loading
+re-examines it. Never rank pairs by confidence on group coverage alone; where the overlap was not
+counted, say so in the report rather than omitting the pair.
 
 ### Quality gate: iterate vs. proceed
 

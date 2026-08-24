@@ -122,6 +122,20 @@ CERTIFICATE_NAME_PLACEHOLDER = "Bootcamper"
 RECAP_CHECKPOINT_START = "<!-- RECAP-CHECKPOINT:START -->"
 RECAP_CHECKPOINT_END = "<!-- RECAP-CHECKPOINT:END -->"
 
+# Fence markers graduation wraps the Bootcamper's own notes in (INV-258).
+#
+# ⛔ THE FENCE IS THE DISCRIMINATOR, NOT THE HEADING TEXT. Every `## ` heading in a recap
+# is parsed as a module (`parse_recap`), so a notes section recognized by its *title*
+# would be one renamed module away from being mis-parsed — and a Bootcamper's private
+# note is then one heading away from being cited on their Certificate of Completion.
+# The block is lifted out of the source before module parsing begins, so no `## ` inside
+# it can ever reach `Recap.modules`.
+BOOTCAMP_NOTES_START = "<!-- BOOTCAMP-NOTES:START -->"
+BOOTCAMP_NOTES_END = "<!-- BOOTCAMP-NOTES:END -->"
+
+#: Default heading for the notes section when the folded block carries none.
+BOOTCAMP_NOTES_TITLE = "Notes, Ideas and Questions"
+
 # Recap image references: `![alt](path)` on a line of its own.
 # An embedded screenshot: ``![alt](path)`` alone on its line.
 #
@@ -223,10 +237,64 @@ class ModuleSection:
 
 
 @dataclass
+class NoteEntry:
+    """One note the Bootcamper captured during the run (INV-257).
+
+    ``body`` is **their** words. ``elaboration`` is the bootcamp's expansion and
+    ``context`` is machine-composed, so both are kept in their own fields and rendered
+    under their own labels — never folded into ``body``. This is a keepsake with their
+    name on the certificate; a paragraph they did not write, indistinguishable from one
+    they did, is the plugin putting words in their mouth permanently.
+    """
+
+    title: str
+    type: str = ""
+    captured: str = ""
+    module: str = ""
+    body: List[str] = field(default_factory=list)
+    context: str = ""
+    elaboration: str = ""
+
+
+@dataclass
+class NotesSection:
+    """The Bootcamper's notes, folded into the recap at graduation.
+
+    Deliberately NOT a ``ModuleSection``: it is never a module, so it never reaches the
+    certificate's module citation (INV-100), either renderer's cover module list, or the
+    four-subsection completeness check (INV-103).
+    """
+
+    title: str = BOOTCAMP_NOTES_TITLE
+    entries: List[NoteEntry] = field(default_factory=list)
+    #: Source characters this section actually accounted for — the stripped length of
+    #: every line the parser assigned to the title or to an entry.
+    #:
+    #: ⚠️ Counted at PARSE time rather than recomputed from the fields, and the difference
+    #: is load-bearing. `**Captured:** <value>` is 14 characters of label the renderer
+    #: draws as a stamp rather than as literal markup; summing the field values instead
+    #: undercounts every note by its label overhead, so retention falls a little further
+    #: with each note the Bootcamper writes. Lines the parser could NOT place stay
+    #: uncounted, so a note that fails to parse still shows up as content loss — which is
+    #: the whole point of the retention figure (INV-110).
+    source_chars: int = 0
+
+    def __bool__(self) -> bool:
+        """Falsey when empty, so ``if recap.notes`` means "there is something to render".
+
+        An empty notes section on a keepsake is worse than an absent one, and every
+        render/TOC/pagination site below gates on exactly this.
+        """
+        return bool(self.entries)
+
+
+@dataclass
 class Recap:
     title: str
     meta: List[Tuple[str, str]]  # ("Bootcamper", "Ada"), ...
     modules: List[ModuleSection]
+    # Defaulted so every existing construction site and test keeps working unchanged.
+    notes: Optional[NotesSection] = None
 
 
 # The suffix the durability hooks leave on a folded-but-unfinalized section, in place of
@@ -522,7 +590,111 @@ def _normalize_heading(name: str) -> str:
     return n
 
 
+_NOTE_HEADING_RE = re.compile(r"^###\s+(.*)$")
+_NOTE_LABEL_RE = re.compile(r"^\*\*(.+?):?\*\*:?\s*(.*)$")
+
+
+def _parse_notes_block(inner: str) -> NotesSection:
+    """Parse the inside of a BOOTCAMP-NOTES fence into a :class:`NotesSection`."""
+    section = NotesSection()
+    current: Optional[NoteEntry] = None
+
+    def close() -> None:
+        nonlocal current
+        if current is not None:
+            while current.body and not current.body[-1].strip():
+                current.body.pop()
+            while current.body and not current.body[0].strip():
+                current.body.pop(0)
+            section.entries.append(current)
+        current = None
+
+    def account(line: str) -> None:
+        """Record a line as content this section carries into the PDF."""
+        section.source_chars += len(line.strip())
+
+    for raw in inner.splitlines():
+        line = raw.rstrip("\n")
+        h2 = re.match(r"^##\s+(.*)$", line)
+        if h2 and current is None:
+            title = h2.group(1).strip()
+            if title:
+                section.title = title
+            account(line)
+            continue
+        h3 = _NOTE_HEADING_RE.match(line)
+        if h3:
+            close()
+            heading = h3.group(1).strip()
+            ntype, _, rest = heading.partition(":")
+            if rest.strip():
+                current = NoteEntry(title=rest.strip(), type=ntype.strip())
+            else:
+                current = NoteEntry(title=heading)
+            account(line)
+            continue
+        if current is None:
+            # Stray text between the fence and the first note. Deliberately NOT
+            # accounted: it reaches no field and renders nowhere, so counting it would
+            # hide exactly the content loss this figure exists to surface.
+            continue
+        label = _NOTE_LABEL_RE.match(line.strip())
+        if label:
+            key = _normalize_heading(label.group(1))
+            val = label.group(2).strip()
+            handled = True
+            if key == "captured":
+                current.captured = val
+            elif key == "module":
+                current.module = val
+            elif key == "type":
+                current.type = current.type or val
+            elif key == "context":
+                current.context = val
+            elif key == "elaboration":
+                current.elaboration = val
+            else:
+                handled = False
+            if handled:
+                account(line)
+                continue
+        current.body.append(line)
+        account(line)
+
+    close()
+    return section
+
+
+def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
+    """Lift the BOOTCAMP-NOTES fence out of ``text`` before any module parsing.
+
+    Returns ``(text_without_the_block, notes_or_None)``. Removing it up front is what
+    makes the fence — not the heading text — the discriminator: the ``## `` inside it
+    never reaches the module loop, so no renamed module can collide with it and no note
+    can be promoted to a module section.
+    """
+    start = text.find(BOOTCAMP_NOTES_START)
+    if start == -1:
+        return text, None
+    end = text.find(BOOTCAMP_NOTES_END, start)
+    if end == -1:
+        # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
+        # Graduation appends this block AFTER the last module section, so everything past
+        # the opening marker is notes; treating the marker as absent instead would let
+        # the notes heading be parsed as a module and put a Bootcamper's private note on
+        # their Certificate of Completion (INV-100). Losing the fence must cost the
+        # notes' formatting at worst, never the modules and never the certificate.
+        inner = text[start + len(BOOTCAMP_NOTES_START):]
+        notes = _parse_notes_block(inner)
+        return text[:start], (notes if notes.entries else None)
+    inner = text[start + len(BOOTCAMP_NOTES_START):end]
+    remainder = text[:start] + text[end + len(BOOTCAMP_NOTES_END):]
+    notes = _parse_notes_block(inner)
+    return remainder, (notes if notes.entries else None)
+
+
 def parse_recap(text: str) -> Recap:
+    text, notes = _extract_notes_block(text)
     lines = text.splitlines()
 
     title = "Senzing Bootcamp Recap"
@@ -614,7 +786,7 @@ def parse_recap(text: str) -> Recap:
             while content and not content[0].strip():
                 content.pop(0)
 
-    return Recap(title=title, meta=meta, modules=modules)
+    return Recap(title=title, meta=meta, modules=modules, notes=notes)
 
 
 # --------------------------------------------------------------------------- #
@@ -688,6 +860,11 @@ def _source_content_chars(text: str) -> int:
         line = raw.strip()
         if not line or line == "---":
             continue
+        # The notes fence markers are structure, not content: the renderers drop them
+        # exactly as they drop `---`, so counting them would understate retention on a
+        # recap whose only difference is that the Bootcamper wrote something down.
+        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END):
+            continue
         total += len(line)
     return total
 
@@ -706,6 +883,13 @@ def _rendered_content_chars(recap: Recap) -> int:
         for heading, lines in mod.subsections:
             total += len(heading)
             total += sum(len(line.strip()) for line in lines if line.strip())
+    # ⚠️ The notes section MUST be counted (INV-258). Omitting it makes the retention
+    # figure fall with every note the Bootcamper writes — their own words counted
+    # against them as content the PDF "lost" — and a long enough notes file crosses
+    # MIN_CONTENT_RETENTION and makes the generator REFUSE to render their recap
+    # (INV-110). The keepsake would be destroyed by the feature meant to enrich it.
+    if recap.notes:
+        total += recap.notes.source_chars
     return total
 
 
@@ -901,6 +1085,48 @@ def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[s
     return problems
 
 
+def manifest_undercount_problems(manifests: Sequence[dict]) -> List[str]:
+    """Manifests describing fewer captures than there are PNGs beside them.
+
+    ⛔ **This is the denominator the manifest cannot supply about itself.** The manifest is
+    the only number in the system that does not come from the recap Markdown, which is
+    exactly why a truncated one is undetectable from the consumer side: there is no second
+    figure to check it against. The PNGs are that second figure, and they are the one
+    record a truncating manifest write cannot destroy — the earlier images stay on disk.
+
+    The reported sequence: six tabs captured, one re-captured on its own because its query
+    matched nothing, and the manifest rewritten from scratch as ``captured_count: 1``.
+    Coverage then passes on a 1-of-1 denominator — and would pass just as cheerfully with
+    five of the six images lost. `write_manifest` now merges rather than replaces, but this
+    check is what notices when that merge is bypassed, skipped, or undone by a later edit;
+    it also catches any other cause of an undercount, not just the re-capture path.
+    """
+    problems: List[str] = []
+    for manifest in manifests:
+        source = manifest.get("_path")
+        name = manifest.get("name")
+        if not source or not name:
+            continue
+        directory = Path(str(source)).parent
+        try:
+            pngs = sorted(directory.glob(f"{name}-*.png"))
+        except OSError:
+            continue
+        if not pngs:
+            continue
+        captured = len([e for e in manifest.get("captured", []) if isinstance(e, dict)])
+        if captured >= len(pngs):
+            continue
+        problems.append(
+            f"visualization {name!r}: the tab manifest records {captured} captured tab(s) "
+            f"but {len(pngs)} {name}-*.png file(s) sit beside it — the manifest "
+            "undercounts, so the coverage check above is measuring against a denominator "
+            "smaller than what was actually captured (a targeted re-capture that replaced "
+            f"the manifest is the usual cause; source: {source})"
+        )
+    return problems
+
+
 def tab_coverage_note(source_text: str, manifests: Sequence[dict]) -> str:
     """``N of M captured tabs`` — empty when no manifest exists.
 
@@ -1033,7 +1259,7 @@ _FALLBACK_RGB = {
 
 
 def _use_fallback_palette():
-    """The nine fallback colours in assignment order, in ONE place (INV-184).
+    """The nine fallback colors in assignment order, in ONE place (INV-184).
 
     Both `except` branches below need them, and nine assignment lines written out per
     branch is the drift surface — a tenth token added to one branch and not the other
@@ -1064,7 +1290,7 @@ try:
     ACCENT = _h2rgb(_bt.EMBER_HOT)   # hot ember accent / rules
     INK = _h2rgb(_bt.DARK_INK)       # headline ink
     GREEN = _h2rgb(_bt.SIGNAL_GREEN)  # resolved/done sections only
-    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold grey)
+    LINE = _h2rgb(_bt.WARM_LINE)     # warm divider/rule (never cold gray)
     AMBER = _h2rgb(_bt.EMBER_GRAD_END)  # warm end of the brand's ember gradient
 except ModuleNotFoundError:  # defensive fallback — kept in sync via tests/test_brand_sync.py
     # INV-111: a degraded path is never inferred from silence. The two branches stay
@@ -1090,8 +1316,8 @@ except Exception as exc:  # present but unusable
 # from the brand palette (INV-081/INV-107) — it is not a new token.
 TABLE_HEAD_FILL = tuple(min(255, c + 12) for c in LINE)
 
-# Muted warm grey for the certificate's small-caps labels, where body ink reads too
-# loud and a cold grey fights the ember band. Derived by blending body ink toward the
+# Muted warm gray for the certificate's small-caps labels, where body ink reads too
+# loud and a cold gray fights the ember band. Derived by blending body ink toward the
 # warm off-white — the same "derive, never invent" rule TABLE_HEAD_FILL follows
 # (INV-081): it is not a new brand token.
 MUTED = tuple(round(s + (l - s) * 0.48) for s, l in zip(SLATE, LIGHT))
@@ -1192,7 +1418,7 @@ _LATIN_FOLD = {
 # Characters `_fold_to_latin1` could not represent at all, mapped to an excerpt of the
 # first passage each was found in. INV-143 permits dropping them; what it does not permit
 # is doing so silently, and until this collector existed the warn half of that contract
-# was implemented for the certificate name only. A Cyrillic organisation name in a
+# was implemented for the certificate name only. A Cyrillic organization name in a
 # discoveries document rendered as `"- "` at exit 0 with `content retained: 96%` — the
 # retention figure cannot see it, because retention is measured over parsed *source*
 # characters before `_safe` runs at render time.
@@ -1211,11 +1437,44 @@ _DROP_EXCERPT_CHARS = 60
 _DROP_NAMES_SHOWN = 8
 
 
+# The one dropped character that is expected, harmless, and has no available remedy.
+#
+# Module 1 Step 11 writes `> \U0001f916 Bootcamp-generated business case` under the title of
+# `docs/business_problem.md` on every run that accepts the Business Case Offer -- the common
+# Core path -- and graduation Step 5b renders that file as a keepsake PDF. ROBOT FACE has no
+# Latin-1 core-font glyph, so it is dropped, and NEITHER branch of the warning's guidance
+# applies: the marker does not name an entity, and it is not the subject of its passage. It is
+# a machine-readable flag that four shipped files match on, read from the MARKDOWN and never
+# from the PDF, so its loss from the page costs nothing and there is no correct action to take.
+#
+# A guaranteed warning with no correct response is what teaches that warnings are ignorable,
+# which is the cost this suppresses.
+#
+# ⛔ Scoped to this exact line, deliberately (INV-266). The character is still DROPPED from the page --
+# only the tally entry is skipped -- and a ROBOT FACE anywhere else in the document still
+# warns, because the guard is the passage, not the character. `tests/test_recap_pdf_guard.py`
+# pins both directions.
+_EXPECTED_DROP_PASSAGE = "> \U0001f916 Bootcamp-generated business case"
+_EXPECTED_DROP_CHAR = "\U0001f916"
+
+
+def _is_expected_marker_drop(ch: str, excerpt: str) -> bool:
+    """True only for ROBOT FACE in the generated-scenario marker line itself."""
+    if ch != _EXPECTED_DROP_CHAR:
+        return False
+    return excerpt.startswith(_EXPECTED_DROP_PASSAGE)
+
+
 def _record_dropped_character(ch: str, context: str) -> None:
     """Remember one character `_fold_to_latin1` had to drop, and where it was."""
     if ch in _DROPPED_CHARACTERS:
         return
     excerpt = re.sub(r"\s+", " ", context).strip()
+    # Checked BEFORE truncation, against the full normalized passage: the marker is 45
+    # characters and _DROP_EXCERPT_CHARS is 60, so truncation would not currently reach it,
+    # but a shorter excerpt cap later must not silently widen what this exempts.
+    if _is_expected_marker_drop(ch, excerpt):
+        return
     if len(excerpt) > _DROP_EXCERPT_CHARS:
         excerpt = excerpt[:_DROP_EXCERPT_CHARS].rstrip() + "..."
     _DROPPED_CHARACTERS[ch] = excerpt
@@ -1259,10 +1518,15 @@ def dropped_character_warning() -> Optional[str]:
         f"PDF's built-in fonts and were dropped from the page: {shown}. "
         f'First affected passage: "{where}". The PDF was still written and the content is '
         f"otherwise intact, but those characters are GONE from it: check the page before "
-        f"sharing it. To fix: use each entity's verified Latin-script name or alias instead "
-        f"of its non-Latin primary name (especially inside fenced/monospace blocks), and use "
-        f"ASCII connectors (| and v) in ASCII diagrams. Never substitute a guess for a name "
-        f"you have not verified.\n"
+        f"sharing it. Which fix applies depends on what the dropped text WAS. "
+        f"(a) If it NAMES an entity: use that entity's verified Latin-script name or alias "
+        f"instead of its non-Latin primary name, especially inside fenced/monospace blocks -- "
+        f"and never substitute a guess for a name you have not verified. "
+        f"(b) If the dropped text IS the subject rather than a label -- a field value the "
+        f"passage is about, with no Latin-script equivalent to substitute -- do NOT remove it: "
+        f"keep it verbatim and add an ASCII description of it alongside, so the page still "
+        f"carries the meaning. "
+        f"Either way, use ASCII connectors (| and v) in ASCII diagrams.\n"
     )
 
 
@@ -1495,20 +1759,27 @@ def render_with_fpdf2(recap: Recap, output: Path) -> bool:
         # numbers. Because both passes paginate identically, the numbers are
         # correct. This is deterministic and avoids fpdf2's insert_toc_placeholder
         # 2-pass render, which duplicated ("ghosted") text in the field report.
+        # ⚠️ Both passes MUST render the notes page. Rendering it in one and not the
+        # other shifts every page number the TOC reports after it (INV-258).
         measure = new_pdf()
         epw = measure.w - measure.l_margin - measure.r_margin
         _render_cover(measure, epw, recap)
         if recap.modules:
-            _render_toc(measure, epw, recap, None)
+            _render_toc(measure, epw, recap, None, None)
         starts = [_render_module_page(measure, epw, mod) for mod in recap.modules]
+        notes_start = (
+            _render_notes_page(measure, epw, recap.notes) if recap.notes else None
+        )
         _render_certificate(measure, recap)
 
         pdf = new_pdf()
         _render_cover(pdf, epw, recap)
         if recap.modules:
-            _render_toc(pdf, epw, recap, starts)
+            _render_toc(pdf, epw, recap, starts, notes_start)
         for mod in recap.modules:
             _render_module_page(pdf, epw, mod)
+        if recap.notes:
+            _render_notes_page(pdf, epw, recap.notes)
         _render_certificate(pdf, recap)
 
         _ensure_parent(output)
@@ -1880,19 +2151,19 @@ def recap_certificate_name_unprintable(recap: Recap) -> Tuple[str, List[str]]:
 # an ember rule, then the Senzing wordmark, an eyebrow, the headline, the recipient, the
 # citation, and a date / issuer signature row flanking an award seal.
 #
-# Every number below is millimetres on landscape A4 (297 × 210), measured off the
+# Every number below is millimeters on landscape A4 (297 × 210), measured off the
 # template at 150 dpi and shifted to A4's slightly shorter page.
 # `_stdlib_certificate_stream` converts the same constants to points, so both renderers
 # put the same content in the same place (INV-066/INV-126) — change a number here and the
 # fallback follows it.
-_MM = 72.0 / 25.4          # one millimetre in PDF points, for the fallback's point space
+_MM = 72.0 / 25.4          # one millimeter in PDF points, for the fallback's point space
 _CERT_BAND_W = 65.0        # ember gradient band, full height down the left edge
 _CERT_CARD_X = 21.0
 _CERT_CARD_Y = 26.0
 _CERT_CARD_W = 255.0
 _CERT_CARD_H = 158.0
 _CERT_BORDER = 1.3         # ember card border stroke
-_CERT_CX = 148.5           # page centre; every line on the certificate is centred on it
+_CERT_CX = 148.5           # page center; every line on the certificate is centered on it
 _CERT_TEXT_W = 175.0       # wrap width for the citation and the module list
 _CERT_LIST_W = 227.0       # widest a line may run: the card less both signature insets
 _CERT_RULE_W = 33.0        # short ember rule under the tagline
@@ -1970,7 +2241,7 @@ def _cert_citation(labels: List[str]) -> str:
 
 
 def _cert_band_color(fraction: float) -> Tuple[int, int, int]:
-    """Colour of the gradient band at `fraction` of the way down the page.
+    """Color of the gradient band at `fraction` of the way down the page.
 
     Ember at both ends, amber through the middle — the template's warm band, mirrored
     with the brand's own gradient pair (`EMBER_HOT`/`EMBER_GRAD_END`) instead of hexes
@@ -2026,7 +2297,7 @@ def _cert_seal_paths() -> Tuple[List[Tuple[float, float]], Tuple[float, float, f
 
 def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) -> float:
     """Width in mm of one certificate line, letterspacing included but not its trailing
-    advance — fpdf2 counts spacing after the last glyph too, which would shift a centred
+    advance — fpdf2 counts spacing after the last glyph too, which would shift a centered
     line half a space to the left."""
     pdf.set_font("Helvetica", style, size)
     setter = getattr(pdf, "set_char_spacing", None)
@@ -2042,9 +2313,9 @@ def _cert_text_width(pdf, text: str, size: float, style: str, spacing: float) ->
 
 def _cert_line(pdf, key: str, text: str, y: float, color, cx: float = _CERT_CX,
                size: Optional[float] = None, max_w: float = 0.0) -> None:
-    """Draw one centred certificate line with its baseline at `y` (mm).
+    """Draw one centered certificate line with its baseline at `y` (mm).
 
-    Centred here rather than with ``cell(align="C")`` because the template's positions
+    Centered here rather than with ``cell(align="C")`` because the template's positions
     were measured as cap tops, and `text()` takes a baseline — a cell would tie the line
     to a box height instead. Letterspacing is real (``set_char_spacing``), never spaces
     inserted between glyphs: a certificate gets searched and copied out of, and
@@ -2265,7 +2536,8 @@ def _render_certificate(pdf, recap: Recap) -> None:
     # Leave suppress_footer set: this is the last page.
 
 
-def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> None:
+def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]],
+                notes_start: Optional[int] = None) -> None:
     """Render the table of contents. ``starts`` is None in the measure pass
     (placeholder page numbers, identical layout) and the real per-module start
     pages in the final pass, so both passes paginate identically."""
@@ -2291,6 +2563,19 @@ def _render_toc(pdf, epw: float, recap: Recap, starts: Optional[List[int]]) -> N
         pdf.set_text_color(*BLUE)
         pdf.set_font("Helvetica", "B", 11)
         pdf.cell(16, 8, "" if starts is None else str(starts[i]), align="R")
+        pdf.ln(8)
+
+    # The notes row goes AFTER the module rows, mirroring where the page itself sits
+    # (INV-258). It is a row in the contents, never a module: nothing else in this file
+    # reads the TOC, so listing it here cannot leak it into the certificate or the cover.
+    if recap.notes:
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*INK)
+        pdf.set_font("Helvetica", "", 11)
+        pdf.cell(epw - 16, 8, _clip(_safe(recap.notes.title), 66))
+        pdf.set_text_color(*BLUE)
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(16, 8, "" if notes_start is None else str(notes_start), align="R")
         pdf.ln(8)
 
 
@@ -2326,6 +2611,78 @@ def _render_module_page(pdf, epw: float, mod) -> int:
             _normalize_heading(r) for r in REQUIRED_SECTIONS
         }:
             _render_subsection(pdf, epw, sub_h, content)
+    return start
+
+
+def _render_notes_page(pdf, epw: float, notes: NotesSection) -> int:
+    """Render the Bootcamper's notes onto a fresh page; return its start page.
+
+    Styled like a module page but visibly its own thing — its own header band color and
+    a heading that reads as the Bootcamper's rather than the bootcamp's — because this
+    is the one section of the keepsake they wrote.
+    """
+    pdf.add_page()
+    start = pdf.page_no()
+    pdf.set_fill_color(*ACCENT)
+    pdf.rect(0, 0, pdf.w, 24, style="F")
+    pdf.set_xy(pdf.l_margin, 6)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(epw, 9, _clip(_safe(notes.title), 62))
+    pdf.set_xy(pdf.l_margin, 15)
+    pdf.set_font("Helvetica", "", 9)
+    count = len(notes.entries)
+    pdf.cell(epw, 5, _safe(
+        "In your own words — %d note%s captured during the bootcamp"
+        % (count, "" if count == 1 else "s")))
+    pdf.ln(24)
+
+    for note in notes.entries:
+        pdf.ln(3)
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*NAVY)
+        pdf.set_font("Helvetica", "B", 12)
+        heading = f"{note.type}: {note.title}" if note.type else note.title
+        pdf.multi_cell(epw, 6, _safe(heading))
+
+        stamp = " · ".join(p for p in (note.captured, note.module) if p)
+        if stamp:
+            pdf.set_x(pdf.l_margin)
+            pdf.set_text_color(*SLATE)
+            pdf.set_font("Helvetica", "I", 8.5)
+            pdf.multi_cell(epw, 4.6, _safe(stamp))
+
+        body = [line for line in note.body if line.strip()]
+        if body:
+            pdf.ln(0.8)
+            pdf.set_x(pdf.l_margin)
+            pdf.set_text_color(*INK)
+            pdf.set_font("Helvetica", "", 10.5)
+            for line in body:
+                pdf.set_x(pdf.l_margin)
+                pdf.multi_cell(epw, 5.2, _safe(_md_inline_to_text(line.strip())))
+
+        # ⛔ Context and Elaboration carry their own labels because neither is the
+        # Bootcamper's writing (INV-257). The elaboration says whose words it is on the
+        # page, not merely in the source, so the distinction survives printing.
+        for label, value in (("Context", note.context),
+                             ("Elaboration (written by the bootcamp)",
+                              note.elaboration)):
+            if not value:
+                continue
+            pdf.ln(0.8)
+            pdf.set_x(pdf.l_margin + 4)
+            pdf.set_text_color(*SLATE)
+            pdf.set_font("Helvetica", "B", 8.5)
+            pdf.multi_cell(epw - 4, 4.6, _safe(label.upper()))
+            pdf.set_x(pdf.l_margin + 4)
+            pdf.set_font("Helvetica", "", 9.5)
+            pdf.multi_cell(epw - 4, 4.8, _safe(_md_inline_to_text(value)))
+
+        pdf.ln(2)
+        pdf.set_draw_color(*LINE)
+        y = pdf.get_y()
+        pdf.line(pdf.l_margin, y, pdf.l_margin + epw, y)
     return start
 
 
@@ -2642,10 +2999,10 @@ def _clip(s: str, n: int) -> str:
 # --------------------------------------------------------------------------- #
 # Stdlib-only fallback renderer
 # --------------------------------------------------------------------------- #
-# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centred line;
+# Helvetica advance widths (1/1000 em) for the glyphs that actually move a centered line;
 # everything else is within a hair of 556. This writer has no font metrics of its own, and
 # the crude `len(text) * size * 0.52` it used before put the certificate's 38 pt headline
-# 8 mm off centre — visible on the page, invisible to text extraction.
+# 8 mm off center — visible on the page, invisible to text extraction.
 _HELV_W = {
     " ": 278, "!": 278, '"': 355, "'": 191, "(": 333, ")": 333, "*": 389, ",": 278,
     "-": 333, ".": 278, "/": 278, ":": 278, ";": 278, "[": 278, "]": 278, "|": 260,
@@ -2657,7 +3014,7 @@ _HELV_W = {
     "W": 944, "Z": 611,
 }
 # Helvetica-Bold runs ~8% wider than Helvetica across mixed-case text; one factor is
-# accurate enough to centre a line, and far more accurate than ignoring the difference.
+# accurate enough to center a line, and far more accurate than ignoring the difference.
 _HELV_BOLD_FACTOR = 1.08
 
 
@@ -2672,7 +3029,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
     """Build a landscape Certificate of Completion content stream (stdlib fallback, INV-100).
 
     Follows the same template geometry as the fpdf2 renderer — same constants, same
-    millimetre positions, converted to this writer's point space — so the fallback is a
+    millimeter positions, converted to this writer's point space — so the fallback is a
     plainer *rendering* of one design rather than a second design (INV-066/INV-126). What
     it gives up: the wordmark is set as text instead of embedded, and italic degrades to
     regular, because this writer embeds neither images nor an oblique face.
@@ -2685,7 +3042,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         return f"{r:.3f} {g:.3f} {b:.3f} {op}"
 
     def flip(mm: float) -> float:
-        """A millimetre offset from the page top as a PDF point from the page bottom."""
+        """A millimeter offset from the page top as a PDF point from the page bottom."""
         return h - mm * _MM
 
     def path(points, style: str, width: float, stroke_color=ACCENT) -> None:
@@ -2709,12 +3066,12 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
              size: Optional[float] = None) -> None:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
-        # Sanitise BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
-        # measuring raw text and rendering sanitised text mis-centres the line — the same
+        # Sanitize BEFORE measuring. `_safe` can change length ("∞" -> "infinity"), so
+        # measuring raw text and rendering sanitized text mis-centers the line — the same
         # desync the comment below describes for escaping, one step earlier.
         text = _safe(text)
         # Measure the text, escape only what is written: `_pdf_escape` turns "·" into the
-        # 4-character sequence `\267`, so measuring after escaping mis-centres the line —
+        # 4-character sequence `\267`, so measuring after escaping mis-centers the line —
         # and escaping twice prints the escape itself.
         width = _stdlib_width(text, size, style == "B", spacing)
         text = _pdf_escape(text)
@@ -2734,7 +3091,7 @@ def _stdlib_certificate_stream(recap: Recap, w: float, h: float) -> str:
         base, style, spacing = _CERT_FONT[key]
         size = base if size is None else size
         return _wrap_to_width(
-            # Sanitise before wrapping: line breaks chosen on raw text do not hold once a
+            # Sanitize before wrapping: line breaks chosen on raw text do not hold once a
             # character transliterates to a longer form.
             _safe(text),
             _CERT_TEXT_W * _MM,
@@ -2840,14 +3197,14 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
         tokens: List[Tuple[str, str, float, float]] = []
 
         def add(text: str, font: str = "F1", size: float = 10.5, indent: float = 0.0) -> None:
-            # The one choke point for stdlib text: sanitise here so `_pdf_escape` only ever
+            # The one choke point for stdlib text: sanitize here so `_pdf_escape` only ever
             # sees Latin-1 and never has to substitute (INV-143). `_safe` is idempotent, so
-            # text already sanitised by `add_wrapped` passes through unchanged.
+            # text already sanitized by `add_wrapped` passes through unchanged.
             tokens.append((_safe(text), font, size, indent))
 
         def add_wrapped(text: str, font: str, size: float, indent: float) -> None:
             width = max(20, max_width_chars - int(indent / 6))
-            # Sanitise BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
+            # Sanitize BEFORE wrapping — `_wrap` counts characters, and "∞" -> "infinity"
             # changes the count, so wrapping raw text yields lines that overrun once
             # rendered.
             for chunk in _wrap(_safe(text), width):
@@ -2891,6 +3248,30 @@ def render_with_stdlib(recap: Recap, output: Path) -> bool:
                     _normalize_heading(r) for r in REQUIRED_SECTIONS
                 }:
                     _stdlib_subsection(add, add_wrapped, h, content)
+
+        # The Bootcamper's notes, after the last module and before the certificate —
+        # which is appended as its own page below, so "after the module loop" here is
+        # the same position the fpdf2 renderer uses (INV-066 parity, INV-258).
+        if recap.notes:
+            add("", "F1", 10, 0)
+            add_wrapped(recap.notes.title, "F2", 15, 0)
+            for note in recap.notes.entries:
+                add("", "F1", 4, 0)
+                heading = f"{note.type}: {note.title}" if note.type else note.title
+                add_wrapped(heading, "F2", 12, 0)
+                stamp = " - ".join(p for p in (note.captured, note.module) if p)
+                if stamp:
+                    add_wrapped(stamp, "F1", 9, 6)
+                for line in note.body:
+                    if line.strip():
+                        add_wrapped(_md_inline_to_text(line.strip()), "F1", 10, 6)
+                if note.context:
+                    add_wrapped(f"Context: {_md_inline_to_text(note.context)}",
+                                "F1", 9.5, 12)
+                if note.elaboration:
+                    add_wrapped(
+                        "Elaboration (written by the bootcamp): "
+                        f"{_md_inline_to_text(note.elaboration)}", "F1", 9.5, 12)
 
         # Paginate tokens into pages of content streams.
         pages: List[str] = []
@@ -3021,8 +3402,8 @@ def _stdlib_subsection(add, add_wrapped, name: str, content: Optional[List[str]]
 def _wrap_to_width(text: str, max_w: float, measure) -> List[str]:
     """Greedy word wrap on measured width, where `measure(str)` returns a width.
 
-    Used by the certificate, whose lines are centred: a character-count wrap
-    (``_wrap``) cannot centre honestly, because "Illinois" and "MMMMMMMM" are the same
+    Used by the certificate, whose lines are centered: a character-count wrap
+    (``_wrap``) cannot center honestly, because "Illinois" and "MMMMMMMM" are the same
     number of characters and nowhere near the same width. Both renderers pass their own
     `measure`, so neither wraps the certificate differently from the other (INV-066).
     """
@@ -3070,14 +3451,14 @@ def _wrap(text: str, width: int) -> List[str]:
 
 
 def _pdf_escape(s: str) -> str:
-    """Escape a string for a PDF `()` literal. ⛔ **Sanitise with `_safe` first.**
+    """Escape a string for a PDF `()` literal. ⛔ **Sanitize with `_safe` first.**
 
     This does PDF *syntax* only: escape `\\`, `(`, `)`, and emit `\\ooo` octal for the
     Latin-1 high range. It performs no transliteration.
 
     ⚠️ **It used to, and that was an INV-143 violation.** It carried its own inline
     substitution table of 9 entries — a subset of `_UNICODE_MAP`'s 33 — with a `"?"`
-    default. The fpdf2 renderer normalises through `_safe` and never reaches here, but the
+    default. The fpdf2 renderer normalizes through `_safe` and never reaches here, but the
     stdlib writers called this on raw text, so **24 of the 33 mapped characters rendered as
     `?`**: `≥ ≤ ≈ ≠ € ™ ∞ ← ↔ ⇒ ↑ ↓ ✅ ✓ ⚠` and the deliberately-dropped emoji. Silently, at
     exit 0, with a green retention figure — because `?` is one character replacing one, so
@@ -3102,7 +3483,7 @@ def _pdf_escape(s: str) -> str:
         elif 160 <= o <= 255:
             out.append("\\%03o" % o)
         else:
-            # Unreachable for `_safe`-sanitised text, which is every shipped caller.
+            # Unreachable for `_safe`-sanitized text, which is every shipped caller.
             # Reached only if a caller forgets — and then the loss must be legible on
             # stderr rather than a `?` on a Bootcamper's keepsake.
             _record_dropped_character(ch, s)
@@ -3250,6 +3631,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         # above, because they all measure the recap against itself.
         manifests = find_tab_manifests()
         problems = problems + tab_coverage_problems(source_text, manifests)
+        # …and whether the manifest those checks trust is itself complete.
+        problems = problems + manifest_undercount_problems(manifests)
         if problems:
             for p in problems:
                 sys.stderr.write(f"INCOMPLETE: {p}\n")

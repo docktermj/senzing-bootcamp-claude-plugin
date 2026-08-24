@@ -32,7 +32,7 @@ stops on its single 👉.
 
 The plugin is almost certainly *right* that no question is needed — strong data should flow into
 mapping without a gate. The defect is that the surrounding instruction says the opposite, so the
-correct behaviour looks like disobedience.
+correct behavior looks like disobedience.
 
 **Why this class matters beyond the instance.** An instruction that cannot be followed teaches the
 model that the surrounding instructions are advisory. This section is dense with genuinely binding

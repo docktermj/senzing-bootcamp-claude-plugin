@@ -67,7 +67,7 @@ gap. Filing again on the strength of a resolved discrepancy would be the third s
 ## Acceptance criteria
 
 - [ ] The question is answered from repo evidence, and the evidence is **named** in the ledger entry
-      (which file, which commit, what it said) rather than summarised as a conclusion.
+      (which file, which commit, what it said) rather than summarized as a conclusion.
 - [ ] Exactly one of `module-02-sdk-setup/SKILL.md:159` or the
       `module02-update-check-commands-unsupplied` ledger row is corrected, and the other is left
       alone because it turned out to be right.

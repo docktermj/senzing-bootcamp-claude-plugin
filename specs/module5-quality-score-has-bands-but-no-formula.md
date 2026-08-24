@@ -70,7 +70,7 @@ number that the gap appears, which is why a walk found it and three audits did n
 2. **Say which fields enter completeness.** The choice is real and consequential: Entity
    Specification attributes only, or every root key. Recommend **spec attributes plus any field
    dispositioned in mapping**, since scoring a source down for raw columns it has not yet been asked
-   about penalises it for work this module has not done yet — the same "fails toward false alarm"
+   about penalizes it for work this module has not done yet — the same "fails toward false alarm"
    shape INV-174 records — but the decision is the maintainer's and the point is that it be written.
 
 3. **Define format consistency and duplicate rate** at least as tightly as presence is defined.

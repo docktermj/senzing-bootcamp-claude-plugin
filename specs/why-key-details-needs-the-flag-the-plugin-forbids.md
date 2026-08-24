@@ -127,8 +127,8 @@ absolute.
 
 - Feedback: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "Module 7: WHY_KEY_DETAILS is absent without SZ_INCLUDE_MATCH_KEY_DETAILS on SDK 4.3.4" (2026-08-16, Module Query, Visualize and Discover Phase 2a step 4b; `Source: self-observed (assistant retrospective)`)
 - Priority: High — a ⛔ directive that produces silently incomplete output in the module's headline demonstration.
-- MCP re-check: **server 1.32.9, 2026-08-16 — the server now contradicts the plugin.** Called `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` (`applies_to` includes `why_records`/`why_entities`/`why_record_in_entity`; `response_paths` `RELATED_ENTITIES[]`, `RESOLVED_ENTITY.*`; `depends_on` the five relations flags), `get_sdk_reference(topic='response_schemas', filter='why_records')` (documents `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS[.CONFIRMATIONS[]]`, no flag named in any field description), and `get_sdk_reference(topic='flags', filter='why_records')` (29 flags apply; none names `WHY_KEY_DETAILS` in `response_paths`; `SZ_WHY_RECORDS_DEFAULT_FLAGS` = `SZ_INCLUDE_FEATURE_SCORES` alone). owner-checked: `get_sdk_reference(topic='flags', filter='why_records')` — the per-method flag catalogue with `response_paths` per flag is the route that would carry "which flag populates `WHY_KEY_DETAILS`"; it returned 29 flags and no such attribution. The SDK-4.3.4 flag-set observation is engine-only and outside what the server documents.
-- Upstream: **candidate — not yet sent.** The server documents a response field and attributes it to no flag, while an engine requires a flag to produce it. That is an actionable coverage gap in `flags`/`response_schemas`, and it is distinct from the entry's already-filed `LD_LIBRARY_PATH` report. Draft and get approval before sending (`category='bug'`).
+- MCP re-check: **server 1.32.9, 2026-08-16 — the server now contradicts the plugin.** Called `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` (`applies_to` includes `why_records`/`why_entities`/`why_record_in_entity`; `response_paths` `RELATED_ENTITIES[]`, `RESOLVED_ENTITY.*`; `depends_on` the five relations flags), `get_sdk_reference(topic='response_schemas', filter='why_records')` (documents `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS[.CONFIRMATIONS[]]`, no flag named in any field description), and `get_sdk_reference(topic='flags', filter='why_records')` (29 flags apply; none names `WHY_KEY_DETAILS` in `response_paths`; `SZ_WHY_RECORDS_DEFAULT_FLAGS` = `SZ_INCLUDE_FEATURE_SCORES` alone). owner-checked: `get_sdk_reference(topic='flags', filter='why_records')` — the per-method flag catalog with `response_paths` per flag is the route that would carry "which flag populates `WHY_KEY_DETAILS`"; it returned 29 flags and no such attribution. The SDK-4.3.4 flag-set observation is engine-only and outside what the server documents.
+- Upstream: **possibly already sent — confirm before re-filing.** This spec was written recording "candidate — not yet sent". A second feedback entry on the same finding (2026-08-16, triaged 2026-08-16) carries `Upstream: submitted 2026-08-16`. ⚠️ Nothing in this repo records the submission, and `submit_feedback` is anonymous so no receipt exists to check — the entry's own field is the only evidence either way. **Do not re-file on the strength of this line**; confirm with the maintainer first. If it was sent, the finding still stands and only this line is stale. The gap itself is unchanged: the server documents a response field and attributes it to no flag, while an engine requires a flag to produce it — an actionable coverage gap in `flags`/`response_schemas`, distinct from the already-filed `LD_LIBRARY_PATH` report.
 - Related specs: `specs/why-response-carries-why-key-details-not-match-key-details.md` (established the current text; its measurement is the root cause), `specs/lookup-sdk-response-schemas-before-parsing.md`, `specs/why-entities-default-flags-has-no-composite-members.md`, `specs/fifth-response-schemas-stops-short-site-survives.md`
 
 ## The general shape
@@ -139,3 +139,60 @@ unobservable — and the conclusion was stated in the strongest available form (
 it") and shipped as a ⛔. A negative about a flag is only supported by an arm in which that flag is
 **absent**; where no such arm was run, the honest form is "not measured", not "not needed". That is
 INV-194's reasoning applied to a flag matrix rather than to a tool route.
+
+## Corroboration on a second SDK build (added 2026-08-16, triage of a later feedback entry)
+
+An independent run on **Senzing SDK 4.3.2** — a different build from the 4.3.4 above — reported
+`WHY_KEY_DETAILS` **absent** from `WHY_RESULTS[].MATCH_INFO` with
+`SZ_WHY_RECORDS_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME` in force. The raw key dump was:
+
+```text
+CANDIDATE_KEYS, DISCLOSED_RELATIONS, FEATURE_SCORES, MATCH_LEVEL_CODE, WHY_ERRULE_CODE, WHY_KEY
+```
+
+`SZ_WHY_RECORDS_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES` alone, so this arm is the **same flag
+set** as row 2 of the table above, run against an earlier SDK. It widens the absent-without-the-flag
+result across two builds and reinforces the same conclusion.
+
+⚠️ **It does not establish a version floor, and the entry's proposed fix must not be read as though
+it does.** That entry suggests *"confirm which SDK versions populate `WHY_KEY_DETAILS` and note the
+floor in the step"* — but **the with-flag arm was never run on 4.3.2**. Both builds have now been
+observed *without* the flag and only 4.3.4 *with* it, so the evidence is equally consistent with
+"the flag is required on both" and says nothing about a version boundary. Writing a floor from this
+data would repeat the exact error described in `## The general shape` above — a conclusion drawn
+from a matrix that never varied the relevant term. **If a floor is wanted it needs a with-flag arm
+on 4.3.2**; until then the conditioned statement in `## Proposed change` already covers both builds.
+
+**One additional datum is worth keeping.** The same 4.3.2 run found `MATCH_KEY_DETAILS` (carrying
+`CONFIRMATIONS[]` / `DENIALS[]`) both documented and **populated** on the `search_by_attributes`
+response. The structure therefore exists in that build and is reachable on another method, which
+rules out "this SDK does not implement the breakdown" and leaves the flag as the variable.
+
+**The entry's fallback suggestion is compatible with this spec and belongs in proposed change 3.**
+Where the field is absent for the flags in force, fall back to `FEATURE_SCORES`, which
+carries the same per-feature evidence and was fully populated in both runs — so the step renders the
+equivalent evidence alongside the explicit "not returned" line, rather than an empty section.
+
+## Upstream: submitted 2026-08-17
+
+**Sent** via `submit_feedback(category='bug')` on **2026-08-17**, with the maintainer's explicit
+approval on the exact message text (they reviewed it in full before it went).
+
+⚠️ **This is a deliberate possible duplicate, and the reasoning is on record.** This spec's
+`Upstream:` line noted that a second feedback entry claims `submitted 2026-08-16`, that nothing in
+this repo records that submission, and that `submit_feedback` is anonymous so no receipt exists to
+check either way. The maintainer's call was that a duplicate costs Senzing seconds of triage while
+the gap costs every SDK caller a silent blank — so it was re-sent rather than assumed filed. Do not
+send a third.
+
+**What was reported:** the server documents `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` and
+attributes it to **no flag** — all 29 flags applying to `why_records` name other `response_paths`,
+`SZ_WHY_RECORDS_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES` alone, and
+`SZ_INCLUDE_MATCH_KEY_DETAILS`' documented effect is on `RELATED_ENTITIES[]` — while the field was
+absent without that flag on SDK 4.3.4 and 4.3.2 and present with it on 4.3.4. The report states
+explicitly that no with-flag arm was run on 4.3.2, so it claims no version boundary.
+
+**Server response, verbatim:** *"Thank you! Your feedback has been submitted to the maintainer."* —
+with the standard notice that submissions are anonymous, the Senzing team cannot follow up, and
+`support@senzing.com` is the channel with a return path. **No receipt or ticket id exists**, so this
+note is the only record that it was sent.

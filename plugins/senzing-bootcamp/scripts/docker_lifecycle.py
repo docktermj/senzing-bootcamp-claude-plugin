@@ -25,7 +25,7 @@ warns-and-continues and never blocks the hook. Pure Python 3 stdlib, no third-pa
 dependency (INV-052/INV-001/INV-002).
 
 This is NOT a hook itself. It is imported by the SessionEnd and SessionStart hook
-scripts, which run in exec form (``python3 <hook>.py``); Python puts each hook
+scripts, which run as ``python3 "<hook>.py"``; Python puts each hook
 script's own directory (this ``scripts/`` directory) on ``sys.path``, so
 ``import docker_lifecycle`` resolves here on Linux, macOS, and Windows alike.
 """
@@ -193,7 +193,7 @@ def resume_summary():
     clauses = []
     unavailable = []
     for runtime, names in groups:
-        # An unrecognised runtime is reported under the name it was recorded with:
+        # An unrecognized runtime is reported under the name it was recorded with:
         # the guide can act on it even though this module will not run it.
         cli = KNOWN_RUNTIMES.get(runtime, runtime)
         if runtime_cli(runtime) is None:

@@ -63,7 +63,7 @@ Then, by verdict:
 - **Unregistered rule** → draft the invariant and get the maintainer's sign-off before recording
   (`implement-spec` Step 5). ⛔ **Do not batch-register.** Each proposed invariant is permanent and
   binds every future spec, so each needs its own decision, and a run that proposes ten at once will
-  get a rubber stamp or a refusal rather than a judgement.
+  get a rubber stamp or a refusal rather than a judgment.
 - **Not durable** → record the verdict and the reason, so the line is not re-triaged.
 
 **Where to record the verdicts.** They are per-line decisions about the plugin's own ruleset, which is
@@ -103,13 +103,13 @@ removed half the backlog, and the ledger says which half.
 - Feedback: none — self-observed; the list is `conformance.py rules` output from the 2026-08-13
   `production-readiness-audit`, which triaged one line and disclosed the rest as untriaged
   (`Source: self-observed (assistant retrospective)`).
-- Priority: **Medium.** No bootcamper-facing behaviour changes. The value is that the reverse
+- Priority: **Medium.** No bootcamper-facing behavior changes. The value is that the reverse
   direction of the invariant contract is where this repo has repeatedly lost weeks — INV-060 and
   INV-097 each stood unimplemented for over a month, invisibly, because no test cited them.
 - MCP re-check: **n/a (no Senzing fact)** for the triage itself. ⚠️ Several candidate lines *contain*
   Senzing facts (`:1178`'s engine-configuration JSON rule, `:1058`'s `mapping_workflow` sequencing,
   `:29`'s prescribed queries). Any fact quoted or restated while adding a citation MUST be re-asked
-  against the live server that session (INV-080) — adding a citation is not licence to carry the
+  against the live server that session (INV-080) — adding a citation is not license to carry the
   surrounding fact forward unverified.
 - Upstream: not applicable.
 - Related specs: `install-verification-has-no-invariant-so-inv129-is-borrowed` (the one line already

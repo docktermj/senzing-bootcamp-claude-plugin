@@ -8,7 +8,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 > x86-64 detected, git initialized. These are the defects static analysis and phases 1–2 structurally
 > cannot reach: four are prose that does not survive contact with the one-👉-per-turn rule or with the
 > live MCP schemas, one is a content gap on the highest-traffic question in the bootcamp, two are
-> behaviours the quiz rules never define, two are gaps in how the per-module apparatus (the
+> behaviors the quiz rules never define, two are gaps in how the per-module apparatus (the
 > model/effort nudge, the write-batching pattern) extends to a live session and to a second module,
 > and two — found only because this walk continued into a real SDK install — are `generate_scaffold`
 > defects confirmed by actually running the corrected calls against a live engine: a workflow
@@ -120,7 +120,7 @@ difficulty of what follows.
 Observed in the walk: the Bootcamper answered question 2 incorrectly, and the guide had to invent the
 whole correction shape. It chose to name the answer as wrong, explain *why* the chosen option was
 wrong (it described the contrasting method), and re-teach the concept before moving on — a reasonable
-choice, but a choice with no support in the file. A guide optimising for encouragement could as
+choice, but a choice with no support in the file. A guide optimizing for encouragement could as
 easily produce "good thinking!" followed by the right answer and no re-teaching, which is the failure
 mode a learning module can least afford.
 
@@ -156,7 +156,7 @@ distinguish a bad query from a real gap.
 
 One line fixes it: prefer the suggested queries, and when a query returns nothing relevant, re-query
 with the documentation's own phrasing before concluding the material is not covered. Scoped here to
-`concepts.md` because that is where the suggested-query list lives, but the reasoning generalises to
+`concepts.md` because that is where the suggested-query list lives, but the reasoning generalizes to
 every skill that reaches for `search_docs`.
 
 ### 8. INV-138's fallback resolves the current model/effort setting as one unit, but the two dials are independently determinable (Low-Medium)
@@ -490,7 +490,7 @@ conversational turn (items 1, 3, 4).
   `entity_resolution_concepts` present, the guard against the derivation that once silently dropped
   the primer from a Core run.
 - **INV-112, INV-075/078, INV-056, INV-061/134, INV-095** all verified correct in the walk; see the
-  `IMPLEMENTED.md` entry for the itemised list.
+  `IMPLEMENTED.md` entry for the itemized list.
 - **INV-080 held under pressure** on a general question ("is entity resolution known by other
   names?") where training data felt sufficient — the rule produced *added* precision (record linkage
   1946, Christen 2012, survivorship framing, and the MDM-is-not-a-synonym distinction).

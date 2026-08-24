@@ -3,7 +3,7 @@
 The step said "save the MCP records to `src/system_verification/truthset_data.jsonl`".
 `get_sample_data` does not return the records — it returns a **preview plus URLs**. Following the
 step as written saved **15 of 159** records and built the module's mandatory artifact (INV-077),
-the bootcamp's showpiece, on nine per cent of the data. Nothing caught it: the step already
+the bootcamp's showpiece, on nine percent of the data. Nothing caught it: the step already
 retrieved the true per-source counts one line above and never compared anything against them. A
 sparse graph is not an error state — it renders, it looks plausible.
 

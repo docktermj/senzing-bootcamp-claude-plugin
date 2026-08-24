@@ -52,6 +52,79 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: that quietly upgrades "I ran it" into "it is good" is the same laundering this guard exists
 #: to stop.
 VERIFIED_QUERIES = {
+    # ---------------------------------------------------------------------------------
+    # Executed 2026-08-23 on server 1.33.0 (docs index 2026-08-20 17:33 UTC), for
+    # `specs/search-docs-instructions-omit-the-required-query-parameter.md`: `query` is
+    # `search_docs`' ONLY required parameter, so nine shipped references passing a bare
+    # `category=` named a call a schema-respecting client cannot construct. Each query below
+    # was chosen by executing it and reading the result, not by paraphrasing the destination.
+    "community wrapper not the official SDK package registry":
+        "ON TARGET and #1: Senzing Anti-Patterns: Ecosystem and Dependencies (36.2), which "
+        "carries 'Do Not pip install senzing', 'Do Not Use Maven Central Senzing Artifacts' "
+        "and 'Do Not Use senzing-garage Repos Without Direction' -- the official-vs-community "
+        "packaging material a TypeScript community wrapper's failed from-source build needs. "
+        "Then 'Installing in Sandboxed or Restricted-Egress Environments' (27.1). NOTE: an "
+        "earlier attempt phrased as 'typescript node install build native bindings' ranked "
+        "the PostgreSQL/container article first instead -- the corpus has no TypeScript-"
+        "specific anti-pattern article, so the vocabulary that works names the PACKAGING "
+        "concern, not the language",
+    "NAME_FULL NAME_ORG parsed person name single field":
+        "ON TARGET and #1: Senzing Entity Specification -> 'Name > Feature: NAME' (68.7), "
+        "carrying both quoted strings verbatim -- NAME_FULL as 'Single-field name when type "
+        "(person vs org) is unknown or only a full name is provided', and the Rules line "
+        "'Prefer parsed person names ... use NAME_FULL only when the type is unknown or only "
+        "a single field exists'. Used at three call sites",
+    "REL_ANCHOR_KEY REL_POINTER disclosed relationship keys":
+        "ON TARGET and #1: Senzing Entity Specification -> 'Disclosed relationship mapping "
+        "guidance' (213.3), then 'Feature: REL_POINTER' (205.5) and 'Feature: REL_ANCHOR' "
+        "(163.3). Together these carry the string-valued JSON examples (\"ORG1001\", "
+        "\"ACME-1001\") AND the REL_ANCHOR_KEY guidance column's bare 1001 -- both halves of "
+        "the does-not-mandate-a-type claim the mapping sites make. Used at two call sites",
+    "usage type distinguishes multiple instances payload optional attributes":
+        "ON TARGET and #1: Senzing Entity Specification -> 'Usage types and payload (optional "
+        "attributes)' (86.6), carrying the quoted definition verbatim: 'A short label that "
+        "distinguishes multiple instances of the same feature on one entity'",
+    "Identifiers NATIONAL_ID PASSPORT TAX_ID TRUSTED_ID feature group":
+        "ON TARGET: Senzing Entity Specification -> 'Identifiers > Feature: TAX_ID' (106.0) "
+        "and 'Identifiers > Feature: NATIONAL_ID' (95.9). These are members OF the Identifiers "
+        "section, which is what the call site's grouping claim rests on -- the section heading "
+        "itself is not a separately indexed chunk, so the members are the evidence",
+    "ACCOUNT_NUMBER ACCOUNT_DOMAIN account feature":
+        "ON TARGET and #1: Senzing Entity Specification -> 'Identifiers > Feature: ACCOUNT' "
+        "(98.2), carrying 'Domain/system for the account number' verbatim -- the definition "
+        "the call site quotes",
+    "recommended JSON schema FEATURES list multiple values sub-list":
+        "ON TARGET and #1: Senzing Entity Specification -> 'Recommended JSON schema' (82.8), "
+        "carrying the quoted sentence verbatim ('In prior versions we allowed a flat JSON "
+        "structure with a separate sub-list for each feature that had multiple values. While "
+        "we still support that, we now recommend ...') plus the Schema Validation Rules that "
+        "declare FEATURES required",
+    # Executed 2026-08-17 on server 1.32.9 (docs index 2026-08-11 20:52 UTC), later than
+    # VERIFIED_ON above, which records the date the bulk of this allowlist was measured.
+    "payload attribute versus registered feature attribute record root extracted as feature precedence":
+        "ADJACENT, AND DELIBERATELY SO: Senzing Entity Specification -> 'Payload attributes "
+        "(optional)' (57.9), 'Attributes for the record key' (49.8), 'Mapping identifiers' "
+        "(48.1). These establish that payload and registered features are distinct "
+        "categories and that choosing between them is a mapping decision -- they do NOT "
+        "state the precedence when a payload-intended root key carries a registered "
+        "attribute's name, which is exactly what the MCP-NEGATIVE marker at that call site "
+        "claims. The query is prescribed so a reader can re-run the absence, not to "
+        "retrieve an answer. NOTE: the highest-scoring result overall was an off-topic "
+        "pricing document ('Data Source Records (DSRs) Explained', 105.0) despite "
+        "category='data_mapping', so the category filter did not exclude it",
+    # Executed 2026-08-21 on server 1.33.0 (docs index 2026-08-20 17:33 UTC), for the datastore
+    # mount-crossing guidance added to module-02 Step 7.
+    "loading":
+        "ON TARGET for the two anti-patterns the step relays, though neither is the #1 hit: "
+        "with category='anti_patterns' the ranking was 'Senzing Anti-Patterns: Configuration "
+        "and Initialization' (12.6), then 'Senzing Anti-Patterns: Architecture and "
+        "Performance' (12.0). The first carries 'Do Not Skip check_repository_performance() "
+        "Before Production' with the SzDiagnostic signature; the second carries 'Do Not Use "
+        "Low-IOPS Storage' with the avoid-network-attached-storage rule. Both are quoted at "
+        "the call site. NOTE: a single-word query is BM25-fragile by nature -- it works here "
+        "only because category='anti_patterns' narrows the corpus to a handful of documents, "
+        "and the top hit by raw relevance was a Rust code example (35.4) that the category "
+        "filter did NOT exclude. Re-check the two titles rather than the ordering",
     "entity resolution business value":
         "ON TARGET: Entity Resolution Buyer's Guide -> 'Five Primary Business Use Cases'; "
         "Agentic Entity Resolution -> 'Why Agentic Entity Resolution Matters'",

@@ -23,8 +23,8 @@ These tests pin three things:
 3. **No silent discard** — when both sources are present, which one won is always stated.
 
 Deliberately SDK-free (INV-108): `resolve_settings` is pure, so every case is exercised without
-`libSz.so`, a database or a licence. Assertions are on the message and on the absence of a
-snapshot, never on engine behaviour.
+`libSz.so`, a database or a license. Assertions are on the message and on the absence of a
+snapshot, never on engine behavior.
 
 Enforces **INV-210**.
 

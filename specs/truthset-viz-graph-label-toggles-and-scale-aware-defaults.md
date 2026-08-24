@@ -18,7 +18,7 @@ against a 159-record dataset.
 3. **The default does not survive reuse** (Medium, self-observed). The same app, reused unchanged for
    Module 7's Customer 360 data (**3,986 entities, 1,040 edges**), rendered roughly a thousand
    overlapping edge labels and the Entity Graph became an unreadable hairball. The bootcamper cannot
-   tell this is a default problem — "it just looks like their data is too messy to visualise."
+   tell this is a default problem — "it just looks like their data is too messy to visualize."
 
 Worth recording from the same report: the reuse otherwise went *well*. The server was already
 parameterized (`--records`, `--title`, `--snapshot`, `--port`) with no hardcoded data sources, so all

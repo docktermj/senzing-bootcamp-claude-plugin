@@ -71,7 +71,7 @@ class TheClauseIsStatedInTheProtocol(unittest.TestCase):
         self.assertIn("results presentation is not a turn ending", nonyielding_section())
 
     def test_the_three_presentation_shapes_are_named(self):
-        """Naming the shapes is what lets a guide recognise the case it is in."""
+        """Naming the shapes is what lets a guide recognize the case it is in."""
         section = nonyielding_section()
         for shape in ("summary", "evidence table", "set of answers"):
             self.assertIn(shape, section, "%r not named as a presentation shape" % shape)
@@ -86,7 +86,7 @@ class TheClauseIsStatedInTheProtocol(unittest.TestCase):
         """A rule with no action is advice; the action is 'count the 👉 first'."""
         section = nonyielding_section()
         self.assertIn("exactly one \U0001f449", section)
-        # INV-251 governs the COUNT (relabelled 2026-08-15; INV-005 is the 👉 marker).
+        # INV-251 governs the COUNT (relabeled 2026-08-15; INV-005 is the 👉 marker).
         self.assertIn("INV-251", section)
 
     def test_the_clause_sits_inside_the_nonyielding_contract(self):

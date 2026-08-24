@@ -48,7 +48,7 @@ guaranteed precisely in the case the marker exists for: a returning bootcamper w
 `path`, `verbosity` and `programming_language`, which is the seeded fixture and the documented
 INV-133 scenario. The two instructions are jointly satisfiable only by collapsing the six lines into
 one and attaching the markers inline, which is what the walk did. Nothing in the file says to do
-that, and a guide that honours the ⛔ literally will emit three or four lines under a one-line budget.
+that, and a guide that honors the ⛔ literally will emit three or four lines under a one-line budget.
 
 Neither instance is a broken path, and no bootcamper-facing output was wrong in the walk. The defect
 is divergence: the same preset, the same fixture, two guides, visibly different output — in the one

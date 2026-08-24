@@ -29,8 +29,8 @@ step that transmits the Bootcamper's personal details off their machine (INV-135
 reached only after a pinned 👉 consent gate. So the failure sequence is: the Bootcamper is asked to
 consent to sending their name and work email, says yes, and the call is then built without a field
 the server requires. Whatever the server does with it, the Bootcamper has been walked through a
-privacy gate for a request that may not produce the licence — and this is the route a Bootcamper
-without a licence takes to get one, so failing it blocks the licensed path (INV-036/INV-093).
+privacy gate for a request that may not produce the license — and this is the route a Bootcamper
+without a license takes to get one, so failing it blocks the licensed path (INV-036/INV-093).
 
 INV-135 additionally requires the pinned question to state **what is sent**. A question built from
 this text describes a payload that is not the payload.
@@ -72,7 +72,7 @@ Two things, and the second is the reusable lesson.
    be asked one question per turn, as INV-135 already requires.
 
 3. **Assert the field list**, not only the gate: extend `TestLicenseRequestIsConsentGated` so the
-   licence step names all three required fields, and so the `CONDITIONALLY_REQUIRED` comment and the
+   license step names all three required fields, and so the `CONDITIONALLY_REQUIRED` comment and the
    shipped text cannot drift apart again.
 
 ⛔ **Do not add a call form.** The plugin deliberately describes `submit_feedback` in prose rather
@@ -92,10 +92,10 @@ manifest; the runtime consequence is stated as unverified below and must stay th
       (INV-080), scoped to that paragraph rather than relying on another stamp on the page.
 - [ ] The pinned consent question's statement of what is sent matches the corrected field list
       (INV-135). Verified by opening the question.
-- [ ] `tests/test_mcp_call_contracts.py`'s licence tests assert the step names **all three**
+- [ ] `tests/test_mcp_call_contracts.py`'s license tests assert the step names **all three**
       required fields, not only that a consent gate exists.
 - [ ] **Negative-controlled, mutation verified to land:** removing `how_heard`/"how they heard" from
-      the licence step fails the new assertion; removing the consent question still fails the
+      the license step fails the new assertion; removing the consent question still fails the
       existing one. Revert both.
 - [ ] The `CONDITIONALLY_REQUIRED["submit_feedback"]` comment and the shipped text agree — asserted,
       not merely both present.
@@ -122,7 +122,7 @@ manifest; the runtime consequence is stated as unverified below and must stay th
   missing `how_heard` is inferred from its schema description and manifest, not observed. Confirming
   it would require sending a real name and work email upstream. The documentation discrepancy is
   established; the runtime consequence is not.
-- Priority: **Medium-high.** Narrow path — only Bootcampers who request an evaluation licence — but
+- Priority: **Medium-high.** Narrow path — only Bootcampers who request an evaluation license — but
   on that path it follows a privacy consent gate, and the plugin's statement of what is sent is
   wrong regardless of what the server does with the call.
 - Related: INV-135 (consent gate and payload statement), INV-192 (schema-optional but
@@ -142,7 +142,7 @@ asserting it.
 only by running the mutation — neither was visible by reading.**
 
 1. **The first version asserted the wrong thing.** It checked that the token `how_heard` appeared
-   somewhere in the licence-step window. Reverting the prose to the defective *"optionally a last
+   somewhere in the license-step window. Reverting the prose to the defective *"optionally a last
    name and how they heard about Senzing"* left that token intact further down, inside the quoted
    `get_capabilities` manifest added as provenance — so the mutation **passed**. A guard a restored
    defect satisfies is worse than no guard.
@@ -156,7 +156,7 @@ statement still precedes that ⛔ so the scoping cannot silently drift. Both the
 correct tree now behave.
 
 **The pinned consent question's wording changed** (INV-056 wording is pinned, and this spec's
-Proposed change §2 authorised it): it now reads *"including your name, work email, and how you heard
+Proposed change §2 authorized it): it now reads *"including your name, work email, and how you heard
 about us"*. The pre-existing guard matches on the question's prefix, so it still passes untouched —
 verified rather than assumed.
 

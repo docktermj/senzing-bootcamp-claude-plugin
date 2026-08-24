@@ -104,7 +104,7 @@ Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "
 versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
 observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
 version through the SDK rather than concluding the SDK is missing.
-<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.33.0, 2026-08-21 -->
 
 **If the SDK is found and version is V4.0+:**
 
@@ -202,11 +202,11 @@ same coverage gap reported upstream on 2026-08-13 — the server documents insta
      feature request WAS sent on 2026-07-31, but for the stdio-mode / private-deployment route — a
      different subject — and the two had been conflated, so 2026-08-13 is this gap's first report
      rather than a duplicate. Full evidence chain in the maintainer's development record. -->
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.33.0, 2026-08-21 -->
 
 **Linux, apt (`linux_apt`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```bash
 # plugin-owned — sdk_guide documents neither of these
@@ -229,7 +229,7 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 
 **macOS, Homebrew cask (`macos_arm`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```bash
 # ALL plugin-owned — sdk_guide documents no brew version-management command:
@@ -255,7 +255,7 @@ paths still resolve.
 
 **Windows, Scoop (`windows`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
 
 ```powershell
 # plugin-owned — sdk_guide documents no scoop version-management command:
@@ -283,7 +283,7 @@ uses a **hyphen**:
 | `szBuildVersion.json` → `BUILD_VERSION` | `4.3.3.26191` |
 
 Comparing those two raw strings reports a difference where none exists. **Prefer the package
-manager's version string**; when only the JSON is available, normalise the separator before
+manager's version string**; when only the JSON is available, normalize the separator before
 comparing. (Observed on a real 4.3.3-26191 install, 2026-07-31 — an environment observation, not
 an MCP-sourced fact.) On Windows that file is in the **sibling** `data` directory, not under
 `%SENZING_DIR%`.
@@ -340,7 +340,7 @@ topic (re-checked 2026-08-13). So whether a point release needs any schema or co
 **undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
 has a populated repository, mention that the update touches the SDK and not their data — then let
 them decide.
-<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.33.0, 2026-08-21 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -383,8 +383,17 @@ if uncertain, call `sdk_guide(topic='install')` with no platform to get the live
 
 **Routing rules (apply in order):**
 
-1. Chosen language is Python AND OS is macOS or Windows → **`platform='docker'`**. The Python
-   SDK is only supported on Linux; on macOS/Windows it must run in a container.
+1. Chosen language is Python AND OS is macOS or Windows → a **Linux environment**, and there are
+   two, not one. The Python SDK is supported on Linux only, so it needs one either way:
+   - **A container** → **`platform='docker'`**. Available on macOS and Windows.
+   - **WSL2 (Windows only)** → the SDK installs natively *inside* the Linux distribution, so the
+     platform resolves to **`platform='linux_apt'`** and the rest of this module follows the
+     `linux_apt` path unchanged. This is the route a Bootcamper who wants a native-feeling
+     toolchain will pick, and Bootcamp preparation now names its cost at the language gate.
+   Both are what the server offers: `sdk_guide(topic='install', platform='windows',
+   language='python')` returns *"use Docker or WSL2 to run Python inside a Linux container"*
+   (server **1.33.0, 2026-08-21**). ⚠️ On macOS only the container route exists — the same server
+   sentence appears under `platform='macos_arm'` and its WSL2 half is wrong there.
 2. macOS Intel → **`platform='docker'`**. There is no native Intel-Mac install: the Homebrew
    tap is Apple Silicon (ARM64) only.
 3. macOS Apple Silicon (non-Python) → **`platform='macos_arm'`**. If the chosen language runs
@@ -432,6 +441,15 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
 - Never drive interactive Senzing CLI tools (`sz_configtool`, `sz_explorer`): they require
   human input. Generate SDK code via `generate_scaffold` instead.
 - Senzing publishes native ARM64 images, so no x86 emulation is needed on Apple Silicon.
+- ⛔ **On this path, a syntax error in a file you just wrote is retried once before it is
+  believed** — files are written host-side and run container-side across the bind mount you set up
+  in the previous bullet, and a partially-synced read reports a parse error at a well-formed line.
+  The rule, the in-container compile check that confirms it, and why a host/container
+  version split is *not* the first explanation are in
+  `../bootcamp-onboarding/ground-rules.md` → "Running a file you just wrote, when the run happens
+  somewhere else". Do not restate them here (INV-183): the rule applies from this module through
+  query programs, so it lives with the cross-cutting execution rules and is linked from the step
+  that creates the condition.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
   give it a stable `--name` and append an entry to a `docker_containers` list in
   `config/bootcamp_progress.json` — at least its `name` and the `runtime` you actually used
@@ -470,8 +488,39 @@ Once the bootcamper responds, act on their answer:
    which the earlier phase already installed, so Python's Step 3 work is to make them importable —
    not to fetch them. Take the paths from the server, never from this file (INV-080):
    `sdk_guide(topic='install', platform='<platform>', language='python')` returns them in
-   `install.platform.env_vars` (`PYTHONPATH`, and `LD_LIBRARY_PATH` for when the native library is
-   not found automatically) and repeats the rule verbatim in `install.platform.gotchas[]`.
+   `install.platform.env_vars` and repeats the rule verbatim in `install.platform.gotchas[]`.
+
+   ⛔ **On `linux_apt` with Python, BOTH `PYTHONPATH` and `LD_LIBRARY_PATH` are required — set both.**
+   ⚠️ **One `sdk_guide` payload says this two different ways, and the governing half is the
+   language-specific one.** Re-verified on MCP server **1.32.9, 2026-08-17**,
+   `sdk_guide(topic='install', platform='linux_apt', language='python')`:
+
+   - The **Python SDK** entry in `install.platform.gotchas[]` states it unconditionally, and this is
+     the one that governs for `language='python'`:
+
+     > "The senzing and senzing-core packages are included in senzingsdk-runtime at
+     > /opt/senzing/er/sdk/python. Do NOT pip install them — instead set
+     > PYTHONPATH=/opt/senzing/er/sdk/python:$PYTHONPATH **and**
+     > LD_LIBRARY_PATH=/opt/senzing/er/lib:$LD_LIBRARY_PATH"
+
+   - The **same response** hedges the same variable twice — `env_vars.LD_LIBRARY_PATH` reads
+     *"(only needed if native lib not found automatically)"*, and the first `gotchas[]` entry repeats
+     that as a general note. `sdk_guide(topic='configure', platform='linux_apt', language='python')`
+     returns `environment.env_vars` with the identical hedged string, so changing topic does not
+     resolve it.
+
+   **Both readings are in the payload; do not silently pick one — the contradiction is the fact the
+   reader needs.** Reported upstream 2026-08-16 (`submit_feedback`, `bug`, anonymous); do not
+   re-file. Until the server changes, treat the language-specific line as authoritative on this
+   platform.
+
+   ⚠️ **The cost of getting this wrong lands a module later.** An environment script written from
+   `env_vars` alone sets only `PYTHONPATH`; the import then fails at the first engine call with
+   `libSz.so: cannot open shared object file: No such file or directory` — which reads as a **broken
+   SDK install** rather than an incomplete environment, in a module that did not cause it. (Observed
+   on Senzing SDK 4.3.4-26210, apt-installed at `/opt/senzing`, no custom location; the loader
+   behavior itself is observation-only.) Take the values from `sdk_guide` rather than from this
+   file — the paths above are quoted with their route, version and date, not adopted (INV-080).
    `generate_scaffold(language='python', workflow=<any>)` carries the same rule as an
    `anti_patterns[]` entry at **`severity: error`**, for **every** workflow it scaffolds — quoted
    below because the wording is the argument (re-verified live, MCP server 1.32.9, 2026-08-14):
@@ -512,7 +561,7 @@ Once the bootcamper responds, act on their answer:
    bare-`pip` prohibition still applies to the plugin's **own** tooling installs (`fpdf2`,
    Playwright — INV-066): always an explicit `python3 -m pip`, never a bare `pip`, and PEP 668
    handled with a project-local virtualenv. That rule is about *how* to run pip for the plugin's
-   helpers; it never authorises pip for the Senzing SDK, which is not a pip package at all.
+   helpers; it never authorizes pip for the Senzing SDK, which is not a pip package at all.
 
 **TypeScript/Node.js warning:** The TypeScript SDK (`sz-napi`) may require building from source
 if prebuilt binaries are not available for the user's platform. This involves installing the
@@ -557,7 +606,7 @@ the inline pointers here.
 
 | Cause | Failure signal | Fix reference ("Common Environment Issues") |
 |---|---|---|
-| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" |
+| `NODE_VERSION` | `SyntaxError` on modern syntax, `ERR_UNSUPPORTED_ESM_URL_SCHEME`, Node.js older than 18 | "Node.js Version Conflicts" — ⚠️ **on the `docker` path, rule out bind-mount propagation lag first**: retry once (see the Phase 1 `docker` bullets), because a version conflict reproduces and lag does not |
 | `NATIVE_ADDON` | `gyp ERR! build error`, `Cannot find module '.../*.node'` | "Native Addon Build Failures (node-gyp)" |
 | `TOOLCHAIN` | missing C++ compiler, missing Rust toolchain, or missing Visual Studio Build Tools | "Native Addon Build Failures (node-gyp)" plus the Windows note above in this Phase 3 |
 | `MODULE_SYSTEM` | `ERR_REQUIRE_ESM`, `Cannot use import statement outside a module` | "ESM vs CommonJS Module Resolution" |
@@ -574,7 +623,14 @@ the inline pointers here.
 
 **5. Sourcing (no hardcoded URLs).** For the detailed fix steps, use the Senzing MCP server:
 `sdk_guide(topic='install', platform='<user_platform>', language='typescript')` and
-`search_docs(category='anti_patterns')`. Never paste external URLs into this recovery flow; all
+`search_docs(query='community wrapper not the official SDK package registry',
+category='anti_patterns')`. ⛔ **`query` is `search_docs`' only REQUIRED parameter — a bare
+`category=` is a call a schema-respecting client cannot construct at all**, so the retrieval
+vocabulary belongs here rather than being left to the reader (INV-212). That query returns
+*Senzing Anti-Patterns: Ecosystem and Dependencies* as its top hit — official-vs-community
+packages, repository choice, and the `senzing-garage` caution — which is the on-point article
+when a community wrapper's from-source build has just failed (verified server 1.33.0,
+2026-08-23). Never paste external URLs into this recovery flow; all
 external/toolchain knowledge comes from the MCP tools (and, once ported, the `lang-typescript.md`
 reference). If an MCP tool is unavailable, the fallback path still applies, so guidance degrades
 gracefully rather than dead-ending.
@@ -656,8 +712,16 @@ fi
 export SENZING_PROJECT_ROOT="$_sz_root"
 export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # Platform-specific exports (SENZING_ROOT, DYLD_LIBRARY_PATH / LD_LIBRARY_PATH, jar
-# paths) go here — take them from sdk_guide(topic='install', platform=…), never from
-# memory or from this file (INV-080).
+# paths) go here — take them from sdk_guide(topic='install', platform=…, language=…),
+# never from memory or from this file (INV-080).
+#
+# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary, and it
+# hedges LD_LIBRARY_PATH as "only needed if native lib not found automatically" while the
+# language-specific gotchas[] entry in the SAME response requires it. A script written
+# from env_vars alone omits a variable the runtime needs, and the failure surfaces at the
+# first engine call -- "libSz.so: cannot open shared object file" -- one module after this
+# script was written, where it reads as a broken install. See Step 3 above for the quoted
+# contradiction, its provenance, and which half governs.
 unset _sz_self _sz_root _sz_settings
 ```
 
@@ -744,7 +808,10 @@ timeout on macOS. Use a background process plus a polling loop with a deadline i
 timeout. Check before relying on it rather than assuming a Linux userland.
 
 **Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
-"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. On
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⚠️ **This is
+not a JVM-only concern:** on `linux_apt` with **Python**, `LD_LIBRARY_PATH` is required too, and
+`sdk_guide`'s `env_vars` hedges it while its language-specific `gotchas[]` entry does not — see
+Step 3's Python note, which is where a non-JVM author will be. On
 **Windows**, the DYLD/LD variables do not apply at all and the env script is a `.bat`; the
 classpath separator is `;`, not `:`. The zsh word-splitting caveat is macOS/zsh-specific and the
 `timeout` caveat is macOS-specific — **neither applies on Linux**, where both behave as expected.
@@ -813,7 +880,7 @@ conclusion above stays true — which is exactly how a correct ⛔ comes to look
 evidence. Citing it alone leaves
 the guide to invent the missing half from memory, which is exactly the training-data fallback
 INV-080 forbids. (Step 8a already carries this warning for a different need, and Step 9 cites
-`workflow='initialize'` correctly for its own — the lesson generalises: **check what a workflow's
+`workflow='initialize'` correctly for its own — the lesson generalizes: **check what a workflow's
 snippets actually contain before citing it for a specific need.**)
 
 ⛔ **`generate_scaffold` returns a **listing**, not code — you must fetch each file.** Its response
@@ -828,7 +895,7 @@ carry that expectation across.
 that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
 all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.9,
 2026-08-13).
-<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.32.9, 2026-08-13 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.33.0, 2026-08-21 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
 about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
 adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
 instead — that path is confirmed working.
@@ -848,7 +915,7 @@ troubleshooting.
 > **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
 > CONFIGPATH → the built-in evaluation license.
 >
-> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.32.9, 2026-08-13 -->
+> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.33.0, 2026-08-21 -->
 > ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
 > it — do not go looking for it anywhere else.** (INV-208) It appears in the `compatibility_notes` of
 > `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
@@ -900,7 +967,7 @@ written into this skill on purpose.** The route that answers it is `sdk_guide` w
 sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
 ```
 
-<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.32.9, 2026-08-13 -->
+<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.33.0, 2026-08-21 -->
 `search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
 EULA and pricing prose with no figure (re-checked 2026-08-13), which is why the tool is named here
 rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
@@ -947,6 +1014,45 @@ Ask: 👉 **Which database would you like to use? Reply with a number:**
 *(Internal: end the turn on this question and wait.)*
 
 **For SQLite** (recommended for bootcamp):
+
+⛔ **Before creating it, check whether the project sits on a mounted host filesystem — measure the
+datastore, do not assume it.** The datastore always goes in the project directory
+(`database/G2C.db`, INV-200), which is right on every platform except one: when the SDK runs in a
+Linux environment while the project lives on the host's filesystem, the database is reached over a
+translation layer instead of a native one. The signature cases are **WSL2 with the project under
+`/mnt/`** and a Docker bind mount. Nothing fails; it is simply one to two orders of magnitude
+slower, and a Bootcamper has no reason to suspect storage.
+
+1. **Detect the crossing.** WSL2 with the project path under `/mnt/` is the case to look for; the
+   Docker path has the equivalent via its bind mount. Say plainly what it means before the datastore
+   is created, not after the load is slow.
+2. **Measure it rather than asserting it.** Senzing's own instrument answers this in seconds:
+   `check_repository_performance` on `SzDiagnostic` reports an insert rate. Take the call and its
+   argument from the server at the point of use rather than from this file (INV-080) — it is a
+   diagnostic-hub call, not an engine one. Report the number to the Bootcamper. **Non-blocking:** if
+   it cannot run, say so in one line and continue (INV-048); an unavailable measurement is not a
+   reason to stall setup.
+3. **Senzing owns the reason, so relay it rather than re-deriving it.**
+   `search_docs(query='loading', category='anti_patterns')` returns *"Do Not Use Low-IOPS Storage"* —
+   *"Senzing entity resolution is I/O intensive … Avoid network-attached storage (NAS/NFS) for the
+   database data directory … Run `check_repository_performance()` to validate your storage meets
+   requirements"* — and *"Do Not Skip check_repository_performance() Before Production"*, which says
+   to run it **before** a large load (re-verified server **1.33.0, 2026-08-21**). A mount crossed by
+   a translation layer is that case.
+
+⚠️ **Observation-only, one workstation, recorded with its conditions rather than asserted as a rule:**
+on Windows 11 + WSL2 Ubuntu with Senzing SDK 4.3.4 and SQLite, `check_repository_performance(5)`
+reported **1,112** inserts on `/mnt/c/...` against **326,606** on a WSL-native path, and end-to-end
+load throughput moved from **3 records/second** to **138–180** — about 7.5 hours down to about 9
+minutes for 83,338 records, same code, same data, same machine (2026-08-18). Treat the shape as
+indicative and the number as this one machine's; the measurement in rung 2 is what speaks for the
+Bootcamper's.
+
+⛔ **Do not relocate the datastore out of the project directory on your own initiative.** INV-200
+exists because files appearing where the Bootcamper did not put them is its own defect, and the
+trade-off is real: a datastore outside the project is not alongside their other artifacts and is not
+picked up by copying the project folder. Report the measurement and let them decide; the default
+stays `database/G2C.db`.
 
 ⛔ **SQLite is not "no setup". The database file is not auto-created and its schema is not
 auto-applied** — the same as PostgreSQL, and for the same reason. Skipping the schema does not fail
@@ -1118,7 +1224,7 @@ raise an error, it just leaves you with the bootstrap code and nothing to config
 bootcamper's platform. If the response has no `environment` key, that is what happened — re-issue
 the call with `platform` rather than reconstructing the paths by hand.
 
-MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.32.9, 2026-08-15
+MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.33.0, 2026-08-21
 
 **Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
 carries both — **provided `platform` was passed** (above). `default_paths` gives plain, correct
@@ -1193,7 +1299,7 @@ call for exactly this reason.
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
 > (Observed 1.32.9, 2026-08-12.)
-> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.32.9, 2026-08-13 -->
+> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.33.0, 2026-08-21 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
 > input data" would send the reader to inspect something that does not yet exist — which is exactly
@@ -1362,8 +1468,28 @@ engine call, several steps later, where the cause is no longer obvious. Exercisi
 here is what moves that failure back to the step designed to catch it.
 
 This constrains **which class the generated check touches**, not where the code comes from: keep
-using `generate_scaffold(workflow='initialize')` and pick the snippet that creates an engine
-(INV-080). Do not hand-write it.
+using `generate_scaffold(workflow='initialize')` (INV-080). Do not hand-write it.
+
+⛔ **The response is a LISTING and nothing in it marks which snippet does this — pick by shape
+(INV-267).**
+On server 1.33.0 (verified 2026-08-23) `generate_scaffold(language='python', workflow='initialize')`
+returned **14** snippets with `content` absent — only `file_path`, `raw_url`, `size_bytes` and
+`line_count` — and no field flagging any of them as engine-creating. So:
+
+- **Pick the snippet whose body CALLS A METHOD ON the engine, not merely one that creates it.** For
+  Python that is `initialization/engine_priming.py`: it builds the factory, calls
+  `create_engine()`, then calls `sz_engine.prime_engine()`. Compare
+  `initialization/abstract_factory.py`, which calls `create_engine()` alongside
+  `create_configmanager()`, `create_diagnostic()` and `create_product()` and then never uses any of
+  them — that satisfies "creates an engine" and **not** the ⛔ above, which requires the check to
+  *use* one.
+- ⛔ **A count or a position in the listing is NOT the selector (INV-267)**, and neither is the
+  filename. The snippet count moves as the server indexes more (Module 3's Step 4 documents the same hazard for
+  `full_pipeline`, where it went 18 → 22 and a whole group appeared). Match on the **shape** — does
+  the body invoke an engine method? — and fetch a candidate's `raw_url` to check rather than
+  inferring from its name.
+- Every language's set has the same pair, so apply the shape test in whichever language was chosen
+  rather than transliterating the Python filenames (INV-090).
 
 Never generate direct SQL against `database/G2C.db`; all access goes through Senzing SDK
 methods (per ground-rules).

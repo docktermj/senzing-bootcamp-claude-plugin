@@ -292,6 +292,36 @@ inert. `{name}` = `truthset_verification`. Follow
 `../bootcamp-onboarding/module-completion.md` → "Capturing visualization screenshots", including its
 rule that every caption is derived from the opened image and its tab label, never from the plan.
 
+⛔ **The capture tool is bundled — run it, do not assess whether automation exists.**
+`${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
+`../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
+writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
+  --url "http://localhost:<the port 2.3 actually bound>" \
+  --name truthset_verification --tabs all --query "<a name present in the Truth Set>"
+```
+
+⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
+first.** Enter the silent-skip path on its **exit code**, never on an assumption that browser
+automation is unavailable — and here that assumption is **unrecoverable**: this module purges its
+records at close, so a live capture missed now cannot be re-taken by anyone, ever. Module 7's
+equivalent was recovered at graduation only because its server could be restarted; this one was
+permanently lost on the run that found this defect.
+
+⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
+"no headless capability" from "no requested tab exists" — which is why its exit code is the
+authority here and your own assessment is not.
+
+⛔ **Embed in the app's own tab order — never in capture or append order, and never in
+filename-discovery order.** The ordering authority is the tab table in
+`visualization-api-reference.md`, whose row order *is* the
+order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
+captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
+having nothing in it (INV-123).
+
 If the server could not be started, fall back to `--html docs/visualizations/truthset_verification.html`
 and either omit the Search / Probe tab or caption it as the inactive state. If no headless capability
 is available it skips silently; otherwise **keep every captured tab and embed them all** in this
@@ -308,6 +338,9 @@ Start the server as a background process you can stop later in Step 4 (Cleanup),
 records on port 8080. For Python:
 
 ```bash
+# Source the project env in the CURRENT shell, as its own statement (see the hazard below).
+. src/scripts/senzing-env.sh
+
 python3 <viz-server-path> \
   --records src/system_verification/truthset_data.jsonl \
   --title "Senzing Truth Set" \
@@ -315,6 +348,22 @@ python3 <viz-server-path> \
   --port 8080 &
 VIZ_PID=$!
 ```
+
+⛔ **Source the env on its own line. If the launch is written `A && B &`, `$!` is the subshell, not
+the server.** `&` binds to the whole `&&` list, so the shell backgrounds a subshell and the server
+becomes its child with a different pid — and Step 2 requires the env sourced before anything that
+touches the Senzing library, which makes `. src/scripts/senzing-env.sh && python3 <server> … &` the
+obvious way to write it. Measured on bash: composed that way the recorded pid and the server's pid
+differ by two, `kill <recorded pid>` **exits 0**, the subshell disappears, and the port stays bound
+by the still-running server. Written as above, `$!` and the server's pid are the same number.
+
+⛔ **Record the pid only from a line whose sole backgrounded command IS the server.** A silently
+wrong pid is worse here than a missing one: `phase2-close.md`'s port-based fallback triggers on
+**absence**, and this failure presents as **presence** — a handle that looks recorded, kills
+something, and reports success.
+
+The PowerShell counterpart does not have this hazard: `Start-Process … -PassThru` returns the
+process object itself, so `$proc.Id` is the server whatever preceded it on the line.
 
 For any other language, start your server's equivalent. It should report a URL like
 `http://localhost:8080`. If port 8080 is in use, use a different port and tell the Bootcamper the

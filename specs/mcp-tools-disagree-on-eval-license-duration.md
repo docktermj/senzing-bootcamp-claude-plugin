@@ -5,7 +5,7 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 ## Problem
 
 Two tools on the **same** MCP server, queried in the **same session**, state different durations for
-the free Senzing evaluation licence. Both read from **server 1.32.9, 2026-08-12**:
+the free Senzing evaluation license. Both read from **server 1.32.9, 2026-08-12**:
 
 **`submit_feedback` (tool description, via `get_capabilities` and the loaded tool schema):**
 
@@ -26,25 +26,25 @@ directing the reader to `submit_feedback`, so the two are describing the identic
 tells you to call the other, and they disagree about what it gives you.
 
 **The plugin is not currently wrong, and that is the whole reason this is filed as it is.** Checked
-2026-08-12: no shipped file states *any* eval-licence duration — `grep` for `10-day`, `10 day`,
+2026-08-12: no shipped file states *any* eval-license duration — `grep` for `10-day`, `10 day`,
 `5-day`, `5 day`, `250K`, `250,000` across `plugins/` returns nothing. What the plugin does carry is
-the **500-record no-licence cap** (`module-06-data-processing/phaseA-build-loading.md:138` — *"The
+the **500-record no-license cap** (`module-06-data-processing/phaseA-build-loading.md:138` — *"The
 cutover is 500 records, sourced from the Senzing MCP server this session"*), which today's response
 confirms verbatim (*"Without a license, Senzing limits ingestion to 500 records (error SENZ9000 at
 record 501)"*). So the plugin quoted the fact that is stable and declined to quote the one that turns
 out to be inconsistent.
 
-**Why it still matters to this plugin.** The licence-request path is a shipped, consent-gated flow
-(`module-04-data-collection/SKILL.md`, INV-135) that offers the Bootcamper exactly this licence. Any
+**Why it still matters to this plugin.** The license-request path is a shipped, consent-gated flow
+(`module-04-data-collection/SKILL.md`, INV-135) that offers the Bootcamper exactly this license. Any
 future edit that helpfully adds "you'll get 10 days" — or "5 days" — has a coin-flip chance of being
 wrong, and would carry a real MCP citation while being wrong, which is the most durable kind of
 error this repo produces. A Bootcamper who reads both tools also simply gets contradictory guidance
-about a licence they are being asked to request with their name and work email.
+about a license they are being asked to request with their name and work email.
 
 ## Root cause
 
 **Upstream, not ours.** Two independent copies of the same product fact live in two tool payloads
-with no shared source: `submit_feedback`'s hand-written description, and a licence paragraph embedded
+with no shared source: `submit_feedback`'s hand-written description, and a license paragraph embedded
 in `sdk_guide`'s install `gotchas`/`engine_config_notes` (duplicated within that one response, which
 suggests it is templated text pasted into two fields). Nothing on the server appears to derive either
 from a single definition, so they drifted.
@@ -64,23 +64,23 @@ Senzing can.
    maintainer's explicit send. Draft, for `category='bug'`, containing: both quotes verbatim, the two
    tools and exact parameters that produced them, server version 1.32.9, the date, and the one-line
    impact — that `sdk_guide` points the reader at `submit_feedback` while disagreeing with it about
-   what the licence grants. No PII; nothing identifying the bootcamper, the host, or this repo.
+   what the license grants. No PII; nothing identifying the bootcamper, the host, or this repo.
 2. **Add a guard that keeps the plugin's silence deliberate rather than accidental.** A test
-   asserting no shipped file states an evaluation-licence **duration** (`\d+[- ]day`) near
-   licence/eval vocabulary. Today it passes vacuously; its value is that it fails the moment someone
+   asserting no shipped file states an evaluation-license **duration** (`\d+[- ]day`) near
+   license/eval vocabulary. Today it passes vacuously; its value is that it fails the moment someone
    adds one, and its docstring can carry the reason: two MCP tools disagree, so any duration written
    here is unciteable.
 3. **Record the contradiction where a future editor will meet it** — a short dated note in the
-   licence-request step (or in `INVARIANTS.md` alongside the existing licence rules) saying the
+   license-request step (or in `INVARIANTS.md` alongside the existing license rules) saying the
    duration is contested upstream as of 2026-08-12 and must not be quoted until the server agrees
    with itself. That is the INV-169-shaped outcome: record both observations with their conditions,
    assert neither.
 
 ## Acceptance criteria
 
-- [ ] No shipped file states an evaluation-licence duration; the 500-record no-licence cap is
+- [ ] No shipped file states an evaluation-license duration; the 500-record no-license cap is
       unchanged and still MCP-cited.
-- [ ] A test fails if any shipped file introduces an eval-licence duration. Negative-controlled by
+- [ ] A test fails if any shipped file introduces an eval-license duration. Negative-controlled by
       adding "a 10-day evaluation license" to a shipped file and confirming the suite fails, with the
       mutation verified to land and reverted.
 - [ ] A dated note records that the duration is contested upstream (both values, both tools, server
@@ -105,7 +105,7 @@ Senzing can.
 
 - Dry run: `dry-run` phase 3, extended past its documented scope into SDK setup at the maintainer's
   request, 2026-08-12 (`Source: self-observed (assistant retrospective)`). Found because Module 2
-  Step 1 requires `sdk_guide(topic='install', …)`, and its licence paragraph could be compared
+  Step 1 requires `sdk_guide(topic='install', …)`, and its license paragraph could be compared
   directly against the `submit_feedback` description already in context from `get_capabilities`.
 - Both quotes are from this session against server **1.32.9**; the `sdk_guide` sentence appears
   **twice** in one response (`install.gotchas` and `engine_config_notes`), so it is not a transcription
@@ -117,7 +117,7 @@ Senzing can.
   naming.
 - Upstream: **sent 2026-08-12** via `submit_feedback(category='bug')`, on the maintainer's explicit
   approval of the exact message text (shown in full beforehand, per the tool's own contract). Sent
-  **after** the dry run closed, as a separate maintainer-authorised action — the run itself never
+  **after** the dry run closed, as a separate maintainer-authorized action — the run itself never
   called the tool (⛔ dry-run rule). The report carries both quotes verbatim, the two tools and their
   exact parameters, server version, date, impact, a minimal reproduction and a suggested fix; it
   contains **no PII** and no repo or host identifiers. Category was `bug`, never `license_request`
@@ -128,7 +128,7 @@ Senzing can.
 - Related specs: `specs/module2-license-clarity.md`,
   `specs/reconcile-sdk-guide-license-note-with-detected-limit.md`,
   `specs/license-request-option.md`, `specs/single-license-gate-at-data-processing.md` — all concern
-  the same licence flow; none records this contradiction.
+  the same license flow; none records this contradiction.
 
 ## Deviations from this spec, and why (2026-08-12)
 
@@ -147,7 +147,7 @@ license…"*, and `sdk_guide(topic='install', platform='macos_arm', language='ja
 
 2. **Note home: the plugin, not `INVARIANTS.md`.** The spec left this to the maintainer. It went to
    `module-04-data-collection/SKILL.md`, immediately after the sentence that describes what the
-   licence call returns, because that is where an editor tempted to add a duration is standing.
+   license call returns, because that is where an editor tempted to add a duration is standing.
    `specs/INVARIANTS.md` is unchanged.
 
 3. **The guard's pattern was wrong on first write, and a mutation caught it.** `\b\d+\s*[-\s]\s*day\b`
@@ -161,7 +161,7 @@ license…"*, and `sdk_guide(topic='install', platform='macos_arm', language='ja
    is a ±320-character window around the disagreement vocabulary, not a file-level allowance: a
    mutation adding a duration **elsewhere in the same file** is still caught (verified). The
    exemption is deliberately robust to rewording — six alternative phrasings satisfy it — so it
-   cannot be un-exempted by a one-word edit; that is a chosen trade, favouring a note that survives
+   cannot be un-exempted by a one-word edit; that is a chosen trade, favoring a note that survives
    copy-editing over a guard that polices the note's exact prose.
 
 No invariant recorded: this spec proposes none, and its durable content is a contested **fact**,

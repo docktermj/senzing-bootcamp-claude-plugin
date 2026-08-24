@@ -29,7 +29,7 @@ now the invariant INV-064.
 Note the current flow already yields to the bootcamper: the "yes" turn ends on
 Step 1's 👉 question, so the module does not advance until the bootcamper responds
 — they can run `/model` and `/effort` during that yield. The bootcamper's concern
-is that this window is not *labelled* as a switch-confirmation, so it reads as "the
+is that this window is not *labeled* as a switch-confirmation, so it reads as "the
 module proceeds immediately."
 
 ## Conflict with invariants (decision required)

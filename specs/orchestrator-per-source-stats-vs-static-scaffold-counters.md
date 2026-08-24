@@ -46,7 +46,7 @@ This is the failure shape the plugin already guards against elsewhere: a wrong f
 
 ## Root cause
 
-Step 17 specifies the orchestrator's required behaviour without saying anything about the state
+Step 17 specifies the orchestrator's required behavior without saying anything about the state
 model of the program it orchestrates. Both halves come from MCP scaffolds, and the loading scaffold
 is written to be a standalone `main()` — process-global statics are correct for that shape and wrong
 the moment it is called more than once in a process.
@@ -89,7 +89,7 @@ describes from the MCP-supplied `LoadViaFutures.java`. Senzing MCP server 1.32.9
 - `INV-243` — A **per-source figure reported to the Bootcamper** MUST be reconciled against that
   source's own input count before it is shown; an unreconciled or mismatching figure MUST NOT be
   printed as a result (recorded in `specs/INVARIANTS.md`, indexed under *Data quality, mapping and
-  validation gates*; enforced by `tests/test_module06_orchestrator_guidance.py`). It **generalises
+  validation gates*; enforced by `tests/test_module06_orchestrator_guidance.py`). It **generalizes
   INV-228**, which requires the same per-source count check and stop-on-mismatch for a dataset
   *written* from the MCP server; a dated forward pointer was added to INV-228 accordingly.
   ✅ **Approved by the maintainer on 2026-08-14**, on review of the wording as registered. Originally minted under the standing authorization given before that unattended run.

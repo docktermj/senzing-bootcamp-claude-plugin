@@ -100,15 +100,29 @@ the next step that actually asks.
 
 ## 25. Execute UAT with business users
 
-**First, check whether there are real stakeholders.** Read `docs/business_problem.md`. If it carries
-the bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
-accepted in Module 1), or otherwise records no real stakeholders, there are no business users to
-involve — so **do not ask** the involvement question (INV-006/INV-012). State briefly that the
-scenario is bootcamp-generated, so you will self-direct the UAT: spot-check 5–10 cross-source
-entities and document findings in `docs/uat_results.md`, then proceed to step 26.
+⛔ **Branch on scenario provenance first — never ask a bootcamper to convene business users for a
+business case the bootcamp invented (INV-006/INV-012).** Read `docs/business_problem.md`: if it carries the
+bootcamp-generated marker `> 🤖 Bootcamp-generated business case` (the Business Case Offer was
+accepted in Module 1), or otherwise records no real stakeholders, take 25a. Otherwise take 25b.
 
-Otherwise (a real business problem with stakeholders), offer to involve business users — pin the
-question verbatim:
+### 25a. Bootcamp-generated scenario (marker present, or no real stakeholders recorded)
+
+There are no business users to involve, so **do not ask** the involvement question
+(INV-006/INV-012). State briefly that the scenario is bootcamp-generated and that you will
+self-direct the UAT, then spot-check 5–10 cross-source entities, document the findings in
+`docs/uat_results.md`, and proceed to step 26.
+
+⛔ **This branch correctly ends with NO 👉 question, and must stay that way.** Do not borrow 25b's
+question to balance the two branches — manufacturing a question here breaches INV-006 in the
+opposite direction. This step is not a turn ending on this path: continue in the same turn to the
+next step that actually asks (`ground-rules.md` → "A results presentation is not a turn ending",
+INV-225).
+
+### 25b. Real business problem with real stakeholders
+
+**Only when `docs/business_problem.md` records real stakeholders and carries no
+`> 🤖 Bootcamp-generated business case` marker** — offer to involve business users. Pin the
+question verbatim (INV-056):
 
 👉 **Would you like to involve business users in testing the cross-source results?** (respond yes or no)
 
@@ -136,11 +150,19 @@ validation baseline before Module 7.
 Update `docs/loading_strategy.md` with: final load order and rationale, per-source statistics,
 cross-source match summary, issues and resolutions, recommendations for future loads.
 
-⛔ **The per-source statistics written here are reconciled figures or they are labelled as
+⛔ **The per-source statistics written here are reconciled figures or they are labeled as
 unreconciled — never bare numbers.** (INV-243/INV-245) This document outlives the session and is
 read as the record of what was loaded, so an unchecked count written into it is the hardest of all
 these sites to correct later: nothing downstream re-derives it, and by the time anyone doubts it
 the load is long finished.
+
+⛔ **There are three reconciliation outcomes to write here, not two.** A source recorded
+`expected_delta` (Phase B's three-way rule) is written as a **reconciled** result carrying **both**
+figures and the artifact that predicts the delta — never as a failure, and never as a bare matching
+count. A load that legitimately changed the record count is the visible consequence of a mapping
+decision, and this document is the place a Bootcamper will look for it a month later; recording it as
+`failed` tells them a clean load broke, and recording it as a plain pass hides that anything happened
+at all.
 
 **Checkpoint:** write step 27.
 
@@ -326,7 +348,7 @@ which is exactly the gap the UAT percentages below leave open.
    reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a
    probable wrong reader before it is real absent data).
 
-4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail.** If one feature
+4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail (INV-264).** If one feature
    is detracting on a large share of cross-source comparisons, say so plainly and ask the
    bootcamper to check whether the two sources' fields for that feature genuinely measure the same
    thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two

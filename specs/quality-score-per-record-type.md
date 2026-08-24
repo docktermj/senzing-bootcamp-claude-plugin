@@ -105,7 +105,7 @@ is measuring absence that the specification predicts.
 - Priority: High
 - MCP re-check: **confirmed and strengthened** on server 1.32.1, 2026-07-28.
   `search_docs(category='data_mapping')` returns the Entity Specification's "What features to map"
-  table labelling `DOB` as "Person date of birth", `REGISTRATION_DATE` as "(organizations)", and `NAME`
+  table labeling `DOB` as "Person date of birth", `REGISTRATION_DATE` as "(organizations)", and `NAME`
   separately for person and organization — so per-type applicability is the specification's own model,
   not an inference. `RECORD_TYPE` is "Recommended", which is why the unknown-type case needed handling
   the entry did not mention.

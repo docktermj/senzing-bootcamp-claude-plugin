@@ -60,7 +60,7 @@ survives the label fix that was supposed to address it.
 
 ## Proposed change
 
-Specify both as behaviour in `visualization-api-reference.md` so a server in any language inherits
+Specify both as behavior in `visualization-api-reference.md` so a server in any language inherits
 them (INV-090/INV-124), and implement them in the Python reference.
 
 1. **Never render a clipped match-key label.** Fit the label to the gutter deliberately instead of
@@ -79,7 +79,7 @@ them (INV-090/INV-124), and implement them in the Python reference.
 3. **Make the relationship-subgraph mode's default scale-aware.** Above an entity-count threshold,
    default Entity Graph to the relationship subgraph rather than the full population, with the
    toggle still available to show everything. State the threshold in the contract so every language
-   implementation picks the same behaviour — as the label thresholds already are.
+   implementation picks the same behavior — as the label thresholds already are.
 
 4. **Say why, in the same voice as the label note.** When the subgraph default engages, show an
    inline note: "Showing the N entities that have relationships, of M total — use the toggle to show
@@ -89,7 +89,7 @@ them (INV-090/INV-124), and implement them in the Python reference.
 5. **Give the dense graph one way to find something.** At production scale, locating a known entity
    is the missing capability. Reuse what exists rather than adding a surface: let a Search / Probe
    result focus that entity in the graph (the app already has `?q=` deep-linking and click-to-detail,
-   INV-124). Specify it as behaviour; a find-by-name box is an acceptable alternative.
+   INV-124). Specify it as behavior; a find-by-name box is an acceptable alternative.
 
 6. **Re-check the defaults against a production-scale dataset, not the Truth Set.** The verification
    for this spec must use data of a few thousand entities. Both defects pass every check the Truth
@@ -107,11 +107,11 @@ them (INV-090/INV-124), and implement them in the Python reference.
       inline note naming both counts; below it, on the full population. The toggle still switches
       both ways.
 - [ ] A specific entity can be located in the graph from a search result, without scanning visually.
-- [ ] Both behaviours are stated in `visualization-api-reference.md` as contract, with the threshold
+- [ ] Both behaviors are stated in `visualization-api-reference.md` as contract, with the threshold
       given as a number, so a non-Python server (INV-090) implements the same defaults.
 - [ ] Verified against a dataset of at least ~2,000 entities and ~4,000 relationships, by opening the
       rendered app — not by unit test alone (INV-129).
-- [ ] Existing tab behaviour is otherwise unchanged: drill-down from a match-key bar still lists its
+- [ ] Existing tab behavior is otherwise unchanged: drill-down from a match-key bar still lists its
       entities, and counts remain exact.
 - [ ] Holds on Linux, macOS, and Windows and stays language-agnostic (per @INVARIANTS.md).
 
@@ -119,7 +119,7 @@ them (INV-090/INV-124), and implement them in the Python reference.
 
 - `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`
   — Match Keys label-fitting and hover requirements; the scale-aware subgraph default and its
-  threshold in the Entity Graph row (`:412`); the search-to-graph focus behaviour.
+  threshold in the Entity Graph row (`:412`); the search-to-graph focus behavior.
 - `plugins/senzing-bootcamp/scripts/senzing_viz_server.py` — `drawMatchKeys` (`:1100-1121`): gutter
   sizing, prefix-preserving truncation, `<title>` with the full key; the graph's subgraph-mode
   default (`:742` and the tab's init) and the scale note.
@@ -167,7 +167,7 @@ The acceptance criterion asked for verification "against a dataset of at least ~
 ~4,000 relationships, by opening the rendered app". Real resolved Senzing output at that scale was
 not available in the implementation environment. Instead the shipped expressions were transcribed and
 exercised at 84 / 2,799 / 5,000 entities (label distinctness, gutter fit, prefix survival, threshold
-behaviour, the no-relationships case), and both changed functions were syntax-checked with
+behavior, the no-relationships case), and both changed functions were syntax-checked with
 `node --check`. That proves the arithmetic guarantees; it does **not** prove the graph reads better at
 2,799 entities. Someone with real resolved data should open the app and confirm the subgraph default
 is the right call at that scale.

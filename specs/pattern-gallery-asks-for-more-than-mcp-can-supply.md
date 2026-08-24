@@ -32,7 +32,7 @@ categories, and is left choosing between two bad options at a bootcamper-facing 
 2. Present a partial gallery and improvise an explanation — what the dry-run walk did. Defensible,
    but unguided, so two guides produce materially different bootcamper experiences.
 
-Neither is the specified behaviour, and the parenthetical "the full pattern gallery is a later
+Neither is the specified behavior, and the parenthetical "the full pattern gallery is a later
 porting phase" explains *why* the content feels thin without saying how to behave.
 
 ## What the re-check found (server 1.32.9, 2026-08-13)
@@ -100,7 +100,7 @@ them, and a query that misses is indistinguishable from documentation that does 
    `[Read More](/…)`, the shape most likely to be mistaken for coverage.
 6. **Stop implying one query yields all forty facts:** the four attributes are filled from
    MCP-returned content, per category, and the gallery presents what the searches actually reached.
-7. Keep the "later porting phase" note, separated from the behavioural instruction.
+7. Keep the "later porting phase" note, separated from the behavioral instruction.
 
 ## Acceptance criteria
 

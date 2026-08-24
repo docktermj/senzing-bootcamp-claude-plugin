@@ -31,7 +31,7 @@ branches produce the run, and each is correct in its own right:
 - **Step 2's marker/provenance guard** skips the provision question entirely and generates the files
   — the Bootcamper already chose this in Discover the Business Problem, so asking again re-litigates
   a settled decision.
-- **Step 8a's volume-skip** passes without a question when the collected total is inside the licence
+- **Step 8a's volume-skip** passes without a question when the collected total is inside the license
   limit, which that step calls the common case.
 - **Step 8b** says nothing when the loadable total is below its threshold.
 
@@ -84,7 +84,9 @@ When the bootcamper hits an error during this module:
 By default, the bootcamper already has Senzing's **built-in evaluation license**: the capacity
 that applies when no custom license is configured. Treat it as the default the session already
 has, presented as a choice rather than a wall. Before any license-based capacity or sampling
-decision, **read `license_record_limit` from `config/bootcamp_progress.json`** (Step 8a writes it
+decision — ⛔ **and "choosing how many records to GENERATE" is one of them, not only "sampling an
+existing dataset down"** — **read `license_record_limit` from `config/bootcamp_progress.json`**
+(Step 8a writes it
 after a custom license is configured — but that gate is **volume-gated**, so an absent value means
 it has not run, never that no custom license exists) and drive the decision from that effective
 limit: never from a remembered or hardcoded figure:
@@ -206,11 +208,34 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   ⛔ **Ask nothing, recommend no CORD alternative, and do not enter the free-data hierarchy.** That
   hierarchy is for a Bootcamper who has *not* already decided; recommending CORD here recommends the
   option Module 1 evaluated and rejected for this category.
-  ⛔ **Generate the mapping complexity the scenario promised** — Module 1 Step 4a's invariant
-  required it, so the files must actually carry it: names split into components in one source and
-  joined in another, addresses as free text where the scenario says so, per-campaign duplicates, and
-  the deliberate inconsistencies across sources. Data Quality, Mapping, and Transformation has to
-  have the work this scenario advertised; a clean, uniform generation makes the next module vacuous.
+  ⛔ **Generate the SHAPE differences the scenario promised** — Module 1 Step 4a's invariant
+  required cross-source mapping divergence, so the files must actually carry it: one source carrying
+  a single name field while another carries components, one carrying a free-text address while
+  another carries parts, per-campaign duplicates, and the deliberate inconsistencies across sources.
+  Data Quality, Mapping, and Transformation has to have the work this scenario advertised; a clean,
+  uniform generation makes the next module vacuous.
+
+  ⛔ **Describe SHAPE only — do not state, or invite, what any field maps to.** The Senzing Entity
+  Specification is not read until Data Quality, Mapping, and Transformation, so a mapping claim
+  recorded here is made without the document that governs it, and it lands in
+  `config/data_sources.yaml` and `docs/data_source_locations.md` where it reads as settled fact a
+  module before anything can check it. Record "one name field" or "name in two parts", never "needs
+  splitting into `NAME_FIRST`/`NAME_LAST`".
+
+  ⚠️ **The one mapping rule that belongs here, because it changes what gets generated:** the
+  specification documents `NAME_FULL` as the *"Single-field name when type (person vs org) is unknown
+  or only a full name is provided"*, and its `NAME` rule reads *"Prefer parsed person names
+  (`NAME_FIRST`/`NAME_LAST`/…) when available; use `NAME_ORG` for organizations; use `NAME_FULL` only
+  when the type is unknown or only a single field exists"*
+  (`search_docs(query='NAME_FULL NAME_ORG parsed person name single field', category='data_mapping')`
+  → *Name > Feature: NAME*, top hit; server 1.32.9, 2026-08-17, query re-verified on 1.33.0,
+  2026-08-23). So a
+  source carrying **one** name field maps to `NAME_FULL` — a direct field-to-attribute mapping. ⛔ **A
+  joined name is therefore NOT a transformation waiting to happen**, and generating one on the
+  assumption that the next module will split it builds the scenario on a plan the specification does
+  not call for. One run recorded exactly that for two sources — a `full_name` and a `"Last, First"`
+  `member_name` — in both documents, and reading the specification at Module 5 reversed both. The
+  full mapping rules stay in that module; this is the one that reaches back this far.
 
   ⛔ **Generate realistic quality gaps too, not only structural complexity (INV-239).** Everything in
   the list above is about **shape** — how a value is structured across sources. None of it is about
@@ -221,9 +246,43 @@ made** for every source in it. Then read the source's entry in `config/data_sour
   a formality — in the module whose first phase is *Quality Assessment*. So the generated data must
   also carry:
 
-  - **missing values in non-key fields**, at a rate that puts **at least one source in the 70-79%
-    band** — a phone absent on roughly a third of its records, an address missing on a handful. That
-    band is the one that opens the remediation conversation, so it has to be reachable.
+  - **missing values in non-key fields**, enough to put **at least one source in the 70-79%
+    band**. ⛔ **State this as a completeness target, not as per-field rates:** leave **30-43% of all
+    applicable field slots empty** across that source — mean per-record completeness of roughly
+    **57-70%**. That band opens the remediation conversation, so it has to be reachable.
+
+    ⛔ **No single field can get you there, at any rate.** On `n` applicable fields, a field absent
+    from **every** record moves the score by at most `0.70 × 100/n` — 10 points on a seven-field
+    source, when the band starts 21 points below 100. Reaching it means gapping most non-key fields
+    substantially, not one field heavily. Worked, for seven applicable fields with clean formatting
+    and distinct keys (so the score reduces to `100 − 10m`, where `m` is the summed per-field absence
+    expressed in whole fields — a field missing on 30% of records contributes 0.30):
+
+    | Gapping | `m` | completeness | score |
+    |---|---|---|---|
+    | phone 30%, address 5% | 0.35 | 95.0% | **96.5** |
+    | one field missing on every record | 1.00 | 85.7% | **90.0** |
+    | five of seven fields, each 30% | 1.50 | 78.6% | **85.0** |
+    | **the 70-79 band** | **2.1 – 3.0** | **70.0% – 57.1%** | **79 – 70** |
+
+    ⚠️ **The arithmetic is Module 5's, not this step's — read it there rather than trusting this
+    table.** The composite formula and the per-`RECORD_TYPE` completeness denominator are stated once
+    in `../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 6 (INV-174); this step
+    carries only the target and one worked illustration, so the two cannot drift (INV-179).
+
+    ⚠️ **Reaching this band honestly means about a third of all field values absent, which is heavier
+    degradation than a real CRM or POS export usually carries.** That is a consequence of pairing a
+    0.70 completeness weight with a band that must be reachable on synthetic data, and it is stated
+    here rather than hidden in gentler example rates. Whether the **band** or the **weights** should
+    move is a design question, not something to solve by generating gentler data and recording the
+    band anyway.
+
+    ⛔ **Verify the generated data against the band before this module closes.** You control the data
+    completely and the formula is fully specified, so this is the one point where the recorded intent
+    and the actual outcome are both available. Score the generated source using Module 5's formula; if
+    it missed the band, **widen the gaps and regenerate** — never adjust a score. Inventing or nudging
+    a measurement the Bootcamper is told is real is the line INV-239 draws; correcting the data before
+    anything scores it is this generator's own job.
   - **off-pattern values in at least one field per source** — a date in a second format among
     ISO ones, an unformatted phone among formatted ones, a lowercase state code — so
     `format_consistency` is genuinely below 100 and the "report the fields that drag it down"
@@ -250,12 +309,52 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     provenance: synthesized
     quality_intent:
       target_band: "70-79"        # one of: ">=80", "70-79", "<70"
-      gaps: ["phone missing ~30% of records", "created_date in two formats"]
+      # Gaps must be able to REACH target_band. 30-43% of applicable slots empty; on a
+      # seven-field source that is a summed absence of 2.1-3.0 fields, not one gappy field.
+      gaps:
+        - "phone missing ~60% of records"
+        - "address_line1 missing ~50%"
+        - "city missing ~45%"
+        - "postal_code missing ~35%"
+        - "state missing ~30%"
+        - "created_date in two formats"   # lowers format_consistency, not completeness
+      measured_score: 78.0          # written by the self-check, never by hand
   ```
+
+  ⚠️ **Check a sample like this before copying it.** Those five absence rates sum to **2.20** of seven
+  applicable fields → completeness **68.6%** → score **78.0**, inside the recorded band. The previous
+  version of this sample paired `target_band: "70-79"` with `gaps: ["phone missing ~30% of records"]`
+  — a summed absence of about 0.35, arithmetically incapable of that band by roughly a factor of six
+  — so the file shipped the inconsistency twice, once as an instruction and once as a sample of a
+  recorded result. **Record the rates you actually generated, and let the self-check above write
+  `measured_score`.** A `quality_intent` whose gaps could not have produced its `target_band` is
+  exactly what makes a generation fault indistinguishable from a scoring fault later.
 
   This is what lets the next module state the contrast it is teaching, and it is what lets a later run
   tell a **generation** fault from a **scoring** fault — without it, a source that scores 100 is
   indistinguishable from a source that was meant to.
+
+  ⛔ **How many records to generate is a LICENSE-CAPACITY decision — do not choose it before the
+  limit is measured.** (INV-244) Follow *"License limit and dataset size (canonical framing)"* above
+  before fixing any record count here. ⚠️ **Do not re-derive or restate its measurement procedure at
+  this step** — route to it, exactly as that block routes to Step 8a. A copy here would be the third,
+  and a rule stated three times drifts in two of them.
+
+  ⚠️ **Sizing a dataset into existence does not feel like a capacity decision, which is why this
+  directive exists.** Nothing is being cut, so the framing's "sampling" language does not obviously
+  apply — and the measurement is several steps downstream of the point the counts are chosen. One run
+  sized a generated dataset **down from 538 records to 466** to stay under the built-in 500-record
+  evaluation limit, reasoning that an absent `license_record_limit` meant no custom license was
+  configured. It then reached Step 8a, measured as instructed, and found the workstation carried a
+  custom EVAL license with **`recordLimit: 0` — no record cap at all**. The downsizing was
+  unnecessary and was withdrawn. ⛔ That is exactly the inference INV-244 forbids: an absent
+  `license_record_limit` means **never measured**, never "no custom license".
+
+  **On a measured `recordLimit: 0`, size the generated data by what the SCENARIO needs** — the
+  cross-source overlap, the quality bands and the mapping complexity required above — and not by any
+  cap. Say so plainly rather than leaving the branch as a warning: with no cap there is nothing to
+  size against except the teaching goal, and under-generating here is what leaves Modules 6 and 7
+  with too little overlap to demonstrate cross-source resolution (INV-150).
 
 ⚠️ **Both are bootcamp-generated, so both skip the question.** Reading `cord` as the only generated
 provenance is what produced a provision question per source on a synthetic scenario — four
@@ -361,7 +460,7 @@ elsewhere.**
 
    A mismatch is a **failed collection, not a warning**: re-fetch with the backoff from check 1, and
    if it persists, report it to the Bootcamper and leave the source uncollected rather than passing a
-   short file downstream. Note that "plausible record count" is a judgement and does **not** catch
+   short file downstream. Note that "plausible record count" is a judgment and does **not** catch
    this — one line is arguably plausible for a source whose size you never looked up.
 
 3. **Never write an unverified fetch to `data/raw/` under the source's final name.** Fetch to a
@@ -404,7 +503,10 @@ before they map it.** Checked directly against `docktermj/senzing-bootcamp-free-
    `REL_ANCHOR`/`REL_POINTER` family — `REL_ANCHOR_DOMAIN`/`REL_ANCHOR_KEY` on the record being
    pointed at, `REL_POINTER_DOMAIN`/`REL_POINTER_KEY`/`REL_POINTER_ROLE` on the record pointing at
    it (Senzing Entity Specification, *Feature: REL_ANCHOR* and *Feature: REL_POINTER*; confirmed via
-   `search_docs(category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11). Mapping
+   `search_docs(query='REL_ANCHOR_KEY REL_POINTER disclosed relationship keys',
+   category='data_mapping')` against MCP server 1.32.8, docs index 2026-08-11 — query re-verified
+   on 1.33.0, 2026-08-23, returning *Disclosed relationship mapping guidance* and both feature
+   sections). Mapping
    `relationships-sample.csv` anyway fails silently: the files parse, the mapping validates, the
    load succeeds, and nothing relates.
 3. **The workable alternative on this source is `service_provider`**, populated on all 10 rows of
@@ -754,6 +856,22 @@ training data.
    email; the emailed Base64 key can be decoded and applied via sub-step 5 whenever it arrives, even
    in a later session. Record `license: evaluation` when no custom key is applied.
 
+   ⛔ **When a request is actually SENT, record it as an event — `license: evaluation` cannot carry
+   this.** Persist `license_key_requested` in `config/bootcamp_progress.json` with the channel and
+   the date — presence means a request went out:
+
+   ```json
+   "license_key_requested": { "channel": "mcp-submit-feedback", "date": "YYYY-MM-DD" }
+   ```
+
+   ⚠️ **`license: evaluation` means "no custom key is applied" and NOTHING about whether a request
+   is outstanding.** It is written on two opposite paths — after a request was sent (above), and
+   when the Bootcamper **declined** to send one (sub-step 6a step 4). A later step that reminds the
+   Bootcamper to check their inbox based on `license: evaluation` would therefore tell someone who
+   deliberately declined to go looking for a license they never asked for. Write `license_key_requested`
+   **only on an actual send**, and leave it absent otherwise — Data processing reads it to decide
+   whether that reminder is owed at all.
+
    ### 6a. The in-flow license request sends the Bootcamper's name and work email — gate it
 
    ⛔ **This is the only step in the entire bootcamp that transmits the Bootcamper's personal
@@ -774,20 +892,12 @@ training data.
    license_request)"*, and `get_capabilities`' manifest lists *"firstname (required), lastname
    (optional), email (work email required …), and how_heard"*.
 
-   ⛔ **Never state the license's duration — the server contradicts itself about it, so no figure
-   is citable.** Verified on **MCP server 1.32.9, 2026-08-12**, both in one session:
-   `submit_feedback`'s own tool description (via `get_capabilities`) says *"A **10-day**, 250K-record
-   eval license is generated and emailed"*, while `sdk_guide(topic='install', platform='macos_arm',
-   language='java')` offers *"a free **5-day** evaluation license (250K records)"* in the same
-   paragraph that points at `submit_feedback` to request it. Two tools, one server, one session, two
-   answers — so "source the figure from MCP at runtime" does **not** disambiguate here, and a
-   duration written into this file would carry a real citation while having a coin-flip chance of
-   being wrong. Say **time- and volume-limited** and let Senzing's email state the terms. Reported
-   upstream as `category='bug'` on 2026-08-12 with the maintainer's approval; **retire this note
-   outright — do not amend it — once the two tools agree.** The **500-record no-license cap** is
-   unaffected and stays MCP-cited: today's `sdk_guide` response confirms it verbatim (*"Without a
-   license, Senzing is limited to 500 Distinct Source Records (DSRs). Loading record 501 fails with
-   SENZ9000|LIMIT"*).
+   **The 500-record no-license cap, MCP-cited.** Re-confirmed on **MCP server 1.33.0, 2026-08-21**:
+   `sdk_guide(topic='load', language='python', platform='linux_apt', record_count=1000)` returns
+   *"Without a license, Senzing is limited to 500 Distinct Source Records (DSRs). Loading record 501
+   fails with SENZ9000|LIMIT"*. The evaluation license's own terms — its duration and its record
+   volume — come from a runtime lookup at the moment of use (INV-080), not from this file: they have
+   changed before.
 
    Those are the
    Bootcamper's personal details, not diagnostic context, so the bug-report rule that strips every
@@ -809,7 +919,10 @@ training data.
       > 2. **No** — I'll get a license another way, or keep using the built-in evaluation license.
 
    4. **Send only on an explicit yes.** On anything else, record `license: evaluation`, continue,
-      and do not re-ask (INV-006). Relay whatever the server returns verbatim.
+      and do not re-ask (INV-006). Relay whatever the server returns verbatim. ⛔ **Do not write
+      `license_key_requested` on this path** — nothing was sent, and a later "check your email" reminder
+      keyed to it would be addressed to someone who declined. On a successful send, write it per
+      sub-step 6.
    5. **A failure never blocks.** Report it in one line and continue on the built-in evaluation
       license.
 
@@ -844,7 +957,7 @@ non-blocking: any failure or indeterminate input continues the Module 4 flow.
 ⛔ **Judge the time from what will actually be LOADED, not from what was collected — the two differ
 whenever Step 8a capped it, which is one step earlier in this same flow.** The "fires even when the
 license imposes no cap" clause above is correct and stays: time is a separate concern from capacity.
-Its mirror is what was missing — **when the licence caps below the collected total, the collected
+Its mirror is what was missing — **when the license caps below the collected total, the collected
 total is not what will be loaded, and a warning built from it describes work that cannot happen.**
 On the walk that found this: 19,500 collected against a 500-record evaluation cap produced a warning
 about a roughly half-hour load, for a load of about two minutes.
@@ -859,8 +972,8 @@ about a roughly half-hour load, for a load of about two minutes.
      `config/bootcamp_progress.json`. Then compute
      **`loadable = min(collected_total, effective_limit)`**, where the effective limit is
      `license_record_limit` when set, the built-in evaluation limit when `license: evaluation`, and
-     **unbounded** when the limit is `0`. Treat an unreadable licence state as unbounded — that
-     reproduces today's behaviour rather than inventing a cap.
+     **unbounded** when the limit is `0`. Treat an unreadable license state as unbounded — that
+     reproduces today's behavior rather than inventing a cap.
    - ⛔ **If `database_type` is absent, say so rather than silently skipping the warning.** A
      missing key means Module 2 Step 7 did not record the choice, not that the engine is
      non-SQLite — and because step 2 below treats indeterminate inputs as "say nothing", an absent
@@ -883,15 +996,15 @@ about a roughly half-hour load, for a load of about two minutes.
      That query returns the **Hardware Sizing FAQ**, which is where the timing material lives:
      throughput per engine core, the three load phases (Phase 1 runs 10-100x faster than Phase 3,
      so a Phase-3 estimate is conservative), and worked load-time examples. `sdk_guide(topic='load',
-     record_count=…)` returns the licence note and the record-count threshold but **no timing
+     record_count=…)` returns the license note and the record-count threshold but **no timing
      figures at all**, so it is the wrong route for this. ⚠️ Nearby wordings do **not** find the FAQ
      — "hardware sizing capacity planning records per second load time" returns flag docs and code
      snippets instead — so use the query as written rather than paraphrasing it (verified on MCP
      server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-14).
-     <!-- MCP-NEGATIVE: sdk_guide(topic='load', language='python', record_count=19500) — returns no load-duration or throughput figures — owner: search_docs(query='hardware sizing capacity planning') carries them, in the Hardware Sizing FAQ (routing negative — the fact exists, go there) — server 1.32.9, 2026-08-14 -->
+     <!-- MCP-NEGATIVE: sdk_guide(topic='load', language='python', record_count=19500) — returns no load-duration or throughput figures — owner: search_docs(query='hardware sizing capacity planning') carries them, in the Hardware Sizing FAQ (routing negative — the fact exists, go there) — server 1.33.0, 2026-08-21 -->
    - ⛔ **State both numbers whenever they differ**, so the estimate is legible rather than
-     mysterious: "19,500 collected, 500 loadable under the evaluation licence — the load will take
-     about N minutes." Suppressing the collected figure would be worse than the old behaviour, not
+     mysterious: "19,500 collected, 500 loadable under the evaluation license — the load will take
+     about N minutes." Suppressing the collected figure would be worse than the old behavior, not
      better.
 
    👉 **Loading all collected records into SQLite may take a while. How would you like to proceed? Reply with a number:**
@@ -902,11 +1015,11 @@ about a roughly half-hour load, for a load of about two minutes.
 
    _(Internal: end the turn on this question and wait.)_
 
-   ⛔ **Omit option 2 when the licence already caps the load below the collected total.** "Sample
+   ⛔ **Omit option 2 when the license already caps the load below the collected total.** "Sample
    down to a smaller record count" is the decision Step 8a just made — offering it again one step
    later is the INV-006 shape, and both remedies are the same action. Renumber the two remaining
    options (load it, or switch database) and say plainly that sampling is already in force under the
-   licence. When the licence imposes no cap, present all three unchanged.
+   license. When the license imposes no cap, present all three unchanged.
 
 3. **Act on the choice.** Sampling is offered here as one option among proceeding and switching
    databases: not the only path.
@@ -972,7 +1085,7 @@ if it's already in the right format for Senzing."
   free-data options are declined.
 
   ⚠️ **"Last resort" is scoped to that Bootcamper — the one arriving with no data and no scenario.**
-  It is **not** a judgement on `provenance: synthesized`, which the Business Case Offer produces by
+  It is **not** a judgment on `provenance: synthesized`, which the Business Case Offer produces by
   design whenever no CORD collection fits the chosen category, and which Step 2 handles by generating
   the files without asking. Applying "last resort" there would re-open a settled decision and push
   CORD at a category Module 1 already ruled it out for.

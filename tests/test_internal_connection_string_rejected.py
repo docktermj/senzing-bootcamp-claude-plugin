@@ -18,7 +18,7 @@ returns, in one `engine_config_notes` entry:
 The recommendation reads before the disqualifying clause, and the plugin routes the assistant
 to `sdk_guide` at runtime (INV-080), so the advice arrives unprompted. This guard is therefore
 **not** enforcing a correction — `internal://` appeared 0 times under `plugins/` when INV-231
-was registered. It pins correct behaviour that nothing else was holding, against advice the
+was registered. It pins correct behavior that nothing else was holding, against advice the
 plugin itself tells the assistant to go and read.
 
 Both halves matter and they fail differently:

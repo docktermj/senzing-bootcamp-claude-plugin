@@ -57,10 +57,10 @@ _EMPH = r"[*_`]{0,2}"
 _SUPPRESS = r"(?:relay|present|show|surface|repeat|quote|pass\s+on)"
 _NEGATION = r"(?:do\s+%snot%s|don'?t|never)" % (_EMPH, _EMPH)
 
-#: The trigger alone is not an offence. Bare "withhold"/"suppress" also describe what the
+#: The trigger alone is not an offense. Bare "withhold"/"suppress" also describe what the
 #: SERVER does — ground-rules.md notes most `reporting_guide` topics "withhold their content"
 #: without `language`, and phaseD-validation.md says Senzing "suppresses legitimate" matches —
-#: so an offence additionally requires the tool's OUTPUT as the object (below).
+#: so an offense additionally requires the tool's OUTPUT as the object (below).
 TRIGGER = re.compile(r"(?i)(?:%s\s+%s%s%s|withhold|suppress)" % (_NEGATION, _EMPH, _SUPPRESS, _EMPH))
 
 #: A tool name followed closely by the thing it produced. Proximity, never `[^.]`-bounded:
@@ -89,7 +89,7 @@ def shipped_markdown():
     return sorted(PLUGIN.rglob("*.md"))
 
 
-def offences():
+def offenses():
     found = []
     for path in shipped_markdown():
         flat = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
@@ -113,7 +113,7 @@ class NoShippedFileSuppressesToolOutput(unittest.TestCase):
         self.assertIn("explain_error_code", corpus)
 
     def test_no_file_tells_the_guide_to_withhold_a_tools_output(self):
-        found = offences()
+        found = offenses()
         self.assertEqual(
             [],
             ["%s: %s" % (path, text) for path, text in found],

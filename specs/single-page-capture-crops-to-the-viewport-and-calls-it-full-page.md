@@ -108,7 +108,7 @@ height against the page's. So the gap was not a regression; it was never in scop
 2. The printed label is `Full page` **only** when a full-page capture succeeded; a viewport-only
    fallback prints a distinct label and warns on stderr with both heights.
 3. The tabbed path is unchanged: same fixed viewport, same per-tab slugs, same labels, same
-   skip-and-report behaviour (asserted, not assumed).
+   skip-and-report behavior (asserted, not assumed).
 4. A height clamp exists, is documented, and is reported in the label and on stderr when it applies.
 5. The new test renders a deliberately tall page and asserts the captured height — negative-controlled
    by restoring the viewport-only capture, which must fail the new assertion while still passing the
@@ -164,7 +164,7 @@ height against the page's. So the gap was not a regression; it was never in scop
   too). Verified live on the **Chrome CLI** backend, which is the one needing the two-pass
   measurement and therefore the riskiest: a 2671px page captured whole with its footer present
   (58 footer rows at y=2613-2670), a 14428px page clamped to 12000 with the stderr warning and
-  the `Full page (clamped at 12000px)` label, and a short page still labelled `Full page`.
+  the `Full page (clamped at 12000px)` label, and a short page still labeled `Full page`.
   Playwright uses its native `full_page=True` (no offset applies, since its `viewport` sets the
   viewport directly); Selenium grows the window to the measured height. Both record their
   outcome, and any backend that records nothing defaults to the viewport-only label rather than

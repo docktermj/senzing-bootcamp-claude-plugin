@@ -282,7 +282,7 @@ class TreeIsFullyAccountedFor(unittest.TestCase):
         )
 
     def test_the_placeholder_entry_is_still_a_placeholder(self):
-        """Guard the guard: if the tree stops using `{n}`, hazard 3's test is theatre."""
+        """Guard the guard: if the tree stops using `{n}`, hazard 3's test is theater."""
         placeholders = [e for e in self.entry_list if "{" in e.name]
         self.assertTrue(
             placeholders,

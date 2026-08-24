@@ -40,7 +40,7 @@ step" invites the end-to-end read the workflow explicitly warns will overflow th
 modules.** `.claude/skills/dry-run/phase3-conversational.md` says so as the rationale for its entire
 start-at-a-chosen-module design:
 
-> A run that analyses from the onboarding preface exhausts its context somewhere around Discover the
+> A run that analyzes from the onboarding preface exhausts its context somewhere around Discover the
 > Business Problem and stops there. That is why every walk to date has re-covered the same opening
 > stretch, and why Data processing, Query/Visualize/Discover and graduation have never been walked at
 > all.
@@ -129,7 +129,7 @@ file from step 2 onward, so a guide holding both has no basis for preferring eit
   outcome is to close this instead of implementing it. That is a decision only the maintainer may
   make (`implement-spec` forbids declining a spec on the implementer's initiative), and they were
   away for this run. It was implemented because the fix is one paragraph, changes no Senzing fact,
-  and the failure mode it removes is the one the `dry-run` skill is built around; the judgement call
+  and the failure mode it removes is the one the `dry-run` skill is built around; the judgment call
   is flagged in the run report so it can still be settled rather than re-asked.
 - **Step 3 was rewritten once, for this spec and
   `download-resource-returns-a-url-not-the-specification` together.** Both target the same step, and

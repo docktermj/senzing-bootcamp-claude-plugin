@@ -22,7 +22,7 @@ python3 -m unittest discover -s tests
   `senzing_viz_server.py` and `generate_recap_pdf.py` stay equal to
   `brand_tokens.py`, so the hand-maintained copies cannot drift silently.
 - `test_recap_pdf_guard.py` — pins the recap PDF generator's two outcome classes
-  apart (`generate_recap_pdf.py`): a recognisable-but-incomplete recap warns,
+  apart (`generate_recap_pdf.py`): a recognizable-but-incomplete recap warns,
   renders, and exits 0 (graduation is non-blocking), while a non-recap input or
   catastrophic content loss writes no PDF, prints no `PDF generated:` line, and
   exits non-zero. Also covers the content-retention figure, the

@@ -126,7 +126,7 @@ class ConformanceFindingsDoNotTriggerARewrite(unittest.TestCase):
 
 class TheMisleadingWarningIsExplained(unittest.TestCase):
 
-    def test_no_name_features_found_is_documented_as_an_artefact(self):
+    def test_no_name_features_found_is_documented_as_an_artifact(self):
         text = flat(PHASE2)
         self.assertIn("No NAME features found", text)
         self.assertRegex(

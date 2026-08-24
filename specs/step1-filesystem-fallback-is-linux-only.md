@@ -142,7 +142,7 @@ sibling-`data` placement would have been the same error one step removed.
 So the fallback probes **the native library only** — the artifact that must exist for the SDK to
 work, and the one `sdk_guide` names for every platform. Reading the *version* is now routed to the
 primary mechanism (the language check, or `SzProduct.get_version()`, which the corpus does document),
-with the `szBuildVersion.json` locations kept as explicitly-labelled **environment observations**:
+with the `szBuildVersion.json` locations kept as explicitly-labeled **environment observations**:
 Linux observed directly on this machine on 2026-08-13 (present in **both** `/opt/senzing/er/` and
 `/opt/senzing/data/`), Windows per this file's existing `:243`, macOS unknown and said to be unknown.
 The absence carries an `MCP-NEGATIVE` marker with its owning route, so it reaches the re-check

@@ -101,7 +101,31 @@ The script **only updates the dev working tree** — no commit, no push.
 4. Sanity-check the reverse transform in the diff: dev self-references should read
    `docktermj/senzing-bootcamp-claude-plugin` and `plugin.json` `author` should
    still be `Senzing`.
-5. Do **not** commit unless asked. If you do, commit subjects in these repos start
+5. ⛔ **Run the full suite, and reconcile every test the retrofit desynced.**
+
+   ```bash
+   python3 -m pytest -q
+   ```
+
+   **This is not a formality, and no guard can replace it — the suite going red
+   *is* the signal.** A retrofit copies `plugins/`, `.claude-plugin/`, `docs/` and
+   `README.md`; it never copies `tests/`, because they are not in the public mirror
+   and cannot come back. So a prose edit made downstream lands in a shipped file
+   while the dev-only test that pins that sentence **verbatim** keeps asserting the
+   old wording, and nothing reconciles the two.
+
+   The worked example is `2223961` (2026-08-16), the British→US spelling
+   corrections: a *correct* edit, faithfully retrofitted, which left **12 failed /
+   2730 passed** — ten of them this desync, each pinning a sentence the retrofit had
+   already changed, plus an INV-065 pair where the example `.md` was retrofitted and
+   the committed PDF was not. Nobody noticed until the next full run, because this
+   step did not exist.
+
+   Reconcile by **updating the assertion to the retrofitted wording**, not by
+   reverting the prose — the public edit is the correction. Where a shipped file and
+   a generated artifact are pinned to each other (INV-065), regenerate the artifact.
+
+6. Do **not** commit unless asked. If you do, commit subjects in these repos start
    with `#<issue-number>`.
 
 ## Guardrails
@@ -110,6 +134,9 @@ The script **only updates the dev working tree** — no commit, no push.
   owner name. Never touch `plugin.json`'s `author`, product mentions of "Senzing",
   or `LICENSE`.
 - **Never delete** dev files; report and let the maintainer decide.
+- **Never report a retrofit as done on an unrun suite.** `tests/` cannot come back
+  from public, so the copy routinely moves prose out from under the assertions that
+  quote it. Step 5 is the only thing that catches it.
 - **Never pull governance** into dev.
 - **Don't guess the source.** If the public repo isn't at the default path and
   none was given, ask rather than retrofitting from somewhere uncertain.

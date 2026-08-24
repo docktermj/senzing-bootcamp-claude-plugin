@@ -8,8 +8,8 @@ narrative even though the session continues. When a bootcamp is active this hook
   2. emits a short reminder so the post-compaction guide keeps
      docs/progress/recap_checkpoint.md current at each step.
 
-Non-blocking. Cross-platform: invoked in exec form (``python3 <path>``) so no shell
-is required on any platform (INV-052).
+Non-blocking. Cross-platform: invoked as a ``type: command`` hook whose ``command`` names the
+interpreter and this script, quoted (``python3 "<path>"``), per INV-052.
 """
 import sys
 

@@ -23,13 +23,13 @@ what step 3 (`map_fields`) is for. Step 3's advance schema offers no way to intr
 `schema_mappings` entries are keyed to schemas fixed at step 2, and the server validates
 `FIELD INTEGRITY` and `COMPLETE MAPPING` against them.
 
-So honouring the discovery requires **`action='back'`** to step 2, re-planning with the embedded
+So honoring the discovery requires **`action='back'`** to step 2, re-planning with the embedded
 master, and re-advancing. `action='back'` **is** named in the plugin — `phase2-data-mapping.md:136`
 lists all five valid actions — but **nothing anywhere says when to use it.** The only "go back"
 guidance in the file concerns step 4's `rework_*` verdicts and the quality gate.
 
 **The failure is silent, and it discards a bootcamper's decision.** A guide at step 3 that
-recognises the entity has two exits, and both are wrong:
+recognizes the entity has two exits, and both are wrong:
 
 - **Try to express it at step 3** → the server rejects it, and the rejection is about field
   integrity rather than about planning, so the cause is not obvious from the message.
@@ -38,7 +38,7 @@ recognises the entity has two exits, and both are wrong:
 
 The second is the dangerous one. **Observed live**: in a phase-3 walk the bootcamper was shown the
 choice for `Lender` — 239 distinct banks, *"Zions Bank"*, *"Western Alliance Bank"*, *"Bank of
-America, National Association"* — and chose *"make each lender its own organisation record"*. There
+America, National Association"* — and chose *"make each lender its own organization record"*. There
 is no instruction in Module 5 that lets a guide carry that out, and the path of least resistance
 silently converts it to `payload`, which is the answer the bootcamper explicitly did not pick. A
 guide that assumes an answer the bootcamper gave differently is precisely what **INV-007** forbids.
@@ -75,7 +75,7 @@ offline), and a prose reader sees a complete, internally consistent ladder.
    Name it as the sanctioned route, not a failure.
 
 3. ⛔ **Forbid the silent downgrade.** A secondary entity that the bootcamper asked to model MUST
-   NOT be quietly mapped to `payload`. If it will not be modelled — because the bootcamper declines,
+   NOT be quietly mapped to `payload`. If it will not be modeled — because the bootcamper declines,
    or because going back is not possible — say so and record it in the registry, so the decision is
    visible rather than inferred from its absence (INV-007, INV-012).
 
@@ -89,7 +89,7 @@ offline), and a prose reader sees a complete, internally consistent ladder.
       the tool requires (`RECORD_ID`, `REL_ANCHOR`, parent `REL_POINTER`). Verified by opening it.
 - [ ] It states the `action='back'` trigger for a step-3 discovery, as the sanctioned route.
 - [ ] It ⛔-forbids silently downgrading a bootcamper-chosen secondary entity to `payload`, and
-      requires the outcome be recorded when it is not modelled.
+      requires the outcome be recorded when it is not modeled.
 - [ ] The trade-off is stated in both directions at the point the choice is offered.
 - [ ] A test asserts all three: `embedded_master` is documented, `back` has a stated trigger, and the
       silent-downgrade prohibition is present. **Not vacuous:** it names the file and fails if any
@@ -160,7 +160,7 @@ argument (**preferred** — it drives constrained decoding)"*.
 
 **A client that follows the tool's preferred path cannot model an embedded entity.** That is an
 upstream defect on top of the plugin gap, and it makes the plugin-side fix strictly larger than
-proposed above: honouring the bootcamper's choice requires **going back to step 2 *and* dropping to
+proposed above: honoring the bootcamper's choice requires **going back to step 2 *and* dropping to
 the legacy payload shape**, neither of which Module 5 mentions. Add to the Proposed change:
 
 5. **State that `embedded_master` requires the legacy `entity_plan` shape**, sent as `data` rather

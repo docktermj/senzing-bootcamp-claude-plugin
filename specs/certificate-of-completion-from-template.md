@@ -22,7 +22,7 @@ recipient's name, a three-line citation, and a `DATE COMPLETED` / `ISSUED BY` si
 flanking an award seal.
 
 The shipped certificate looks nothing like it: a navy-and-ember double border around
-centred Helvetica, an italic footer, and a `Modules completed` label — visibly the weakest
+centered Helvetica, an italic footer, and a `Modules completed` label — visibly the weakest
 page of the recap, and the one page a bootcamper detaches, prints and shows to other
 people.
 
@@ -30,10 +30,10 @@ people.
 
 `plugins/senzing-bootcamp/scripts/generate_recap_pdf.py`:
 
-- `_render_certificate` hard-codes its own design: two nested `rect` borders, five centred
+- `_render_certificate` hard-codes its own design: two nested `rect` borders, five centered
   `cell` calls at fixed `y` offsets, and two bottom-anchored italic attribution lines.
 - `_stdlib_certificate_stream` (INV-066's fallback) hard-codes a *second*, different design
-  — a navy border plus a stack of centred lines — with its own magic offsets. The two
+  — a navy border plus a stack of centered lines — with its own magic offsets. The two
   renderers share only the strings, so nothing keeps their layouts in step beyond
   INV-126's version line.
 - Neither renderer draws the template's band, card, seal or signature blocks, and the only
@@ -46,12 +46,12 @@ people.
 
 Lay both renderers out from one set of geometry constants measured off the template:
 
-- Millimetre constants on landscape A4 for the band, card, baselines, signature blocks and
+- Millimeter constants on landscape A4 for the band, card, baselines, signature blocks and
   seal, shared by the fpdf2 renderer and the stdlib fallback, so the fallback becomes a
   plainer *rendering* of one design rather than a second design (INV-066/INV-126).
 - Palette strictly from `brand_tokens` (INV-081): the band mirrors the brand's own
   `EMBER_GRAD_START`/`EMBER_GRAD_END` pair rather than hexes sampled off the template, and
-  the muted label grey is *derived* from body ink the way `TABLE_HEAD_FILL` is derived —
+  the muted label gray is *derived* from body ink the way `TABLE_HEAD_FILL` is derived —
   no new token, nothing invented.
 - Repaint the shipped light wordmark's white letterforms in dark ink at render time, so
   one asset serves both the dark cover band and the white certificate card and they cannot

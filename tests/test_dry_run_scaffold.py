@@ -2,7 +2,7 @@
 
 `.claude/skills/dry-run/` documents a methodology, and its `scaffold_project.py`
 builds the fixture that methodology depends on. A fixture that quietly stops
-exercising a path turns the whole exercise into theatre — and that is not
+exercising a path turns the whole exercise into theater — and that is not
 hypothetical: the scaffold's **first version had exactly that bug**. Its recap's
 longest module chip was 41 characters against a 46-character clip threshold, so it
 reproduced the precise blind spot the skill documents as the reason a renderer crash
@@ -134,7 +134,7 @@ class TestSeededModeExercisesTheHonorPath(unittest.TestCase):
         )
 
     def test_the_seeded_verbosity_is_the_one_with_a_visible_effect(self):
-        """`minimal` suppresses output, so honouring it wrongly is obvious in a walk."""
+        """`minimal` suppresses output, so honoring it wrongly is obvious in a walk."""
         self.assertIn("preset: minimal", self.scaffold.SEEDED_PREFERENCES)
 
     def test_the_phase_three_doc_prescribes_the_seeded_walk(self):

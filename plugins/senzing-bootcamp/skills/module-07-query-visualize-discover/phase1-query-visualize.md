@@ -117,12 +117,17 @@ complete and only the human-readable labels are missing, so it reads as unnamed 
 than as a flags problem. OR the flag in explicitly:
 `SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
 (`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
-`why_record_in_entity` — verified 2026-07-31). ⛔ **`SZ_INCLUDE_MATCH_KEY_DETAILS` was in this
-expression and has been removed: it `depends_on` a relations flag and writes into
-`RELATED_ENTITIES[]`, so on a why call it adds nothing.** The CONFIRMATIONS and DENIALS named
-above are already there without it — they are part of `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`
-(`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
-2026-08-14). Adding a flag that changes nothing is how a wrong field name survives review. The same holds for
+`why_record_in_entity` — verified 2026-07-31). ⛔ **Add `SZ_INCLUDE_MATCH_KEY_DETAILS` together
+with a relations flag when the match-key breakdown is wanted.** `WHY_KEY_DETAILS` is documented on
+the why response and **no flag is documented as populating it**
+(`get_sdk_reference(topic='flags', filter='why_records')`, server 1.32.9, 2026-08-17: 29 flags
+apply, none names it) — but on **Senzing SDK 4.3.4** it was **absent** without that flag and
+**present** with it plus `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, and on **4.3.2** absent without it
+(observation-only, 2026-08-16; INV-080/INV-149). ⚠️ **This flag was previously removed from this
+expression on the grounds that the breakdown is "already there without it" — that was wrong**: the
+measurement it rested on passed the flag in *both* arms, so its contribution was never varied. The
+full statement, with both builds and the reason a version floor cannot be read from them, is in
+`phase2-discover.md` step 4b.3. The same holds for
 `SZ_WHY_RECORDS_DEFAULT_FLAGS` and `SZ_WHY_RECORD_IN_ENTITY_DEFAULT_FLAGS`, both documented
 as equivalent to `SZ_INCLUDE_FEATURE_SCORES` (each **checked individually**, not inferred from
 its sibling — INV-169).
@@ -194,6 +199,14 @@ field from the same response object reads fine, suspect the **flags** before the
 `RECORD_SUMMARY[]` correctly while `RECORDS[]` comes back empty is that signature exactly. Fix it
 by OR-ing in the missing sub-flag, not by switching to a different field and not by re-verifying a
 name that is already correct.
+
+⛔ **One exception to that discriminator, because it points the wrong way there: a container the
+schema documents can be PRESENT and EMPTY.** Then the key exists, the path is confirmed, a sibling
+reads fine — every signal the rule uses to say "suspect the flags" — and adding flags cannot fill an
+array the engine had nothing to put in. Distinguish **absent** (the key is missing → cause 2, flags)
+from **present but empty** (the key is there with no members → cause 3, data). The worked instance is
+`WHY_KEY_DETAILS.CONFIRMATIONS[]`, whose three states and fallback are stated once in
+`phase2-discover.md` step 4b.3 (INV-179).
 
 Verify against `response_schemas` or a dumped raw response before rendering. Never render a blank
 value as though it were a real result — say "no value returned for X" so the failure is visible.
@@ -286,10 +299,23 @@ When presenting results from `how_entity` or the `why_*` methods (`why_entities`
 presentations are built from (it applies to all four methods; `get_sdk_reference(topic='flags',
 filter='why_records')`, server 1.32.9, 2026-08-14). If the query used default flags, note what
 additional detail feature scores would add. ⛔ **For a why response the match-key breakdown is
-read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, not from a `MATCH_KEY_DETAILS` field and
-not by adding `SZ_INCLUDE_MATCH_KEY_DETAILS`** — that flag targets `RELATED_ENTITIES[]` and needs
-a relations flag, so on a why call it has nothing to attach to and a parser written for it renders
-blank with no error (INV-179; see `phase2-discover.md` step 4b.3, which states this once).
+read from `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS`, never from a `MATCH_KEY_DETAILS` field** —
+that field name is the one this module already corrected, and it is still wrong here.
+⛔ **And the rename is the whole `MATCH_*` family, not just that details object: its two sibling
+scalars are `WHY_RESULTS[].MATCH_INFO.WHY_KEY` and `WHY_RESULTS[].MATCH_INFO.WHY_ERRULE_CODE`.**
+`MATCH_KEY` and `ERRULE_CODE` are the **entity-side** names — real, but on
+`RESOLVED_ENTITY.RECORDS[]` and `RELATED_ENTITIES[]`. Carrying them across from a `get_entity` or
+export parser is the habit that produces the error, and all three fields render blank rather than
+raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` —
+the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
+2026-08-21).
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same call returns those three names on the entity side under RESOLVED_ENTITY.RECORDS[] and RELATED_ENTITIES[], which is what makes the absence a rename rather than a gap (absence negative) — server 1.33.0, 2026-08-21 -->
+⚠️ **Getting
+`WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
+flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
+(observation-only). If it is missing for the flags in force, say so explicitly and fall back to
+`FEATURE_SCORES` rather than rendering an empty section — the full statement is in
+`phase2-discover.md` step 4b.3, which states it once (INV-179).
 
 **Checkpoint:** write step 3a.
 
@@ -368,9 +394,64 @@ Based on the assessment — evidence first, wording second:
   entities. Quality looks good — let's proceed to visualizations."
 - **Marginal:** "I see some potential issues. Here are the specific entities to review." (Show the
   sampled entities and pairs with their match keys, then ask whether to proceed or iterate.)
-- **Poor:** "The results suggest mapping improvements would help." (Show the entities or possible-match
-  pairs that demonstrate it — naming the match key pattern the near-misses share, since that is what
-  points at the unmapped feature — then give recommendations and offer the Module 5 feedback loop.)
+- **Poor:** a high possible-match rate is a **finding, not a verdict on the mapping.** Show the
+  possible-match pairs and name the match-key pattern they share, then run the test below before
+  saying anything about mapping. ⛔ **The band says to look hard; it does not say what you will
+  find.**
+
+⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5 (INV-264).** This mirrors the
+match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
+"Report a high-share cross-source suppressor as a FINDING, never a pass/fail"), and for the same
+reason: the possible-match rate is driven mostly by things a remap cannot change — how populated each
+field is in the source, how common the names are, and how large the dataset is. On the
+generated-scenario path the plugin **creates** those characteristics itself: INV-239 requires a source
+gapped into the 70-79% band, and gapped contact fields are the first thing that produces near-misses
+no remap can fix.
+
+**What the server actually says** (`reporting_guide(topic='evaluation', language='<chosen_language>')`
+— the call this step already makes above — server **1.33.0, 2026-08-21**), quoted rather than
+paraphrased, because the plugin used to assert what the server hedges:
+
+> **UNDER-MATCHING:** … **If many near-misses are concentrated on one match key pattern, this likely
+> indicates a mapping issue** (e.g., phone numbers not mapped).
+
+and, from the same response's evaluation anti-patterns:
+
+> if many near-misses share the same match key pattern, a feature is likely **unmapped or has data
+> quality issues**.
+
+Three things follow: the diagnosis is conditional on **concentration**, not on the rate; it is
+**likely**, not certain; and it has **two** causes, of which only the first is mapping-actionable.
+
+⛔ **Run the sanity comparison first — it is the discriminator, and this step already has both
+numbers.** The same response prescribes it: *"Compare compression rates against source profiler
+uniqueness stats from the data profiling step. … If profiler showed 30% duplicate names but
+compression is only 2%, likely under-matching."* Compare against Module 5's profile for that source.
+A dataset that genuinely contains many similar people is not a mapping defect.
+
+Then route on what the evidence shows:
+
+1. **Mapping-actionable** — near-misses concentrated on one match-key pattern that a mapping change
+   would affect. Report it, give recommendations, and offer the Module 5 feedback loop below.
+2. **Not mapping-actionable** — the cause is a data characteristic. **Say plainly that remapping
+   would not change it**, record the finding, and continue to **3c**. Two causes are common enough to
+   name so they are recognized rather than rediscovered:
+   - **Source field sparsity** — a correctly-mapped field whose values are simply absent from the
+     source. Check the **populated share per field**: Module 5 already measured it as `completeness`,
+     so read that figure rather than inventing a measurement.
+   - **Name-only collisions** in small or synthetic datasets, from a limited name pool. On a
+     generated scenario the plugin built that pool.
+3. **Could not determine** — say so, record it, and continue to **3c**. Do not guess in either
+   direction; an unsupported "mapping looks fine" is the same defect as an unsupported remap.
+
+⛔ **Outcomes 2 and 3 do NOT ask the Module 5 question** — they end by continuing into 3c, whose
+pinned visualization offer closes the turn, exactly as the **Acceptable** branch already does. Do not
+invent a question for a branch that has none (the unsatisfiable-instruction class
+`module5-quality-gate-demands-a-question-its-best-branch-lacks` records).
+
+⛔ **A non-actionable Poor finding still goes in the module recap.** It is a real result about the
+Bootcamper's data — "48.9% possible matches, driven by 46% phone population in one source, not by the
+mapping" is worth keeping — and a finding that routed nowhere must not be silently discarded.
 
 **Module 5 feedback loop (when quality is poor or the bootcamper requests iteration):**
 
@@ -432,6 +513,15 @@ and the `../module-03b-truthset-visualization/visualization-api-reference.md` co
 bootcamper's chosen programming language (INV-090), pointed at the bootcamper's loaded data instead
 of the Truth Set. It MUST:
 
+- ⛔ **Color each graph node by the entity's whole source SET, not by its first source** — see the
+  contract's "Coloring graph nodes". ⚠️ **This is the rule the Truth Set cannot test.** Most Truth
+  Set entities sit in one source, so first-source coloring looks correct there and only misreports
+  on the bootcamper's own data: one run rendered **1,951 cross-source entities in a single-source
+  color**, under a legend implying they were single-source, and the headline finding of the whole
+  bootcamp — the same vendor found in more than one system — was invisible in the tab built to show
+  it. Nothing looked broken. This step's own warning applies to itself here: *the bootcamper cannot
+  tell a bad default from bad data*, so check what the colors encode rather than assuming the
+  reference got it right.
 - Serve/render every applicable tab from that contract — Entity Graph, Merge Statistics, Match
   Keys, Feature Scores, Cross-Source, and Search / Probe. That is the whole set: **six** tabs. Tabs
   whose data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys /
@@ -481,6 +571,37 @@ of the Truth Set. It MUST:
   `{name}` = `results_visualization`. Capture **one image per tab** from the running server
   (`--url http://localhost:<port>`, with `--query` so Search / Probe shows real results) — not
   several shots of one tab — and derive every caption from the opened image and its tab label.
+
+  ⛔ **The capture tool is bundled — run it, do not assess whether automation exists.**
+  `${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py` (INV-185; skill-relative fallback
+  `../../scripts/capture_screenshots.py`, INV-252). It tries several headless backends itself and
+  writes both the PNGs and a `<name>-tabs.json` coverage manifest that graduation reads:
+
+  ```bash
+  python3 "${CLAUDE_PLUGIN_ROOT}/scripts/capture_screenshots.py" \
+    --url "http://localhost:<the port 3b actually bound>" \
+    --name results_visualization --tabs all --query "<a name present in the loaded data>"
+  ```
+
+  ⛔ **"No headless capability" is a conclusion the helper reaches and reports, never one you reach
+  first.** Enter the silent-skip path on its **exit code** — it distinguishes its reasons — and never
+  on an assumption that browser automation is unavailable. A guide that skipped capture here on that
+  assumption, without running this script, lost twelve recap images; the same script then captured
+  6 of 6 tabs first try against plain headless Chrome. The procedure (backends, exit codes,
+  `--single`, the caption rule) stays stated once in `module-completion.md` — this is the tool's
+  identity, not a copy of its manual (INV-179).
+
+  ⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
+  "no headless capability" from "no requested tab exists" — which is exactly why its exit code is
+  the authority here and your own assessment is not.
+
+  ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
+  filename-discovery order.** The ordering authority is the tab table in
+  `../module-03b-truthset-visualization/visualization-api-reference.md`, whose row order *is* the
+  order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+  ⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
+  captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
+  having nothing in it (INV-123).
 - ⛔ **If the visualization changes after the snapshot is written — a bootcamper request, a fix, a
   styling tweak — rebuild the snapshot and re-capture its screenshots.** The snapshot is the retained
   artifact and the one the recap embeds; the server is disposable. A change present only on the
@@ -525,9 +646,24 @@ and record it in the `m7_visualizations` checkpoint below, with the port it boun
 signal that pid and confirm the port is free before saying the server is stopped. `pkill -f <script name>` matches the invoking shell's own
 command line and signals the caller, and this module's server is generated in the bootcamper's
 chosen language (INV-090), so there is no script name to match on anyway. When the pid is missing,
-find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). Full rule:
+find the listener by port (`lsof -ti:<port>`, or `Get-NetTCPConnection -LocalPort <port>`). ⛔ **On
+the `docker` path neither `lsof` nor a `kill` binary exists in the container (INV-223)** — signal through the
+shell builtin using the pid INV-223 required the launch to record, and probe the port with `python3`, and treat the port's answer as the observation
+rather than the kill's exit status. Full rule:
 `../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" →
 "Identifying the server process".
+
+⛔ **A port that binds is not a port that was free, so never read a successful start as proof.**
+The server the bootcamper writes here MUST bind the loopback interface explicitly and MUST confirm,
+before the URL is handed over, that the process answering `/api/stats` is the one just started —
+both required by the any-language contract (`visualization-api-reference.md` → "Binding the port"
+and "Confirming the server that answers is yours"). ⚠️ **A wildcard bind coexists with an existing
+loopback listener on the same port:** both succeed, two processes listen, and either may answer.
+Observed 2026-08-17 — a three-week-old server from an unrelated project held the port, this
+module's server bound alongside it, and only luck decided which one the browser reached. The other
+outcome shows the bootcamper **a stranger's dataset under their own project's title**, with every
+figure wrong and the recap screenshots capturing it. If the identity check disagrees, stop and
+report the conflict; do not hand over the URL with a warning attached.
 
 **Checkpoint:** write step 3c to `config/bootcamp_progress.json`, recording `m7_visualizations`
 (offered/accepted, the artifact path, and — while the server is up — the port and pid it was started

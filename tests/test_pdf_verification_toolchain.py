@@ -17,7 +17,7 @@ from `specs/pdf-layout-verification-without-poppler.md` and reached the skill, I
 this file — and no test could catch it, because no suite can check what is installed on a
 platform it is not running on, and this repo's CI runs on Linux, where it happens to hold.
 The macOS grouping is now asserted below so the habitual "Linux / macOS" pairing cannot be
-reintroduced silently. That assertion is the only defence available; it checks what the
+reintroduced silently. That assertion is the only defense available; it checks what the
 guidance *says*, not what any machine *has*.
 
 The same session shipped a recap PDF missing all six of the bootcamper's screenshots,

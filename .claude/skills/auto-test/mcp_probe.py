@@ -127,7 +127,7 @@ _ENUM_CUES = (
 # Parameters that are free text, not closed sets. Listing them explicitly keeps the
 # conformance check from flagging `version='current'` or `filter='why_entities'`,
 # which are legitimate and unbounded. Anything absent from PROSE_VALUES is skipped
-# anyway; this set exists to document the judgement rather than leave it implicit.
+# anyway; this set exists to document the judgment rather than leave it implicit.
 FREE_TEXT_PARAMS = frozenset({"version", "filter", "query", "source", "email",
                               "firstname", "lastname", "message", "how_heard",
                               "file_path", "filename", "repo", "scale"})
@@ -230,7 +230,7 @@ def _digest(value):
 
 
 def _normalize_schema(schema):
-    """Order-stabilise a schema so a reordering is not reported as a change."""
+    """Order-stabilize a schema so a reordering is not reported as a change."""
     if isinstance(schema, dict):
         out = {}
         for key in sorted(schema):
@@ -414,7 +414,7 @@ def accepted_values(tool_meta, param):
     """
     # Values confirmed accepted by an actual call outrank everything, and are
     # unioned in rather than replacing: `get_sample_data` enumerates four datasets
-    # and also honours `dataset='list'`, so neither source alone is the whole set.
+    # and also honors `dataset='list'`, so neither source alone is the whole set.
     extra = set((tool_meta.get("verified_values") or {}).get(param) or [])
     probed = (tool_meta.get("probed_values") or {}).get(param)
     if probed and probed.get("mode") == ENUMERATED and probed.get("values"):
@@ -430,7 +430,7 @@ def record_verified_extras(live, url, timeout=30):
 
     Run at baseline time so the offline suite can reuse the verdict. Without this,
     an offline conformance check has no way to distinguish an invented value from an
-    undocumented-but-honoured one like `dataset='list'`, and reports the plugin's
+    undocumented-but-honored one like `dataset='list'`, and reports the plugin's
     correct text as BREAKING.
     """
     tools = live.get("tools", {})
@@ -602,9 +602,9 @@ _KWARG = re.compile(r"\b([a-z_]+)='([A-Za-z0-9_.#-]+)'")
 def verify_literal(url, tool, param, value, timeout=30, _cache={}):
     """Ask the server directly whether this exact value is accepted.
 
-    The rejection message is not a complete catalogue. ``get_sample_data`` answers a
+    The rejection message is not a complete catalog. ``get_sample_data`` answers a
     bad dataset with "Available datasets: las-vegas, london, moscow, truthset" and
-    yet also honours ``dataset='list'``, an undocumented discovery sentinel that
+    yet also honors ``dataset='list'``, an undocumented discovery sentinel that
     appears in no list anywhere. Inferring from the enumeration alone therefore
     produces a confident, wrong BREAKING finding against correct plugin text.
 

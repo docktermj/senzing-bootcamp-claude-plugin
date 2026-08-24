@@ -115,7 +115,7 @@ catch.
 ## Source
 
 - Feedback: none — dry run 2026-08-13. The defect the convention failed to catch was found in phase 3;
-  this spec generalises it at the maintainer's request. `Source: self-observed (assistant retrospective)`
+  this spec generalizes it at the maintainer's request. `Source: self-observed (assistant retrospective)`
 - Priority: High — it is the mechanism by which a whole class of false claim passes review, and the
   class has now produced three instances (`senz7221-now-names-its-own-remedy`,
   `explain-error-code-now-owns-senz7426`, and the license-variable error), the third one reaching a

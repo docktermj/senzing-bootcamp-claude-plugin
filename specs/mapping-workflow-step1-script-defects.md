@@ -45,8 +45,8 @@ until fields from the lost schema come back blank.
 **C — the profiler cannot read a headerless CSV, and the recommended catalog ships one.**
 `samples/raw/ofac-sdn/sdn-sample.csv` from the free-data repository is headerless; its own README
 documents 12 positional columns. The profiler assumes a header row, so it consumes the first data
-row as column names: **one sanctioned party disappears** and every column is mislabelled with a value
-from that row. A mislabelled profile does not fail — it produces a confident, wrong mapping.
+row as column names: **one sanctioned party disappears** and every column is mislabeled with a value
+from that row. A mislabeled profile does not fail — it produces a confident, wrong mapping.
 
 A secondary observation from the same file: `-0-` is OFAC's null sentinel and, being a value, makes
 the profiler report **100% population on all 12 columns** when 8 carry no information. Any
@@ -94,7 +94,7 @@ do get fixed.
 - [ ] The headerless-CSV limitation and its headered-copy workaround appear **where the profiler is
       run**, not only in a limitations list elsewhere (INV-183).
 - [ ] The sentinel-token caveat is stated wherever the profile's population figures could feed a
-      completeness judgement, cross-referencing INV-128.
+      completeness judgment, cross-referencing INV-128.
 - [ ] Each of the three is marked upstream-owned with a date, so a later run can retire it when the
       server fixes it — the shape `:342` already uses.
 - [ ] No forked copy of `sz_schema_generator.py` ships (INV-173).
@@ -129,7 +129,7 @@ do get fixed.
 - Upstream: **sent 2026-07-31 via `submit_feedback` (`category='bug'`, anonymous)**, with the
   maintainer's explicit approval. All three defects in one report — one tool, three concrete
   reproductions with the per-source counts, the colliding `-o` paths, and the headerless-CSV
-  mislabelling plus the sentinel-token observation. Source names were reduced to A–D and no machine
+  mislabeling plus the sentinel-token observation. Source names were reduced to A–D and no machine
   paths, employer details or record values were included. Their entries had recorded "offered at
   graduation", i.e. never actually sent, so this is a first submission and not a re-file. The
   submission is anonymous, so no reply is possible; a conversation would need
@@ -146,7 +146,7 @@ do get fixed.
 **The three limitations went to two different steps, not one block.** The spec grouped them because
 they share a delivery channel, a remedy and a failure signature — which justified one *spec*, and
 would have been wrong for one *location*. INV-183 puts a rule where it fires: the multi-file
-output-path collision and the headerless-CSV mislabelling are profiler-time, so they sit at
+output-path collision and the headerless-CSV mislabeling are profiler-time, so they sit at
 `### 9. Profile`; the field-count warning is emitted by workflow step 3, so it sits at `### 11. Map`.
 A reader meeting the counter is not reading the profile step, and vice versa. The tests assert
 *placement* as well as presence, because presence alone was already satisfied by the limitations
@@ -154,7 +154,7 @@ block elsewhere in the same file.
 
 **The sentinel-token observation was placed by consequence rather than by topic.** The spec called
 it a "secondary observation" of the headerless-CSV entry. It is really about population percentages
-feeding a completeness judgement, so it sits with the profile output where those percentages are
+feeding a completeness judgment, so it sits with the profile output where those percentages are
 reported, cross-referencing INV-128 — which governs the same confusion one layer downstream. Filing
 it under "headerless CSV" would have hidden it from every source that is not headerless, and the
 `-0-` sentinel has nothing to do with headers.

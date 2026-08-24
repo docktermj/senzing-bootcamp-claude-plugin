@@ -100,7 +100,7 @@ class TheRateLimitCaseIsNamedAndHandled(unittest.TestCase):
 
 
 class TheCountComparisonIsPrescribed(unittest.TestCase):
-    """"Plausible record count" was a judgement; the decisive figure was already in hand."""
+    """"Plausible record count" was a judgment; the decisive figure was already in hand."""
 
     def test_the_expected_count_comes_from_the_mcp_source_listing(self):
         self.assertRegex(canonical_block(), r"source='list'\)` returns `record_count` per source")
@@ -115,7 +115,7 @@ class TheCountComparisonIsPrescribed(unittest.TestCase):
         self.assertRegex(block, r"(?i)expect exactly `record_count`")
 
     def test_plausibility_is_explicitly_rejected(self):
-        self.assertRegex(canonical_block(), r"(?i)\"plausible record count\" is a judgement")
+        self.assertRegex(canonical_block(), r"(?i)\"plausible record count\" is a judgment")
 
     def test_data_file_validation_requires_a_match_not_a_plausibility_call(self):
         self.assertRegex(flat(MODULE_04), r"(?i)a record count that \*\*matches\*\* it rather than one that merely looks plausible")

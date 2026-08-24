@@ -14,12 +14,12 @@ invariants are things that must **ALWAYS** be true:
 > … on structural mismatch or retention below its stated minimum — write no output file,
 > emit no success line, and exit non-zero.
 
-INV-110 reconciles the *retention* half itself — *"A recognisable-but-incomplete input stays
+INV-110 reconciles the *retention* half itself — *"A recognizable-but-incomplete input stays
 non-blocking (warn, render, exit 0), so an imperfect recap still produces its PDF
 (INV-066)"* — but says nothing about the **structural mismatch** half, which is the case
 where no file is written. Neither invariant cites the other.
 
-**The shipped behaviour is INV-110's.** `generate_recap_pdf.py:3264` comments *"Audit BEFORE
+**The shipped behavior is INV-110's.** `generate_recap_pdf.py:3264` comments *"Audit BEFORE
 rendering. A structurally wrong input must never reach the …"*, and
 `tests/test_recap_pdf_guard.py:130` (`test_names_the_structural_mismatch`) pins it. So
 INV-048's "always" is the text that does not match the code.
@@ -81,7 +81,7 @@ and INV-173. Scope it, do not remove it.
 - [ ] INV-048's non-blocking reading is preserved — the invariants that rely on it
       (INV-129, INV-157, INV-163, INV-173) still resolve to a true statement. Each is checked
       by opening it, not inferred (INV-182).
-- [ ] The retention half is untouched: a recognisable-but-incomplete recap still warns,
+- [ ] The retention half is untouched: a recognizable-but-incomplete recap still warns,
       renders, and exits 0.
 - [ ] No invariant is deleted or renumbered; both edits are dated in-place clarifications.
 - [ ] `tests/test_recap_pdf_guard.py` still passes unchanged — this spec edits the ruleset,

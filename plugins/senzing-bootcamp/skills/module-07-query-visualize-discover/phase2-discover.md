@@ -125,17 +125,70 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      `SCORE_BUCKET`. That is the path to parse for step 5
      (`get_sdk_reference(topic='response_schemas', filter='why_records')`, server 1.32.9,
      2026-08-14).
-   - ⛔ **Do not reach for `SZ_INCLUDE_MATCH_KEY_DETAILS` here.** The why methods accept it, but
-     what it populates is a `MATCH_KEY_DETAILS` object on **each related entity**
-     (`response_paths: RELATED_ENTITIES[]`), and it `depends_on` one of the relations flags — so
-     it belongs to relationship inspection in step 4d, not to a why demonstration comparing two
-     records. A parser written for `MATCH_KEY_DETAILS` in a why response finds nothing and
-     renders blank, with no error: exactly the failure "Defensive parsing" in `ground-rules.md`
-     exists for. This is INV-179's second cause of a blank field — a correct field name the
-     flags in force do not populate — so confirm the flag that populates the field you intend
-     to read, not merely that the name is spelled right.
-     (`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')`,
-     server 1.32.9, 2026-08-14.)
+   - ⛔ **Its two sibling scalars are renamed the same way: `WHY_KEY` and `WHY_ERRULE_CODE`.**
+     `MATCH_INFO` on a why response carries exactly four scalar-or-object members —
+     `MATCH_LEVEL_CODE`, `WHY_ERRULE_CODE`, `WHY_KEY` and `WHY_KEY_DETAILS` — beside
+     `CANDIDATE_KEYS`, `DISCLOSED_RELATIONS` and `FEATURE_SCORES`. `MATCH_KEY` and `ERRULE_CODE` are
+     the **entity-side** names, carried on `RESOLVED_ENTITY.RECORDS[]` and `RELATED_ENTITIES[]`
+     instead. So the rename is the whole `MATCH_*` family, not just the details object: a parser
+     carried across from `get_entity` or from an export reads all three fields off the wrong names
+     and each one renders blank rather than raising
+     (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')`,
+     server **1.33.0, 2026-08-21** — that enumeration is the complete member list it returned).
+   - ⚠️ **`CONFIRMATIONS[]` has a third state, and it is neither of the two above: present and
+     empty.** Observed on every `why_records` call of a 2026-08-18 run — rules `SNAME_SSTAB` and
+     `SF1_PNAME_CFF`, `SZ_INCLUDE_FEATURE_SCORES` in force — while `how_entity`'s
+     `MATCH_KEY_DETAILS.CONFIRMATIONS[]` populated on the same entity (observation-only,
+     INV-080/INV-149: no MCP route reports whether a given rule produces confirmations).
+     **An empty array is a data/rule outcome, not a flag problem and not a parse error** — do not add
+     flags for it and do not re-verify a path `response_schemas` confirms. **Fall back to
+     `FEATURE_SCORES`**, which carries the same evidence (the feature, its score, its bucket) and
+     populated normally on that run, so step 5's demonstration completes instead of being abandoned.
+     Say that this pair's match key has no per-feature confirmation detail *on this data* and show the
+     feature scores — never *"no value returned"*, which reads as a failure, and never an empty
+     section rendered as a result. ⚠️ **Do not reconcile this with the absent case below into one
+     absolute** (INV-169): the two were seen under different data, rules and SDK builds, and both are
+     recorded with their conditions.
+   - ⛔ **`WHY_KEY_DETAILS` may need `SZ_INCLUDE_MATCH_KEY_DETAILS` to appear at all — pass it,
+     with a relations flag.** Two separate things are known here and neither governs the other
+     (INV-169); read both before choosing flags.
+
+     **What the server documents** (`get_sdk_reference(topic='flags', filter='why_records')` and
+     `filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server 1.32.9, 2026-08-17): `WHY_KEY_DETAILS` is a
+     real path on the why response, and **no flag is documented as populating it** — all 29 flags
+     that apply to `why_records` name other `response_paths`, and `SZ_INCLUDE_MATCH_KEY_DETAILS`'
+     own documented effect is a `MATCH_KEY_DETAILS` object on **each related entity**
+     (`RELATED_ENTITIES[]`). So the server attributes the field to nothing.
+
+     ⚠️ **What was observed, engine-side — observation-only, not an MCP claim** (INV-080/INV-149):
+     on **Senzing SDK 4.3.4**, `WHY_KEY_DETAILS` was **absent** from `WHY_RESULTS[].MATCH_INFO`
+     with `SZ_INCLUDE_FEATURE_SCORES` alone and with `+ SZ_ENTITY_INCLUDE_ENTITY_NAME`, and
+     **present** once `SZ_INCLUDE_MATCH_KEY_DETAILS | SZ_ENTITY_INCLUDE_ALL_RELATIONS` was added —
+     returning `+NAME score 95 (CLOSE)` and `+ADDRESS score 100 (SAME)` in `CONFIRMATIONS[]`
+     (2026-08-16). A second run on **SDK 4.3.2** also found it absent without the flag
+     (`SZ_WHY_RECORDS_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`; the raw `MATCH_INFO` keys
+     were `CANDIDATE_KEYS, DISCLOSED_RELATIONS, FEATURE_SCORES, MATCH_LEVEL_CODE, WHY_ERRULE_CODE,
+     WHY_KEY`). ⛔ **This is NOT a version floor:** the with-flag arm was never run on 4.3.2, so
+     the evidence is equally consistent with "the flag is required on both" and says nothing about
+     a boundary. Do not write one.
+
+     **So: pass `SZ_INCLUDE_MATCH_KEY_DETAILS` together with a relations flag** — its documented
+     `depends_on` still holds — and treat the breakdown as conditional rather than guaranteed.
+
+     ⚠️ **This corrects a directive that used to forbid the flag here**, on the grounds that the
+     breakdown was "already there without it". That claim came from a measurement whose **two arms
+     both passed the flag**, so the flag's contribution was never varied and never observed; a
+     negative about a flag needs an arm in which that flag is **absent**. Following the old ⛔
+     produced a why demonstration with no match-key breakdown at all, and — because every other
+     analytical field rendered — it read as *"this SDK doesn't provide that detail"* rather than
+     *"a flag is missing"*. That is INV-179's silent-blank shape, reached by obeying the step's own
+     instruction.
+   - ⛔ **Dump `MATCH_INFO`'s top-level keys before writing the parser, and never render an empty
+     section.** Print the keys you actually got; if `WHY_KEY_DETAILS` is not among them, say so
+     explicitly — *"match-key breakdown not returned by this SDK for these flags"* — and fall back
+     to `FEATURE_SCORES`, which carries the same per-feature evidence and was fully populated in
+     both runs above. An omitted section is indistinguishable from a feature the engine does not
+     have; a stated absence is what turned this defect up in the first place.
    - ⚠️ **Confirm each flag's type, not only its name.** Where a binding takes a *collection* of
      flags, a composite constant may not belong to that collection's element type, and must then
      be passed as its members instead — `get_sdk_reference` lists those under `composite_members`
@@ -206,6 +259,28 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
    parsing it (INV-115). Explain: "I'm using
    SZ_INCLUDE_FEATURE_SCORES so we can see the scoring at each construction step. This shows
    how closely features matched each time a new record was added."
+
+   ⛔ **The two sides of a resolution step are `VIRTUAL_ENTITY_1` and `VIRTUAL_ENTITY_2`** —
+   objects, each carrying `.VIRTUAL_ENTITY_ID` and `.MEMBER_RECORDS[].RECORDS[].{DATA_SOURCE,
+   RECORD_ID}`. The similarly-named `INBOUND_VIRTUAL_ENTITY_ID` is a **string ID** on the step, not
+   the object, and its partner is `RESULT_VIRTUAL_ENTITY_ID`. **There is no
+   `CANDIDATE_VIRTUAL_ENTITY` at any depth.** (Verified via
+   `get_sdk_reference(topic='response_schemas', filter='how_entity')`, server 1.32.9, 2026-08-17.)
+
+   ⚠️ **Why the wrong pairing is reachable, and why the lookup above does not by itself prevent it.**
+   `INBOUND_…`/`CANDIDATE_…` *is* a real pairing in this very response — one level deeper, inside
+   `MATCH_INFO.FEATURE_SCORES.<FEATURE>[]`, as `INBOUND_FEAT_DESC` / `CANDIDATE_FEAT_DESC` (it
+   recurs in one further `MATCH_INFO` sub-object; see this module's API reference). Generalizing
+   that pairing **up** to the step level
+   lands on `INBOUND_VIRTUAL_ENTITY_ID`, which exists, so the name is not obviously wrong; its
+   invented partner `CANDIDATE_VIRTUAL_ENTITY` simply returns nothing. A parser built that way raises
+   no error and renders every step as `? joined ?` while the rule and match key beside them populate
+   correctly — the failure is silent and looks like missing data rather than a wrong key.
+
+   ⛔ **So a name-level lookup is not enough here: read the returned paths' TYPES, or dump one raw
+   step.** A wholly invented key is caught by the first lookup; a key that appears in the schema at a
+   different depth and type survives it. This is INV-115's dump-before-parse rule at the one place
+   where skipping the dump is most tempting, because the lookup appears to have confirmed the name.
 3. **Chronological narrative presentation:** present the How Analysis output as a chronological
    narrative of the entity's construction history:
    - each step where a new record was added,

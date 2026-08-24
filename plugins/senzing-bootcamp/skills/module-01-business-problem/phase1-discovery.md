@@ -34,7 +34,7 @@ never from an earlier turn's results. This is **presentation freshness**
 (`../bootcamp-onboarding/ground-rules.md` → "MCP-first invariant"): the gallery carries an MCP
 attribution line, and the attribution is only truthful for what a tool produced this turn. "Already
 retrieved a few turns ago" does not satisfy it. (The full pattern gallery is a
-later porting phase; that is why this step retrieves rather than reads from a shipped catalogue.)
+later porting phase; that is why this step retrieves rather than reads from a shipped catalog.)
 
 ⛔ **Query by SECTOR vocabulary, not by the category label.** This is the step's real work, and one
 generic query is not it: the documentation's own words are industry terms, so "entity resolution use
@@ -107,8 +107,21 @@ an MCP tool actually produced.
 
 👉 **Do any of these patterns match your situation?**
 
-If they pick one, use it as a template (pre-fill source types, suggest matching criteria,
-adapt to their context). If none fit, they can accept the Business Case Offer in Step 4.
+If they pick one, use it as a template — and ⛔ **pre-fill it from the `search_docs` response that
+supplied that gallery entry, never from what you know about the pattern (INV-080/INV-212).** The
+source types come from that entry's **typical sources** attribute, which the gallery already
+retrieved (see "Problem, goal and typical sources" above); the matching criteria come from the same
+entry's problem and goal wording. If the entry you presented did not carry typical sources — a
+`[Read More]` stub supplies none of the four attributes — **re-query with the documentation's own
+vocabulary before pre-filling anything**, and if it is still unreached, say so and ask the
+bootcamper for their sources rather than proposing a plausible list.
+
+⚠️ **This is the step where invention is least visible.** A pattern's typical sources are exactly
+the kind of detail that reads right when invented — "CRM, billing, support tickets" is plausible for
+almost any pattern — and Step 3 has already told the bootcamper the gallery is Senzing-sourced, so a
+guessed pre-fill inherits that attribution.
+
+If none fit, they can accept the Business Case Offer in Step 4.
 
 **Checkpoint:** write step 3.
 
@@ -142,9 +155,18 @@ bootcamper explicitly accepts option 3.)*
   Migration, Compliance, Marketing, Healthcare, Supply Chain, KYC, Insurance, Vendor MDM), and
   a non-empty definition of success. If a pattern was picked in Step 3, the category must match
   it. Decide CORD vs. synthetic data per Step 4b. **Validate invariants** before recording: at
-  least two distinctly named data sources, each with ≥1 record; the data is
-  mapping-complexity-rich (needs at least one transformation when mapped to the Senzing Entity
-  Specification); the scenario is **quality-varied** — it promises missing and off-pattern values,
+  least two distinctly named data sources, each with ≥1 record; the data carries **cross-source
+  mapping divergence** — at least two sources describing the same feature in **different shapes**
+  (one a single name field, another parsed components; one a free-text address, another parts), so
+  the mapping module has real per-source work to do. ⛔ **Do not state this as "at least one
+  transformation".** That wording produced a reversal: a joined name is a **direct** mapping to
+  `NAME_FULL` under the Entity Specification, not a field awaiting a split, so a scenario built to
+  satisfy "a transformation" on the strength of a joined name satisfies nothing and encodes a plan
+  the specification does not call for. If a genuine value-level transformation is wanted, name a
+  kind the specification actually asks for — date normalization, code or value standardization,
+  composing a `RECORD_ID` — rather than leaving it unqualified. ⚠️ **Do not record what any field
+  maps to here either:** the specification is not read until Data Quality, Mapping, and
+  Transformation. The scenario is **quality-varied** — it promises missing and off-pattern values,
   spanning bands rather than being uniformly clean, which is what Data collection then generates and
   what makes the quality gate reachable (INV-239); category is in the recognized set; problem and
   success are non-empty. On
@@ -169,7 +191,7 @@ values exactly as returned. Wait up to 30s; retry once.
 ⛔ **`truthset` is NOT eligible to back a generated scenario, for two independent reasons.**
 It is the most inviting choice — smallest, already used elsewhere in the bootcamp, and its
 description says it is for quickstarts — so rule it out explicitly rather than leaving it to
-judgement:
+judgment:
 
 1. **It is pre-mapped**, so it can never satisfy Step 4a's mapping-complexity invariant. The
    disqualifying word is the server's own: `get_capabilities` describes it as *"the Senzing demo
@@ -231,9 +253,37 @@ session; normally absent at this point):
   Key — record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Otherwise
   leave it unset. Either way, proceed to Step 6.
 - **Present and = 0** (no cap): no license concern → proceed to Step 6.
-- **Absent/null:** compare the total against the built-in evaluation capacity, confirmed via the
-  Senzing MCP server (never a hardcoded figure). If the total exceeds it, record
-  `license_guidance_deferred: true`; otherwise leave it unset. Either way, proceed to Step 6.
+- **Absent/null:** compare the total against the built-in evaluation capacity. ⛔ **Get that figure
+  from the one route that carries it — do not ask "the MCP server" generally, and never use a
+  remembered number.** It is in the `compatibility_notes` and `engine_config_notes` of
+  `sdk_guide(topic='load', language='<chosen_language>', platform='<detected_platform>',
+  record_count=<a value above the limit>)`; a `record_count` under the limit does not surface it.
+  Re-ask it here rather than copying a figure from this file (INV-080). If the total exceeds the
+  capacity, record `license_guidance_deferred: true`; otherwise leave it unset. Either way,
+  proceed to Step 6.
+
+  ⛔ **Two different Senzing licenses have two different capacities, and confusing them is the
+  recorded failure.** The **built-in** one — active by default, no request needed — is the small
+  figure this comparison needs. The **requestable** evaluation license, obtained via
+  `submit_feedback(category='license_request')`, is far larger and is described in that tool's own
+  description, which you may well have read earlier in the session for another reason. On
+  2026-08-18 the larger figure was attributed to the built-in license here, the comparison passed
+  when it should have failed, `license_guidance_deferred` was left unset, and Module 4's gate — the
+  one thing that would have warned the Bootcamper before they hit the cap mid-load — never fired.
+  ⛔ **Ask the route above; do not reason from the other license's number.**
+
+  ⚠️ **This branch assumes the built-in capacity because nothing has measured the installed
+  license yet, and that is deliberate rather than the INV-244 error.** `license_record_limit` is
+  written only by Module 4's Step 8a gate, which is volume-gated by design, so its absence here
+  means *not yet measured* — not *no custom license*. INV-093 forbids a license prompt at this
+  point, and this step only sets a deferral flag for a later gate to resolve, so assuming the
+  built-in figure is the correct conservative reading. Say so if it matters to the Bootcamper;
+  never present it as a detected value.
+
+⛔ **What this comparison decides.** Leaving `license_guidance_deferred` unset **suppresses**
+Module 4's Step 8a License Key gate — the single volume-gated prompt in the whole bootcamp. Getting
+this comparison wrong therefore removes the warning rather than producing a wrong one, which is why
+the figure has to come from the route above and not from recall.
 
 **The bootcamp does not ask about a Senzing License Key here.** The single, volume-gated License
 Key prompt is presented once — at the start of Data collection (Module 4), after the actual data

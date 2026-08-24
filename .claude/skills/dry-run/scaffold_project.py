@@ -212,7 +212,7 @@ a fenced block with no info string
 # Synthetic verification records, in the shape System verification Step 2 specifies: a
 # 3-record merge cluster for one invented person plus one distractor that must stay a
 # singleton, every record `DATA_SOURCE: VERIFY` with a unique `RECORD_ID`, so a resumed
-# mid-bootcamp run reads data the module recognises (4 records -> 2 entities).
+# mid-bootcamp run reads data the module recognizes (4 records -> 2 entities).
 #
 # Attribute names and record structure are the Senzing Entity Specification's, confirmed
 # this session rather than copied: `DATA_SOURCE`/`RECORD_ID` at the root of each record,

@@ -66,12 +66,12 @@ class TheOverrideIsStated(unittest.TestCase):
             "the precedence statement must name mapping_workflow as the source of the "
             "directives, or a reader cannot tell what it is about")
 
-    def test_it_quotes_the_directive_so_a_reader_recognises_it(self):
+    def test_it_quotes_the_directive_so_a_reader_recognizes_it(self):
         """Paraphrase is not enough: the guide has to spot this string in a live response."""
         flat = re.sub(r"\s+", " ", self.body)
         self.assertRegex(
             flat, r"(?i)Do NOT ask the user",
-            "the observed directive is not quoted; the guide must be able to recognise it "
+            "the observed directive is not quoted; the guide must be able to recognize it "
             "verbatim when a tool response carries it")
 
     def test_it_states_that_the_bootcamp_wins_on_interaction(self):
@@ -108,11 +108,11 @@ class TheOverrideIsScoped(unittest.TestCase):
                               "the scope limit must name %r as still governed by the tool" % kept)
 
     def test_the_verbosity_offer_is_not_weakened(self):
-        """The fix must honour the guided-mode promise, never retract it."""
+        """The fix must honor the guided-mode promise, never retract it."""
         self.assertRegex(
             self.body, r"👉 \*\*Before we start mapping, which mode would you like\?",
             "the pinned mapping-verbosity question was altered or removed; the remedy for the "
-            "tool conflict is to honour that promise, not to stop making it (INV-056)")
+            "tool conflict is to honor that promise, not to stop making it (INV-056)")
 
 
 
@@ -121,15 +121,41 @@ class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
 
     Its prose shows `profile_summary` as an object keyed by schema name; its inline JSON
     Schema and `advance_schema` define an array of objects each requiring `schema_name`,
-    with `additionalProperties: false`. Resolved empirically on server 1.32.9, 2026-08-12:
-    the ARRAY advances, the prose form cannot validate. The plugin was already sending the
-    array — this guard exists so a later edit cannot invert the caution and send readers to
-    the shape that fails. (Upstream defect; if the server corrects its prose, retire the
-    note rather than flipping it.)
+    with `additionalProperties: false`. **Send the array, because the schema declares the
+    array** — that is the durable reason, and it is what the typed `payload` branch
+    constrains decoding to. This guard exists so a later edit cannot invert the caution and
+    send readers to the shape the schema rejects.
+
+    ⚠️ **Corrected 2026-08-23. The original reason expired; the instruction did not.** This
+    class was written against "the ARRAY advances, the prose form cannot validate" (server
+    1.32.9, 2026-08-12). Re-measured on **1.33.0, 2026-08-23**: the object-keyed prose payload
+    **also advances**, `status: "ok"`, no enforcement notice. So the server now accepts both
+    shapes and the caution is phrased against the declared contract instead of against an
+    outcome. See `specs/step-1s-does-not-work-claim-about-the-object-shape-is-stale.md`.
+
+    ⛔ **Scoped to the caution, not the file.** `setUp` read `text()` — the whole 1454-line
+    file — so both assertions below were satisfied by any dated stamp or any "array … works"
+    phrasing anywhere in it. Two negative controls escaped on exactly that: stripping the
+    caution's provenance passed because a neighboring claim carried its own stamp, and deleting
+    "send the ARRAY" passed because the words appear in the caution's own history sentence. An
+    assertion about a *section* says nothing about the *sentence*.
     """
 
+    #: The caution block: its stop sign to the start of the next unrelated claim.
+    START = "⛔ **The step-1 response states this payload twice"
+    END = "**The profile-report filename depends on how many files you pass"
+
     def setUp(self):
-        self.body = text()
+        body = text()
+        start = body.index(self.START)
+        try:
+            end = body.index(self.END, start)
+        except ValueError:  # the neighboring claim moved; fall back to a generous window
+            end = start + 4000
+        self.body = body[start:end]
+        assert len(self.body) > 400, (
+            "the step-1 caution window collapsed to %d chars — the anchors moved and every "
+            "assertion below is now inspecting almost nothing" % len(self.body))
 
     def test_the_caution_exists_and_names_both_shapes(self):
         flat = re.sub(r"\s+", " ", self.body)
@@ -147,16 +173,31 @@ class TheStepOneAdvanceShapeCautionIsCorrect(unittest.TestCase):
             "the caution must say the ARRAY is what works. Inverting this would send every "
             "reader to the shape the schema rejects.")
         self.assertNotRegex(
-            flat, r"(?i)send the OBJECT|object form advanced",
-            "the caution names the object form as the working one — that is backwards; the "
-            "array is what advanced on server 1.32.9")
+            flat, r"(?i)send the OBJECT|object form is the one to send"
+                  r"|prose form is what the schema declares",
+            "the caution names the object form as the one to send — that is backwards; the "
+            "schema declares the array, and that is the durable reason.\n"
+            "⚠️ Re-worded 2026-08-23: the old pattern also forbade `object form advanced`, which "
+            "made it impossible to state truthfully that 1.33.0 accepts BOTH shapes. What must "
+            "stay forbidden is naming the object form as the one to SEND, not observing that the "
+            "server tolerates it.")
 
     def test_it_carries_dated_provenance(self):
+        """A well-formed version and date — deliberately NOT which.
+
+        ⚠️ **Unpinned 2026-08-23.** This asserted the literals `1.32.9` and `2026-08-12`, which
+        made an honest re-verification break the test: on 1.33.0 the object form the caution
+        described as failing now advances, and correcting that claim means re-dating the caution.
+        A guard that punishes re-asking is a guard that gets worked around
+        (`specs/guards-pinning-a-dated-negative-outlive-it.md`). What matters is that a date is
+        present at all, because the suite is offline (INV-108) and the date is the only re-check
+        mechanism.
+        """
         flat = re.sub(r"\s+", " ", self.body)
-        self.assertRegex(flat, r"1\.32\.9",
-                         "the caution must carry the server version it was verified against")
-        self.assertRegex(flat, r"2026-08-12",
-                         "the caution must carry the date, so a later run knows how stale it is")
+        self.assertRegex(
+            flat, r"server\s+\*{0,2}1\.\d+\.\d+\*{0,2},\s*\d{4}-\d{2}-\d{2}",
+            "the caution carries no `server <version>, <date>` stamp, so a later run cannot "
+            "tell how stale it is")
 
 
 class TheQuestionFormatDirectiveIsAddressed(unittest.TestCase):
@@ -181,7 +222,7 @@ class TheQuestionFormatDirectiveIsAddressed(unittest.TestCase):
         flat = re.sub(r"\s+", " ", self.body)
         self.assertRegex(
             flat, r"(?i)QUESTION FORMAT",
-            "the step-3 QUESTION FORMAT directive is not named; a guide cannot recognise "
+            "the step-3 QUESTION FORMAT directive is not named; a guide cannot recognize "
             "it in a live response if the plugin never quotes it")
 
     def test_the_conforming_shape_is_stated(self):

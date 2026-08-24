@@ -47,7 +47,7 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    and mark which ones this environment can actually reach (step 3 below is that
    check). Everything before the chosen module is walked as a Bootcamper sees it with
    the analysis off; the analysis begins when that module does. This is not a
-   refinement — a walk that analyses from the top runs out of context around Module 1
+   refinement — a walk that analyzes from the top runs out of context around Module 1
    every time, which is why no phase-3 run has ever reached the later modules. Full
    rules, including what the fast-forward may and may not do, in
    [phase3-conversational.md](phase3-conversational.md).
@@ -101,7 +101,7 @@ and its entire factual foundation. Start there unless the maintainer says otherw
    tool-absence claims in **shipped plugin prose that carry no marker**, which `negatives` cannot
    see because it only lists what is already tagged. The **date** is the discriminator — undated
    prose explaining how a tool behaves is not a re-checkable claim and is not reported. A hit needs
-   judgement (it may be prose *about* behaviour), which is why this reports rather than gates, and
+   judgment (it may be prose *about* behavior), which is why this reports rather than gates, and
    the vocabulary is a phrase list, so a miss is weak evidence. ⛔ **Never mark one of these by
    stamping today's date on it** — re-ask the owning route first; if the server has moved, the fix
    is to correct the prose, not to certify it.

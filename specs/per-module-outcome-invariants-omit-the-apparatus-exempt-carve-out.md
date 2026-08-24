@@ -51,7 +51,7 @@ their pointers, and carry none. Nothing indicates the omission was a decision.
 The gap is invisible to every existing check: INV-029–INV-032 are cited by **no test**
 (`coverage_reports.py invariants` classes them as bootcamp-outcome invariants routed to `dry-run`
 phase 3), and `citations.py verify` proves only that IDs resolve, never that a rule's scope matches
-the plugin's. `final-review-doc-coherence` fixed the neighbouring stale citations
+the plugin's. `final-review-doc-coherence` fixed the neighboring stale citations
 (INV-028→INV-079, INV-072→INV-078) and made the journey-map derivation explicit for exactly these
 two apparatus-exempt modules — and still did not annotate INV-029–INV-032.
 
@@ -59,7 +59,7 @@ two apparatus-exempt modules — and still did not annotate INV-029–INV-032.
 
 Append a dated clarification to each of INV-029, INV-030, INV-031 and INV-032 naming the exemption
 and its authority. This is a **clarification with no meaning change**, permitted by
-`INVARIANTS.md` rule 2; the plugin's behaviour does not change and no invariant is renumbered or
+`INVARIANTS.md` rule 2; the plugin's behavior does not change and no invariant is renumbered or
 deleted. Suggested form, matching the INV-013/INV-014 idiom:
 
 > (The apparatus-exempt setup modules — Bootcamp preparation, INV-075; Module 0, INV-078 — are
@@ -104,7 +104,7 @@ ruleset is what overstates.
   files and its own ruleset; no MCP tool was called and no Senzing claim is asserted. Server
   **1.32.9** was recorded this session (`get_capabilities`, 2026-08-15) to date the run.
 - Upstream: not applicable — not a Senzing MCP server defect.
-- Related specs: `final-review-doc-coherence` (fixed the neighbouring stale citations and touched
+- Related specs: `final-review-doc-coherence` (fixed the neighboring stale citations and touched
   the same two modules without annotating these four), and INV-075, INV-078, INV-092.
 
 ## Deviations from this spec, and why (2026-08-15)
@@ -117,7 +117,7 @@ ruleset is what overstates.
   "its ENTITY RESOLUTION CONCEPTS banner" (`module-00/SKILL.md:26`). So it received a note saying the
   setup modules are **NOT** exempt from it — the inverse of what this spec prescribes for its four.
   Had the guard hardcoded the spec's list, INV-028 would have stayed silent directly above four
-  carved-out neighbours, where silence reads as the same carve-out. This is the failure INV-246
+  carved-out neighbors, where silence reads as the same carve-out. This is the failure INV-246
   exists for, caught by the mechanism INV-246 requires, on the first spec implemented after it.
 - **The guard therefore asserts a *disposition*, not an exemption.** Each member of the phrasing
   class must state which side it is on — carved out, or explicitly not — because a guard demanding

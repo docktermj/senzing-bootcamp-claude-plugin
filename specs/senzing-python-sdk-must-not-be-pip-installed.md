@@ -133,7 +133,7 @@ regardless.
    or the SDK path prepended.
 3. Keep the other languages unchanged: Maven/Gradle, NuGet etc. remain correct, and
    the TypeScript `sz-napi` build-from-source warning is unaffected.
-4. Scope INV-066 so it cannot be read as authorising this again — it governs the
+4. Scope INV-066 so it cannot be read as authorizing this again — it governs the
    plugin's *own* tooling installs (`fpdf2`, `playwright`), not Senzing SDK packages,
    which are never pip-installed. Register the carve-out as a new invariant (INV-222)
    rather than silently narrowing INV-066, and cross-reference the two.
@@ -219,7 +219,7 @@ the state instead.
   `platform_note`.
 - INV-066's scope is stated **in Module 2's prose**, which is the mitigation available without
   minting an invariant: it governs the plugin's own tooling installs (`fpdf2`, Playwright) and
-  never authorises pip for the Senzing SDK. That is weaker than criterion 4 asks for — the
+  never authorizes pip for the Senzing SDK. That is weaker than criterion 4 asks for — the
   cross-reference lives in one shipped file rather than in `specs/INVARIANTS.md` — and is why the
   criterion is reported unmet rather than reinterpreted as met.
 

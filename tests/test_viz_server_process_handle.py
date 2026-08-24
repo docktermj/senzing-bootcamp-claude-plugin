@@ -15,7 +15,7 @@ A name-based match is also wrong in principle here: the server is built in the B
 chosen language (INV-090/INV-002), so in the general case there is no script name to match.
 The handle must be the process id.
 
-So this file asserts the contract states the rule as **behaviour** (not as a Python detail),
+So this file asserts the contract states the rule as **behavior** (not as a Python detail),
 that both modules that start a server carry it, and that no shipped instruction teaches the
 command-line match except to forbid it.
 
@@ -70,7 +70,7 @@ class TheContractOwnsTheRule(unittest.TestCase):
                             "section — the pid rule has no home that every module reads")
         self.assertGreater(section, lifetime,
                            "the process-handle rule must sit inside Server lifetime, which is "
-                           "the section modules are required to honour")
+                           "the section modules are required to honor")
 
     def test_the_pid_is_captured_at_launch_and_recorded_with_the_port(self):
         self.assertRegex(self.flat, r"(?i)capture the server's process id at launch")
@@ -104,7 +104,7 @@ class TheContractOwnsTheRule(unittest.TestCase):
             "waiting is not the same as verifying; the contract must say which one is "
             "required or the 5-second wait reads as sufficient")
 
-    def test_the_rule_is_behaviour_not_a_python_identifier(self):
+    def test_the_rule_is_behavior_not_a_python_identifier(self):
         """INV-002/INV-090: a requirement expressed only as a Python name never reaches a
         Java, C#, Rust or TypeScript bootcamp.
 
