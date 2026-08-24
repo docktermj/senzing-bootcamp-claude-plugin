@@ -70,3 +70,17 @@ This are ideas for future specs.
   `search_docs(query='loading', category='anti_patterns')` covers the adjacent thread-safety rule
   ("Do Not Initialize Factory or Environment Per Call or Thread") and not the object-lifetime angle
   — re-checked server 1.33.0, 2026-08-21.
+
+- **The user-level CommonMark hook fights the bootcamp's defer-to-graduation rule, and neither
+  side is the plugin's.** During a walk inside a maintainer environment, a `PostToolUse` agent hook
+  matching `Write|Edit` rejected writes to `docs/bootcamp_recap.md` for MD022/MD032 at every module
+  close, while `bootcamp-onboarding/ground-rules.md:504-510` says bootcamp docs are written plain
+  and graduation runs one normalization pass over them. ⛔ **The plugin ships no `PostToolUse` hook
+  at all** — `plugins/senzing-bootcamp/hooks/hooks.json` registers only SessionStart,
+  UserPromptSubmit, PreToolUse (write-gate), Stop, PreCompact and SessionEnd — so this is host
+  configuration (`~/.claude/settings.json`), not a shipped conflict, and no bootcamper ever sees it.
+  Nothing in the plugin needs changing; excluding the files `normalize_docs_markdown.py` claims
+  (top-level `docs/*.md`, keeping `docs/REVISIT_BOOTCAMP.md` in scope) from that hook removes the
+  friction for whoever runs the walk. Source: `SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md` → "PostToolUse
+  Markdown hook blocks on rules `ground-rules.md` defers to graduation" (2026-08-24,
+  `self-observed`, Medium; routed `host` at triage, so no upstream channel applies).
