@@ -29,7 +29,7 @@ For the desktop application instead, see
 1. Install Senzing Bootcamp Claude Plugin.
 
     ```console
-    claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin
+    claude plugin marketplace add docktermj/senzing-bootcamp-claude-plugin-development
     claude plugin install senzing-bootcamp@senzing-bootcamp
     ```
 

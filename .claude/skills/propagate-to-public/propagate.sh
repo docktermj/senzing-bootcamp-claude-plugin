@@ -72,18 +72,22 @@ rsync -a --delete --exclude='/development.md' "$here/docs/" "$dest/docs/"
 echo "=== Copying README.md ==="
 rsync -a "$here/README.md" "$dest/README.md"
 
-# --- Rewrite owner self-references (docktermj -> Senzing) ------------------- #
+# --- Rewrite self-references (dev slug -> public slug) --------------------- #
 # Only this plugin repo's own slug and the marketplace owner name are rewritten,
-# so the published files point users at the Senzing repo. The separate
-# docktermj/senzing-bootcamp-free-data repo is intentionally left untouched
-# (different repo name, so its slug never matches). Idempotent: rsync re-copies
-# the docktermj-flavored source each run, then this pass rewrites it again.
+# so the published files point users at the Senzing repo. The two slugs differ in
+# BOTH owner and name: the dev repo carries a `-development` suffix the public one
+# does not, so SLUG_OLD MUST stay the suffixed string. Left unsuffixed it still
+# matches -- as a PREFIX -- and publishes the broken Senzing/...-development. The
+# separate docktermj/senzing-bootcamp-free-data repo is intentionally left
+# untouched (different repo name, so its slug never matches). Idempotent: rsync
+# re-copies the docktermj-flavored source each run, then this pass rewrites it
+# again.
 echo
-echo "=== Rewriting owner self-references (docktermj -> Senzing) ==="
+echo "=== Rewriting self-references (docktermj/...-development -> Senzing) ==="
 python3 - "$dest" <<'PY'
 import os, sys
 dest = sys.argv[1]
-SLUG_OLD = "docktermj/senzing-bootcamp-claude-plugin"
+SLUG_OLD = "docktermj/senzing-bootcamp-claude-plugin-development"
 SLUG_NEW = "Senzing/senzing-bootcamp-claude-plugin"
 
 targets = [os.path.join(dest, "README.md")]

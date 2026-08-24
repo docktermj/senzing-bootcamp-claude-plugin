@@ -69,17 +69,20 @@ rsync -a "$src/docs/" "$here/docs/"
 echo "=== Updating README.md ==="
 rsync -a "$src/README.md" "$here/README.md"
 
-# --- Reverse the owner rewrite (Senzing -> docktermj) ---------------------- #
+# --- Reverse the propagate rewrite (public slug -> dev slug) --------------- #
 # Narrowly scoped: only this plugin repo's own slug, and the marketplace owner
 # name. plugin.json's author "Senzing" (the company), the many product mentions
-# of "Senzing" in skill content, and LICENSE text are NEVER touched.
+# of "Senzing" in skill content, and LICENSE text are NEVER touched. The rewrite
+# restores BOTH halves of the dev identity -- the docktermj owner and the
+# `-development` name suffix the public repo does not carry -- which is what keeps
+# it a clean inverse of propagate.sh.
 echo
-echo "=== Reversing owner self-references (Senzing -> docktermj) ==="
+echo "=== Reversing self-references (Senzing -> docktermj/...-development) ==="
 python3 - "$here" <<'PY'
 import os, sys
 dev = sys.argv[1]
 SLUG_OLD = "Senzing/senzing-bootcamp-claude-plugin"
-SLUG_NEW = "docktermj/senzing-bootcamp-claude-plugin"
+SLUG_NEW = "docktermj/senzing-bootcamp-claude-plugin-development"
 
 targets = [os.path.join(dev, "README.md")]
 for sub in ("plugins", ".claude-plugin", "docs"):
