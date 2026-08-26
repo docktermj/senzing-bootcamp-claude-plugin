@@ -894,6 +894,27 @@ Applies to **Entity Graph** in both of its modes.
   Clicking a legend entry filters the view to that type/source and toggles back; show the active
   filter state and a per-entry count. Pair color with a non-color distinction (e.g. line style per
   relationship type) so the encoding survives a monochrome screenshot.
+  - ⛔ **A legend count's LABEL is a claim about its denominator — name the denominator the code
+    actually uses.** The per-source rows on the Entity Graph count **participation**: every entity
+    drawing on that source, cross-source entities included. Label that block **"Entities per
+    source:"**, never "Single-source:". The shipped reference carried the wrong label and the numbers
+    were individually correct, which is why nothing caught it — on a two-source run the block read
+    `CRM_CUSTOMERS 65` and `WEBSTORE_ACCOUNTS 70` against **121** entities of which **14** spanned
+    both (`65 + 70 − 14 = 121`); the true single-source figures were 51 and 56, and every figure on
+    screen agreed with every other, so the only wrong thing was the word above them.
+  - ⛔ **Do not "fix" it by recomputing the counts.** The whole row is participation-shaped: the
+    tooltip filters the *source*, the click handler keeps a node when **any** of its sources is still
+    on, and the swatch is the per-source color while a cross-source entity is drawn in its own
+    combination color. Recomputing to true single-source figures would agree with the label and
+    disagree with all three — three changes to avoid one.
+  - **State the overlap, because two adjacent blocks read as a partition.** With a combination block
+    headed "entities in more than one source have their own color", the per-source block needs one
+    clause saying an entity in several sources is counted in **each** of its sources' rows. Without
+    it the pair reads as disjoint and the cross-source entities look double-counted or absent.
+  - **Label the per-source block whether or not combination rows exist.** In the reference this
+    heading sat inside the combinations branch, so it vanished on single-source runs — where the
+    label is accidentally correct — and appeared only where participation and single-source diverge,
+    which is exactly the run the module exists to demonstrate.
 - **Data-source colors are ASSIGNED FROM the sources present, never from a name-keyed palette.**
   Build the source→color map at model-build time from the data-source codes actually loaded. A map
   keyed by source *name* is not acceptable: the shipped palette names the Truth Set's sources

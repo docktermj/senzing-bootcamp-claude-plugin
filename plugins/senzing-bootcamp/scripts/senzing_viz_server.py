@@ -1220,7 +1220,30 @@ function drawLegend(nodes){d3.select("#graph-container .legend").remove();
       r.append("span").text(comboLabel(k));
       r.append("span").attr("class","cnt").text(comboCounts[k]);
       r.attr("title","Entities appearing in "+comboLabel(k));});
-    l.append("div").attr("class","why").style("margin","6px 0 4px").text("Single-source:");
+  }
+  // "Entities per source", NOT "Single-source": these counts are PARTICIPATION -- every
+  // entity drawing on that source, cross-source entities included -- because `counts`
+  // above increments once per source per node. The label is a claim about a denominator,
+  // and single-source was never the denominator in use. On a two-source run this block
+  // read `CRM_CUSTOMERS 65` / `WEBSTORE_ACCOUNTS 70` against 121 entities with 14 spanning
+  // both (65 + 70 - 14 = 121, inclusion-exclusion); the true single-source figures were 51
+  // and 56, and nothing on screen contradicted the misreading because each figure agreed
+  // with every other total in the app.
+  //
+  // The rows are participation-shaped throughout, which is why relabeling is the fix and
+  // recomputing is not: the tooltip filters the SOURCE, the click handler keeps a node when
+  // ANY of its sources is on, and the swatch is the per-source color while a cross-source
+  // entity is drawn in its own combination color. Changing the counts would put the label
+  // in agreement with the heading and out of agreement with all three.
+  //
+  // Emitted unconditionally -- it sat inside `if(combos.length)` and so vanished on
+  // single-source runs, where the label happens to be correct. That hid the defect from
+  // the simple case and showed it only on the runs this module exists to demonstrate.
+  l.append("div").attr("class","why").style("margin",combos.length?"6px 0 4px":"0 0 4px")
+    .text("Entities per source:");
+  if(combos.length){
+    l.append("div").attr("class","why").style("margin","0 0 4px").style("font-style","italic")
+      .text("An entity in more than one source is counted in each of its sources below.");
   }
   srcs.forEach(function(s){const r=l.append("div").attr("class","row");
     r.append("span").attr("class","dot").style("background",color(s))

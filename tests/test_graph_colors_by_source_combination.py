@@ -175,8 +175,22 @@ class TheLegendNamesTheCombinations(unittest.TestCase):
         self.assertIn("comboCounts[k]=(comboCounts[k]||0)+1", self.page)
 
     def test_they_are_labeled_as_combinations(self):
+        """Both blocks carry a label, so a combination color is nameable and distinguishable.
+
+        ⚠️ The second label was `Single-source:` until 2026-08-26 and this assertion pinned it.
+        It was wrong: those counts are PARTICIPATION -- the accumulator increments once per
+        source per node, so a cross-source entity is counted in every one of its sources'
+        rows. The block is now `Entities per source:`, which is the denominator the code
+        actually uses. See `tests/test_legend_labels_its_actual_denominator.py`, which owns
+        that claim; this test only requires that both blocks are labeled at all.
+        """
         self.assertIn("Entities in more than one source have their own color:", self.page)
-        self.assertIn("Single-source:", self.page)
+        self.assertIn("Entities per source:", self.page)
+        self.assertNotIn(
+            "Single-source:", self.page,
+            "the per-source block is labeled single-source again, which claims a denominator "
+            "the legend does not compute",
+        )
 
     def test_a_combination_is_rendered_readably(self):
         self.assertIn('function comboLabel(k){return k.split("|").join(" + ");}',
