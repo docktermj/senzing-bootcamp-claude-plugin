@@ -137,3 +137,26 @@ extensions were forgotten. The list is the wrong mechanism, not an incomplete on
 - Related specs: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md` (introduced the
   scan), `specs/harden-write-gate.md` (INV-109's patterns, and the consumer that applies them
   correctly — with no extension filter)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved. One deviation and one addition.
+
+1. **Scanning is by full content, not by a binary sniff.** Proposed change 1 suggested reading a
+   bounded prefix and skipping what is "genuinely binary", with a NUL byte as the discriminator.
+   Implemented without any binary detection instead: every member is read in 1 MiB blocks, decoded
+   with `errors="replace"`, and scanned. The reason is the case the sniff would have missed — a key
+   pasted into a `.png` is still a key, and a NUL-byte test would have skipped it. Cost is one
+   extra full read per member, on a tree already read in full for the manifest's SHA-256.
+
+2. **Two tests were added that this spec did not ask for, because three of the five negative
+   controls escaped.** Reintroducing the allowlist was caught; collapsing `UNEXAMINED` into `None`,
+   including an unexamined member, and dropping the scan-block overlap were not — no fixture had an
+   unreadable member, and every fixture was smaller than one scan block. That is the same
+   guard-narrower-than-its-claim defect this spec is about, reproduced inside its own fix. Added: a
+   >1 MiB member with the armor line straddling the block boundary, and a `chmod 000` member
+   (skipped where the filesystem lets the test process read it anyway).
+
+   ⚠️ Closing the second one revealed that failing open also **crashes**: with `UNEXAMINED`
+   collapsed, `sha256_of` raises on the unreadable member during manifest build. The fail-closed
+   branch is therefore load-bearing for robustness as well as for disclosure.

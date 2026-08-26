@@ -104,12 +104,29 @@ TRANSFER_EXTRA = (
 #: Above this, moving the file is awkward enough to be worth saying so.
 SIZE_WARN_BYTES = 2 * 1024 * 1024 * 1024
 
-#: Only text-like members are scanned; a PNG cannot carry a PEM armor line and reading every
-#: binary would make the scan the slowest part of the run.
-TEXT_SUFFIXES = (
-    ".md", ".txt", ".json", ".yaml", ".yml", ".py", ".java", ".cs", ".rs", ".ts", ".js",
-    ".sh", ".bat", ".csv", ".jsonl", ".html", ".css", ".ini", ".cfg", ".toml", ".sql", ".env",
-)
+#: How much of a member is read at a time when scanning it for secrets, and how much of the
+#: previous block is carried forward so a pattern straddling a block boundary is still found.
+#: The longest pattern is the license blob's ~22-byte prefix plus its base64 tail, so 4 KiB of
+#: overlap is orders of magnitude more than required.
+SCAN_BLOCK_BYTES = 1 << 20
+SCAN_OVERLAP_BYTES = 4096
+
+# ⛔ There is deliberately NO extension allowlist here. There was one until 2026-08-26 --
+# `TEXT_SUFFIXES`, carrying .md/.py/.json/.csv and NOT .pem, .key, .crt or the empty extension --
+# and `_scan()` returned None for anything unlisted, which the call site could not distinguish
+# from "nothing found". Measured on a fixture: `src/keys/server.pem` and an extensionless
+# `src/keys/id_rsa`, both carrying real PEM armor lines, were PACKAGED, while the identical key
+# embedded in `src/loader.py` was correctly excluded. The scan skipped exactly the file types
+# whose purpose is to hold a credential, in an archive whose reason to exist is being handed to
+# someone else -- and `OPEN_ME_FIRST.md` told the recipient that anything matching a secret
+# pattern had been excluded, which was then false.
+#
+# An allowlist answering "is this worth reading as text?" cannot answer "can this contain a
+# secret?". Lengthening it would be the same defect with a later trigger, so it is gone: every
+# member is read and scanned, and a member that cannot be read is EXCLUDED rather than included
+# unexamined. `write-gate.py` has never had such a filter -- it scans every payload -- which is
+# why asserting the two pattern *strings* equal said nothing about their application.
+# See `specs/the-packager-secret-scan-skips-the-files-most-likely-to-be-secrets.md`.
 
 
 def _rel(path, root):
@@ -194,6 +211,15 @@ def collect(project_root, profile):
                     })
                     continue
                 secret = _scan(resolved)
+                if secret == UNEXAMINED:
+                    # Fail CLOSED. An unreadable member is not a clean member, and including it
+                    # unexamined is how the manifest's exclusion promise becomes false.
+                    skipped.append({
+                        "path": rel,
+                        "reason": "excluded: could not be read, so it was NOT scanned for "
+                                  "secrets; nothing unexamined is packaged",
+                    })
+                    continue
                 if secret:
                     skipped.append({
                         "path": rel,
@@ -205,15 +231,41 @@ def collect(project_root, profile):
     return members, skipped
 
 
+#: Sentinel for the third outcome. `None` means "read it all and found nothing"; this means
+#: "could not read it", which MUST NOT be treated as clean.
+UNEXAMINED = "unexamined"
+
+
 def _scan(path):
-    """The secret class this file's content matches, or None. Text-like files only."""
-    if path.suffix.lower() not in TEXT_SUFFIXES:
-        return None
+    """Three outcomes, and the third is the one an extension allowlist erased.
+
+    Returns the name of the first secret class the file's bytes match, ``None`` when the file
+    was read in full and matched nothing, or ``UNEXAMINED`` when it could not be read.
+
+    ⛔ ``None`` and ``UNEXAMINED`` must stay distinct at the call site. Collapsing them is
+    exactly how a `.pem` private key came to be packaged: "not scanned" was reported as
+    "nothing found", and the caller had no way to tell.
+
+    Every member is scanned regardless of extension. Bytes are decoded with ``errors="replace"``
+    rather than sniffed for binary-ness, so a key concatenated into an image is still found --
+    a credential does not stop being one because of the file it was pasted into. Binary members
+    simply do not match, which is the correct outcome rather than a skipped one.
+    """
     try:
-        text = path.read_text(encoding="utf-8", errors="replace")
+        with open(path, "rb") as handle:
+            carry = ""
+            while True:
+                block = handle.read(SCAN_BLOCK_BYTES)
+                if not block:
+                    return None
+                text = carry + block.decode("utf-8", errors="replace")
+                found = find_secret(text)
+                if found:
+                    return found
+                # Carry the tail forward so a pattern straddling the boundary is still seen.
+                carry = text[-SCAN_OVERLAP_BYTES:]
     except OSError:
-        return None
-    return find_secret(text)
+        return UNEXAMINED
 
 
 def sha256_of(path):

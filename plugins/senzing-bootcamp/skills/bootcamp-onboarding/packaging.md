@@ -91,9 +91,13 @@ the archive safe to hand over:
 - **Never packaged, either profile:** `.env`, `licenses/`, `config/license.json`,
   `data/raw/` (the bootcamper's own source data), `data/temp/`, `logs/`, `.git/`, caches
   and virtualenvs, and `backups/packages/` itself.
-- **Content-scanned:** a member whose text matches an INV-109 secret pattern — a PEM
-  private key, an AWS access-key ID, a Senzing license payload — is excluded and **named**
-  in the manifest.
+- **Content-scanned, every member, regardless of extension:** a member whose bytes match an
+  INV-109 secret pattern — a PEM private key, an AWS access-key ID, a Senzing license payload —
+  is excluded and **named** in the manifest. ⛔ **There is no file-type allowlist**, and there was
+  one until 2026-08-26: it carried `.md`/`.py`/`.json` and not `.pem`, `.key` or the empty
+  extension, so a `server.pem` and an extensionless `id_rsa` were packaged while the same key in
+  a `.py` was excluded. A member that cannot be **read** is also excluded and named — nothing
+  unexamined is packaged.
 - **Symlinks resolved, then compared:** a member resolving outside the project root is
   skipped and named (the INV-200 rule).
 - **Verified before it is announced:** `testzip()` re-opens the finished archive and a

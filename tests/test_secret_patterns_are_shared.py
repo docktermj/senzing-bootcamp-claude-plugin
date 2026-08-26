@@ -14,6 +14,18 @@ secret patterns, so the duplication cannot become drift.
 ⛔ The comparison is on the pattern **string**, not on behavior sampled from a few examples: a
 sampled comparison passes while a fourth alternation branch exists on one side only.
 
+⛔ **What this file proves, and what it does NOT.** It establishes that the two consumers scan for
+the same *patterns*. It does **not** establish that they apply them to the same *inputs*, and on
+2026-08-26 they did not: the gate scanned every payload while the packager scanned only members
+whose extension appeared in an allowlist, so a `.pem` private key was packaged while the identical
+key in a `.py` was excluded. This file was green throughout, and its docstring claimed the
+packager "cannot protect less than the gate" — true of the constants, false of the behavior.
+
+So the equality below is necessary and not sufficient, and
+`TheApplicationIsNotNarrowedByFileType` guards the half that was missing. The general lesson is
+worth more than the fix: **a sync test on a shared constant says nothing about how each consumer
+uses it.**
+
 Stdlib only.
 
 Source spec: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`.
@@ -80,6 +92,60 @@ class TheTwoListsAreTheSameList(unittest.TestCase):
 
     def test_all_three_classes_are_named(self):
         self.assertEqual(3, len(PATTERNS.SECRET_PATTERN_NAMES))
+
+
+class TheApplicationIsNotNarrowedByFileType(unittest.TestCase):
+    """Equal patterns, unequal application — the gap the pattern comparison cannot see.
+
+    `write-gate.py` scans the whole payload with no notion of file type. The packager must not be
+    narrower, and it was: `TEXT_SUFFIXES` decided whether a member was scanned at all, and
+    `_scan()` returned None -- indistinguishable from clean -- for anything unlisted.
+    """
+
+    def setUp(self):
+        self.packager = (SCRIPTS / "package_bootcamp.py").read_text(encoding="utf-8")
+
+    def test_the_packager_has_no_extension_allowlist(self):
+        """Asserted on the CODE, not the whole file.
+
+        The module comment names `TEXT_SUFFIXES` deliberately — that rationale is what stops it
+        being re-added — so a bare substring check fires on the explanation of the fix. What must
+        not exist is the assignment.
+        """
+        self.assertIsNone(
+            re.search(r"(?m)^TEXT_SUFFIXES\s*=", self.packager),
+            "package_bootcamp.py defines an extension allowlist again. An allowlist answering "
+            "'is this worth reading as text?' cannot answer 'can this contain a secret?', and "
+            "the one that existed skipped .pem, .key and the empty extension -- the file types "
+            "whose purpose is to hold a credential")
+
+    def test_the_removal_rationale_survives(self):
+        """⛔ Never cut the reason. Without it, a later editor re-adds the allowlist as tidying."""
+        self.assertIn("There is deliberately NO extension allowlist here", self.packager)
+        self.assertIn(".pem", self.packager,
+                      "the comment no longer names the file type that was being skipped, which "
+                      "is the concrete fact that makes the rule hard to argue away")
+
+    def test_the_scan_is_not_gated_on_a_suffix(self):
+        self.assertNotRegex(
+            self.packager, r"def _scan\(path\):(?:.|\n){0,400}?path\.suffix",
+            "the packager's secret scan consults the file suffix again; every member must be "
+            "scanned regardless of extension")
+
+    def test_an_unreadable_member_is_not_treated_as_clean(self):
+        """The third outcome. Collapsing it into None is what made 'not scanned' read as 'clean'."""
+        self.assertIn(
+            "UNEXAMINED", self.packager,
+            "the packager no longer distinguishes 'could not read it' from 'read it and found "
+            "nothing'; an unexamined member must be excluded, not included")
+
+    def test_the_write_gate_still_scans_every_payload(self):
+        """The baseline the packager is measured against — assert it, do not assume it."""
+        gate = WRITE_GATE.read_text(encoding="utf-8")
+        self.assertIsNone(
+            re.search(r"(?m)^\s*(?:if|elif).*\.suffix", gate),
+            "write-gate.py has grown a suffix filter. If that is deliberate, the comparison in "
+            "this file needs rethinking; if not, the gate now protects less than it did")
 
 
 class TheClassifierNamesTheRightClass(unittest.TestCase):

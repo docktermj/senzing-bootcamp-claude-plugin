@@ -18,6 +18,12 @@ who wants history silently gets a package that cannot give it.
 no database, no `data/raw/`, no credentials, and no `docs/mapping/` (which describes the
 bootcamper's own source schema).
 
+⛔ **The secret-scan fixtures below include a `.pem` and an extensionless key file, and that is
+the point.** Until 2026-08-26 the scan was gated on an extension allowlist and this suite's only
+secret fixture was a `.py`, so it passed while `server.pem` and `id_rsa` were packaged. A guard
+whose fixture shares the defect's blind spot certifies nothing. A genuine PNG is asserted to still
+travel, because the fix must not exclude the visualizations `share` exists to carry.
+
 Offline; stdlib only; no network and no Senzing engine.
 
 Source spec: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`.
@@ -26,10 +32,12 @@ Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
 import json
+import struct
 import subprocess
 import sys
 import tempfile
 import unittest
+import zlib
 import zipfile
 from pathlib import Path
 
@@ -88,6 +96,20 @@ class Project:
         # A source file that legitimately contains a private key -> excluded and named.
         write("src/loader.py", 'KEY = """-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n"""\n')
         write("src/clean.py", "print('ok')\n")
+        # ⛔ The file types the old extension allowlist skipped. These are the regression
+        # fixtures for `the-packager-secret-scan-skips-the-files-most-likely-to-be-secrets`.
+        (root / "src" / "keys").mkdir(parents=True, exist_ok=True)
+        write("src/keys/server.pem",
+              "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n"
+              "-----END RSA PRIVATE KEY-----\n")
+        write("src/keys/id_rsa",          # no extension at all
+              "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg\n-----END PRIVATE KEY-----\n")
+        write("src/keys/aws.crt", "AKIAIOSFODNN7EXAMPLE\n")
+        # A real PNG, which must STILL travel: the fix must not exclude every binary.
+        tiny_png(root / "docs" / "visualizations" / "graph.png")
+        # A key pasted into a PNG -- still a key, so still excluded.
+        (root / "docs" / "visualizations" / "sneaky.png").write_bytes(
+            b"\x89PNG\r\n\x1a\n\x00\x00-----BEGIN RSA PRIVATE KEY-----\nMIIabc\n")
         # A symlink escaping the project root -> skipped and named.
         try:
             (root / "docs" / "escape.md").symlink_to("/etc/hostname")
@@ -115,6 +137,20 @@ class Project:
 
     def __exit__(self, *exc):
         self.tmp.cleanup()
+
+
+def tiny_png(path):
+    """A real 4x1 PNG. Binary, so it must survive the secret scan and still be packaged."""
+    ihdr = struct.pack(">IIBBBBB", 4, 1, 8, 2, 0, 0, 0)
+
+    def chunk(tag, data):
+        return (struct.pack(">I", len(data)) + tag + data
+                + struct.pack(">I", zlib.crc32(tag + data)))
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr)
+                     + chunk(b"IDAT", zlib.compress(b"\x00" + b"\xff\x00\x00" * 4))
+                     + chunk(b"IEND", b""))
 
 
 def members(path):
@@ -256,6 +292,87 @@ class SecretsAndSymlinksAreExcludedAndNamed(unittest.TestCase):
     def test_a_clean_sibling_is_still_packaged(self):
         """Exclusion is per-file, not per-directory: one bad file must not drop src/."""
         self.assertTrue([n for n in self.names if n.endswith("src/clean.py")])
+
+    def test_a_secret_is_excluded_whatever_the_extension(self):
+        """⛔ The regression. The old allowlist skipped exactly these three."""
+        for tail in ("src/keys/server.pem", "src/keys/id_rsa", "src/keys/aws.crt"):
+            with self.subTest(path=tail):
+                self.assertFalse(
+                    [n for n in self.names if n.endswith(tail)],
+                    "%s carries a secret and was packaged; the scan is gated on an extension "
+                    "allowlist again, which skips the file types whose purpose is to hold a "
+                    "credential" % tail)
+
+    def test_each_of_those_is_named_in_the_manifest(self):
+        reasons = {e["path"]: e["reason"] for e in self.manifest["excluded"]}
+        for rel in ("src/keys/server.pem", "src/keys/id_rsa", "src/keys/aws.crt"):
+            with self.subTest(path=rel):
+                self.assertIn(rel, reasons)
+                self.assertIn("secret pattern", reasons[rel])
+
+    def test_a_secret_pasted_into_a_binary_is_still_caught(self):
+        """A credential does not stop being one because of the file it was pasted into."""
+        self.assertFalse([n for n in self.names if n.endswith("sneaky.png")])
+
+    def test_a_secret_straddling_a_scan_block_boundary_is_caught(self):
+        """The scan reads in blocks; a pattern split across two must still be found.
+
+        ⛔ Added because a negative control escaped: dropping the block overlap changed nothing
+        any test could see, since every fixture was smaller than one block. A guard that claims
+        boundary-safe scanning and exercises only sub-block files certifies nothing.
+        """
+        armor = "-----BEGIN RSA PRIVATE KEY-----"
+        block = PKG.SCAN_BLOCK_BYTES
+        with Project() as p:
+            # Straddle the boundary: the first half of the armor ends block 1, the rest opens 2.
+            split = len(armor) // 2
+            filler = "A" * (block - split)
+            (p.root / "src" / "big.txt").write_text(filler + armor + "\nMII\n", encoding="utf-8")
+            _, manifest = p.dry_run("transfer")
+            reasons = {e["path"]: e["reason"] for e in manifest["excluded"]}
+            self.assertIn(
+                "src/big.txt", reasons,
+                "a secret split across a scan-block boundary was not detected; the block "
+                "overlap is what makes the chunked read safe")
+            self.assertIn("secret pattern", reasons["src/big.txt"])
+
+    def test_an_unreadable_member_is_excluded_and_named(self):
+        """The third outcome: not scanned must never be reported as clean.
+
+        ⛔ Added because two negative controls escaped -- collapsing UNEXAMINED into None, and
+        including an unexamined member -- and neither was visible to any fixture, because no
+        fixture had a member that could not be read.
+        """
+        with Project() as p:
+            secret_file = p.root / "src" / "unreadable.txt"
+            secret_file.write_text("harmless\n", encoding="utf-8")
+            secret_file.chmod(0o000)
+            try:
+                readable = secret_file.read_text(encoding="utf-8")
+            except OSError:
+                readable = None
+            if readable is not None:  # running as root, or a permissive filesystem
+                secret_file.chmod(0o644)
+                self.skipTest("cannot make a file unreadable in this environment")
+            try:
+                _, manifest = p.dry_run("transfer")
+                names = {f["path"] for f in manifest["included"]}
+                reasons = {e["path"]: e["reason"] for e in manifest["excluded"]}
+                self.assertNotIn(
+                    "src/unreadable.txt", names,
+                    "an unreadable member was PACKAGED unexamined; 'could not scan it' must not "
+                    "be treated as 'nothing found'")
+                self.assertIn("src/unreadable.txt", reasons)
+                self.assertRegex(reasons["src/unreadable.txt"], r"(?i)could not be read|NOT scanned")
+            finally:
+                secret_file.chmod(0o644)
+
+    def test_a_genuine_binary_still_travels(self):
+        """The fix must not exclude the visualizations the archive exists to carry."""
+        self.assertTrue(
+            [n for n in self.names if n.endswith("docs/visualizations/graph.png")],
+            "a real PNG was excluded; scanning every member must not mean excluding every "
+            "binary member")
 
     def test_a_symlink_resolving_outside_the_project_is_skipped_and_named(self):
         if not self.project.symlinks:
