@@ -150,3 +150,30 @@ report, it would have added a second, competing acknowledge rule beside the exis
 The real gap is narrower and is what this spec fixes: the rule is silent on **ordering relative to
 tool calls**, and the module transition is the one point in the bootcamp where "before proceeding"
 spans a multi-call, zero-output interval.
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, so nothing was re-verified against the server. Two deviations, both
+widening the fix rather than narrowing it.
+
+1. **The site set is four, not one.** This spec named `phaseD-validation.md` and reasoned that
+   *"the other modules' transitions inherit from `module-completion.md` already, which is why the
+   fix belongs there and not in ten phase files."* True of inheritance; false of the sites that
+   **restate** the transition inline. An INV-246 scan for prose acting on an affirmative reply found
+   three more, all with the identical zero-output interval:
+
+   - `module-03-system-verification/phase2-report-close.md:183`
+   - `module-03b-truthset-visualization/phase2-close.md:172`
+   - `bootcamp-onboarding/module-completion.md`'s **graduation gate** — *"On an affirmative reply,
+     invoke the `graduation` skill"* — which is the same defect at the last gate of the bootcamp,
+     where an answer that appears to change nothing is the closing impression.
+
+   All four now carry the rule and name the file that defines it, per the state-it-once discipline.
+
+2. **INV-012 and INV-006 are cited at Step 4, and neither is the rule.** `conformance.py rules`
+   flagged the new Step 4 stop sign as sitting in a section citing no invariant. Both cited
+   invariants genuinely bear on the finding — the interval is invisible from the Bootcamper's point
+   of view (INV-012), and the observed cost was the question being effectively answered twice
+   (INV-006) — but the ordering requirement itself is registered by neither. It is deferred with
+   drafted wording in this spec's `specs/IMPLEMENTED.md` entry, because Step 5 requires sign-off
+   and the maintainer was away.

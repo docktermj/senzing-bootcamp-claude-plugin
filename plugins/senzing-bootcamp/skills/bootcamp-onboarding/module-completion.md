@@ -376,6 +376,21 @@ next module: {next module name}?" (fill {next module name} with the next module 
 summary content above into multiple questions: the summary is statements, the transition is the one
 👉 question.
 
+⛔ **On an affirmative reply, acknowledge it in one short visible line naming the module being
+started — then invoke that module's skill.** This is the ground rules' acknowledge clause at the one
+place where "before proceeding" spans a multi-call, zero-output interval: the next module's step list
+does not exist until its skill is invoked and its phase files are read, so an acknowledgment composed
+alongside the start banner arrives *after* all of it. One line, and it must not duplicate the banner,
+the journey map, the before/after framing or the step overview — those are the next step, and this is
+only the receipt for the answer. It carries no 👉 and ends nothing.
+
+**Why this is a gate concern and not a style one (INV-012, INV-006).** From the bootcamper's point
+of view an unacknowledged interval is indistinguishable from an answer that never registered
+(INV-012 — output is relative to *their* point of view), and the cost lands on the one rule that
+cannot absorb it: on 2026-08-25 a bootcamper answered this question, saw nothing across a skill
+invocation and two file reads, interrupted, and answered again — so the question was effectively
+asked twice, which INV-006 forbids, without the guide ever re-asking it.
+
 ## Reaching graduation (after the last content module)
 
 When the module just completed is the **last content module before Bootcamp graduation in
@@ -385,7 +400,11 @@ transition, offer graduation (the mandatory terminal module):
 
 👉 **Would you like to graduate now and generate your production project and recap?**
 
-On an affirmative reply, invoke the `graduation` skill. If the bootcamper wants to
+On an affirmative reply, **acknowledge it in one short visible line naming graduation before
+invoking the `graduation` skill** — the same ordering as a module transition and for the same reason:
+the invocation and its file reads emit nothing the bootcamper can see, and this is the last gate of
+the bootcamp, so an answer that appears to change nothing is the worst possible note to end on. Then
+invoke the `graduation` skill. If the bootcamper wants to
 keep exploring first, stay available and offer graduation again whenever they are
 ready. Bootcamp graduation is the required close-out module; its production project and
 migration checklist deliver the production-hardening guidance (performance,

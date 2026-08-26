@@ -151,6 +151,18 @@ steering files.)
 
     Once the bootcamper says something substantive, the reference-something-specific form applies
     again; this carve-out is for content-free answers only.
+  - ⛔ **When proceeding requires LOADING anything, the acknowledgment goes out first — in its own
+    bootcamper-visible text, before the first tool call.** Invoking a skill, reading a file or
+    running a script produces **no** bootcamper-visible output, so an acknowledgment composed *after*
+    the loading leaves their answer looking unregistered for the whole interval — which at a module
+    transition is several consecutive calls long. "Acknowledge before proceeding" is satisfiable by
+    one combined reply everywhere the next step is **composed**; it is not, where the next step must
+    first be **loaded**. Recorded 2026-08-25: a bootcamper answered the Module 7 transition question,
+    saw nothing across a skill invocation and two file reads, interrupted, and answered a second time
+    — *"I lost my place and had to re-confirm"*. ⚠️ **Emit a statement, not a turn boundary.** It
+    carries no 👉, ends nothing, and does not preview or duplicate whatever the loaded step then
+    produces; the module-start apparatus follows in the same flow (INV-005–INV-009 untouched, and the
+    question is still asked exactly once — INV-006).
 - **Continuation requests** ("continue", "keep going", "next", "proceed", "move on") -> give
   the next step this same turn. Never suggest pausing, "take a break", or "pick this up later".
 - After the bootcamper answers a pending 👉 question, processing that answer is the FIRST

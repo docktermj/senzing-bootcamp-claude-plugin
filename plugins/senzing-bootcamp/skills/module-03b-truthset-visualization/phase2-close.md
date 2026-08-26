@@ -169,8 +169,11 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    Step 3. (This module's module-start banner/journey/before-after/step-overview were already shown at
    its module start in Phase 1, so only its close is presented here.)
 4. **Transition to the next module:** ask the single transition question (once), then on an
-   affirmative reply produce the next module's start banner, journey map, before/after framing, and
-   step overview per the ground rules.
+   affirmative reply **acknowledge it in one short visible line naming that module before invoking
+   its skill** (the ground rules' acknowledge clause and
+   `../bootcamp-onboarding/module-completion.md` Step 4 own the ordering — a skill invocation and its
+   file reads emit nothing the bootcamper can see), then produce the next module's start banner,
+   journey map, before/after framing, and step overview per the ground rules.
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 
