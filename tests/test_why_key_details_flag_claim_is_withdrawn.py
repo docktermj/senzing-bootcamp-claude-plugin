@@ -129,7 +129,42 @@ class TheStepTellsTheGuideToPassTheFlag(unittest.TestCase):
     def test_the_java_composite_caution_survives(self):
         """A composite constant may not belong to a Set<SzFlag> element type."""
         self.assertIn("composite_members", self.text)
-        self.assertIn("`long` bitmask, which will not compile into that argument", self.text)
+        # The caution must route the reader to the topic that reports a binding type.
+        self.assertIn("topic='parameters'", self.text)
+
+    def test_the_java_composite_is_named_a_set_not_a_long(self):
+        """Corrected 2026-08-26 against the installed sz-sdk.jar.
+
+        This assertion previously pinned "`long` bitmask, which will not compile into
+        that argument", which describes the *plural* class `SzFlags` and sent the reader
+        to the class that does not fit a `Set<SzFlag>` parameter. Verified with javap and
+        javac: `SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `Set<SzFlag>` static field on
+        the enum class and is not an enum constant, so it merges with `addAll` and cannot
+        appear in `EnumSet.of`; `SzFlags.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `long` (960).
+        """
+        self.assertIn("`Set<SzFlag>` static field", self.text)
+        self.assertIn("merged with `addAll` rather than listed in `EnumSet.of`", self.text)
+        # The trap is that both shapes exist under one name; the plural class must be named.
+        self.assertIn("class `SzFlags`", self.text)
+
+    def test_the_superseded_long_bitmask_claim_is_only_quoted_history(self):
+        """The retracted wording may appear only as quoted history, never as guidance.
+
+        The phrase "`long` bitmask" is legitimately current when it describes `SzFlags`,
+        the plural class. What must never stand alone is the retracted *attribution* —
+        that the composite you pass is a long — which is the claim that sent the reader
+        to the wrong class. It survives only inside the sentence withdrawing it.
+        """
+        retracted = "the composite is a `long` bitmask"
+        self.assertIn(retracted, self.text,
+                      "the correction must still quote what it corrects, or the carve-out "
+                      "is untested and could hide a genuine reintroduction")
+        idx = self.text.find(retracted)
+        while idx != -1:
+            self.assertIn("previously said", self.text[max(0, idx - 60):idx],
+                          "the retracted attribution appears outside the retraction that "
+                          "withdraws it, so the wrong claim reads as current guidance")
+            idx = self.text.find(retracted, idx + 1)
 
 
 class TheServerPositionAndTheObservationAreSeparate(unittest.TestCase):

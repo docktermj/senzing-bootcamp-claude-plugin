@@ -153,6 +153,70 @@ the "Equivalent to:" line quoted above (source: `senzing.com/docs/flags/4/flags_
 **"The server does not document X" is only ever "the tool I asked does not document X."**
 An empty structured field is not an absent fact.
 
+⛔ **Confirm a composite's *representation* for the chosen binding before composing a flag set —
+a composite is not always the same kind of thing as the flags it contains.** `composite_members`
+tells you *which* flags a composite carries; it does not tell you what a composite **is** in the
+binding you are writing. Read the flags argument's own type first:
+
+```text
+get_sdk_reference(topic='parameters', filter='<method>', language='<chosen_language>')
+```
+
+That response is the authority, and it is explicit about divergence. For `get_entity_by_entity_id`
+it returns `flags` as `Set<SzFlag>` in Java, `int` in Python, `SzFlag?` in C#, `Option<SzFlags>` in
+Rust and `bigint` in TypeScript, with a warning naming every binding that differs
+(`get_sdk_reference(topic='parameters', filter='get_entity_by_entity_id', language='java')`,
+server 1.33.0, 2026-08-26). Two shapes follow, and the choice is the binding's, not yours:
+
+- **The parameter is a scalar/bitmask** — OR the composite in directly; it is one value among values.
+- **The parameter is a collection** — the composite may be a *member* of that collection, or may
+  itself be a **collection of members**. If it is a collection, it cannot be listed among the
+  members; it is **merged** into the set.
+
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS', language='java') — the flag row carries applies_to, composite_members, description, name, response_paths and source_file, with no field naming a binding type, and is byte-identical with and without the language argument — owner: get_sdk_reference(topic='parameters', filter='<method>', language='java') IS the route that owns per-binding types and returns flags as Set<SzFlag> for Java plus a warning naming every binding that differs, so the parameters topic is where the reader must go (routing negative) — server 1.33.0, 2026-08-26 -->
+⚠️ **`topic='flags'` cannot answer this — it returns composites and single flags in the *same* JSON
+shape, with `composite_members` as the only difference and no field naming a binding type**
+(`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS', language='java')`,
+server 1.33.0, 2026-08-26: the row is byte-identical with and without `language`). So the flags
+listing is where you learn membership and the parameters listing is where you learn representation;
+asking only the first is what produces a flag set that does not compile.
+
+**Worked example — Java, which has both shapes under one name.** Verified against the installed
+`sz-sdk.jar` on 2026-08-26 (`javap`, then `javac`/`java`; observation-only per INV-080/INV-149 —
+no MCP route reports a binding's class layout):
+
+- `com.senzing.sdk.SzFlag` is an **enum** whose constants are the individual flags, and the same
+  class declares `public static final Set<SzFlag>` fields for the composites.
+  `SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is one of those `Set` fields — **not** an enum constant.
+- `com.senzing.sdk.SzFlags` — plural, a different class — declares `public static final long`
+  bitmask constants under the **same names**. `SzFlags.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is `960`.
+
+So this does not compile, because a `Set` cannot be an `EnumSet.of` element:
+
+```java
+// error: no suitable method found for of(SzFlag,SzFlag,Set<SzFlag>)
+EnumSet.of(SzFlag.SZ_ENTITY_INCLUDE_ENTITY_NAME,
+           SzFlag.SZ_ENTITY_INCLUDE_RECORD_SUMMARY,
+           SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS);
+```
+
+and this does — the composite is merged, expanding to its four members for six flags total:
+
+```java
+Set<SzFlag> flags = EnumSet.of(SzFlag.SZ_ENTITY_INCLUDE_ENTITY_NAME,
+                               SzFlag.SZ_ENTITY_INCLUDE_RECORD_SUMMARY);
+flags.addAll(SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS);
+```
+
+⛔ **Do not reach for the plural class to escape this.** `SzFlags.*` compiles on its own and then
+cannot be passed to a `Set<SzFlag>` parameter at all — two classes one letter apart, identical
+constant names, different types. Read the parameter type, then pick the class that matches it.
+
+⚠️ **This sits directly on the path the reference itself recommends.** The same response that says
+*"request exactly the flags whose output you consume"* rather than a `*_DEFAULT_FLAGS` composite
+returns a list in which some entries cannot be used the way the others can, and does not say which.
+Anyone following that advice in a collection-typed binding meets it.
+
 And the flag→field mapping that makes the consequence exact: `SZ_ENTITY_INCLUDE_RECORD_DATA` →
 `RESOLVED_ENTITY.RECORDS[]`; `SZ_ENTITY_INCLUDE_RECORD_SUMMARY` → `RESOLVED_ENTITY.RECORD_SUMMARY[]`.
 So a habit learned on `get_entity` ("the defaults give me records") is correct there and **wrong**

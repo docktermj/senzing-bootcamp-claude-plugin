@@ -59,6 +59,26 @@ ESTABLISHED_MARKERS = (
     "**invariant established**",
 )
 
+# The third state, and the one `implement-spec` Step 5 mandates when the maintainer is
+# unavailable: a hard rule SHIPPED, its invariant drafted but not registered, because
+# only the maintainer may sign off on invariant wording. Without this vocabulary a run
+# following the skill has to either claim "establishes no invariant" -- false, and exactly
+# the silence the reverse contract forbids -- or leave the suite red. Both are worse than
+# recording the deferral.
+#
+# It is deliberately STRICTER than the other two states: a deferral counts only when the
+# entry also carries the drafted wording, so the marker cannot become a bare label that
+# retires the obligation. `test_a_deferral_must_carry_its_drafted_wording` pins that.
+DEFERRED_MARKERS = (
+    "deferred invariant",
+    "invariant deferred",
+)
+DRAFT_MARKERS = (
+    "drafted wording",
+    "draft wording",
+    "drafted invariant wording",
+)
+
 # Placeholder headings inside each file's own format comment, not real entries.
 TEMPLATE_NAMES = {"<spec-name>"}
 
@@ -123,10 +143,14 @@ class TestForwardCoverage(unittest.TestCase):
                 continue
             if any(flatten(p) in flat for p in ESTABLISHED_MARKERS):
                 continue
+            if any(flatten(p) in flat for p in DEFERRED_MARKERS) and any(
+                flatten(p) in flat for p in DRAFT_MARKERS
+            ):
+                continue
             unaccounted.append(
                 f"{name} (implemented {date}) is neither cited as a `Source:` in "
                 "INVARIANTS.md, nor names the invariant it established, nor states "
-                "that it established none"
+                "that it established none, nor defers one with its drafted wording"
             )
         self.assertEqual(
             [],
@@ -135,6 +159,25 @@ class TestForwardCoverage(unittest.TestCase):
             "defect that left the name-detection design citing INV-076:\n  "
             + "\n  ".join(unaccounted),
         )
+
+    def test_a_deferral_must_carry_its_drafted_wording(self):
+        """A bare "deferred" label must not retire the obligation it defers.
+
+        The deferral state exists so a run that ships a hard rule it cannot register
+        still records the rule. An entry that says "deferred" and stops has recorded
+        nothing a later reader can act on, so it stays unaccounted-for.
+        """
+        for name, date, body in entries():
+            if date is None or date < CUTOFF:
+                continue
+            flat = flatten(body)
+            if not any(flatten(p) in flat for p in DEFERRED_MARKERS):
+                continue
+            self.assertTrue(
+                any(flatten(p) in flat for p in DRAFT_MARKERS),
+                f"{name} defers an invariant without recording its drafted wording, so "
+                "the rule it shipped has no address a later run can pick up",
+            )
 
     def test_the_cutoff_actually_covers_something(self):
         """A cutoff past the newest entry would make this test vacuous."""

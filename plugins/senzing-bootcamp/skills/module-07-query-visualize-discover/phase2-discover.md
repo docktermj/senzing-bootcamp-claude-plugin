@@ -194,9 +194,18 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      be passed as its members instead — `get_sdk_reference` lists those under `composite_members`
      (`SZ_ENTITY_INCLUDE_ALL_RELATIONS` is the four relation flags; server 1.32.9, 2026-08-14).
      Confirm the argument type with `get_sdk_reference(topic='parameters', filter='why_records',
-     language='<chosen_language>')` alongside the names (INV-002, INV-132). Observed 2026-08-14
-     on Senzing SDK 4.3.4 (Java): `whyRecords` takes `Set<SzFlag>` while the composite is a
-     `long` bitmask, which will not compile into that argument.
+     language='<chosen_language>')` alongside the names (INV-002, INV-132) — the parameters topic
+     is the only route that reports a binding type; `topic='flags'` returns composites and single
+     flags in the same shape and names no type (server 1.33.0, 2026-08-26). The full rule, with the
+     worked Java example, is in `phase1-query-visualize.md` beside the composite-flag guidance.
+     ⚠️ **Java carries both shapes under one name, and an earlier version of this note named the
+     wrong one.** Verified against the installed `sz-sdk.jar` 2026-08-26 (`javap` + `javac`;
+     observation-only, INV-080/INV-149): `whyRecords` takes `Set<SzFlag>`, and
+     `SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `Set<SzFlag>` static field — **not** an enum
+     constant — so it is merged with `addAll` rather than listed in `EnumSet.of`. The `long` bitmask
+     of the same name lives in the *plural* class `SzFlags`, which cannot be passed to that argument
+     at all. This note previously said "the composite is a `long` bitmask", which describes `SzFlags`
+     and sends the reader to the class that does not fit the parameter.
 4. **Plain-language explanation of the output:** after receiving the response, explain it
    covering three aspects:
    - **Features that matched:** list which features (NAME, ADDRESS, DOB, PHONE, etc.) were

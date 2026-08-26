@@ -135,3 +135,53 @@ reply is possible.
   `specs/verify-sdk-parameter-shapes-and-flag-families.md` (INV-132),
   `specs/relay-the-default-flags-production-caution.md`,
   `specs/method-default-flags-omit-record-data.md`
+
+## Deviations from this spec, and why (2026-08-26)
+
+Re-verification against MCP server **1.33.0** on **2026-08-26** contradicted this spec's central
+absence claim, and the implementation changed shape as a result.
+
+1. **"No field or note states the Java type difference" is false.**
+   `get_sdk_reference(topic='parameters', filter='get_entity_by_entity_id', language='java')` returns
+   `getEntity(entityId: long, flags: Set<SzFlag>) -> String` plus the warning *"Argument 2 type
+   differs across bindings — csharp: `SzFlag?`, java: `Set<SzFlag>`, python: `int`, rust:
+   `Option<SzFlags>`, typescript: `bigint`."* The binding type **is** served; this spec's Root cause
+   reasoned from `topic='flags'` alone, which is the route that does not carry it. So the shipped
+   guidance became a **routing pointer** to `topic='parameters'` rather than a hardcoded Java fact —
+   a form that cannot go stale the way a copied type would. The narrower residue (that a composite
+   *constant* is itself a collection) is recorded as a routing `MCP-NEGATIVE` marker at
+   `phase1-query-visualize.md:177` with `topic='parameters'` as owner.
+
+   Confirmed unchanged: `composite_members` for `SZ_ENTITY_INCLUDE_ALL_RELATIONS` is exactly the four
+   relation flags, composites and single flags share one JSON shape, and the production caution still
+   recommends requesting only consumed flags.
+
+2. **The plugin already stated this rule, and stated it wrong — that correction was not in scope
+   here and shipped anyway.** `phase2-discover.md` (2026-08-14) said *"the composite is a `long`
+   bitmask"*. Verified against the installed `sz-sdk.jar` with `javap`, `javac` and `java`
+   (2026-08-26, observation-only per INV-080/INV-149 — no MCP route reports a binding's class
+   layout): `com.senzing.sdk.SzFlag` is an enum that **also** declares
+   `public static final Set<SzFlag>` fields for composites, so
+   `SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `Set<SzFlag>` and is **not** an enum constant;
+   the identically-named `long` (value `960`) lives in the *separate plural class*
+   `com.senzing.sdk.SzFlags`, which cannot be passed to a `Set<SzFlag>` parameter at all. This spec's
+   premise was right and the shipped note was wrong about which class it described. Corrected in
+   place; the retracted wording is kept as quoted history.
+
+3. **The compile behavior was runtime-verified, which criterion 6 said was not possible here.**
+   A live Java SDK and `javac` are present on this machine, so both arms were compiled:
+   `EnumSet.of(..., SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS)` fails with
+   `no suitable method found for of(SzFlag,SzFlag,Set<SzFlag>)`, and the `addAll` form compiles and
+   yields six flags — the two named plus the composite's four members.
+
+4. **Criterion 4 (register a new invariant) is NOT met — deferred, not skipped.** `implement-spec`
+   Step 5 requires maintainer sign-off on invariant wording, and the maintainer was away for this
+   run. The two hard rules that shipped, the drafted wording, and the follow-up actions are recorded
+   in this spec's `specs/IMPLEMENTED.md` entry under a `DEFERRED INVARIANT` bullet, so the next
+   `production-readiness-audit` reads them as known rather than discovering them.
+
+5. **Criterion 5 (upstream report) is deferred, with the reason.** `submit_feedback` requires the
+   exact message be shown and confirmed before sending; the maintainer is away. The re-check also
+   narrowed what is fileable — the original finding is false, and only the missing
+   representation hint / cross-reference on `topic='flags'` rows remains. Draft message and category
+   (`feature`, never `license_request` — INV-135) are in the ledger entry.
