@@ -456,8 +456,17 @@ breaks the tab.
 
 **`GET /api/how?entity_id=<id>`:** Explain HOW an entity was constructed from its records
 
-Backed by `how_entity_by_entity_id` with `SZ_HOW_ENTITY_DEFAULT_FLAGS` (confirm via the MCP
-server).
+Backed by `how_entity_by_entity_id`. ⛔ **(INV-080, INV-115) `SZ_HOW_ENTITY_DEFAULT_FLAGS` alone will NOT return the
+match-key breakdown — add `SZ_INCLUDE_MATCH_KEY_DETAILS` with a relations flag if the renderer shows
+it** (the same addition the `/api/why` entry above already makes on the why side). The server is
+explicit that the default is not enough: `SZ_HOW_ENTITY_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES`
+alone, `response_paths` `HOW_RESULTS.RESOLUTION_STEPS[]`, and `SZ_INCLUDE_MATCH_KEY_DETAILS` lists
+`how_entity_by_entity_id` in `applies_to` with `depends_on` one of the five relations flags
+(`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES', language='python')` and
+`filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server **1.33.0**, 2026-08-26). Confirm both, and the
+response structure, via the MCP server. ⚠️ **Treat the breakdown as conditional and fall back to
+`FEATURE_SCORES`** — see the asymmetry note above for what the server does and does not attribute to
+this flag on a how response, and never render an empty section.
 
 ```json
 {

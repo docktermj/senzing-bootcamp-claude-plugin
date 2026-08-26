@@ -261,13 +261,79 @@ Demonstrate How Analysis using a concrete multi-record entity (3+ records) ident
 1. **Entity selection:** select a multi-record entity with 3+ records from step 4a. State which
    entity and why: "I'll use Entity [ID], which has [N] records, enough construction steps to
    see a meaningful history of how Senzing built this entity over time."
-2. **SDK flag and response shape:** generate the `how_entity` call with the
-   `SZ_INCLUDE_FEATURE_SCORES` flag (confirm via `get_sdk_reference(topic='flags',
+2. **SDK flag and response shape:** generate the `how_entity` call with
+   `SZ_INCLUDE_FEATURE_SCORES` **and** `SZ_INCLUDE_MATCH_KEY_DETAILS` **together with a
+   relations flag** (confirm via `get_sdk_reference(topic='flags',
    filter='how_entity_by_entity_id')`), and look up the response structure via
    `get_sdk_reference(topic='response_schemas', filter='how_entity_by_entity_id')` before
    parsing it (INV-115). Explain: "I'm using
    SZ_INCLUDE_FEATURE_SCORES so we can see the scoring at each construction step. This shows
    how closely features matched each time a new record was added."
+
+   ⛔ **(INV-115, INV-169) `SZ_INCLUDE_FEATURE_SCORES` alone is the method's DEFAULT and does not
+   request the match-key breakdown — pass `SZ_INCLUDE_MATCH_KEY_DETAILS` with a relations flag if you
+   intend to show it (INV-115, INV-169).** This step used to name feature scores alone while
+   step 4b's `CONFIRMATIONS[]` caution pointed at `how_entity`'s
+   `MATCH_KEY_DETAILS.CONFIRMATIONS[]` as the reason the how side is worth reaching for — an
+   instruction and a cross-reference that did not meet. **What the server says, three routes,
+   all re-verified on server 1.33.0, 2026-08-26:**
+
+   - `get_sdk_reference(topic='response_schemas', filter='how_entity', language='python')`
+     documents the path — `HOW_RESULTS.RESOLUTION_STEPS[].MATCH_INFO.MATCH_KEY_DETAILS`, with
+     `CONFIRMATIONS[]` carrying `FTYPE_CODE`, `TOKEN`, `SOURCE`, `SCORE`, `SCORE_BUCKET` and
+     the `INBOUND_`/`CANDIDATE_FEAT_*` members. The same response's Python signature reads
+     `how_entity_by_entity_id(entity_id: int, flags: int = <SzEngineFlags.SZ_INCLUDE_FEATURE_SCORES: 67108864>)`,
+     so feature scores alone **is** the default flag set.
+   - `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES', language='python')`
+     returns `SZ_HOW_ENTITY_DEFAULT_FLAGS` as that one flag, `response_paths`
+     `HOW_RESULTS.RESOLUTION_STEPS[]`; the bare flag's own `response_paths` are
+     `RESOLVED_ENTITIES[]` and `SEARCH_STATISTICS[]`. Neither reaches the
+     `MATCH_KEY_DETAILS` subtree, so the breakdown is a separate opt-in.
+   - `get_sdk_reference(topic='flags', filter='SZ_INCLUDE_MATCH_KEY_DETAILS')` lists
+     `how_entity_by_entity_id` in `applies_to` and `depends_on` one of the five relations
+     flags — which is why the relations flag travels with it.
+
+   ⚠️ **Those three do not fully agree, and none of them governs the others (INV-169).** The
+   flag's `applies_to` names `how_entity_by_entity_id` and the how schema documents the path,
+   yet that same flag entry's `response_paths` are `RELATED_ENTITIES[]` and
+   `RESOLVED_ENTITY.*`, and its description reads *"each related entity includes a
+   MATCH_KEY_DETAILS object"* — a shape `how_entity` does not return at all. **Record all
+   three; reconcile none.** This is a gap on the server's side, not something the plugin can
+   settle, and it is why the breakdown is **conditional** below rather than promised.
+
+   ⚠️ **Two engine observations, side by side — both observation-only (INV-080/INV-149), and
+   neither governs the other (INV-169).** No MCP route reports which flag set populated a
+   given engine response.
+
+   | Date | Method | Flags in force (a relations flag travels with the details flag) | Result — **observation-only**, INV-080/INV-149 |
+   |---|---|---|---|
+   | 2026-08-18 | `how_entity` | **not recorded** | `MATCH_KEY_DETAILS.CONFIRMATIONS[]` populated |
+   | 2026-08-24 | `how_entity` | `SZ_INCLUDE_FEATURE_SCORES` alone | `MATCH_KEY_DETAILS` **absent** from `MATCH_INFO` (keys were `CANDIDATE_KEYS`, `ERRULE_CODE`, `FEATURE_SCORES`, `MATCH_KEY`) |
+   | 2026-08-24 | `why_records` | `SZ_INCLUDE_MATCH_KEY_DETAILS \| SZ_ENTITY_INCLUDE_ALL_RELATIONS` | `WHY_KEY_DETAILS`, 3 confirmations |
+
+   ⛔ **(INV-169) The 2026-08-18 row's flag set was never written down, so it is not evidence either
+   way — and "it used to work without the flag" MUST NOT be written from it.** That would
+   repeat exactly the error the why-side correction documents: a conclusion drawn from a
+   matrix that never varied the relevant term. The rows are consistent with the flag being
+   required on both methods, and that is the strongest statement the data supports. **Do not
+   write a version floor or a flag floor.**
+
+   ⚠️ **`SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a composite** — where the binding takes a flag
+   *collection* rather than a bitmask it is merged as its members rather than listed among
+   them. Step 4b's note on this call's why-side sibling states the rule and
+   `../module-07-query-visualize-discover/phase1-query-visualize.md` carries the worked
+   example; do not duplicate it here.
+
+   ⛔ **(INV-115, INV-179) The breakdown is CONDITIONAL — dump `MATCH_INFO`'s keys, and if `MATCH_KEY_DETAILS` is
+   not among them say so in one line and render `FEATURE_SCORES` instead.** It carries the
+   same per-feature evidence — the feature, its score, its bucket — and populated normally on
+   both runs above. **Never render an empty section, and never print "no value returned"**:
+   the first is indistinguishable from a feature the engine lacks, and the second reads as a
+   failure. A stated absence is what turned this into a visible finding rather than a blank.
+
+   ⛔ **(INV-115) The field is `MATCH_KEY_DETAILS` on the how side and `WHY_KEY_DETAILS` on the why
+   side. Both spellings are correct on their own method; do not harmonize them.** Reusing one
+   parser across both silently yields nothing.
 
    ⛔ **The two sides of a resolution step are `VIRTUAL_ENTITY_1` and `VIRTUAL_ENTITY_2`** —
    objects, each carrying `.VIRTUAL_ENTITY_ID` and `.MEMBER_RECORDS[].RECORDS[].{DATA_SOURCE,

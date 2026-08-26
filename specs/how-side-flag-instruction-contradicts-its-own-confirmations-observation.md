@@ -195,3 +195,38 @@ and the cross-reference between them becomes the trap: step 4b now passes the fl
 step 4c cites step 4b's result while passing the old flag set. When a spec's criteria name
 a method, the sweep should be over the *claim* — which flags a breakdown needs — rather
 than over the method that happened to surface it.
+
+## Deviations from this spec, and why (2026-08-26)
+
+All four Senzing facts re-verified on MCP server **1.33.0**, **2026-08-26**, and every one
+confirmed — including the three-way disagreement, which is intact and is recorded rather than
+resolved. Two deviations, both widening the fix.
+
+1. **Two more defective sites, one failing in the opposite direction.** `## Affected files` listed
+   the contract and `phase1-query-visualize.md` only as things to *check*. Both were defective:
+
+   - `visualization-api-reference.md:459` prescribed `SZ_HOW_ENTITY_DEFAULT_FLAGS` for the
+     `/api/how` endpoint — the server confirms that composite is `SZ_INCLUDE_FEATURE_SCORES` alone —
+     while the same file's asymmetry note promises the breakdown. The `/api/why` entry three
+     paragraphs above already said to add the flag, so the contract disagreed with itself between
+     its own two endpoints, and any bootcamp building a renderer inherited the defect from it.
+   - `phase1-query-visualize.md`'s flag paragraph said to pass the flag *"only for the methods that
+     return related entities"*, which **excludes `how_entity`** — the one method whose own schema
+     documents the field. That clause had silently resolved the server's three-way tension in favor
+     of the `response_paths` line, so the module forbade (phase 1) and promised (step 4b) the same
+     field. Rewritten to record all three statements and reconcile none (INV-169).
+
+   This is the spec's own `## The general shape` coming true a second time: a correction scoped to
+   the site where the defect was observed leaves its siblings intact.
+
+2. **The `CONFIRMATIONS[]` member list is larger than this spec quoted.** The spec names
+   `FTYPE_CODE`, `TOKEN`, `SOURCE`, `SCORE`, `SCORE_BUCKET`; the server also returns
+   `ADDITIONAL_SCORES`, `CANDIDATE_FEAT_DESC`, `CANDIDATE_FEAT_ID`, `CANDIDATE_FEAT_USAGE_TYPE`,
+   `INBOUND_FEAT_DESC`, `INBOUND_FEAT_ID`, `INBOUND_FEAT_USAGE_TYPE` and `SCORE_BEHAVIOR`. The
+   shipped prose names the spec's five and refers to the rest as the `INBOUND_`/`CANDIDATE_FEAT_*`
+   members rather than reproducing a list that would go stale.
+
+3. **The upstream report is deferred, as this spec asked.** It records the report as the maintainer's
+   call because it is adjacent to a deliberate possible-duplicate already sent on the why side. The
+   maintainer was away; the drafted message and category are in this spec's `specs/IMPLEMENTED.md`
+   entry. Nothing was sent.
