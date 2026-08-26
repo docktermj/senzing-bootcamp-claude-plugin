@@ -7,9 +7,9 @@ Maintain the invariant conditions in @INVARIANTS.md and fix the following issue:
 `skills/bootcamp-onboarding/packaging.md` ships two hard rules governing **what the
 Bootcamper consents to** before an archive is written:
 
-- `:22` — ⛔ **Run the dry run first. The question below quotes a measured size, never an
+- `:25` — ⛔ **Run the dry run first. The question below quotes a measured size, never an
   estimate.**
-- `:50` — ⛔ **Option 3 writes nothing at all.**
+- `:58` — ⛔ **Option 3 writes nothing at all.**
 
 Neither is registered, and neither is named in the deferral that was supposed to account
 for them. `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`'s
@@ -55,7 +55,7 @@ the same flow — but state the gate as its own sentence so a reader can find it
 as prose pointing at a spec file: the list, with `file:line`, so the next audit reads it as
 known rather than discovering it.
 
-**3. Add the missing citations once the ID exists.** `packaging.md:22` and `:50` are the
+**3. Add the missing citations once the ID exists.** `packaging.md:25` and `:58` are the
 sites; `conformance.py per-rule --uncited` lists both today.
 
 ⚠️ **Do not fix this by weakening the rules.** The measured-size requirement is what stops
@@ -100,3 +100,22 @@ computed by the dry run the flow performs anyway.
 - Related specs: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md` (the feature),
   `specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md` (the same class, 2026-08-17,
   which produced the Step 5 guardrail this run followed incompletely)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved. Two deviations.
+
+1. **Criterion 3 (the citations) is not done, and cannot be until an ID exists.** The criterion
+   says `conformance.py per-rule --uncited` should stop listing `packaging.md`'s two consent rules
+   "once an ID exists to cite" — and none has been minted, because `implement-spec` Step 5 forbids
+   recording invariant wording the maintainer has not approved. Adding a placeholder `INV-NNN`
+   would create a citation of an undefined invariant, which turns the whole suite red (the exact
+   failure the ledger header records). The two sites are listed as follow-up actions in the
+   `the-bootcamp-cannot-leave-the-machine-it-was-built-on` deferral.
+
+2. **The guard pins two things this spec did not ask for.** `test_exactly_one_question_is_asked`
+   counts questions rather than 👉 occurrences — a bare count reads 2, the second being the
+   trigger paragraph's prose citation of "one 👉 question per yielding turn (INV-251)", which is a
+   reference to the rule rather than a question. And the command's rule that a profile argument
+   still runs the dry run and still asks is pinned, because an argument names a profile and does
+   not consent to what the archive carries.

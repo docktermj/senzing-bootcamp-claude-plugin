@@ -13,10 +13,12 @@ the machine is the bootcamper's action, and the closing summary names the path s
 `backups/revisit/` **in place** (INV-094), which is a save point on *this* machine. This
 flow makes that portable, and reuses it rather than duplicating it.
 
-Triggered by the `/package-bootcamp` command, or whenever the bootcamper says something
-like "back up the bootcamp", "archive this", "move this to another machine", "zip it up",
-or "send this to my colleague". Follow `ground-rules.md`: one 👉 question per yielding
-turn (INV-251), and the turn ends on it.
+Reached by the `/package-bootcamp` command. ⚠️ **There is no hook for this flow** — unlike
+`notes.md`, whose `UserPromptSubmit` clause is real, nothing intercepts prompts on packaging
+vocabulary. So **recognize these as a request for it and offer the command**: "back up the
+bootcamp", "archive this", "move this to another machine", "zip it up", "send this to my
+colleague". Recognizing them is the guide's job, not a hook's. Follow `ground-rules.md`: one 👉
+question per yielding turn (INV-251), and the turn ends on it.
 
 ## Step 1: Get the real size before asking anything
 

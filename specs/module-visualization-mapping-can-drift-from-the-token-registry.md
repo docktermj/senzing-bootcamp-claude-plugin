@@ -113,3 +113,16 @@ catches that.
 - Related specs: `specs/tab-coverage-has-no-denominator-for-a-visualization-that-wrote-no-manifest.md`
   (the check this guards), `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`
   (whose `secret_patterns.py` used the `brand_tokens` precedent this one missed)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved. No deviation from the proposed change; one hazard worth recording.
+
+**Stale bytecode made a negative control report a false failure.** After the value-swap mutation,
+`cp` restored `generate_recap_pdf.py` with a same-second mtime, Python reused the cached `.pyc`,
+and the "restored" check failed against a file that was correct on disk (`git diff` showed only
+the added comment). The general hazard already has a spec
+(`specs/bytecode-caching-hides-a-latent-syntax-error-from-the-suite.md`); the specific lesson for
+mutation loops is that **the loop must clear `__pycache__` between rounds**, since the same
+mechanism can equally produce a false *pass* — a mutation cached away is indistinguishable from a
+guard that legitimately caught nothing. Every control loop after this one clears it.

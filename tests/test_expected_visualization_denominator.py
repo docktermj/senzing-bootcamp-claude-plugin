@@ -41,6 +41,7 @@ Run:  python3 -m unittest discover -s tests
 """
 import importlib.util
 import json
+import re
 import struct
 import subprocess
 import sys
@@ -168,6 +169,21 @@ BOTH = ["system_verification", "truthset_visualization", "data_processing",
 
 
 class TheDenominatorComesFromTheModulesThatRan(unittest.TestCase):
+    """⚠️ Two tests pin `MODULE_VISUALIZATIONS`, and they catch OPPOSITE drifts. Keep both.
+
+    * `test_the_mapping_covers_both_visualizing_modules` (here) pins the map's **content** --
+      it notices an edit to the map, including a module mapped to the wrong visualization
+      name, which the registry check below cannot see.
+    * `TheMappingKeysMatchTheTokenRegistry` pins the map against its **source of truth** --
+      it notices the map going stale because the registry moved, which the content-pin
+      cannot see, because nothing fails when a token the map names stops being written.
+
+    The second direction is the one that breaks silently: `read_completed_modules()` degrades
+    honestly in the under-reporting direction, so a stale key produces no error at all -- just
+    a tab-coverage figure that reads clean while a whole visualization is missing, which is the
+    2026-08-25 defect this denominator was added to prevent.
+    """
+
     def test_the_mapping_covers_both_visualizing_modules(self):
         self.assertEqual(
             {"truthset_visualization": "truthset_verification",
@@ -204,6 +220,65 @@ class TheDenominatorComesFromTheModulesThatRan(unittest.TestCase):
             GEN.manifest_names([{"name": "a"},
                                 {"_path": "docs/visualizations/b-tabs.json"}]),
         )
+
+
+class TheMappingKeysMatchTheTokenRegistry(unittest.TestCase):
+    """`MODULE_VISUALIZATIONS`'s keys are module name tokens owned by another file.
+
+    The registry is `skills/bootcamp-preparation/SKILL.md`'s module table, and
+    `skills/bootcamp-onboarding/module-completion.md` is what writes a module's token into
+    `modules_completed` at its close. The map inlines those tokens, so it is a copy -- the
+    `brand_tokens.py` / `test_brand_sync.py` shape, and this is its sync test.
+
+    ⚠️ The registry is a markdown table, not a constant, which is why this lives in a test
+    rather than an import: `generate_recap_pdf.py` must not grow a markdown-table parser to
+    resolve its own configuration at run time.
+    """
+
+    #: `| n | Module | Rule | `token` | Maps to |` -- the token is the 4th cell, backticked.
+    ROW = re.compile(r"^\|\s*\d+\s*\|[^|]*\|[^|]*\|\s*`([a-z_0-9]+)`\s*\|", re.M)
+
+    @classmethod
+    def registry_tokens(cls):
+        text = (REPO_ROOT / "plugins" / "senzing-bootcamp" / "skills"
+                / "bootcamp-preparation" / "SKILL.md").read_text(encoding="utf-8")
+        return set(cls.ROW.findall(text))
+
+    def test_the_registry_extraction_is_not_vacuous(self):
+        """INV-265 — a table parse matching nothing satisfies the check below trivially.
+
+        Which is this very defect one level up: a check whose input is empty reporting
+        agreement. So the floor and a known member are both asserted before anything is
+        concluded from the set.
+        """
+        tokens = self.registry_tokens()
+        self.assertGreaterEqual(
+            len(tokens), 10,
+            "the module-token registry table parsed to fewer than 10 tokens (%d); the "
+            "assertion below would pass on an empty set" % len(tokens))
+        for known in ("system_verification", "query_visualize_discover", "graduation"):
+            with self.subTest(known=known):
+                self.assertIn(known, tokens,
+                              "the registry parse is missing a token the table certainly "
+                              "carries; the row pattern has drifted from the table's shape")
+
+    def test_every_mapping_key_is_a_registered_module_token(self):
+        tokens = self.registry_tokens()
+        for key in GEN.MODULE_VISUALIZATIONS:
+            with self.subTest(key=key):
+                self.assertIn(
+                    key, tokens,
+                    "'%s' is not a module name token in bootcamp-preparation/SKILL.md's "
+                    "registry, so no module will ever write it to modules_completed and the "
+                    "visualization it maps to will never be expected -- tab coverage returns "
+                    "to reporting a clean figure with a whole visualization missing" % key)
+
+    def test_both_visualizing_modules_are_still_in_the_registry(self):
+        """The other direction: a module dropped from the registry entirely."""
+        tokens = self.registry_tokens()
+        for key in ("truthset_visualization", "query_visualize_discover"):
+            with self.subTest(key=key):
+                self.assertIn(key, tokens)
 
 
 class AMissingManifestIsReportedUnrunNotPassed(unittest.TestCase):

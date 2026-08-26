@@ -1075,6 +1075,16 @@ def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]
 # is specified to build one named visualization. Below is that mapping; a module absent
 # from it produces no visualization and contributes nothing to expect.
 
+# ⛔ The KEYS are module name tokens owned elsewhere: the registry is
+# `skills/bootcamp-preparation/SKILL.md`'s module table, and
+# `skills/bootcamp-onboarding/module-completion.md` is what writes a module's token into
+# `modules_completed` at its close. This map is therefore a COPY, and a copy that goes stale
+# fails silently -- `read_completed_modules()` degrades in the under-reporting direction, so a
+# key no module writes any more produces no error, just a tab-coverage figure that reads clean
+# with a whole visualization missing. `tests/test_expected_visualization_denominator.py` pins it
+# from both ends: `TheMappingKeysMatchTheTokenRegistry` against the registry table, and
+# `test_the_mapping_covers_both_visualizing_modules` against the map's own content (a valid key
+# mapped to the wrong visualization name is invisible to the first).
 MODULE_VISUALIZATIONS = {
     # module name token in `modules_completed` -> the `{name}` its capture step uses
     "truthset_visualization": "truthset_verification",
