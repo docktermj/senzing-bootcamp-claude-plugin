@@ -69,9 +69,15 @@ ESTABLISHED_MARKERS = (
 # It is deliberately STRICTER than the other two states: a deferral counts only when the
 # entry also carries the drafted wording, so the marker cannot become a bare label that
 # retires the obligation. `test_a_deferral_must_carry_its_drafted_wording` pins that.
+#: Matched only in the BOLDED form a real deferral uses -- `**DEFERRED INVARIANT ...` or
+#: `**... invariant deferred ...**`. ⚠️ An audit record that *discusses* deferrals in prose
+#: (e.g. "covered by a recorded `DEFERRED INVARIANT` bullet") is not itself deferring one, and
+#: an unbolded substring match reported exactly that as an unaccounted entry on 2026-08-26.
+#: The distinction is making a deferral versus mentioning the concept.
 DEFERRED_MARKERS = (
-    "deferred invariant",
-    "invariant deferred",
+    "**deferred invariant",
+    "**invariant deferred",
+    "— invariant deferred",
 )
 DRAFT_MARKERS = (
     "drafted wording",
