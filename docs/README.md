@@ -73,7 +73,7 @@ For the desktop application instead, see
 
 ## Bootcamp commands
 
-The plugin ships three slash commands. Each also works as plain English, so you never
+The plugin ships these slash commands. Each also works as plain English, so you never
 have to remember them:
 
 | Command | What it does |
@@ -81,6 +81,8 @@ have to remember them:
 | `/start-bootcamp` | Start the bootcamp, or resume one already in progress (same as saying "Start the bootcamp"). |
 | `/bootcamp-feedback` | Share feedback about the bootcamp at any time (same as saying "bootcamp feedback"). Saved locally to `docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md`. |
 | `/graduate` | Graduate: render the recap PDF and generate the `production/` starter project. Bootcamp graduation normally follows the last module on its own, so use this only to graduate early or to re-run it. |
+| `/bootcamp-note` | Jot down an idea, question, reminder or to-do at any time (same as saying "make a note"). Saved locally to `docs/bootcamp_notes.md` and folded into your recap at graduation. |
+| `/package-bootcamp` | Package your bootcamp into a single zip under `backups/packages/` (same as saying "back up the bootcamp") — either the results to share, or everything needed to continue on another machine. Written locally; nothing is sent anywhere. |
 
 ## Uninstall plugin
 

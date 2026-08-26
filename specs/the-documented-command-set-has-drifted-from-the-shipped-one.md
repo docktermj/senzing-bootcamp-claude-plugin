@@ -105,3 +105,11 @@ a third is cheap to look for and expensive to find later.
 - Related specs: `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md` (added
   `/package-bootcamp` without updating either document),
   `specs/bootcamp-notes-capture-and-recap-section.md` (added `/bootcamp-note`, likewise)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved. No deviation from the proposed change; proposed change 4 (look for
+other stale counts) produced a second finding and is recorded there:
+`specs/readme-claims-two-interfaces-while-inv098-handles-four.md`. `README.md:45`'s "Claude Code
+has two interfaces" was the only other hardcoded count in the two user-facing documents, and it
+was a larger defect than the one that prompted the sweep — which is the argument for asking.

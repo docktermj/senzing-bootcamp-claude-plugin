@@ -98,3 +98,11 @@ a separate finding — but it is the fuller list, so `README.md` moves toward it
 - Upstream: not applicable — not a Senzing MCP server matter.
 - Related specs: `specs/the-documented-command-set-has-drifted-from-the-shipped-one.md` (the sweep
   that surfaced this, and the same hardcoded-count-in-prose habit)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, and no deviation from the proposed change. Proposed change 3 asked
+whether INV-098's own enumeration might be incomplete; it was not investigated beyond confirming
+it is the fuller of the two lists, and it is left as the authority. If a fifth Claude context
+appears, the new guard fails and points at both places to update — which is the outcome the
+derived-not-hardcoded context list was chosen for.
