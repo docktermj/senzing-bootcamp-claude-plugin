@@ -185,6 +185,35 @@ steering files.)
 - **Pre-response checklist:** if your response contains Senzing SDK method names, attribute
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
+- ⛔ **(INV-080) That checklist is a floor, NOT the exhaustive set of claims needing a source.** Its
+  enumeration is technical, and read as a complete list it licenses everything outside it. An
+  assertion about **Senzing the company** — its licensing, its support, its pricing, its internal
+  process, how its customers or employees do things — is subject to the same discipline as an SDK
+  method name. It comes from an MCP tool, from a shipped skill file, or from something measured on
+  this machine. There is no fourth source.
+- ⛔ **(INV-080, INV-149) Anything you cannot source is labeled as an inference AT THE POINT it is
+  made, or it is not said.** Label-or-omit, never label-and-proceed: a hedge bolted onto an advisory that should not
+  have been offered is still the advisory. ⚠️ **And at a gate the bootcamper has already answered,
+  the correct action is silence** — an unsourced consideration they did not ask for has no bearing
+  they invited. The labeling half of this rule is for when the bootcamper **asks** something the
+  plugin cannot source; it does not authorize volunteering.
+
+  ⚠️ **Recorded because it happened at the worst possible place (2026-08-25).** At the Module 4
+  License Key gate a bootcamper chose *"request a free evaluation license now through the
+  bootcamp"*. Before any value was collected, the guide volunteered that their account email was on
+  the `senzing.com` domain and that *"if you're at Senzing, you very likely have access to a license
+  through internal channels"* — stated flatly, unhedged, arguing against the option they had picked
+  one turn earlier. The one-per-email and 30-day terms in the same breath **were** sourced, from the
+  MCP server; the internal-channels claim was the guide's own inference about how Senzing employees
+  obtain licenses. Their words: *"I don't want assumptions presented as fact."* The sourced and the
+  unsourced arrived in one paragraph, indistinguishable.
+- ⛔ **(INV-065) The bootcamper's identifying context is for IDENTIFICATION and for fields a tool
+  requires —
+  never a premise for your reasoning about what they should choose.** Their name, email address and
+  account details are collected to identify them and to satisfy a call that cannot run without them.
+  **Do not infer employer, affiliation, seniority or entitlement from an email domain** or from any
+  other identifying detail, and never use such an inference to steer a decision. An email address
+  supplied to identify someone is not evidence about what options they have.
 - ⛔ **Two rules, two names, and they are not the same rule.** Both appear throughout the plugin,
   and left undefined they read as one requirement stated inconsistently — so a guide cannot tell
   whether a result fetched earlier may be presented now. Use these terms:

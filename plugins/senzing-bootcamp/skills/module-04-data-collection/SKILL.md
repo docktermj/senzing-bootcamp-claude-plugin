@@ -833,6 +833,22 @@ training data.
 
    _(Internal: end the turn on this question and wait. Do not proceed until the bootcamper answers.)_
 
+   ⛔ **(INV-080, INV-247) The gate's options ARE the options — once the bootcamper selects one,
+   proceed with it.** Do
+   not re-argue the choice, do not advocate an option this list does not carry, and do not introduce
+   a consideration no step here supplies. That includes anything you would have to infer rather than
+   look up: assertions about Senzing's licensing or internal process need a source on the same
+   footing as an SDK fact, and an unsourceable one is not said at all (see the ground rules'
+   MCP-first section). If new information genuinely invalidates a selection — a tool reports the
+   category unavailable — that is a **reported failure with its own branch** below, not an advisory.
+
+   ⚠️ **This is a consent gate, which is why it is stated here rather than left to the general
+   rule.** Option 4 leads to sub-step 6a, the only step in the bootcamp that transmits the
+   bootcamper's personal details off their machine, and the terms this step has just described are
+   real — one request per email address, re-requestable after 30 days. An unsourced advisory
+   delivered *here*, against the option they just chose, is the worst location in the bootcamp for
+   sourcing discipline to lapse. It happened on 2026-08-25.
+
 5. **Apply a Senzing License Key (options 1–2).** 🚨 Never ask the bootcamper to paste a license key
    into chat. Decode/place it to `licenses/g2.lic`:
    - **Base64 string** — Linux/macOS: `echo '<BASE64_STRING>' | base64 --decode > licenses/g2.lic`;

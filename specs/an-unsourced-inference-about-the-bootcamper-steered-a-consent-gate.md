@@ -164,3 +164,29 @@ other identifying detail, and never use such an inference to steer a decision.
   (INV-247, the questions half of the same gap),
   `specs/inv247-guard-is-narrower-than-the-invariant-it-enforces.md`,
   `specs/mcp-grounding-in-every-skill.md` (INV-080)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is asserted by this spec or by its implementation, so nothing was re-verified
+against the server. The spec's own note — that it was triaged with the server unreachable and that
+the entry's citation of the `license_request` terms went unconfirmed — needed no follow-up: nothing
+here depends on it, and sub-step 6a's MCP-sourced field list, `how_heard` requirement and
+500-record cap are untouched with their existing citations and dates.
+
+One deviation.
+
+**The invariant is deferred, not skipped, and it is two invariants rather than one.**
+`## Affected files` predicts `specs/INVARIANTS.md`; it was deliberately left untouched because Step 5
+requires maintainer sign-off and the maintainer was away. Splitting it in two came out of the
+implementation: the sourcing scope and the identity rule have different sources and different
+neighbors —
+
+- the sourcing rule **widens INV-080**, whose own text repeats the technical enumeration that caused
+  this, so citing INV-080 at the new rules (which is done) is not the same as registering the wider
+  scope;
+- the identity rule is adjacent to **INV-065**, which governs what leaves the machine in a bug
+  report rather than what may be inferred from what stays, and to **INV-247**, which governs
+  questions when nothing here was asked.
+
+Both drafted statements, and the sites to cite them at, are in this spec's `specs/IMPLEMENTED.md`
+entry under `DEFERRED INVARIANT`.
