@@ -159,3 +159,30 @@ The subject is redirected to the part the entry got right and did not develop: t
 **passed** while a whole visualization was missing, because its denominator is the set of manifests
 that happen to exist. That is INV-193's own failure shape, one level out, and it is the piece that
 would have caught this run.
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, so nothing was re-verified against the server; this spec's own
+correction (Module 7's capture step already exists) was re-confirmed by reading the shipped file,
+and no instruction was duplicated.
+
+1. **`--check` gained two flags rather than reading the progress file implicitly.** `--progress`
+   (default `config/bootcamp_progress.json`) supplies the denominator, and
+   `--expect-visualizations` overrides it. The override exists for two reasons the spec did not
+   anticipate: the tests need to set the expected set without writing a progress file, and — more
+   usefully — passing `--expect-visualizations ""` reproduces the **old** behavior exactly, which is
+   what lets the suite demonstrate that the fix changes the outcome on the reported fixture rather
+   than merely existing (INV-265 anti-vacuity).
+
+2. **A missing manifest is reported as `SKIPPED:` with exit 0, not as an `INCOMPLETE:` problem.**
+   The spec asks for it to be reported and explicitly not blocking (INV-048), and `--check` returns 1
+   for anything in `problems`. Routing it through the existing `SKIPPED` vocabulary keeps the exit
+   code at 0 while still naming the shortfall, and a mutation that makes it blocking is caught by the
+   guard. The coverage figure is withheld in the same branch, so nothing prints a passing number
+   beside a skipped check.
+
+3. **The invariant is deferred, not skipped.** `## Affected files` predicts `specs/INVARIANTS.md`; it
+   was deliberately left untouched because Step 5 requires maintainer sign-off and the maintainer was
+   away. INV-193 is cited at the rule as the mechanism one layer in, but it does not reach the
+   set-of-manifests level, which is this spec's actual finding. The drafted wording and follow-up
+   actions are in this spec's `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.

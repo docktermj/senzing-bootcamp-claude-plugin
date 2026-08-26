@@ -523,6 +523,48 @@ none of these are covered by it:
    - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
      visualization's base name and compare against the section's image lines.
 
+   ⛔ **The manifest check is PER-NAME, and its denominator is the manifests that exist — so ask
+   separately whether a manifest is MISSING (INV-193, INV-265).** "Did every captured tab reach the
+   recap?" is answered for each manifest found; it cannot answer "should there have been another
+   manifest?" A module that captured nothing contributes no manifest, no denominator, and no
+   shortfall the check can see, and the `SKIPPED: tab-coverage check` branch fires only when **no**
+   manifest exists at all — so with one present it stays silent.
+
+   **The expected-visualization denominator closes it, and it does not come from the manifests.**
+   `--check` derives the set of **expected visualizations** from `modules_completed` in
+   `config/bootcamp_progress.json`, mapped to the visualization each producing module is specified to
+   build — `truthset_verification` for the Truth Set module, `results_visualization` for Module 7 —
+   and reports, by name, any expected visualization with no manifest:
+
+   ```text
+   SKIPPED: tab-coverage check for 'results_visualization' — the 'query_visualize_discover'
+   module ran (it is in modules_completed) … Coverage for it has NOT been measured — this is
+   not a pass …
+   ```
+
+   When that fires, `--check` **withholds the coverage figure entirely** and prints
+   `Tab coverage NOT reported: N expected visualization(s) have no manifest` instead. Relay that as
+   an **unrun** check naming the visualization and the module that owed it — never as a pass, and
+   never alongside a coverage percentage.
+
+   ⚠️ **This is why it matters, in the artifact that leaves with them.** On a 2026-08-25 run the
+   check reported *"6 of 6 captured tabs reached the recap"* — a clean pass — while the entire
+   Module 7 application, built over the Bootcamper's **own** resolved data, had been captured not at
+   all. The recap PDF illustrated the bootcamp with six pictures of the demo Truth Set, and the
+   Bootcamper's cross-source entities and fraud leads appeared only as prose. The sentence was true
+   of the manifests that existed and false of the bootcamp.
+
+   ⛔ **(INV-048, INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
+   re-run the capture against it (`capture_screenshots.py --url http://localhost:<port> --name
+   <name>`), then re-embed via the backfill path, rather than proceeding with a recap that pictures
+   the sample dataset in place of the Bootcamper's results.
+
+   ⚠️ **None of this is blocking.** The recap PDF is produced unconditionally (INV-048) and a missing
+   manifest does **not** fail `--check`; the requirement is that graduation **states** the shortfall,
+   not that it refuses to graduate. Do not re-state Module 7's capture instruction either — it is
+   already explicit, and a fourth copy is the state-it-once violation (INV-179). What was missing was
+   the silence afterward, and that is what this closes.
+
    ⛔ **Do not use the generator's `embedded N of M images` figure for this.** Its denominator is
    the count of `![](…)` links in the recap it is measuring, so a section that embedded four of six
    captured tabs reports `embedded 4 of 4 images` — a perfect score against an incomplete set. It

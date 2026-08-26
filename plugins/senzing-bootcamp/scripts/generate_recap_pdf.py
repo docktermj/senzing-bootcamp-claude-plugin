@@ -1055,6 +1055,118 @@ def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]
     return manifests
 
 
+# --- The expected-visualization denominator ---------------------------------
+#
+# `tab_coverage_problems` answers "did every captured tab reach the recap?" for each
+# manifest it is given, and `find_tab_manifests` supplies the manifests that exist. So
+# its denominator is *the set of captures that happened*: a module that captured nothing
+# contributes no manifest, no denominator, and no shortfall anything can see.
+#
+# ⛔ That is INV-193's own failure shape, one level out. INV-193 moved the completeness
+# denominator off the artifact being measured and onto the manifest; the manifest is
+# external to the recap, but the SET of manifests is still derived from whatever capture
+# happened to produce. On 2026-08-25 the check reported "6 of 6 captured tabs reached the
+# recap" -- a clean pass -- while the whole Module 7 application, built over the
+# Bootcamper's own resolved data, had been captured not at all. The keepsake illustrated
+# the bootcamp with pictures of the sample dataset.
+#
+# The fix is a denominator that does not come from the manifests: the modules that ran.
+# `config/bootcamp_progress.json` records `modules_completed`, and each visualizing module
+# is specified to build one named visualization. Below is that mapping; a module absent
+# from it produces no visualization and contributes nothing to expect.
+
+MODULE_VISUALIZATIONS = {
+    # module name token in `modules_completed` -> the `{name}` its capture step uses
+    "truthset_visualization": "truthset_verification",
+    "query_visualize_discover": "results_visualization",
+}
+
+DEFAULT_PROGRESS = Path("config") / "bootcamp_progress.json"
+
+
+def read_completed_modules(path=DEFAULT_PROGRESS) -> List[str]:
+    """The ``modules_completed`` list from the progress JSON, or [] if unreadable.
+
+    Any read or parse problem yields [] rather than raising: a missing progress file
+    must degrade to "nothing expected" and leave the pre-existing per-manifest checks
+    exactly as they were, never break the render (INV-048). Returning [] is safe in the
+    honest direction -- it can only under-report, and the caller says so when it does.
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return []
+    if not isinstance(data, dict):
+        return []
+    completed = data.get("modules_completed")
+    if not isinstance(completed, list):
+        return []
+    return [item for item in completed if isinstance(item, str)]
+
+
+def expected_visualizations(completed: Sequence[str]) -> List[str]:
+    """The visualization names the modules that ran were specified to build."""
+    names = []
+    for module in completed:
+        name = MODULE_VISUALIZATIONS.get(module)
+        if name and name not in names:
+            names.append(name)
+    return sorted(names)
+
+
+def manifest_names(manifests: Sequence[dict]) -> set:
+    """Every visualization a manifest accounts for.
+
+    Prefers the manifest's own ``name`` field and falls back to the filename stem, so a
+    manifest written by an older capture that predates that field still counts.
+    """
+    names = set()
+    for manifest in manifests:
+        name = manifest.get("name")
+        if isinstance(name, str) and name:
+            names.add(name)
+            continue
+        path = manifest.get("_path")
+        if isinstance(path, str) and path:
+            stem = Path(path).name
+            if stem.endswith("-tabs.json"):
+                names.add(stem[: -len("-tabs.json")])
+    return names
+
+
+def missing_visualization_reports(
+    expected: Sequence[str], manifests: Sequence[dict]
+) -> List[str]:
+    """One report per expected visualization that has no manifest.
+
+    Phrased as an UNRUN check, not a failure: nothing here is evidence the tabs were
+    never captured, only that coverage for them cannot be measured. Graduation is
+    non-blocking (INV-048), so the requirement is that the shortfall is stated -- by
+    name, with the module that owed it, and with the remedy -- never that graduation
+    refuses (INV-163, INV-193, INV-265).
+    """
+    present = manifest_names(manifests)
+    owed = {name: module for module, name in MODULE_VISUALIZATIONS.items()}
+    reports = []
+    for name in expected:
+        if name in present:
+            continue
+        module = owed.get(name, "an unrecorded module")
+        reports.append(
+            f"tab-coverage check for '{name}' — the '{module}' module ran (it is in "
+            f"modules_completed) and is specified to build this visualization, but no "
+            f"{name}-tabs.json was found beside the recap's images. Coverage for it has "
+            f"NOT been measured — this is not a pass, and the per-manifest figure below "
+            f"cannot see it because its denominator is the manifests that exist. "
+            f"Remedy while the artifacts are still on disk: re-start the app and re-run "
+            f"capture_screenshots.py --url http://localhost:<port> --name {name}, then "
+            f"re-embed (the backfill path), rather than shipping a recap that pictures "
+            f"the sample dataset in place of the Bootcamper's own results."
+        )
+    return reports
+
+
 def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[str]:
     """Captured tabs that never reached the recap, named by slug.
 
@@ -3602,6 +3714,23 @@ def main(argv: Optional[List[str]] = None) -> int:
             "names contain commas, e.g. 'Query, Visualize and Discover'."
         ),
     )
+    parser.add_argument(
+        "--progress",
+        default=str(DEFAULT_PROGRESS),
+        help=(
+            "Progress JSON whose `modules_completed` supplies the EXPECTED set of "
+            "visualizations. This is the tab-coverage denominator that does not come "
+            "from the manifests, so a module that captured nothing is still visible."
+        ),
+    )
+    parser.add_argument(
+        "--expect-visualizations",
+        default=None,
+        help=(
+            "Comma-separated visualization names to expect, overriding --progress. "
+            "Mainly for tests and for a run whose progress file is unavailable."
+        ),
+    )
     args = parser.parse_args(argv)
 
     inp = Path(args.input)
@@ -3648,11 +3777,32 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "is unknown. The embedded-image count cannot answer this: its "
                 "denominator comes from this same recap.\n"
             )
+        # …and whether a visualization that SHOULD have a manifest has none. This branch
+        # is the one the no-manifest branch above cannot reach: with some manifest
+        # present it never fires, so a wholly uncaptured module passed silently.
+        if args.expect_visualizations is not None:
+            expected = [
+                name.strip()
+                for name in args.expect_visualizations.split(",")
+                if name.strip()
+            ]
+        else:
+            expected = expected_visualizations(read_completed_modules(Path(args.progress)))
+        missing = missing_visualization_reports(expected, manifests)
+        for report in missing:
+            sys.stderr.write(f"SKIPPED: {report}\n")
+        # ⛔ The coverage figure is WITHHELD while an expected visualization is
+        # unaccounted for. Printing "6 of 6 captured tabs reached the recap" beside a
+        # missing-manifest notice is exactly the reading that made the 2026-08-25 run
+        # look clean: the sentence is true of the manifests that exist and false of the
+        # bootcamp (INV-163, INV-193, INV-265).
         print(
             "Recap complete: all module sections carry the required subsections, "
             "and every End-of-Module Summary carries its labeled blocks."
             + (f" Tab coverage: {tab_coverage_note(source_text, manifests)}."
-               if manifests else "")
+               if manifests and not missing else "")
+            + (f" Tab coverage NOT reported: {len(missing)} expected visualization(s) "
+               f"have no manifest (see SKIPPED above)." if missing else "")
         )
         return 0
 
