@@ -1036,6 +1036,43 @@ collision this fixes; that is the error made while repairing it by hand, not a h
 **The legend MUST name each combination** it colors (INV-259), labeled as a combination and counted over the
 nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
 
+#### The encoding self-check (required — behavior, in every language)
+
+⛔ **The graph endpoint MUST expose a self-check, and the build step MUST run it before capture.**
+The rule above is stated three times across this bootcamp and was still re-implemented wrong in a
+generated Java app on 2026-08-25 — colored from `data_sources[0]`, with 294 of 5,619 cross-source
+entities rendered as single-source. Prose did not prevent that. A check that fails will.
+
+**What to expose.** Alongside `total` and `capped`, the graph payload carries the number of distinct
+**sorted source-set keys** over the nodes it emits — the same keys the client computes to color them:
+
+```text
+encoding_check: {
+  distinct_source_set_keys: <int>,     # distinct sorted, joined source sets over emitted nodes
+  source_set_keys: [<string>, …],      # e.g. ["CUSTOMERS", "CUSTOMERS|REFERENCE", "WATCHLIST"]
+  combination_keys: [<string>, …],     # the subset containing the join separator
+  status: "ok" | "not_exercised",
+  detail: <string>
+}
+```
+
+**What to verify.** The number of distinct color keys the **legend names** MUST equal
+`distinct_source_set_keys`. That equality is false exactly when a node is colored by one member of
+its set: first-source coloring collapses every combination onto a single-source key, so the legend
+key count drops below the source-set count. Both numbers are already computed in order to draw the
+graph, so the check costs nothing.
+
+⚠️ **Fewer than two distinct keys means the check was NOT exercised — report that, never "passed"
+(INV-265).** With one registered data source every key is that source, the comparison cannot fail,
+and reporting a pass would be reporting agreement from a match that could not disagree. **This is
+not a corner case: it is the normal Truth Set situation, and it is exactly why the module that
+builds this app cannot catch the defect with its own data.** Say "not exercised — one data source"
+and move on.
+
+⛔ **On a mismatch, stop and fix the encoding before capturing screenshots (INV-259).** The screenshots become
+a permanent keepsake in the recap and the production project; capturing first means shipping the
+wrong picture and discovering it afterwards, which is what happened.
+
 ### The graph payload is bounded, and says so (required)
 
 The graph endpoint MUST cap the nodes it emits and carry **`total`** and whether a cap was applied,

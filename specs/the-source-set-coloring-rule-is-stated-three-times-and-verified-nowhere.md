@@ -166,3 +166,24 @@ did not prevent the defect from recurring in generated Java.** The subject is th
 from "fix the reference" to "the rule has no executable check, and the only module that builds the
 app cannot provoke it with its own data" — which is the entry's *second*, unelaborated suggestion,
 promoted to the substance of the spec.
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, so nothing was re-verified against the server; the spec's own
+correction (the reference was already fixed) was re-confirmed by reading `senzing_viz_server.py`.
+Two deviations.
+
+1. **The check reuses `SOURCE_KEY_SEP` rather than the literal separator this spec's prose implies.**
+   `Model.color_keys()` already builds the full single-pass key set using the module's
+   `SOURCE_KEY_SEP` constant. The first implementation of `_encoding_check` hardcoded `"|"` twice,
+   which would let the separator drift between the palette allocation and the check meant to
+   validate it. Found while diagnosing an invalid negative control — `color_keys()` at `:564` carries
+   a byte-identical source-derivation line, so a single-occurrence string replacement edited the
+   wrong method.
+
+2. **The invariant is deferred, not skipped.** `## Affected files` predicts `specs/INVARIANTS.md`;
+   it was deliberately left untouched because Step 5 requires maintainer sign-off on invariant
+   wording and the maintainer was away. INV-259 (the encoding) and INV-265 (not-exercised reporting)
+   are cited at all three new rules, but neither registers the *verification* requirement, which is
+   this spec's actual finding. The drafted wording and follow-up actions are in this spec's
+   `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.

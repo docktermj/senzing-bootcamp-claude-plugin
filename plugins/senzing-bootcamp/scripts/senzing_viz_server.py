@@ -605,7 +605,50 @@ class Model:
                 )
         # `total` and `capped` travel with the payload so the UI can state what it is
         # showing rather than implying it is everything.
-        return {"nodes": nodes, "edges": edges, "total": total, "capped": capped}
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "total": total,
+            "capped": capped,
+            "encoding_check": self._encoding_check(nodes),
+        }
+
+    @staticmethod
+    def _encoding_check(nodes):
+        """Self-check for the source-set encoding required by INV-259.
+
+        Counts the distinct **sorted source-set keys** over the nodes being emitted --
+        the same keys ``srcKeyOf()`` computes client-side to color them. The build step
+        compares this against the number of color keys the legend names; first-source
+        coloring collapses every combination onto a single-source key, so the legend key
+        count drops below this number exactly when the misencoding is present.
+
+        ⚠️ Reports ``not_exercised`` -- never ``ok`` -- when fewer than two distinct keys
+        are present (INV-265: an empty or trivial match is an unrun check, not agreement).
+        With a single registered data source every key is that source and the comparison
+        cannot fail, which is precisely why the Truth Set could not catch this defect.
+        """
+        keys = set()
+        for entity in nodes or []:
+            sources = sorted(set(entity.get("data_sources") or []))
+            if sources:
+                keys.add(SOURCE_KEY_SEP.join(sources))
+        combos = sorted(k for k in keys if SOURCE_KEY_SEP in k)
+        status = "ok" if len(keys) >= 2 else "not_exercised"
+        return {
+            "distinct_source_set_keys": len(keys),
+            "source_set_keys": sorted(keys),
+            "combination_keys": combos,
+            "status": status,
+            "detail": (
+                "Compare distinct_source_set_keys against the number of color keys the "
+                "legend names; they MUST be equal (INV-259). Fewer legend keys means nodes "
+                "are colored by one member of their source set."
+                if status == "ok" else
+                "Fewer than two distinct source-set keys are present, so this check cannot "
+                "fail and has NOT been exercised (INV-265). It is not a pass."
+            ),
+        }
 
     def merges(self):
         out = [e for e in self.entities.values() if e["record_count"] > 1]
