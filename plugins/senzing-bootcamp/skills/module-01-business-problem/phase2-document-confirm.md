@@ -126,6 +126,8 @@ Save to `docs/business_problem.md` using this template:
 ## Problem Description
 [One sentence]
 
+> "[Their own words, verbatim]"
+
 ## Use Case Category
 [Customer 360 / Fraud Detection / Data Migration / Compliance / Marketing / Healthcare /
  Supply Chain / KYC / Insurance / Vendor MDM]
@@ -146,12 +148,18 @@ Save to `docs/business_problem.md` using this template:
 ## Success Criteria
 - [Measurable outcome 1..3]
 
+> "[Their own words, verbatim]"
+
 ## Desired Output
 **Format**: [Master list / API / Reports / Export]  **Use case**: [One-time / Ongoing /
 Real-time]  **Integration**: [Standalone / Integrated with [systems]]
 
+> "[Their own words, verbatim]"
+
 ## Integration Requirements
 **Downstream systems** / **Integration method** / **Systems mentioned** (from `integration_targets` in `config/bootcamp_preferences.yaml`, captured in Phase 2 Step 10a — INV-097)
+
+> "[Their own words, verbatim]"
 
 ## Deployment Target
 [If `deployment_target` present in preferences: Platform / Category (Cloud/Container/Local/
@@ -165,7 +173,42 @@ not captured for this bootcamp."]
 
 ## Notes
 [Constraints, context]
+
+> "[Their own words, verbatim]"
 ```
+
+⛔ **(INV-097, INV-056) The `> "…"` lines are the Bootcamper's OWN WORDS, quoted — not a second
+rendering.** Every
+other field in that template instructs you to *summarize*; these instruct you to *quote*. Refinement
+is not transcription, and a document that keeps only the refinement cannot be checked against what
+was meant. The refined prose stays the working text and every downstream consumer keeps reading it.
+
+**Which sections carry a quote, and why only those.** Problem Description, Success Criteria, Desired
+Output, Integration Requirements and Notes are built from *interview prose* — the guide interprets
+them, so there is a rendering that can drift. `Use Case Category`, `Deployment Target` and `Entity
+Types` are selections from fixed vocabularies; there is nothing to preserve.
+
+⚠️ **Where an answer was a selection rather than prose, OMIT the quote — never manufacture one.**
+Drop the `> "…"` line entirely for that section. This is the rule the acknowledge clause already
+applies to bare option numbers (`../bootcamp-onboarding/ground-rules.md`): an invented "verbatim"
+line is worse than none, because it looks like evidence.
+
+⚠️ **For Integration Requirements the answer is already on disk — quote from there, do not
+reconstruct it.** INV-097 persists `integration_targets` to `config/bootcamp_preferences.yaml` at
+Step 10a and requires the problem statement to read it, so that section's quote comes from the
+persisted answer rather than from memory of the conversation. That also makes this one section's
+drift **mechanically** checkable: the document and the preferences file can disagree, and the
+preferences file is the record of what was said.
+
+⚠️ **Why this is a correctness measure and not an archival nicety.** On 2026-08-25 a Bootcamper said
+their **possible**-fraud entities should feed the fraud tool; the document rendered it as
+*"Internal fraud tool (**confirmed fraud cases**)"*. One adjective, and a different routing rule —
+which entities reach the fraud tool, and how large that queue is. The same document still said
+*"Possible-fraud entities routed to the internal fraud tool"* four lines earlier, so **it contradicted
+itself and carried nothing that could settle which reading was right**. It was confirmed as accurate
+at Step 15, then propagated: Module 7 step 1 derives its query requirements from this document, and
+requirement 7 came out titled *"Confirmed-fraud candidate list"*. The Bootcamper approved those too —
+reviewing, again, only the refined artifact.
 
 **Generated scenario (Business Case Offer accepted):** produce the SAME artifacts a real case
 would, plus:
@@ -257,9 +300,18 @@ sourced statement is the correct outcome, not a failure of the step.
 
 ## 15. Get confirmation
 
+⛔ **Present the document with BOTH versions visible, and say which is which.** Before asking, state
+plainly that the `> "…"` lines are their own words as they said them and the prose above each is your
+rendering of it — and that a mismatch between the two is exactly what this question is for. Without
+that, the gate asks *"does this plausible-sounding text sound right?"* rather than *"does this match
+what I said?"*, and a single substituted adjective inside an otherwise-accurate sentence survives it.
+One did (see Step 11's note), and it was confirmed as accurate on the way through.
+
 👉 **Does this accurately capture your problem and approach?**
 
-*(Internal: end the turn and wait.)* **Checkpoint:** write step 15.
+*(Internal: end the turn and wait.)* The question wording above is pinned verbatim (INV-056) and is
+**unchanged** by this — what changed is what the Bootcamper is looking at when they answer it.
+**Checkpoint:** write step 15.
 
 ## 16. Generate the stakeholder summary
 

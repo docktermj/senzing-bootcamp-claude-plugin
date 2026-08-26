@@ -20,6 +20,14 @@ least one non-empty desired-output field:
 - Derive between 1 and 10 query requirements from the success criteria and desired outputs in
   the document. Each derived requirement must reference the specific success criterion or
   desired output it addresses.
+  - ⚠️ **Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
+    are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
+    confirmation gate; they are provenance, not requirements input. **But read them when the two
+    disagree** — a quote that contradicts the prose above it means the refinement drifted, and the
+    quote is what the Bootcamper actually said. Raise the discrepancy here rather than deriving a
+    requirement from either side of it: on 2026-08-25 a *possible*-fraud routing rule was rendered
+    as *confirmed* fraud, and requirement 7 came out titled "Confirmed-fraud candidate list" three
+    modules downstream of the substitution.
 - Present them with this attribution: "Based on your business problem, here are
   the query requirements I've derived:"
 - List each requirement with its source (e.g. "From your success criterion about [X]..." or

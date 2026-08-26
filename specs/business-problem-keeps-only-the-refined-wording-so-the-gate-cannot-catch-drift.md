@@ -145,3 +145,31 @@ Widening it is a separate decision with its own cost in document length.
   `specs/capture-reversed-decisions-during-the-run.md`,
   `specs/relocate-integration-deployment-questions-to-module1.md` (Step 10a, where the misrendered
   answer was collected)
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, so nothing was re-verified against the server; the spec's diagnosis was
+re-confirmed by re-reading the shipped template. Three deviations, all additive.
+
+1. **The Integration Requirements quote is taken from the persisted answer, not reconstructed.**
+   INV-097 already writes `integration_targets` to `config/bootcamp_preferences.yaml` at Step 10a and
+   requires the problem statement to read it — so that section's quote comes from disk, and the
+   document and the preferences file can be compared directly. That is precisely the field that
+   drifted (*possible* → *confirmed* fraud), so the one section where this spec's defect actually
+   occurred now has a check that does not depend on anyone remembering the interview. It also
+   supplied the citation `conformance.py rules` required at the new rule.
+
+2. **Module 7 is told to read the quotes when the two disagree, not to ignore them.** The spec asks
+   only that step 1 state which version it consumes, so the quotes are not mistaken for requirements
+   input. Stated that way alone, the quotes become decorative at the one downstream site that
+   inherited the drift. Step 1 now derives from the refined prose, reads the quotes when they
+   contradict it, and **raises the discrepancy rather than deriving from either side** — which is
+   what should have happened on 2026-08-25, when requirement 7 came out titled "Confirmed-fraud
+   candidate list" three modules after the substitution.
+
+3. **The invariant is deferred, not skipped.** `## Affected files` predicts `specs/INVARIANTS.md`; it
+   was deliberately left untouched because Step 5 requires maintainer sign-off and the maintainer was
+   away. INV-097 and INV-056 are cited at the new rules, but neither registers the general
+   preserve-the-original guarantee. The drafted wording — including the persisted-answer clause and
+   the downstream-discrepancy clause discovered during implementation — is in this spec's
+   `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
