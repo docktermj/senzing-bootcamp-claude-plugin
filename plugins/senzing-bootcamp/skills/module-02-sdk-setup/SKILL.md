@@ -715,15 +715,46 @@ export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # paths) go here — take them from sdk_guide(topic='install', platform=…, language=…),
 # never from memory or from this file (INV-080).
 #
-# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary, and it
-# hedges LD_LIBRARY_PATH as "only needed if native lib not found automatically" while the
-# language-specific gotchas[] entry in the SAME response requires it. A script written
-# from env_vars alone omits a variable the runtime needs, and the failure surfaces at the
-# first engine call -- "libSz.so: cannot open shared object file" -- one module after this
-# script was written, where it reads as a broken install. See Step 3 above for the quoted
-# contradiction, its provenance, and which half governs.
+# THAT LIST IS ILLUSTRATIVE, NOT A CHECKLIST. The authority for the FULL variable set is
+# the language-specific gotchas[] entry in the SAME sdk_guide response: export every
+# variable it names, whether or not this comment happens to list it (INV-222 -- the SDK's
+# language packages are made available BY PATH, and the paths come from that lookup). This comment names
+# no language on purpose (INV-002) -- the lookup above is what resolves the set for
+# whichever language was chosen.
+#
+# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary and it
+# disagrees with gotchas[] in BOTH directions, so neither the summary nor a fixed list is
+# safe alone: it hedges LD_LIBRARY_PATH as "only needed if native lib not found
+# automatically" while the language-specific gotchas[] entry in the SAME response requires
+# it, and it marks other variables required that a fixed list like the one above can simply
+# omit.
+#
+# AN OMITTED VARIABLE FAILS IN ONE OF TWO WAYS, AND ONLY ONE OF THEM IS LOUD.
+#   - Loud: the runtime cannot find the native library, and the first engine call fails --
+#     "libSz.so: cannot open shared object file" -- one module after this script was
+#     written, where it reads as a broken install.
+#   - Silent: the runtime finds a DIFFERENT copy of the language bindings on its own module
+#     search path, imports it, raises nothing, and every later module runs against a
+#     different SDK version than the one this module just verified.
+# The second is why Step 4 prints the RESOLVED BINDING PATH and not just a version.
 unset _sz_self _sz_root _sz_settings
 ```
+
+⚠️ **The concrete case, because the general rule above names no language and the omission it
+guards against is invisible.** On `linux_apt` with **Python**, `sdk_guide(topic='install',
+platform='linux_apt', language='python')` returns **both** variables in `install.platform.env_vars`
+— `PYTHONPATH` marked *"required for Python SDK — the senzing and senzing-core packages ship with
+senzingsdk-runtime here"* and `LD_LIBRARY_PATH` carrying the *"only needed if…"* hedge — and its
+Python `gotchas[]` entry requires both unconditionally: *"Do NOT pip install them — instead set
+`PYTHONPATH=…` and `LD_LIBRARY_PATH=…`"* (server 1.33.0, verified 2026-08-26). **So the server
+supplies `PYTHONPATH`; a script that lacks it lost it here, not upstream.** This is **INV-222** at
+the site that writes the script: the SDK's language packages are made available *by path*, and those
+paths come from `sdk_guide` at run time rather than from memory or from this file (INV-080). This template has now
+been wrong at each end in turn — once naming `PYTHONPATH` and omitting `LD_LIBRARY_PATH`, then
+naming `LD_LIBRARY_PATH` and omitting `PYTHONPATH` — which is why the rule above routes to
+`gotchas[]` instead of carrying a longer list. `PYTHONPATH` is Linux-only because the Python SDK is:
+*"The Senzing Python SDK is ONLY supported on Linux"* (`platform='macos_arm', language='python'` →
+`compatibility_notes`, same server and date), so there is no macOS/Windows counterpart to add.
 
 Three things in that block are the point, not decoration:
 
@@ -831,6 +862,54 @@ here **cannot succeed even on a perfectly healthy, current install**.
 This module already says so at its own success indicator: *"an engine-class call
 (`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (**Step 9**)"*. That is
 **Step 9**'s bar, after the database and the seeded config exist. Step 4 must not duplicate it early.
+
+⛔ **Report WHERE the binding resolved from, not only that it loaded — and print it beside the
+version.** A version query answers through the **native library**, so it reports the *engine's*
+version and says nothing about which language package was imported. Those are two different places:
+the engine comes through the native library, the binding through the interpreter's own module search
+path. **Agreement between them is the thing being verified**, so print both:
+
+- the **engine** version, from the `workflow='information'` snippet below; and
+- the **resolved binding path** — for Python, `python3 -c "import senzing; print(senzing.__file__)"`;
+  for other languages, the equivalent "where did this module come from" probe for that runtime
+  (the loaded jar's location for JVM languages, the assembly path for C#).
+
+⛔ **A resolved path outside the SDK's own language directory means locally installed packages are
+shadowing the shipped ones** — the exact failure **INV-222** exists to prevent, reached here by an
+install that predates this bootcamp rather than by a `pip install` inside it. The remedy is Step 3's:
+uninstall them, **or** prepend the SDK path to the language's module search path so the shipped
+bindings win. Report which was done.
+
+⛔ **Print the PATH, not a package-metadata version — the metadata reports the wrong package.**
+It is tempting to print a binding *version* beside the engine version and compare numbers. Do not
+substitute that for the path. Measured on the development machine 2026-08-26 (observation-only,
+INV-080/INV-149 — no MCP route reports a language package's metadata layout): the SDK-shipped Python
+binding exposes **no** `__version__`, `VERSION` or `version` attribute at all, and
+`importlib.metadata.version("senzing")` returns **`4.1.2`** — the *PyPI distribution's* number —
+**even when the module actually imported is the SDK-shipped one** under `/opt/senzing/er/sdk/python`,
+because that directory ships no distribution metadata and the lookup falls through to
+`site-packages`. A version comparison built on it therefore reports the shadowing package's version
+while the correct module is loaded: the same silent skew this check exists to catch, wearing the
+check's own uniform. **The resolved path is the signal that cannot lie.**
+
+⚠️ **Why this check exists here and not only in Step 3.** A shadowed install produces a working
+import *and* a plausible, current-looking version, so a step that merely reports success is exactly
+what the defect hides behind (the fail-loudly reasoning INV-111 applies to generators). It is placed
+at Step 4 because **Step 4 is on every path**: Step 1's existing-install route skips Step 2 and Step
+3's install commands — which is where Step 3's own `senzing.__file__` detection lives — so a
+bootcamper who already had the SDK installed would otherwise never run it. Reproduced on the
+development machine 2026-08-26: with `PYTHONPATH` unset, `import senzing` resolved to
+`~/.local/lib/python3.12/site-packages/senzing/__init__.py` while the SDK-shipped bindings sat
+unreachable at `/opt/senzing/er/sdk/python`; with `PYTHONPATH` set, it resolved to the latter
+(observation-only — interpreter module-resolution order, which no MCP route reports; INV-080/INV-149).
+
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install_commands, no env_vars and no gotchas at all, only compatibility_notes stating the Python SDK is Linux-only and offering Java/C# (official) or Docker/WSL2 instead, so there is no macOS PYTHONPATH counterpart to export — owner: sdk_guide(topic='install', platform=<that platform>, language='python') IS the route that would carry a per-platform Python variable set, and it answers by declining the platform rather than by omitting a variable (absence negative) — server 1.33.0, 2026-08-26 -->
+⚠️ **Do not invent a counterpart where the server says there is none.** `PYTHONPATH` is a
+Linux-only concern because the Python SDK itself is: *"The Senzing Python SDK is ONLY supported on
+Linux. It is NOT supported on macOS or Windows"* (`sdk_guide(topic='install', platform='macos_arm',
+language='python')` → `compatibility_notes`, server 1.33.0, 2026-08-26). So this check has no
+macOS/Windows Python form to add, and the `DYLD_LIBRARY_PATH` and `senzing-env.bat` guidance stays
+exactly as it is.
 
 ⚠️ **What it looks like when the engine is attempted here** (measured live on a healthy install,
 Senzing 4.3.4 build 4.3.4.26210, 2026-08-14): `SzProduct.get_version()` returns `4.3.4` **and** the

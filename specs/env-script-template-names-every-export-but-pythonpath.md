@@ -176,3 +176,39 @@ offered as an example is read as a checklist. Both prior versions of this templa
 complete for the failure most recently observed and silent about the other end. The durable
 form is not a longer list — it is a pointer to the route that owns the whole set, with the
 list marked as illustrative, which is what proposed change 2 asks for.
+
+## Deviations from this spec, and why (2026-08-26)
+
+MCP server **1.33.0**, **2026-08-26** — this spec's own corrected diagnosis was re-confirmed
+(`env_vars` carries both variables, `PYTHONPATH` marked required; the Python `gotchas[]` entry
+requires both). Three deviations, all forced by things checked rather than assumed.
+
+1. **Criterion 1's letter conflicts with INV-002, so proposed change 2 governed instead.**
+   The criterion asks that the template's export guidance *name* `PYTHONPATH`. The env-script
+   snippet must name **no programming language** — it routes the author to *their* language's
+   `gotchas[]` entry — and naming `PYTHONPATH` there **was already tried and rejected**, as
+   `tests/test_ld_library_path_is_not_relayed_as_conditional`'s own docstring records. Doing it
+   literally turned that guard red, which is how the conflict surfaced. Shipped instead as this
+   spec's proposed change 2: the snippet carries the generalized rule (illustrative list,
+   `gotchas[]` as the authority for the full set), and the concrete `PYTHONPATH` case with server
+   provenance sits in the prose immediately after the fenced snippet.
+
+2. **Criterion 3's "binding version" was NOT implemented, because the number is wrong.**
+   Measured on this machine 2026-08-26 (observation-only, INV-080/INV-149): the SDK-shipped Python
+   binding exposes no `__version__`, `VERSION` or `version` attribute, and
+   `importlib.metadata.version("senzing")` returns **`4.1.2`** — the PyPI distribution's number —
+   **even when the imported module is `/opt/senzing/er/sdk/python/senzing/__init__.py`**, because
+   that directory ships no distribution metadata and the lookup falls through to `site-packages`.
+   Printing it would report the shadowing package's version while the correct module is loaded,
+   reproducing the exact skew the check exists to catch. Step 4 therefore prints the **resolved
+   path** and the engine version, and `:883` records why the version was refused.
+
+3. **Criterion 2 is not runtime-verified.** Whether the *generated* script exports both variables
+   is observable only during a live bootcamp; `dry-run` phase 2/3 owns it. Verified statically:
+   the template routes both values to `sdk_guide`/`gotchas[]` at run time and hardcodes neither.
+
+4. **The invariant is deferred, not skipped.** Criterion 5's guard is in place, but the two hard
+   rules at `:866` and `:883` state one new guarantee — verification by resolved path, never by a
+   version number — that INV-222 does not reach (it governs installation and availability, not how
+   a step proves which copy loaded). Sign-off was unavailable; the drafted wording and follow-up
+   actions are in this spec's `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
