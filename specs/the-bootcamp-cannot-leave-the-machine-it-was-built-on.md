@@ -219,3 +219,52 @@ the command and name no path.
 ## Invariants introduced
 
 - `INV-NNN` (unassigned — take the next unused number, with its index entry, in the implementing edit) — The Bootcamper MUST be able, at any point in the bootcamp, to package their bootcamp into a single self-describing archive under `backups/packages/`, in one of two profiles: a **share** profile (keepsakes, visualizations and `production/`; never a database, source data or credential) or a **transfer** profile (the share contents plus the INV-094 revisit bundle, config and mappings, sufficient to resume on another machine). Every archive MUST extract into one top-level directory carrying `OPEN_ME_FIRST.md` and a `PACKAGE_MANIFEST.json` that names what was included **and what was excluded**; MUST exclude `.env`, `licenses/`, `config/license.json`, `data/raw/`, `.git/` and its own output directory; MUST exclude and name any member matching the INV-109 secret patterns or resolving outside the project root; MUST be verified on disk (`testzip()` plus a SHA-256 sidecar) before the Bootcamper is told it exists; and MUST NOT be transmitted anywhere by the plugin. The `transfer` profile MUST reuse INV-094's database-backup procedure rather than implement a second one. Requires maintainer-approved wording before implementation.
+
+## Deviations from this spec, and why (2026-08-26)
+
+No Senzing fact is involved, so nothing was re-verified against the server. Six deviations.
+
+1. **`write-gate.py` was NOT changed; it keeps its inline pattern and a test pins the two equal.**
+   The spec asks for the patterns to move "into a shared importable helper both files use". The
+   helper exists and `package_bootcamp.py` imports it — but the gate is a `PreToolUse` security
+   control, where an ImportError does not degrade to "no secret scan", it degrades to a hook that
+   cannot run at all, on every write in the bootcamp. The plugin already has this exact shape for
+   `brand_tokens.py`, inlined into two generators with `tests/test_brand_sync.py` asserting the
+   copies stay equal; `tests/test_secret_patterns_are_shared.py` does that job here, comparing the
+   pattern **strings** rather than sampled behavior. The spec's stated goal — "the packager cannot
+   drift from INV-109" — is met without adding a failure mode to the gate.
+
+2. **The `transfer` database backup is run by the conversation layer, not by the script.** The spec
+   says "the packager runs that same file's procedure". `package_bootcamp.py` is stdlib-only and must
+   not shell out to `pg_dump` or `docker`, and inventing credentials is forbidden — so
+   `packaging.md` Step 3 runs `../graduation/database-backup.md` before invoking the script, and the
+   script packages whatever `backups/revisit/` then contains. One implementation of the branch, as
+   the spec requires; a different caller than its wording implies.
+
+3. **`share` also excludes `docs/mapping/`.** The spec lists `docs/mapping/` under `transfer` only,
+   but a whole-`docs` sweep pulled it into `share` too. Found by extracting a real archive and
+   reading it, not by review. It describes the Bootcamper's own source schema — field names, sample
+   values — which the results audience does not need, so it is now a `share`-profile exclusion.
+
+4. **`backups/packages/` was given its own leaf in INV-050's tree, not a comment on `backups/`.** A
+   comment-only continuation line is not a tree entry, and `test_invariant_layout_tree` pins the
+   count of both. A real leaf is also what makes INV-202 satisfiable for the directory, since the
+   path is referenced under `plugins/`. The pinned directory count moved 30 → 31 with the reason
+   recorded beside the constant.
+
+5. **`MIGRATION.md`'s `hooks/backup-before-load.json` entry is left OPEN, not marked superseded.**
+   The spec asks for the Kiro items to be marked superseded; two are. The third is an *automatic
+   pre-load* backup, which is a different decision — when it fires, whether it is silent, what it
+   costs on a large repository — and this flow is bootcamper-invoked and asks before it writes.
+   Marking it superseded would retire a question nothing has answered.
+
+6. **The graduation discoverability line sits on its own line rather than appended to the closing
+   announcement sentence.** Appending it produced a 991-character line with a stop sign ~800
+   characters in, which `test_conformance_sees_a_rule_beside_a_citation` rejected — it validates the
+   truncated string `since` prints rather than the source line (`classify()` accepts the full line).
+   The prose is better on its own line and is now line-anchored for every conformance view.
+
+**The invariant is deferred, and this spec asked for that explicitly** — its `## Invariants
+introduced` note reads "Requires maintainer-approved wording before implementation." No ID was
+minted and nothing was appended to the invariant list. The layout-tree edit is called out separately
+in the `specs/IMPLEMENTED.md` entry so the maintainer can accept or revert it independently.

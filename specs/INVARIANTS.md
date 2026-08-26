@@ -207,6 +207,7 @@ These hold at the boundaries of every module.
   ├── logs/                              # Run logs & result summaries
   ├── backups/                           # Project backups/archives; `backups/revisit/` holds the
   │                                      #   graduation revisit/resume bundle (INV-094)
+  │   └── packages/                      # Transferable archives from `/package-bootcamp`
   ├── monitoring/                        # Monitoring assets (reserved; Advanced Topics follow-up)
   ├── tests/                             # Test suite (reserved)
   └── production/                        # Production project (generated at graduation)

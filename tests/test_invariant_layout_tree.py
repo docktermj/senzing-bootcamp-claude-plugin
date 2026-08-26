@@ -67,7 +67,12 @@ ANNOTATION = re.compile(r"reserved|superseded|legacy|future", re.IGNORECASE)
 #   * continuation lines (comment-only, no name) are EXCLUDED from both, counted separately
 #   * the placeholder entry `stakeholder_summary_module{n}.md` IS counted, as one file
 EXPECTED_FILE_ENTRIES = 24
-EXPECTED_DIR_ENTRIES = 30
+#: 30 -> 31 on 2026-08-26: `backups/packages/` was added as its own leaf when
+#: `/package-bootcamp` began writing transferable archives there
+#: (`specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`). Given its own entry rather
+#: than a comment on `backups/` because a comment-only continuation line is not an entry and this
+#: is a real directory the plugin writes to -- which is also what keeps INV-202 satisfiable for it.
+EXPECTED_DIR_ENTRIES = 31
 EXPECTED_CONTINUATION_LINES = 1
 
 

@@ -1069,27 +1069,14 @@ overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create
 
 ### 6a. Database backup
 
-Back up the resolved repository so it can be restored later. Read **`database_type`**
-(`sqlite`/`postgresql`) from pre-checks and the connection from `config/engine_config.json`.
-⛔ When `database_type` is indeterminate, **do not guess a branch** — determine the engine from
-`config/engine_config.json`'s connection string instead (and note the missing key per pre-check 3).
-Picking the wrong branch here means either no backup or `pg_dump` against a SQLite file, and the
-backup is the whole point of the bundle — INV-094 requires exactly one of the two branches below to
-have run.
+⛔ **Follow `database-backup.md` — it is the one implementation of this procedure, and behavior here
+is unchanged by the factoring.** It carries the `database_type` lookup, the do-not-guess rule for an
+indeterminate value, both engine branches, the warn-and-continue rule, and the restore commands Step
+6c records in the return guide. INV-094 requires exactly one of its two branches to have run.
 
-- **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
-  `cp database/G2C.db backups/revisit/database/G2C.db`).
-- **PostgreSQL:** run `pg_dump` of the Senzing database to
-  `backups/revisit/database/senzing.dump`. When the database runs in a Docker container, dump
-  through the container (e.g.
-  `docker exec <container> pg_dump -U <user> -d <db> -Fc > backups/revisit/database/senzing.dump`).
-  Confirm the exact user / database / container from `config/engine_config.json` (and the recorded
-  container, when container-lifecycle tracking is present); never invent credentials.
-
-Record the exact **restore** command in the return guide (Step 6c): SQLite = copy the file back to
-`database/`; PostgreSQL = `pg_restore` (or `psql <` for a plain dump) into a fresh database. If the
-backup cannot be produced (tool missing, database unreachable), warn and continue — the rest of the
-bundle still saves.
+The second caller is `../bootcamp-onboarding/packaging.md`: the `transfer` package profile needs a
+database backup, and when `backups/revisit/` does not exist yet it runs **that same file's**
+procedure rather than growing a second SQLite-vs-PostgreSQL branch.
 
 ### 6b. RESUME_STATE manifest
 
@@ -1143,6 +1130,16 @@ This runs exactly once, after the report, before graduation is reported finished
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
 2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+
+   **Add exactly one line** offering `/package-bootcamp`, which gathers the recap, the keepsake
+   documents, the visualizations and `production/` into a single zip under `backups/packages/` they
+   can archive, move to another machine, or hand to a colleague.
+
+   ⛔ **That line is a statement, not a question, and it names no output path (INV-251).** No new 👉
+   gate belongs here — the single closing question is untouched — and graduation does **not** run the
+   packager, so there is no archive yet whose path could be named. (`tests/test_graduation_announces_what_it_produces.py`
+   requires a path to be announced when a graduation bash block writes one; this design deliberately
+   writes none.)
 
    **Also name the two keepsake documents Step 5b rendered — each only if it exists:**
    `docs/business_problem.pdf` (the problem this bootcamp set out to solve — the document a
