@@ -3748,7 +3748,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stderr.write(f"Recap not found: {inp}\n")
         return 1
 
-    source_text = inp.read_text(encoding="utf-8")
+    try:
+        source_text = inp.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        # Exists but is not UTF-8 — an editor that saves cp1252/ANSI is the usual cause.
+        # Refuse with a message the guide can relay rather than a traceback, and write no
+        # PDF (INV-110). Do NOT re-read with errors="replace": the recap is the
+        # bootcamper's document, and silently mangling their text is not ours to do.
+        sys.stderr.write(
+            f"Recap is not valid UTF-8: {inp} ({exc}). No PDF written. "
+            f"Re-save it as UTF-8 and run this again.\n"
+        )
+        return 1
     recap = parse_recap(source_text)
     expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
     audit = audit_recap(recap, source_text, expected or None)

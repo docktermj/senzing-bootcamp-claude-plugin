@@ -214,7 +214,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # their enforcer and each of those tests now cites the invariant back. INV-273 and INV-274 share
 # one enforcer (`test_sourcing_reaches_beyond_technical_facts.py`), so they contribute two pairs
 # against one file. Re-derived by running the extractor, not relaxed.
-EXPECTED_PAIRS = 89
+# 90 as of 2026-08-27 (third registration pass): INV-276 names its enforcer
+# (`test_undecodable_recap_is_never_overwritten.py`) and that test cites the invariant back.
+# One invariant, one test, one pair. Re-derived by running the extractor, not relaxed.
+EXPECTED_PAIRS = 90
 
 
 def pairs():
