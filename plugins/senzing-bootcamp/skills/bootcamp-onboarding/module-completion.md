@@ -376,7 +376,7 @@ next module: {next module name}?" (fill {next module name} with the next module 
 summary content above into multiple questions: the summary is statements, the transition is the one
 👉 question.
 
-⛔ **On an affirmative reply, acknowledge it in one short visible line naming the module being
+⛔ **(INV-272) On an affirmative reply, acknowledge it in one short visible line naming the module being
 started — then invoke that module's skill.** This is the ground rules' acknowledge clause at the one
 place where "before proceeding" spans a multi-call, zero-output interval: the next module's step list
 does not exist until its skill is invoked and its phase files are read, so an acknowledgment composed
@@ -400,7 +400,7 @@ transition, offer graduation (the mandatory terminal module):
 
 👉 **Would you like to graduate now and generate your production project and recap?**
 
-On an affirmative reply, **acknowledge it in one short visible line naming graduation before
+On an affirmative reply, **(INV-272) acknowledge it in one short visible line naming graduation before
 invoking the `graduation` skill** — the same ordering as a module transition and for the same reason:
 the invocation and its file reads emit nothing the bootcamper can see, and this is the last gate of
 the bootcamp, so an answer that appears to change nothing is the worst possible note to end on. Then

@@ -173,3 +173,7 @@ re-confirmed by re-reading the shipped template. Three deviations, all additive.
    preserve-the-original guarantee. The drafted wording — including the persisted-answer clause and
    the downstream-discrepancy clause discovered during implementation — is in this spec's
    `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
+
+## Invariants introduced
+
+- `INV-275` — Where the guide refines a Bootcamper's answer into a durable artifact later modules read as an input, the original wording MUST be preserved beside the refinement and the confirmation gate MUST present both, stating that a mismatch is what it asks about. A fixed-vocabulary answer gets no quote rather than an invented one; an already-persisted answer is quoted from the persisted value. Scoped to `docs/business_problem.md` at registration. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

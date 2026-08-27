@@ -34,6 +34,10 @@ are comparing, and that downstream derivation reads the refined text.
 
 Stdlib only; shipped markdown read as text (INV-108).
 
+Enforces **INV-275** (the Bootcamper's original wording is preserved beside the refinement in a
+durable artifact later modules read, and the confirmation gate presents both). ⚠️ Asserts the
+slots and the gate instruction SHIP; whether a run quotes faithfully is `dry-run` phase 3's.
+
 Source spec: `specs/business-problem-keeps-only-the-refined-wording-so-the-gate-cannot-catch-drift.md`.
 
 Run:  python3 -m unittest discover -s tests

@@ -833,7 +833,7 @@ training data.
 
    _(Internal: end the turn on this question and wait. Do not proceed until the bootcamper answers.)_
 
-   ⛔ **(INV-080, INV-247) The gate's options ARE the options — once the bootcamper selects one,
+   ⛔ **(INV-273, INV-080, INV-247) The gate's options ARE the options — once the bootcamper selects one,
    proceed with it.** Do
    not re-argue the choice, do not advocate an option this list does not carry, and do not introduce
    a consideration no step here supplies. That includes anything you would have to infer rather than

@@ -151,7 +151,7 @@ steering files.)
 
     Once the bootcamper says something substantive, the reference-something-specific form applies
     again; this carve-out is for content-free answers only.
-  - ⛔ **When proceeding requires LOADING anything, the acknowledgment goes out first — in its own
+  - ⛔ **(INV-272) When proceeding requires LOADING anything, the acknowledgment goes out first — in its own
     bootcamper-visible text, before the first tool call.** Invoking a skill, reading a file or
     running a script produces **no** bootcamper-visible output, so an acknowledgment composed *after*
     the loading leaves their answer looking unregistered for the whole interval — which at a module
@@ -185,13 +185,13 @@ steering files.)
 - **Pre-response checklist:** if your response contains Senzing SDK method names, attribute
   names, config options, error codes, or entity-resolution technical details, you MUST have
   called an MCP tool this turn to get them. If not, stop and call it first.
-- ⛔ **(INV-080) That checklist is a floor, NOT the exhaustive set of claims needing a source.** Its
+- ⛔ **(INV-273, INV-080) That checklist is a floor, NOT the exhaustive set of claims needing a source.** Its
   enumeration is technical, and read as a complete list it licenses everything outside it. An
   assertion about **Senzing the company** — its licensing, its support, its pricing, its internal
   process, how its customers or employees do things — is subject to the same discipline as an SDK
   method name. It comes from an MCP tool, from a shipped skill file, or from something measured on
   this machine. There is no fourth source.
-- ⛔ **(INV-080, INV-149) Anything you cannot source is labeled as an inference AT THE POINT it is
+- ⛔ **(INV-273, INV-080, INV-149) Anything you cannot source is labeled as an inference AT THE POINT it is
   made, or it is not said.** Label-or-omit, never label-and-proceed: a hedge bolted onto an advisory that should not
   have been offered is still the advisory. ⚠️ **And at a gate the bootcamper has already answered,
   the correct action is silence** — an unsourced consideration they did not ask for has no bearing
@@ -207,7 +207,7 @@ steering files.)
   MCP server; the internal-channels claim was the guide's own inference about how Senzing employees
   obtain licenses. Their words: *"I don't want assumptions presented as fact."* The sourced and the
   unsourced arrived in one paragraph, indistinguishable.
-- ⛔ **(INV-065) The bootcamper's identifying context is for IDENTIFICATION and for fields a tool
+- ⛔ **(INV-274, INV-065) The bootcamper's identifying context is for IDENTIFICATION and for fields a tool
   requires —
   never a premise for your reasoning about what they should choose.** Their name, email address and
   account details are collected to identify them and to satisfy a call that cannot run without them.

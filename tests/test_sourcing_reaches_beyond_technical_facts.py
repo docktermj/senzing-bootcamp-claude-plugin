@@ -32,6 +32,11 @@ the gate where it lapsed. Whether a given run obeys it is `dry-run` phase 3's ob
 
 Stdlib only; shipped markdown read as text (INV-108).
 
+Enforces **INV-273** (assertions about Senzing, including non-technical ones, come from an MCP
+tool, a shipped skill file or something measured here; the technical enumeration is a floor) and
+**INV-274** (identifying context is never a premise for reasoning about what the Bootcamper should
+choose). ⚠️ Asserts both rules SHIP; runtime compliance is `dry-run` phase 3's.
+
 Source spec: `specs/an-unsourced-inference-about-the-bootcamper-steered-a-consent-gate.md`.
 
 Run:  python3 -m unittest discover -s tests

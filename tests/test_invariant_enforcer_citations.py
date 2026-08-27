@@ -210,7 +210,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # back. INV-268 was registered in the same edit and names no test in its own text — its rule is
 # guarded through `test_why_key_details_flag_claim_is_withdrawn.py`, which is not an "Enforced by"
 # claim — so it adds no pair here. Re-derived by running the extractor, not relaxed.
-EXPECTED_PAIRS = 85
+# 89 as of 2026-08-27 (second registration pass): INV-272, INV-273, INV-274 and INV-275 each name
+# their enforcer and each of those tests now cites the invariant back. INV-273 and INV-274 share
+# one enforcer (`test_sourcing_reaches_beyond_technical_facts.py`), so they contribute two pairs
+# against one file. Re-derived by running the extractor, not relaxed.
+EXPECTED_PAIRS = 89
 
 
 def pairs():

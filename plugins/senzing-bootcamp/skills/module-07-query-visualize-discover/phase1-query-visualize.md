@@ -20,7 +20,7 @@ least one non-empty desired-output field:
 - Derive between 1 and 10 query requirements from the success criteria and desired outputs in
   the document. Each derived requirement must reference the specific success criterion or
   desired output it addresses.
-  - ⚠️ **Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
+  - ⚠️ **(INV-275) Derive from the REFINED prose, not from the `> "…"` quotes beside it.** Those blockquotes
     are the Bootcamper's own words, preserved so a misrendering can be caught at Module 1's
     confirmation gate; they are provenance, not requirements input. **But read them when the two
     disagree** — a quote that contradicts the prose above it means the refinement drifted, and the

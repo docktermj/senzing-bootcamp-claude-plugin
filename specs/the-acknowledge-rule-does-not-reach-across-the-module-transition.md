@@ -177,3 +177,7 @@ widening the fix rather than narrowing it.
    (INV-006) — but the ordering requirement itself is registered by neither. It is deferred with
    drafted wording in this spec's `specs/IMPLEMENTED.md` entry, because Step 5 requires sign-off
    and the maintainer was away.
+
+## Invariants introduced
+
+- `INV-272` — Where proceeding from a Bootcamper's answer requires LOADING anything, the acknowledgment MUST be emitted as bootcamper-visible text BEFORE the first such call, as a statement that duplicates none of the apparatus the loaded step produces. Binds every site acting on an affirmative transition or graduation reply. ⚠️ Compliance is not statically testable; `dry-run` phase 3 is the only check on it. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

@@ -22,6 +22,10 @@ affirmative reply -- never by listing known paths. That is not a formality here:
 named ONE phase file, and the scan found THREE more, one of them the graduation gate, where the
 same skill-invocation interval is the last thing that happens in the bootcamp.
 
+Enforces **INV-272** (the acknowledgment of a Bootcamper's answer is emitted before the first
+loading call, as a statement, at every site acting on an affirmative transition or graduation
+reply). ⚠️ Asserts the rule SHIPS; whether a run obeys it is `dry-run` phase 3's.
+
 Source spec: `specs/the-acknowledge-rule-does-not-reach-across-the-module-transition.md`.
 
 Run:  python3 -m unittest discover -s tests

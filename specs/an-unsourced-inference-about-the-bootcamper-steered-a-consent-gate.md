@@ -190,3 +190,8 @@ neighbors —
 
 Both drafted statements, and the sites to cite them at, are in this spec's `specs/IMPLEMENTED.md`
 entry under `DEFERRED INVARIANT`.
+
+## Invariants introduced
+
+- `INV-273` — An assertion about Senzing — including non-technical ones about the company, its licensing, support or internal process — MUST come from an MCP tool, a shipped skill file, or something measured on this machine; the pre-response checklist's technical enumeration is a floor. Unsourceable assertions are labeled at the point they are made or not made, and at an already-answered gate the required action is silence. Widens INV-080. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)
+- `INV-274` — The Bootcamper's identifying context is for identification and for fields a tool requires, and MUST NOT be a premise in the guide's reasoning about what they should choose; employer and entitlement MUST NOT be inferred from an email domain. Distinct from INV-065, which governs what leaves the machine rather than what is inferred from what stays. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

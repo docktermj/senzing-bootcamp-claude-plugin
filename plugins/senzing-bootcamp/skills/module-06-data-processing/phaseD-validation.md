@@ -454,7 +454,7 @@ summary), then close the module:
 👉 **Are you ready to move on to the next module: {next module name}?**
 
 *(Internal: end the turn on this question and wait.)* On completion, set `current_step` to
-`null` in `config/bootcamp_progress.json` and, on an affirmative reply, **acknowledge it in one short
+`null` in `config/bootcamp_progress.json` and, on an affirmative reply, **(INV-272) acknowledge it in one short
 visible line naming Module 7 before invoking its skill** — per the ground rules' acknowledge clause
 and `../bootcamp-onboarding/module-completion.md` Step 4, which own the ordering — then produce the
 Module 7 start banner, journey map, before/after framing, and step overview per the ground rules.

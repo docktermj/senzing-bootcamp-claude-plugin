@@ -177,7 +177,7 @@ not captured for this bootcamp."]
 > "[Their own words, verbatim]"
 ```
 
-⛔ **(INV-097, INV-056) The `> "…"` lines are the Bootcamper's OWN WORDS, quoted — not a second
+⛔ **(INV-275, INV-097, INV-056) The `> "…"` lines are the Bootcamper's OWN WORDS, quoted — not a second
 rendering.** Every
 other field in that template instructs you to *summarize*; these instruct you to *quote*. Refinement
 is not transcription, and a document that keeps only the refinement cannot be checked against what
@@ -300,7 +300,7 @@ sourced statement is the correct outcome, not a failure of the step.
 
 ## 15. Get confirmation
 
-⛔ **Present the document with BOTH versions visible, and say which is which.** Before asking, state
+⛔ **(INV-275) Present the document with BOTH versions visible, and say which is which.** Before asking, state
 plainly that the `> "…"` lines are their own words as they said them and the prose above each is your
 rendering of it — and that a mismatch between the two is exactly what this question is for. Without
 that, the gate asks *"does this plausible-sounding text sound right?"* rather than *"does this match
