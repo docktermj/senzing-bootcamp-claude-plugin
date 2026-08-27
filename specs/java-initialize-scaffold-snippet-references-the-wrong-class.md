@@ -118,7 +118,9 @@ is executed against the live server, which is what this dry run did.
   directly — the defect **reproduces**, and is confirmed isolated to `EnvironmentAndHubs.java`
   among the five. No absence claim is made here (the defect is a positive, reproduced result:
   the file does not compile), so `owner-checked:` does not apply.
-- Upstream: **not yet sent — needs maintainer approval.** ⛔ A dry run must not call
+- Upstream: **sent 2026-08-27** as `submit_feedback(category='bug')`, on the maintainer's
+  explicit approval of the verbatim text — see "Upstream report sent" below.
+  Not sent during the dry run itself: ⛔ A dry run must not call
   `submit_feedback` under any category (`.claude/skills/dry-run/SKILL.md`, "Absolute rules"), so
   this was deliberately not filed. The correct upstream target is the `senzing/code-snippets-v4`
   GitHub repository directly (a source-code defect, not something `submit_feedback`'s `bug`
@@ -126,3 +128,19 @@ is executed against the live server, which is what this dry run did.
 - Related specs: none — this is the first-recorded defect in a `generate_scaffold` snippet's
   compilability; earlier specs (`refresh-the-initialize-workflow-snippet-count-in-step4`) concerned
   the *count* of snippets returned, not whether any one of them compiles.
+
+## Upstream report sent (2026-08-27)
+
+The maintainer approved the drafted text **verbatim** and it was sent as
+`submit_feedback(category='bug')` on 2026-08-27 — a separate, maintainer-authorized action, taken
+after the dry run closed and therefore outside the skill's ⛔ on invoking `submit_feedback` during a
+run. No text was changed between approval and sending. Nothing identifying was included: the message
+carries no name, no email and no local path, and the server states submissions are anonymous in any
+case (INV-065).
+
+The server's response records that **submissions are anonymous and cannot be followed up**, so no
+reply will arrive and none should be waited for. ⚠️ The defect lives in the `senzing/code-snippets-v4`
+GitHub repository, not in the server, so `submit_feedback` reaches the Senzing maintainers but not
+the repository's issue tracker directly. The maintainer chose this route knowing that; a GitHub
+issue against `code-snippets-v4` remains open as a stronger follow-up if the file is still broken on
+a later check. Re-fetch `EnvironmentAndHubs.java` and recompile rather than assuming it was fixed.

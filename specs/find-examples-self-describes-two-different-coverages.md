@@ -137,7 +137,9 @@ looks impeccable.
   indexed and the declared description understates coverage. No absence claim about the server is
   made here — the diagnosis rests on a positive result, not an empty one — so `owner-checked:` does
   not apply.
-- Upstream: **not yet sent — needs maintainer approval.** ⛔ A dry run must not call
+- Upstream: **sent 2026-08-27** as `submit_feedback(category='bug')`, on the maintainer's
+  explicit approval of the verbatim text — see "Upstream report sent" below.
+  Not sent during the dry run itself: ⛔ A dry run must not call
   `submit_feedback` under any category (`.claude/skills/dry-run/SKILL.md`, "Absolute rules"), so this
   was deliberately not filed. Same handling as
   `specs/mcp-tools-disagree-on-eval-license-duration.md`.
@@ -147,3 +149,20 @@ looks impeccable.
   broken by a call rather than by argument);
   `specs/mcp-negative-markers-must-name-the-owning-route.md` (the marker convention this coverage
   claim is deliberately *not* given, since it is not an absence)
+
+## Upstream report sent (2026-08-27)
+
+The maintainer approved the drafted text **verbatim** and it was sent as
+`submit_feedback(category='bug')` on 2026-08-27 — a separate, maintainer-authorized action, taken
+after the dry run closed and therefore outside the skill's ⛔ on invoking `submit_feedback` during a
+run. No text was changed between approval and sending. Nothing identifying was included: the message
+carries no name, no email and no local path, and the server states submissions are anonymous in any
+case (INV-065).
+
+The server's response records that **submissions are anonymous and cannot be followed up**, so no
+reply will arrive and none should be waited for. The plugin-side protections this spec proposes — the
+contested-fact note beside `phaseA-build-loading.md:332` and the `ground-rules.md`
+parameters-vs-coverage distinction — are **still outstanding** and remain the operative safeguard
+regardless of what upstream does. Re-check the two descriptions on a later server version rather
+than assuming the report was acted on; if they are reconciled, retire the note rather than
+inverting it.
