@@ -523,7 +523,7 @@ none of these are covered by it:
    - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
      visualization's base name and compare against the section's image lines.
 
-   ⛔ **The manifest check is PER-NAME, and its denominator is the manifests that exist — so ask
+   ⛔ **(INV-271) The manifest check is PER-NAME, and its denominator is the manifests that exist — so ask
    separately whether a manifest is MISSING (INV-193, INV-265).** "Did every captured tab reach the
    recap?" is answered for each manifest found; it cannot answer "should there have been another
    manifest?" A module that captured nothing contributes no manifest, no denominator, and no

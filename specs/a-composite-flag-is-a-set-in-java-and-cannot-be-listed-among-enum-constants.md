@@ -185,3 +185,7 @@ absence claim, and the implementation changed shape as a result.
    narrowed what is fileable — the original finding is false, and only the missing
    representation hint / cross-reference on `topic='flags'` rows remains. Draft message and category
    (`feature`, never `license_request` — INV-135) are in the ledger entry.
+
+## Invariants introduced
+
+- `INV-268` — Before composing a flag set for an SDK call, the guide MUST confirm each composite flag's **representation** for the chosen binding — not only its membership — via `get_sdk_reference(topic='parameters', …)`, and where the flags parameter is a collection and the binding declares the composite as a collection it MUST be merged into the set rather than listed among its members. Extends INV-132 from a method's parameter shapes to the representation of the flag constants passed into them. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

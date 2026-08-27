@@ -1068,7 +1068,7 @@ nodes actually drawn. A color a viewer cannot name is not an improvement over th
 
 #### The encoding self-check (required — behavior, in every language)
 
-⛔ **The graph endpoint MUST expose a self-check, and the build step MUST run it before capture.**
+⛔ **(INV-270) The graph endpoint MUST expose a self-check, and the build step MUST run it before capture.**
 The rule above is stated three times across this bootcamp and was still re-implemented wrong in a
 generated Java app on 2026-08-25 — colored from `data_sources[0]`, with 294 of 5,619 cross-source
 entities rendered as single-source. Prose did not prevent that. A check that fails will.

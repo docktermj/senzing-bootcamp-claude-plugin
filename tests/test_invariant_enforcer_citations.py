@@ -204,7 +204,13 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # enforcer. INV-265 and INV-267 were registered in the same edit and name no test in their own
 # text — their guards cite them rather than the reverse — so they add no pair here. Re-derived by
 # running the extractor, not relaxed.
-EXPECTED_PAIRS = 82
+# 85 as of 2026-08-27: INV-269, INV-270 and INV-271 each name their enforcer
+# (`test_env_script_names_every_required_export.py`, `test_encoding_self_check_is_stated_as_behavior.py`,
+# `test_expected_visualization_denominator.py`), and each of those tests now cites the invariant
+# back. INV-268 was registered in the same edit and names no test in its own text — its rule is
+# guarded through `test_why_key_details_flag_claim_is_withdrawn.py`, which is not an "Enforced by"
+# claim — so it adds no pair here. Re-derived by running the extractor, not relaxed.
+EXPECTED_PAIRS = 85
 
 
 def pairs():

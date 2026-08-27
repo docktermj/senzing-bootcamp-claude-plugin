@@ -187,3 +187,7 @@ Two deviations.
    are cited at all three new rules, but neither registers the *verification* requirement, which is
    this spec's actual finding. The drafted wording and follow-up actions are in this spec's
    `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
+
+## Invariants introduced
+
+- `INV-270` — A visualization the Bootcamper's code builds MUST expose the count of distinct sorted source-set keys on its graph endpoint, and the build step MUST compare it against the legend's distinct color-key count before capture — stopping on inequality, and reporting **not exercised** rather than a pass below two keys (INV-265). Stated as behavior in the any-language contract, not only in the bundled reference (INV-002). (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

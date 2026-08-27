@@ -283,7 +283,7 @@ re-run SDK initialization from Module 2 / System Verification; check `config/eng
 and retry until the snapshot is written — the module does not complete without it.
 
 ⛔ **Run the encoding self-check against the running server BEFORE capturing — and stop on a
-mismatch (INV-259, INV-265).** Fetch the graph endpoint and compare the number of distinct color keys the legend names
+mismatch (INV-270, INV-259, INV-265).** Fetch the graph endpoint and compare the number of distinct color keys the legend names
 against `encoding_check.distinct_source_set_keys` (the contract's "The encoding self-check" defines
 both). They MUST be equal; fewer legend keys means nodes are colored by one member of their source
 set rather than the whole set (INV-259), which renders every cross-source entity as single-source

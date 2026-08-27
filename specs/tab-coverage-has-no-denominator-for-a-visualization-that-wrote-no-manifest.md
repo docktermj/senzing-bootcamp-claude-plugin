@@ -186,3 +186,7 @@ and no instruction was duplicated.
    away. INV-193 is cited at the rule as the mechanism one layer in, but it does not reach the
    set-of-manifests level, which is this spec's actual finding. The drafted wording and follow-up
    actions are in this spec's `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
+
+## Invariants introduced
+
+- `INV-271` — A completeness check whose denominator is a set of produced artifacts MUST also establish that the **expected** set was produced, from a source independent of them; an expected artifact with no manifest is reported by name as an **unrun** check and the coverage figure is withheld, without blocking the recap (INV-048). Extends INV-193 from the artifact being measured to the set of measurements themselves. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

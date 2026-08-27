@@ -863,7 +863,7 @@ This module already says so at its own success indicator: *"an engine-class call
 (`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (**Step 9**)"*. That is
 **Step 9**'s bar, after the database and the seeded config exist. Step 4 must not duplicate it early.
 
-⛔ **Report WHERE the binding resolved from, not only that it loaded — and print it beside the
+⛔ **(INV-269) Report WHERE the binding resolved from, not only that it loaded — and print it beside the
 version.** A version query answers through the **native library**, so it reports the *engine's*
 version and says nothing about which language package was imported. Those are two different places:
 the engine comes through the native library, the binding through the interpreter's own module search
@@ -880,7 +880,7 @@ install that predates this bootcamp rather than by a `pip install` inside it. Th
 uninstall them, **or** prepend the SDK path to the language's module search path so the shipped
 bindings win. Report which was done.
 
-⛔ **Print the PATH, not a package-metadata version — the metadata reports the wrong package.**
+⛔ **(INV-269) Print the PATH, not a package-metadata version — the metadata reports the wrong package.**
 It is tempting to print a binding *version* beside the engine version and compare numbers. Do not
 substitute that for the path. Measured on the development machine 2026-08-26 (observation-only,
 INV-080/INV-149 — no MCP route reports a language package's metadata layout): the SDK-shipped Python

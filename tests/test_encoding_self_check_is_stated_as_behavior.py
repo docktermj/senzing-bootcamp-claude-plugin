@@ -29,6 +29,10 @@ rather than passed.
 Stdlib only. The contract and build steps are read as text; the reference's own check is exercised
 by import, which is a dev-only read of a bundled script (INV-108).
 
+Enforces **INV-270** (the graph endpoint exposes the distinct source-set key count, the build
+step compares it against the legend's color-key count before capture, and below two keys it
+reports *not exercised* rather than a pass).
+
 Source spec: `specs/the-source-set-coloring-rule-is-stated-three-times-and-verified-nowhere.md`.
 
 Run:  python3 -m unittest discover -s tests

@@ -1055,7 +1055,7 @@ def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]
     return manifests
 
 
-# --- The expected-visualization denominator ---------------------------------
+# --- The expected-visualization denominator (INV-271) -----------------------
 #
 # `tab_coverage_problems` answers "did every captured tab reach the recap?" for each
 # manifest it is given, and `find_tab_manifests` supplies the manifests that exist. So

@@ -218,9 +218,50 @@ the command and name no path.
 
 ## Invariants introduced
 
-- `INV-NNN` (unassigned — take the next unused number, with its index entry, in the implementing edit) — The Bootcamper MUST be able, at any point in the bootcamp, to package their bootcamp into a single self-describing archive under `backups/packages/`, in one of two profiles: a **share** profile (keepsakes, visualizations and `production/`; never a database, source data or credential) or a **transfer** profile (the share contents plus the INV-094 revisit bundle, config and mappings, sufficient to resume on another machine). Every archive MUST extract into one top-level directory carrying `OPEN_ME_FIRST.md` and a `PACKAGE_MANIFEST.json` that names what was included **and what was excluded**; MUST exclude `.env`, `licenses/`, `config/license.json`, `data/raw/`, `.git/` and its own output directory; MUST scan **every** member's bytes — with no file-type allowlist — and MUST exclude and name any member matching the INV-109 secret patterns, resolving outside the project root, or that could not be read (nothing unexamined is packaged); MUST be verified on disk (`testzip()` plus a SHA-256 sidecar) before the Bootcamper is told it exists; and MUST NOT be transmitted anywhere by the plugin. The `transfer` profile MUST reuse INV-094's database-backup procedure rather than implement a second one. **The consent gate is part of the guarantee, not an implementation detail: a packaging run MUST ask exactly one pinned, numbered 👉 question before anything is written; the sizes that question quotes MUST come from a `--dry-run` measurement rather than an estimate; and the cancel option MUST write nothing at all.** What the Bootcamper consents to is precisely which of their files travel, so a question that understates the contents is the failure this clause exists to prevent. Requires maintainer-approved wording before implementation.
+⚠️ **Still unregistered. Held deliberately, and SPLIT IN TWO by the maintainer's decision of
+2026-08-27.** The single ~250-word statement this section carried covered the archive's contents,
+its verification, *and* its consent gate — the gate having been appended on 2026-08-26 after
+`production-readiness-audit-2026-08-26` found it uncovered, because the original draft predated the
+conversational layer. Bolting a second subject onto a statement is exactly how the first omission
+happened, so the two are now separate drafts with separate IDs.
 
-⚠️ **The consent-gate sentence was added 2026-08-26** by `specs/the-packaging-consent-gate-is-an-unregistered-guarantee.md`, after `production-readiness-audit-2026-08-26` found that `packaging.md` shipped those two rules while this draft — written before the conversational layer existed — covered only the archive's contents and verification.
+⛔ **Held, not merely unapproved.** The maintainer's stated reason: every other invariant registered
+on 2026-08-27 describes behavior that shipped and was exercised, whereas **this feature has never
+run in a live bootcamp** — and its most serious defect, a `.pem` private key packaged into an
+archive meant for someone else, was found only by executing it against a hostile fixture after
+static reading had passed it twice. Registering it now would mean amending a fresh invariant rather
+than approving a settled one. Revisit after `dry-run` phases 2 and 3 have exercised the flow.
+
+### Draft 1 of 2 — what the archive IS (contents, exclusions, integrity)
+
+- `INV-NNN` (unassigned) — The Bootcamper MUST be able, at any point in the bootcamp, to package
+  their bootcamp into a single self-describing archive under `backups/packages/`, in one of two
+  profiles: a **share** profile (keepsakes, visualizations and `production/`; never a database,
+  source data or credential) or a **transfer** profile (the share contents plus the INV-094 revisit
+  bundle, config and mappings, sufficient to resume on another machine). Every archive MUST extract
+  into one top-level directory carrying `OPEN_ME_FIRST.md` and a `PACKAGE_MANIFEST.json` that names
+  what was included **and what was excluded**; MUST exclude `.env`, `licenses/`,
+  `config/license.json`, `data/raw/`, `.git/` and its own output directory; MUST scan **every**
+  member's bytes — with no file-type allowlist — and MUST exclude and name any member matching the
+  INV-109 secret patterns, resolving outside the project root, or that could not be read (nothing
+  unexamined is packaged); MUST be verified on disk (`testzip()` plus a SHA-256 sidecar) before the
+  Bootcamper is told it exists; and MUST NOT be transmitted anywhere by the plugin. The `transfer`
+  profile MUST reuse INV-094's database-backup procedure rather than implement a second one.
+
+### Draft 2 of 2 — what the Bootcamper CONSENTS to
+
+- `INV-NNN+1` (unassigned) — A packaging run MUST ask exactly one pinned, numbered 👉 question
+  before anything is written; the sizes that question quotes MUST come from a `--dry-run`
+  measurement rather than an estimate; and the cancel option MUST write nothing at all. What the
+  Bootcamper consents to is precisely **which of their files travel**, so a question that
+  understates the contents is the failure this rule exists to prevent. (Separated from draft 1 on
+  2026-08-27: the archive's contents and the consent gate are independently amendable, and
+  `dry-run` phase 3 may change the gate without touching what the archive carries.)
+
+**On approval of either or both:** mint the next free ID(s), append with index entries in the same
+edit, and cite at the sites the `specs/IMPLEMENTED.md` deferral lists — nine hard rules across
+`packaging.md`, `graduation/database-backup.md` and `graduation/SKILL.md`. Draft 1's sites are the
+contents/verification rules; draft 2's are `packaging.md:25` and `:58`.
 
 ## Deviations from this spec, and why (2026-08-26)
 

@@ -212,3 +212,7 @@ requires both). Three deviations, all forced by things checked rather than assum
    version number — that INV-222 does not reach (it governs installation and availability, not how
    a step proves which copy loaded). Sign-off was unavailable; the drafted wording and follow-up
    actions are in this spec's `specs/IMPLEMENTED.md` entry under `DEFERRED INVARIANT`.
+
+## Invariants introduced
+
+- `INV-269` — A step that verifies a language binding MUST report the **resolved path** the binding was loaded from, beside the engine version, MUST NOT substitute a package-metadata version for it, and MUST sit on a step every install path reaches. Complements INV-222, which governs how the packages are made available and is silent on proving which copy loaded. (recorded in `specs/INVARIANTS.md`, approved 2026-08-27.)

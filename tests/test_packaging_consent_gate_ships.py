@@ -143,9 +143,15 @@ class TheDraftedInvariantCoversTheGate(Base):
         self.text = flat(SPEC)
 
     def test_the_draft_states_the_consent_gate_guarantee(self):
-        self.has(self.text, r"(?i)consent gate is part of the guarantee",
-                 "the drafted invariant does not cover the consent gate, so the two rules above "
-                 "remain guarantees the ruleset does not record")
+        """⚠️ The draft was SPLIT on 2026-08-27, so the gate is now its own statement.
+
+        Before the split this asserted the single draft carried a "consent gate is part of the
+        guarantee" clause. The gate is now draft 2 of 2 in its own right, which is a stronger
+        form of the same property -- so the assertion moved to the heading that establishes it.
+        """
+        self.has(self.text, r"(?i)Draft 2 of 2 — what the Bootcamper CONSENTS to",
+                 "the drafted invariant no longer carries the consent gate as its own statement, "
+                 "so the two rules above remain guarantees the ruleset does not record")
 
     def test_the_draft_requires_a_measured_size(self):
         self.has(self.text,
@@ -158,9 +164,15 @@ class TheDraftedInvariantCoversTheGate(Base):
 
     def test_the_amendment_records_why_it_was_missing(self):
         """A rule carrying the case that produced it is one a later editor cannot tidy away."""
-        self.has(self.text, r"(?i)written before the conversational layer existed",
+        self.has(self.text, r"(?i)predated the\s+conversational layer",
                  "the draft does not record why the gate was omitted, so the lesson -- a "
                  "deferral written against a draft inherits its blind spots -- is lost")
+
+    def test_the_split_records_why_the_two_are_separate(self):
+        """Bolting a second subject onto a statement is how the first omission happened."""
+        self.has(self.text, r"(?i)independently amendable|separate drafts with separate IDs",
+                 "the split is recorded without its reason, so a later editor may merge the two "
+                 "back and re-create the single statement that lost the gate")
 
 
 if __name__ == "__main__":

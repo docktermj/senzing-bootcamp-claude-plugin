@@ -35,6 +35,9 @@ exit code 0 with a `SKIPPED:` line and a withheld coverage figure, never a failu
 against skipping. It was ignored anyway. A fourth copy is the state-it-once violation (INV-179)
 and would not have changed that run; the defect fixed here is the silence afterward.
 
+Enforces **INV-271** (a completeness check whose denominator is a set of produced artifacts also
+establishes that the expected set was produced, from an independent source).
+
 Source spec: `specs/tab-coverage-has-no-denominator-for-a-visualization-that-wrote-no-manifest.md`.
 
 Run:  python3 -m unittest discover -s tests

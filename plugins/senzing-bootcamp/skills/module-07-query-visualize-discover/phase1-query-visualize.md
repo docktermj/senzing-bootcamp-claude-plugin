@@ -184,7 +184,7 @@ the "Equivalent to:" line quoted above (source: `senzing.com/docs/flags/4/flags_
 **"The server does not document X" is only ever "the tool I asked does not document X."**
 An empty structured field is not an absent fact.
 
-⛔ **Confirm a composite's *representation* for the chosen binding before composing a flag set —
+⛔ **(INV-268) Confirm a composite's *representation* for the chosen binding before composing a flag set —
 a composite is not always the same kind of thing as the flags it contains.** `composite_members`
 tells you *which* flags a composite carries; it does not tell you what a composite **is** in the
 binding you are writing. Read the flags argument's own type first:
@@ -239,7 +239,7 @@ Set<SzFlag> flags = EnumSet.of(SzFlag.SZ_ENTITY_INCLUDE_ENTITY_NAME,
 flags.addAll(SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS);
 ```
 
-⛔ **Do not reach for the plural class to escape this.** `SzFlags.*` compiles on its own and then
+⛔ **(INV-268) Do not reach for the plural class to escape this.** `SzFlags.*` compiles on its own and then
 cannot be passed to a `Set<SzFlag>` parameter at all — two classes one letter apart, identical
 constant names, different types. Read the parameter type, then pick the class that matches it.
 
@@ -617,7 +617,7 @@ of the Truth Set. It MUST:
   it. Nothing looked broken. This step's own warning applies to itself here: *the bootcamper cannot
   tell a bad default from bad data*, so check what the colors encode rather than assuming the
   reference got it right.
-  - ⛔ **Run the encoding self-check here too, and here it is not vacuous (INV-259, INV-265).** Compare the legend's
+  - ⛔ **Run the encoding self-check here too, and here it is not vacuous (INV-270, INV-259, INV-265).** Compare the legend's
     distinct color-key count against `encoding_check.distinct_source_set_keys` from the graph
     endpoint (the contract's "The encoding self-check"). The Truth Set build almost always reports
     `not_exercised` — one data source, so the comparison cannot fail — whereas the bootcamper's data

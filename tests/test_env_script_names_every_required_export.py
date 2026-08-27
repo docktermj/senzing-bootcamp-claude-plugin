@@ -38,6 +38,9 @@ never by naming the known path.
 
 Stdlib only; reads shipped markdown as text and imports nothing from `plugins/` (INV-108).
 
+Enforces **INV-269** (a step verifying a language binding reports the resolved path, never a
+package-metadata version, on a step every install path reaches).
+
 Source spec: `specs/env-script-template-names-every-export-but-pythonpath.md`.
 
 Run:  python3 -m unittest discover -s tests
