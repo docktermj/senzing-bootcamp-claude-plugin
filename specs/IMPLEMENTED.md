@@ -42,6 +42,58 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## system-verification-java-loading-scaffold-hits-the-json-p-gap-too
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03-system-verification/phase1-verification.md`,
+  `tests/test_java_json_dependency_gap_is_covered.py` (new),
+  `specs/system-verification-java-loading-scaffold-hits-the-json-p-gap-too.md` (deviation note)
+- **MCP re-check:** server **1.33.0**, 2026-08-28 — **confirmed, and wider than the spec measured.**
+  `generate_scaffold(language='java', workflow='full_pipeline')` re-called; all seven `loading/`
+  snippets fetched fresh from their own `raw_url`s. **Six of the six that read an input file** import
+  `javax.json`; the only one that does not, `LoadRecords.java`, hardcodes its records and is the file
+  Step 4 forbids picking — so the selection rule routes toward the dependency with no sibling escape
+  hatch. No jar under `/opt/senzing` carries a `javax/json` class (`sz-sdk.jar` + siblings, OpenJDK
+  21.0.12; environment observation, INV-080/INV-149).
+- **Summary:** `java-scaffold-json-dependency-gap` (2026-07-25, `b3205b7`) fixed this in three
+  modules and never reached System verification, whose Step 4 independently calls
+  `generate_scaffold(workflow='full_pipeline')` and steers at a snippet with the same dependency.
+  Added Step 4 item 5: check the saved file's imports for a non-standard-library package **before**
+  Step 5 compiles, cross-referencing module-02's canonical procedure rather than copying it
+  (INV-179), while restating two things at the step because a bootcamper hitting this is reading
+  *this* file — the safety asymmetry (**replacing the JSON library is safe; altering the Senzing SDK
+  calls is not**) and the requirement to record the substitution in the saved file's header. Step 5's
+  Fix_Instruction now names a missing **non-SDK** dependency as a cause distinct from the SDK ones,
+  because an unresolved import otherwise reads as a broken install in the module that just finished
+  verifying the install. ⛔ **Criterion 2 could not be met as written and that is itself the finding:**
+  it says to extend the original fix's guard, and **no such guard exists** — the 2026-07-25 fix
+  shipped to three modules with no test at all, which is why those three could not reveal that a
+  fourth was missing. A new guard covers **all four** sites, deriving them by scanning (INV-246).
+  ✅ **Criterion 3 was runtime-verified rather than disclosed** — this machine has `javac` and
+  `sz-sdk.jar`: as delivered `LoadViaLoop.java` fails with `package javax.json does not exist`; after
+  the documented substitution it **compiles cleanly** under plain `javac`, with every SDK call
+  byte-identical to the scaffold (verified by diff) and the only remaining `javax.json` mentions
+  being the two header comments the guidance requires. Guard negative-controlled four ways: removing
+  the item, dropping the safety-asymmetry sentence, moving the check after the compile step, and
+  duplicating the canonical procedure each fail it.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The rule now ships at
+  **four** sites (`module-02-sdk-setup/SKILL.md`, `module-03-system-verification/phase1-verification.md`,
+  `module-06-data-processing/phaseA-build-loading.md`,
+  `module-05-data-quality-mapping/phase2-data-mapping.md`) and is registered **nowhere** — the
+  reverse-contract gap, inherited from the 2026-07-25 fix and widened by this one. Only the
+  maintainer may sign off on invariant wording, so it is recorded here rather than registered.
+  Drafted wording, ready to register as the next free ID:
+  *"**INV-NNN** — A step that compiles code obtained from `generate_scaffold` MUST verify, before
+  invoking the compiler, that every package the snippet imports is satisfiable by the installed
+  environment, and MUST resolve an unsatisfiable **non-SDK** dependency by substituting only
+  non-Senzing code — never by altering an SDK call, a flag constant or a method signature — recording
+  the substitution in the saved file's header. The verification MUST be per-install rather than
+  assumed, and the safety asymmetry (replacing the JSON library is safe; altering the SDK calls is
+  not) MUST be stated **at** each such step rather than only cross-referenced (INV-183)."*
+  Already enforced by `tests/test_java_json_dependency_gap_is_covered.py`, so registering it costs
+  one edit to `specs/INVARIANTS.md` plus citing the ID at the four sites.
+- **Commit:** uncommitted
+
 ## step1-license-framing-ignores-the-measured-record-limit
 
 - **Implemented:** 2026-08-28

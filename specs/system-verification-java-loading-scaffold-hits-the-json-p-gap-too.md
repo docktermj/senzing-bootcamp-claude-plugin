@@ -150,3 +150,47 @@ Apply the same three-part pattern the original fix established, at this module's
   `specs/java-initialize-scaffold-snippet-references-the-wrong-class.md` (the other Java-scaffold
   defect found earlier in the same walk, at Step 3 of this same module — unrelated cause, same
   module, same session)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on the diagnosis, and the facts are re-confirmed rather than carried over.** Server
+**1.33.0**, 2026-08-28: `generate_scaffold(language='java', workflow='full_pipeline')` re-called,
+and every `loading/` snippet it returns fetched fresh from its own `raw_url`. No jar under
+`/opt/senzing` contains a `javax/json` class — checked against `sz-sdk.jar` and its two siblings
+(environment observation, INV-080/INV-149; OpenJDK 21.0.12).
+
+⚠️ **The gap is wider than the spec measured, in the direction that matters.** The spec checked two
+of the loading siblings. All seven were checked here, and **six of the six that read an input file**
+import `javax.json`: `LoadViaLoop`, `LoadViaFutures`, `LoadWithInfoViaFutures`, `LoadViaQueue`,
+`LoadWithStatsViaLoop`, `LoadTruthSetWithInfoViaLoop`. The **only** snippet without the dependency is
+`LoadRecords.java`, which hardcodes its records — the file Step 4 item 2 explicitly forbids picking.
+So there is no sibling escape hatch at all: Step 4's selection rule routes toward the dependency by
+construction, which is a stronger statement than the spec's "routes toward" and is now what the
+shipped text says.
+
+⛔ **Acceptance criterion 2 could not be met as written, and the reason is itself a finding.** It
+says to *"extend whatever guard `java-scaffold-json-dependency-gap` added for its three sites, if
+one exists"*. **No such guard exists** — `grep` across `tests/` found nothing naming `javax.json`,
+JSON-P or that spec before today. The original fix shipped to three modules with no test, which is
+exactly why those three sites could not tell anyone a fourth was missing. So a new guard was written
+covering **all four** sites rather than only the new one:
+`tests/test_java_json_dependency_gap_is_covered.py`, whose site set is derived by scanning for files
+that fetch a scaffold and compile Java (INV-246).
+
+**Criterion 3 was runtime-verified, not disclosed.** This machine has `javac` and the installed
+`sz-sdk.jar`, so the criterion was actually executed rather than reported as unrunnable:
+
+- As delivered, `LoadViaLoop.java` fails with `package javax.json does not exist` (plus the INV-237
+  public-class error the module already covers).
+- After the documented substitution — the import removed, the class made package-private, and only
+  the two JSON-extraction lines replaced by a dependency-free top-level string reader — it
+  **compiles cleanly** under plain `javac -cp .../sz-sdk.jar`.
+- Every Senzing SDK call is **byte-identical** to the scaffold, verified by diffing the
+  `SzCoreEnvironment.newBuilder` / `env.getEngine` / `SzRecordKey.of` / `engine.addRecord` /
+  `SZ_NO_FLAGS` lines between the fetched file and the substituted one. The only remaining
+  `javax.json` occurrences are the two header comments recording the deviation, which is what the
+  guidance requires.
+
+**One invariant is DEFERRED** — see the ledger entry. The rule now ships at four sites and is
+registered nowhere; only the maintainer may sign off on invariant wording, so the drafted text is
+recorded rather than registered.

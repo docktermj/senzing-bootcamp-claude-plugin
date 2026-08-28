@@ -326,8 +326,32 @@ Verify the MCP server can generate a full pipeline script in the chosen language
    - ⛔ **Confirm it reads its records from an external file** — the check that actually
      distinguishes the right snippet from the wrong one. The three checks above are satisfied by
      *any* file in the returned set, which is why they never caught this.
-5. **If validation passes:** report pass for code generation.
-6. **If the generator returns an empty response, an error, or does not respond within 30
+5. ⛔ **Check the saved file's imports for a package outside the standard library BEFORE Step 5
+   compiles it — resolve it here, not from a raw compiler error.** The full procedure is stated
+   once in `../module-02-sdk-setup/SKILL.md` → **"MCP Java scaffolds may need a JSON library the
+   install does not provide"**; follow it there rather than a copy here (INV-179). Two things are
+   restated at this step deliberately, because a bootcamper hitting this is reading *this* file:
+
+   - ⛔ **Replacing the JSON library is safe. Altering the Senzing SDK calls is not.** Keep
+     `SzRecordKey.of`, `engine.addRecord` and every flag constant exactly as the scaffold returned
+     them, and substitute only the JSON-**extraction** lines. Rewriting the SDK calls to clear an
+     import error is the failure `generate_scaffold` exists to prevent.
+   - ⛔ **Record the substitution in the saved file's header** — what was replaced and why — so
+     `verify_pipeline.[ext]` self-documents its one departure from the authoritative scaffold
+     rather than silently diverging. Never just strip the import.
+
+   ⚠️ **On Java this is the expected path, not an edge case, and there is no sibling to escape
+   to.** Every `loading/` snippet in this workflow's response that reads an input file imports
+   `javax.json` — `LoadViaLoop`, `LoadViaFutures`, `LoadWithInfoViaFutures`, `LoadViaQueue`,
+   `LoadWithStatsViaLoop`, `LoadTruthSetWithInfoViaLoop` (all six fetched and checked on server
+   **1.33.0**, 2026-08-28). The only one that does not is `LoadRecords.java`, which hardcodes its
+   records — the file item 2 above forbids picking. So the selection rule routes *toward* the
+   dependency by design. `javax.json` (JSON-P) is not in Java SE, and the stock
+   `senzingsdk-runtime` install does not supply it: no jar under `/opt/senzing` contains a
+   `javax/json` class (checked 2026-08-28 against `sz-sdk.jar` and its siblings; environment
+   observation, INV-080/INV-149). Verify per install rather than assuming.
+6. **If validation passes:** report pass for code generation.
+7. **If the generator returns an empty response, an error, or does not respond within 30
    seconds:** report fail with a Fix_Instruction advising a check of MCP connectivity to
    `mcp.senzing.com:443`, then retry.
 
@@ -366,7 +390,11 @@ own tests pin.
 2. **If the build exits with code 0:** report pass.
 3. **If the build fails** (non-zero exit code): report fail including the first 50 lines of
    compiler error output. Generate a Fix_Instruction identifying common causes (missing SDK
-   libraries, incorrect PATH, missing build tools).
+   libraries, incorrect PATH, missing build tools) — and ⛔ **name a missing *non-SDK* dependency
+   as its own cause, separately from the SDK ones.** An unresolved `javax.json` import reads as an
+   install problem in the module that just finished verifying the install, which sends the
+   bootcamper to re-check a working install. Step 4 item 5 should have caught it before this
+   point; if it reaches here, resolve it there rather than reporting an install fault.
 4. **If the build does not complete within 120 seconds:** terminate the process. Report fail
    with a timeout Fix_Instruction suggesting a check for dependency-resolution issues or
    network-dependent build steps.
