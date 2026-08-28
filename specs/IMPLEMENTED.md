@@ -74,7 +74,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   floor are both negative-controlled too. **Establishes no invariant** — the change adds two citations
   to rules already governed, corrects a maintainer-side skill, and adds a guard; no new guarantee
   ships, and `conformance.py since` reports the two edited lines as cited.
-- **Commit:** uncommitted
+- **Commit:** 6a55a3a
 
 ## production-readiness-audit-2026-08-28c
 
