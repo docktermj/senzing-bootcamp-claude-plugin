@@ -172,6 +172,24 @@ bootcamper explicitly accepts option 3.)*
   success are non-empty. On
   success, record artifacts in Phase 2 Step 11 (write `docs/business_problem.md` with the
   generated marker, and each source into `config/data_sources.yaml`), then continue at Step 5.
+- ⛔ **Size the generated scenario to about 10,000 records unless the Bootcamper asks for more,
+  and if they do, say what it costs BEFORE generating it.** The step above validates the
+  scenario's *shape* — category, sources, mapping divergence, quality variation — and nothing
+  validates its *size*, so an unbounded scenario is the default rather than a choice. The cost is
+  not paid here: it is paid in **Data collection**, **Data processing** and
+  **Query, Visualize and Discover**, where the data is collected, loaded, redo-drained and
+  queried, by which point the decision is many steps behind and expensive to reverse.
+  - **When they ask for more, state it in one line and then generate what they asked for** — e.g.
+    *"That will make Data collection and Data processing take noticeably longer."* ⛔ **This is a
+    statement, not a 👉 question** (INV-251), and it is **not** a re-ask of a settled choice
+    (INV-006). Their answer stands; they are owed the trade-off, not a gate.
+  - ⛔ **Do not state a wall-clock figure or a records-per-second rate.** Load time depends on the
+    workstation, the database and the chosen language, none of which this module knows, and a
+    number invented here is one the run will contradict. Name the modules that absorb the cost
+    instead.
+  - ⛔ **Do not tie the ceiling to the license limit at this step.** Nothing has measured the
+    license yet and INV-093 forbids a license prompt here, so the ceiling is about how long the
+    bootcamp takes — which is knowable now — never about capacity, which is not.
 - **Declined:** continue with their own description (Path 1/2); do not generate a scenario.
 - **Generation failed / invariants violated:** tell the bootcamper it couldn't complete, fall
   back to their own description, no generated `docs/business_problem.md`.

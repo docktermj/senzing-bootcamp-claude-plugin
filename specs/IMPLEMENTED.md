@@ -42,6 +42,48 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## scenario-generation-has-no-size-cap-or-load-time-warning
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`,
+  `tests/test_generated_scenario_is_bounded.py` (new),
+  `specs/scenario-generation-has-no-size-cap-or-load-time-warning.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed. The change
+  adds a size default and a time-cost statement to this plugin's own generation step; the report's
+  "100,000-record POC license" is a Bootcamper claim, not a server fact, and is not relied on.
+  `get_capabilities` was called this session to date the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Step 4a validated a generated scenario's **shape** and never its **size**, so a
+  Bootcamper was scaled from ~7,081 to ~93,999 records with no statement of the cost — which is paid
+  three modules later, where the decision is expensive to reverse. Step 4a now sizes to about
+  **10,000 records** by default and, when asked for more, states the cost in one line naming Data
+  collection and Data processing **before** generating, then generates what was asked. All six
+  criteria addressed; four are test-asserted by `tests/test_generated_scenario_is_bounded.py` (7
+  tests, stdlib only, no `plugins/` import — INV-108), whose site set is derived by scanning for
+  scenario-generation vocabulary rather than naming the file (INV-246). ⚠️ **Two criteria are
+  implemented but NOT runtime-verified** and are disclosed rather than ticked: that a live run
+  generates to the ceiling, and that the warning precedes generation. Both are turn-level behavior no
+  offline suite can see; they need a `dry-run` phase-3 walk. The guard pins the spec's three ⛔
+  absences as well — no wall-clock figure, no licensing tie (INV-093), and **not a gate** (INV-006,
+  INV-251) — the last being the one a well-meaning edit erodes, since "warn them" reads naturally as
+  "ask them". Negative-controlled five ways: removing the bullet, dropping the warning, turning it
+  into a gate, inventing a wall-clock figure, and tying it to the license each fail the guard.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The ceiling is a **new
+  standing guarantee** and nothing in `INVARIANTS.md` covers it: `conformance.py per-rule --uncited`
+  reports `phase1-discovery.md:175` as carrying no invariant at the line, because there is none to
+  cite. The rule ships now, guarded by a test, registered nowhere. Drafted wording (highest id
+  currently INV-276, so the next free one is 277 — written as `INV-NNN` deliberately, because
+  spelling an unminted id creates a citation of an undefined invariant and turns `citations.py
+  verify` red):
+  *"**INV-NNN** — A step that GENERATES a dataset or scenario for the Bootcamper MUST bound its
+  default size, and MUST state the downstream time cost — naming the modules that absorb it — before
+  generating anything larger on request. The larger scenario MUST still be generated: the bound is a
+  default the Bootcamper may exceed, never a gate (INV-006, INV-251). The statement MUST NOT carry a
+  wall-clock or throughput figure, which the generating step cannot know, and MUST NOT be tied to
+  license capacity, which nothing has measured at that point (INV-093)."*
+  Already enforced by `tests/test_generated_scenario_is_bounded.py`, so registering it costs one edit
+  to `specs/INVARIANTS.md` plus citing the id at `phase1-discovery.md:175`.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28b
 
 **Not a spec** — a dated record of an audit run, per the `deep-dive-audit-*` precedent. **Cycle 2 of the unattended `/unattended-spec-loop`, and the first to produce NO spec** — which is the loop's termination condition. The loop stops here, at 2 of its 5 permitted cycles.

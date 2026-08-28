@@ -95,3 +95,28 @@ send them a warning just that it will take them longer."*
   defect: sizing *down* on an unmeasured license, already implemented);
   `specs/load-time-warning-ignores-the-license-cap-decided-one-step-earlier.md` (Module 4's Step 8b
   load-time warning, already implemented — downstream of this choice)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** The root cause was re-confirmed in the file before anything changed: Step 4a at
+`phase1-discovery.md:151-175` validates category, source count, cross-source mapping divergence and
+quality variation, and no clause bounds record volume or mentions a time cost.
+
+**MCP re-check: n/a, re-confirmed rather than assumed.** The change asserts no Senzing fact — it adds
+a size default and a time-cost statement to this plugin's own generation step. The report's
+"100,000-record POC license" is a Bootcamper claim, not a server fact, and is deliberately not relied
+on; its sibling spec covers what went wrong with it. `get_capabilities` was called this session to
+date the run: server **1.33.0**, 2026-08-28.
+
+⚠️ **Two criteria are implemented but NOT runtime-verified**, and are disclosed rather than ticked:
+that a live run generates to the ceiling by default, and that it emits the warning *before*
+generating a larger scenario. Both describe what a conversational step does in a turn, which no
+offline suite can assert (INV-108). Verifying them needs a `dry-run` phase-3 walk through Module 1's
+generated-scenario path, asking for a scenario above the ceiling.
+
+**The guard asserts three absences as well as two presences**, because the spec's ⛔ items are as
+load-bearing as its asks: no wall-clock figure, no licensing tie, and no gate. The gate assertion is
+the one most likely to be eroded by a well-meaning edit — "warn them" reads naturally as "ask them" —
+so it is pinned explicitly and negative-controlled.
+
+**One invariant is DEFERRED** — see the ledger entry. Only the maintainer may sign off on wording.
