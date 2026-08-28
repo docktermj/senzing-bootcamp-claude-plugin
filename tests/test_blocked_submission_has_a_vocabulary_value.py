@@ -34,13 +34,33 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
 DRY_RUN = REPO_ROOT / ".claude" / "skills" / "dry-run" / "phase3-conversational.md"
+#: Maintainer-side skills that state the same vocabulary. `.claude/` does not ship, so a
+#: corpus of `plugins/` alone is structurally blind to it — which is exactly how the value
+#: added on 2026-08-28 reached two of the vocabulary's three sites and not the third.
+MAINTAINER_SIDE = REPO_ROOT / ".claude" / "skills"
 VALUE = "submission blocked"
 #: The other values, used to find every place the vocabulary is enumerated.
 SIBLINGS = ("offered, declined", "submission failed")
+#: The spec-side vocabulary uses its own spelling for the same closed set.
+SPEC_SIDE_SIBLINGS = ("already sent", "declined by the maintainer")
 
 
 def shipped_markdown():
     return sorted(p for p in PLUGIN.rglob("*.md") if "__pycache__" not in p.parts)
+
+
+def vocabulary_corpus():
+    """Shipped prose **and** the maintainer-side skills, because this vocabulary spans both.
+
+    ⚠️ Scanning `plugins/` alone is the right default for a rule about shipped prose, and
+    it is wrong here: `feedback-to-specs` states the same closed set from the spec side,
+    and a guard that cannot see it cannot notice the two halves disagreeing. This is the
+    site-set-is-larger-than-the-shipped-tree case of INV-246.
+    """
+    out = list(shipped_markdown())
+    if MAINTAINER_SIDE.is_dir():
+        out += [p for p in MAINTAINER_SIDE.rglob("*.md") if "__pycache__" not in p.parts]
+    return sorted(out)
 
 
 def flatten(text):
@@ -59,10 +79,10 @@ def enumeration_lines():
     catch was invisible to it. The vocabulary drifts one enumeration at a time.
     """
     out = []
-    for p in shipped_markdown():
+    for p in vocabulary_corpus():
         for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
             low = line.lower()
-            if all(s in low for s in SIBLINGS):
+            if all(s in low for s in SIBLINGS) or all(s in low for s in SPEC_SIDE_SIBLINGS):
                 out.append((p, i, line))
     return out
 
@@ -83,6 +103,37 @@ class TheVocabularyCarriesABlockedValue(unittest.TestCase):
             f"an `Upstream:` vocabulary enumeration omits `{VALUE}:`, so the copies have "
             "drifted and a consented-but-forbidden send has no legal value there:\n  "
             + "\n  ".join(missing))
+
+    def test_both_trees_state_the_value(self):
+        """⛔ The finding this widening exists for: present in one tree, absent in the other.
+
+        On 2026-08-28 the value reached `plugins/`'s two enumerations and not
+        `feedback-to-specs`'s, and the guard could not see it because its corpus stopped at
+        the shipped tree. A count per tree is what makes that visible.
+        """
+        trees = {"plugins": 0, ".claude": 0}
+        for path, _, line in enumeration_lines():
+            if VALUE in line.lower():
+                key = "plugins" if "plugins" in path.parts else ".claude"
+                trees[key] += 1
+        for tree, n in trees.items():
+            with self.subTest(tree=tree):
+                self.assertGreater(
+                    n, 0,
+                    f"no enumeration under {tree}/ states `{VALUE}:`. The vocabulary spans "
+                    "both trees, so a value in one and not the other is the drift this "
+                    "guard exists to catch")
+
+    def test_the_spec_side_says_the_report_is_still_owed(self):
+        """`submission blocked` is the one outcome that does NOT end the obligation."""
+        skill = REPO_ROOT / ".claude" / "skills" / "feedback-to-specs" / "SKILL.md"
+        flat = flatten(skill.read_text(encoding="utf-8"))
+        self.assertIn(VALUE, flat,
+                      "feedback-to-specs Step 1 never mentions the blocked value, so it "
+                      "triages a consented-but-unsent finding as though it were declined")
+        self.assertIn("still owed", flat,
+                      "Step 1 does not say a blocked entry still owes a report — the whole "
+                      "reason the value is distinct from a decline")
 
     def test_graduation_points_at_the_blocked_value(self):
         """Step 0 is where the collision fires, so the rule must be reachable there (INV-183)."""

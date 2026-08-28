@@ -122,3 +122,32 @@ set is larger than the shipped tree.
   the value to the two shipped sites; this spec completes the set and registers the rule);
   `specs/feedback-routing-has-no-verdict-for-a-defect-neither-component-owns.md` (the sibling gap in
   the routing taxonomy, which INV-248 now binds)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** All three sites were re-read before changing anything and the diagnosis held:
+`feedback.md:134` and `:232` carried `submission blocked:`, `spec-template.md:50` did not, and its
+nearest value was `declined by the maintainer`.
+
+**MCP re-check: n/a, and re-confirmed as n/a rather than assumed.** The subject is two of this
+repo's own vocabularies agreeing with each other; no Senzing behavior, SDK surface or server claim
+is involved. `get_capabilities` was called this session to date the run: server **1.33.0**,
+2026-08-28.
+
+**The guard's corpus was widened rather than a second guard written.** The existing
+`test_blocked_submission_has_a_vocabulary_value.py` already owned this rule; giving it a
+`vocabulary_corpus()` that spans `plugins/` **and** `.claude/skills/` keeps one guard per rule and
+makes the cross-tree assertion possible. It recognizes the spec-side spelling of the same closed set
+(`already sent` / `declined by the maintainer`) as well as the entry-side one, since the two halves
+name the same states in different words. The new `test_both_trees_state_the_value` counts the value
+per tree and fails when it is present in one and absent in the other — which is precisely the state
+this spec was filed for, and it is negative-controlled in **both** directions.
+
+⚠️ **`conformance.py since` reports zero hard-rule lines added, and that is correct rather than a
+miss.** Every change here is under `.claude/`, which does not ship; that scan reads shipped markdown
+only. The ⛔ added to `feedback-to-specs/SKILL.md` is a maintainer-side instruction and sits outside
+the shipped-rule reverse contract — noted so a later reader does not read the zero as evidence the
+change added no rule at all.
+
+**One invariant is DEFERRED** — see the ledger entry. The spec asks for one and only the maintainer
+may sign off on wording.

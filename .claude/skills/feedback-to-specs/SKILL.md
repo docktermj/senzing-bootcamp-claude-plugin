@@ -222,6 +222,15 @@ record the confirmed behavior.
    something the first submission lacked — that it still reproduces on a newer server
    version, or a confirmed field name/shape they can act on. Say in the message that it
    is a follow-up.
+
+   ⛔ **`submission blocked: <reason>` is the one outcome where the report is STILL OWED,
+   and it must not be triaged like a decline.** It means the answer was **yes** and the
+   session was forbidden to send — a `/dry-run`, which forbids `submit_feedback` under any
+   category. Nobody declined anything, so the finding still needs forwarding: draft the
+   message and put it to the maintainer. ⚠️ `offered, declined` and `declined by the
+   maintainer` are the values that end the obligation; `submission blocked:` is the value
+   that keeps it. Reading the first where the second was meant is how a consented report
+   stops being anyone's job.
 2. **Draft the message as a technical bug report Senzing can act on without context from
    this repo:** the tool and parameters called, what came back, what was expected, the
    contradiction (quote both sides), the server version and SDK version, and the impact

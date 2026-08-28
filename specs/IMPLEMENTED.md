@@ -42,6 +42,54 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-upstream-outcome-vocabulary-is-an-unbound-closed-set
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `.claude/skills/feedback-to-specs/spec-template.md`,
+  `.claude/skills/feedback-to-specs/SKILL.md`,
+  `tests/test_blocked_submission_has_a_vocabulary_value.py` (corpus widened, two assertions added),
+  `specs/the-upstream-outcome-vocabulary-is-an-unbound-closed-set.md` (deviation note).
+  `specs/INVARIANTS.md` — predicted by the spec, **deliberately unchanged**: the invariant it asks
+  for is deferred for sign-off, see below.
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed. The subject
+  is two of this repo's own vocabularies agreeing with each other. `get_capabilities` was called this
+  session to date the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Cycle 2 of the unattended loop, implementing the single finding
+  `production-readiness-audit-2026-08-28` produced. The `Upstream:` outcome vocabulary is a closed set
+  stated at three sites and the value added in cycle 1 reached two; the third,
+  `spec-template.md:50`, recorded a consented-but-unsendable report as `declined by the maintainer`,
+  which misstates consent exactly the way the entry-side fix was written to stop. Six of seven
+  criteria met. (1) `spec-template.md:50` now carries `submission blocked: <reason>`, named
+  consistently with the entry side and flagged **the report is STILL OWED**. (2)
+  `feedback-to-specs/SKILL.md` Step 1 states that a blocked entry is the one outcome that does **not**
+  end the obligation, and names `offered, declined` / `declined by the maintainer` as the values that
+  do — so the two cannot be read for each other. (3) The two already-sent specs were **not** rewritten,
+  verified by `git diff` showing them untouched. (5) The guard's corpus now spans `plugins/` **and**
+  `.claude/skills/`, recognizing the spec-side spelling of the same set, and
+  `test_both_trees_state_the_value` fails when the value is present in one tree and absent in the
+  other — the exact state filed. (6) Negative-controlled in both directions: reverting the spec-side
+  value fails it, and removing the shipped-side value fails it, as does dropping the still-owed rule.
+  (7) Prose and a guard, so cross-platform and language-agnostic hold. ⚠️ `conformance.py since`
+  reports **zero** shipped hard-rule lines added, which is correct rather than a miss — every change
+  is under `.claude/`, which does not ship and which that scan does not read.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ Criterion 4 asks for an
+  invariant binding this vocabulary, and it is the spec's central point: the sibling routing taxonomy
+  has **INV-248** (*"the closed set … and **every** shipped site stating that set MUST state all
+  five"*) while this one has nothing, which is why a value could reach two of three sites unnoticed.
+  The rule now ships in the guard but not in the ruleset. Only the maintainer may sign off, so the
+  drafted wording is recorded here (highest id currently INV-276, so the next free one is 277 —
+  written as `INV-NNN` deliberately, because spelling an unminted id creates a citation of an
+  undefined invariant and turns `citations.py verify` red):
+  *"**INV-NNN** — The `Upstream:` outcome vocabulary is a closed set, and **every** site stating it —
+  shipped or maintainer-side — MUST state the same values. A **consented** send that could not be
+  made MUST carry its own value, distinct from a declined one, because the two differ in whether a
+  report is still owed: a decline ends the obligation and a blocked send keeps it. (Mirrors
+  **INV-248** for the routing taxonomy; the asymmetry between the two is what allowed this set to
+  drift.)"*
+  Already enforced by `tests/test_blocked_submission_has_a_vocabulary_value.py`, so registering it
+  costs one edit to `specs/INVARIANTS.md` plus citing the id at the three enumeration sites.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28
 
 **Not a spec** — a dated record of an audit run, per the `deep-dive-audit-*` precedent. **Cycle 1 of the unattended `/unattended-spec-loop`**, run after that cycle's implement round emptied the backlog (6 specs). It produced **one** spec, so the loop continues to cycle 2.
