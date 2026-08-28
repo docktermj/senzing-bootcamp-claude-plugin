@@ -79,7 +79,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   caution of the kind INV-136 and INV-125 already govern, and both cite them at the line; this is the
   same shape as `mapping-workflow-step1-prose-contradicts-its-own-advance-schema`, which likewise
   registered none.
-- **Commit:** uncommitted
+- **Commit:** a07bea1
 
 ## license-record-limit-has-a-detected-only-contract-nothing-enforces
 
