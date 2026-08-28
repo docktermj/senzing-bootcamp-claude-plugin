@@ -65,12 +65,34 @@ MEASURED_ONLY = re.compile(
     r"writes only a measured value|written only from a measured license|"
     r"writes it from an assumption")
 #: Each site's own phrasing of the conclusion the property supports.
-ABSENCE = re.compile(r"absence still means|absent no matter what license is installed|"
-                     r"absence says nothing about the installed license")
+#: An `Absent or null` branch bullet — the genuinely structural marker, and the one a new
+#: module adding this branch will carry.
+ABSENT_BULLET = re.compile(r"-\s*absent or null\b")
+#: The conclusion those branches draw, matched at the CONCEPT level rather than as a list of
+#: literal sentences: absence tells you nothing about the installed license.
+ABSENCE_CONCLUSION = re.compile(
+    r"absence (?:here )?still means|absent no matter wh(?:at|ich) license is installed|"
+    r"absence says nothing about the installed license")
+#: Sites known to reason about the field being absent, as of 2026-08-28. The floor exists so
+#: a branch DISAPPEARING fails rather than passing quietly (INV-265).
+KNOWN_BRANCHES = 4
 
 
 def flatten(text):
-    return re.sub(r"\s+", " ", text).lower()
+    """Whitespace-collapsed, emphasis-stripped, lowercased.
+
+    ⛔ **Stripping `*` and backticks is load-bearing, not cosmetic.** A matcher written
+    against a phrase is otherwise sensitive to where an author put emphasis: three sites
+    wrote the property with the whole phrase bolded, so the substring survived, and one
+    bolded a single word inside it, so it did not. The property was present at all four and
+    the matcher saw three.
+
+    ⚠️ **`_` is deliberately NOT stripped.** It is an identifier character throughout this
+    repo — license_record_limit, bootcamp_progress.json — and removing it yields
+    licenserecordlimit and bootcampprogress.json, breaking every needle that names one.
+    Underscore-italics are not used in this corpus, so the trade is not close.
+    """
+    return re.sub(r"[*`]", "", re.sub(r"\s+", " ", text)).lower()
 
 
 def field_sites():
@@ -104,39 +126,82 @@ class TheFieldIsWrittenOnlyFromAMeasurement(unittest.TestCase):
             "state the measured-only property instead:\n  " + "\n  ".join(bad))
 
     def test_every_absence_branch_states_the_measured_only_property(self):
-        """Derived from the CONCLUSION — the sites that OWE the property, not those that have it.
+        """Every site reasoning about the field being ABSENT states the property it rests on.
 
-        ⚠️ An earlier version enumerated the files already carrying the fix and required a
-        floor, so deleting one of three left the floor satisfied and it passed its own
-        negative control.
+        ⚠️ **The branch set is a union of two markers, because the sites are two kinds.**
+        Three are `- **Absent or null**` bullets — genuinely structural, and what a new
+        module adding this branch will carry. The fourth, Module 1's Step 5a comparison, is
+        not a bullet at all: it reasons about the field being absent inside a threshold
+        check. Deriving from the bullet alone silently drops it, which is the same
+        one-blind-spot-for-another trade this guard was rewritten to stop.
+
+        ⛔ **Module 2 is deliberately NOT a branch.** Its reconciliation mentions absence —
+        *"Never write this field when it is ABSENT"* — while being the **writer**, not a
+        reader drawing the not-yet-measured conclusion. A file-level "mentions INV-244 and
+        absence" derivation collects it and was rejected for that reason.
         """
         branches = [p for p in field_sites()
-                    if ABSENCE.search(flatten(p.read_text(encoding="utf-8")))]
+                    if ABSENT_BULLET.search(flatten(p.read_text(encoding="utf-8")))
+                    or ABSENCE_CONCLUSION.search(flatten(p.read_text(encoding="utf-8")))]
+        names = sorted(str(p.relative_to(REPO_ROOT)) for p in branches)
         self.assertGreaterEqual(
-            len(branches), 3,
-            "fewer absence branches were found than the three known sites; one whose "
-            "conclusion was deleted rather than corrected disappears from this scan. Found: "
-            f"{[str(p.relative_to(REPO_ROOT)) for p in branches]}")
+            len(branches), KNOWN_BRANCHES,
+            f"fewer than the {KNOWN_BRANCHES} known absence branches were found. A branch "
+            "that lost its conclusion AND its bullet disappears from this scan rather than "
+            f"failing, which is what this floor catches. Found: {names}")
         missing = [str(p.relative_to(REPO_ROOT)) for p in branches
                    if not MEASURED_ONLY.search(flatten(p.read_text(encoding="utf-8")))]
         self.assertEqual(
             [], missing,
-            "an INV-244 absence branch draws its conclusion without stating the measured-only "
-            "property it rests on:\n  " + "\n  ".join(missing))
+            "a site reasoning about an absent `license_record_limit` does not state the "
+            "measured-only property its conclusion rests on:\n  " + "\n  ".join(missing))
+
+    def test_the_branch_scan_reaches_the_bullet_only_site(self):
+        """⛔ The site that motivated this rewrite, pinned by name.
+
+        `module-04-data-collection/SKILL.md` says *"absent no matter **which** license is
+        installed"* where the others say *"what"*, and bolds `**measured**` inside the
+        property phrase rather than around it. One word and one asterisk pair put it outside
+        both of the previous matchers at once, so the two defects hid each other.
+        """
+        m4 = PLUGIN / "senzing-bootcamp" / "skills" / "module-04-data-collection" / "SKILL.md"
+        flat = flatten(m4.read_text(encoding="utf-8"))
+        self.assertTrue(ABSENT_BULLET.search(flat) or ABSENCE_CONCLUSION.search(flat),
+                        "module-04's absence branch is outside the branch scan again")
+        self.assertTrue(MEASURED_ONLY.search(flat),
+                        "module-04's absence branch does not state the measured-only "
+                        "property — or flatten() stopped stripping emphasis")
+
+    def test_emphasis_does_not_hide_the_property(self):
+        """⛔ INV-265 — the exact markup that defeated the previous matcher."""
+        for markup in ("writes only a **measured** value",
+                       "**writes only a measured value**",
+                       "writes only a `measured` value"):
+            with self.subTest(markup=markup):
+                self.assertTrue(MEASURED_ONLY.search(flatten(markup)),
+                                "flatten() no longer strips emphasis, so the matcher is "
+                                "sensitive to where an author put asterisks")
+        # ⚠️ `_measured_` is deliberately NOT supported: stripping `_` would turn
+        # license_record_limit into licenserecordlimit and break every needle naming a
+        # field. Underscore-italics are not used in this corpus. Pinned as a known
+        # limitation rather than left as an untested assumption.
+        self.assertIsNone(
+            MEASURED_ONLY.search(flatten("writes only a _measured_ value")),
+            "underscore emphasis now matches — if that was intentional, confirm no needle "
+            "in this file names an identifier containing an underscore")
 
     def test_the_replace_only_distinction_survives(self):
         """Not a count — the one writer that never creates a value, which Module 1 relies on."""
         m1 = PLUGIN / "senzing-bootcamp" / "skills" / "module-01-business-problem" / "phase1-discovery.md"
         flat = flatten(m1.read_text(encoding="utf-8"))
-        self.assertIn("only ever **replaces** an already-recorded value".lower().replace("**", ""),
-                      flat.replace("**", ""),
+        self.assertIn("only ever replaces an already-recorded value", flat,
                       "Module 1 no longer says the reconciliation only replaces and never "
                       "creates — which is what makes its absence reasoning hold")
 
     def test_sdk_setup_persists_and_never_creates(self):
         m2 = PLUGIN / "senzing-bootcamp" / "skills" / "module-02-sdk-setup" / "SKILL.md"
         flat = flatten(m2.read_text(encoding="utf-8"))
-        self.assertIn("write the measured value into `config/bootcamp_progress.json`", flat,
+        self.assertIn("write the measured value into config/bootcamp_progress.json", flat,
                       "SDK setup does not persist the measured value, so a corrected figure "
                       "stays on screen and Module 4's gate remains volume-skipped")
         self.assertIn("never write this field when it is absent", flat,

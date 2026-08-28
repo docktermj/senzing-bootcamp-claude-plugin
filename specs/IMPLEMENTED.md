@@ -42,6 +42,43 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-absence-branch-guard-reaches-three-of-four-sites
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `tests/test_license_limit_is_written_only_from_a_measurement.py`,
+  `specs/the-absence-branch-guard-reaches-three-of-four-sites.md` (deviation note). **No shipped
+  file changed** — `git status -- plugins/` empty, `conformance.py since` reports 0 hard rules added.
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed; the subject
+  is two regexes and a helper in one test file. `get_capabilities` was called earlier this session to
+  date the run: server **1.33.0**, 2026-08-28.
+- **Summary:** The measured-only guard reached **three of four** INV-244 absence branches and its
+  property matcher broke on inline bold; the two defects hid each other, since the site the first
+  regex could not reach was the one whose property the second could not match. Both fixed. All six
+  criteria met and walked one at a time: (1) `flatten()` strips `*` and backticks, pinned by
+  `test_emphasis_does_not_hide_the_property`; (2) the branch set is derived structurally and finds
+  **4**, including `module-04-data-collection/SKILL.md`; (3) a `KNOWN_BRANCHES = 4` floor makes the
+  set shrinking a failure rather than a quieter pass (INV-265); (4) all four state the property and
+  **none was reworded to suit the matcher**, per the spec's ⛔; (5) negative-controlled at all four
+  sites including module-04; (6) stdlib `pathlib`/`re` over text, so cross-platform and
+  language-agnostic hold. ⚠️ **One deviation, and the spec's own premise was wrong:** its proposed
+  `Absent or null` marker exists at only three sites — Module 1's Step 5a reasons about absence
+  inside a threshold check, not a branch bullet — so implementing item 2 literally would have dropped
+  it and traded one blind spot for another. Two broader derivations were tried and rejected because
+  both collect `module-02-sdk-setup`, which cites INV-244 for the **reconciliation** and is the
+  *writer* rather than a reader drawing the conclusion. What shipped is a documented **union** of the
+  bullet and the concept-level conclusion, with the exclusion explained in the docstring. ⛔ **Item 1
+  needed narrowing:** stripping `_` as well turned `bootcamp_progress.json` into
+  `bootcampprogress.json` and broke every field-naming needle; `_` is an identifier character here,
+  so it is left alone and the limitation is **pinned as an assertion** rather than assumed. ⛔ **Three
+  negative controls initially passed and none was a real pass** — two were unlanded mutations (a
+  literal space where the file wraps the line; uppercase `MEASURED` where module-04 writes it
+  lowercase) and the third was genuine, because `phase1-discovery.md` states the property in two
+  forms. Re-run with a whitespace- and case-tolerant mutation that removes every accepted form and
+  **reports its substitution count**, all four fail. **Establishes no invariant** — this is a test-only
+  correction; the rule it enforces is INV-244's, and the generalization it is evidence for remains
+  deferred in `the-writer-count-matcher-enumerates-phrasings-not-the-concept`.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28g
 
 **Not a spec** — a dated record of an audit run. **Cycle 5 of the second unattended `/unattended-spec-loop`, and its CAP.** It produced one spec, which stays **open**: the loop stops at five cycles regardless of what the last audit finds, so this finding is handed over rather than implemented.
@@ -788,7 +825,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **MCP re-check:** n/a (no Senzing fact). The defect is entirely in the plugin's own scripts, hooks and artifacts — no Senzing behavior, SDK surface or entity-specification claim is involved, so there is no server fact to re-verify and no absence claim to substantiate. `get_capabilities` was called once at the start of the `/dry-run` that found this, to date the run: server **1.33.0**, 2026-08-27.
 - **Summary:** Found by `/dry-run` phase 2. A `docs/bootcamp_recap.md` that is not valid UTF-8 — what a Windows editor saving cp1252/ANSI produces as soon as the prose contains a smart quote or an en dash — crashed **three of the seven hook entries** (`precompact-recap.py`, `session-start.py`, `session-end.py`) and **both keepsake PDF generators** with an unhandled `UnicodeDecodeError` traceback. Root cause was a single choke point, `recap_checkpoint._read`, catching `OSError` only; `UnicodeDecodeError` derives from `ValueError`, so it escaped. ⚠️ **The severity is not the crash.** `fold()` reads the recap and then rewrites it in `"w"` mode, so the natural one-line patch — widening that `except` to return `None` — converts a loud crash into **silent destruction**: the recap is treated as empty and replaced by the current checkpoint block alone. Measured on the real scripts with only that patch applied, outside the repo: a 279-byte recap holding **two completed module sections became 98 bytes holding none**, while the hook printed `folded … (97 characters)` — a success line. The fix therefore makes `_read` return a distinct `UNREADABLE` sentinel so callers cannot conflate *absent* (safe to create) with *unreadable* (never write here); `fold_checkpoint` and `checkpoint_state` refuse and report in the shape `normalize_docs_markdown.py` already used, naming the file, the cause and that both files were left untouched; the two generators guard their own reads, exit 1 and write no PDF. ⛔ The bootcamper's file is never "repaired" — no `errors="replace"`, because silently mangling a document they are invited to keep and share is not ours to do. **Acceptance criteria all satisfied**, verified by execution rather than by reading: no hook emits a traceback; the recap is **byte-identical** after all three folding hooks (sha256 compared); both completed sections survive; both generators exit non-zero with a relayable message and no PDF; `normalize_docs_markdown.py` unchanged (it already handled this correctly, which is what made the omission a gap rather than an accepted limit); and the healthy path is intact — the fold is still byte-identical across three runs at the same md5 as the pre-fix baseline, the recap PDF still reports `renderer: fpdf2`, and an **absent** recap is still created. ⛔ **Negative-controlled twice, because one control was not enough.** Control A reintroduced the original `except OSError` — 6 of 10 tests failed. Control B applied the destructive widening patch — 5 failed, `test_the_recap_is_byte_identical_after_every_folding_hook` and `test_completed_module_sections_survive` among them. A guard that only asserted "no traceback" would have **passed** against Control B, which is precisely the certification-of-a-worse-bug this repo has been bitten by before; the byte-identity assertion is the point of the file and its docstring says so. Both controls reverted and `__pycache__` cleared. **Test is stdlib-only and drives the hooks as subprocesses, importing nothing under `plugins/` (INV-108).** ⚠️ **My own error, reported:** while probing, a backup `cp` fell through to a path that did not exist with its failure hidden by `2>/dev/null`, so a later "utf8" backup captured an already-mutated fixture and I briefly read healthy hooks as crashing. Caught by checking each fixture's actual encoding rather than trusting the restore; the scratch project was re-scaffolded and the UTF-8 baseline re-established before any conclusion was drawn. This is the second time in this skill's history that a silent restore failure cost work, and it happened despite the rule that warns about it.
 - **Invariant established: INV-276** — registered 2026-08-27 on the maintainer's sign-off, from the wording drafted in this entry and carried over unchanged. Indexed under *Generator behavior: rendering, encoding, reporting*; enforced by `tests/test_undecodable_recap_is_never_overwritten.py`, which now cites it back per the bidirectional guard. **Registered wording:** *A helper that reads a bootcamper-owned artifact MUST distinguish **absent** from **present but unreadable**, and MUST NOT collapse the two into one falsy result. Any caller that goes on to WRITE that artifact MUST refuse and report when the read was unreadable, never proceed on a value that merely looks empty — a rewrite of a file whose existing content could not be read destroys it. The refusal MUST name the file and the cause, and MUST leave the artifact byte-identical; the plugin MUST NOT silently transcode or lossily re-read a document the bootcamper owns. Enforced by `tests/test_undecodable_recap_is_never_overwritten.py`, whose byte-identity assertion — not its no-traceback assertion — is what distinguishes a correct fix from a data-destroying one.* Scope note for the reviewer: the rule is about the **absent-vs-unreadable conflation**, not about UTF-8 specifically; `current_module()` in the same file already honored it (catching `(OSError, ValueError)`, documented against INV-048) eleven lines above the function that did not, which is the argument that the guarantee wants an address of its own rather than living as a comment.
-- **Commit:** uncommitted
+- **Commit:** 26dcf1a
 
 ## invariant-review-2026-08-27b
 

@@ -100,3 +100,46 @@ sites happened to bold the whole phrase and one happened to bold a word inside i
   this completes, and whose deferred invariant this is evidence for);
   `specs/counting-the-writers-of-license-record-limit-is-the-wrong-invariant.md`;
   `specs/sdk-setups-license-reconciliation-does-not-say-whether-to-persist.md`
+
+## Deviations from this spec, and why (2026-08-28)
+
+⚠️ **One deviation, on item 2, and the spec's own premise was the thing that was wrong.** It
+proposes deriving the branch set from *"an `Absent or null` bullet citing INV-244"*. That marker
+exists at only **three** of the four sites: `phaseA`, `phaseB` and `module-04` carry it;
+**Module 1's Step 5a does not** — it reasons about the field being absent inside a record-count
+threshold check, not in a branch bullet. Implementing item 2 literally would have dropped Module 1
+and traded one blind spot for another, which is the exact failure this spec exists to correct.
+
+**Two alternatives were tried and rejected before settling.** A file-level *"cites INV-244"*
+derivation collects **five** files — it pulls in `module-02-sdk-setup`, which cites INV-244 four
+times for the **reconciliation**: that file is the *writer*, not a reader drawing the
+not-yet-measured conclusion, so requiring the property there is meaningless. Narrowing to
+*"INV-244 within N characters of 'absen'"* still collects module-02, because its rule *"Never write
+this field when it is ABSENT"* legitimately mentions absence.
+
+**What shipped is a documented union of two markers**: the `Absent or null` bullet (structural, and
+what a new module adding this branch will carry) **or** the absence conclusion, matched at concept
+level with `wh(?:at|ich)` alternation rather than as three literal sentences. Four sites, floor of
+four, and `test_the_branch_scan_reaches_the_bullet_only_site` pins module-04 by name because it is
+the site that motivated the spec. The union and the module-02 exclusion are both explained in the
+test's docstring, so the next reader does not re-derive them.
+
+⛔ **Item 1 needed narrowing too, and the first attempt broke the file.** Stripping `*`, `_` and
+backticks turned `bootcamp_progress.json` into `bootcampprogress.json` and `license_record_limit`
+into `licenserecordlimit`, breaking every needle that names a field — the suite caught it
+immediately. `flatten()` strips `*` and backticks only. Underscore-italics are not used in this
+corpus and `_` is an identifier character throughout it, so the trade is not close; the limitation
+is **pinned as an assertion** (`_measured_` must NOT match) rather than left as an untested
+assumption, with the reason beside it.
+
+⚠️ **Three negative controls initially passed, and none of the three was a real pass.** Two were
+**unlanded mutations** — the sed used a literal space where the files wrap the phrase across a line,
+and module-04 writes `**measured**` in lowercase where the pattern expected uppercase. The third was
+a genuine pass for a reason worth keeping: `phase1-discovery.md` states the property in **two**
+forms, so removing one left the other. Re-run with a whitespace- and case-tolerant mutation that
+removes **every** accepted form and reports how many it removed, all four fail. ⛔ **This is the
+hazard `dry-run` names — a missed target and an escaped mutation look identical in a loop's
+output** — and it is why each mutation now prints its substitution count.
+
+**No shipped file changed**, as the spec's `## Affected files` predicts: `git status -- plugins/` is
+empty and `conformance.py since` reports **0** hard rules added. Suite **3,744 passed, 4 skipped**.
