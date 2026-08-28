@@ -92,7 +92,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   not) MUST be stated **at** each such step rather than only cross-referenced (INV-183)."*
   Already enforced by `tests/test_java_json_dependency_gap_is_covered.py`, so registering it costs
   one edit to `specs/INVARIANTS.md` plus citing the ID at the four sites.
-- **Commit:** uncommitted
+- **Commit:** ac2242e
 
 ## step1-license-framing-ignores-the-measured-record-limit
 
