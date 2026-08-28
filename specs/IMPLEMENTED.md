@@ -42,6 +42,45 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## sdk-setups-license-reconciliation-does-not-say-whether-to-persist
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md` (a **third**
+  single-writer site the spec did not name), `tests/test_license_limit_has_exactly_two_writers.py`
+  (new), `specs/sdk-setups-license-reconciliation-does-not-say-whether-to-persist.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed; the subject is
+  which of this plugin's own steps may write one of its own state fields. `get_capabilities` dated the
+  run: server **1.33.0**, 2026-08-28.
+- **Summary:** Cycle 3 of the second unattended loop, implementing the finding
+  `production-readiness-audit-2026-08-28d` produced — **that the earlier license fix might not fix the
+  defect.** *"Take the measurement"* never said whether to **persist**, and under the do-not-persist
+  reading the false figure stayed in `config/bootcamp_progress.json`, Module 4's Step 8a volume-skipped
+  its gate on a ~94,000-record collection, and the suppression the fix targeted survived it. SDK setup
+  now **writes** the measured value, replacing the recorded one, and says why persisting is the point
+  rather than a detail; it also states that the field is **never** written when absent, which keeps
+  INV-244's absence branch intact. All three single-writer claims are corrected to name both writers
+  while keeping each site's own phrasing of the absence conclusion. ⚠️ **The spec named two such sites;
+  the guard found three** — `phaseB-load-first-source.md:107` was not in the spec's affected-files list
+  (INV-246). Guarded by `tests/test_license_limit_has_exactly_two_writers.py` (6 tests, stdlib only, no
+  `plugins/` import — INV-108). ⛔ **A negative control caught the guard checking the wrong direction,
+  and the lesson generalizes:** it collected files that already carried the **corrected** sentence and
+  required two, so deleting one of three left the floor satisfied and the guard **passed its own
+  negative control**. It now enumerates the files stating an **absence conclusion** — the sites that
+  *owe* the correction — and requires each to carry it. A guard that enumerates where the fix already
+  is can only confirm it there. Four negative controls, all failing correctly after the rewrite.
+  ⚠️ **`test_new_hard_rules_are_cited_or_deferred`, added in cycle 2, caught both new rules uncited on
+  its first real use** — cited to INV-244 before commit. ⚠️ **The criterion that matters is still
+  unverified and cannot be verified here:** whether Step 8a actually presents the gate on a stated
+  100,000, a measured 500 and a 94,000-record collection is end-to-end conversational behavior across
+  three modules (INV-108), and it is the single most valuable thing a `dry-run` phase 3 could now
+  check. **Establishes no invariant** — the change corrects three false statements, resolves an
+  ambiguity, and adds a guard; both new hard-rule lines restate INV-244's discipline at the step that
+  performs it and cite it at the line.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28d
 
 **Not a spec** — a dated record of an audit run, per the `deep-dive-audit-*` precedent. **Cycle 2 of the second unattended `/unattended-spec-loop`.** It produced **one** spec, so the loop continues to cycle 3.

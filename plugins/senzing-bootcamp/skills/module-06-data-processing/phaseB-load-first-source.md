@@ -104,8 +104,9 @@ hardcoded figure:
   and it is the option this branch previously omitted entirely; what the `license_key_requested`
   marker gates is only the *"check your email, it may have arrived"* line above.
 - **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
-  is the same branch, and the same trap, as Phase A's — `license_record_limit` is written only by
-  Module 4's volume-gated Step 8a, so its absence says nothing about the installed license. Measure
+  is the same branch, and the same trap, as Phase A's — `license_record_limit` is written by exactly
+  two steps, Module 4's volume-gated Step 8a and SDK setup's Step 5a reconciliation, and neither
+  creates a value where none existed, so its absence says nothing about the installed license. Measure
   it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
   `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter
   these three branches with the measured value — a license reporting `recordLimit: 0` then lands on

@@ -123,3 +123,39 @@ them, but a reader checking "did I break anything in module-02?" does not.
   reasoning the corrected sentences must preserve);
   `specs/scenario-generation-has-no-size-cap-or-load-time-warning.md` (the compounding half — the
   scenario sized against the figure this gate would have caught)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content. Reading B was implemented, as the spec recommends:** SDK setup now writes the
+measured value into `config/bootcamp_progress.json`, replacing the recorded one, and says why —
+*"Persisting it is the point, not a detail"* — because Module 4's volume-skip reads that field, so a
+correction that stays on screen leaves the gate suppressed by the number it just disproved. It also
+states plainly that the field is **never** written when absent, which keeps the INV-244 absence
+branch intact.
+
+⚠️ **The spec named two single-writer sites. There were three** (INV-246).
+`module-06-data-processing/phaseB-load-first-source.md:107` carries the same claim in its own words —
+*"`license_record_limit` is written only by Module 4's volume-gated Step 8a"* — and the spec's
+`## Affected files` does not list it. Found by the guard, which scans every reader/writer of the
+field rather than the two paths the spec predicted. All three are corrected, and each keeps its own
+phrasing of the absence conclusion.
+
+⛔ **A negative control caught the guard checking the wrong direction, and this one is worth
+studying.** `test_the_absence_conclusion_survives` collected the files that already carried the
+**corrected** sentence and required at least two of them — so deleting the correction from one of
+the three left two behind, the floor was satisfied, and the guard **passed its own negative
+control**. The check is now derived from the **conclusion** instead: enumerate every file stating an
+INV-244 absence conclusion about this field, and require each to say that neither writer creates a
+value. Deleting any one now fails. ⚠️ **The lesson generalizes:** a guard that enumerates the files
+carrying the fix can only ever confirm the fix where it already is. Enumerate the sites that *owe*
+the fix.
+
+⚠️ **The three sites phrase the conclusion three different ways** — *"its absence still means not yet
+measured"*, *"absent no matter what license is installed"*, *"its absence says nothing about the
+installed license"* — and all three are listed in the matcher. A regex fitted to one would have
+passed the other two vacuously, which is the same shape as the bug above.
+
+⚠️ **The criterion that matters is still not verified, and cannot be here.** Whether Module 4's Step
+8a actually presents the gate given a stated `100000`, a measured `500` and a ~94,000-record
+collection is end-to-end conversational behavior across three modules (INV-108). It is the single
+most valuable thing a `dry-run` phase 3 could check on this plugin right now.

@@ -187,8 +187,10 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   `phaseB-load-first-source.md` step 7, once. Improvising a choice at this point is how a Bootcamper
   came to be offered *"wait until the evaluation license is applied"* with no way to reach it.
 - **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
-  assume it.** (INV-244) The only writer of `license_record_limit` is Module 4's Step 8a gate, which is
-  volume-gated by design: a bootcamper with a small dataset never triggers it, so the field is
+  assume it.** (INV-244) `license_record_limit` has exactly two writers, and neither creates a value where
+  none existed: Module 4's Step 8a gate, which is volume-gated by design, and SDK setup's Step 5a
+  reconciliation, which only **replaces** an already-recorded value. A bootcamper with a small
+  dataset never triggers the gate and has nothing for the reconciliation to correct, so the field is
   absent no matter what license is installed. Assuming the default here relays a 500-record note —
   and `sdk_guide`'s sampling prescription with it — to someone whose license may have no cap at
   all, which is the same harm named just above, reached through the branch that is taken far more
