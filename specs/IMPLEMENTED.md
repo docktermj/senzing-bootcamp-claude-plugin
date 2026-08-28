@@ -82,7 +82,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   license capacity, which nothing has measured at that point (INV-093)."*
   Already enforced by `tests/test_generated_scenario_is_bounded.py`, so registering it costs one edit
   to `specs/INVARIANTS.md` plus citing the id at `phase1-discovery.md:175`.
-- **Commit:** uncommitted
+- **Commit:** 4379fb7
 
 ## production-readiness-audit-2026-08-28b
 
