@@ -140,3 +140,8 @@ false claims rather than adding rules. The skip is the guard saying so rather th
 
 **One invariant is DEFERRED** — criterion 5, and the half worth more than either site fix. See the
 ledger entry.
+
+## Invariants introduced
+
+- `INV-282` — A guard MUST derive its matcher from the claim being made, not from the phrasings observed at the sites it was written to fix. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

@@ -27,6 +27,9 @@ missing, and why this guard covers **all** of them rather than only the new one.
 installed SDK, which the offline suite has neither of (INV-108). It asserts the guidance is
 present and reachable at the step that needs it (INV-183).
 
+Enforces **INV-279** — a step compiling `generate_scaffold` code verifies every import is satisfiable before invoking
+the compiler, and resolves a non-SDK gap by substituting only non-Senzing code.
+
 Source spec: `specs/system-verification-java-loading-scaffold-hits-the-json-p-gap-too.md`.
 Original:    `specs/java-scaffold-json-dependency-gap.md`.
 

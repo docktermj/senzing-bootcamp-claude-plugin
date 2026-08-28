@@ -194,3 +194,8 @@ that fetch a scaffold and compile Java (INV-246).
 **One invariant is DEFERRED** — see the ledger entry. The rule now ships at four sites and is
 registered nowhere; only the maintainer may sign off on invariant wording, so the drafted text is
 recorded rather than registered.
+
+## Invariants introduced
+
+- `INV-279` — A step compiling `generate_scaffold` code MUST verify every import is satisfiable before invoking the compiler, and MUST resolve a non-SDK gap by substituting only non-Senzing code. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

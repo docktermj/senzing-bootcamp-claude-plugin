@@ -16,6 +16,11 @@ it** — a property that held before either correction and will hold when a sixt
 appears. A count is a proxy that has to be re-derived whenever the code moves, goes stale
 silently, and reads authoritative while wrong.
 
+⛔ **INV-282 governs this file's matchers.** A guard derives its matcher from the CLAIM being
+made, not from the phrasings observed at the sites it was written to fix; every phrasing that
+has shipped is pinned as a fixture, and every construction the matcher must NOT flag is pinned
+beside it.
+
 ⚠️ **The same defect occurred twice in one day, by the same mechanism.** The first version
 inherited a stale count; the second **minted a fresh one while fixing the first**, in a spec
 whose whole subject was that the writer set had changed — and the guard written alongside it
@@ -26,6 +31,9 @@ why the rename is part of the fix rather than tidying.
 
 ⚠️ What this does NOT establish: that a live run measures before writing. That is turn-level
 behavior no offline suite can assert (INV-108).
+
+Enforces **INV-278** — a state field whose authority rests on being measured is written only from that measurement,
+presence is not proof of it, and a reconciling step persists what it measures.
 
 Source spec: `specs/counting-the-writers-of-license-record-limit-is-the-wrong-invariant.md`.
 

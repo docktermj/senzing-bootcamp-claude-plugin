@@ -23,6 +23,9 @@ to anyone later deciding whether the report is still owed.
 property of a phase-3 run (INV-108). It asserts the value exists wherever the vocabulary is
 enumerated, so the two enumerations cannot drift.
 
+Enforces **INV-281** — the `Upstream:` outcome vocabulary is a closed set stated identically at every site, and a
+consented-but-blocked send carries its own value distinct from a decline.
+
 Source spec: `specs/graduation-upstream-offer-collides-with-the-dry-run-no-send-rule.md`.
 
 Run:  python3 -m unittest discover -s tests

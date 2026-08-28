@@ -301,7 +301,7 @@ steering files.)
   it, never only the forbidden token — so a reader can tell where it applies and where it does not.
   INV-234 is this tool family's case of it.
 
-  ⛔ **A declared schema is authoritative for the parameters a tool ACCEPTS — not for prose
+  ⛔ **(INV-280) A declared schema is authoritative for the parameters a tool ACCEPTS — not for prose
   describing what it COVERS.** The rule above turns on what the schema declares, and that is right:
   a parameter the schema does not declare cannot be passed. But a declared description also carries
   free prose — repository counts, indexed file types, language lists — and that prose is **not**

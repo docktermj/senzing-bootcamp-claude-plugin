@@ -26,6 +26,9 @@ about bootcamp duration, which is knowable, not capacity, which is not.
 property of a conversational step, which no offline suite can assert (INV-108) — it needs a
 `dry-run` phase-3 walk through Module 1's generated-scenario path.
 
+Enforces **INV-277** — a step that GENERATES a dataset or scenario bounds its default size and states the downstream
+time cost before generating anything larger; the bound is a default, never a gate.
+
 Source spec: `specs/scenario-generation-has-no-size-cap-or-load-time-warning.md`.
 
 Run:  python3 -m unittest discover -s tests

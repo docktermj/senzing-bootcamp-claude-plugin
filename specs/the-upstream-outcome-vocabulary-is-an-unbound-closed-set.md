@@ -151,3 +151,8 @@ change added no rule at all.
 
 **One invariant is DEFERRED** — see the ledger entry. The spec asks for one and only the maintainer
 may sign off on wording.
+
+## Invariants introduced
+
+- `INV-281` — The `Upstream:` outcome vocabulary is a closed set stated identically at every site, and a consented-but-blocked send carries its own value distinct from a decline. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

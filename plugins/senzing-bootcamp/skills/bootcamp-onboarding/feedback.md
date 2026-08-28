@@ -232,7 +232,7 @@ never automatic.
    `offered, declined`, `submission failed: <reason>`, or `submission blocked: <reason>`. Update
    the entry in place for this field only — do not rewrite the prose (append-only elsewhere).
 
-   ⛔ **`submission blocked:` is for a *consented* send the runner was forbidden to make — it is
+   ⛔ **(INV-281) `submission blocked:` is for a *consented* send the runner was forbidden to make — it is
    not a synonym for the other three.** Use it when the answer was **yes** and the send could not
    happen because the session operates under a no-send rule (a maintainer `/dry-run`, which
    forbids calling `submit_feedback` under any category). ⚠️ **Never record that as

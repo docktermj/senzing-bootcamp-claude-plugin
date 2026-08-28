@@ -203,3 +203,8 @@ cannot quietly become a file-wide opt-out. Negative-controlled: widening it to t
 **One invariant is DEFERRED** — see the ledger entry. The parameters-vs-coverage distinction is the
 spec's own "generalizable half", and it is a new standing rule that nothing in `INVARIANTS.md`
 covers; only the maintainer may sign off on invariant wording.
+
+## Invariants introduced
+
+- `INV-280` — A declared schema is authoritative for the parameters a tool accepts, not for prose describing what it covers; for coverage `get_capabilities` governs and a call settles a conflict. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

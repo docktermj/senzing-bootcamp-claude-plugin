@@ -120,3 +120,8 @@ the one most likely to be eroded by a well-meaning edit — "warn them" reads na
 so it is pinned explicitly and negative-controlled.
 
 **One invariant is DEFERRED** — see the ledger entry. Only the maintainer may sign off on wording.
+
+## Invariants introduced
+
+- `INV-277` — A step that GENERATES a dataset or scenario MUST bound its default size and state the downstream time cost before generating anything larger; the bound is a default, never a gate. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

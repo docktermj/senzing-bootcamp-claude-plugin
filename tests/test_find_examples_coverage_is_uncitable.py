@@ -34,6 +34,9 @@ only stance that cannot go stale.
 Upstream: reported 2026-08-27 via `submit_feedback(category='bug')` on the maintainer's verbatim
 approval. Anonymous, so no reply will arrive; re-check rather than assuming it was acted on.
 
+Enforces **INV-280** — a declared schema is authoritative for the parameters a tool accepts, not for prose describing
+what it covers; a coverage figure the server states two ways is not quotable at all.
+
 Source spec: `specs/find-examples-self-describes-two-different-coverages.md`.
 
 Run:  python3 -m unittest discover -s tests

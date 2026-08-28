@@ -326,7 +326,8 @@ Verify the MCP server can generate a full pipeline script in the chosen language
    - ⛔ **Confirm it reads its records from an external file** — the check that actually
      distinguishes the right snippet from the wrong one. The three checks above are satisfied by
      *any* file in the returned set, which is why they never caught this.
-5. ⛔ **Check the saved file's imports for a package outside the standard library BEFORE Step 5
+5. ⛔ **(INV-279) Check the saved file's imports for a package outside the standard library BEFORE
+   Step 5
    compiles it — resolve it here, not from a raw compiler error.** The full procedure is stated
    once in `../module-02-sdk-setup/SKILL.md` → **"MCP Java scaffolds may need a JSON library the
    install does not provide"**; follow it there rather than a copy here (INV-179). Two things are

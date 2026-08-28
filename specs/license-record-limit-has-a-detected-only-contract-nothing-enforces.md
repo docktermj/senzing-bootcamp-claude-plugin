@@ -158,3 +158,8 @@ offline suite can assert (INV-108); they need a `dry-run` phase-3 walk through M
 Module 2 Step 5a with a Bootcamper who states an entitlement.
 
 **One invariant is DEFERRED** — see the ledger entry.
+
+## Invariants introduced
+
+- `INV-278` — A state field whose authority rests on being measured MUST be written only from that measurement; presence is not proof of measurement, and a reconciling step MUST persist what it measures. (recorded in `specs/INVARIANTS.md`, registered 2026-08-28 on the maintainer's
+  sign-off, from the wording drafted in this spec's ledger entry and carried over unchanged.)

@@ -115,7 +115,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   *"no hard rules added"* — both correct, since this change removed false claims rather than adding
   rules, and the skip is that guard saying so rather than passing silently (INV-265), its first time
   on that branch.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ This is the half worth
+- **Invariant established: INV-282** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-282, 2026-08-28) — the draft as it stood.** ⛔ This is the half worth
   more than either site fix, and it now has **four instances in one day**: the count was wrong; the
   correction minted a new count; the guard against counts enumerated the phrasings already seen; the
   concept-level rewrite then over-matched. INV-246 states this for a guard's set of **files** and
@@ -445,7 +452,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   permissive. Negative-controlled five ways: restoring either site's presence-as-proof wording,
   dropping the prohibition, removing the stated key, and dropping the recorded-not-verified fallback
   each fail the guard.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ **INV-244 governs
+- **Invariant established: INV-278** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-278, 2026-08-28) — the draft as it stood.** ⛔ **INV-244 governs
   *absence* only** — its text is *"a step branching on it MUST NOT read that field's **absence** as a
   measured finding"* — and says nothing about where a **present** value came from. The three rules
   shipped here are the presence side of the same concern and are registered nowhere; all three now
@@ -489,7 +503,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   INV-251) — the last being the one a well-meaning edit erodes, since "warn them" reads naturally as
   "ask them". Negative-controlled five ways: removing the bullet, dropping the warning, turning it
   into a gate, inventing a wall-clock figure, and tying it to the license each fail the guard.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The ceiling is a **new
+- **Invariant established: INV-277** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-277, 2026-08-28) — the draft as it stood.** ⛔ The ceiling is a **new
   standing guarantee** and nothing in `INVARIANTS.md` covers it: `conformance.py per-rule --uncited`
   reports `phase1-discovery.md:175` as carrying no invariant at the line, because there is none to
   cite. The rule ships now, guarded by a test, registered nowhere. Drafted wording (highest id
@@ -546,7 +567,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   (7) Prose and a guard, so cross-platform and language-agnostic hold. ⚠️ `conformance.py since`
   reports **zero** shipped hard-rule lines added, which is correct rather than a miss — every change
   is under `.claude/`, which does not ship and which that scan does not read.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ Criterion 4 asks for an
+- **Invariant established: INV-281** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-281, 2026-08-28) — the draft as it stood.** ⛔ Criterion 4 asks for an
   invariant binding this vocabulary, and it is the spec's central point: the sibling routing taxonomy
   has **INV-248** (*"the closed set … and **every** shipped site stating that set MUST state all
   five"*) while this one has nothing, which is why a value could reach two of three sites unnoticed.
@@ -611,7 +639,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   controlled five ways: writing a count, writing the stale extension list, removing the ground-rules
   distinction, dropping the live `.ts` evidence, and widening the exemption to the whole file each
   fail the guard.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The
+- **Invariant established: INV-280** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-280, 2026-08-28) — the draft as it stood.** ⛔ The
   parameters-vs-coverage distinction is a **new standing rule** — the spec calls it "the generalizable
   half and the reason to file rather than only patch one line" — and nothing in `INVARIANTS.md`
   covers it today: INV-234 reaches what a tool **accepts** and stops there. It ships now at
@@ -705,7 +740,14 @@ entries at once. Two things a reader should know about the hashes now recorded:
   being the two header comments the guidance requires. Guard negative-controlled four ways: removing
   the item, dropping the safety-asymmetry sentence, moving the check after the compile step, and
   duplicating the canonical procedure each fail it.
-- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The rule now ships at
+- **Invariant established: INV-279** — registered 2026-08-28 on the maintainer's sign-off, from
+  the wording drafted below and carried over **unchanged**. Cited at the shipped sites it
+  governs and cross-referenced from the spec's `## Invariants introduced`; the enforcing test
+  cites it back, so `test_invariant_enforcer_citations.py`'s bidirectional pair count rose from
+  90 to 97 across this pass (six invariants, seven pairs — INV-282 names two enforcers).
+  ⚠️ The deferral text is kept below rather than deleted, so the record shows what was drafted
+  while the maintainer was unavailable and that nothing changed between drafting and signing.
+- **DEFERRED INVARIANT (resolved INV-279, 2026-08-28) — the draft as it stood.** ⛔ The rule now ships at
   **four** sites (`module-02-sdk-setup/SKILL.md`, `module-03-system-verification/phase1-verification.md`,
   `module-06-data-processing/phaseA-build-loading.md`,
   `module-05-data-quality-mapping/phase2-data-mapping.md`) and is registered **nowhere** — the

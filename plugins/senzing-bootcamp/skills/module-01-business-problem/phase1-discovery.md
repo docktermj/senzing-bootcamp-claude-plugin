@@ -172,7 +172,8 @@ bootcamper explicitly accepts option 3.)*
   success are non-empty. On
   success, record artifacts in Phase 2 Step 11 (write `docs/business_problem.md` with the
   generated marker, and each source into `config/data_sources.yaml`), then continue at Step 5.
-- ⛔ **Size the generated scenario to about 10,000 records unless the Bootcamper asks for more,
+- ⛔ **(INV-277) Size the generated scenario to about 10,000 records unless the Bootcamper asks for
+  more,
   and if they do, say what it costs BEFORE generating it.** The step above validates the
   scenario's *shape* — category, sources, mapping divergence, quality variation — and nothing
   validates its *size*, so an unbounded scenario is the default rather than a choice. The cost is
@@ -266,7 +267,7 @@ targets** (specific software, pipeline mentions). Use "not yet determined" when 
 Compute the total record count across the mentioned sources and read `license_record_limit` from
 `config/bootcamp_progress.json` (normally absent at this point):
 
-⛔ **(INV-244) `license_record_limit` is written ONLY from a measured license — never from a
+⛔ **(INV-244, INV-278) `license_record_limit` is written ONLY from a measured license — never from a
 Bootcamper statement.** The one legitimate writer is Module 4's Step 8a gate, which parses the record limit out
 of `getLicense`/`get_license` against the installed SDK. A number the Bootcamper *tells* you — "our
 POC license allows 100,000" — is a claim about a license that may never have been applied to this
@@ -278,7 +279,7 @@ a ~94,000-record scenario; the gate that exists to warn before hitting the cap m
 have fired. This is INV-244's rule reached from the other side — that invariant forbids reading
 *absence* as "no license"; this forbids treating a *present but unmeasured* value as a measurement.
 
-⛔ **(INV-244) Record a stated entitlement as `license_stated_limit` in
+⛔ **(INV-278) Record a stated entitlement as `license_stated_limit` in
 `config/bootcamp_preferences.yaml`, and say plainly that no gate reads it.** It is the Bootcamper's claim, worth keeping — it is why they
 sized the scenario the way they did, and Module 4 can reconcile it against the measurement later —
 but it is a *statement*, and it lives with the other stated preferences, in a different file from the

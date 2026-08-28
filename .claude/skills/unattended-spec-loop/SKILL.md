@@ -85,7 +85,7 @@ re-asking wastes the one turn they are still present for.
   ⚠️ Check with `conformance.py since --since-last-audit` and `per-rule --uncited`
   **before** writing the entry, not after. `rules` alone cannot answer this.
 
-  ⛔ **The check is a SET DIFFERENCE between the two outputs — never a grep of `per-rule` for
+  ⛔ **(INV-282) The check is a SET DIFFERENCE between the two outputs — never a grep of `per-rule` for
   phrases you expect.** A grep can only confirm lines you already thought of, and the uncited
   ones are by construction the ones you did not: that is what the check is *for*. This has now
   produced a wrong ledger claim **twice** — on 2026-08-28 an entry stated "all four hard-rule

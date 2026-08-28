@@ -1035,18 +1035,18 @@ up to N records," or "Your license has no record cap (unlimited)" when it is `0`
 evaluation-license note below. Do not re-ask (INV-006). Confirm any SDK facts against the Senzing MCP
 server rather than training data.
 
-⛔ **(INV-244) Presence is not proof of detection — reconcile it here, because this is the first
+⛔ **(INV-244, INV-278) Presence is not proof of detection — reconcile it here, because this is the first
 step where the SDK exists and the license can actually be measured.** The field's contract is measured-only
 (Module 1 Step 5a states the prohibition), but a contract is not an enforcement, and on 2026-08-25 a
 value written from a Bootcamper's statement — 100,000 — sat in it against an install whose real limit
 was **500**. Run the license check this step already builds toward, compare it against the recorded
 value, and on a mismatch **write the measured value into `config/bootcamp_progress.json`, replacing
 the recorded one, and say the recorded figure was withdrawn** — naming both numbers.
-⛔ **(INV-244) Persisting it is the point, not a detail.** Module 4's Step 8a reads this field and
+⛔ **(INV-278) Persisting it is the point, not a detail.** Module 4's Step 8a reads this field and
 **volume-skips** its License-Key gate when the collected total is at or below the recorded limit, so
 a correction that stays on screen leaves the gate suppressed by the very number it just disproved —
 which is the defect this reconciliation exists to close, not a smaller version of it.
-⛔ **(INV-244) Never write this field when it is ABSENT.** The reconciliation fires only on a value already
+⛔ **(INV-244, INV-278) Never write this field when it is ABSENT.** The reconciliation fires only on a value already
 recorded. Creating one here would turn a volume-gated measurement into an unconditional one, and it
 would break the *absent means not yet measured* branch INV-244 depends on. ⚠️ **A correction that makes the reported capacity smaller is the one worth stating out
 loud**, because anything already sized against the larger figure — a generated scenario, a collection

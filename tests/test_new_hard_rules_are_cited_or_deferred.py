@@ -10,6 +10,8 @@ silence is neither:
   then *un-writable* until the id is minted, which is exactly the queued-approval hazard
   `implement-spec` Step 5 names.
 
+⛔ **INV-282 governs how this guard matches** — from the claim, not from phrasings already seen.
+
 ⛔ **This guard exists because the manual version of the check failed twice.** On 2026-08-28 a
 ledger entry claimed *"all four hard-rule lines cite one of those at the line"* when two did
 not — written from a `per-rule --uncited | grep` narrowed to two phrases, three cycles after
