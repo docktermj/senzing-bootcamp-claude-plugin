@@ -96,7 +96,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   finding; this forbids reading presence as a measurement.)"*
   Already enforced by `tests/test_license_record_limit_is_measured_only.py`, so registering it costs
   one edit to `specs/INVARIANTS.md` plus swapping the three `(INV-244)` citations for the new id.
-- **Commit:** uncommitted
+- **Commit:** 999bcdd
 
 ## scenario-generation-has-no-size-cap-or-load-time-warning
 
