@@ -42,6 +42,62 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## license-record-limit-has-a-detected-only-contract-nothing-enforces
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`,
+  `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`,
+  `tests/test_license_record_limit_is_measured_only.py` (new),
+  `tests/test_mcp_freshness_vocabulary.py` (one stale allowlist entry removed, per that guard's own
+  instruction), `specs/license-record-limit-has-a-detected-only-contract-nothing-enforces.md`
+  (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed; the defect is
+  this plugin's field contract. Related facts were re-verified at triage and deliberately **not**
+  promoted: `get_sdk_reference(topic='response_schemas', filter='getLicense', language='java')`
+  returns the method with an **empty** `data` array, so `recordLimit`/`licenseType` stay
+  observation-only (INV-080/INV-149). `get_capabilities` dated the run: server **1.33.0**, 2026-08-28.
+- **Summary:** `license_record_limit` is authoritative *because it is measured*, and its contract was
+  stated descriptively in two places and enforced in neither — so a value written from a Bootcamper's
+  statement (100,000, against an install measuring 500) could occupy it and be believed. ⛔ **The
+  consequence is a suppressed warning, not a wrong number:** a value above the dataset size suppresses
+  Module 4's Step 8a gate, the single volume-gated prompt in the bootcamp. Module 1 Step 5a now states
+  the write prohibition as a **prohibition**, gives a Bootcamper's claim its own key
+  (`license_stated_limit`, in `config/bootcamp_preferences.yaml` — a **different file** from the
+  measured field) and says no gate reads it; Module 2 Step 5a stops asserting detection from presence
+  and reconciles against a measurement, with **recorded, not verified** as the fallback when the check
+  cannot run. ⚠️ **The spec named one inference site; a sweep found two** (INV-246) — Module 1's own
+  read carried it too, and a guard built from the spec's file list would have certified it. Four
+  criteria test-asserted by `tests/test_license_record_limit_is_measured_only.py` (6 tests, stdlib
+  only, no `plugins/` import — INV-108), which derives its site set by scanning every reader/writer of
+  the field. ⚠️ **Three criteria are implemented but NOT runtime-verified** and are disclosed rather
+  than ticked — refusing the write, recording the claim under the new key, and reconciling at SDK
+  setup are all turn-level behaviors needing a `dry-run` phase-3 walk. ⛔ **One unrelated guard was
+  corrected as its own failure message prescribes:** `test_mcp_freshness_vocabulary.py` allowlisted the
+  exact phrase the rewrite removed, and its anti-rot assertion said *"remove it rather than leaving it
+  as cover for new text."* Removed. **No assertion was weakened** — the replacement wording was checked
+  against that scanner's `SUSPECT` pattern and does not match, so the allowlist got smaller, not more
+  permissive. Negative-controlled five ways: restoring either site's presence-as-proof wording,
+  dropping the prohibition, removing the stated key, and dropping the recorded-not-verified fallback
+  each fail the guard.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ **INV-244 governs
+  *absence* only** — its text is *"a step branching on it MUST NOT read that field's **absence** as a
+  measured finding"* — and says nothing about where a **present** value came from. The three rules
+  shipped here are the presence side of the same concern and are registered nowhere; all three now
+  cite INV-244 at the line as the nearest governing rule, which is honest but not the same as being
+  covered by it. Drafted wording (highest id currently INV-276 — written as `INV-NNN` deliberately,
+  because spelling an unminted id creates a citation of an undefined invariant and turns
+  `citations.py verify` red):
+  *"**INV-NNN** — A bootcamp state field whose authority rests on being **measured** MUST be written
+  only from that measurement, never from a Bootcamper statement, and no step may infer from the
+  field's **presence** that a measurement was taken. A stated-but-unverified value MUST be recorded
+  under a separate key that no gate reads. Where a later step can perform the measurement, it MUST
+  reconcile the recorded value against it and say plainly when a recorded figure is withdrawn.
+  (**Extends INV-244** from the absent branch to the present one: INV-244 forbids reading absence as a
+  finding; this forbids reading presence as a measurement.)"*
+  Already enforced by `tests/test_license_record_limit_is_measured_only.py`, so registering it costs
+  one edit to `specs/INVARIANTS.md` plus swapping the three `(INV-244)` citations for the new id.
+- **Commit:** uncommitted
+
 ## scenario-generation-has-no-size-cap-or-load-time-warning
 
 - **Implemented:** 2026-08-28

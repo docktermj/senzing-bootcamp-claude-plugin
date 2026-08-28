@@ -1029,11 +1029,22 @@ troubleshooting.
 ### 5a. Confirm the built-in evaluation license (no prompt)
 
 **Already-licensed guard (check first).** Read `config/bootcamp_progress.json`. If a
-`license_record_limit` field is present, a custom license has already been configured (its limit
-was detected earlier, this session or a prior one). Acknowledge it: present the detected
-`recordLimit` as the authoritative limit ("Your license allows up to N records," or "Your license
-has no record cap (unlimited)" when it is `0`), and skip the evaluation-license note below. Do not
-re-ask (INV-006). Confirm any SDK facts against the Senzing MCP server rather than training data.
+`license_record_limit` field is present, a custom license limit was recorded earlier — this session
+or a prior one. Acknowledge it: present the recorded `recordLimit` as the limit ("Your license allows
+up to N records," or "Your license has no record cap (unlimited)" when it is `0`), and skip the
+evaluation-license note below. Do not re-ask (INV-006). Confirm any SDK facts against the Senzing MCP
+server rather than training data.
+
+⛔ **(INV-244) Presence is not proof of detection — reconcile it here, because this is the first
+step where the SDK exists and the license can actually be measured.** The field's contract is measured-only
+(Module 1 Step 5a states the prohibition), but a contract is not an enforcement, and on 2026-08-25 a
+value written from a Bootcamper's statement — 100,000 — sat in it against an install whose real limit
+was **500**. Run the license check this step already builds toward, compare it against the recorded
+value, and on a mismatch **take the measurement and say the recorded figure was withdrawn**, naming
+both numbers. ⚠️ **A correction that makes the reported capacity smaller is the one worth stating out
+loud**, because anything already sized against the larger figure — a generated scenario, a collection
+plan — was sized against a ceiling that does not exist. If the check cannot run yet, present the value
+as **recorded, not verified**, rather than as detected.
 
 Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
 **not a question:**

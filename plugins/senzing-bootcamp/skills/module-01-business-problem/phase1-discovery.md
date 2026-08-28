@@ -264,8 +264,25 @@ targets** (specific software, pipeline mentions). Use "not yet determined" when 
 ### 5a. Record-count threshold check (compute-only — no license prompt here)
 
 Compute the total record count across the mentioned sources and read `license_record_limit` from
-`config/bootcamp_progress.json` (present only if a custom license was configured in a prior
-session; normally absent at this point):
+`config/bootcamp_progress.json` (normally absent at this point):
+
+⛔ **(INV-244) `license_record_limit` is written ONLY from a measured license — never from a
+Bootcamper statement.** The one legitimate writer is Module 4's Step 8a gate, which parses the record limit out
+of `getLicense`/`get_license` against the installed SDK. A number the Bootcamper *tells* you — "our
+POC license allows 100,000" — is a claim about a license that may never have been applied to this
+install, and it does not go in this field, this session or any other. ⚠️ **The failure is a
+suppressed warning, not a wrong number:** a `license_record_limit` above the dataset size
+**suppresses** Module 4's Step 8a gate, the single volume-gated prompt in the whole bootcamp. On
+2026-08-25 a stated 100,000 was written here against an install whose measured limit was **500**, on
+a ~94,000-record scenario; the gate that exists to warn before hitting the cap mid-load would never
+have fired. This is INV-244's rule reached from the other side — that invariant forbids reading
+*absence* as "no license"; this forbids treating a *present but unmeasured* value as a measurement.
+
+⛔ **(INV-244) Record a stated entitlement as `license_stated_limit` in
+`config/bootcamp_preferences.yaml`, and say plainly that no gate reads it.** It is the Bootcamper's claim, worth keeping — it is why they
+sized the scenario the way they did, and Module 4 can reconcile it against the measurement later —
+but it is a *statement*, and it lives with the other stated preferences, in a different file from the
+measured field so the two cannot be confused by proximity.
 
 - **Present and > 0:** if the total exceeds it, the bootcamper will likely need a Senzing License
   Key — record `license_guidance_deferred: true` in `config/bootcamp_preferences.yaml`. Otherwise

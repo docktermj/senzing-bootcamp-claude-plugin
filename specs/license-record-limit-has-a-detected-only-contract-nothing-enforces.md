@@ -115,3 +115,46 @@ positioned to forbid one — and Module 4's Step 8a, the only legitimate writer,
   the *absent* branch this spec's mirror image);
   `specs/step1-license-framing-ignores-the-measured-record-limit.md` (a reader of the same field,
   implemented 2026-08-28)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** Both sites were re-read before changing anything and the diagnosis held.
+
+⚠️ **The spec named ONE inference site. There were two** (INV-246). It attributed the
+presence-implies-detection reading to `module-02-sdk-setup/SKILL.md` alone. Module 1's own Step 5a
+read carried it as well — *"present only if a custom license was configured in a prior session"* —
+which is the same inference in the same words' worth of meaning, in the file the spec was otherwise
+correcting. A guard written from the spec's file list would have fixed one and certified the other.
+Both are corrected, and the guard scans every reader/writer of the field rather than naming files.
+
+**MCP re-check: n/a, re-confirmed rather than assumed** — the defect is this plugin's field
+contract. The related Senzing facts were re-verified during triage and are recorded there rather
+than re-asserted here: `get_sdk_reference(topic='response_schemas', filter='getLicense',
+language='java')` returns the method and an **empty** `data` array, so `recordLimit` and
+`licenseType` remain **observation-only** (INV-080/INV-149) and are not written into shipped prose as
+MCP-sourced. `get_capabilities` dated the run: server **1.33.0**, 2026-08-28.
+
+**The stated key went to `config/bootcamp_preferences.yaml`, not to progress.** The report invented
+`license_stated_poc_limit` in `bootcamp_progress.json`, beside the measured field. Preferences is
+where the bootcamp already keeps what the Bootcamper *said* (`license`,
+`license_guidance_deferred`), and putting the claim in a **different file** from the measurement
+makes the confusion this spec is about structurally harder rather than merely discouraged. Named
+`license_stated_limit` — the `poc` in the reported name described one Bootcamper's situation, not
+the field.
+
+⛔ **An unrelated guard needed a one-line correction, and its own failure message prescribed it.**
+`tests/test_mcp_freshness_vocabulary.py` allowlisted the exact phrase *"was detected earlier, this
+session or a prior one)"* as an ordinary-sense use of "this session"; rewriting Module 2's guard
+removed that phrase, and the allowlist's anti-rot assertion fired — *"an allowlisted ordinary-sense
+phrase no longer exists; remove it rather than leaving it as cover for new text."* The entry was
+removed, which is what the guard asks for. ⚠️ **No assertion was weakened:** the replacement wording
+was checked against the scanner's `SUSPECT` pattern directly and does **not** match, so it needs no
+allowlist entry of its own — the allowlist got smaller, not more permissive.
+
+⚠️ **Three criteria are implemented but NOT runtime-verified**, and are disclosed rather than
+ticked: that a live run refuses to write the field from a statement, that it records a claim under
+the new key instead, and that SDK setup actually reconciles. All three are turn-level behaviors no
+offline suite can assert (INV-108); they need a `dry-run` phase-3 walk through Module 1 Step 5a and
+Module 2 Step 5a with a Bootcamper who states an entitlement.
+
+**One invariant is DEFERRED** — see the ledger entry.

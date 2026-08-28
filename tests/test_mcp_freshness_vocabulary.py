@@ -43,7 +43,6 @@ SUSPECT = re.compile(r"(?:%s)[^.!?]{0,120}?this session" % MCP_VOCAB)
 #: so a stale entry is a failure rather than dead cover for something new.
 ALLOWED = (
     "do not ask again** this session or the next (INV-006)",
-    "was detected earlier, this session or a prior one)",
     "tripped us up this session, so the bootcamp itself improves",
     "Review **this session** for four categories",
 )
