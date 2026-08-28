@@ -22,9 +22,16 @@ reference is checked separately, for behavior, and must not be the only place th
 
 ⚠️ **INV-265 is the other half.** With one registered data source every source-set key is that
 source, the comparison cannot fail, and a "pass" would be agreement from a match that could not
-disagree. That is the *normal* Truth Set situation, not a corner case -- it is why the module that
-builds the app cannot provoke the defect -- so both build sites must report **not exercised**
-rather than passed.
+disagree. So a build site must be able to say **not exercised** rather than passed.
+
+⛔ **Corrected 2026-08-28 -- this docstring previously called that "the *normal* Truth Set
+situation ... why the module that builds the app cannot provoke the defect". It is false.** The
+Truth Set registers three data sources (CUSTOMERS, REFERENCE, WATCHLIST, 159 records) and one full
+load emitted 7 distinct source-set keys, 4 of them combinations, so the comparison is live at the
+Truth Set site too. The assertions below were never wrong -- they require each build site to *name*
+the not-exercised outcome, which is correct in either case -- but the premise stated around them
+was, and a false premise in a guard's own prose reads as reviewed. INV-270 carried the same claim
+and was corrected in place the same day.
 
 Stdlib only. The contract and build steps are read as text; the reference's own check is exercised
 by import, which is a dev-only read of a bundled script (INV-108).
@@ -156,8 +163,9 @@ class BothBuildSitesInvokeIt(unittest.TestCase):
         self.assertTrue(truthset, "the Truth Set build site no longer references the check")
         self.assertRegex(
             truthset[0], r"(?i)not exercised|not_exercised",
-            "the Truth Set build step does not name the not-exercised outcome, which is its "
-            "expected result with one data source (INV-265)",
+            "the Truth Set build step does not name the not-exercised outcome, which it must be "
+            "able to report when a load registers fewer than two data sources (INV-265). Note the "
+            "Truth Set itself carries three, so a real verdict is the expected result there",
         )
 
     def test_the_module7_site_says_the_check_has_teeth_there(self):
@@ -191,7 +199,12 @@ class TheReferenceImplementsIt(unittest.TestCase):
         self.assertEqual(a["source_set_keys"], b["source_set_keys"])
 
     def test_a_single_source_corpus_is_not_exercised_rather_than_ok(self):
-        """INV-265 — the Truth Set case must not report agreement."""
+        """INV-265 — a single-source corpus must not report agreement.
+
+        ⚠️ Not "the Truth Set case": the Truth Set has three data sources. The corpus built
+        below is synthetic and single-source on purpose, which is System verification's
+        `VERIFY` shape rather than the Truth Set's.
+        """
         result = self.check([{"data_sources": ["CUSTOMERS"]}] * 5)
         self.assertEqual("not_exercised", result["status"])
         self.assertNotIn("passed", result["detail"].lower())

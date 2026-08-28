@@ -1094,10 +1094,20 @@ graph, so the check costs nothing.
 
 ⚠️ **Fewer than two distinct keys means the check was NOT exercised — report that, never "passed"
 (INV-265).** With one registered data source every key is that source, the comparison cannot fail,
-and reporting a pass would be reporting agreement from a match that could not disagree. **This is
-not a corner case: it is the normal Truth Set situation, and it is exactly why the module that
-builds this app cannot catch the defect with its own data.** Say "not exercised — one data source"
-and move on.
+and reporting a pass would be reporting agreement from a match that could not disagree. Say
+"not exercised — one data source" and move on.
+
+⛔ **That is NOT the Truth Set's case — this module is a genuine test site for INV-259.** The Truth
+Set registers **three** data sources and resolves entities spanning them, so the comparison is live
+here and a real `ok`/mismatch verdict is what this module should produce
+(`get_sample_data(dataset='truthset', source='list')` → CUSTOMERS, REFERENCE, WATCHLIST, 159
+records; server 1.33.0, 2026-08-28). A `not_exercised` result **in this module is itself a signal** —
+fewer sources loaded than expected — not a routine outcome to move past. The single-source case
+belongs to System verification's synthetic `VERIFY` data, and to a bootcamper who loads exactly one
+source. ⚠️ Observation, not a server fact: one full 159-record load on 2026-08-27 emitted **7**
+distinct source-set keys, **4** of them combinations, over 84 entities — first-source coloring would
+have collapsed those four and dropped the legend count to 3, which is the mismatch this check
+exists to catch.
 
 ⛔ **On a mismatch, stop and fix the encoding before capturing screenshots (INV-259).** The screenshots become
 a permanent keepsake in the recap and the production project; capturing first means shipping the

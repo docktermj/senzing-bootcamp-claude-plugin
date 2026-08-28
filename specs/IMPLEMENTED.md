@@ -42,6 +42,43 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-truth-set-does-exercise-the-encoding-self-check
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`,
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `tests/test_encoding_self_check_is_stated_as_behavior.py`, `tests/test_truthset_is_not_called_single_source.py` (new),
+  `specs/INVARIANTS.md` (INV-270 corrected in place), `specs/the-truth-set-does-exercise-the-encoding-self-check.md` (deviation note)
+- **MCP re-check:** server **1.33.0**, 2026-08-28 — **confirmed.** `get_capabilities` for the version,
+  then `get_sample_data(dataset='truthset', source='list')`, which returns **three** sources —
+  CUSTOMERS 120, REFERENCE 22, WATCHLIST 17, 159 total. The spec's central fact holds unchanged. The
+  *seven distinct source-set keys* figure remains an **observation** from a 2026-08-27 load on this
+  machine, marked as such wherever it is written (INV-080/INV-149), not promoted to a server fact.
+- **Summary:** The contract told implementers the INV-270 encoding self-check could not be exercised
+  in the module that builds the visualization app — "the normal Truth Set situation … Say 'not
+  exercised — one data source' and move on" — which is false and, worse, an instruction to stop
+  looking. All four acceptance criteria met. (1) `visualization-api-reference.md` no longer states or
+  implies it; the paragraph now says the module is a genuine INV-259 test site and that a
+  `not_exercised` result **here** is itself a signal. (2) The `not_exercised` rule and its INV-265
+  citation are unchanged in substance — verified by `test_the_not_exercised_rule_survived` — and the
+  single-source example now names System verification's synthetic `VERIFY` data, which really is one
+  source. (3) `tests/test_truthset_is_not_called_single_source.py` (6 tests, stdlib only, no
+  `plugins/` import — INV-108) guards it. (4) Prose about data, so cross-platform and
+  language-agnostic hold trivially. ⚠️ **The spec named one site; a sweep found five** (INV-246) — the
+  contract, the module-03b walkthrough, module-07 step 3c, the docstring of the guard enforcing
+  INV-270, and **INV-270's own text**. All five corrected; see the spec's deviation note for the
+  table. ⛔ **INV-270 was corrected in place** — its rule is untouched and only its false closing aside
+  about which datasets can provoke the defect is withdrawn, with a dated note quoting the old wording.
+  **This one deserves the maintainer's eye on return**, because amending a registered invariant is a
+  heavier action than the spec anticipated and it was taken unattended. **Establishes no invariant** —
+  corrected INV-270 already carries the rule; the two hard-rule lines added to shipped markdown
+  (`conformance.py since --ref 15c1522`) both restate it at their site and both now cite an invariant
+  at the line (INV-259 and INV-270 respectively), so `per-rule --uncited` reports neither. Guard
+  negative-controlled at four sites: reintroducing the claim in the contract, in module-07, and in
+  INV-270 each fails it, and so does deleting the true replacement claim.
+- **Commit:** uncommitted
+
 ## java-initialize-scaffold-snippet-references-the-wrong-class
 
 - **Implemented:** 2026-08-28

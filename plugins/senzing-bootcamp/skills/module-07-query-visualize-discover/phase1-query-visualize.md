@@ -619,10 +619,12 @@ of the Truth Set. It MUST:
   reference got it right.
   - ⛔ **Run the encoding self-check here too, and here it is not vacuous (INV-270, INV-259, INV-265).** Compare the legend's
     distinct color-key count against `encoding_check.distinct_source_set_keys` from the graph
-    endpoint (the contract's "The encoding self-check"). The Truth Set build almost always reports
-    `not_exercised` — one data source, so the comparison cannot fail — whereas the bootcamper's data
-    is multi-source by construction, which makes **this** the run where the check has teeth. Stop and
-    fix the encoding on a mismatch rather than capturing; the screenshots persist into the recap.
+    endpoint (the contract's "The encoding self-check"). ⚠️ The Truth Set build **also** exercises
+    this check — it registers three data sources, so a `not_exercised` result back in Module 3b was a
+    signal rather than the norm — and the bootcamper's data exercises it again at larger scale. Do
+    not treat a clean Module 3b verdict as covering this run: different data, different encoding
+    path, and the 1,951-entity defect above happened here. Stop and fix the encoding on a mismatch
+    rather than capturing; the screenshots persist into the recap.
 - Serve/render every applicable tab from that contract — Entity Graph, Merge Statistics, Match
   Keys, Feature Scores, Cross-Source, and Search / Probe. That is the whole set: **six** tabs. Tabs
   whose data is absent are simply not shown (e.g. Cross-Source needs 2+ sources; Match Keys /

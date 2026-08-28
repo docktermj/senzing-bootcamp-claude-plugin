@@ -292,10 +292,15 @@ the screenshots persist into the recap and the production project, so capturing 
 picture.
 
 ⚠️ **Report `not exercised`, not `passed`, when `encoding_check.status` is `not_exercised`** — fewer
-than two distinct source-set keys means the comparison could not have failed (INV-265). **On the
-Truth Set that is the expected outcome whenever one data source is registered**, and it is exactly
-why this module cannot catch the defect with its own data: the check goes live in Module 7 step 3c,
-against the bootcamper's data. Say which of the two happened; do not report silence as agreement.
+than two distinct source-set keys means the comparison could not have failed (INV-265). Say which of
+the two happened; do not report silence as agreement.
+
+⛔ **On the Truth Set, expect a real verdict — `not_exercised` here is a signal, not the norm (INV-270).** The
+Truth Set registers **three** data sources (CUSTOMERS, REFERENCE, WATCHLIST — 159 records;
+`get_sample_data(dataset='truthset', source='list')`, server 1.33.0, 2026-08-28) and resolves
+entities across them, so the check has teeth in **this** module, not only in Module 7 step 3c
+against the bootcamper's data. If it reports `not_exercised` here, fewer sources loaded than the
+Truth Set carries — investigate that before moving on.
 
 **Capture screenshots for the recap (optional, non-blocking).** Defer this until the live server is
 running (2.3) and capture from **`--url http://localhost:<port>`** — substituting the port the
