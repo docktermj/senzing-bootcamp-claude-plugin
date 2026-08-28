@@ -78,7 +78,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   sites, governed by INV-001 (all three platforms first-class), INV-002 (stated as behavior, not per
   binding) and INV-179 (stated once, cited elsewhere); all three new hard-rule lines cite one of them
   at the line, and `conformance.py rules` reports **0** sections citing no invariant.
-- **Commit:** uncommitted
+- **Commit:** e6c1df2
 
 ## mapping-step3-rejects-disjoint-name-declarations
 
