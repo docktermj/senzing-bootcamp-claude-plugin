@@ -569,6 +569,35 @@ predominant type and let step 3's `type_discriminator` do the typing — which i
 what the tool's own prose says happens anyway (*"The type_discriminator details will be defined in
 Step 3 mapping"*), so nothing is lost.
 
+⛔ **(INV-136, INV-125) Step 3 rejects a source that declares BOTH organization and person name
+fields — even when no record carries both — and its message describes the wrong problem.** A source whose name fields are
+disjoint *by record type* is rejected with:
+
+```text
+NAME_ORG cannot co-exist with person name attributes NAME_FIRST, NAME_FULL, NAME_LAST — a
+record is either a person or an organization.
+```
+
+**The fix is to declare the names through `type_discriminator.field_overrides`** — including where
+the override is **identity in both branches**, declared purely to satisfy the validator. Observed on
+two sources on server **1.33.0**, 2026-08-25, and again on 2026-08-27; both had verified-disjoint
+fields (one populated per record, selected by `RECORD_TYPE`; zero rows carrying both).
+
+- ⚠️ **Read the message as "declare it differently", not "your data is wrong".** It states a
+  **record-level** rule, and the mapping already satisfied it — the rejection is about the *field
+  declarations*. A run that reads it literally spends its first attempt re-checking data that is
+  correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
+  NAME` section says *"do not mix `NAME_ORG` with parsed person fields **in the same object**"*
+  (`search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
+  PHONE_NUMBER', category='data_mapping')`, server **1.33.0**, 2026-08-28) — one NAME object, not one record, and
+  certainly not one declaration.
+- ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
+  are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
+  the known field-count warning described below — **not** unmapped data. Do not chase it.
+- ⛔ **(INV-136) Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
+  rejection, not a default: adding an identity override to a mapping that does not need one buys the
+  same coverage-count surprise for nothing.
+
 ⚠️ **If a warning like that reaches you, it is not your error and not a mapping defect** — record it
 as expected and proceed (INV-048/INV-173). This is **one** known-bad interaction, and it does not
 license ignoring step-2 warnings generally: the others are real. And note the prose's *"must be PERSON or

@@ -122,3 +122,40 @@ constraint lives inside one step's runtime validation, which no offline test can
   `mapping_workflow` upstream report, same handling and same caution pattern);
   `specs/step-2-prose-prescribes-a-record-type-its-own-schema-rejects.md` (the sibling step-2
   scope defect)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**The plugin half is implemented as specified; the upstream half is deliberately NOT done.**
+Proposed change item 3 (report upstream) was put to the maintainer on 2026-08-28 and they chose
+**leave pending** — the report is still owed, and the re-drive named below remains its precondition.
+This is not a decline: nobody declined it.
+
+**MCP re-check: the specification's scope confirmed; the validator NOT re-driven.** Unchanged from
+what the Source block records, and restated here because it is the spec's weakest evidence:
+`search_docs` confirms the Entity Specification scopes the rule to *"the same object"*, which is the
+load-bearing new fact. The rejection itself rests on two field observations on this server version
+(2026-08-25 and 2026-08-27) and was **not** reproduced during implementation. ⛔ Re-drive
+`mapping_workflow` steps 1–3 before anything goes upstream.
+
+⛔ **Two guards caught real errors in this implementation before it was committed, and both are
+worth recording because both were mine.**
+
+1. **An unexecutable citation.** The caution first cited `search_docs(category='data_mapping')` with
+   no `query=`. `query` is that tool's only required parameter, so the call as written cannot be
+   constructed — `tests/test_search_docs_calls_pass_a_query.py` failed with exactly that reasoning.
+2. **A query that was never run.** Fixing (1) by adding a plausible-looking `query=` was worse:
+   `tests/test_prescribed_search_queries.py` failed because the phrasing had never been executed
+   against the server, and `search_docs` is BM25 — an unexecuted phrasing can return anything, and a
+   miss looks identical to documentation that does not cover the topic. The caution now cites the
+   query that was **actually executed** during triage, and that query is registered in
+   `VERIFIED_QUERIES` with its observed top hits. ⚠️ **This is the "laundered fact" class the whole
+   re-verification discipline exists for**, reached by paraphrasing my own earlier call rather than
+   by copying from a spec.
+
+**The caution went beside the type-discriminator typing discussion, not at the step-3 payload
+table.** `phase2-data-mapping.md` already tells the guide to *"let step 3's `type_discriminator` do
+the typing"*; placing the rejection and its fix immediately after that is where a reader is already
+holding the relevant concept, rather than several hundred lines away at the advance table.
+
+**The coverage consequence is referenced, not restated** (INV-179) — the field-count note later in
+the same file already owns it, and this caution points at it in one sentence.

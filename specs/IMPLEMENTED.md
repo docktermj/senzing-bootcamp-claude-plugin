@@ -42,6 +42,45 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## mapping-step3-rejects-disjoint-name-declarations
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase2-data-mapping.md`,
+  `tests/test_step3_name_rejection_names_its_fix.py` (new), `tests/test_prescribed_search_queries.py`
+  (one executed query registered with its observed top hits),
+  `specs/mapping-step3-rejects-disjoint-name-declarations.md` (deviation note)
+- **MCP re-check:** **server 1.33.0, 2026-08-28 — specification scope confirmed; validator NOT
+  re-driven.** `search_docs(query='entity specification attribute names feature tables NAME_ORG
+  ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns the Entity Specification's
+  `Name > Feature: NAME` section, which scopes the rule to *"do not mix `NAME_ORG` with parsed person
+  fields **in the same object**"* — one NAME object, narrower than the validator's record-level
+  message and much narrower than the declaration level it enforces at. ⚠️ **The rejection itself was
+  not reproduced**: reaching step 3 needs steps 1–2 driven against a real multi-source project. It
+  rests on two field observations on this server version (2026-08-25 and 2026-08-27), marked
+  observation-only (INV-080/INV-149).
+- **Summary:** Step 3 rejects a source declaring both organization and person name fields even when
+  the fields are disjoint by record type, and its message states a **record-level** rule the mapping
+  already satisfied — so the natural reading is "your data is wrong" and the first attempt goes into
+  re-checking correct data. `phase2-data-mapping.md` now carries a dated caution beside the existing
+  type-discriminator typing discussion: it quotes the rejection, names
+  `type_discriminator.field_overrides` as the fix **including the identity-in-both-branches case**,
+  says the message is about declarations rather than data, warns that coverage drops afterwards
+  (by reference to the field-count note — INV-179, not restated), and rules out emitting a
+  `type_discriminator` on every source. Guarded by `tests/test_step3_name_rejection_names_its_fix.py`
+  (6 tests, stdlib only, no `plugins/` import — INV-108), site set derived by scanning for
+  `schema_mappings` (INV-246). Negative-controlled five ways. **The upstream half is deliberately not
+  done** — the maintainer chose *leave pending* on 2026-08-28, and the re-drive is its precondition;
+  this is pending, **not** declined. ⛔ **Two guards caught errors of mine before commit and both are
+  recorded in the spec's deviation note:** an unexecutable `search_docs(category=…)` citation with no
+  `query=`, and then a `query=` I had **never executed** — the caution now cites the query actually
+  run at triage, registered in `VERIFIED_QUERIES` with its observed hits. That second one is the
+  laundered-fact class the re-verification discipline exists for, reached by paraphrasing my own
+  earlier call. **Establishes no invariant** — both hard-rule lines are a dated tool-contradiction
+  caution of the kind INV-136 and INV-125 already govern, and both cite them at the line; this is the
+  same shape as `mapping-workflow-step1-prose-contradicts-its-own-advance-schema`, which likewise
+  registered none.
+- **Commit:** uncommitted
+
 ## license-record-limit-has-a-detected-only-contract-nothing-enforces
 
 - **Implemented:** 2026-08-28

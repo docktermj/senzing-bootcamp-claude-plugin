@@ -53,6 +53,20 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-08-28 on server 1.33.0, during the `/feedback-to-specs` triage that
+    # produced `specs/mapping-step3-rejects-disjoint-name-declarations.md`. The claim it
+    # supports is the SCOPE of the NAME rule -- the step-3 validator's message asserts a
+    # record-level rule, and the specification states an object-level one.
+    "entity specification attribute names feature tables NAME_ORG ADDR_LINE1 PHONE_NUMBER":
+        "ON TARGET. #1 is Senzing Entity Specification / 'Entities, features and attributes' "
+        "(99.8). #2 is the same document's 'Name > Feature: NAME' section (83.5), which "
+        "carries the load-bearing sentence -- 'do not mix NAME_ORG with parsed person fields "
+        "IN THE SAME OBJECT' -- plus the matching negative example. NOTE: the excerpts render "
+        "attribute names BACKTICKED (`OTHER_ID_TYPE`), while the same tables in the document "
+        "`download_resource` serves render them as PLAIN TEXT; that divergence is its own "
+        "finding, in `applicability-and-attribute-catalog-are-authored-by-hand-and-fail-"
+        "silently`.",
+    # ---------------------------------------------------------------------------------
     # Executed 2026-08-23 on server 1.33.0 (docs index 2026-08-20 17:33 UTC), for
     # `specs/search-docs-instructions-omit-the-required-query-parameter.md`: `query` is
     # `search_docs`' ONLY required parameter, so nine shipped references passing a bare
