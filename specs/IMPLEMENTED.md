@@ -42,6 +42,48 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## applicability-and-attribute-catalog-are-authored-by-hand-and-fail-silently
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`,
+  `tests/test_quality_score_inputs_are_checked_before_scoring.py` (new),
+  `specs/applicability-and-attribute-catalog-are-authored-by-hand-and-fail-silently.md` (deviation note)
+- **MCP re-check:** **server 1.33.0, 2026-08-28 — confirmed at triage, figures reproduce exactly.**
+  The served `senzing_entity_specification.md` yields 102 plain-text first-column attribute names, 21
+  backticked ALL-CAPS tokens anywhere and 110 in the union, with `NAME_ORG`, `ADDR_LINE1` and
+  `PHONE_NUMBER` never backticked — the report's own numbers.
+  `search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
+  PHONE_NUMBER', category='data_mapping')` returns the same tables **backticked**, establishing the
+  two-rendering trap the report did not name. Per-type presence percentages stay observation-only
+  (INV-080/INV-149).
+- **Summary:** Two hand-authored inputs to the quality score, each of which produced a wrong number
+  that looked like a data finding. **(1) Applicability:** four fields on a 72,799-record source were
+  marked "applies to both" while measuring 100%/91.5%/42.3%/100% on ORGANIZATION and **0%** on
+  PERSON, scoring 70.5% into the remediation band against a corrected 85.7%. Step 6 now requires a
+  per-`RECORD_TYPE` presence breakdown for **every** field marked as applying to both, **before** the
+  score is reported, and treats a 100%/0% split as an applicability error that **stops the score**.
+  ⚠️ This is a **precondition**, not another heuristic: the existing NAME/ADDRESS check fires after a
+  low score exists and keys on the output, while the applicability set is the input that was wrong.
+  The existing check and the 0%/100% uniformity sanity-check are both preserved and test-asserted as
+  such. **(2) The catalog:** the specification's feature tables write attribute names as **plain text
+  in the first column**, so a backtick-tuned parse under-collects by roughly four fifths — and
+  `search_docs` renders the same names backticked, which is why a parse tuned on an excerpt works
+  there and fails here. Stated at the save step, which already warns that a bad fetch surfaces later
+  as "attribute names that are merely absent". ⛔ **No attribute count ships**, per criterion 4 — and
+  enforcing that caught two of my own violations, including a bullet *forbidding* a pinned count that
+  stated one. Guarded by `tests/test_quality_score_inputs_are_checked_before_scoring.py` (9 tests,
+  stdlib only, no `plugins/` import — INV-108), site sets derived by scanning (INV-246).
+  ⚠️ **The guard's matcher was wrong in both directions before it was right** — too narrow, then too
+  broad (flagging an unrelated `MCP-NEGATIVE` marker) — found by the negative controls, not by
+  reading; it now pins three phrasings that must match and three that must not. Negative-controlled
+  six ways. ⚠️ **Both halves are text-asserted only** and need a phase-3 walk on a mixed
+  person/organization source. **Establishes no invariant** — the applicability precondition is INV-174
+  and INV-264 applied at the step that feeds them, and the parse rule is INV-115's
+  confirm-the-shape-before-parsing discipline applied to a fetched document; all four hard-rule lines
+  cite one of those at the line, and `conformance.py rules` reports **0** sections citing no
+  invariant.
+- **Commit:** uncommitted
+
 ## macos-protected-launchers-strip-dyld-from-a-backgrounded-server
 
 - **Implemented:** 2026-08-28

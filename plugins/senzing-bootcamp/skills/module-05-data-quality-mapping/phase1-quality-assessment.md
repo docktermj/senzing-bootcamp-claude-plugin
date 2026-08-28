@@ -78,6 +78,22 @@ states the rule once for all three (INV-234).
    truncated fetch, or a saved error page, is caught here in one comparison instead of surfacing in
    Step 4 as attribute names that are merely absent. (INV-228's count-check discipline, applied to a
    resource fetch rather than a dataset.)
+3. ⛔ **(INV-115) Read the attribute names out of the FIRST COLUMN of the feature tables as PLAIN
+   TEXT — they are not backticked in this document, and a catalog built by scanning for backticked
+   tokens silently under-collects by roughly four fifths.** Verified against the served document on
+   server **1.33.0**, 2026-08-28. `NAME_ORG`, `ADDR_LINE1` and `PHONE_NUMBER` appear plain and are
+   **never** backticked anywhere in the file, so a backtick-tuned parse reports three of the
+   commonest attributes in the specification as unrecognized — which is the cheap way to tell a
+   broken parse from a real absence.
+   - ⚠️ **The same names render the other way through a different route, which is what makes this a
+     trap rather than a typo.** `search_docs(query='entity specification attribute names feature
+     tables NAME_ORG ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns those same tables
+     with the names **backticked** (`` `OTHER_ID_TYPE` ``). A parse tuned on a `search_docs` excerpt
+     works there and under-collects here — and this saved document is what Step 4 reads.
+   - ⛔ **Do not pin an attribute count in this file** — whatever the document holds today, a figure
+     written into shipped prose is one nobody re-measures, and it goes stale silently because it
+     keeps reading authoritative. Confirm the parse against the saved copy instead: a catalog
+     missing `NAME_ORG` is a parse failure, not a specification change.
 
 ⚠️ **If the URL fetch fails, `inline=true` is the sanctioned fallback for this tool — and for this
 tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline` and
@@ -570,6 +586,22 @@ whose NAME and ADDRESS coverage is high is a probable applicability error, not a
 Check the record-type mix before reporting the score or routing anyone to remediation (INV-264). The presence
 rules above are unchanged — they decide whether a *value* is there; this decides whether the feature
 belonged in the denominator at all.
+
+⛔ **(INV-174, INV-264) Before reporting the score, print a per-`RECORD_TYPE` presence breakdown for
+EVERY field you marked as applying to BOTH types — and treat a 100%/0% split as an applicability
+error that stops the score.** No real field is present on every record of one type and none of the
+other; that shape is the signature of a wrong applicability set, not a finding about the data. The
+breakdown costs nothing — the profiling pass already holds both per-type counts.
+
+⚠️ **This is a precondition, not another heuristic.** The check above fires *after* a low score
+exists and keys on a NAME/ADDRESS pattern; this one runs *before* any score is reported and keys on
+the applicability set itself, which is the input that was wrong. On 2026-08-25 four fields on a
+72,799-record source were marked "both" while measuring 100% / 91.5% / 42.3% / 100% on
+`ORGANIZATION` and **0%** on `PERSON` — the source's person records are officer and contact records
+attached to a company, where a business address structurally cannot exist. The source scored 70.5%
+and landed in the remediation band; corrected, it scores 85.7% and passes. ⛔ **The applicability set
+is authored by hand per source, so getting it wrong is the default failure rather than an unusual
+one** — which is why it needs a check by construction rather than an instruction to be careful.
 
 Use these thresholds to guide the decision:
 

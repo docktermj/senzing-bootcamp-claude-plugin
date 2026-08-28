@@ -130,3 +130,41 @@ Both are **measurement faults that present as data findings**, and neither has a
   spec adds a precondition to, already implemented);
   `specs/inv174-per-record-applicability-is-unverified.md` (INV-174's coverage gap);
   `specs/completeness-denominator-has-two-readings-on-a-raw-source.md` (the denominator this feeds)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content; both halves implemented as specified, at two different sites in one file.** The
+applicability precondition went beside the existing low-score heuristic at step 6, and the parse rule
+went into the specification **save** step — where the file is fetched and its size checked — because
+that step already warns that a bad fetch surfaces later "as attribute names that are merely absent",
+which is the same failure this rule prevents by a different cause.
+
+**MCP re-check: confirmed at triage and not re-asked here.** The figures were measured during the
+`/feedback-to-specs` pass earlier this session, on server **1.33.0**, 2026-08-28: the served
+document yields 102 plain-text first-column names, 21 backticked ALL-CAPS tokens anywhere, 110 in
+the union, and `NAME_ORG`/`ADDR_LINE1`/`PHONE_NUMBER` are never backticked — the report's own
+numbers, reproduced. `search_docs(query='entity specification attribute names feature tables
+NAME_ORG ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns the same tables **backticked**,
+which is the two-rendering trap the report did not name and the shipped note now does. The per-type
+presence percentages remain observation-only (INV-080/INV-149) — no MCP route reports them.
+
+⛔ **The shipped text carries NO attribute count, and enforcing that caught me twice.** Criterion 4
+says plainly "No shipped file states an attribute count", and the first draft of the parse rule
+stated all three figures as a dated measurement. Worse, the bullet **forbidding** a pinned count
+stated one — *"Do not pin an attribute count in this file. 110 is what the document holds today"*.
+Both were removed; the measurement lives here and in the ledger, where it is dated and re-derivable,
+and the shipped rule is qualitative ("under-collects by roughly four fifths") plus the three example
+names, which is the actionable test: **a catalog missing `NAME_ORG` is a parse failure, not a
+specification change.**
+
+⚠️ **The guard's own matcher was wrong in both directions before it was right**, and the negative
+controls are what found it. The first version required the number to precede the word and missed the
+self-contradicting bullet above. The second matched any of the three numbers on any line mentioning
+"attribute" and flagged an unrelated `MCP-NEGATIVE` marker in `phase2-data-mapping.md` whose query
+text contains "attribute" twice and whose server version contains a `21`. It now requires a counting
+construction adjacent to the number in either order, and the anti-vacuity test pins three phrasings
+that must match and three that must not.
+
+⚠️ **Both halves are text-asserted only.** Whether a live run prints the per-type breakdown, or
+parses the catalog correctly, is runtime behavior no offline suite can see (INV-108). Verifying them
+needs a `dry-run` phase-3 walk through Module 5 Phase 1 on a mixed person/organization source.
