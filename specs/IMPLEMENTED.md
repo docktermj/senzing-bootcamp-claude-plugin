@@ -77,7 +77,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   **reports its substitution count**, all four fail. **Establishes no invariant** — this is a test-only
   correction; the rule it enforces is INV-244's, and the generalization it is evidence for remains
   deferred in `the-writer-count-matcher-enumerates-phrasings-not-the-concept`.
-- **Commit:** uncommitted
+- **Commit:** a18e3aa
 
 ## production-readiness-audit-2026-08-28g
 
