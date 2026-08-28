@@ -350,6 +350,18 @@ Truth Set visualization module already run.
    describes that wrapper, not the official Python binding, and the result does not say so.
    `get_sdk_reference(…, language=<binding>)` is the route that answers per binding. It already warns
    about name and type divergence; **error-condition divergence is the gap this note covers.**
+
+   ⚠️ **`get_capabilities` is quoted here deliberately: `find_examples`' own declared description
+   disagrees with it, and the declared one is the stale half.** The declared tool description — the
+   text a client loads from the manifest — understates the index: it omits TypeScript and JavaScript
+   from both the language list and the indexed file extensions, and gives a lower repository count.
+   Settled by a call rather than by argument:
+   `find_examples(query='add record engine initialization', language='typescript')` returns
+   `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts`, so `.ts` **is**
+   indexed (server **1.33.0**, re-confirmed 2026-08-28; reported upstream 2026-08-27). ⛔ **Do not
+   quote a repository count anywhere in this plugin** — the two sources give different numbers, so no
+   count is citeable, and pinning either one recreates the defect. Quote `get_capabilities` for what
+   the index covers.
 3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
    Rust, TypeScript), using the same per-language build command as the loader.
 4. **Execute it before the Phase B load.** On success, record the registered codes in

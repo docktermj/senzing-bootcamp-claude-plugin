@@ -300,6 +300,29 @@ steering files.)
   a prohibition derived from a general rule states the general rule and the property that triggers
   it, never only the forbidden token — so a reader can tell where it applies and where it does not.
   INV-234 is this tool family's case of it.
+
+  ⛔ **A declared schema is authoritative for the parameters a tool ACCEPTS — not for prose
+  describing what it COVERS.** The rule above turns on what the schema declares, and that is right:
+  a parameter the schema does not declare cannot be passed. But a declared description also carries
+  free prose — repository counts, indexed file types, language lists — and that prose is **not**
+  normative and does go stale. For coverage, **`get_capabilities` governs**, and a disagreement is
+  settled by making the call, not by preferring whichever text looks newer.
+
+  <!-- COVERAGE-FIGURE-SCAN: quoted-history — the two lines below QUOTE the stale declared
+       description in order to say it is stale. `tests/test_find_examples_coverage_is_uncitable.py`
+       exempts from this marker to the next blank line; keep that block short. -->
+  Read on server **1.33.0**, 2026-08-28: `find_examples`' declared description lists
+  `.py, .java, .cs, .rs` and "Python, Java, C#, Rust", while `get_capabilities` lists `.ts` and
+  `.js` too and names TypeScript/Node.js.
+
+  A live `language='typescript'` search returns a `.ts` file, so the declared half is stale.
+  `generate_scaffold` shows the same split **inside one schema**: its summary line says
+  "Languages: python, java, csharp, rust" and omits `error_handling` from its workflow list, while
+  that schema's own `language` and `workflow` **property** descriptions do list
+  `typescript (or ts, node, nodejs, javascript, js)` and `error_handling`. ⚠️ **The hazard is that
+  the wrong half carries the more official-looking citation**, so an editor applying "the schema is
+  the route" in reverse lands on stale prose with an impeccable-looking source. Reported upstream
+  2026-08-27.
 - Never hand-code Senzing JSON mappings or SDK method names.
 - **MCP failure:** retry once. If it still fails, tell the bootcamper the MCP server is
   unreachable and they must fix the connection before continuing. Never fabricate. If MCP

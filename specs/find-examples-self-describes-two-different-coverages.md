@@ -166,3 +166,40 @@ parameters-vs-coverage distinction — are **still outstanding** and remain the 
 regardless of what upstream does. Re-check the two descriptions on a later server version rather
 than assuming the report was acted on; if they are reconciled, retire the note rather than
 inverting it.
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content — both halves re-verified live, and both still reproduce.** Server **1.33.0**,
+2026-08-28:
+
+- `find_examples`' **declared** description (read from the loaded tool manifest) still says
+  *"37 indexed Senzing GitHub repositories"*, *"Indexes source code (.py, .java, .cs, .rs)"* and
+  *"Covers Python, Java, C#, Rust SDK patterns"*.
+- `get_capabilities` on the same tool, same session, still says *"42 indexed Senzing GitHub
+  repositories"*, *"(.py, .java, .cs, .rs, .ts, .js)"* and *"Rust and TypeScript/Node.js community"*.
+- Tie broken by the same call, re-run:
+  `find_examples(query='add record engine initialization', language='typescript')` returned
+  `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts`, provenance
+  `community`, Apache-2.0. `.ts` **is** indexed; the declared half is stale.
+- `generate_scaffold`'s split re-confirmed **inside one schema**: the summary line reads
+  *"Languages: python, java, csharp, rust"* and its workflow list omits `error_handling`, while that
+  same schema's `language` property says `typescript (or ts, node, nodejs, javascript, js)` and its
+  `workflow` property lists `error_handling`.
+
+**Upstream was already sent** — 2026-08-27, `submit_feedback(category='bug')`, on the maintainer's
+verbatim approval, covering both halves. Proposed change item 3 is therefore complete, and no send
+was made during this implementation.
+
+⛔ **A guard-vs-correction tension surfaced and was resolved with the repo's existing convention.**
+Acceptance criterion 2 asks that no shipped file enumerate the indexed extensions — but the
+`ground-rules.md` correction has to *quote* the stale list (`.py, .java, .cs, .rs`) in order to say
+it is stale. A matcher that cannot tell quoting from asserting forbids a correction from naming what
+it corrects. Resolved the way `MCP-NEGATIVE-SCAN: quoted-history` already resolves the same problem
+for absence claims: a `COVERAGE-FIGURE-SCAN: quoted-history` marker sits directly above the quoting
+lines and exempts them to the next blank line. ⚠️ **The exemption is itself guarded** —
+`test_the_exemption_is_narrow` fails if the marker starts covering more than a paragraph, so it
+cannot quietly become a file-wide opt-out. Negative-controlled: widening it to the whole file fails.
+
+**One invariant is DEFERRED** — see the ledger entry. The parameters-vs-coverage distinction is the
+spec's own "generalizable half", and it is a new standing rule that nothing in `INVARIANTS.md`
+covers; only the maintainer may sign off on invariant wording.

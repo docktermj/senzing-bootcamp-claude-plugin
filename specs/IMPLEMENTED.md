@@ -42,6 +42,63 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## find-examples-self-describes-two-different-coverages
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/ground-rules.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `tests/test_find_examples_coverage_is_uncitable.py` (new),
+  `specs/find-examples-self-describes-two-different-coverages.md` (deviation note).
+  `tests/test_eval_license_duration_is_unciteable.py` — predicted by the spec's `## Affected files`
+  only as a **naming precedent** ("name mirrors ..."), never as a file to change, and
+  **deliberately unchanged because it no longer exists**: commit `2759bce` retired that guard along
+  with its contested-fact note when the eval-license duration disagreement was resolved upstream.
+  The new guard mirrors its naming convention, not its content.
+- **MCP re-check:** server **1.33.0**, 2026-08-28 — **confirmed, still reproduces.** The declared
+  tool manifest still says 37 repos / `.py, .java, .cs, .rs` / "Python, Java, C#, Rust";
+  `get_capabilities` in the same session still says 42 / `.ts, .js` included / "TypeScript/Node.js
+  community". Tie re-broken by
+  `find_examples(query='add record engine initialization', language='typescript')`, which returned
+  `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts` — so `.ts` is indexed
+  and the declared half is stale. `generate_scaffold`'s summary-vs-property split re-confirmed inside
+  one schema. ⛔ No `submit_feedback` call was made during this implementation; the report went
+  2026-08-27 on the maintainer's verbatim approval.
+- **Summary:** All five criteria met. `phaseA-build-loading.md` gains a dated contested-fact note
+  beside the existing `get_capabilities` citation, naming the live `.ts` result that settled it and
+  stating that no repository count is citeable. `ground-rules.md` gains the distinction the plugin was
+  missing: a declared schema is authoritative for the **parameters a tool accepts** and **not** for
+  prose describing what it **covers**, where `get_capabilities` governs and a call settles a
+  conflict — so the INV-234 passage can no longer be read as endorsing stale manifest prose. Guarded
+  by `tests/test_find_examples_coverage_is_uncitable.py` (7 tests, stdlib only, no `plugins/` import —
+  INV-108), which scans shipped `.md` and `.py` line by line for a repo count near a repo/index word
+  and for the truncated `.cs, .rs` extension list. ⚠️ **A tension between the guard and the correction
+  had to be resolved:** the correction must *quote* the stale list to say it is stale, so a
+  `COVERAGE-FIGURE-SCAN: quoted-history` marker exempts those lines to the next blank line — mirroring
+  the repo's existing `MCP-NEGATIVE-SCAN: quoted-history` convention — and
+  `test_the_exemption_is_narrow` fails if that marker ever covers more than a paragraph. Negative-
+  controlled five ways: writing a count, writing the stale extension list, removing the ground-rules
+  distinction, dropping the live `.ts` evidence, and widening the exemption to the whole file each
+  fail the guard.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ The
+  parameters-vs-coverage distinction is a **new standing rule** — the spec calls it "the generalizable
+  half and the reason to file rather than only patch one line" — and nothing in `INVARIANTS.md`
+  covers it today: INV-234 reaches what a tool **accepts** and stops there. It ships now at
+  `ground-rules.md`, so the rule is in the product with nothing binding future work to it. Only the
+  maintainer may sign off, so it is recorded here. Drafted wording, ready as the next free ID
+  (highest currently INV-276, so the next free id is 277 — written as `INV-NNN` here on purpose,
+  because spelling an unminted id out loud creates a citation of an undefined invariant and turns
+  `citations.py verify` red, which is exactly what happened on the first draft of this entry):
+  *"**INV-NNN** — A tool's **declared schema** is authoritative for the **parameters it accepts** and
+  MUST NOT be treated as authoritative for **prose describing what it covers** — repository counts,
+  indexed file types, language or workflow lists. For coverage, `get_capabilities` governs, and a
+  disagreement between the two MUST be settled by making the call rather than by preferring the text
+  that looks newer. A coverage figure the server states two different ways MUST NOT be quoted in
+  shipped guidance at all. (Extends **INV-234** from what a tool accepts to what it is said to
+  cover.)"*
+  Already enforced by `tests/test_find_examples_coverage_is_uncitable.py`, so registering it costs one
+  edit to `specs/INVARIANTS.md` plus citing the ID at the two sites.
+- **Commit:** uncommitted
+
 ## graduation-upstream-offer-collides-with-the-dry-run-no-send-rule
 
 - **Implemented:** 2026-08-28
