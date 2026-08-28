@@ -74,7 +74,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   invariant at the line, so `per-rule --uncited` reports neither. Negative-controlled three ways:
   removing the gate, making the preferences key the gate again, and duplicating the three branches
   each fail the guard.
-- **Commit:** uncommitted
+- **Commit:** 2a94863
 
 ## the-truth-set-does-exercise-the-encoding-self-check
 
