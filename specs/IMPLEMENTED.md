@@ -97,7 +97,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   cover.)"*
   Already enforced by `tests/test_find_examples_coverage_is_uncitable.py`, so registering it costs one
   edit to `specs/INVARIANTS.md` plus citing the ID at the two sites.
-- **Commit:** uncommitted
+- **Commit:** c1b483e
 
 ## graduation-upstream-offer-collides-with-the-dry-run-no-send-rule
 
