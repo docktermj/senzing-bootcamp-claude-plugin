@@ -82,7 +82,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   confirm-the-shape-before-parsing discipline applied to a fetched document; all four hard-rule lines
   cite one of those at the line, and `conformance.py rules` reports **0** sections citing no
   invariant.
-- **Commit:** uncommitted
+- **Commit:** 2859243
 
 ## macos-protected-launchers-strip-dyld-from-a-backgrounded-server
 
