@@ -42,6 +42,30 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## java-initialize-scaffold-snippet-references-the-wrong-class
+
+- **Implemented:** 2026-08-28
+- **Files changed:** none in this repo — see Summary. `specs/java-initialize-scaffold-snippet-references-the-wrong-class.md` (deviation note appended).
+- **MCP re-check:** server **1.33.0**, 2026-08-28 — **confirmed, still reproduces.** `get_capabilities`
+  for the version, then `generate_scaffold(language='java', workflow='initialize')`, which still returns
+  `java/snippets/initialization/EnvironmentAndHubs.java` among its five snippets. Fetched fresh from its
+  own `raw_url` (HTTP 200, 2,315 bytes, unchanged): line 10 is `public class EnvironmentAndHubs {` and
+  line 20 is still `String instanceName = EnginePriming.class.getSimpleName();`. Not fixed upstream in
+  the day since the report was sent.
+- **Summary:** Closed as **no plugin change**, which is acceptance criterion 1 and the spec's own
+  recommendation. Criterion 1 ("the one-line upstream fix is reported") is satisfied: the report was sent
+  2026-08-27 as `submit_feedback(category='bug')` on the maintainer's verbatim approval, recorded in the
+  spec's own "Upstream report sent" section. Criterion 2 is **conditional** — "if the maintainer chooses
+  option 3" — and the maintainer ruled on 2026-08-28 to close it without the optional defense-in-depth
+  wording in `phase1-verification.md` Step 3, so the criterion is not triggered rather than unmet.
+  Criterion 3 (cross-platform, language-agnostic) holds vacuously: nothing ships, so nothing can be
+  platform-specific. ⚠️ Disclosure carried forward from the spec: only the Java `initialize` workflow was
+  checked; the other four bindings' `initialize` snippets were not individually re-verified, on that run
+  or this one. ⛔ This is a **close, not a decline** — the spec was implemented as criterion 1 specifies,
+  and nothing was written to `DECLINED.md`. **Establishes no invariant** — no rule ships, because no
+  shipped file changed. Verified rather than assumed — `git diff` touches nothing under `plugins/`.
+- **Commit:** uncommitted
+
 ## a-non-utf8-recap-crashes-three-hooks-and-the-obvious-fix-destroys-it
 
 - **Implemented:** 2026-08-27

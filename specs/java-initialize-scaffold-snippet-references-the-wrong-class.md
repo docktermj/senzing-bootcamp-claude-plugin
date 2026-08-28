@@ -144,3 +144,23 @@ GitHub repository, not in the server, so `submit_feedback` reaches the Senzing m
 the repository's issue tracker directly. The maintainer chose this route knowing that; a GitHub
 issue against `code-snippets-v4` remains open as a stronger follow-up if the file is still broken on
 a later check. Re-fetch `EnvironmentAndHubs.java` and recompile rather than assuming it was fixed.
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content — the claim was re-verified live before the spec was closed.** `get_capabilities`
+(server **1.33.0**) and `generate_scaffold(language='java', workflow='initialize')` were re-called on
+2026-08-28, and `EnvironmentAndHubs.java` was re-fetched from its own `raw_url`: HTTP 200, 2,315 bytes,
+byte-size unchanged, `public class EnvironmentAndHubs` on line 10 and
+`String instanceName = EnginePriming.class.getSimpleName();` still on line 20. The defect **still
+reproduces** one day after the upstream report was sent; it was not fixed in the interval.
+
+**The maintainer resolved this spec's one conditional.** Acceptance criterion 2 reads "if the maintainer
+chooses option 3 above", and on 2026-08-28 they chose not to — the spec closes as **no plugin change**,
+which is criterion 1 and what the spec's own `## Proposed change` item 1 recommends. The optional
+defense-in-depth wording for `phase1-verification.md` Step 3 was therefore **not** written. That is the
+conditional resolving, not a departure from the plan.
+
+⚠️ **What remains true and unfixed.** The upstream defect is live, and `submit_feedback` is anonymous
+with no follow-up, so nothing will report back. A GitHub issue against `senzing/code-snippets-v4` stays
+available as the follow-up that can actually be tracked. Re-fetch and recompile rather than assuming a
+later server version carries a fixed file.
