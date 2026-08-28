@@ -76,7 +76,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   own judgment; recorded so they are not re-derived as a missed site. **Establishes no invariant** —
   the change replaces a false premise with the true one at three sites and renames a guard; the one
   hard-rule line added cites INV-244 at the line.
-- **Commit:** uncommitted
+- **Commit:** 829bbb5
 
 ## production-readiness-audit-2026-08-28e
 
