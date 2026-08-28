@@ -140,3 +140,36 @@ framing" — so on a plain reading they simply conflict.
 - Related specs: `specs/no-license-path-environment-variable.md` (the INV-244 lineage — measuring
   rather than assuming license state); `specs/mcp-tools-disagree-on-eval-license-duration.md` (the
   other licensing-facts spec, upstream rather than internal)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** The root cause was re-confirmed in the code before anything changed: Step 1's
+framing at `phaseA-build-loading.md:96-108` keyed on `license` in `config/bootcamp_preferences.yaml`,
+while the reconciliation block at `:158-166` keyed on the measured `license_record_limit` — two
+decision points over one fact, thirty lines apart, giving opposite answers.
+
+**MCP re-check: n/a, as the spec states — and re-confirmed as n/a rather than assumed.** The defect is
+entirely in this plugin's cross-block state handling: which of two project files a step reads. No
+Senzing behavior, SDK surface or server claim is involved, and the fix asserts no new Senzing fact.
+`get_capabilities` was called this session to date the run: server **1.33.0**, 2026-08-28.
+
+**A sweep for other sites found none — and one file that looked like a hit is correct.**
+`module-04-data-collection/SKILL.md:803-810` reads *both* signals (`license: custom` **or** a
+`license_record_limit` reflecting a custom key) and carries its own volume-skip that handles `0`
+explicitly, so Step 8a does not have this defect and was left untouched. Recording the near-miss
+because "the spec named one site" is not evidence there was only one (INV-246); here, checking
+confirmed there was.
+
+**The precedence rule was already written — Step 1 now cites it instead of a second copy.** The
+spec's proposed change item 2 asked for the rule to be stated once and referenced from both places.
+It turned out the reconciliation block at `:174-183` already says it (*"a value you measured on this
+machine governs over generic guidance about that same value"*), so the implementation points Step 1
+at those branches by name rather than adding a third statement of them (INV-179). The guard asserts
+`suppress it entirely` appears exactly **once** in the file, so a future edit cannot reintroduce the
+duplication that caused the drift.
+
+⚠️ **Two criteria are implemented but not runtime-verified**, and are disclosed rather than ticked:
+the behavior with `license_record_limit: 0` and with a positive sub-dataset limit is asserted as
+**text** in a shipped instruction file. Whether a guide actually suppresses the framing on a live run
+is a runtime property no offline test can see (INV-108); it needs a `dry-run` phase-3 walk through
+Data processing Step 1 with each of the three states set.

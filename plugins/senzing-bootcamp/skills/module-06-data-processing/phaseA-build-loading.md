@@ -93,7 +93,21 @@ tell me now and I'll build the threaded version instead."
 **License framing (default + expansion paths).** After the tier is classified, present
 licensing as a default the bootcamper already has, never as a hard cap:
 
-- Frame the built-in evaluation license as the default they already have. Present the expansion
+- ⛔ **Read the measured `license_record_limit` from `config/bootcamp_progress.json` before framing
+  anything, and suppress this entire block when it does not bind (INV-244, INV-012).** `0` (no cap),
+  or a value **≥ the dataset size**, means the bootcamper is not constrained: say nothing here about
+  licenses, defaults, expansion paths or downsizing, and go straight to step 2. Only a **positive
+  limit below the dataset size** puts licensing in scope at this step. If the field is **absent or
+  null** that means *"never asked"*, not *"no custom license"* — follow the three branches under
+  *"Reconcile it against the license already detected"* below rather than restating them here
+  (INV-179), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
+  Module 4 Step 8a is its only writer, and a second SDK call is the way two answers start to differ.
+  ⚠️ **`license` in `config/bootcamp_preferences.yaml` is not this gate.** It records *how* a license
+  was obtained — applied or requested — and a bootcamper who simply has a good one installed is
+  measured and never writes it. The measured limit governs (the same precedence the branches below
+  state: a value measured on this machine outranks generic guidance about that value).
+- **When the limit does bind:** frame the built-in evaluation license as the default they already
+  have. Present the expansion
   paths — apply an existing license, request one through the external channel
   (<support@senzing.com>), and, when available, request one in-flow via the Senzing MCP server —
   before any mention of downsizing. Downsizing (sampling or a smaller subset) is one option
@@ -105,7 +119,8 @@ licensing as a default the bootcamper already has, never as a hard cap:
   `get_capabilities` (wait up to 30s), and omit the in-flow path when it is unavailable, errors,
   or does not respond. If the bootcamper already has a license (`license` set in
   `config/bootcamp_preferences.yaml`), route them to the apply-an-existing-license path and omit
-  the in-flow option. Refer to the Senzing MCP server by name only, never a URL.
+  the in-flow option — that key narrows **which** expansion path to show, never **whether**
+  licensing is in scope, which the measured limit decided above. Refer to the Senzing MCP server by name only, never a URL.
 
 **Checkpoint:** write step 1 to `config/bootcamp_progress.json`.
 

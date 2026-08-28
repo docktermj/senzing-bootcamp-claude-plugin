@@ -42,6 +42,40 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## step1-license-framing-ignores-the-measured-record-limit
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `tests/test_license_framing_consults_the_measured_limit.py` (new),
+  `specs/step1-license-framing-ignores-the-measured-record-limit.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed. The defect is
+  which of two project files a step reads; no Senzing behavior, SDK surface or server claim is
+  involved, and the fix asserts no new Senzing fact. `get_capabilities` called this session to date
+  the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Step 1's license framing keyed on `license` in `config/bootcamp_preferences.yaml`;
+  the reconciliation block thirty lines below keyed on the measured `license_record_limit`. The two
+  come apart on the ordinary path — anyone with a good license already installed is *measured* and
+  never writes the preferences key — so a bootcamper with `license_record_limit: 0` was handed the
+  built-in-eval framing and three expansion paths for a constraint they do not have: exactly the
+  INV-012 noise the neighboring block forbids by name. Step 1 now reads the measured limit first and
+  suppresses itself on the same branch, defers the absent/null case to the existing three branches
+  rather than restating them (INV-179), keeps the `license` key as a **narrowing** of which expansion
+  path to show rather than a gate on whether licensing is in scope, and is told explicitly not to
+  re-measure (Module 4 Step 8a is the only writer). Criteria 3–6 met and test-asserted by
+  `tests/test_license_framing_consults_the_measured_limit.py` (5 tests, stdlib only, no `plugins/`
+  import — INV-108), whose site set is **derived by scanning** for licensing-framing vocabulary rather
+  than naming the file (INV-246). ⚠️ **Criteria 1 and 2 are implemented but NOT runtime-verified** and
+  are disclosed rather than ticked: they describe what a guide emits for a given
+  `license_record_limit`, which is a live-run property no offline test can see (INV-108). Verifying
+  them needs a `dry-run` phase-3 walk through Step 1 with each of the three states set. A sweep for
+  other sites found none — `module-04-data-collection/SKILL.md:803-810` reads both signals and
+  handles `0`, so Step 8a is correct and was left alone. **Establishes no invariant** — both hard-rule
+  lines added restate INV-244 and INV-012 at the site they govern (INV-183), and both cite an
+  invariant at the line, so `per-rule --uncited` reports neither. Negative-controlled three ways:
+  removing the gate, making the preferences key the gate again, and duplicating the three branches
+  each fail the guard.
+- **Commit:** uncommitted
+
 ## the-truth-set-does-exercise-the-encoding-self-check
 
 - **Implemented:** 2026-08-28
