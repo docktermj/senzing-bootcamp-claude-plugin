@@ -42,6 +42,44 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## macos-protected-launchers-strip-dyld-from-a-backgrounded-server
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/visualization-api-reference.md`
+  (the canonical rule, in "Server lifetime"),
+  `plugins/senzing-bootcamp/skills/module-03b-truthset-visualization/phase1-visualization.md`,
+  `plugins/senzing-bootcamp/skills/module-07-query-visualize-discover/phase1-query-visualize.md`,
+  `tests/test_server_launch_warns_about_protected_launchers.py` (new),
+  `specs/macos-protected-launchers-strip-dyld-from-a-backgrounded-server.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact).** The subject is macOS SIP behavior and this plugin's
+  launch guidance; no Senzing behavior, SDK surface or server claim is asserted. `get_capabilities`
+  dated the run: server **1.33.0**, 2026-08-28.
+- **Summary:** macOS SIP strips `DYLD_*` whenever a **protected** binary execs a child, and
+  `/usr/bin/nohup`, `/usr/bin/env` and `/bin/bash` are all protected — so a backgrounded server fails
+  with `UnsatisfiedLinkError: no Sz in java.library.path` although the parent shell has the variable
+  set. The plugin was already right about the hard part (module-02 states that
+  `-Djava.library.path` alone is insufficient) but `DYLD` appeared in **exactly one** shipped file,
+  several modules from the two steps that start a server, and nothing named the launcher. The rule
+  now lives once in the **"Server lifetime"** contract both launching modules read — demonstration,
+  symptom, the "the JVM flag does not fix it" pointer to module-02 (INV-179), and the explicit note
+  that it is silent on Linux and Windows so a non-macOS reader does not skip it (INV-001), with the
+  JVM error marked as illustration (INV-002) — and each launch site carries a pointer. ⚠️ **The spec
+  predicted two files; the derived set is three** (the contract is itself a site), and
+  `phase2-close.md` is deliberately excluded as teardown-only. Guarded by
+  `tests/test_server_launch_warns_about_protected_launchers.py` (7 tests, stdlib only, no `plugins/`
+  import — INV-108), site set derived by launch instruction and launch-handle capture (INV-246). ⛔ **A
+  negative control caught a vacuous assertion:** the guard matched the bare word `env`, which is a
+  substring of "environment" and "senzing-env.sh", so deleting `/usr/bin/env` from the contract
+  **passed**. It now matches backticked tokens and fails on any deletion — found by running the
+  control, not by reading the test. Negative-controlled six ways in total. ⚠️ **The SIP behavior was
+  NOT reproduced** — this machine is Linux, where `DYLD_*` does not exist — so it is marked
+  observation-only (INV-080/INV-149) in the shipped text and needs re-confirming on macOS.
+  **Establishes no invariant** — the rule is a platform hazard note stated once and cited from its
+  sites, governed by INV-001 (all three platforms first-class), INV-002 (stated as behavior, not per
+  binding) and INV-179 (stated once, cited elsewhere); all three new hard-rule lines cite one of them
+  at the line, and `conformance.py rules` reports **0** sections citing no invariant.
+- **Commit:** uncommitted
+
 ## mapping-step3-rejects-disjoint-name-declarations
 
 - **Implemented:** 2026-08-28

@@ -119,3 +119,39 @@ so any deviation that wraps the launch (a `nohup` for durability, an `env` prefi
   guidance in module-02, already implemented — this spec carries it to the launch sites and adds the
   protected-launcher case it does not cover); `specs/env-script-must-be-shell-portable.md` and
   `specs/env-script-template-names-every-export-but-pythonpath.md` (the `senzing-env.sh` lineage)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** The gap was re-confirmed before changing anything: `DYLD` appeared in exactly
+one shipped file (`module-02-sdk-setup/SKILL.md`), and a grep for `nohup` / "protected binary" /
+"protected launcher" near a DYLD or library term returned nothing anywhere in `plugins/`.
+
+**The rule went to the contract first, not to each launch site separately.**
+`visualization-api-reference.md` → **"Server lifetime (required in every module that starts one)"**
+is the language-agnostic contract both launching modules already read, so the demonstration, the
+symptom, the "the JVM flag does not fix it" pointer and the platform framing are stated there once
+(INV-002, INV-179). The two launch sites carry a short pointer each. That is a departure from a
+literal reading of criterion 1 — "every shipped step … carries the macOS caution" — in favor of what
+INV-179 asks for; the guard still requires every derived launch site to name the hazard, so the
+criterion's intent is enforced.
+
+⚠️ **The spec predicted two affected files. The derived set is three**, because the contract itself
+is a site: `phase1-visualization.md`, `visualization-api-reference.md` and
+`module-07/phase1-query-visualize.md`. `phase2-close.md` cites the same contract and is deliberately
+**excluded** — it tears a server down and has no launch to warn about, so demanding the caution
+there would be noise. The guard separates the two by the launch instruction and the launch-handle
+capture rather than by filename.
+
+⛔ **A negative control caught a vacuous assertion, and it is the one worth recording.** The guard
+checked that the contract names the three protected launchers by matching the bare words `nohup`,
+`env` and `bash -c`. **`env` is a substring of "environment", "env script" and "senzing-env.sh"** —
+so that assertion was satisfied by text that had nothing to do with launchers, and deleting
+`/usr/bin/env` from the contract **passed**. Found by running the negative control rather than by
+reading the test. It now matches the backticked tokens (`` `nohup` ``, `` `/usr/bin/env` ``,
+`` `bash -c` ``), and deleting any one of them fails.
+
+⚠️ **The SIP behavior was NOT reproduced.** This machine is Linux, where `DYLD_*` does not exist and
+the stripping cannot occur (INV-108). The rule rests on the reporter's three-line demonstration on
+Darwin 25.5.0 arm64, marked observation-only (INV-080/INV-149) in the shipped text as well as here.
+⛔ **Re-confirm on macOS** — a `dry-run` on Apple Silicon that starts the visualization server through
+`nohup` should reproduce it, and starting it as a direct child should not.

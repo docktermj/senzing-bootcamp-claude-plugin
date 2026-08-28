@@ -1041,6 +1041,33 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+⛔ **(INV-001, INV-002) On macOS, start the server as a DIRECT CHILD of the shell that sourced the
+env script — never through `nohup`, `env`, or a nested `bash -c`.** macOS System Integrity Protection strips `DYLD_*`
+out of the environment whenever a **protected** binary execs a child, and `/usr/bin/nohup`,
+`/usr/bin/env` and `/bin/bash` are all protected. The variable is set correctly in the parent shell
+and simply does not survive the wrapper. Demonstrated on Darwin 25.5.0 arm64, 2026-08-25
+(environment observation, INV-080/INV-149):
+
+```text
+$ echo $DYLD_LIBRARY_PATH              -> /opt/homebrew/opt/senzing/er/lib:...
+$ bash -c 'echo $DYLD_LIBRARY_PATH'    -> (empty)
+$ nohup bash -c '...'                  -> (empty)
+```
+
+- ⚠️ **The symptom points away from the cause.** It surfaces as
+  `java.lang.UnsatisfiedLinkError: no Sz in java.library.path` from a **backgrounded** process whose
+  parent shell has the variable set — so the obvious response is to add `-Djava.library.path=…`,
+  **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "MCP Java scaffolds may need a JSON
+  library the install does not provide" states why a JVM flag cannot repair a dynamic-linker search
+  path after the process has started; follow it there rather than re-deriving it (INV-179).
+- ⚠️ **Foreground programs work throughout, which is what makes this confusing.** They are direct
+  children of the shell that exported the variable, so nothing is stripped. The failure appears only
+  when a process is backgrounded or wrapped — exactly what starting a server is.
+- ⚠️ **Silent on Linux and Windows**, where `DYLD_*` does not exist. That is why it is stated here,
+  in the contract every platform reads, rather than behind a macOS branch a Linux reader skips
+  (INV-001). The JVM error above is illustration; the rule is about the launcher, not the language
+  (INV-002).
+
 ### Coloring graph nodes (required — behavior, in every language, INV-259)
 
 ⛔ **A node is colored by its whole source set — never by one member of it (INV-259).** The key is the
