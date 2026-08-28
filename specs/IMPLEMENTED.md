@@ -77,7 +77,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   at the line (INV-259 and INV-270 respectively), so `per-rule --uncited` reports neither. Guard
   negative-controlled at four sites: reintroducing the claim in the contract, in module-07, and in
   INV-270 each fails it, and so does deleting the true replacement claim.
-- **Commit:** uncommitted
+- **Commit:** 4ced0e0
 
 ## java-initialize-scaffold-snippet-references-the-wrong-class
 
