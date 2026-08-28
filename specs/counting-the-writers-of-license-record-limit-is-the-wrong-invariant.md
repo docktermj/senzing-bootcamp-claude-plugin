@@ -110,3 +110,37 @@ is what INV-244's absence rule genuinely rests on.
   the measured-only property was first written down — as a prohibition on *writing*, which is the
   same property this spec asks the absence branches to state);
   `specs/inv244-absent-license-branch-exists-in-module-4-too.md` (the INV-244 lineage)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** All seven criteria met. No shipped file states a writer count; all three
+absence branches state the measured-only property in their own words; SDK setup's replace-only
+clause survives and Module 1's reasoning still cites it; the guard is renamed to
+`test_license_limit_is_written_only_from_a_measurement.py` and asserts the property plus the
+**absence** of any count.
+
+**MCP re-check: n/a, re-confirmed rather than assumed.** The subject is which of this plugin's own
+steps write one of its own state fields. `get_capabilities` dated the run: server **1.33.0**,
+2026-08-28.
+
+⛔ **The guard rejects the TRUE count as well as the false ones, and that is deliberate.** Negative
+control 3 replaced the property with *"`license_record_limit` has five writers"* — which is
+currently accurate — and the guard fails it. Any count is the wrong shape here: it is correct only
+until the next writer is added, it has already been wrong twice, and nothing re-derives it. A guard
+that accepted the right number today would have accepted the wrong one on both previous occasions.
+
+**The rename is part of the fix, not tidying.** `test_license_limit_has_exactly_two_writers.py` was
+named for the claim it pinned, and a guard named after a wrong claim keeps that claim alive in every
+future `grep` and in every reader's mental index of what the suite checks. Renamed with `git mv` so
+the history follows.
+
+⚠️ **The count matcher pins four shipped phrasings and two that must pass.** All four have actually
+been in the repo — *"the only writer of"*, *"is written only by Module 4"*, *"exactly two writers"*
+and a plain *"five writers"* — and the two that must pass are the property wording and the
+replace-only distinction, which contains the word "writer"-adjacent language and would be easy to
+catch by accident.
+
+⚠️ **The parentheticals at `phaseB:57` and `phaseA:176` are deliberately untouched.** Each says
+Module 4's gate persists the value, which is **true and partial**, not false; the audit judged them
+out of scope and this implementation agrees. They are recorded here so a later reader does not treat
+them as a missed site.

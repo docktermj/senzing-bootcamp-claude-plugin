@@ -308,11 +308,14 @@ measured field so the two cannot be confused by proximity.
   ⛔ **Ask the route above; do not reason from the other license's number.**
 
   ⚠️ **This branch assumes the built-in capacity because nothing has measured the installed
-  license yet, and that is deliberate rather than the INV-244 error.** `license_record_limit` is
-  written by exactly two steps — Module 4's Step 8a gate, which is volume-gated by design, and SDK
-  setup's Step 5a reconciliation, which only ever **replaces** a value already recorded and never
-  creates one. Neither can put a value here, so its absence still means *not yet measured* — not
-  *no custom license*. INV-093 forbids a license prompt at this
+  license yet, and that is deliberate rather than the INV-244 error.** ⛔ **Every step that writes
+  `license_record_limit` writes only a MEASURED value** — none writes it from an assumption, a
+  default, or a Bootcamper statement. So a value present here is always a measurement, and its
+  absence still means *not yet measured* — not *no custom license*. ⚠️ **Do not reason from how many
+  steps write it**; that number has been stated wrongly twice and is not what the conclusion rests
+  on. The one distinction that does matter here: SDK setup's Step 5a reconciliation only ever
+  **replaces** an already-recorded value and never creates one, so nothing before Module 4's
+  volume-gated gate can put a figure in this field at all. INV-093 forbids a license prompt at this
   point, and this step only sets a deferral flag for a later gate to resolve, so assuming the
   built-in figure is the correct conservative reading. Say so if it matters to the Bootcamper;
   never present it as a detected value.

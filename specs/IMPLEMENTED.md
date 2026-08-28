@@ -42,6 +42,42 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## counting-the-writers-of-license-record-limit-is-the-wrong-invariant
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseB-load-first-source.md`,
+  `tests/test_license_limit_is_written_only_from_a_measurement.py` (renamed from
+  `test_license_limit_has_exactly_two_writers.py` via `git mv`, and rewritten),
+  `specs/counting-the-writers-of-license-record-limit-is-the-wrong-invariant.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed.
+  `get_capabilities` dated the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Cycle 4 of the second unattended loop. Three absence branches justified their
+  conclusion with a **count of writers**, and the count was wrong in every version it had: *"the only
+  writer is Module 4's Step 8a"* (false — Module 4 has a second write, and both Module 6 phases
+  measure and persist), then *"exactly two writers, and neither creates a value where none existed"*
+  (`885a992` — also false, and **self-contradicted four lines below itself**, since the same bullet
+  says *"Persist it as `license_record_limit`"*). The real set is **five write sites across four
+  steps**. ⛔ **The conclusion never needed a count.** All three sites now state the property it
+  actually rests on — **every step that writes the field writes only a measured value** — which held
+  before both corrections and will hold when a sixth writer appears. SDK setup's **replace-only**
+  clause is kept, because that is a real distinction rather than a count and Module 1's reasoning
+  uses it. Guarded by the renamed
+  `tests/test_license_limit_is_written_only_from_a_measurement.py` (7 tests, stdlib only, no
+  `plugins/` import — INV-108), which asserts the property **and the absence of any count**, deriving
+  its site set by scanning (INV-246) and its absence-branch set from the conclusion rather than from
+  the files already carrying the fix. ⛔ **The guard rejects the TRUE count too** — negative control 3
+  plants *"has five writers"*, which is currently accurate, and it fails: any count is the wrong
+  shape, since a guard accepting today's right number would have accepted both previous wrong ones.
+  **The rename is part of the fix** — a guard named for the claim it pinned keeps that claim alive in
+  every future grep. Five negative controls, all failing correctly. ⚠️ **Two parentheticals
+  (`phaseB:57`, `phaseA:176`) are deliberately untouched** as true-but-partial, matching the audit's
+  own judgment; recorded so they are not re-derived as a missed site. **Establishes no invariant** —
+  the change replaces a false premise with the true one at three sites and renames a guard; the one
+  hard-rule line added cites INV-244 at the line.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28e
 
 **Not a spec** — a dated record of an audit run, per the `deep-dive-audit-*` precedent. **Cycle 3 of the second unattended `/unattended-spec-loop`.** It produced **one** spec, so the loop continues to cycle 4.
