@@ -80,7 +80,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   docstring carries the accurate version. **Establishes no invariant** — the one hard-rule line added
   states how to use an existing vocabulary value at its own site (INV-183), not a new standing
   guarantee.
-- **Commit:** uncommitted
+- **Commit:** 511fd8e
 
 ## system-verification-java-loading-scaffold-hits-the-json-p-gap-too
 
