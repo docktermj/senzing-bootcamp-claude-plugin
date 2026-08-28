@@ -42,6 +42,40 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## three-hard-rules-from-the-2026-08-28-loop-carry-no-citation-at-the-line
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/phase1-quality-assessment.md`
+  (two citations), `.claude/skills/unattended-spec-loop/SKILL.md` (the check is a set difference, with
+  the script), `tests/test_new_hard_rules_are_cited_or_deferred.py` (new),
+  `specs/three-hard-rules-from-the-2026-08-28-loop-carry-no-citation-at-the-line.md` (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed; the subject is
+  citation coverage in this repo's own prose and the accuracy of its ledger. `get_capabilities` dated
+  the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Cycle 2 of the second unattended loop, implementing the single finding
+  `production-readiness-audit-2026-08-28c` produced. All six criteria met. The two uncited hard rules
+  now cite **INV-080** and **INV-174** at their own lines and `per-rule --uncited` lists neither; the
+  scenario-ceiling line stays uncited on purpose, because citing an invariant that does not govern it
+  would be worse than the gap and its deferral already names the site. **The durable half is the loop
+  skill.** What produced the gap was that `unattended-spec-loop` said to check `since` and `per-rule`
+  without saying how, and a grep is the natural reading — which is how the same wrong ledger claim was
+  made twice, three cycles apart. It now states the check is a **set difference** between the two
+  outputs and ships the script, with the reason: a grep confirms only lines you already suspect, and
+  the uncited ones are by construction the ones you did not. Guarded by
+  `tests/test_new_hard_rules_are_cited_or_deferred.py` (3 tests, stdlib only, no `plugins/` import —
+  INV-108), which distinguishes **three** states: cited, deferred by name, or silent — and fails only
+  on silence. ⛔ Encoding the deferral hatch matters: without it the guard would punish exactly the
+  sanctioned path `implement-spec` Step 5 prescribes when the maintainer is unavailable. ⚠️ **A
+  negative control revealed a scope limit, recorded rather than plugged:** deleting a citation added
+  *after* the newest audit's commit reverts the line to its committed form, so `since` stops reporting
+  it. That is inherent to a since-last-audit scope and correct — the standing backlog is
+  `per-rule --uncited`'s job. Re-controlled with a genuinely new uncited rule, which fails it as
+  claimed; the limit is written into the guard's docstring. The deferral hatch and the anti-vacuity
+  floor are both negative-controlled too. **Establishes no invariant** — the change adds two citations
+  to rules already governed, corrects a maintainer-side skill, and adds a guard; no new guarantee
+  ships, and `conformance.py since` reports the two edited lines as cited.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28c
 
 **Not a spec** — a dated record of an audit run, per the `deep-dive-audit-*` precedent. **Cycle 1 of the second unattended `/unattended-spec-loop`**, run after that cycle implemented all five specs the `/feedback-to-specs` triage produced. It produced **one** spec, so the loop continues to cycle 2.

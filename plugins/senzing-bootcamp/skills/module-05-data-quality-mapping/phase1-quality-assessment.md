@@ -90,7 +90,7 @@ states the rule once for all three (INV-234).
      tables NAME_ORG ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns those same tables
      with the names **backticked** (`` `OTHER_ID_TYPE` ``). A parse tuned on a `search_docs` excerpt
      works there and under-collects here — and this saved document is what Step 4 reads.
-   - ⛔ **Do not pin an attribute count in this file** — whatever the document holds today, a figure
+   - ⛔ **(INV-080) Do not pin an attribute count in this file** — whatever the document holds today, a figure
      written into shipped prose is one nobody re-measures, and it goes stale silently because it
      keeps reading authoritative. Confirm the parse against the saved copy instead: a catalog
      missing `NAME_ORG` is a parse failure, not a specification change.
@@ -599,9 +599,9 @@ the applicability set itself, which is the input that was wrong. On 2026-08-25 f
 72,799-record source were marked "both" while measuring 100% / 91.5% / 42.3% / 100% on
 `ORGANIZATION` and **0%** on `PERSON` — the source's person records are officer and contact records
 attached to a company, where a business address structurally cannot exist. The source scored 70.5%
-and landed in the remediation band; corrected, it scores 85.7% and passes. ⛔ **The applicability set
-is authored by hand per source, so getting it wrong is the default failure rather than an unusual
-one** — which is why it needs a check by construction rather than an instruction to be careful.
+and landed in the remediation band; corrected, it scores 85.7% and passes. ⛔ **(INV-174) The applicability
+set is authored by hand per source, so getting it wrong is the default failure rather than an
+unusual one** — which is why it needs a check by construction rather than an instruction to be careful.
 
 Use these thresholds to guide the decision:
 

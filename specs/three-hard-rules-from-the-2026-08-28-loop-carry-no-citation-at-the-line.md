@@ -101,3 +101,34 @@ what found this and what the earlier audit entry recommended.
 - Related specs: `specs/seven-hard-rules-shipped-in-one-run-with-no-invariant.md` and
   `specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md` (the same reverse-contract
   class, both about genuinely unregistered rules rather than uncited ones)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** All six criteria met. The two uncited lines now cite **INV-080** (a figure not
+re-measured is not asserted) and **INV-174** (per-record applicability) at their own lines;
+`per-rule --uncited` lists neither. The scenario-ceiling line is deliberately **still uncited** —
+citing something else there would attach the rule to an invariant that does not govern it, and its
+deferral names the site.
+
+**MCP re-check: n/a, re-confirmed rather than assumed.** The subject is citation coverage in this
+repo's own prose and the accuracy of its ledger. `get_capabilities` dated the run: server
+**1.33.0**, 2026-08-28.
+
+⛔ **The guard distinguishes three states, not two, and the third is the point.** A hard rule added
+since the last audit is **cited**, **deferred by name**, or **silent** — and only silence fails.
+Encoding the deferral escape hatch matters because without it the guard would punish exactly the
+sanctioned path `implement-spec` Step 5 prescribes when the maintainer is unavailable, where the
+citation is un-writable because the id does not exist yet.
+
+⚠️ **A negative control revealed a scope limit, and it is recorded rather than plugged.** Deleting a
+citation that was added *after* the newest audit's commit reverts the line to its committed form, so
+`since` stops reporting it and the guard is unmoved. That is inherent to a since-last-audit scope
+and is the correct behavior: the standing backlog belongs to `per-rule --uncited`, which is far
+larger. Re-controlled with a **genuinely new** uncited rule, which fails it as claimed, and the limit
+is now written into the guard's docstring so a future reader does not mistake it for coverage.
+
+**The loop skill got the more durable half of the fix.** The citations close two instances; what
+caused them is that `unattended-spec-loop` said to *check* `since` and `per-rule` without saying how,
+and a grep is the natural reading of that. It now states the check is a **set difference** and ships
+the exact script, with the reason: a grep can only confirm lines you already suspect, and the uncited
+ones are by construction the ones you did not.

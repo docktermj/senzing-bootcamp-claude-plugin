@@ -85,6 +85,32 @@ re-asking wastes the one turn they are still present for.
   ⚠️ Check with `conformance.py since --since-last-audit` and `per-rule --uncited`
   **before** writing the entry, not after. `rules` alone cannot answer this.
 
+  ⛔ **The check is a SET DIFFERENCE between the two outputs — never a grep of `per-rule` for
+  phrases you expect.** A grep can only confirm lines you already thought of, and the uncited
+  ones are by construction the ones you did not: that is what the check is *for*. This has now
+  produced a wrong ledger claim **twice** — on 2026-08-28 an entry stated "all four hard-rule
+  lines cite one of those at the line" when two did not, three cycles after an audit had
+  recorded the same spot-check method as unsound. Take every `+` line `since` reports, normalize
+  it, and test membership against `per-rule --uncited`:
+
+  ```bash
+  python3 - <<'EOF'
+  import subprocess, re
+  R = ".claude/skills/production-readiness-audit/conformance.py"
+  run = lambda *a: subprocess.run(["python3", R, *a], capture_output=True, text=True).stdout
+  added = [l[7:].strip() for l in run("since", "--since-last-audit").splitlines()
+           if l.startswith("     +")]
+  unc = re.sub(r"\s+", " ", run("per-rule", "--uncited"))
+  key = lambda s: re.sub(r"\s+", " ", re.sub(r"^[-\d.\s]*", "", s).replace("⛔", "").strip())[:60]
+  for a in added:
+      if key(a) and key(a) in unc:
+          print("UNCITED:", a[:100])
+  EOF
+  ```
+
+  Each line it prints is then **either** cited at the line **or** named in a `DEFERRED INVARIANT`
+  block — those are the only two legitimate states, and silence is neither.
+
 - ⛔ **Never call `submit_feedback`.** Any `mcp-server`-routed finding gets a spec whose
   `Upstream:` line reads **"not yet sent — needs maintainer approval"**, with the exact
   message drafted in the spec ready to send. Nothing leaves the machine unattended.
