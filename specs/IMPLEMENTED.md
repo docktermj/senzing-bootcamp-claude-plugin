@@ -42,6 +42,51 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-writer-count-matcher-enumerates-phrasings-not-the-concept
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/module-06-data-processing/phaseA-build-loading.md`,
+  `plugins/senzing-bootcamp/skills/module-04-data-collection/SKILL.md`,
+  `tests/test_license_limit_is_written_only_from_a_measurement.py` (matcher rewritten against the
+  claim), `specs/the-writer-count-matcher-enumerates-phrasings-not-the-concept.md` (deviation note).
+  `specs/INVARIANTS.md` — predicted by the spec, **deliberately unchanged**: the invariant it asks for
+  is deferred for sign-off, below.
+- **MCP re-check:** **n/a (no Senzing fact)** — re-confirmed as n/a rather than assumed.
+  `get_capabilities` dated the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Cycle 5 of the second unattended loop, and its cap. Two writer-count sites survived the
+  guard written to remove them, because that matcher required the field name adjacent to the claim
+  while both sentences used an **anaphor** — *"its only writer"*, *"the field's only writer"* — whose
+  subject was established a line earlier. Both corrected keeping their own point; a corpus grep for
+  the concept now returns nothing outside one legitimate compound adjective. The matcher is rewritten
+  against the **claim**: scoping by file rather than by proximity, with all **six** phrasings that
+  have actually shipped pinned as fixtures and each planted at a real site to confirm it fails.
+  ⛔ **The rewrite immediately produced a false positive, which is the other half of the lesson:** the
+  first concept-level pattern fired on *"a stdlib-only writer"*, a real string that states no count.
+  A guard that flags correct prose gets relaxed, so the pattern carries a negative lookbehind and
+  that string is pinned in the must-pass set — **widening a matcher and tightening it are the same
+  edit**. ⚠️ `since` reports **0** rules added and the cycle-2 cited-or-deferred guard **skips** with
+  *"no hard rules added"* — both correct, since this change removed false claims rather than adding
+  rules, and the skip is that guard saying so rather than passing silently (INV-265), its first time
+  on that branch.
+- **DEFERRED INVARIANT — needs the maintainer's sign-off on the wording.** ⛔ This is the half worth
+  more than either site fix, and it now has **four instances in one day**: the count was wrong; the
+  correction minted a new count; the guard against counts enumerated the phrasings already seen; the
+  concept-level rewrite then over-matched. INV-246 states this for a guard's set of **files** and
+  nothing states it for its set of **phrasings**. Drafted wording (highest id currently INV-276 —
+  written as `INV-NNN` deliberately, because spelling an unminted id creates a citation of an
+  undefined invariant and turns `citations.py verify` red):
+  *"**INV-NNN** — A guard enforcing a rule across shipped prose MUST derive its matcher from the
+  CLAIM being made, not from the phrasings observed at the sites it was written to fix. Where the
+  claim can be made about a subject established in an earlier sentence, the matcher MUST NOT require
+  that subject adjacent to it; scope by file instead. Every phrasing that has actually shipped MUST
+  be pinned as a fixture, and every construction the matcher must NOT flag MUST be pinned beside it —
+  a guard that flags correct prose is relaxed rather than fixed. (**Extends INV-246** from a guard's
+  set of FILES to its set of PHRASINGS: both fail by inheriting the blind spot of whoever last fixed
+  the instances.)"*
+  Already enforced in practice by `tests/test_license_limit_is_written_only_from_a_measurement.py`'s
+  fixture sets; registering it costs one edit to `specs/INVARIANTS.md` plus a citation in that guard.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-28f
 
 **Not a spec** — a dated record of an audit run. **Cycle 4 of the second unattended `/unattended-spec-loop`.** It produced **one** spec, so the loop continues to cycle 5 — which is its cap.

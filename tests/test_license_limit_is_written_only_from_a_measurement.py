@@ -39,12 +39,25 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PLUGIN = REPO_ROOT / "plugins"
 FIELD = "license_record_limit"
 
-#: Any sentence that states HOW MANY steps write the field. All of these have shipped.
+#: A writer-count claim, matched by the CLAIM rather than by phrasings already seen.
+#: ⚠️ **No requirement that the field name be adjacent.** Two sites survived the first
+#: version of this matcher by using an anaphor — "its only writer", "the field's only
+#: writer" — with the subject established a sentence earlier, which is the normal way to
+#: write the second sentence about a subject. Scoping is by FILE (it discusses the field),
+#: not by proximity within the sentence.
+#: ⛔ Deliberately NOT a corpus-wide ban on the word "only": that would fire on unrelated
+#: correct prose and be relaxed within a week, which is worse than the gap.
 WRITER_COUNT = (
-    r"the only writer of\s*`?license_record_limit",
-    r"license_record_limit`? is\s*written only by",
+    # ⚠️ The negative lookbehind excludes a compound adjective: "a stdlib-only writer"
+    # is a real string in this repo and states no writer count. Matching it would push an
+    # editor into deleting correct prose, which is the failure mode opposite to the one
+    # this guard exists for.
+    r"(?:its|the field's|the|a)\s+(?<![-\w])only\s+writer\b",
+    r"(?:its|the field's)\s+only\s+writer\b",
+    r"\bsole\s+writer\b",
+    r"is\s+written\s+only\s+by",
     r"written only by module 4",
-    r"(?:has|is written by)\s*(?:exactly\s*)?(?:one|two|three|four|five|\d+)\s*writers?",
+    r"(?:has|have|is written by)\s*(?:exactly\s*)?(?:one|two|three|four|five|\d+)\s*writers?",
     r"(?:exactly\s*)?(?:one|two|three|four|five|\d+)\s*(?:steps?|writers?)\s*writes?\b",
 )
 #: The property the conclusion actually rests on.
@@ -138,23 +151,36 @@ class TheFieldIsWrittenOnlyFromAMeasurement(unittest.TestCase):
                       "matters before relaxing anything here")
 
     def test_the_count_matcher_is_not_vacuous(self):
-        """⛔ INV-265 — prove it still detects every count that has actually shipped."""
-        for planted in ("the only writer of `license_record_limit` is Module 4",
-                        "`license_record_limit` is written only by Module 4's Step 8a",
-                        "it has exactly two writers, and neither creates a value",
-                        "the field has five writers"):
-            with self.subTest(planted=planted):
+        """⛔ INV-265 — pin every phrasing that has ACTUALLY shipped, not a sample of them.
+
+        Six have. The last two are the anaphoric pair that survived the first version of this
+        matcher, and they are fixtures here rather than a memory precisely because that is
+        how the blind spot recurred.
+        """
+        SHIPPED = (
+            "the only writer of `license_record_limit` is Module 4",
+            "`license_record_limit` is written only by Module 4's Step 8a",
+            "written only by Module 4's volume-gated Step 8a",
+            "it has exactly two writers, and neither creates a value",
+            "Module 4 Step 8a is its only writer, and a second SDK call",
+            "The field's only writer is Step 8a below, which is volume-gated",
+        )
+        for planted in SHIPPED:
+            with self.subTest(planted=planted[:46]):
                 flat = flatten(planted)
                 self.assertTrue(any(re.search(p, flat) for p in WRITER_COUNT),
-                                "the count matcher no longer detects a shipped phrasing")
+                                "the count matcher no longer detects a phrasing that has "
+                                "actually shipped in this repo")
         for ok in ("every step that writes it writes only a measured value",
                    "SDK setup's Step 5a reconciliation only ever replaces an already-recorded "
-                   "value and never creates one"):
-            with self.subTest(ok=ok):
+                   "value and never creates one",
+                   "a stdlib-only writer when it is absent",
+                   "the value you would be re-deriving was already measured and persisted"):
+            with self.subTest(ok=ok[:46]):
                 flat = flatten(ok)
                 self.assertFalse(any(re.search(p, flat) for p in WRITER_COUNT),
-                                 "the count matcher flags the property wording it exists to "
-                                 "make room for")
+                                 "the count matcher flags prose that states no writer count, "
+                                 "which would push an editor into deleting correct text")
 
 
 if __name__ == "__main__":

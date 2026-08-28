@@ -107,3 +107,36 @@ for those.
   `specs/step1-license-framing-ignores-the-measured-record-limit.md` (`2a94863`, which introduced
   `phaseA:104`); `specs/mcp-negative-markers-must-name-the-owning-route.md` (INV-246's lineage — the
   same blind-spot argument, applied to paths rather than phrasings)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**None on content.** Both sites are corrected keeping their own point: `phaseA:104` now says the
+value *"was already measured and persisted by the step that owns this question"* — which is its
+actual argument against re-measuring and needs no writer count — and `module-04:99` states the
+measured-only property before naming Step 8a's volume gating. A corpus grep for the concept returns
+**nothing** outside the one legitimate compound adjective.
+
+**MCP re-check: n/a, re-confirmed rather than assumed.** `get_capabilities` dated the run: server
+**1.33.0**, 2026-08-28.
+
+⛔ **Rewriting the matcher against the concept immediately produced a false positive, which is the
+other half of the lesson.** The first concept-level pattern matched `\bonly\s+writer\b`, which fires
+on **"a stdlib-only writer"** — a real string in `generate_discoveries_pdf.py` that states no writer
+count. A guard that flags correct prose gets relaxed, so the pattern now carries a negative
+lookbehind excluding the compound adjective, and that string is pinned in the must-pass set. ⚠️
+**Widening a matcher and tightening it are the same edit**: the concept-level version has to exclude
+what the phrasing-level version excluded by accident.
+
+**All six shipped phrasings are fixtures, not memory.** Each was planted at a real site and each
+fails the guard: `the only writer of X`, `X is written only by`, `written only by Module 4's
+volume-gated Step 8a`, `exactly two writers`, `its only writer`, `the field's only writer`. The last
+two are the anaphoric pair that survived the previous version, recorded as fixtures precisely
+because that is how the blind spot recurred.
+
+⚠️ **`conformance.py since` reports zero rules added, and the new cited-or-deferred guard SKIPS**
+with *"no hard rules added since the newest audit entry"*. Both are correct: this change **removed**
+false claims rather than adding rules. The skip is the guard saying so rather than passing silently
+(INV-265), and it is the first time that branch has been exercised.
+
+**One invariant is DEFERRED** — criterion 5, and the half worth more than either site fix. See the
+ledger entry.

@@ -101,7 +101,8 @@ licensing as a default the bootcamper already has, never as a hard cap:
   null** that means *"never asked"*, not *"no custom license"* — follow the three branches under
   *"Reconcile it against the license already detected"* below rather than restating them here
   (INV-179), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
-  Module 4 Step 8a is its only writer, and a second SDK call is the way two answers start to differ.
+  the value you would be re-deriving was already measured and persisted by the step that owns this
+  question, and a second SDK call is the way two answers start to differ.
   ⚠️ **`license` in `config/bootcamp_preferences.yaml` is not this gate.** It records *how* a license
   was obtained — applied or requested — and a bootcamper who simply has a good one installed is
   measured and never writes it. The measured limit governs (the same precedence the branches below

@@ -96,7 +96,8 @@ limit: never from a remembered or hardcoded figure:
   exceeds it.
 - **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
 - **Absent or null** — ⛔ **this means "never measured", not "no custom license": measure it before
-  deciding anything about capacity.** (INV-244) The field's only writer is Step 8a below, which is
+  deciding anything about capacity.** (INV-244) Every step that writes this field writes only a
+  **measured** value, and the only one reached before this point is Step 8a below, which is
   **volume-gated by design** — it fires only when the collected volume approaches the limit — so on
   a small dataset it never runs and the field is absent no matter which license is installed.
   Treating that silence as "no custom license" is what steers a bootcamper whose license has **no
