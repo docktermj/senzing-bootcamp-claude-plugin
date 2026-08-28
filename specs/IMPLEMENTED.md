@@ -88,7 +88,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   drift.)"*
   Already enforced by `tests/test_blocked_submission_has_a_vocabulary_value.py`, so registering it
   costs one edit to `specs/INVARIANTS.md` plus citing the id at the three enumeration sites.
-- **Commit:** uncommitted
+- **Commit:** 64ebe0a
 
 ## production-readiness-audit-2026-08-28
 
