@@ -64,7 +64,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   or this one. ⛔ This is a **close, not a decline** — the spec was implemented as criterion 1 specifies,
   and nothing was written to `DECLINED.md`. **Establishes no invariant** — no rule ships, because no
   shipped file changed. Verified rather than assumed — `git diff` touches nothing under `plugins/`.
-- **Commit:** uncommitted
+- **Commit:** 8c07808
 
 ## a-non-utf8-recap-crashes-three-hooks-and-the-obvious-fix-destroys-it
 
