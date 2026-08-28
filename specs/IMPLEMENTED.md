@@ -79,7 +79,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   check. **Establishes no invariant** — the change corrects three false statements, resolves an
   ambiguity, and adds a guard; both new hard-rule lines restate INV-244's discipline at the step that
   performs it and cite it at the line.
-- **Commit:** uncommitted
+- **Commit:** 885a992
 
 ## production-readiness-audit-2026-08-28d
 
