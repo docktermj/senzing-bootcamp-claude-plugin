@@ -131,7 +131,7 @@ rewrite the file, so earlier entries are preserved.
 **Priority:** [High/Medium/Low]
 **Source:** bootcamper-reported
 **Routing:** [plugin | mcp-server | both | host | unclear] — [one-line reason, per Step 2b]
-**Upstream:** [not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason]
+**Upstream:** [not applicable | offered, declined | submitted YYYY-MM-DD | submission failed: reason | submission blocked: reason]
 
 ### What happened
 
@@ -229,8 +229,17 @@ never automatic.
    bootcamper's only follow-up route.
 
 5. **Record the outcome** in the entry's `**Upstream:**` field: `submitted YYYY-MM-DD`,
-   `offered, declined`, or `submission failed: <reason>`. Update the entry in place for this field
-   only — do not rewrite the prose (append-only elsewhere).
+   `offered, declined`, `submission failed: <reason>`, or `submission blocked: <reason>`. Update
+   the entry in place for this field only — do not rewrite the prose (append-only elsewhere).
+
+   ⛔ **`submission blocked:` is for a *consented* send the runner was forbidden to make — it is
+   not a synonym for the other three.** Use it when the answer was **yes** and the send could not
+   happen because the session operates under a no-send rule (a maintainer `/dry-run`, which
+   forbids calling `submit_feedback` under any category). ⚠️ **Never record that as
+   `offered, declined`.** The bootcamper agreed; writing down that they refused is false, and it
+   is the one value that reads as *"this was considered and rejected"* to anyone deciding later
+   whether the finding is still owed upstream. `submission failed:` is also wrong — nothing
+   failed, and nothing will succeed on a retry.
 
 6. **A failed or unavailable submission never blocks anything.** If the tool errors or the MCP server
    is unreachable, say so in one line, record `submission failed: <reason>`, and continue to Step 4.

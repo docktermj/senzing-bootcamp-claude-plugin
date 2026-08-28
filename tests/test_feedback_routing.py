@@ -526,6 +526,26 @@ class BootcamperDataNeverLeaves(unittest.TestCase):
         self.assertIn("verbatim", plain(forward_step()))
 
 
+def retrospective_section(text):
+    """Graduation's Step 0 section, sliced at the NEXT heading rather than a char count.
+
+    ⚠️ **Corrected 2026-08-28.** These assertions used `t[start : start + 4500]`, a magic
+    number standing in for "the section". On 2026-08-28 the `**Non-blocking.**` bullet sat
+    **18 characters** inside that window, so the guard was one edit away from failing on
+    content it was never meant to police -- and it duly did, on an unrelated addition to the
+    `Upstream:` bullet above it. Slicing at the real boundary measures the section the
+    assertion is about. The floor below keeps it from becoming vacuous if the heading moves
+    (INV-265).
+    """
+    start = text.index("## Step 0: Session retrospective")
+    nxt = text.find("\n## ", start + 1)
+    section = text[start:] if nxt == -1 else text[start:nxt]
+    assert len(section) > 2000, (
+        "the Step 0 retrospective section collapsed to %d chars -- these assertions would "
+        "pass vacuously against a stub" % len(section))
+    return section
+
+
 class EveryEntryPointDescribesTheRouting(unittest.TestCase):
     """Three surfaces describe this flow; all must agree (INV-003)."""
 
@@ -550,8 +570,7 @@ class EveryEntryPointDescribesTheRouting(unittest.TestCase):
         """Self-observed findings skew upstream — a tool behaving differently than documented
         is exactly what a bootcamper cannot report."""
         t = read(GRADUATION)
-        start = t.index("## Step 0: Session retrospective")
-        section = t[start : start + 4000]
+        section = retrospective_section(t)
         self.assertIn("**`Routing:`**", section)
         self.assertIn("**`Upstream:`**", section)
         self.assertIn("rather than defaulting it to `plugin`", plain(section))
@@ -559,13 +578,11 @@ class EveryEntryPointDescribesTheRouting(unittest.TestCase):
     def test_retrospective_batches_the_offer(self):
         """One question for all findings, so the retrospective stays a single non-blocking step."""
         t = read(GRADUATION)
-        start = t.index("## Step 0: Session retrospective")
-        self.assertIn("Batch the offer", plain(t[start : start + 4000]))
+        self.assertIn("Batch the offer", plain(retrospective_section(t)))
 
     def test_retrospective_stays_non_blocking(self):
         t = read(GRADUATION)
-        start = t.index("## Step 0: Session retrospective")
-        section = t[start : start + 4500]
+        section = retrospective_section(t)
         self.assertIn("Non-blocking", section)
         self.assertIn("INV-015", section)
 

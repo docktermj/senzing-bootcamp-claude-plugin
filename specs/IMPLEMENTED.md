@@ -42,6 +42,46 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## graduation-upstream-offer-collides-with-the-dry-run-no-send-rule
+
+- **Implemented:** 2026-08-28
+- **Files changed:** `plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`,
+  `plugins/senzing-bootcamp/skills/graduation/SKILL.md`,
+  `.claude/skills/dry-run/phase3-conversational.md`,
+  `tests/test_blocked_submission_has_a_vocabulary_value.py` (new), `tests/test_feedback_routing.py`
+  (three brittle section slices corrected), `specs/graduation-upstream-offer-collides-with-the-dry-run-no-send-rule.md`
+  (deviation note)
+- **MCP re-check:** **n/a (no Senzing fact).** The collision is between two of this repo's own
+  instruction files; nothing about Senzing, the SDK or the server is asserted. ⛔ `submit_feedback`
+  was **not** called during this implementation — which is the rule the spec is about.
+  `get_capabilities` was called this session to date the run: server **1.33.0**, 2026-08-28.
+- **Summary:** Graduation Step 0 offers to forward `mcp-server`-routed findings and send on a yes;
+  `/dry-run` forbids calling `submit_feedback` under any category. On the first phase-3 walk to reach
+  graduation the maintainer answered yes in character and the walk had to break character to refuse.
+  Implemented as option 1 — **present the offer, refuse the send** — because the offer is module
+  behavior under test and skipping it silently corrupts what phase 3 observes. All five criteria met.
+  `feedback.md` Step 3 gains `submission blocked: <reason>` in the vocabulary, with an explicit ⛔
+  saying it is **not** a synonym for `offered, declined` (false — the bootcamper agreed) or
+  `submission failed` (nothing failed, no retry will succeed). `graduation/SKILL.md` Step 0 points at
+  it. `.claude/skills/dry-run/phase3-conversational.md` gains a section naming the gate, stating the
+  offer is presented and the send refused, and giving the **disclosure wording verbatim** so a runner
+  is not improvising mid-walk. Guarded by `tests/test_blocked_submission_has_a_vocabulary_value.py`
+  (5 tests, stdlib only, no `plugins/` import — INV-108), whose enumeration set is derived by scanning
+  for the sibling values (INV-246). ⚠️ **A negative control caught a hole in that guard and it was
+  fixed before commit:** the first version checked for the value **per file**, so deleting it from the
+  entry template still passed because the value survived elsewhere in the same file. The check is now
+  **per line**, since a vocabulary drifts one enumeration at a time. ⛔ **An unrelated existing guard
+  was corrected** — `tests/test_feedback_routing.py` sliced Step 0 by a 4500-character magic number,
+  and the `Non-blocking` bullet sat **18 characters** inside it; three assertions now slice at the
+  next heading with an anti-vacuity floor (INV-265). No assertion was weakened and both directions are
+  negative-controlled. ⚠️ **The spec overstates one claim** and the fix does not rest on it:
+  `feedback-to-specs` skips only findings already *sent*, so a `declined` entry is not dropped from
+  spec filing — the real harm is that the field records the opposite of what happened. The guard's
+  docstring carries the accurate version. **Establishes no invariant** — the one hard-rule line added
+  states how to use an existing vocabulary value at its own site (INV-183), not a new standing
+  guarantee.
+- **Commit:** uncommitted
+
 ## system-verification-java-loading-scaffold-hits-the-json-p-gap-too
 
 - **Implemented:** 2026-08-28

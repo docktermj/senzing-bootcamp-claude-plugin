@@ -232,6 +232,38 @@ reads as broader coverage than it had.
   one without a maintainer watching, would land the same way. Findings are trustworthy;
   clean stretches are weaker evidence than they feel.
 
+## Graduation's upstream offer — present it, refuse the send
+
+⛔ **Graduation Step 0 will offer to forward `mcp-server`-routed findings and send on a yes, and
+`/dry-run` forbids calling `submit_feedback` under any category. Present the offer anyway; do not
+send.** Skipping the gate silently is worse: its wording, its batching and its INV-065 stripping
+are module behavior under test, and a walk that quietly omits a step corrupts the thing phase 3
+exists to observe.
+
+⚠️ **This fires on every phase-3 walk that reaches graduation with at least one `mcp-server`
+finding, which is close to guaranteed** — Step 0 says so itself: retrospective findings skew toward
+`mcp-server`, because a tool behaving differently than documented is the defect class a bootcamper
+cannot report. It had simply never been hit before 2026-08-27, when no phase-3 walk had reached
+graduation.
+
+**Break character to say so, in roughly these words**, rather than improvising it mid-walk:
+
+> This is a dry run, so I can present this gate but I can't actually send: the skill forbids
+> calling `submit_feedback` under any category, so a dry run never files into Senzing's real
+> queue. I'm recording your answer and the drafted message; sending is yours to do afterwards.
+
+Then:
+
+- **Record `submission blocked: dry run — sending is forbidden by the dry-run skill`** in the
+  entry's `Upstream:` field (`../../plugins/senzing-bootcamp/skills/bootcamp-onboarding/feedback.md`
+  Step 3). ⛔ **Never `offered, declined`** — the maintainer answering in character said *yes*, and
+  writing down a refusal is false about the one thing the field exists to record.
+- **Draft the exact message into the spec** so the send costs one approval later. A blocked send
+  with no drafted text is a finding nobody can forward without redoing the work.
+- The send itself is a **separate, maintainer-authorized action taken after the run closes**, with
+  the maintainer approving the text verbatim — which is outside this skill's ⛔, because the run is
+  over.
+
 ## Stopping
 
 Stop wherever the maintainer stops — a partial walk is still evidence, and the

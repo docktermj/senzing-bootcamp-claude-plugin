@@ -128,3 +128,32 @@ Neither file is wrong about its own concern. What is missing is the seam.
   `specs/find-examples-self-describes-two-different-coverages.md` (both carry "not yet sent — needs
   maintainer approval", the same blocked-send situation recorded from the maintainer side rather
   than the Bootcamper side)
+
+## Deviations from this spec, and why (2026-08-28)
+
+**Implemented as proposed — option 1, present the offer and block the send.** The spec left
+suppression open as the maintainer's call and recommended against it; that recommendation is
+followed, for the reason it gives: the offer's wording, batching and INV-065 stripping are module
+behavior under test, and a walk that silently omits a gate corrupts what phase 3 exists to observe.
+
+⚠️ **One claim in this spec is overstated, and the implementation does not rely on it.** The spec
+argues that a finding recorded as `offered, declined` *"is a finding nobody will forward"*, because
+`feedback-to-specs` reads the field to decide whether an upstream report is still owed. Checked at
+`.claude/skills/feedback-to-specs/SKILL.md:219`: that step skips a finding only when the field says
+it was already **sent** (`sent <date> via submit_feedback`); `offered, declined` is not a skip
+condition, so such a finding is still considered for filing. The narrower harm is real and is what
+the fix is written against — the field is the record of what happened, and `offered, declined`
+records the opposite of what happened, reading as *"considered and rejected"* to whoever decides
+later. Corrected here rather than in the spec body, per this skill's rule against editing spec
+content; the guard's docstring states the accurate version so the overstatement is not inherited.
+
+⛔ **An unrelated existing guard had to be corrected, and it is worth the maintainer's eye.**
+`tests/test_feedback_routing.py` sliced graduation's Step 0 as `t[start : start + 4500]` — a magic
+number standing in for "the section". The `**Non-blocking.**` bullet sat **18 characters** inside
+that window, so the guard was one edit from failing on content it was never meant to police, and it
+duly failed on the addition to the `Upstream:` bullet above it. Three assertions now slice at the
+**next heading** instead, with an anti-vacuity floor so a collapsed section fails rather than passes
+(INV-265). ⚠️ **No assertion was weakened** — each still requires exactly what it required, and both
+directions are negative-controlled: removing the `Non-blocking` bullet fails, and stubbing the
+section fails on the floor. The addition to graduation was also **shortened** in the same pass,
+because it was restating what `feedback.md` Step 3 already says instead of citing it (INV-179).
