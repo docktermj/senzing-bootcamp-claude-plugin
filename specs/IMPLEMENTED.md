@@ -85,7 +85,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
   the instances.)"*
   Already enforced in practice by `tests/test_license_limit_is_written_only_from_a_measurement.py`'s
   fixture sets; registering it costs one edit to `specs/INVARIANTS.md` plus a citation in that guard.
-- **Commit:** uncommitted
+- **Commit:** a232485
 
 ## production-readiness-audit-2026-08-28f
 
