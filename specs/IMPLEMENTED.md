@@ -52,7 +52,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - ⛔ **The guard's first version PASSED its mutation — the third instance of one shape in a single session, and the most instructive.** It asserted the bare substring `record_count` anywhere in the improve path; deleting the whole update bullet left the word standing in the ⛔ prose explaining *why* it matters, so the guard certified the field was updated while the instruction to update it was gone. Rewritten to match the **update bullet** rather than the token. ⚠️ The session's three instances share one sentence: **an assertion a neighboring sentence can satisfy is not an assertion about the claim.** Each was caught by running the mutation, never by reading the guard — which is the argument for the negative-control step being mandatory rather than advisory.
 - ⚠️ **Two citations were added after the fact, and the suite is what caught it.** The first full run failed `test_new_hard_rules_are_cited_or_deferred`: the new `record_count` and fetch-provenance rules shipped with their invariants named in the surrounding prose but no `INV-nnn` **at the line**. INV-243 and INV-203 are now cited at the rules themselves (INV-183). Worth recording because the rules were not unregistered — they were uncited, which is the other half of the reverse contract and the half that looks fine while reading.
 - **Establishes no invariant.** INV-243 already requires a per-source figure to be reconciled against that source's own input, and INV-203 already governs what the fetch checks mean; this applies both at a step that was falsifying them.
-- **Commit:** uncommitted
+- **Commit:** `a8acf67`
 
 ## the-deep-linking-preflight-refuses-a-tabless-page-it-should-capture-whole
 
