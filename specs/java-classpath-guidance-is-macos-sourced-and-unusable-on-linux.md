@@ -173,5 +173,16 @@ step that actually omitted the path.
   because a *neighboring* bullet two items earlier mentions "macOS's default shell" in an unrelated
   aside. Re-scoped to the **bullet**, which is what a bootcamper actually copies, it now fails on
   the shipped text (3 of its 6 tests) and passes on the correction.
-- **Proposed change 4 (report upstream) is drafted and NOT sent.** The maintainer asked to see the
-  exact message first, and `submit_feedback` was not invoked. **It remains owed.**
+- **Proposed change 4 (report upstream): `submitted 2026-08-31`** (INV-281 vocabulary). The
+  maintainer asked to see the exact message before it went, approved it unchanged, and
+  `submit_feedback(category='bug')` was then invoked once with that text verbatim — nothing was
+  edited between approval and sending. The report states the `linux_apt` + `language='java'`
+  absence, contrasts it with the honored `macos_arm` response, gives the shipped jar path measured
+  on `senzingsdk-runtime` 4.3.4-26210, and proposes returning a Java `gotchas[]` entry for
+  `linux_apt`/`linux_yum` or saying plainly that Java paths are not covered there.
+  ⚠️ **This supersedes the `## Source` section's `Upstream: **not yet sent**… The report is STILL
+  OWED.`** — true when the spec was written under `/dry-run`, which forbids `submit_feedback` under
+  any category, and discharged here. The spec's own text is left unedited per this skill's
+  guardrails; this bullet is the record. The server's reply confirms submissions are **anonymous
+  with no follow-up channel**, so no response will arrive and none should be waited for; the
+  plugin-side fix never depended on it.
