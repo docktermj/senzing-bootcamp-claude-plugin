@@ -65,6 +65,7 @@ Exit codes: 0 = wrote at least one PNG; 2 = no headless capability available
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -189,6 +190,71 @@ def _has_tab_controls(source: str) -> bool:
         re.search(r'id\s*=\s*["\']navbtn-', source)
         or re.search(r'id\s*=\s*["\']tab-', source)
     )
+
+
+# Evidence that the page's own code reads the query string, which is what `?tab=`
+# activation depends on. Any of these appearing anywhere in the served source is enough:
+# the check is for the MECHANISM being present, not for a particular spelling of it.
+_DEEP_LINK_MARKERS = (
+    r"URLSearchParams",
+    r"location\s*\.\s*search",
+    r"\.searchParams",
+    r"window\s*\.\s*location\s*\.\s*href",
+)
+
+
+def _supports_deep_linking(source: str) -> bool:
+    """Can this page act on ``?tab=`` at all?
+
+    ⛔ **This is the pre-flight that keeps a live-server capture honest, and it exists
+    because nothing else on the ``--url`` path can.** Tab activation has two mechanisms
+    and only one runs per path: the snapshot path injects ``activate()`` with a
+    ``#navbtn-`` click fallback (``_ACTIVATE_JS``), while a live server is driven ONLY by
+    the ``?tab=`` deep link (``_tab_url``). A server that implements the tab set, the
+    section ids and the nav ids but omits deep-linking therefore serves its DEFAULT tab
+    for every request — and every earlier check still passes, because the ids it looks
+    for are all present. The run then writes one correctly-named PNG per tab, all of the
+    same tab, reports success for each, and the images reach the recap captioned as tabs
+    they do not show. Measured on 2026-08-28 against a Java server built to the contract:
+    six files, five distinct images, two byte-identical, exit 0.
+
+    ⚠️ **A source-level check, deliberately, and its limit is stated rather than hidden.**
+    It proves the page reads the query string; it cannot prove the page honors ``tab``
+    correctly. Verifying the RENDERED result would need a backend that can evaluate script
+    against a live URL — Playwright or Selenium — and neither is a bootcamp requirement,
+    while the headless-Chrome CLI that does the capturing cannot evaluate an expression for
+    us (see ``_measure_chrome_cli``, which has to patch a local file to read one number).
+    So this catches the failure that actually occurs — no deep-linking at all — and cannot
+    produce a false FAILURE on a conforming server, which must read the query string to
+    honor the contract at `visualization-api-reference.md`'s "Tab identifiers and
+    deep-linking (required)".
+
+    An unreadable page returns True: never let a page this script could not fetch block a
+    capture (INV-122, and the same best-effort rule ``_tabs_present`` follows).
+    """
+    if not source:
+        return True
+    return any(re.search(marker, source) for marker in _DEEP_LINK_MARKERS)
+
+
+def _identical_groups(paths) -> list:
+    """Groups of captured files whose bytes are identical — never a legitimate outcome.
+
+    Two tabs cannot render the same image: they are different views of different data.
+    Byte-identity means activation did not take between them, so both files are named for
+    something at most one of them shows. Defense in depth behind
+    ``_supports_deep_linking``: it catches a page that reads the query string but ignores
+    the value, which the source-level check cannot see.
+    """
+    by_digest = {}
+    for path in paths:
+        try:
+            digest = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+        except OSError:
+            continue
+        by_digest.setdefault(digest, []).append(Path(path))
+    return [group for group in by_digest.values() if len(group) > 1]
+
 
 # Chrome needs a virtual-time budget or the frame is captured before the D3 layout
 # and the /api/* fetches settle — the difference between a graph and a blank panel.
@@ -1015,7 +1081,8 @@ def _prior_manifest(target: Path) -> "dict | None":
 
 
 def write_manifest(
-    out_dir: Path, name: str, requested, absent, written, missed, suppressed=()
+    out_dir: Path, name: str, requested, absent, written, missed, suppressed=(),
+    failed_reason: str = "no image written by any backend",
 ) -> bool:
     """Record what capture did, beside the PNGs. Returns True if written.
 
@@ -1063,7 +1130,7 @@ def write_manifest(
              "reason": "the app suppresses this tab because its data does not exist"}
             for tab in suppressed
         ],
-        "failed": [{"tab": tab, "reason": "no image written by any backend"}
+        "failed": [{"tab": tab, "reason": failed_reason}
                    for tab in missed],
     }
     payload["captured_count"] = len(payload["captured"])
@@ -1234,6 +1301,29 @@ def main(argv=None) -> int:
                 "skipping it rather than capturing an empty pane the bootcamper never saw.",
                 file=sys.stderr,
             )
+    # ⛔ Never write a tab-named PNG a live server cannot actually produce. This runs
+    # after the tab pre-flights above (so its message names activation rather than an
+    # inventory problem) and BEFORE any capture, because the failure it catches is
+    # invisible afterwards: the files are correctly named, non-empty and all the same tab.
+    if is_url and tabs != [SINGLE_PAGE_ID] and not _supports_deep_linking(source):
+        print(
+            "This server does not implement `?tab=` deep-linking, which is the ONLY way a "
+            "live page's tab can be selected for capture (a saved snapshot is driven by an "
+            "injected activate() instead). Every screenshot would therefore show the "
+            "default tab under a different tab's name. Nothing was captured.\n"
+            "Fix the server, not the capture: apply the `?tab=` / `?q=` parameters at the "
+            "end of init(), after the data load and buildNav() have settled — see \"Tab "
+            "identifiers and deep-linking (required)\" in visualization-api-reference.md — "
+            "then re-run this command.",
+            file=sys.stderr,
+        )
+        write_manifest(
+            Path(args.out_dir), args.name, [], absent, [], tabs, suppressed,
+            failed_reason="the server does not implement ?tab= deep-linking, so the tab "
+                          "could not be selected",
+        )
+        return 1
+
     if not tabs and not _has_tab_controls(source):
         # Safety net: the page has no tab bar at all, so this is a single-page document
         # rather than a tabbed app whose tabs were misnamed. Capture it whole instead of
@@ -1282,6 +1372,37 @@ def main(argv=None) -> int:
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1
+
+    # ⛔ Defense in depth behind the deep-linking pre-flight: two tabs cannot render the
+    # same bytes. Identity means activation did not take between them, so at most one of
+    # the two files shows the tab it is named for and NOTHING here can say which — both
+    # are deleted rather than shipped, because a mislabeled image reaching the recap is
+    # the defect this whole path exists to prevent, and it is unfalsifiable once there.
+    duplicates = _identical_groups([path for path, _ in written])
+    if duplicates:
+        dropped = set()
+        for group in duplicates:
+            for path in group:
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
+                dropped.add(path)
+        written = [(path, label) for path, label in written if path not in dropped]
+        for group in duplicates:
+            print(
+                "identical captures: %s are byte-identical, so the tab did not change "
+                "between them. Deleted rather than kept — at most one can be showing the "
+                "tab it is named for, and which one is not knowable from here."
+                % ", ".join(sorted(path.name for path in group)),
+                file=sys.stderr,
+            )
+        print(
+            "This usually means the page ignored `?tab=` (see the deep-linking "
+            "requirement in visualization-api-reference.md) or that activate() did not "
+            "switch the section. Fix the app and re-run.",
+            file=sys.stderr,
+        )
 
     # Written before the no-capture branches below, because a run that captured
     # nothing is exactly the case the recap's coverage check must be able to see.
@@ -1332,6 +1453,11 @@ def main(argv=None) -> int:
 
     for path, label in written:
         print(f"{os.path.relpath(path)}\t{label}")
+    if duplicates:
+        # Exit non-zero even though other tabs captured: the run produced a keepsake with
+        # holes in it, and a zero exit is what let the original defect through the
+        # module's completion gate.
+        return 1
     return 0
 
 

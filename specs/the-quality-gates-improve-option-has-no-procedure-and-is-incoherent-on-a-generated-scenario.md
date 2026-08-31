@@ -127,3 +127,43 @@ that defeats the module. Nothing in either file warns against it.
   2026-08-28. The Entity Specification retrieval that precedes this step was verified live in the
   same session (73,051 bytes, matching the recorded `size_bytes`).
 - Upstream: not applicable — plugin-side only.
+
+## Invariants introduced
+
+- `INV-284` — Every option a pinned gate offers MUST have a handling step (a section in the same
+  skill file, or an inline branch at the gate) saying what the guide does when it is chosen and
+  where the flow resumes; and where that step changes the state the gate measured, re-presenting the
+  gate is NOT an INV-006 repeat (recorded in `specs/INVARIANTS.md`, 2026-08-31, on the maintainer's
+  sign-off).
+
+## Deviations from this spec, and why (2026-08-31)
+
+- **Item 3 (the maintainer's design call) resolved to "split by what is fixable".** The quality
+  score's three dimensions are not equally repairable: `format_consistency` (0.25) and
+  `duplicate_rate` (0.05) are mechanical and the guide performs them; `completeness` (0.70) cannot be
+  fixed here, because **a missing value cannot be invented** and offering to fill one is offering to
+  fabricate data — so that half routes back to Data collection for a better export. This was chosen
+  over a pure in-module editing loop (which implies the Bootcamper can supply missing values on the
+  spot) and over routing out entirely (which sends away a Bootcamper whose problem is format drift in
+  data they already have).
+- **Item 2 resolved to "disclose, then keep the option".** On a `provenance: synthesized` source the
+  disclosure precedes the 👉 and says the gaps were generated deliberately so the assessment would
+  have something to find, and that improving them means regenerating data the bootcamp just authored.
+  Both pinned questions are unchanged, byte for byte (INV-056), and the alternative — suppressing the
+  option — was declined because it would have required a second pinned form of the gate and would
+  take the remediation conversation away from the very source Module 4 was required to build to host
+  it.
+- ⛔ **The spec named two gates; the scan found six options across three files (INV-246).** Module 5
+  Phase 2 offers three more remediation options and Phase 3 a fourth, none of them mentioned in the
+  finding. All four were **already discharged** — Phase 2 by `### 17. Iterate`, Phase 3 by an inline
+  `**If rejected:** … return to Phase 2 to adjust their mapping` branch — so nothing needed fixing
+  there, but the guard covers them, and finding that a handling step ships in **two different
+  shapes** is what stopped the guard from requiring a heading and reporting Phase 3's correct prose
+  as a defect.
+- ⚠️ **The guard's first two versions reported correct prose, both caught by running it.** Matching
+  any occurrence of "improve" made *"Iterate to improve the data"* demand an `improve` section when
+  its action is *iterate* — already handled — so matching moved to the option's **leading verb**.
+  Matching any numbered line then flagged an instruction step in `SKILL.md` (on the word "fix") and
+  one of the improve path's own numbered steps, so option extraction is now scoped to lists that
+  follow a 👉. Both are recorded because a guard that flags correct text is the one that gets
+  relaxed away.

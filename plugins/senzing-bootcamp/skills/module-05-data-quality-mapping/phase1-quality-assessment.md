@@ -768,6 +768,24 @@ improvising one breaches INV-056, which pins every gate question's wording preci
 drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
 scores there — so this is the path most runs take.
 
+⛔ **(INV-284) On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**
+Read `provenance` for this source from `config/data_sources.yaml`. When it is `synthesized`, Module
+4's Step 2 was **required** to manufacture exactly these gaps (INV-239: *"missing values in non-key
+fields, enough to put at least one source in the 70-79% band… That band opens the remediation
+conversation, so it has to be reachable"*) — so this gate is firing as designed, and "improve the
+data" means regenerating data the bootcamp authored minutes ago. Say so in one line **before** the
+question, because anything meant to inform the answer goes before it
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol):
+
+> "One thing worth knowing before you choose: this source was generated for the bootcamp, and its
+> gaps are deliberate — they were built in so this assessment would have something to find.
+> Improving them means regenerating data we authored a few minutes ago. That is a fair choice, it
+> is just not the same as fixing a real dataset."
+
+Then present the pinned question **unchanged, with both options live** (INV-056). ⛔ **Never
+silently regenerate.** Rewriting the Bootcamper's data as the answer to a question they were not
+told meant that is the failure this disclosure exists to prevent.
+
 - **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
   continue into Phase 2 this turn)**
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
@@ -790,6 +808,58 @@ scores there — so this is the path most runs take.
 *(Internal: in the two gating branches, end the turn on the applicable question and wait. In the
 ≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
 end on its first 👉.)*
+
+### 7a. The improve path — what option 1 means, in both gating bands
+
+⛔ **(INV-284) This step is what the gate's first option executes.** Both gating bands offer to improve the
+data first, and until this step existed the turn ended on the question with nothing to run: no
+procedure, no re-score, no way back to the gate. A pinned question whose answer has no handling step
+is the unsatisfiable-instruction shape that teaches a guide to read the surrounding ⛔ rules as
+advisory, so treat this as executable, not advisory.
+
+1. **Name the weakest fields from the score you already computed** — do not re-measure. Step 6's
+   assessment already identifies them per field (e.g. *phone missing in 60% of records, address 44%,
+   date of birth 34%*). Name the worst three with their figures, worst first.
+
+2. **Split them by what can honestly be fixed here, and say which is which.** The score has three
+   dimensions and they are not equally repairable:
+
+   - ✅ **Fixable in this module — `format_consistency` and `duplicate_rate`** (0.25 and 0.05 of the
+     score). These are mechanical: normalize the minority formats in a field to its dominant one
+     (phone punctuation, date layout, casing, whitespace, state/country spellings) and resolve
+     records whose `(DATA_SOURCE, RECORD_ID)` pair repeats, per Step 6's own definitions. Do this
+     work **for** the Bootcamper rather than asking them to; it is deterministic and they can read
+     the diff.
+   - ⛔ **(INV-284) Not fixable here — `completeness`** (0.70 of the score, and usually what put the source in
+     the band). **A missing value cannot be invented**, and offering to fill one is offering to
+     fabricate data. Say that plainly. The honest route is a better export from the source system,
+     which is Data collection's job: offer a return to that module for this source, and say the
+     bootcamp will pick up here with the new file.
+
+3. **Write the improved data as a NEW file; never overwrite what was collected.** Put it beside the
+   original as `data/raw/<source>-improved.<ext>`, point that source's `path` in
+   `config/data_sources.yaml` at it, and record the original path in the same entry so nothing is
+   lost. `data/raw/` holds source data as received (INV-050), and the original stays exactly as
+   received.
+
+4. **Re-score the source with Step 6's formula and re-present the gate with the new figure**, naming
+   the before and after (e.g. *"75.1 → 79.4"*).
+
+   ⛔ **Re-presenting the gate here is NOT an INV-006 repeat, and a guide must not suppress it as
+   one.** INV-006 forbids re-asking a question already answered about the same state; the score has
+   changed, so this is a new question about a new state, and the Bootcamper's earlier answer was
+   about the old figure. Present whichever band's pinned question the **new** score selects — a
+   source that crossed into ≥80% gets no question at all and continues into Phase 2 this turn.
+
+5. **When nothing was fixable, say so rather than looping.** If the gaps are entirely completeness,
+   there is no mechanical work to do: state that, name the return-to-collection route from step 2,
+   and present the gate again with the score **unchanged and identified as unchanged**. Never
+   re-present an unchanged score as an improvement.
+
+⚠️ **On a `provenance: synthesized` source this path is still available and still honest** — the
+disclosure above has already told the Bootcamper the gaps are deliberate. Normalizing formats in
+generated data is real work with a real re-score; if they ask to regenerate instead, that is Module
+4's Step 2, and it is their call to make with the disclosure in hand.
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.

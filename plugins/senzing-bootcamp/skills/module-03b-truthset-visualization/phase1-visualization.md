@@ -203,6 +203,18 @@ Whatever the language, the server MUST reproduce the reference's behavior:
   entity surface must offer.
 - Serve the live D3 v7 page as a **single consolidated, tabbed app** (all tabs in 2.4), and write a
   self-contained standalone HTML snapshot.
+- ⛔ **(INV-122) Implement `?tab=<id>` and `?q=<text>` deep-linking, applied at the end of `init()`** — after
+  the async data load and `buildNav()` have settled. It is specified under *"Tab identifiers and
+  deep-linking (required)"* in `visualization-api-reference.md`, and it is **not decoration: it is
+  the only way a tab of the LIVE app can be selected for a screenshot.** `capture_screenshots.py
+  --url` drives a live server solely by appending `?tab=`; the injected `activate()` with its
+  `#navbtn-` click fallback runs against a saved **snapshot** only. ⚠️ **A server with every tab,
+  section id and nav id correct but no deep-linking is indistinguishable from a correct one until
+  you open the images** — it serves its default tab for every request, so the capture writes one
+  correctly-named PNG per tab, all showing the same tab, and they reach the recap captioned as
+  tabs they do not show (observed 2026-08-28: six files, five distinct images, two byte-identical,
+  exit 0). The capture step now refuses to run against such a server instead of writing them, so
+  this is a prerequisite for completing the module, not a nicety.
 - **Render offline (INV-091):** inline the vendored D3 at
   `${CLAUDE_PLUGIN_ROOT}/scripts/vendor/d3.v7.min.js` (skill-relative fallback:
   `../../scripts/vendor/d3.v7.min.js`, INV-252) into both

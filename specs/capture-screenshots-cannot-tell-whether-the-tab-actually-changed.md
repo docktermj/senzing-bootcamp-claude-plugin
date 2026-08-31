@@ -130,3 +130,40 @@ the completion gate, on the module whose entire output is a keepsake.
   module's own verification chain. `get_capabilities` was called at the start of this run to date
   it: server **1.33.0**, 2026-08-28.
 - Upstream: not applicable — plugin-side only.
+
+## Deviations from this spec, and why (2026-08-31)
+
+- ⛔ **Criterion 1 is NOT met as written, and this is the disclosure rather than a
+  reinterpretation.** The spec asks the script to "verify the active tab matches the requested tab
+  before saving" by reading back the rendered page. **No backend available to this plugin can do
+  that on the `--url` path.** Playwright and Selenium can evaluate script against a live page, and
+  neither is installed here or required by the bootcamp (both are optional imports that return
+  `False` when missing); the backend that actually does the capturing on this machine — and the one
+  the walk that found this defect used — is the **headless-Chrome CLI**, which cannot evaluate an
+  expression for us. `_measure_chrome_cli` is the existing proof: to read **one number** off a page
+  it has to patch a local copy of the HTML and re-serve it, and its own docstring records that "a
+  remote URL cannot be patched". A rendered readback would therefore be unavailable in exactly the
+  configuration where the defect occurs.
+- **What shipped instead: a source-level pre-flight that catches the failure before any file is
+  written.** `_supports_deep_linking` asks whether the served page's own code reads the query string
+  at all — which `?tab=` activation requires — and refuses the run when it does not. It cannot prove
+  a page honors `tab` *correctly*, and says so in its docstring; it cannot produce a false failure on
+  a conforming server, which must read the query string to meet the contract. The spec's **outcome**
+  criterion (3) is fully met — a non-conforming server now produces a non-zero exit and a message
+  naming activation, instead of six confidently-named PNGs — and criterion 2 (byte-identical
+  captures) is met by `_identical_groups`, which also deletes the offending files, since at most one
+  can show the tab it is named for and nothing can determine which.
+- **Proposed change 3 (give the `--url` path the snapshot path's click fallback) is deliberately not
+  implemented.** `_ACTIVATE_JS` works by injecting a script into a temp copy of a local file; a live
+  page cannot be patched, so running it against a server needs a browser-automation session driving
+  navigation, activation and screenshot together — which is the optional dependency the capture step
+  exists to avoid (INV-052/INV-066/INV-048 keep it dependency-optional). Refusing the run is the
+  honest alternative: it tells the implementer their server is missing a required contract feature,
+  where a fallback would have silently compensated for it and left the next consumer to find out.
+- ⚠️ **The spec's INV-122 reading is corrected, and it means no new invariant was needed.** The spec
+  says this is "adjacent to INV-122 but outside it", reasoning from INV-122's *absent-tab* clause.
+  INV-122's **first** clause already forbids the outcome outright: screenshots "MUST be captured as
+  one image per tab, **never as several views of one tab**, and each file MUST be named after the tab
+  it shows". Six files showing one tab is precisely that. So the guarantee was registered all along
+  and only the enforcement was missing for this mechanism — which is why the new rule at
+  `phase1-visualization.md` cites INV-122 rather than minting an ID.
