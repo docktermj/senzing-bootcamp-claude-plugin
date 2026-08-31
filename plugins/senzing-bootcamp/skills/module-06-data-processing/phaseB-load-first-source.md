@@ -105,8 +105,10 @@ hardcoded figure:
   marker gates is only the *"check your email, it may have arrived"* line above.
 - **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
   is the same branch, and the same trap, as Phase A's — **every step that writes
-  `license_record_limit` writes only a MEASURED value**, and the only one reached before here is
-  Module 4's **volume-gated** Step 8a, so its absence says nothing about the installed license.
+  `license_record_limit` writes only a MEASURED value**, so its absence says nothing about the
+  installed license: SDK setup's Step 5a measures as soon as the SDK is verified and deliberately
+  writes nothing when it cannot, and Module 4's **volume-gated** Step 8a fires only when the
+  collected volume approaches the limit.
   ⚠️ **Do not reason from a count of writers**; that number has been stated wrongly twice. Measure
   it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
   `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter

@@ -223,7 +223,7 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # (`test_license_limit_is_written_only_from_a_measurement.py` and
 # `test_new_hard_rules_are_cited_or_deferred.py`), because it governs how both derive their
 # matchers. Re-derived by running the extractor, not relaxed.
-EXPECTED_PAIRS = 97
+EXPECTED_PAIRS = 99
 
 
 def pairs():

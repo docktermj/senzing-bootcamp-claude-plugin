@@ -729,6 +729,17 @@ export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # it, and it marks other variables required that a fixed list like the one above can simply
 # omit.
 #
+# IF gotchas[] HAS NO ENTRY FOR YOUR LANGUAGE, THAT IS A GAP TO FILL -- NOT AN EMPTY SET.
+# The rule above assumes an entry exists. On some platform/language pairs it does not: the
+# response then carries nothing for the chosen language at all, and passing the language
+# argument returns the same response as passing none. Exporting only what env_vars happens
+# to carry then produces a script holding the native library path and NOTHING FOR THE
+# LANGUAGE -- a runtime that starts and cannot find the SDK.
+# So: when the chosen language has no entry for the detected platform, derive that language's
+# own paths from the INSTALL LAYOUT, export them here, and record them as an observation with
+# the version they were measured against -- never as a server fact (INV-080/INV-149). Say in
+# the script's header that the value was derived rather than returned.
+#
 # AN OMITTED VARIABLE FAILS IN ONE OF TWO WAYS, AND ONLY ONE OF THEM IS LOUD.
 #   - Loud: the runtime cannot find the native library, and the first engine call fails --
 #     "libSz.so: cannot open shared object file" -- one module after this script was
@@ -755,6 +766,17 @@ naming `LD_LIBRARY_PATH` and omitting `PYTHONPATH` — which is why the rule abo
 `gotchas[]` instead of carrying a longer list. `PYTHONPATH` is Linux-only because the Python SDK is:
 *"The Senzing Python SDK is ONLY supported on Linux"* (`platform='macos_arm', language='python'` →
 `compatibility_notes`, same server and date), so there is no macOS/Windows counterpart to add.
+
+⚠️ **The other shape of the same problem: a pair the response says nothing about.** The Python case
+above is a *disagreement* between `env_vars` and `gotchas[]`; the harder one is a platform/language
+pair for which the response carries **no language content at all**, so there is nothing to disagree
+with and the omission looks like "this language needs nothing extra". A JVM language on `linux_apt`
+is that case — no SDK jar path, and no entry to route to — and a script built from `env_vars` alone
+is then missing the one path that language needs. **The classpath bullet under *The launch
+environment* below records what that route returns, with its dated `MCP-NEGATIVE` marker, and gives
+the path to export and the check that confirms it.** Follow it rather than re-deriving the negative
+here (INV-183: the rule lives where the reader needs it, and a second dated copy is a second thing
+to keep true).
 
 Three things in that block are the point, not decoration:
 
@@ -804,11 +826,30 @@ file (INV-080). What follows is the shape of the problem, not a substitute for t
 - **Do not pass flags through an unquoted variable.** `java $SENZING_JAVA_OPTS` does not word-split
   in zsh (macOS's default shell), so multiple flags arrive as a single argument. Write the flags
   explicitly in the launcher script.
-- **Classpath:** the MCP install guidance's example is
-  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:<your classes>" MyApp`. Note the SDK **jar** lives
-  under `sdk/java/`, while the **native** library lives under `lib/` — two different paths for two
-  different things, and confusing them produces a class-not-found or a library-not-found error
-  depending on which you get wrong. Confirm both paths via `sdk_guide`.
+- **Classpath — and it is platform-specific, which the example does not look like.** The install
+  guidance's example is the **`macos_arm` response's**, quoted from its Java `gotchas[]` entry:
+  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:myapp.jar" MyApp`
+  (`sdk_guide(topic='install', platform='macos_arm', language='java')`, server **1.35.1**,
+  re-confirmed 2026-08-31). Note the SDK **jar** lives under `sdk/java/`, while the **native**
+  library lives under `lib/` — two different paths for two different things, and confusing them
+  produces a class-not-found or a library-not-found error depending on which you get wrong.
+  - ⛔ **(INV-283) Never carry `${SENZING_ROOT}` to Linux.** The macOS install sets it and nothing on
+    `linux_apt` does; the server's own anti-pattern list names it for macOS and Windows only
+    (*"SENZING_DIR on macOS → correct: SENZING_ROOT (macOS uses different env var than Windows)"*,
+    same response). Applied verbatim on Linux it expands to `-cp "/sdk/java/sz-sdk.jar"`, every
+    `com.senzing.sdk` import fails to compile, and the failure surfaces in **System verification**
+    or later — one module away from the step that omitted the path, where it reads as a broken
+    install rather than a wrong classpath.
+    <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — carries no SENZING_ROOT, no jar path and no Java gotchas[] entry; env_vars holds only PYTHONPATH and LD_LIBRARY_PATH, and the response is identical to the same call with no language argument, so the parameter is inert on this platform — owner: sdk_guide(topic='install', platform='linux_apt', language='java') IS the route that would carry a Java jar path for Linux, asked directly and answered with neither the path nor a Java entry (absence negative) — server 1.35.1, 2026-08-31 -->
+  - **On Linux the jar is at `/opt/senzing/er/sdk/java/sz-sdk.jar`** — ⚠️ **observation-only**
+    (INV-080/INV-149), measured against `senzingsdk-runtime` **4.3.4-26210** on 2026-08-31, because
+    **no MCP route serves a Java path for `linux_apt`**. Treat it as a starting point to verify on
+    the bootcamper's machine, never as a server fact: `ls /opt/senzing/er/sdk/java/sz-sdk.jar`. If
+    it is not there, derive it from the `default_paths` the `linux_apt` response *does* return
+    (`resource_path` is `/opt/senzing/er/resources`, so the SDK root is `/opt/senzing/er`) rather
+    than guessing, and say the path was derived.
+  - **Confirm the native library path via `sdk_guide`** — that one the Linux route does answer
+    (`LD_LIBRARY_PATH` → `/opt/senzing/er/lib`). It is only the **jar** that has no Linux route.
 - **If you see `.dylib`/`.so` "not found" errors, do not symlink or copy Senzing libraries.** Per
   the MCP anti-patterns, Senzing tries both extensions and may report one even when the other works;
   the real cause is usually a missing dependency or an unset `DYLD_LIBRARY_PATH`. Re-run the
@@ -839,7 +880,10 @@ timeout on macOS. Use a background process plus a polling loop with a deadline i
 timeout. Check before relying on it rather than assuming a Linux userland.
 
 **Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
-"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⚠️ **This is
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⛔ **(INV-283) For
+Linux + a JVM language, `sdk_guide` answers the library half and not the classpath half** — see the
+classpath bullet above: the jar path is an install-layout observation there, not a server fact, and
+`${SENZING_ROOT}` must not be used to build it. ⚠️ **This is
 not a JVM-only concern:** on `linux_apt` with **Python**, `LD_LIBRARY_PATH` is required too, and
 `sdk_guide`'s `env_vars` hedges it while its language-specific `gotchas[]` entry does not — see
 Step 3's Python note, which is where a non-JVM author will be. On
@@ -984,12 +1028,12 @@ troubleshooting.
 
 **Checkpoint:** write step 4 to `config/bootcamp_progress.json`.
 
-## Step 5: License (built-in evaluation license active)
+## Step 5: License (record capacity)
 
 > **Internal note:** this step does NOT prompt for a License Key. The single, volume-gated
 > Senzing License Key prompt is presented once, at the start of Data collection (Module 4),
-> per INV-093. SDK setup only confirms that the built-in evaluation license is active; the
-> "License Key" reference notes below are kept for context.
+> per INV-093. SDK setup **measures** the active license's record capacity and records it;
+> the "License Key" reference notes below are kept for context.
 
 > **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
 > CONFIGPATH → the built-in evaluation license.
@@ -1026,35 +1070,69 @@ troubleshooting.
 > the **Senzing End User License Agreement (EULA)** accepted during SDK install in Step 3. When
 > this step says "License Key", it means the runtime license, never the EULA.
 
-### 5a. Confirm the built-in evaluation license (no prompt)
+### 5a. Measure the active license's record limit (no prompt)
 
-**Already-licensed guard (check first).** Read `config/bootcamp_progress.json`. If a
-`license_record_limit` field is present, a custom license limit was recorded earlier — this session
-or a prior one. Acknowledge it: present the recorded `recordLimit` as the limit ("Your license allows
-up to N records," or "Your license has no record cap (unlimited)" when it is `0`), and skip the
-evaluation-license note below. Do not re-ask (INV-006). Confirm any SDK facts against the Senzing MCP
-server rather than training data.
+⛔ **(INV-244) Measure the license here — never infer it from what the state file does or does not
+say.** This is the first step where the measurement is possible: Step 3 wrote the env script that
+supplies the settings and Step 4 has just verified the SDK works, so the capacity the bootcamper is
+told is a reading of **their** machine rather than an assumption about it. Take the reading **before**
+branching on anything recorded, and let it govern everything below (INV-012).
 
-⛔ **(INV-244, INV-278) Presence is not proof of detection — reconcile it here, because this is the first
-step where the SDK exists and the license can actually be measured.** The field's contract is measured-only
-(Module 1 Step 5a states the prohibition), but a contract is not an enforcement, and on 2026-08-25 a
-value written from a Bootcamper's statement — 100,000 — sat in it against an install whose real limit
-was **500**. Run the license check this step already builds toward, compare it against the recorded
-value, and on a mismatch **write the measured value into `config/bootcamp_progress.json`, replacing
-the recorded one, and say the recorded figure was withdrawn** — naming both numbers.
+1. **Take the reading.** `SzProduct`'s license method takes no arguments and returns the active
+   license as a JSON string — `getLicense()` in Java and TypeScript, `get_license()` in Python and
+   Rust, `GetLicense()` in C# (`get_sdk_reference(topic='parameters', filter='getLicense')`, server
+   **1.35.1**, 2026-08-31). The snippet ships in the **same** scaffold Step 4 already fetched:
+   `generate_scaffold(language='<chosen_language>', workflow='information')` returns `GetLicense`
+   beside the `GetVersion` this module ran one step ago (confirmed for Java on server **1.35.1**,
+   2026-08-31 — `java/snippets/information/GetLicense.java`). Fetch its `raw_url` like any other
+   scaffold snippet; the response is a listing, not source.
+   - ⚠️ **No engine configuration is needed, and its absence is not a failure.** `SzProduct` needs no
+     support data, which is exactly why Step 4's version call succeeds here while engine calls still
+     raise `SENZ7426` with Steps 7–8a still ahead. If the license call itself raises `SENZ7426` or
+     `SENZ7220`, treat it as the "cannot measure yet" branch below, not as a broken install.
+   - Save the returned JSON to `config/license.json` and **read the saved file to confirm its shape
+     before parsing it** (INV-115) — `get_license` has **no** `response_schemas` entry, so an empty
+     `data` array there is the expected result, not a failed lookup.
+   - Parse `recordLimit`: `0` means **no record cap (unlimited)**; a positive value is the cap.
+
+2. **State what was measured** — as a statement, **not a question:** "Your Senzing license allows up
+   to N records," or "Your Senzing license has **no record cap (unlimited)**" when `recordLimit` is
+   `0`. Name it as a reading of the installed license, so it is not mistaken for a published default.
+
+3. **Persist it.** **Write the measured value into `config/bootcamp_progress.json`** as
+   `license_record_limit`. If a value was already recorded and the measurement disagrees with it,
+   replace the recorded one and **say the recorded figure was withdrawn** — naming both numbers.
+   Do not re-ask anything (INV-006).
+   - ⛔ **(INV-278) Presence is not proof of detection, which is why the reading comes first.** A
+     figure already in the file is not evidence that anyone measured it — on 2026-08-25 a value
+     written from a Bootcamper's statement (100,000) sat in this field against an install whose
+     real limit was **500**. Measuring before reading it is what makes that unfalsifiable state
+     impossible here, rather than merely discouraged.
+
 ⛔ **(INV-278) Persisting it is the point, not a detail.** Module 4's Step 8a reads this field and
 **volume-skips** its License-Key gate when the collected total is at or below the recorded limit, so
-a correction that stays on screen leaves the gate suppressed by the very number it just disproved —
-which is the defect this reconciliation exists to close, not a smaller version of it.
-⛔ **(INV-244, INV-278) Never write this field when it is ABSENT.** The reconciliation fires only on a value already
-recorded. Creating one here would turn a volume-gated measurement into an unconditional one, and it
-would break the *absent means not yet measured* branch INV-244 depends on. ⚠️ **A correction that makes the reported capacity smaller is the one worth stating out
-loud**, because anything already sized against the larger figure — a generated scenario, a collection
-plan — was sized against a ceiling that does not exist. If the check cannot run yet, present the value
-as **recorded, not verified**, rather than as detected.
+a measurement that stays on screen leaves that gate driven by a figure nobody measured — which is the
+defect this step exists to close, not a smaller version of it. ⚠️ **A correction that makes the
+reported capacity smaller is the one worth stating out loud**, because anything already sized against
+the larger figure — a generated scenario, a collection plan — was sized against a ceiling that does
+not exist.
 
-Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
-**not a question:**
+⛔ **(INV-244, INV-278) Write this field ONLY from the reading taken here, and never from an
+assumption.** That is the whole contract: the field's authority rests on being measured, so a value
+that was stated, remembered, defaulted, or inferred from the absence of another value must never
+reach it. ⛔ **When the measurement cannot run, write nothing** — leave the field absent and take the
+branch below. An absent `license_record_limit` therefore means *no measurement has been taken yet*,
+which is what every step reading it relies on; a written one means this step, or Module 4's Step 8a,
+actually measured.
+
+**Only if the measurement genuinely cannot run** — the SDK call fails, the language's scaffold cannot
+be fetched, or the settings are not yet usable — say what could not be determined, and:
+
+- **If a value was already recorded**, present it as **recorded, not verified** — never as detected —
+  and say the check could not be run this session. Leave it in place; it is the best figure available
+  and replacing it with an assumption would be strictly worse.
+- **Otherwise**, present the built-in evaluation figure **as an assumption**, naming what could not be
+  determined:
 
 ⛔ **Fill `{record limit}` below from the MCP server before presenting this — the figure is not
 written into this skill on purpose.** The route that answers it is `sdk_guide` with a
@@ -1073,18 +1151,22 @@ unavailable from the MCP server. Never substitute a hardcoded or remembered figu
 capacity has changed before, and a stale number here is a Senzing fact asserted from memory
 (INV-080), in the one place the bootcamper is most likely to plan against it.
 
-"Your Senzing SDK uses a **built-in evaluation license** automatically when no custom license is
-present (limited to {record limit} records) — no license file needed. That's enough for the demo
-modules that come next (System verification and Truth Set visualization), which run on small
-synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll set up a
-Senzing License Key in the Data collection module, where your data volume is known. Nothing to do
-here."
+"I couldn't read your license from the SDK just now, so this is the **assumption** rather than a
+measurement: Senzing uses a **built-in evaluation license** automatically when no custom license is
+present (limited to {record limit} records) — no license file needed. What I could not determine is
+whether a custom license is installed on this machine, and what its record limit is. That's enough
+for the demo modules that come next (System verification and Truth Set visualization), which run on
+small synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll
+set up a Senzing License Key in the Data collection module, where your data volume is known. Nothing
+to do here."
 
-> **Where the License Key is handled now:** the interactive License-Key setup (asking whether the
-> bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, requesting an
-> evaluation license via the MCP server or Senzing support, and detecting the record limit) is the
-> single, volume-gated gate at the start of Data collection (Module 4, Step 8a), per INV-093. SDK
-> setup no longer performs it.
+> **Where the License Key is handled now:** the interactive License-Key **setup** (asking whether the
+> bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, and requesting
+> an evaluation license via the MCP server or Senzing support) is the single, volume-gated gate at the
+> start of Data collection (Module 4, Step 8a), per INV-093. SDK setup does not perform it. ⚠️ **Reading
+> the installed license is not setting one up** — this step measures the capacity that is already
+> there, which needs no prompt and no volume, and Module 4's gate is what asks for a key when the
+> collected volume actually exceeds it.
 
 **Checkpoint:** write step 5 to `config/bootcamp_progress.json`.
 

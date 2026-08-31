@@ -132,3 +132,46 @@ step that actually omitted the path.
 - Upstream: **not yet sent.** The inert `language='java'` parameter on `linux_apt` is a genuine
   server-side coverage gap and is worth reporting, but `/dry-run` forbids `submit_feedback` under
   any category, so no submission was made. **The report is STILL OWED.**
+
+## Invariants introduced
+
+- `INV-283` — A platform- or language-scoped value an MCP route returns MUST be attributed to the
+  platform or language whose response returned it, at the site it is presented, and where the
+  Bootcamper's own pair has no such value from any route the step MUST say so and supply that pair's
+  form as an observation (recorded in `specs/INVARIANTS.md`, 2026-08-31, on the maintainer's
+  sign-off).
+
+## Deviations from this spec, and why (2026-08-31)
+
+- **Re-verified against server 1.35.1, two versions after the spec was written — the absence still
+  holds, and one claim was strengthened.** `sdk_guide(topic='install', platform='linux_apt',
+  language='java')` still returns no `SENZING_ROOT`, no jar path and no Java `gotchas[]` entry
+  (`env_vars` carries only `PYTHONPATH` and `LD_LIBRARY_PATH`), while `macos_arm` still returns the
+  Java `gotchas[]` entry quoted verbatim in the plugin. The spec's *"identical to the same call
+  without `language`"* claim was **re-established live** rather than carried over: the no-language
+  `linux_apt` call was made this session and returns the same content, so the parameter is inert on
+  that platform. The Linux jar path was re-measured on this machine against `senzingsdk-runtime`
+  **4.3.4-26210** and is marked observation-only.
+- **Proposed change 2 could not be written the way the spec words it.** The spec asks for a branch
+  in Step 3's env-script instruction covering a language whose `gotchas[]` has no entry, and its
+  example is Java. That instruction lives **inside the generated script's comment block**, which
+  three separate guards require to name no programming language (INV-002) — naming Java there failed
+  `test_env_script_names_every_required_export`, `test_env_script_shell_portability` and
+  `test_ld_library_path_is_not_relayed_as_conditional`. The branch is therefore stated as a
+  **behavior** in the snippet ("when the chosen language has no entry for the detected platform,
+  derive that language's paths from the install layout and record them as an observation"), with the
+  concrete JVM-on-Linux case as prose outside the fence, beside the existing Python note. This is
+  INV-002's own boundary test applied as written.
+- **One dated `MCP-NEGATIVE` marker, not two.** A first pass carried the negative twice — once at
+  the classpath bullet and once in the env-script instruction — which
+  `coverage_reports.py unmarked` correctly flagged as an unmarked dated negative in the second
+  place. The env-script prose now routes to the classpath bullet's marker rather than restating it:
+  a second dated copy is a second thing to keep true, and INV-183 is satisfied by the pointer.
+- ⛔ **The guard's first version did not fail on the real defect, and the fix is the unit it
+  measures.** `tests/test_classpath_root_is_platform_qualified.py` originally scoped its check to
+  the blank-line-delimited passage — and passed when the defective sentence was reintroduced,
+  because a *neighboring* bullet two items earlier mentions "macOS's default shell" in an unrelated
+  aside. Re-scoped to the **bullet**, which is what a bootcamper actually copies, it now fails on
+  the shipped text (3 of its 6 tests) and passes on the correction.
+- **Proposed change 4 (report upstream) is drafted and NOT sent.** The maintainer asked to see the
+  exact message first, and `submit_feedback` was not invoked. **It remains owed.**

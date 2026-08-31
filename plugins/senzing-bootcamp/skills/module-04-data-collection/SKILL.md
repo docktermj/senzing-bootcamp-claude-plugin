@@ -97,9 +97,11 @@ limit: never from a remembered or hardcoded figure:
 - **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
 - **Absent or null** — ⛔ **this means "never measured", not "no custom license": measure it before
   deciding anything about capacity.** (INV-244) Every step that writes this field writes only a
-  **measured** value, and the only one reached before this point is Step 8a below, which is
-  **volume-gated by design** — it fires only when the collected volume approaches the limit — so on
-  a small dataset it never runs and the field is absent no matter which license is installed.
+  **measured** value, so absence means every earlier measurement was skipped or failed: SDK setup's
+  Step 5a measures as soon as the SDK is verified and deliberately writes nothing when it cannot,
+  and Step 8a below is **volume-gated by design** — it fires only when the collected volume
+  approaches the limit, so on a small dataset it never runs. In both cases the **absence says
+  nothing about the installed license** — it is a measurement that did not happen.
   Treating that silence as "no custom license" is what steers a bootcamper whose license has **no
   cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
   - **Measure it** by Step 8a's own procedure (sub-step 7 below): generate a scaffold calling

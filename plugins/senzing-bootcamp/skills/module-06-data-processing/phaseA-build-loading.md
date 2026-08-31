@@ -190,10 +190,11 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
 - **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
   assume it.** (INV-244) **Every step that writes `license_record_limit` writes only a MEASURED value** —
   including this branch, below. ⚠️ **Do not reason from a count of writers**; that number has been
-  stated wrongly twice. What makes absence uninformative about the *license* is that the only step
-  reached before this one is Module 4's Step 8a gate, which is **volume-gated by design**: a
-  bootcamper with a small dataset never triggers it, so the field is absent no matter what license
-  is installed. Assuming the default here relays a 500-record note —
+  stated wrongly twice. What makes absence uninformative about the *license* is that no step writes
+  this field without measuring it: SDK setup's Step 5a measures as soon as the SDK is verified and
+  deliberately writes nothing when it cannot, and Module 4's Step 8a gate is **volume-gated by
+  design**, so a bootcamper with a small dataset never triggers it. In both cases the **absence says
+  nothing about the installed license** — it is a measurement that did not happen. Assuming the default here relays a 500-record note —
   and `sdk_guide`'s sampling prescription with it — to someone whose license may have no cap at
   all, which is the same harm named just above, reached through the branch that is taken far more
   often. It also contradicts a higher-precedence rule: a value you measured on this machine governs

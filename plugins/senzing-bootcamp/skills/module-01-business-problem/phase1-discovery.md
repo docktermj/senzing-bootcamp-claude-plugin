@@ -268,8 +268,9 @@ Compute the total record count across the mentioned sources and read `license_re
 `config/bootcamp_progress.json` (normally absent at this point):
 
 ⛔ **(INV-244, INV-278) `license_record_limit` is written ONLY from a measured license — never from a
-Bootcamper statement.** The one legitimate writer is Module 4's Step 8a gate, which parses the record limit out
-of `getLicense`/`get_license` against the installed SDK. A number the Bootcamper *tells* you — "our
+Bootcamper statement.** Every step that writes it parses the record limit out of
+`getLicense`/`get_license` against the installed SDK — SDK setup's Step 5a measures it as soon as
+Step 4 has verified the SDK, and Module 4's Step 8a measures it again at the License-Key gate. A number the Bootcamper *tells* you — "our
 POC license allows 100,000" — is a claim about a license that may never have been applied to this
 install, and it does not go in this field, this session or any other. ⚠️ **The failure is a
 suppressed warning, not a wrong number:** a `license_record_limit` above the dataset size
@@ -314,9 +315,10 @@ measured field so the two cannot be confused by proximity.
   default, or a Bootcamper statement. So a value present here is always a measurement, and its
   absence still means *not yet measured* — not *no custom license*. ⚠️ **Do not reason from how many
   steps write it**; that number has been stated wrongly twice and is not what the conclusion rests
-  on. The one distinction that does matter here: SDK setup's Step 5a reconciliation only ever
-  **replaces** an already-recorded value and never creates one, so nothing before Module 4's
-  volume-gated gate can put a figure in this field at all. INV-093 forbids a license prompt at this
+  on. The distinction that does matter here is ORDER, not the writer set: the first step that
+  measures the license is SDK setup's Step 5a, and SDK setup has not run yet at this point in the
+  bootcamp — so nothing can have put a figure in this field, and its absence here carries no
+  information about the installed license. INV-093 forbids a license prompt at this
   point, and this step only sets a deferral flag for a later gate to resolve, so assuming the
   built-in figure is the correct conservative reading. Say so if it matters to the Bootcamper;
   never present it as a detected value.

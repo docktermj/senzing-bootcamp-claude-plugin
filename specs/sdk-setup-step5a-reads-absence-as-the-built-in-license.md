@@ -132,3 +132,46 @@ cross-source resolution Modules 6 and 7 exist to show.
   that the step relays that generic figure **instead of** measuring the installed license, which is
   an environment reading rather than a server fact (INV-080/INV-149).
 - Upstream: not applicable — this is entirely a plugin-side branch.
+
+## Deviations from this spec, and why (2026-08-31)
+
+- **Item 3 resolved to PERSIST, on the maintainer's decision.** The spec deliberately left this
+  open. The evidence put to the maintainer was that Module 4's Step 8a **never measures before
+  gating** — it reads the recorded value at `SKILL.md:798-812` and only measures at `:949`, *after*
+  a custom key has been applied — so "present only" would have fixed what the Bootcamper is told at
+  Step 5a and left the unneeded gate firing one module later. Consequently the ⛔ at the old
+  `SKILL.md:1070` was **reworded, not reaffirmed**: *"Never write this field when it is ABSENT"*
+  became *"Write this field ONLY from the reading taken here, and never from an assumption"*, with
+  ⛔ **"When the measurement cannot run, write nothing"** carrying the protection that sentence
+  existed for. Absence still means *not measured*; it now means the measurement was skipped or
+  failed rather than never attempted.
+- **The change is larger than `## Affected files` predicted, and the extra sites are the point
+  (INV-246).** Making Step 5a a writer falsified a claim at **four** shipped sites in three other
+  modules — `module-01-business-problem/phase1-discovery.md` (twice), `module-04-data-collection/
+  SKILL.md`, `module-06-data-processing/phaseA-build-loading.md` and `phaseB-load-first-source.md` —
+  each of which said Module 4's Step 8a was the only writer, or the only one reached before that
+  point. All four were corrected to state the **property** rather than the order of writers. Two
+  existing guards had to move with them: `tests/test_license_limit_is_written_only_from_a_
+  measurement.py` (two assertions pinned the superseded behavior — the old needles are now pinned
+  in the must-NOT-match direction) and `tests/test_module06_license_reconciliation.py`.
+- **`specs/INVARIANTS.md` was edited, as the spec predicted, but not in the way it predicted.**
+  INV-244's *rationale* — not its condition — asserted *"The only writer of `license_record_limit`
+  is Module 4's Step 8a gate"* and *"the field is absent no matter what license is installed"*.
+  Both are now historical, so a dated correction was appended in place (permitted by
+  `INVARIANTS.md`'s own rule 2: clarification without a change of meaning). The new plugin-wide
+  guard was added to INV-244's enforcer list **alongside** the module-scoped one rather than
+  replacing it — a guard scoped to one module is what let the second site ship.
+- **MCP re-check found a newer server than the spec assumed.** The spec was written against
+  **1.33.0**; this ran against **1.35.1** (2026-08-31). Nothing it relied on changed. Two facts were
+  established live rather than carried from the spec: `SzProduct`'s license method takes no
+  arguments and returns a JSON string in all five bindings (`get_sdk_reference(topic='parameters',
+  filter='getLicense')`), and — new, and what makes the fix cheap — the `GetLicense` snippet ships
+  in the **same** `generate_scaffold(workflow='information')` response Step 4 already fetches for
+  `GetVersion`, so Step 5a adds no new scaffold call.
+- ⛔ **The new guard's first version PASSED the mutation, and that is recorded rather than
+  quietly fixed.** `tests/test_no_absence_branch_asserts_a_licensing_finding.py` was written,
+  reviewed and passing before the real Step 5a text was reintroduced to test it — at which point it
+  still passed, because *"say the current limit is unavailable from the MCP server"* sat in the same
+  branch and had been included as a discharge phrase. That sentence is about failing to fetch a
+  published figure, not about marking a claim unverified. It was removed, and the guard now fails on
+  the shipped defect and passes on the correction, both verified by mutating the real file.

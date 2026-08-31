@@ -144,10 +144,16 @@ class TheBranchMeasuresRatherThanAssumes(unittest.TestCase):
         """The inference that has to die, stated as an inference."""
         for name, path in BRANCHES:
             with self.subTest(name):
-                branch = absent_branch(path)
+                # ⛔ Emphasis-stripped and case-insensitive (INV-282). The sibling guard,
+                # `test_license_limit_is_written_only_from_a_measurement.py`, was rewritten on
+                # 2026-08-28 for exactly this: three sites bolded the whole phrase and one bolded
+                # a word inside it, so a matcher reading raw Markdown saw three of four. This one
+                # read raw text too, and a rewrite that opened the sentence with a capital and a
+                # `**` put a correct site outside it.
+                branch = re.sub(r"[*`]", "", absent_branch(path))
                 self.assertRegex(
                     branch,
-                    r"(absent no matter (what|which) license is installed"
+                    r"(?i)(absent no matter (what|which) license is installed"
                     r"|absence says nothing about the installed license)",
                 )
 

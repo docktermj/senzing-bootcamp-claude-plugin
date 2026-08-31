@@ -10,11 +10,14 @@ wrong in every version it had:
   false, and **self-contradicted four lines below itself**: the same bullet then says
   *"Persist it as `license_record_limit`"*.
 
-The real set is five write sites across four steps. ⛔ **But the conclusion never needed a
-count.** What makes absence informative is that **no step writes this field without measuring
-it** — a property that held before either correction and will hold when a sixth writer
-appears. A count is a proxy that has to be re-derived whenever the code moves, goes stale
-silently, and reads authoritative while wrong.
+⛔ **But the conclusion never needed a count.** What makes absence informative is that **no step
+writes this field without measuring it** — a property that held before either correction and holds
+now that SDK setup's Step 5a has been added as a writer (2026-08-31,
+`sdk-setup-step5a-reads-absence-as-the-built-in-license`). A count is a proxy that has to be
+re-derived whenever the code moves, goes stale silently, and reads authoritative while wrong —
+which is why **this docstring no longer carries one either**: the version that did said "five
+write sites across four steps", and Step 5a made it wrong three days later, exactly as predicted
+one sentence above.
 
 ⛔ **INV-282 governs this file's matchers.** A guard derives its matcher from the CLAIM being
 made, not from the phrasings observed at the sites it was written to fix; every phrasing that
@@ -198,22 +201,56 @@ class TheFieldIsWrittenOnlyFromAMeasurement(unittest.TestCase):
             "underscore emphasis now matches — if that was intentional, confirm no needle "
             "in this file names an identifier containing an underscore")
 
-    def test_the_replace_only_distinction_survives(self):
-        """Not a count — the one writer that never creates a value, which Module 1 relies on."""
+    def test_module_1_justifies_its_assumption_by_ORDER_not_by_the_writer_set(self):
+        """What makes Module 1's built-in assumption sound, restated when Step 5a became a writer.
+
+        ⚠️ **This assertion used to read the other way round.** Until 2026-08-31 Module 1 said
+        *"SDK setup's Step 5a reconciliation only ever replaces an already-recorded value and
+        never creates one, so nothing before Module 4's volume-gated gate can put a figure in
+        this field at all"* — true then, and false the moment Step 5a began measuring and
+        persisting (`sdk-setup-step5a-reads-absence-as-the-built-in-license`). The conclusion
+        Module 1 needs is unchanged and still holds, but it now rests on **order**: SDK setup is
+        Module 2, so at Module 1 no step that measures has run yet.
+
+        ⛔ The old needle is pinned in the must-NOT-match set below, because a revert to the
+        superseded sentence is the specific regression this replaces.
+        """
         m1 = PLUGIN / "senzing-bootcamp" / "skills" / "module-01-business-problem" / "phase1-discovery.md"
         flat = flatten(m1.read_text(encoding="utf-8"))
-        self.assertIn("only ever replaces an already-recorded value", flat,
-                      "Module 1 no longer says the reconciliation only replaces and never "
-                      "creates — which is what makes its absence reasoning hold")
+        self.assertIn("the first step that measures the license is sdk setup's step 5a", flat,
+                      "Module 1 no longer names the first measuring step, which is what makes "
+                      "its absence reasoning hold now that Step 5a writes the field")
+        self.assertIn("sdk setup has not run yet at this point", flat,
+                      "Module 1 no longer says WHY that first measurement cannot have happened "
+                      "yet — order is the whole justification for assuming the built-in figure")
+        self.assertNotIn("only ever replaces an already-recorded value", flat,
+                         "Module 1 has gone back to the superseded claim that SDK setup never "
+                         "creates this field. Step 5a measures and persists it — re-read "
+                         "module-02-sdk-setup/SKILL.md Step 5a before restoring that sentence")
 
-    def test_sdk_setup_persists_and_never_creates(self):
+    def test_sdk_setup_measures_persists_and_writes_nothing_when_it_cannot(self):
+        """SDK setup Step 5a: measure, persist what was measured, write nothing otherwise.
+
+        ⚠️ **The second assertion used to require the opposite rule.** Until 2026-08-31 Step 5a
+        was forbidden to write the field at all when it was absent — correct while the step only
+        *reconciled* an existing value, and the reason a Bootcamper with an uncapped license was
+        told they were limited to 500 records. The maintainer's decision on
+        `sdk-setup-step5a-reads-absence-as-the-built-in-license` was to **persist**, so the
+        protection moves rather than disappears: what must never reach this field is an
+        UNMEASURED value, which is now stated as "when the measurement cannot run, write nothing".
+        """
         m2 = PLUGIN / "senzing-bootcamp" / "skills" / "module-02-sdk-setup" / "SKILL.md"
         flat = flatten(m2.read_text(encoding="utf-8"))
         self.assertIn("write the measured value into config/bootcamp_progress.json", flat,
                       "SDK setup does not persist the measured value, so a corrected figure "
                       "stays on screen and Module 4's gate remains volume-skipped")
-        self.assertIn("never write this field when it is absent", flat,
-                      "SDK setup does not rule out creating the field when absent")
+        self.assertIn("when the measurement cannot run, write nothing", flat,
+                      "SDK setup no longer rules out writing this field on the branch where "
+                      "nothing was measured — which is the only thing keeping an absent "
+                      "`license_record_limit` meaningful (INV-244)")
+        self.assertIn("measure the license here", flat,
+                      "SDK setup Step 5a no longer takes the measurement at all; it is the "
+                      "first step where the SDK is verified and the reading is possible")
 
     def test_the_gate_it_protects_is_still_described(self):
         """Anti-vacuity for the reason: the volume-skip must exist to be worth protecting."""
@@ -245,8 +282,7 @@ class TheFieldIsWrittenOnlyFromAMeasurement(unittest.TestCase):
                                 "the count matcher no longer detects a phrasing that has "
                                 "actually shipped in this repo")
         for ok in ("every step that writes it writes only a measured value",
-                   "SDK setup's Step 5a reconciliation only ever replaces an already-recorded "
-                   "value and never creates one",
+                   "the first step that measures the license is SDK setup's Step 5a",
                    "a stdlib-only writer when it is absent",
                    "the value you would be re-deriving was already measured and persisted"):
             with self.subTest(ok=ok[:46]):
