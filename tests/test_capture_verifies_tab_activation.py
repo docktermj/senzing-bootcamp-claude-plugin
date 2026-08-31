@@ -65,6 +65,11 @@ init();
     "".join('<section class="tab" id="tab-%s">%s</section>' % (t, t) for t in TABS),
 )
 
+#: A page with NO tab bar at all — a single-page deliverable (a quality report, a mapping
+#: summary), served live. It reads no query string because it has no reason to.
+TABLESS = ("<!doctype html><html><body><h1>A quality report</h1>"
+           "<p>No tabs at all.</p></body></html>")
+
 #: The same page with deep-linking applied at the end of init(), per the contract.
 CONFORMING = NON_CONFORMING.replace(
     "function init(){ activate('graph'); }",
@@ -199,6 +204,52 @@ class AConformingPageIsNotRefused(unittest.TestCase):
         """Best-effort, like every other pre-flight here: never block on a fetch failure."""
         module = load_module()
         self.assertTrue(module._supports_deep_linking(""))
+
+
+class ATablessPageIsStillCapturedWhole(unittest.TestCase):
+    """⛔ The regression this guard did not catch when it was written (2026-08-31).
+
+    The deep-linking pre-flight was first placed ABOVE `main()`'s single-page safety net.
+    `_tabs_present` correctly empties `tabs` for a page with no tab bar, the check read
+    `[] != [SINGLE_PAGE_ID]` as true, and a tabless page served over http:// was refused —
+    exit 1, no image — three lines above the net whose own comment says *"exiting was the
+    behavior that silently cost every single-page deliverable its recap image."* Measured
+    both ways: rc 0 with an image before, rc 1 with none after.
+
+    ⚠️ **The suite was green across it, and this file is why.** Every case here drove a page
+    that HAS tab controls, which is the half the pre-flight was written for; the half it
+    could break went untested. A guard narrower than the code it protects certifies the case
+    its author was already thinking about.
+    """
+
+    def test_it_captures_as_a_single_page_rather_than_being_refused(self):
+        module = load_module()
+
+        def backend(url, out):
+            Path(out).write_bytes(b"PNG-single")
+            return True
+
+        with _Server(TABLESS) as server, tempfile.TemporaryDirectory() as out:
+            rc, err = run_capture(module, server.url, out, backend=backend)
+            self.assertEqual(
+                0, rc,
+                "a tabless page served over http:// was refused. The deep-linking "
+                "pre-flight is above the single-page safety net again: " + err)
+            self.assertEqual(
+                ["truthset.png"], png_files(out),
+                "the single-page fallback wrote no image, so this deliverable reaches the "
+                "recap with no picture")
+            self.assertNotIn("deep-linking", err,
+                             "the deep-linking refusal fired on a page that has no tabs to "
+                             "select in the first place")
+
+    def test_the_tabbed_case_still_refuses(self):
+        """Both halves in one class, so moving the check cannot satisfy one by breaking the other."""
+        module = load_module()
+        with _Server(NON_CONFORMING) as server, tempfile.TemporaryDirectory() as out:
+            rc, err = run_capture(module, server.url, out)
+            self.assertNotEqual(0, rc)
+            self.assertIn("deep-linking", err)
 
 
 class IdenticalCapturesAreRefused(unittest.TestCase):

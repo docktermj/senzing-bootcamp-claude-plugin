@@ -1301,29 +1301,6 @@ def main(argv=None) -> int:
                 "skipping it rather than capturing an empty pane the bootcamper never saw.",
                 file=sys.stderr,
             )
-    # ⛔ Never write a tab-named PNG a live server cannot actually produce. This runs
-    # after the tab pre-flights above (so its message names activation rather than an
-    # inventory problem) and BEFORE any capture, because the failure it catches is
-    # invisible afterwards: the files are correctly named, non-empty and all the same tab.
-    if is_url and tabs != [SINGLE_PAGE_ID] and not _supports_deep_linking(source):
-        print(
-            "This server does not implement `?tab=` deep-linking, which is the ONLY way a "
-            "live page's tab can be selected for capture (a saved snapshot is driven by an "
-            "injected activate() instead). Every screenshot would therefore show the "
-            "default tab under a different tab's name. Nothing was captured.\n"
-            "Fix the server, not the capture: apply the `?tab=` / `?q=` parameters at the "
-            "end of init(), after the data load and buildNav() have settled — see \"Tab "
-            "identifiers and deep-linking (required)\" in visualization-api-reference.md — "
-            "then re-run this command.",
-            file=sys.stderr,
-        )
-        write_manifest(
-            Path(args.out_dir), args.name, [], absent, [], tabs, suppressed,
-            failed_reason="the server does not implement ?tab= deep-linking, so the tab "
-                          "could not be selected",
-        )
-        return 1
-
     if not tabs and not _has_tab_controls(source):
         # Safety net: the page has no tab bar at all, so this is a single-page document
         # rather than a tabbed app whose tabs were misnamed. Capture it whole instead of
@@ -1364,6 +1341,35 @@ def main(argv=None) -> int:
         # "how many tabs should the recap show", and the only one available here.
         write_manifest(Path(args.out_dir), args.name, [], absent, [], [], suppressed)
         return 2
+
+    # ⛔ Never write a tab-named PNG a live server cannot actually produce. Placed BELOW
+    # the single-page safety net on purpose, and the position is the whole correctness of
+    # it: run above the net, this check sees `tabs == []` for a page that simply has no
+    # tabs, reads `[] != [SINGLE_PAGE_ID]` as true, and refuses a single-page deliverable
+    # that was never going to select a tab — exit 1, no image, which is precisely the
+    # behavior the net below was added to stop. Measured 2026-08-31: rc 0 with an image
+    # before, rc 1 with none after. Here, `tabs` is non-empty and is `[SINGLE_PAGE_ID]`
+    # exactly when the page has no tab bar, so the guard sees only genuinely tabbed pages.
+    # Still BEFORE any capture, because the failure it catches is invisible afterwards:
+    # the files are correctly named, non-empty and all the same tab.
+    if is_url and tabs != [SINGLE_PAGE_ID] and not _supports_deep_linking(source):
+        print(
+            "This server does not implement `?tab=` deep-linking, which is the ONLY way a "
+            "live page's tab can be selected for capture (a saved snapshot is driven by an "
+            "injected activate() instead). Every screenshot would therefore show the "
+            "default tab under a different tab's name. Nothing was captured.\n"
+            "Fix the server, not the capture: apply the `?tab=` / `?q=` parameters at the "
+            "end of init(), after the data load and buildNav() have settled — see \"Tab "
+            "identifiers and deep-linking (required)\" in visualization-api-reference.md — "
+            "then re-run this command.",
+            file=sys.stderr,
+        )
+        write_manifest(
+            Path(args.out_dir), args.name, [], absent, [], tabs, suppressed,
+            failed_reason="the server does not implement ?tab= deep-linking, so the tab "
+                          "could not be selected",
+        )
+        return 1
 
     try:
         written = capture(

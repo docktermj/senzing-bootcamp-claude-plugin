@@ -42,6 +42,17 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## the-deep-linking-preflight-refuses-a-tabless-page-it-should-capture-whole
+
+- **Implemented:** 2026-08-31
+- **Files changed:** `plugins/senzing-bootcamp/scripts/capture_screenshots.py` (the pre-flight moved below the single-page safety net, with the reason recorded at its new position), `tests/test_capture_verifies_tab_activation.py` (a `TABLESS` fixture and a two-test `ATablessPageIsStillCapturedWhole` class), `specs/IMPLEMENTED.md` (this entry).
+- **MCP re-check:** **n/a (no Senzing fact).** Control-flow ordering inside a bundled script; no Senzing claim is involved and no MCP tool was called.
+- **Summary:** The regression is gone and the ordering is now guarded. **Criterion walk, 4 of 4 hold, all runtime-verified.** (1) *A tabless page over `http://` captures as a single page* — re-measured with the same probe that found it: `rc = 0`, `truthset.png` written, matching the pre-`b826db5` behavior exactly. (2) *A tabbed page with no `?tab=` still exits non-zero with no images and a message naming deep-linking* — asserted in the same test class as (1), deliberately, so moving the check cannot satisfy one half by breaking the other. (3) *Negative-controlled* — `git show b826db5:…` restored the pre-flight to its broken position, `test_it_captures_as_a_single_page_rather_than_being_refused` **failed**, and it passed again on restore; the mutation was verified to land in both directions rather than assumed. (4) *Cross-platform, language-agnostic* — the fix is a statement's position; the test drives a stdlib `http.server` bound to 127.0.0.1, so it stays offline (INV-091) and needs no browser.
+- **The fix is a move, not a new condition, and that was deliberate.** A guard added at the old position would have made the check correct and left the next reader to re-derive why it was there. At its new position — below the safety net — `tabs` is non-empty and equals `[SINGLE_PAGE_ID]` exactly when the page has no tab bar, so the existing condition is already right and the comment records the measurement (rc 0 with an image before, rc 1 with none after) rather than restating the rule.
+- ⚠️ **One skip appeared and is correct, recorded so the next run does not chase it.** The suite moved from 3 skips to 4: `test_new_hard_rules_are_cited_or_deferred` now reports *"no hard rules added since the newest audit entry — nothing to check"*, because the newest entry is `production-readiness-audit-2026-08-31` (`089be23`) and this change adds a **moved** statement and a test, not a new rule. `conformance.py since --since-last-audit` confirms **0 hard-rule lines across 0 files**. That is the guard saying so via a skip rather than passing silently (INV-265), which is the branch it was written to take.
+- **Establishes no invariant.** INV-122 already requires the capture to remain dependency-optional and to continue unblocked when it cannot capture, and the single-page fallback exists to serve that; this restores an ordering that honored it.
+- **Commit:** uncommitted
+
 ## production-readiness-audit-2026-08-31
 
 **Not a spec** — a dated record of an audit run. **The first audit since the 2026-08-28 loop hit its cap**, and the first to run against a session that had just implemented four specs and registered two invariants. **Two findings, both written to specs and both OPEN; one invariant-text correction proposed and not made** (report-before-change).
