@@ -837,12 +837,34 @@ advisory, so treat this as executable, not advisory.
      bootcamp will pick up here with the new file.
 
 3. **Write the improved data as a NEW file; never overwrite what was collected.** Put it beside the
-   original as `data/raw/<source>-improved.<ext>`, point that source's `path` in
-   `config/data_sources.yaml` at it, and record the original path in the same entry so nothing is
-   lost. `data/raw/` holds source data as received (INV-050), and the original stays exactly as
-   received.
+   original as `data/raw/<source>-improved.<ext>` and record the original `file_path` in the same
+   entry so nothing is lost. `data/raw/` holds source data as received (INV-050), and the original
+   stays exactly as received.
 
-4. **Re-score the source with Step 6's formula and re-present the gate with the new figure**, naming
+4. ⛔ **(INV-243) Update every registry field the new file changes — not just `file_path`.** The
+   entry is a set of claims about the file it points at, and repointing it makes each of them a
+   claim about the improved file. Re-measure and rewrite, in `config/data_sources.yaml`:
+
+   - **`file_path`** → the improved file.
+   - **`record_count`** → **re-counted from the improved file.** ⛔ **(INV-243) This is the one that does
+     damage if it is skipped.** Resolving duplicates removes records, and Module 6 Phase B compares
+     its loaded count against the `record_count` written here (INV-243) — so a stale figure reports
+     a *correct* load as short by exactly the number of duplicates this step just removed, one
+     module downstream of the cause. Say both figures to the Bootcamper when it changes, with the
+     reason ("1,000 → 984 records; 16 duplicate `(DATA_SOURCE, RECORD_ID)` pairs resolved").
+   - **`file_size_bytes`** → re-measured.
+   - **`quality_score`** → the re-scored figure from step 5 below, once it is computed.
+   - **`updated_at`** → the current ISO 8601 timestamp.
+
+   ⛔ **(INV-203) Leave `expected_record_count`, `validation_status` and `validation_checks` describing the
+   ORIGINAL fetch, and say in the entry that they do.** Those fields record that a *fetched* file
+   arrived with a 2xx status and a count matching what the provider stated (INV-203); the improved
+   file was derived here, not fetched, so re-pointing them at it would assert a check nobody ran.
+   ⚠️ **`record_count` is the opposite case and must NOT be left alone for the same reason** — it is
+   a measurement of the file, and the file changed, so leaving it stale is what makes the entry
+   wrong rather than what keeps it honest.
+
+5. **Re-score the source with Step 6's formula and re-present the gate with the new figure**, naming
    the before and after (e.g. *"75.1 → 79.4"*).
 
    ⛔ **Re-presenting the gate here is NOT an INV-006 repeat, and a guide must not suppress it as
@@ -851,7 +873,7 @@ advisory, so treat this as executable, not advisory.
    about the old figure. Present whichever band's pinned question the **new** score selects — a
    source that crossed into ≥80% gets no question at all and continues into Phase 2 this turn.
 
-5. **When nothing was fixable, say so rather than looping.** If the gaps are entirely completeness,
+6. **When nothing was fixable, say so rather than looping.** If the gaps are entirely completeness,
    there is no mechanical work to do: state that, name the return-to-collection route from step 2,
    and present the gate again with the score **unchanged and identified as unchanged**. Never
    re-present an unchanged score as an improvement.

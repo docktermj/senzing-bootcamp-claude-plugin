@@ -152,6 +152,11 @@ class TheImprovePathIsUsable(unittest.TestCase):
 
     def setUp(self):
         self.text = (MODULE / "phase1-quality-assessment.md").read_text(encoding="utf-8")
+        start = self.text.index("### 7a.")
+        end = self.text.index("**Success indicator:**", start)
+        #: The improve path alone. Scoped, because the fields below appear elsewhere in the
+        #: module and a whole-file search would pass on a neighbor's mention of them.
+        self.improve_path = self.text[start:end]
 
     def test_it_separates_what_can_be_fixed_from_what_cannot(self):
         """A missing value cannot be invented, and offering to fill one invites fabrication."""
@@ -187,6 +192,58 @@ class TheImprovePathIsUsable(unittest.TestCase):
             disclosure, question,
             "the synthesized-source disclosure comes after the gate question it exists to "
             "inform; anything meant to inform an answer goes before the question")
+
+    def test_it_updates_every_registry_field_the_new_file_changes(self):
+        """⛔ INV-243 — the entry is a set of claims about the file it points at.
+
+        The first version of this step repointed `file_path` and stopped there. Resolving
+        duplicates removes records, and Module 6 Phase B compares its loaded count against
+        the `record_count` written here — so a stale figure reports a CORRECT load as short
+        by exactly the number of duplicates this step just removed, one module downstream
+        of the cause. Repointing the file without re-measuring it is what makes the entry
+        wrong; the fetch-provenance fields are the opposite case, below.
+        """
+        # ⛔ Matched as an UPDATE BULLET, not as a token anywhere in the section. A first
+        # version asserted the bare substring and **passed the mutation**: deleting the
+        # whole `record_count` bullet left the word standing in the ⛔ prose that explains
+        # why it matters, so the guard certified the field was updated while the
+        # instruction to update it was gone. An assertion a neighbor can satisfy is not an
+        # assertion about the claim (INV-282).
+        for field in ("file_path", "record_count", "file_size_bytes", "quality_score",
+                      "updated_at"):
+            with self.subTest(field=field):
+                self.assertRegex(
+                    self.improve_path, r"(?m)^\s*-\s+\*\*`" + re.escape(field) + r"`\*\*\s*→",
+                    f"the improve path repoints the registry without an update bullet for "
+                    f"`{field}`, so that field goes on describing the file it replaced")
+        self.assertIn("INV-243", self.improve_path,
+                      "the rule that makes record_count load-bearing is not nameable at the "
+                      "step that changes it (INV-183)")
+
+    def test_it_leaves_the_fetch_provenance_fields_with_the_original(self):
+        """The mirror: a derived file must not be described as fetched and count-verified."""
+        for field in ("expected_record_count", "validation_status", "validation_checks"):
+            with self.subTest(field=field):
+                self.assertIn(
+                    field, self.improve_path,
+                    f"the improve path says nothing about `{field}`, so a reader must guess "
+                    "whether a derived file inherits a fetch's checks")
+        self.assertRegex(
+            self.improve_path, r"ORIGINAL fetch|original fetch",
+            "the improve path does not say those fields keep describing the original fetch, "
+            "which is the only thing stopping them being re-pointed at a file nobody fetched")
+
+    def test_it_names_registry_fields_that_actually_exist(self):
+        """⛔ A field name the schema does not have sends an editor to invent one.
+
+        The first version said *"point that source's `path`"*. The registry's field is
+        `file_path` (`module-04-data-collection/SKILL.md`'s entry contract), and no entry
+        has ever had a `path` key.
+        """
+        self.assertNotRegex(
+            self.improve_path, r"source's `path`",
+            "the improve path names a registry field that does not exist; the schema's field "
+            "is `file_path`")
 
     def test_it_forbids_silent_regeneration(self):
         self.assertRegex(self.text, r"[Nn]ever\s+\*\*silently\s+regenerate|silently regenerate",

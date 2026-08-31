@@ -76,3 +76,35 @@ about.
   costs the most time to diagnose.
 - MCP re-check: **n/a (no Senzing fact).** Registry bookkeeping internal to the plugin.
 - Upstream: not applicable — plugin-side only.
+
+## Deviations from this spec, and why (2026-08-31)
+
+- **The change is larger than the spec's Proposed change, because the registry entry promises more
+  than the two fields the spec named.** The spec asked for `record_count` and a decision on the
+  fetch-provenance fields. Reading `module-04-data-collection/SKILL.md`'s entry contract
+  (`:583-598`) showed the entry is a **set of claims about the file it points at** — so repointing it
+  also falsifies `file_size_bytes`, `quality_score` and `updated_at`. All five are now update
+  bullets, and the fetch-provenance fields (`expected_record_count`, `validation_status`,
+  `validation_checks`) are explicitly kept describing the original fetch, with INV-203 cited for
+  why: the improved file was derived, not fetched, so re-pointing them would assert a check nobody
+  ran.
+- ⛔ **A third defect in the same paragraph, found while fixing the second: the step named a registry
+  field that does not exist.** It said *"point that source's `path`"*; the registry's field is
+  **`file_path`**, and no entry has ever carried a `path` key. Nothing would have caught it — the
+  guard written alongside the improve path asserted the option had a *handler*, not that the handler
+  named real fields. It is now pinned by `test_it_names_registry_fields_that_actually_exist`, whose
+  mutation restores the wrong spelling.
+- ⛔ **The guard's first version PASSED its mutation, and this is the third time in one session.**
+  `test_it_updates_every_registry_field_the_new_file_changes` first asserted the bare substring
+  `record_count` anywhere in the improve path — and deleting the entire `record_count` update bullet
+  left the word standing in the ⛔ prose that explains *why* it matters, so the guard certified the
+  field was updated while the instruction to update it was gone. Rewritten to match the **update
+  bullet** (`^- **\`<field>\`** →`), it now fails on that mutation. The recurring shape is worth
+  naming: **an assertion a neighboring sentence can satisfy is not an assertion about the claim**,
+  and every instance this session was caught by running the mutation rather than by reading the
+  guard.
+- **Two citations were added after the fact, which the suite caught.**
+  `test_new_hard_rules_are_cited_or_deferred` failed on the first full run: the new `record_count`
+  and fetch-provenance rules shipped without an `INV-nnn` at the line, even though both invariants
+  were named in the surrounding prose. INV-243 and INV-203 are now cited at the rules themselves
+  (INV-183).
