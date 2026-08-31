@@ -51,7 +51,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **The fix is a move, not a new condition, and that was deliberate.** A guard added at the old position would have made the check correct and left the next reader to re-derive why it was there. At its new position — below the safety net — `tabs` is non-empty and equals `[SINGLE_PAGE_ID]` exactly when the page has no tab bar, so the existing condition is already right and the comment records the measurement (rc 0 with an image before, rc 1 with none after) rather than restating the rule.
 - ⚠️ **One skip appeared and is correct, recorded so the next run does not chase it.** The suite moved from 3 skips to 4: `test_new_hard_rules_are_cited_or_deferred` now reports *"no hard rules added since the newest audit entry — nothing to check"*, because the newest entry is `production-readiness-audit-2026-08-31` (`089be23`) and this change adds a **moved** statement and a test, not a new rule. `conformance.py since --since-last-audit` confirms **0 hard-rule lines across 0 files**. That is the guard saying so via a skip rather than passing silently (INV-265), which is the branch it was written to take.
 - **Establishes no invariant.** INV-122 already requires the capture to remain dependency-optional and to continue unblocked when it cannot capture, and the single-page fallback exists to serve that; this restores an ordering that honored it.
-- **Commit:** uncommitted
+- **Commit:** `8c66fca`
 
 ## production-readiness-audit-2026-08-31
 
