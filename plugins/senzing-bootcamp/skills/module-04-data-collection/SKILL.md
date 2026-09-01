@@ -466,6 +466,25 @@ writes the prose body, because no status check was asked for. Left uncaught, `da
 one-line file that fails in Module 5's mapping or lands as a "1 record" quality assessment, and the
 Bootcamper debugs their mapping for a fault created two modules earlier.
 
+**⛔ Prefer `download_url` (MCP-hosted) over `source_download_url` for every CORD fetch.** Both
+appear in the same `citation`, so both look equally available; they are not. The MCP endpoint is
+served to programmatic clients and needs only `mcp.senzing.com` reachable, which is also what keeps
+it working in a restricted-egress environment — the server's own citation note says so. Use
+`source_download_url` only when the full uncapped file is genuinely needed and the capped fetch is
+not enough. Module 3b states the same preference for the Truth Set; this is Module 4's.
+
+⚠️ **Observation, not an MCP-sourced fact (INV-080/INV-149).** On **2026-09-01**, Ubuntu 24.04 /
+Python **3.12.3**, `https://senzing.com/datasets/gleif-lasvegas.jsonl` returned **HTTP 403** to
+`urllib.request` under its default `Python-urllib/3.12` User-Agent and **HTTP 200** to `curl`, while
+`https://mcp.senzing.com/download/...` returned **200** to both. All four `las-vegas` sources of a
+generated scenario failed identically on 2026-08-31. Whether this is a CDN rule, and whether it
+holds from every network, is not something any MCP route reports — so it is dated and scoped to
+where it was measured rather than stated as Senzing behavior.
+
+⛔ **Never set a misleading User-Agent to get around it.** Beyond being the wrong thing to teach, it
+does not even work: `Mozilla/5.0` was measured **403** on the same host in the same run. The remedy
+is the other URL, which the response already gave you.
+
 Three checks, all required, in this order. **This is the canonical statement; do not restate it
 elsewhere.**
 
@@ -477,6 +496,14 @@ elsewhere.**
    brief pause between sequential source fetches so the limit is not tripped at all. Verified live:
    the same four-source fetch that lost two sources returned **all four complete** when each request
    retried with a one-second backoff (server 1.32.9, 2026-08-12).
+
+   ⛔ **On 403, do not retry — switch URLs.** A 403 is a refusal, not a throttle, so a backoff
+   changes nothing and burns the Bootcamper's time before failing anyway. Re-fetch the same source
+   via the **other** URL in the same `citation` — in practice `download_url`, if the failed attempt
+   used `source_download_url` — and continue with check 2 against that URL's expected count. Only if
+   **both** URLs fail do you report failure, and then name the host and the status rather than
+   saying the fetch did not work: the Bootcamper can act on "senzing.com returned 403" and cannot act
+   on "collection failed".
 
 2. **Compare the record count against the count the server already gave you.** The authoritative
    figure is already in hand — `get_sample_data(dataset=…, source='list')` returns `record_count` per

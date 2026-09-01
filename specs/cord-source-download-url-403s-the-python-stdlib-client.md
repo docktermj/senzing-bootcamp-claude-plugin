@@ -108,3 +108,35 @@ disguise its client is the wrong shape of advice regardless.
 - Upstream: possibly worth reporting to Senzing that `senzing.com/datasets/*` refuses
   `Python-urllib`, but that is the maintainer's call and is **not** actioned by this spec.
 - Related specs: none
+
+## Deviations from this spec, and why (2026-09-01)
+
+**None to the substance — but the observation was re-measured rather than restamped.** The 403 is an
+access-policy observation of a third-party web host, not an MCP-reported fact, so carrying the
+spec's 2026-08-31 table forward would have been the exact defect
+`specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md` (implemented earlier in this run)
+is about. Re-probed 2026-09-01 on Ubuntu 24.04 / Python 3.12.3, and **all four cells reproduce**:
+
+| Client | `senzing.com/datasets/gleif-lasvegas.jsonl` | `mcp.senzing.com/download/…` |
+|---|---|---|
+| `urllib.request`, default `Python-urllib/3.12` | **403** | 200 |
+| `urllib.request`, `User-Agent: curl/8.5.0` | 200 | — |
+| `urllib.request`, `User-Agent: Mozilla/5.0` | **403** | — |
+| `curl`, default UA | 200 | 200 |
+
+The shipped text is dated **2026-09-01** and names the client, since the split is by User-Agent and
+"senzing.com returns 403" without the client is not reproducible.
+
+**The server now states the routing distinction itself, which strengthens change 1.** The live
+`get_sample_data` citation note reads: *"download_url serves up to 250000 records per request and
+needs only mcp.senzing.com allowed; source_download_url is the complete uncapped file but requires
+egress to senzing.com."* The `download_url` preference is therefore not merely a workaround for the
+403 — it is the route the server itself describes as the one needing less reachability, which is why
+the shipped reason leads with restricted egress rather than with the refusal.
+
+**Acceptance criterion 3 is implemented but not runtime-verified.** *"A Python guide using only the
+standard library can collect every source of a CORD-backed generated scenario by following the
+module as written"* is a claim about a live walk. The route it now documents returned **200** from
+this machine today, and the guidance is asserted by the guard — but confirming the criterion needs a
+`dry-run` phase 3 pass that collects a CORD-backed generated scenario, which is the run that found
+this in the first place.
