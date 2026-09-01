@@ -256,11 +256,33 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    answers *will it load*. This answers *is there anything left to map* — and they are not the same
    question. Over the same sampled records, partition every root key into three sets:
 
-   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and the legacy
-     per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
+   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and any root
+     sub-list **whose contents resolve to Entity Specification attributes** (`NAMES`, `ADDRESSES`,
+     `IDENTIFIERS`, …);
    - **specification attributes** — keys that resolve to an attribute in the Entity Specification
      you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
-   - **unrecognized keys** — everything else.
+   - **unrecognized keys** — everything else, *including the contents of any root array whose
+     contained keys do not resolve*.
+
+   ⛔ **A root array is a per-feature sub-list only if its CONTENTS are spec attributes — decide it
+   by looking inside, never by the key's shape.** The structural set above is closed, and the `…`
+   continues a list of *examples of the test*, not an invitation to add members by resemblance:
+   plural, uppercase and an array-of-objects is exactly what an unrecognized array looks like too.
+   **So partition one level down as well** — for every root key holding an array of objects, run the
+   same three-way test on the contained keys, and count an unresolved contained key as an
+   unrecognized key of the source.
+
+   ⚠️ **The worked case, measured live.** `get_sample_data(dataset='las-vegas', source='GLEIF')`
+   returns four root arrays that look alike. Three are genuine sub-lists — `COUNTRIES` holds
+   `REGISTRATION_COUNTRY`, `DATES` holds `REGISTRATION_DATE`, `RELATIONSHIPS` holds
+   `REL_ANCHOR_*`/`REL_POINTER_*`, and all resolve. The fourth, **`RISKS`, holds `TOPIC`, which is
+   not a Senzing attribute at all** — 547 of the source's 1,952 records carry it, and `TOPIC` appears
+   in no feature table of the Entity Specification (both re-verified on MCP server **1.35.1**,
+   2026-09-01). Filed as structural, its undispositioned contents are invisible, and a source whose
+   only unmapped content sits inside such an array reaches step 5 with **zero** unrecognized keys —
+   the fast path is offered, and the module is skipped with real fields undecided. That is the
+   failure the ⛔ two paragraphs down already forbids, arriving one level up: at the **container**
+   rather than at the leaf.
 
    ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
    catalog attribute can arrive carrying a leading label, and an exact match reports it as
