@@ -59,7 +59,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     **INV-NNN** — Where a check classifies a source key as *structure* rather than as *content*, that classification MUST be decided by the key's **contents**, never by its name or shape, and any set of structural keys stated in the plugin MUST be closed rather than open-ended. A container whose contained keys do not resolve is unrecognized content, and its contents count toward the source's unrecognized set. ⚠️ **An open-ended list of examples is read as an invitation to add members by resemblance**, which is precisely how a gate that decides whether a whole module may be skipped comes to be satisfied by an array nobody dispositioned. Enforced by `tests/test_coverage_check_looks_inside_root_arrays.py`.
 
     ⛔ **Nothing was written to `specs/INVARIANTS.md`.** Minting is the maintainer's alone. On sign-off, mint it at the next free id and cite it at the rule's line, then re-run `coverage_reports.py shipped` and confirm the id is gone from its output.
-- **Commit:** `uncommitted`
+- **Commit:** `915bdc7`
 
 ## step-1-says-skip-step-3-entirely-then-says-not-entirely
 
