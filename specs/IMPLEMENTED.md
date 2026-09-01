@@ -55,7 +55,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
     Drafted wording, next free id:
 
     **INV-NNN** — *(written as NNN deliberately: a literal id here would cite an invariant that does not exist and turn `citations.py verify` red. Mint at the next free id — read it off `INVARIANTS.md` rather than trusting a number written here, since several deferrals are pending and only the first one minted gets the id any of them would have named.)* Where the SBCP ships a rule into an artifact the Bootcamper works through **unattended** — a checklist, a migration item, a standing instruction they act on without the guide present — and that rule has a **known site where following it is wrong**, the exception MUST ship in the same item as the rule. ⛔ **Recording the exception in another document is not shipping it**: the reader of a checkbox does not follow a cross-reference before ticking it, and an unqualified rule is at its most damaging exactly where nobody is watching. Where the exception cannot be stated in the item, the item MUST be narrowed until it is true as written, never shipped broad with the correction elsewhere. (Source: `export-flags-are-not-documented-against-the-export-method`, 2026-09-01.)
-- **Commit:** uncommitted
+- **Commit:** 8d8eb83
 
 ## the-export-flag-set-is-coupled-to-absorb-with-nothing-connecting-them
 
