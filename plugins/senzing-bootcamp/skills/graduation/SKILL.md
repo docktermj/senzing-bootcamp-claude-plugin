@@ -919,7 +919,13 @@ the files are exactly as they were before this paragraph.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
   - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
     composites in `production/src/` with the explicit `SZ_*` flags whose output your code actually
-    consumes."* Give the reason, because it is what makes the item non-obvious: the server states
+    consumes — **except the export call**, where `SZ_ENTITY_DEFAULT_FLAGS` is the documented
+    choice and hand-assembling `SZ_ENTITY_INCLUDE_*` members has been observed to drop
+    `RELATED_ENTITIES` entirely, with no error."*
+    ⛔ **Ship the exception with the item, never the item alone.** The bare instruction points at
+    the one call where following it silently loses every relationship
+    (`../module-06-data-processing/phaseD-validation.md`), and a checklist a Bootcamper works
+    through unattended is exactly where an unqualified rule does that damage. Give the reason, because it is what makes the item non-obvious: the server states
     that DEFAULT composites are for getting started and exploration rather than production, that
     their **membership may change between Senzing versions**, and that pinned code can therefore
     *"silently change what it returns after an upgrade — no error is raised"*; they also over-fetch,

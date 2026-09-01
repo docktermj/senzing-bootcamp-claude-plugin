@@ -261,30 +261,41 @@ class TheExportPathIsReachableFromTheShippedServer(unittest.TestCase):
             "the export build.",
         )
 
-    def test_the_export_call_does_not_pin_a_default_composite(self):
-        """⛔ Module 7 forbids it, so the reference it points at must not do it either.
+    def test_the_export_call_uses_the_export_documented_composite(self):
+        """The export call passes SZ_ENTITY_DEFAULT_FLAGS, not hand-assembled members.
 
-        `SZ_EXPORT_DEFAULT_FLAGS` is `SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_DEFAULT_FLAGS`
-        (server 1.35.3, 2026-09-01), and the server's own caution says a DEFAULT composite's
-        membership may change between versions with no error raised.
+        ⚠️ **This assertion was reversed on 2026-09-01, and the reversal is the point.**
+        It previously required the opposite — an explicit `SZ_ENTITY_INCLUDE_*` set, with
+        `SZ_EXPORT_DEFAULT_FLAGS` banned — because Module 7 said so and the server's
+        production caution backs enumerating flags in general.
+
+        That was pinning a wrong premise. `module-06-data-processing/phaseD-validation.md`
+        already recorded a bootcamp session that assembled export flags from those members
+        and got rows with **no `RELATED_ENTITIES` key at all, and no error** — for this
+        model, a graph with nodes and no edges. The documentation says the same thing more
+        quietly: the relationship and record-detail flags do not list the export methods in
+        their `applies_to`, while `SZ_ENTITY_DEFAULT_FLAGS` does and its `response_paths`
+        cover exactly what `_absorb` reads (server 1.35.4, 2026-09-01).
+
+        So the claim being pinned is *"the export call requests entity content the way the
+        export family documents"* — not any particular spelling of it.
         """
         fn = self._build_model_fn()
         names = {n.attr for n in ast.walk(fn) if isinstance(n, ast.Attribute)}
-        self.assertNotIn(
-            "SZ_EXPORT_DEFAULT_FLAGS", names,
-            "the export call must request the flags the model consumes, not a DEFAULT "
-            "composite — the instruction in Module 7 says so, and a reference that "
-            "contradicts it recreates the defect this fix exists for.",
+        self.assertIn(
+            "SZ_ENTITY_DEFAULT_FLAGS", names,
+            "the export call must request entity content through the composite the export "
+            "family documents. Hand-assembling SZ_ENTITY_INCLUDE_* members has been "
+            "OBSERVED to return rows with no RELATED_ENTITIES and no error.",
         )
-        for required in ("SZ_EXPORT_INCLUDE_ALL_ENTITIES",
-                         "SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO",
-                         "SZ_ENTITY_INCLUDE_ALL_RELATIONS"):
-            with self.subTest(flag=required):
-                self.assertIn(
-                    required, names,
-                    "the export flags must name what `_absorb` actually reads; %s "
-                    "populates a field the model consumes" % required,
-                )
+        self.assertIn("SZ_EXPORT_INCLUDE_ALL_ENTITIES", names)
+        hand_assembled = {n for n in names if n.startswith("SZ_ENTITY_INCLUDE_")}
+        self.assertEqual(
+            set(), hand_assembled,
+            "the export flag set must not go back to hand-assembled SZ_ENTITY_INCLUDE_* "
+            f"members: {sorted(hand_assembled)}. That is the composition observed to drop "
+            "relationships silently.",
+        )
 
 
 class TheHeaderDescribesBothBuildPaths(unittest.TestCase):
@@ -372,6 +383,16 @@ class TheModuleSaysWhichStrategyApplies(unittest.TestCase):
         self.text = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
                      "module-07-query-visualize-discover" /
                      "phase1-query-visualize.md").read_text(encoding="utf-8")
+        # ⚠️ And the EXPORT-CALL block only, for claims about the export call. Checked
+        # against the whole file, the "names the composite" assertion passed with every
+        # mention deleted from the export guidance — satisfied by the flag-composite table
+        # ~550 lines earlier, which is about `get_entity`. A file-wide `assertIn` on a
+        # token this common tests that the module mentions a flag somewhere, which was
+        # never the claim.
+        start = self.text.index("Build the model from the EXPORT STREAM")
+        rest = self.text[start:]
+        nxt = re.search(r"\n- \*\*Keep all|\n- Keep all", rest)
+        self.export_block = rest[:nxt.start()] if nxt else rest
 
     def test_it_instructs_the_export_stream_build(self):
         self.assertRegex(
@@ -396,12 +417,32 @@ class TheModuleSaysWhichStrategyApplies(unittest.TestCase):
             "(INV-002/INV-080).",
         )
 
-    def test_it_warns_against_pinning_a_default_composite(self):
+    def test_it_says_what_to_pass_to_the_export_call(self):
+        """The guidance names the composite, and says why the usual advice is wrong here.
+
+        ⚠️ Also reversed on 2026-09-01. The retired version required the module to warn
+        *against* pinning a DEFAULT composite into the export call — advice that could not
+        be followed (no `SZ_ENTITY_INCLUDE_*` flag lists the export methods in `applies_to`,
+        so there is no enumerated set to request) and that pointed at the exact composition
+        observed to lose every relationship. Pinning the instruction rather than the claim
+        is what let it stand while `module-06` shipped the opposite.
+        """
+        flat = re.sub(r"\s+", " ", self.export_block)
+        self.assertIn(
+            "SZ_ENTITY_DEFAULT_FLAGS", flat,
+            "the export guidance must name the composite it wants passed; a reader who is "
+            "only told what not to do has to invent the rest.",
+        )
         self.assertRegex(
-            self.text, r"(?i)\*_DEFAULT_FLAGS`? composite into the export call|"
-            r"Do not pin a `?\*_DEFAULT_FLAGS",
-            "the guidance must not send a Bootcamper to pin a DEFAULT composite — the "
-            "server's own caution says their membership may change with no error raised.",
+            flat, r"(?i)no `?RELATED_ENTITIES`? key at all",
+            "the guidance must carry the OBSERVATION, not just the conclusion. The reason "
+            "this rule inverts the module's usual advice is the whole reason it survives "
+            "a later tidy-up (INV-169).",
+        )
+        self.assertNotRegex(
+            flat, r"(?i)Do not pin a `?\*_DEFAULT_FLAGS`? composite into the export call",
+            "the retired instruction must not come back — it contradicted module-06 and "
+            "named the composition observed to drop relationships.",
         )
 
 
@@ -546,4 +587,60 @@ class AMissingFieldIsSilentNotLoud(unittest.TestCase):
             "The flags argument must reach export_json_entity_report. A build that "
             "computes a flag set and then does not pass it is the defect this whole "
             "coupling is about, in its most direct form.",
+        )
+
+
+SHIPPED = REPO / "plugins" / "senzing-bootcamp"
+
+
+class EveryShippedSiteAgreesAboutTheExportFlags(unittest.TestCase):
+    """No shipped file may tell a reader to hand-assemble the export flag set.
+
+    ⛔ (INV-246) The site set is SCANNED, not listed. The defect this guards against
+    survived because the rule lived in three files that disagreed — `module-06` said start
+    from the export composite, `module-07` said never pin one, and the reference server did
+    a third thing — and every guard checked one file at a time, so no assertion could see
+    the disagreement. A hardcoded pair of paths would reproduce that blindness exactly.
+    """
+
+    RETIRED = re.compile(
+        r"(?i)do not pin a `?\*?_?DEFAULT_FLAGS`? composite into the export call")
+
+    def shipped_files(self):
+        for path in sorted(SHIPPED.rglob("*")):
+            if path.suffix in (".md", ".py") and path.is_file():
+                yield path
+
+    def test_no_shipped_file_carries_the_retired_instruction(self):
+        offenders = [
+            f"{p.relative_to(REPO)}:{i}"
+            for p in self.shipped_files()
+            for i, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1)
+            if self.RETIRED.search(line)
+        ]
+        self.assertEqual(
+            [], offenders,
+            "a shipped file still tells the reader not to pin a DEFAULT composite into the "
+            f"export call: {offenders}. That instruction cannot be followed — no "
+            "SZ_ENTITY_INCLUDE_* flag lists the export methods in applies_to — and it names "
+            "the composition observed to return no RELATED_ENTITIES at all.",
+        )
+
+    def test_the_modules_that_teach_the_export_call_name_the_composite(self):
+        """Both teaching sites must name what to pass, not only what to avoid."""
+        teaching = [
+            p for p in self.shipped_files()
+            if p.suffix == ".md" and "export_json_entity_report" in
+            p.read_text(encoding="utf-8") and "flags" in p.read_text(encoding="utf-8")
+        ]
+        self.assertTrue(teaching, "no shipped file teaches the export call — scan is wrong")
+        silent = [
+            str(p.relative_to(REPO)) for p in teaching
+            if "DEFAULT_FLAGS" not in p.read_text(encoding="utf-8")
+        ]
+        self.assertEqual(
+            [], silent,
+            f"these files teach the export call without naming a flag composite: {silent}. "
+            "A reader told to call the method but not what to pass will assemble members, "
+            "which is the case observed to drop relationships.",
         )

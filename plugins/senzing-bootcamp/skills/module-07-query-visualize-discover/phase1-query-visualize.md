@@ -684,9 +684,24 @@ of the Truth Set. It MUST:
     by binding** — Java `exportJsonEntityReport` taking `Set<SzFlag>`, C# `ExportJsonEntityReport`,
     TypeScript `exportJsonEntityReport` taking `bigint` — so look it up for the Bootcamper's
     language rather than translating the Python form.
-  - ⚠️ **Do not pin a `*_DEFAULT_FLAGS` composite into the export call.** `get_sdk_reference`'s own
-    production caution says their membership may change between versions with no error raised;
-    request the flags whose output the model actually consumes.
+  - ⛔ **(INV-179) Pass `SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_DEFAULT_FLAGS` — do NOT hand-assemble
+    the export flags from `SZ_ENTITY_INCLUDE_*` members.** This is the one call where this
+    module's usual "request exactly the flags you consume" advice is **wrong**, and it is wrong
+    in a way that was observed rather than reasoned about: a bootcamp session that assembled
+    export flags from those members got rows with **no `RELATED_ENTITIES` key at all, and no
+    error** — a graph with nodes and no edges (`../module-06-data-processing/phaseD-validation.md`,
+    which records both observations and treats the dumped row as the authority).
+    The documentation agrees: the relationship and record-detail flags do **not** list the export
+    methods in their `applies_to`, while `SZ_ENTITY_DEFAULT_FLAGS` does, and its `response_paths`
+    cover `RELATED_ENTITIES[]` and `RESOLVED_ENTITY.ENTITY_ID`/`.ENTITY_NAME`/`.RECORDS[]`
+    (`get_sdk_reference(topic='flags', filter='SZ_ENTITY_DEFAULT_FLAGS')`, server **1.35.4**,
+    2026-09-01). `scripts/senzing_viz_server.py` does exactly this, so a server modeled on it
+    inherits the right choice.
+    ⚠️ **The DEFAULT-composite caution is not waived — it is relocated.** Membership can still
+    shift between versions with no error, which matters for the code that *leaves* with the
+    Bootcamper: `production/MIGRATION_CHECKLIST.md` carries it as a Performance item, and that
+    item's own carve-out says the export call is where the replacement must not be applied
+    blindly.
 - Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
   `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct

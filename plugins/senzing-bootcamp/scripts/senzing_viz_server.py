@@ -57,9 +57,10 @@ engine through the SDK; no direct SQL is ever run against the database on either
                        embedded-master record the mapper emitted into no input file is
                        invisible to it.
 
-The export path's flags are chosen explicitly rather than as a DEFAULT composite; the
-reason, and the mapping from each flag to the field it populates, is stated at the call
-in ``build_model`` rather than repeated here.
+The export path passes ``SZ_ENTITY_DEFAULT_FLAGS`` rather than a hand-assembled set of
+``SZ_ENTITY_INCLUDE_*`` members, which is the opposite of the usual advice and is the
+one call where the usual advice has been observed to fail; the reason is stated at the
+call in ``build_model`` rather than repeated here.
 
 Usage:
     # Serve the live web app (Python reference; run directly only when the chosen language is Python — INV-090):
@@ -399,13 +400,13 @@ class Model:
         Shared verbatim by both build paths: an export row and a ``get_entity`` response
         carry the same shape, which is why the export path needed no new absorb logic.
 
-        ⛔ **(INV-179) READING A NEW FIELD HERE MEANS ADDING ITS FLAG TO ``export_flags``
-        IN ``build_model``.** The per-record path passes the broad
-        ``SZ_ENTITY_DEFAULT_FLAGS``, so a newly-read field probably works there; the export
-        path passes an explicit list, and a field whose flag is missing comes back
-        **absent** and renders blank — no error, no warning. INV-179 names that as one of
-        the three causes of a blank field, and the one nothing warns about. The Truth Set
-        would look fine and a Bootcamper's own datastore would not.
+        ⛔ **(INV-179) READING A NEW FIELD HERE MEANS CHECKING IT AGAINST ``export_flags``
+        IN ``build_model``.** Both paths now pass ``SZ_ENTITY_DEFAULT_FLAGS``, so a field
+        inside that composite's ``response_paths`` works on both; a field OUTSIDE them
+        needs its own flag added, and until it is there it comes back **absent** and
+        renders blank — no error, no warning. INV-179 names that as one of the three
+        causes of a blank field, and the one nothing warns about. The Truth Set would look
+        fine and a Bootcamper's own datastore would not.
 
         ⚠️ ``tests/test_visualization_model_build_scales.py`` fails when a field read here
         is not accounted for in its field-to-flag map, which is what turns this comment
@@ -1845,47 +1846,37 @@ def build_model(settings, patterns):
         # record, and it yields EVERY resolved entity, including embedded-master records the
         # mapper emitted into no input file, which the per-record build cannot reach.
         #
-        # ⛔ The flags are requested EXPLICITLY, not as `SZ_EXPORT_DEFAULT_FLAGS`. That
-        # composite is `SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_DEFAULT_FLAGS`
-        # (`get_sdk_reference(topic='flags', filter='SZ_EXPORT_DEFAULT_FLAGS')`, server
-        # 1.35.3, 2026-09-01), and the server's own production caution says a DEFAULT
-        # composite's membership may change between versions with no error raised. Module 7
-        # tells the guide not to pin one into the export call, so this file must not — a
-        # reference that contradicts the instruction pointing at it is the defect
-        # `the-export-stream-build-is-unreachable-in-the-shipped-server` was filed for.
+        # ⛔ (INV-179) This call is coupled to `Model._absorb`, ~1,450 lines above: the
+        # flag set must cover every field it reads, and a field it reads that the export
+        # did not return comes back **absent** — no error, no warning, a blank cell.
+        # The coupling is enforced by the field-to-flag map in
+        # `tests/test_visualization_model_build_scales.py`.
         #
-        # ⛔ (INV-179) This list is coupled to `Model._absorb`, ~500 lines above: each flag
-        # is here because `_absorb` reads the field it populates, and a field read there
-        # without its flag here comes back blank from a real engine with no error. The
-        # coupling is enforced by the field-to-flag map in
-        # `tests/test_visualization_model_build_scales.py` — change one end and that test
-        # tells you about the other.
+        # ⛔ Pass `SZ_ENTITY_DEFAULT_FLAGS`, NOT a hand-assembled set of
+        # `SZ_ENTITY_INCLUDE_*` members. This is the one call where the usual
+        # "request exactly the flags you consume" advice is wrong, and it is wrong in a
+        # way that has been OBSERVED rather than reasoned about:
         #
-        # ⚠️ The server documents these five SZ_ENTITY_INCLUDE_* flags against the
-        # get_entity family, NOT against the export method we pass them to. The composite
-        # that IS documented for export (SZ_ENTITY_DEFAULT_FLAGS, applies_to includes
-        # export_json_entity_report) has response_paths equal to exactly the four paths
-        # `_absorb` reads. Whether the individual flags are honored on the export stream
-        # is not something an offline suite or a machine with no datastore can settle, so
-        # it is recorded rather than guessed — see
-        # `specs/export-flags-are-not-documented-against-the-export-method.md`.
+        #   - `../skills/module-06-data-processing/phaseD-validation.md` records a
+        #     bootcamp session that assembled export flags from `SZ_ENTITY_INCLUDE_*`
+        #     members and got rows with **no `RELATED_ENTITIES` key at all, and no
+        #     error**. For this model that is a graph with nodes and no edges.
+        #   - The documentation agrees: the relationship-detail flags do not list the
+        #     export methods in their `applies_to`, while `SZ_ENTITY_DEFAULT_FLAGS` does
+        #     and carries `response_paths` covering exactly what `_absorb` reads —
+        #     `RELATED_ENTITIES[]`, `RESOLVED_ENTITY.ENTITY_ID`, `.ENTITY_NAME`,
+        #     `.RECORDS[]` (`get_sdk_reference(topic='flags',
+        #     filter='SZ_ENTITY_DEFAULT_FLAGS')`, server 1.35.4, 2026-09-01).
         #
-        # MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_DATA') — no SZ_ENTITY_INCLUDE_* flag in this set lists export_json_entity_report in applies_to — owner: get_sdk_reference(topic='response_schemas', filter='export_json_entity_report') documents RESOLVED_ENTITY.ENTITY_ID/.ENTITY_NAME/.RECORDS[] and RELATED_ENTITIES[] as export response paths and carries requires_flags ONLY on MATCH_KEY_DETAILS — server 1.35.4, 2026-09-01
+        # The server's DEFAULT-composite caution (membership can shift between versions
+        # with no error) still applies and is not waived here — it is carried where it
+        # bites, as the Performance item in `production/MIGRATION_CHECKLIST.md`, because
+        # that is about the code the Bootcamper ships rather than this reference.
         #
-        # Each flag below is here because `_absorb` reads what it populates:
-        #   ALL_ENTITIES          -> which entities the export yields
-        #   ENTITY_NAME           -> RESOLVED_ENTITY.ENTITY_NAME
-        #   RECORD_DATA           -> RESOLVED_ENTITY.RECORDS[] DATA_SOURCE / RECORD_ID
-        #   RECORD_MATCHING_INFO  -> RESOLVED_ENTITY.RECORDS[].MATCH_KEY (Match Keys tab)
-        #   ALL_RELATIONS         -> RELATED_ENTITIES[]
-        #   RELATED_MATCHING_INFO -> RELATED_ENTITIES[] MATCH_KEY / MATCH_LEVEL_CODE
+        # MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS') — the SZ_ENTITY_INCLUDE_* relationship and record flags do not list export_json_entity_report in applies_to — owner: get_sdk_reference(topic='flags', filter='SZ_ENTITY_DEFAULT_FLAGS') IS the route that owns entity content on the export family: its applies_to includes export_json_entity_report and export_csv_entity_report, and its response_paths are RELATED_ENTITIES[] / RESOLVED_ENTITY.ENTITY_ID / .ENTITY_NAME / .RECORDS[] / .RECORD_SUMMARY[], so the composite is where the reader must go rather than concluding the export cannot return relationships (routing negative) — server 1.35.4, 2026-09-01
         export_flags = (
             SzEngineFlags.SZ_EXPORT_INCLUDE_ALL_ENTITIES
-            | SzEngineFlags.SZ_ENTITY_INCLUDE_ENTITY_NAME
-            | SzEngineFlags.SZ_ENTITY_INCLUDE_RECORD_DATA
-            | SzEngineFlags.SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO
-            | SzEngineFlags.SZ_ENTITY_INCLUDE_ALL_RELATIONS
-            | SzEngineFlags.SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO
+            | SzEngineFlags.SZ_ENTITY_DEFAULT_FLAGS
         )
         model = Model().build_from_export(engine, export_flags)
     # Pre-compute the (capped) feature-score distribution so the Feature Scores tab
