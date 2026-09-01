@@ -1391,9 +1391,18 @@ async function drawHist(){const s=await getJSON("/api/stats");const box=d3.selec
   const W=Math.min(720,box.node().clientWidth),H=300,m={t:20,r:10,b:40,l:44};
   const svg=box.append("svg").attr("width",W).attr("height",H);
   const x=d3.scaleBand().domain(data.map(function(d){return d.label;})).range([m.l,W-m.r]).padding(0.25);
-  const y=d3.scaleLinear().domain([0,d3.max(data,function(d){return d.n;})||1]).nice().range([H-m.b,m.t]);
+  const maxN=d3.max(data,function(d){return d.n;})||1;
+  const y=d3.scaleLinear().domain([0,maxN]).nice().range([H-m.b,m.t]);
   svg.append("g").attr("transform","translate(0,"+(H-m.b)+")").call(d3.axisBottom(x));
-  svg.append("g").attr("transform","translate("+m.l+",0)").call(d3.axisLeft(y).ticks(5));
+  // This axis counts ENTITIES, which are whole. d3's .ticks(n) asks for "about n
+  // ticks" and picks whatever step fits, so a domain of [0,1] is labeled in fifths
+  // — "0.4 entities". Small maxima are the NORMAL bootcamp shape (the built-in
+  // evaluation license caps ingestion at 500 DSRs), so pick integer tick VALUES.
+  // .tickFormat("d") alone is not enough: it rounds the labels while leaving the
+  // fractional positions, yielding duplicates like 0,0,0,1,1,1.
+  const yStep=Math.max(1,Math.ceil(maxN/5));
+  svg.append("g").attr("transform","translate("+m.l+",0)")
+    .call(d3.axisLeft(y).tickValues(d3.range(0,maxN+1,yStep)).tickFormat(d3.format("d")));
   svg.selectAll("rect").data(data).join("rect").attr("x",function(d){return x(d.label);}).attr("y",function(d){return y(d.n);})
     .attr("width",x.bandwidth()).attr("height",function(d){return y(0)-y(d.n);}).attr("rx",4).style("cursor","pointer")
     .attr("fill",function(d,i){return i===0?"__ACCENT__":"__ACCENT_HOT__";})
