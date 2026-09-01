@@ -42,6 +42,20 @@ entries at once. Two things a reader should know about the hashes now recorded:
 
 -->
 
+## production-readiness-audit-2026-09-01b
+
+**Not a spec** — a dated record of an audit run. **Cycle 2 of the unattended `/unattended-spec-loop`**, run against the three specs cycle 1's audit filed. ⛔ **No new specs. This is the loop's stopping condition**, and it is the result most worth being able to verify later, so the basis is recorded rather than asserted.
+
+- **Implemented:** 2026-09-01 (**0 findings; nothing written, nothing fixed**)
+- **Files changed:** this record only. **No shipped file, no test and no spec was modified by this audit.**
+- **MCP re-check:** **n/a (no Senzing fact).** Cycle 2 implemented three internal findings — two citation corrections and one ledger-wording fix — and asserted no Senzing claim. The session dated itself at server **1.35.3**, 2026-09-01.
+- **Baseline, read off the run.** Suite green: **3,911 passed, 3 skipped**. `citations.py verify` clean at **283**. `rules`: **613** hard-rule lines (428 line-anchored + 185 mid-line), **0** in a section citing no invariant. `shipped`: none. `unmarked`: none. `since --since-last-audit`: **3** hard-rule lines added across 3 files since `188df74`.
+- **The three added rules, read individually — the set cycle 2 is answerable for.** All three are the citations cycle 2 existed to add, and each was checked against the invariant's own text before being written, not after: ⛔ **(INV-146)** at `module-completion.md`'s screenshot-timing rule — INV-146 is *"Every screenshot a visualization capture produced MUST reach the recap"*, and the two-moments rule is the mechanism by which it does; ⛔ **(INV-222)** at `module-02-sdk-setup/SKILL.md`'s *"Not Step 3 entirely"* — INV-222 governs the `PYTHONPATH`/`LD_LIBRARY_PATH` that Step 3's environment script exports; ⛔ **(INV-247)** at `module-04-data-collection/SKILL.md`'s do-not-gate clause — INV-247 is *"the guide MUST NOT originate a gate the bootcamp does not specify"*, which is that rule almost word for word. **`tests/test_new_hard_rules_are_cited_or_deferred.py` is green under its new, stricter form**, which requires the citation on the rule's own line rather than accepting a neighbor's.
+- ⛔ **Why "no findings" is a real result here and not a tired one.** Cycle 1's audit found three defects by reading 32 rules one at a time; cycle 2 had **3** to read, all of them citations added deliberately in response to those findings, and the check that let cycle 1's defect through was itself replaced and negative-controlled three ways — including against the exact case it used to accept. The population was small, its provenance was known, and the mechanism that missed the earlier instance no longer can.
+- **Verdict by property, separately.** **Consistent — pass in scope**; the three citation sites agree with the invariants they now name. **Coherent — pass**; cycle 1's two coherence defects (a rule citing nothing, a rule citing the wrong invariant) are both closed, and the wrong-citation sweep covered all three CORD disclosure sites rather than the one the finding named. **Complete — pass in scope**; `shipped` and `unmarked` clean. **Concise — unchanged**: **186,834** words against 186,798 at cycle 1, a difference of **36 words** for three specs.
+- ⛔ **Coverage limits, explicitly, and they are cycle 1's unchanged.** **No full forward sweep** — 284 invariants, and this cycle scoped to a 3-rule diff. **The per-module outcome blocks INV-028–INV-049 took no rotation slot in either cycle.** **`per-rule --uncited`'s standing worklist was not worked.** **The 163 duplicated passages were not read pairwise for drift.** ⛔ **The conversational invariants remain wholly untested and cannot be tested by reading**, and **six of this run's specs carry acceptance criteria that are implemented but explicitly not runtime-verified** — every one needs `dry-run` phase 3. **This audit established no invariant and modified no shipped file.**
+- **Commit:** uncommitted
+
 ## the-cord-disclosure-rule-cites-inv-012-where-inv-247-governs
 
 - **Implemented:** 2026-09-01
