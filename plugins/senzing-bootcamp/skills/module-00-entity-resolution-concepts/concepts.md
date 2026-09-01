@@ -22,10 +22,31 @@ Suggested queries:
 
 - "Senzing principle-based entity resolution approach"
 - "entity resolution relationships disclosed discovered"
-- "entity resolution ambiguous match possible match"
+- "ambiguous matches invisible false positives"
 - "Senzing differentiators real-time explainability attribution"
-- "entity resolution pipeline standardization blocking scoring clustering"
+- "How does entity resolution work steps process"
 - "entity resolution false positives false negatives accuracy"
+
+⚠️ **All six were MEASURED, one at a time, not composed.** Each was run against the live index and
+kept only because it returns the material it is for — **MCP server 1.35.3, docs index 2026-09-01
+11:58 UTC**. `search_docs` is BM25, so a plausible-sounding phrase is not evidence of anything, and
+**two of these six were wrong when they were checked**:
+
+- *"entity resolution ambiguous match possible match"* returned **three Entity-Centric-Learning
+  chunks and no ambiguous-match material at all** — the composed phrase loses to chunks with a
+  denser concentration of `entity`/`resolution`/`match`. Replaced with wording from the
+  documentation's own section heading; it now returns *"What Are Ambiguous Matches and Invisible
+  False Positives?"* at **rank 1** (94.7), with two further ambiguous-match sections behind it.
+- *"entity resolution pipeline standardization blocking scoring clustering"* named five real
+  pipeline stages and reached **none of them** — rank 1 was a customer case study, rank 2 the MCP
+  server's own page. Replaced; the query now returns the *"How Does Entity Resolution Work?"*
+  section at **rank 1** (108.7), which is the numbered pipeline itself.
+
+⛔ **Both were found by running them, and neither was findable by reading them** — they are
+well-formed, on-topic and use the right technical vocabulary. So if you change an entry here, **run
+it first**, and if the index date above has moved, re-run all six rather than trusting this note.
+The false-positives entry is the standing example of a *good* result that still needs reading: its
+rank 1 is a case study and the material it is for is at rank 2.
 
 ⛔ **Prefer these queries, and when a query returns nothing relevant, RE-QUERY with the
 documentation's own phrasing before concluding the material is not covered.** (INV-212 — the

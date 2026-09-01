@@ -94,3 +94,37 @@ vouches for is one the file's own criterion rejects.
   query-phrasing defect, not a documentation gap.
 - Upstream: not applicable — the defect is in the plugin's shipped query wording, not in the server.
 - Related specs: none
+
+## Deviations from this spec, and why (2026-09-01)
+
+**A second entry in the same list was also wrong, and the spec did not know.** Criterion 2 asks the
+list to carry a note stating *"the entries were measured"*. Shipping that claim having measured only
+the entry this spec names would have been the very defect being fixed — a plausible statement with
+one measurement behind it. So all six were run against server 1.35.3, docs index 2026-09-01 11:58
+UTC, and:
+
+| Query | Reaches its material? | What came back |
+|---|---|---|
+| `Senzing principle-based entity resolution approach` | Yes, rank 1 (138.8) | *What is Principle Based Entity Resolution?* |
+| `entity resolution relationships disclosed discovered` | Yes, rank 1 (69.0) | *How Does Relationship Awareness Improve Entity Resolution?* |
+| `entity resolution ambiguous match possible match` | **No** | 3/3 Entity-Centric-Learning chunks |
+| `Senzing differentiators real-time explainability attribution` | Yes, rank 1 (103.3) | *Senzing Explainability* |
+| `entity resolution pipeline standardization blocking scoring clustering` | **No** | rank 1 a customer case study, rank 2 the MCP server's own page |
+| `entity resolution false positives false negatives accuracy` | Yes, rank 2 (66.6) | as the file already documents — rank 1 is a case study |
+
+The pipeline entry names five real pipeline stages and reaches none of them. It is replaced with
+`How does entity resolution work steps process`, which returns the *"How Does Entity Resolution
+Work?"* section — the numbered pipeline itself — at **rank 1** (108.7). Both misses are recorded in
+the shipped note **with what they actually returned**, so a later editor cannot restore them by feel.
+
+⚠️ **Neither miss was findable by reading.** Both are well-formed, on-topic, and use the right
+technical vocabulary. That is the point: under BM25 the words in a query are not evidence about what
+it returns, so "review the list" is exactly the check that had already passed twice.
+
+**An existing guard had pinned the wrong premise, and it is worth naming.**
+`tests/test_concepts_teaching_section_claims_no_exemption.py` asserted that a pipeline query exists
+by matching the literal terms `pipeline`, `blocking`, `clustering` in the query text. It therefore
+certified a query it had never seen work, on the strength of the words the query contained — the
+reasoning BM25 defeats. It now pins the **measured result** instead: `concepts.md` must record which
+entry reaches the pipeline section, and that entry must be present in the list. Negative-controlled
+both ways. Nothing was relaxed; the new form is strictly harder to satisfy than a term match.

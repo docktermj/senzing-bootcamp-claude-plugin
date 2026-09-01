@@ -61,7 +61,16 @@ EXEMPTION_SHAPED = ("generic", "general knowledge", "common knowledge", "backgro
 
 #: The two queries the section's own material depends on. Asserted as *content*, not as exact
 #: strings, so rephrasing a query for better retrieval does not fail this guard.
-PIPELINE_TERMS = ("pipeline", "blocking", "clustering")
+#: ⚠️ The pipeline route is asserted by its MEASURED RESULT, not by its vocabulary.
+#: This was `PIPELINE_TERMS = ("pipeline", "blocking", "clustering")` — a term match on the
+#: shipped query `"entity resolution pipeline standardization blocking scoring clustering"`.
+#: On 2026-09-01 that query was run against the live index and reached **none** of the pipeline
+#: material (rank 1 a customer case study, rank 2 the MCP server's own page), so the guard was
+#: certifying a query it had never seen work, on the strength of words the query contained.
+#: Under BM25 the words in a query are not evidence about what it returns — which is the whole
+#: defect. The route is now pinned to the section `concepts.md` records it returning (INV-282:
+#: match the claim, not the phrasing already seen).
+PIPELINE_SECTION = "How Does Entity Resolution Work?"
 FAILURE_MODE_TERMS = ("false positive", "false negative")
 
 
@@ -176,13 +185,28 @@ class TheQueriesForThisSectionsMaterialAreSuggested(unittest.TestCase):
         self.queries = [q.lower() for q in suggested_queries()]
 
     def test_a_pipeline_query_is_suggested(self):
-        matching = [q for q in self.queries
-                    if all(term in q for term in PIPELINE_TERMS)]
+        """The route must exist AND be recorded as reaching the pipeline material.
+
+        Offline (INV-108) this cannot re-run the query, so it asserts the two halves the file
+        is responsible for: a suggested entry exists, and the measurement note names the
+        section that entry returned. That is checkable here; the ranking itself is
+        `/dry-run` phase 1's job, which is why the note carries an index date.
+        """
+        note = re.sub(r"\s+", " ", text())
+        self.assertIn(
+            PIPELINE_SECTION, note,
+            "concepts.md must record which suggested query reaches the pipeline material and "
+            "what it returned. Without that record the teaching section's requirement has no "
+            "verifiable route, which is the INV-212 gap this class exists for.")
         self.assertTrue(
-            matching,
-            "no suggested query covers the pipeline stages the teaching section requires "
-            "(looking for %r together). The requirement would then arrive without its route"
-            % (PIPELINE_TERMS,))
+            self.queries,
+            "no suggested queries found at all — the list or its parser has moved")
+        credited = [q for q in self.queries if "entity resolution work" in q]
+        self.assertTrue(
+            credited,
+            "the entry credited with reaching %r is not in the suggested list. The teaching "
+            "section requires the pipeline stages, so the requirement would arrive without "
+            "its route. Found: %r" % (PIPELINE_SECTION, self.queries))
 
     def test_a_failure_modes_query_is_suggested(self):
         matching = [q for q in self.queries
