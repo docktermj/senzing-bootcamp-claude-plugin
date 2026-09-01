@@ -209,6 +209,126 @@ class TheLiftNeverEmptiesTheRecap(unittest.TestCase):
         self.assertNotIn("Where we are", [m.title for m in recap.modules])
 
 
+#: Both fence types, so the rule below is asserted as a class rather than an instance.
+FENCE_PAIRS = (
+    ("<!-- RECAP-CHECKPOINT:START -->", "<!-- RECAP-CHECKPOINT:END -->"),
+    ("<!-- BOOTCAMP-NOTES:START -->", "<!-- BOOTCAMP-NOTES:END -->"),
+)
+
+
+def recap_with_stray_fence(start_marker, end_marker):
+    """A stray START, then a REAL module, then a well-formed fence.
+
+    The shape that deleted `## SDK setup`: the stray's terminator search found the LATER
+    fence's END, so the span covered both and the module between them went with it.
+    """
+    return """# Senzing Bootcamp Recap
+
+## Discover the Business Problem
+
+### Information Shared
+- first real module, long enough for the retention denominator to be meaningful
+
+%s
+## Where we are
+stale, never closed
+
+## SDK setup
+
+### Information Shared
+- SECOND REAL MODULE between the two fences, with content that must not vanish
+
+%s
+## Still to do
+- a later, well-formed block
+%s
+
+## Data collection
+
+### Information Shared
+- third real module, also long enough to count for something here
+""" % (start_marker, start_marker, end_marker)
+
+
+class AStrayFenceNeverAnnexesAModule(unittest.TestCase):
+    """⛔ The HIGH finding of `production-readiness-audit-2026-09-01d`.
+
+    Both handlers located their terminator with ``text.find(END, start)`` — the next END
+    *anywhere* — so a stray unterminated START spanned to a later fence's terminator and
+    discarded every finalized module in between. Measured on the shipped script: a
+    three-module recap parsed to two.
+
+    ⚠️ It was silent three ways, which is why this is asserted rather than left to review:
+    ``audit_recap`` fired the *unfinalized-module* warning (true, about something else),
+    ``--expect-modules`` checks presence and never absence, and ``_source_content_chars``
+    stripped the same region so the loss left the retention **denominator** too — 94%
+    retention, no fatal, on a recap that had lost a module.
+    """
+
+    def setUp(self):
+        self.gen = load_generator()
+
+    def test_the_module_between_two_fences_survives(self):
+        for start_marker, end_marker in FENCE_PAIRS:
+            with self.subTest(fence=start_marker):
+                recap = self.gen.parse_recap(recap_with_stray_fence(start_marker, end_marker))
+                titles = [m.title for m in recap.modules]
+                self.assertIn(
+                    "SDK setup", titles,
+                    "a finalized module between a stray fence START and a later fence's "
+                    "END must survive. Annexing that region to lift one block deletes the "
+                    "Bootcamper's own content from the keepsake PDF, and nothing reports "
+                    "it. Parsed: %r" % (titles,),
+                )
+                self.assertIn("Data collection", titles)
+                self.assertIn("Discover the Business Problem", titles)
+
+    def test_the_stray_is_reported_by_name(self):
+        """Not deleted and not silent: the operator is told which marker is malformed."""
+        for start_marker, end_marker in FENCE_PAIRS:
+            with self.subTest(fence=start_marker):
+                source = recap_with_stray_fence(start_marker, end_marker)
+                audit = self.gen.audit_recap(self.gen.parse_recap(source), source)
+                self.assertTrue(
+                    any("stray" in w and start_marker in w for w in audit.warnings),
+                    "a stray fence START must be reported by name. Leaving its region in "
+                    "place is the safe choice, but an unremoved block is content the fence "
+                    "was meant to lift — for the notes fence, a private note one heading "
+                    "from the recap (INV-100).",
+                )
+
+    def test_the_well_formed_fence_after_a_stray_is_still_handled(self):
+        """Skipping the stray must not disable the fence that IS well formed."""
+        start_marker, end_marker = FENCE_PAIRS[0]
+        recap = self.gen.parse_recap(recap_with_stray_fence(start_marker, end_marker))
+        self.assertNotIn(
+            "Still to do", [m.title for m in recap.modules],
+            "the later, well-formed checkpoint block must still be lifted — otherwise "
+            "fixing the stray case would reintroduce the phantom-module defect.",
+        )
+
+    def test_a_genuinely_unterminated_notes_fence_keeps_its_end_of_text_policy(self):
+        """⚠️ Unchanged, and only reachable when NO well-formed block exists.
+
+        Graduation appends the notes block after the last module, so sweeping to
+        end-of-text is safe there — and it is what stops a truncated fold putting a
+        private note on the certificate (INV-100). Where a later well-formed fence
+        exists, the sweep is NOT used, because it would delete every module after the
+        stray marker.
+        """
+        text = ("# Senzing Bootcamp Recap\n\n## Discover the Business Problem\n\n"
+                "### Information Shared\n- real\n\n"
+                "<!-- BOOTCAMP-NOTES:START -->\n## Notes, Ideas and Questions\n\n"
+                "### Idea: one\n**Captured:** 2026-08-26\n\na private thought\n")
+        recap = self.gen.parse_recap(text)
+        self.assertNotIn(
+            "Notes, Ideas and Questions", [m.title for m in recap.modules],
+            "an unterminated notes fence with no well-formed block after it must still "
+            "sweep to end of text — the note must never become a module section.",
+        )
+        self.assertIsNotNone(recap.notes)
+
+
 class TheFenceSetIsARegistryNotAOneOff(unittest.TestCase):
     """INV-246: adding a fence brings it under the lift, rather than needing a new branch."""
 

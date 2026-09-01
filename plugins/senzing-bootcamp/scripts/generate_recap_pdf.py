@@ -665,6 +665,63 @@ def _parse_notes_block(inner: str) -> NotesSection:
     return section
 
 
+def _fence_spans(text: str, start_marker: str, end_marker: str):
+    """Every WELL-FORMED ``(start, end_exclusive)`` fence span, and the strays skipped.
+
+    ⛔ **A fence's span NEVER extends past the next START of its own type.** Both handlers
+    used to locate their terminator with ``text.find(END, start)`` — the next END *anywhere*
+    in the document — so a stray unterminated START annexed the region up to a later fence's
+    terminator, and **every finalized module section in that region was discarded**.
+
+    Measured 2026-09-01 on the shipped script, for both fences: a three-module recap parsed
+    to two, with `## SDK setup` and its content gone. It was silent three ways — ``audit_recap``
+    fired the *unfinalized-module* warning (true, and about something else), ``--expect-modules``
+    checks presence and never absence, and ``_source_content_chars`` stripped the same region so
+    the deleted module left the retention **denominator** too: 94% retention, no fatal, on a
+    recap that had lost a module.
+
+    A stray START is therefore skipped rather than paired: the caller leaves its block in
+    place, the well-formed fence after it is still handled, and the module between them
+    survives. Returns ``(spans, strays)`` so the caller can report the strays.
+    """
+    spans, strays = [], []
+    pos = 0
+    while True:
+        start = text.find(start_marker, pos)
+        if start == -1:
+            break
+        end = text.find(end_marker, start)
+        if end == -1:
+            break                      # genuinely unterminated — the caller's own policy
+        nxt = text.find(start_marker, start + len(start_marker))
+        if nxt != -1 and nxt < end:
+            # This START's terminator belongs to a later block. Skip it; do not span both.
+            strays.append(start)
+            pos = nxt
+            continue
+        spans.append((start, end + len(end_marker)))
+        pos = end + len(end_marker)
+    return spans, strays
+
+
+def stray_fence_markers(text: str):
+    """Every stray (unterminated-but-followed-by-another) fence START in ``text``.
+
+    Reported by :func:`audit_recap`: a stray marker means the recap is malformed in a way
+    that leaves content in the document which the fence was supposed to lift — for the
+    notes fence that is a Bootcamper's private note one heading away from the recap
+    (INV-100), and the operator has to be told rather than have it silently rendered or
+    silently deleted.
+    """
+    out = []
+    for start_marker, end_marker in (
+        (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END),
+    ) + tuple(DISCARDED_FENCES):
+        _spans, strays = _fence_spans(text, start_marker, end_marker)
+        out.extend((start_marker, i) for i in strays)
+    return out
+
+
 def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     """Lift the BOOTCAMP-NOTES fence out of ``text`` before any module parsing.
 
@@ -673,24 +730,33 @@ def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     never reaches the module loop, so no renamed module can collide with it and no note
     can be promoted to a module section.
     """
+    spans, _strays = _fence_spans(text, BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END)
+    if spans:
+        # The first WELL-FORMED block. A stray START before it is left where it is — its
+        # region is not annexed, so no finalized module between the two is deleted. The
+        # stray is reported by `stray_fence_markers` rather than silently swallowed.
+        start, end = spans[0]
+        inner = text[start + len(BOOTCAMP_NOTES_START): end - len(BOOTCAMP_NOTES_END)]
+        remainder = text[:start] + text[end:]
+        notes = _parse_notes_block(inner)
+        return remainder, (notes if notes.entries else None)
+
     start = text.find(BOOTCAMP_NOTES_START)
     if start == -1:
         return text, None
-    end = text.find(BOOTCAMP_NOTES_END, start)
-    if end == -1:
-        # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
-        # Graduation appends this block AFTER the last module section, so everything past
-        # the opening marker is notes; treating the marker as absent instead would let
-        # the notes heading be parsed as a module and put a Bootcamper's private note on
-        # their Certificate of Completion (INV-100). Losing the fence must cost the
-        # notes' formatting at worst, never the modules and never the certificate.
-        inner = text[start + len(BOOTCAMP_NOTES_START):]
-        notes = _parse_notes_block(inner)
-        return text[:start], (notes if notes.entries else None)
-    inner = text[start + len(BOOTCAMP_NOTES_START):end]
-    remainder = text[:start] + text[end + len(BOOTCAMP_NOTES_END):]
+    # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
+    # Graduation appends this block AFTER the last module section, so everything past
+    # the opening marker is notes; treating the marker as absent instead would let
+    # the notes heading be parsed as a module and put a Bootcamper's private note on
+    # their Certificate of Completion (INV-100). Losing the fence must cost the
+    # notes' formatting at worst, never the modules and never the certificate.
+    # ⚠️ This is reached only when there is NO well-formed block anywhere — the
+    # genuinely-truncated case the policy was written for. Where a later well-formed
+    # fence exists, the branch above handles it and this end-of-text sweep is not used,
+    # because sweeping would delete every module after the stray marker.
+    inner = text[start + len(BOOTCAMP_NOTES_START):]
     notes = _parse_notes_block(inner)
-    return remainder, (notes if notes.entries else None)
+    return text[:start], (notes if notes.entries else None)
 
 
 #: Fenced blocks lifted out of the recap before module parsing and then DISCARDED.
@@ -724,14 +790,10 @@ def _strip_discarded_fences(text: str) -> str:
     module content to avoid it is not a trade this may make.
     """
     for start_marker, end_marker in DISCARDED_FENCES:
-        while True:
-            start = text.find(start_marker)
-            if start == -1:
-                break
-            end = text.find(end_marker, start)
-            if end == -1:
-                break                      # unterminated — see the docstring
-            text = text[:start] + text[end + len(end_marker):]
+        spans, _strays = _fence_spans(text, start_marker, end_marker)
+        # Right to left, so an earlier span's indices stay valid after a later removal.
+        for start, end in reversed(spans):
+            text = text[:start] + text[end:]
     return text
 
 
@@ -1396,6 +1458,20 @@ def audit_recap(
             f"recap still contains a {RECAP_CHECKPOINT_START} … "
             f"{RECAP_CHECKPOINT_END} block — a module was folded by the "
             "durability hooks but never finalized (module-completion step 2d)"
+        )
+
+    # ⛔ A stray fence START — one whose terminator belongs to a LATER block — is reported
+    # by name. It is not the same condition as the surviving-block warning above, and
+    # saying so matters: the stray's region is deliberately NOT annexed (annexing it
+    # deleted finalized modules), so its content stays in the document, and for the notes
+    # fence that is a Bootcamper's private note one heading away from the recap (INV-100).
+    # Neither silently deleting it nor silently rendering it is acceptable; naming it is.
+    for marker, index in stray_fence_markers(source_text):
+        warnings.append(
+            "stray %s at offset %d — its closing marker belongs to a later block, so the "
+            "region was left in place rather than removed (removing it would delete any "
+            "finalized module section between the two). Repair the recap's fences."
+            % (marker, index)
         )
 
     source_chars = _source_content_chars(source_text)

@@ -1806,7 +1806,41 @@ def build_model(settings, patterns):
     factory = SzAbstractFactoryCore("bootcamp_viz", settings, verbose_logging=False)
     engine = factory.create_engine()
     flags = SzEngineFlags.SZ_ENTITY_DEFAULT_FLAGS
-    model = Model().build(engine, flags, _iter_record_keys(patterns))
+    if patterns:
+        # The Truth Set path: a known, small record set, and the file is the source of truth
+        # for which records were loaded.
+        model = Model().build(engine, flags, _iter_record_keys(patterns))
+    else:
+        # ⛔ No records file — build from the export stream. This is the path Module 7
+        # mandates for a Bootcamper's own datastore: one pass instead of one round trip per
+        # record, and it yields EVERY resolved entity, including embedded-master records the
+        # mapper emitted into no input file, which the per-record build cannot reach.
+        #
+        # ⛔ The flags are requested EXPLICITLY, not as `SZ_EXPORT_DEFAULT_FLAGS`. That
+        # composite is `SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_DEFAULT_FLAGS`
+        # (`get_sdk_reference(topic='flags', filter='SZ_EXPORT_DEFAULT_FLAGS')`, server
+        # 1.35.3, 2026-09-01), and the server's own production caution says a DEFAULT
+        # composite's membership may change between versions with no error raised. Module 7
+        # tells the guide not to pin one into the export call, so this file must not — a
+        # reference that contradicts the instruction pointing at it is the defect
+        # `the-export-stream-build-is-unreachable-in-the-shipped-server` was filed for.
+        #
+        # Each flag below is here because `_absorb` reads what it populates:
+        #   ALL_ENTITIES          -> which entities the export yields
+        #   ENTITY_NAME           -> RESOLVED_ENTITY.ENTITY_NAME
+        #   RECORD_DATA           -> RESOLVED_ENTITY.RECORDS[] DATA_SOURCE / RECORD_ID
+        #   RECORD_MATCHING_INFO  -> RESOLVED_ENTITY.RECORDS[].MATCH_KEY (Match Keys tab)
+        #   ALL_RELATIONS         -> RELATED_ENTITIES[]
+        #   RELATED_MATCHING_INFO -> RELATED_ENTITIES[] MATCH_KEY / MATCH_LEVEL_CODE
+        export_flags = (
+            SzEngineFlags.SZ_EXPORT_INCLUDE_ALL_ENTITIES
+            | SzEngineFlags.SZ_ENTITY_INCLUDE_ENTITY_NAME
+            | SzEngineFlags.SZ_ENTITY_INCLUDE_RECORD_DATA
+            | SzEngineFlags.SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO
+            | SzEngineFlags.SZ_ENTITY_INCLUDE_ALL_RELATIONS
+            | SzEngineFlags.SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO
+        )
+        model = Model().build_from_export(engine, export_flags)
     # Pre-compute the (capped) feature-score distribution so the Feature Scores tab
     # works in the live app and the offline snapshot. Guarded so a why failure or a
     # single-record-only data set never blocks the model/snapshot build (INV-077).
@@ -2131,8 +2165,16 @@ def resolve_settings(path, env_value, log):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--settings", default="config/engine_config.json")
-    ap.add_argument("--records", nargs="+", required=True,
-                    help="JSONL file(s)/glob(s) of the records that were loaded")
+    # ⛔ Optional on purpose. With records, the model is built per record — correct for the
+    # Truth Set, which is what this reference serves. WITHOUT them it is built from the
+    # export stream, which is the path Module 7 mandates for a Bootcamper's own datastore
+    # and which this file would otherwise only describe rather than demonstrate. Existing
+    # invocations are unaffected: passing --records keeps the behavior they had.
+    ap.add_argument("--records", nargs="+", default=None,
+                    help="JSONL file(s)/glob(s) of the records that were loaded. Omit to "
+                         "build the model from the export stream instead (every resolved "
+                         "entity, one pass) — preferred for a datastore larger than the "
+                         "Truth Set")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--title", default="Senzing Entity Resolution")
     ap.add_argument("--dataset", default="",

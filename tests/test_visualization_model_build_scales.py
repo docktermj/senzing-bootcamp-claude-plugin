@@ -27,8 +27,10 @@ live engine with a loaded datastore and stays the reporter's observation.
 Stdlib only; the server is loaded by path (INV-108).
 """
 
+import ast
 import importlib.util
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -178,6 +180,91 @@ class TheExportHandleIsAlwaysClosed(unittest.TestCase):
             "the handle must be closed even when the stream raises — that is what the "
             "try/finally is for, and a leaked handle outlives the failed build",
         )
+
+
+class TheExportPathIsReachableFromTheShippedServer(unittest.TestCase):
+    """⛔ The MEDIUM finding of `production-readiness-audit-2026-09-01d`.
+
+    `build_from_export` was added and **nothing in the shipped script called it**:
+    `build_model` built per-record unconditionally and `--records` was `required=True`, so
+    no invocation could reach it. Its only callers were these tests, which is dead code in
+    a shipped artifact — and Module 7 tells the guide to model their own server on this
+    file while mandating the export path, so the reference contradicted the instruction
+    pointing at it.
+
+    ⚠️ Asserted against the **call graph**, not the presence of the method. The ledger
+    ticked a criterion reading *"can build … and does so when pointed at a Bootcamper
+    datastore"* on the evidence that the method existed — which established the first half
+    only. A test for `hasattr` would have passed on the defect.
+    """
+
+    def setUp(self):
+        self.source = SERVER.read_text(encoding="utf-8")
+        self.tree = ast.parse(self.source)
+
+    def _build_model_fn(self):
+        for node in ast.walk(self.tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "build_model":
+                return node
+        self.fail("build_model() not found in the shipped server")
+
+    def _calls_within(self, fn):
+        out = set()
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                out.add(node.func.attr)
+        return out
+
+    def test_build_model_can_reach_the_export_path(self):
+        calls = self._calls_within(self._build_model_fn())
+        self.assertIn(
+            "build_from_export", calls,
+            "build_model() must be able to reach the export build. Adding the method "
+            "without a call site leaves dead code in a shipped script that Module 7 tells "
+            "the guide to model on, while instructing the very path it cannot take.",
+        )
+
+    def test_build_model_still_reaches_the_per_record_path(self):
+        calls = self._calls_within(self._build_model_fn())
+        self.assertIn(
+            "build", calls,
+            "the per-record path must remain reachable — it is correct for the Truth Set, "
+            "which is what this reference serves.",
+        )
+
+    def test_the_records_argument_is_optional(self):
+        """The route that selects the export path: omitting --records."""
+        self.assertNotRegex(
+            re.sub(r"\s+", " ", self.source),
+            r'add_argument\("--records"[^)]*required=True',
+            "--records must be optional; while it was required no invocation could select "
+            "the export build.",
+        )
+
+    def test_the_export_call_does_not_pin_a_default_composite(self):
+        """⛔ Module 7 forbids it, so the reference it points at must not do it either.
+
+        `SZ_EXPORT_DEFAULT_FLAGS` is `SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_DEFAULT_FLAGS`
+        (server 1.35.3, 2026-09-01), and the server's own caution says a DEFAULT composite's
+        membership may change between versions with no error raised.
+        """
+        fn = self._build_model_fn()
+        names = {n.attr for n in ast.walk(fn) if isinstance(n, ast.Attribute)}
+        self.assertNotIn(
+            "SZ_EXPORT_DEFAULT_FLAGS", names,
+            "the export call must request the flags the model consumes, not a DEFAULT "
+            "composite — the instruction in Module 7 says so, and a reference that "
+            "contradicts it recreates the defect this fix exists for.",
+        )
+        for required in ("SZ_EXPORT_INCLUDE_ALL_ENTITIES",
+                         "SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO",
+                         "SZ_ENTITY_INCLUDE_ALL_RELATIONS"):
+            with self.subTest(flag=required):
+                self.assertIn(
+                    required, names,
+                    "the export flags must name what `_absorb` actually reads; %s "
+                    "populates a field the model consumes" % required,
+                )
 
 
 class TheModuleSaysWhichStrategyApplies(unittest.TestCase):

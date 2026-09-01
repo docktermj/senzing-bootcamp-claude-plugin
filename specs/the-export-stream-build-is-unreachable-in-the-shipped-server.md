@@ -96,3 +96,39 @@ or an abandoned one.
 - Upstream: not applicable
 - Related specs: `visualization-model-build-does-one-get-entity-per-record.md` — the implementation
   this audits.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Option 1 was taken:** `--records` is now optional, and `build_model` builds from the export stream
+when it is omitted. Existing invocations are unaffected — passing `--records` keeps the per-record
+Truth Set behavior exactly as before.
+
+**One thing the spec did not anticipate: wiring the call exposed a second instruction/reference
+disagreement, of the same class.** The obvious wiring is
+`build_from_export(engine, SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS)` — and Module 7's own new rule,
+shipped an hour earlier, says ⚠️ *"Do not pin a `*_DEFAULT_FLAGS` composite into the export call."*
+Doing the obvious thing would have made the reference contradict the instruction pointing at it,
+which is the defect this spec exists for, reproduced while fixing it.
+
+The export call therefore requests exactly what `_absorb` reads:
+
+    SZ_EXPORT_INCLUDE_ALL_ENTITIES | SZ_ENTITY_INCLUDE_ENTITY_NAME
+  | SZ_ENTITY_INCLUDE_RECORD_DATA | SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO
+  | SZ_ENTITY_INCLUDE_ALL_RELATIONS | SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO
+
+Verified against server **1.35.3, 2026-09-01**: `get_sdk_reference(topic='flags',
+filter='SZ_EXPORT_DEFAULT_FLAGS')` returns `composite_members: ["SZ_EXPORT_INCLUDE_ALL_ENTITIES",
+"SZ_ENTITY_DEFAULT_FLAGS"]` with the standing production caution that a DEFAULT composite's
+membership may change between versions with no error raised. ⚠️ **Every flag name was additionally
+checked against the installed SDK enum** (`senzing.SzEngineFlags`, 4.4.0.26242) — a runtime check,
+not a documentation one, because a flag that does not exist fails at call time and nothing offline
+would catch it.
+
+**The per-record path still uses `SZ_ENTITY_DEFAULT_FLAGS` and was deliberately left alone.** Module
+7's rule is scoped to the **export call**; changing the Truth Set path's flags is a different
+decision with its own risk, and this spec does not make it.
+
+⚠️ **Not runtime-verified.** The export path has not been executed against a live engine — this
+environment has an SDK but no loaded datastore. What is verified: the call graph reaches it from the
+shipped entry point, `--records` is optional, the flag names exist in the installed enum, and both
+build paths produce identical models against a fake engine. Running it needs `dry-run` phase 3.
