@@ -348,6 +348,34 @@ steering files.)
   server 1.32.2, 2026-07-30) — so check a suspect field name there **first**. The raw dump stays
   the authority for what *this* installation actually returns and for anything the schema does
   not list; an empty or shallow result is coverage, not a failed call (INV-149).
+
+  ⚠️ **(INV-179) For an ABSENT field — as opposed to a wrong value — suspect the FLAGS before
+  the field name.** `response_schemas`' `requires_flags` annotation is **incomplete**, so its absence is
+  **not** evidence that a path is unconditional. Verified on MCP server 1.35.3, 2026-09-01:
+  `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`, `RESOLVED_ENTITY.RECORDS[].ERRULE_CODE`,
+  `RELATED_ENTITIES[].MATCH_KEY` and `RELATED_ENTITIES[].IS_DISCLOSED` carry **no**
+  `requires_flags`, while neighbors in the same arrays do — `RELATED_ENTITIES[].RECORDS[]` →
+  `SZ_ENTITY_INCLUDE_RELATED_RECORD_DATA`, `RELATED_ENTITIES[].MATCH_KEY_DETAILS` →
+  `SZ_INCLUDE_MATCH_KEY_DETAILS`. `topic='flags'` does not close the gap from the other side:
+  `SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO` and `SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO` carry
+  no `response_paths` at all. The mapping is recorded in **neither** direction, and it is the
+  *partial* coverage that does the damage — it makes an omission look like information.
+
+  **So do this:** re-issue the same call with the matching `*_MATCHING_INFO` flag added, and
+  compare. A field that appears is a **flag** problem, not absent data. Only after that
+  comparison is "the data is genuinely absent" a supportable conclusion. ⛔ **(INV-179) The broadened
+  call is a diagnostic, not the shipped call** — `get_sdk_reference` cautions that `*_DEFAULT_FLAGS`
+  composites are for getting started rather than production, so narrow back to the flags whose
+  output you actually consume once the question is settled.
+
+  ⚠️ **The gating itself is observation-only (INV-149).** Those four paths were proven
+  flag-gated by paired `get_entity_by_record_id` calls differing only in flags — SDK 4.4.0, a
+  loaded repository, 2026-08-31: without the related-matching-info flag a related entity
+  returned `{ENTITY_ID, ENTITY_NAME}`; with it, `{ENTITY_ID, ENTITY_NAME, ERRULE_CODE,
+  IS_AMBIGUOUS, IS_DISCLOSED, MATCH_KEY, MATCH_LEVEL_CODE}`. Only a live engine can show this,
+  and no MCP route reports it. This cost two wrong answers in one walk — a match-key audit
+  reporting **0** distinct keys against a true 16, and disclosed links reporting **0** against
+  556 — each reached by following the rule above and stopping at the schema.
 - **Parameter shapes, for the bootcamper's binding.** **`get_sdk_reference` answers parameter
   shapes whenever `filter` names a method — under *any* topic**, not only `topic='methods'`. A
   `flags` or `response_schemas` response you already hold therefore carries the signature too,

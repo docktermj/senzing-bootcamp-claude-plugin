@@ -168,3 +168,36 @@ Keep the existing rule intact; this narrows its first step for the absent-field 
 > flag that gates one — ideally both, since they are the same mapping read from two directions.
 >
 > Senzing SDK 4.4.0; MCP server 1.35.1.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Re-verified against server 1.35.3 — the defect is unchanged, so the relay ships.** All six rows of
+the spec's table reproduce today: `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`,
+`RESOLVED_ENTITY.RECORDS[].ERRULE_CODE`, `RELATED_ENTITIES[].MATCH_KEY` and
+`RELATED_ENTITIES[].IS_DISCLOSED` still carry **no** `requires_flags`, while
+`RELATED_ENTITIES[].RECORDS[]` (`SZ_ENTITY_INCLUDE_RELATED_RECORD_DATA`) and
+`RELATED_ENTITIES[].MATCH_KEY_DETAILS` (`SZ_INCLUDE_MATCH_KEY_DETAILS`) still do. From the other
+side, `topic='flags'` filtered on `SZ_ENTITY_INCLUDE_ALL_RELATIONS` returns
+`SZ_ENTITY_INCLUDE_RELATED_MATCHING_INFO` with **no** `response_paths`, while
+`SZ_ENTITY_INCLUDE_RELATED_RECORD_DATA` and `SZ_ENTITY_INCLUDE_RELATED_RECORD_TYPES` both have
+them. Had it been fixed upstream, the workaround would have been dropped rather than shipped
+(`implement-spec` Step 3.3, "already fixed upstream").
+
+**No invariant was minted: the rule is INV-179 and now cites it at the line.** The drafted amendment
+reads as a new guarantee, but INV-179 already says a blank field has **three** causes — wrong field
+name, correct name the flags in force do not populate, or genuinely absent data — and that *"the
+flags MUST be suspected before the data, and the fix is to OR in the missing sub-flag"*. What this
+change adds is the case INV-179 did not anticipate: that `response_schemas` **cannot** confirm the
+gating, because its annotation is partial. That is an application of INV-179, not a rule beside it,
+so both hard rules cite it rather than opening a fourth deferral in this run.
+
+**The upstream half was already sent** (2026-08-31, `category='bug'`, with the maintainer's explicit
+approval after the dry run closed). Nothing was re-sent: the unattended loop never calls
+`submit_feedback`, and re-sending an approved report would have duplicated it upstream with no way
+to withdraw either copy.
+
+**Two dates, deliberately, because they have different authorities.** The **annotation gaps** are
+MCP-sourced and stamped **1.35.3, 2026-09-01** — re-asked today. The **empirical flag-gating** is
+stamped **2026-08-31, SDK 4.4.0** and marked observation-only (INV-149): it needs a live engine with
+loaded data, this environment no longer has that repository, and no MCP route reports it. Restamping
+it today would have claimed a measurement that was not taken.
