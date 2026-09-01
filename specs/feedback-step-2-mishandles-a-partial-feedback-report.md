@@ -68,3 +68,26 @@ Rewrite Step 2's shortcut clause to cover partial answers. Wording along the lin
   specification.
 - Upstream: not applicable
 - Related specs: `specs/three-numbered-questions-render-their-options-inline.md` (found in the same passage; split out because it is a different root cause with a wider blast radius)
+
+## Deviations from this spec, and why (2026-09-01)
+
+**The spec misquotes `notes.md`, and the misquote was carried into the first draft of the fix.**
+Under `## Root cause` this spec attributes to `notes.md` the sentence ⛔ *"Do not ask what they want
+to note when they already said it"*. That sentence appears nowhere in the file. What `notes.md`
+Step 2 actually says, at `bootcamp-onboarding/notes.md:81-83`, is:
+
+> ⛔ **If the triggering message already carries the note, take it from the message and do not ask.**
+
+**The diagnosis is unaffected — only the quotation was wrong.** The sibling control does state the
+rule, does state it as a hard rule, and does cite INV-006 in the following sentence, so the
+precedent this spec reasons from is real and the fix stands as specified.
+
+⚠️ **Recorded because of how the error surfaced, which is the part worth keeping.** The paraphrase
+was written into the shipped fix as a quotation of `notes.md`, and into the new guard as the regex
+it pinned. The guard then failed against a correct fix — the failure was the paraphrase not
+matching the file, not the fix being wrong. Had the invented wording happened to resemble
+neighboring prose closely enough to match, it would instead have passed while asserting nothing
+about the precedent, which is the same shape as the three vocabulary-satisfied guards caught
+earlier in this run. **A precedent is cited by opening the file, never from memory of its gist** —
+the guard now asserts the instruction as written, and both the shipped text and this spec's
+reasoning quote the file verbatim.

@@ -77,8 +77,17 @@ context so you do not ask the bootcamper to repeat it):
 4. 👉 **Do you have a suggested fix?**
 5. 👉 **What priority would you give this? Reply with a number:** (1) High, (2) Medium, (3) Low.
 
-If the bootcamper gives everything in one message, do not re-ask: confirm what you
-captured and proceed.
+⛔ **Ask only the questions their message has not already answered (INV-006).** Anything it supplies
+— in whole or in part — is **captured, not re-asked**: confirm what you captured in one line, then
+ask only the gaps, one 👉 per turn. If it answers everything, ask nothing and proceed.
+
+⚠️ **The partial message is the normal shape, not the exception.** A bootcamper who stops to report
+something usually writes one sentence naming the subject, what happened, and often a suggested fix
+— three of the five above — and leaves the rest. Read as an all-or-nothing shortcut, this step
+re-asks the three they just answered, which is the INV-006 violation the whole flow is most exposed
+to: they are already spending goodwill to report a defect. The sibling any-time control states the
+same rule for the same reason (`notes.md` Step 2 → *"If the triggering message already carries the
+note, take it from the message and do not ask."*).
 
 ## Step 2b: Triage — plugin issue, Senzing MCP server issue, or neither?
 
