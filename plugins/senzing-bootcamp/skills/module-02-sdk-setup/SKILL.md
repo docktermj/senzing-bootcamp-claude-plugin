@@ -87,8 +87,10 @@ supported, so all three are listed):
 (Each path as `sdk_guide(topic='install', platform=…)` gives it under `post_install`/`env_vars`,
 verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
 
-If the library is present, report the SDK as installed, skip Steps 2 and 3 entirely, and proceed to
-Step 4 verification.
+If the library is present, report the SDK as installed and skip the **installation** — Step 2, and
+Step 3's install commands. ⛔ **Not Step 3 entirely: its environment-script work still runs**, and it
+is the single most likely thing an existing install is missing — see "Required stops" in the V4.0+
+branch below. Then proceed to Step 4 verification.
 
 ⛔ **Only conclude "not installed" for a platform whose library you actually checked.** If the
 platform is undetermined, or the check could not run, the result is **unknown** — say so and name
