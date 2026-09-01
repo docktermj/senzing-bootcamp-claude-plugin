@@ -101,12 +101,30 @@ gets sent to reinstall it, which is exactly what this step opens by forbidding.
 **Reading the version once the library is found:** use the primary route — the language version
 check, or `SzProduct.get_version()`, which returns `VERSION`, `BUILD_DATE`, `BUILD_NUMBER` and
 `NATIVE_API_VERSION` (`search_docs`, server 1.32.9, 2026-08-13). Failing that, build metadata sits
-in `szBuildVersion.json`: on Linux under `/opt/senzing/er/` (and also `/opt/senzing/data/`), and on
-Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "Comparing the two
-versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
-observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
-version through the SDK rather than concluding the SDK is missing.
-<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; every hit is a version-READING example or a build/packaging document, none stating where the file lives — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.35.3, 2026-09-01 -->
+in `szBuildVersion.json` — see "Comparing the two versions" in Step 1b.
+
+⛔ **Its provenance differs by platform, so it is stated per platform.** One caveat spanning all
+three is what let the Windows half go stale while reading as reviewed.
+
+- **Windows — MCP-sourced.** Under the **sibling** `data` directory, not under `%SENZING_DIR%`:
+  Scoop sets `SENZING_DIR=<scoop-app-dir>\er` and the support data installs to
+  `<scoop-app-dir>\data`. Stated by the server itself, in the `gotchas[]` of
+  `sdk_guide(topic='install', platform='windows')`, which names `szBuildVersion.json` among that
+  support data (server **1.35.3**, 2026-09-01; the server cites the MSI Directory table for
+  4.3.3.26191).
+- **Linux — environment observation, not MCP-sourced (INV-149).** `/opt/senzing/er/` and also
+  `/opt/senzing/data/`. Observed on a real install, both files present and identical, reporting
+  `BUILD_VERSION 4.4.0.26242` (2026-09-01). No MCP route states it:
+  `sdk_guide(topic='install', platform='linux_apt')` gives `default_paths` and a
+  `ls /opt/senzing/er/lib/libSz.so` verification step and never mentions the file.
+- **macOS — unknown, and the route was asked.** `sdk_guide(topic='install', platform='macos_arm')`
+  names the support data under `$(brew --prefix)/opt/senzing/data` as `address_datamodel`,
+  `nomicon` and the `*TransRules.sz` modules, and stops there — no `szBuildVersion.json` anywhere
+  (server **1.35.3**, 2026-09-01). Do not guess it by analogy with Linux.
+
+If the file is not where expected, read the version through the SDK rather than concluding the SDK
+is missing.
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; every hit is a version-READING example or a build/packaging document, none stating where the file lives — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative; NOTE the Windows path IS served, by sdk_guide(topic='install', platform='windows') in its gotchas[] — this claim is scoped to search_docs and to Linux/macOS) — server 1.35.3, 2026-09-01 -->
 
 **If the SDK is found and version is V4.0+:**
 

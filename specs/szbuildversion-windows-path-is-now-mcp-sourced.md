@@ -112,3 +112,26 @@ by `sdk_guide(topic='install', platform='windows')`.
   Linux do not.
 - Upstream: not applicable — the server is correct here; the plugin's label is what is stale
 - Related specs: `mcp-negative-markers-carry-rationale-nothing-reverifies.md`
+
+## Deviations from this spec, and why (2026-09-01)
+
+**None to the substance — every claim was re-asked rather than carried over.** The spec was written
+against server 1.35.1; all three routes were asked again on **1.35.3, 2026-09-01**, and all three
+answers hold: Windows serves the path in `gotchas[]`, macOS names the support data without it, and
+`linux_apt` never mentions it. The Linux **observation** was also re-taken on this machine rather
+than restamped from the spec — both files present, identical, `BUILD_VERSION 4.4.0.26242`. Re-dating
+an observation without re-observing it is the defect
+`specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md` addresses, and this spec is one
+of the ones that report named.
+
+**The rule was deferred rather than cited, and two candidate citations were rejected.** INV-080
+states that Senzing facts come from MCP; INV-149 governs empty `response_schemas` results. Neither
+says anything about the **granularity** at which provenance is recorded, which is the entire rule
+here — so citing either would have been the wrong-citation class rather than a shortcut.
+
+⚠️ **The guard tripped an existing guard, which is worth recording.** `test_dated_negatives_are_marked`
+reported the new test file as carrying two malformed `MCP-NEGATIVE:` markers, because it quotes that
+token as a **locator** to find the real marker in `SKILL.md` and assert its `owner:` clause.
+Resolved with the sanctioned `MCP-NEGATIVE-SCAN: ignore-file` opt-out plus a note saying why: the
+docstring's absence claims duplicate the ones the real marker already carries, and it is the marker
+— not the test — that belongs on the re-ask worklist.
