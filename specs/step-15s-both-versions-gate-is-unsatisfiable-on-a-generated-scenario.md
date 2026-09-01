@@ -103,3 +103,35 @@ prescribes as a structured summary.
 - Upstream: not applicable
 - Related specs: `specs/desired-outcome-question-is-single-select-for-a-multi-valued-answer.md` — the
   narrowing risk this gate would fail to catch.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**One of the two comparison targets the spec names does not exist.** Under `## Root cause` this spec
+says the generated path's comparison target is *"the scenario text the Bootcamper confirmed at Step
+4a (**"Does that scenario work for you?"**) and the summary they confirmed at Step 6a"*. There is no
+such question. `phase1-discovery.md` Step 4a (`:151-197`) generates the scenario, validates its
+invariants, and continues at Step 5 — the only 👉 in Steps 4–4b is Step 4's *"How would you like to
+define the business problem?"*, which is the choice to accept the offer, not approval of what the
+offer produced. Step 6a's *"Does that summary capture your situation accurately?"* is real, and is
+the **only** point on this path where the Bootcamper approves the scenario's content.
+
+**What shipped instead, and why it is stronger than what was specified.** The branch names two
+targets: the Step 6a summary, and the **recorded answers** behind the derived fields —
+`integration_targets` in `config/bootcamp_preferences.yaml` (INV-097) and the option replies at
+Steps 6b–6d. The second is not a substitute of convenience: INV-275 already requires the persisted
+answer to be the quote source *"rather than reconstructed, which makes that section's drift
+mechanically checkable"*, so on the generated path it is the one comparison target that is checkable
+against a file rather than against memory of the conversation. A gate pointed at a question nobody
+asked would have been unsatisfiable in the same way the ⛔ it replaces was.
+
+⚠️ **Both hard rules in the new branch cite INV-275 at the line; no invariant was minted.** The
+branch is that invariant's own gate clause applied to a path with one version, plus its
+selection-omit and persisted-value clauses — not a new guarantee. Verified by the INV-282 set
+difference between `conformance.py since --since-last-audit` and `per-rule --uncited`.
+
+⚠️ **This is the second fabricated quotation found in this run's specs**, after
+`feedback-step-2-mishandles-a-partial-feedback-report` attributed to `notes.md` a sentence it does
+not contain. Both specs were written during the same 2026-08-31 walk, both quote a *sibling* file
+from memory rather than from the file, and in both the underlying diagnosis was sound — which is
+what makes the shape worth naming: the invented quote is decoration on a correct argument, so
+nothing about the spec reads as wrong until someone opens the file it cites.

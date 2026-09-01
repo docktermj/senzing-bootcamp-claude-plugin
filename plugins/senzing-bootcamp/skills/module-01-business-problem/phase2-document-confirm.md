@@ -300,12 +300,44 @@ sourced statement is the correct outcome, not a failure of the step.
 
 ## 15. Get confirmation
 
+**What the Bootcamper checks the document against differs by path — branch as Steps 9 and 11 do.**
+The pinned question below is the same on both.
+
+### 15a. Bootcamper-described case (offer declined, or their own data)
+
 ⛔ **(INV-275) Present the document with BOTH versions visible, and say which is which.** Before asking, state
 plainly that the `> "…"` lines are their own words as they said them and the prose above each is your
 rendering of it — and that a mismatch between the two is exactly what this question is for. Without
 that, the gate asks *"does this plausible-sounding text sound right?"* rather than *"does this match
 what I said?"*, and a single substituted adjective inside an otherwise-accurate sentence survives it.
 One did (see Step 11's note), and it was confirmed as accurate on the way through.
+
+### 15b. Generated scenario (Business Case Offer accepted)
+
+⛔ **(INV-275) There is no second version to show on this path, and that is correct — never
+manufacture one.** Every quote-carrying section here is a selection or bootcamp-authored, so Step
+11's omit rule strips every `> "…"` line: a `docs/business_problem.md` carrying **zero** of them is
+the expected result, not a Step 11 failure to repair. INV-275 requires the invented quote to be
+absent for exactly this reason — it would look like evidence of something the Bootcamper never said.
+Say the document has no quoted lines and why, rather than presenting it as though it does.
+
+⛔ **(INV-275) The gate still asks "does this match what was agreed?" — so name what it is matched
+against.**
+Present the document beside both:
+
+- **The Step 6a summary they confirmed** (`phase1-discovery.md` Step 6a) — the one point on this path
+  where they approved the scenario's content, rather than approving the offer to generate it.
+- **The recorded answers behind the derived fields**, where drift is checkable rather than
+  remembered: `integration_targets` in `config/bootcamp_preferences.yaml` (INV-097, INV-275) for
+  Integration Requirements, and the option replies at Steps 6b–6d for record types, source count and
+  Desired Output.
+
+⚠️ **Give those fields the attention the quote lines would have earned.** A bare option reply leaves
+no prose to drift from, so the rendering is the only text there is — and it is the rendering that
+travels. "1 and 3" written up as `**Format**: Master list and Reports` is faithful; the same reply
+written up as `Master list` narrows a requirement Module 7 step 1 later reads as input, with nothing
+in the document able to settle which was meant. That is the Step 11 adjective failure reached by a
+different route, and on this path this branch is the only thing standing in front of it.
 
 👉 **Does this accurately capture your problem and approach?**
 
