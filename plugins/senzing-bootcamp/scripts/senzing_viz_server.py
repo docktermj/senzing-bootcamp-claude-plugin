@@ -307,6 +307,15 @@ class Model:
         }
 
     def build(self, engine, flags, record_keys):
+        """Build from a records file: one ``get_entity_by_record_id`` per record.
+
+        ⚠️ Correct and fast at the Truth Set's 84 entities, and **this is the Truth Set
+        path**. It does not scale to a Bootcamper's own data — 19,584 records is 19,584
+        round trips to build one page (observed 2026-08-26) — and it is also *incomplete*
+        there: it can only see entities that have a record in the file it was handed, so an
+        embedded-master record the mapper emitted into no input file is invisible. For a
+        Bootcamper datastore use :meth:`build_from_export`.
+        """
         get = engine.get_entity_by_record_id
         for ds, rid in record_keys:
             self.records_total += 1
@@ -314,44 +323,102 @@ class Model:
                 resp = json.loads(get(ds, rid, flags))
             except Exception:
                 continue
-            re_ = resp.get("RESOLVED_ENTITY", {})
-            eid = re_.get("ENTITY_ID")
-            if eid is None:
-                continue
-            if eid not in self.entities:
-                records = re_.get("RECORDS", [])
-                sources = sorted({r.get("DATA_SOURCE", "?") for r in records})
-                self.entities[eid] = {
-                    "entity_id": eid,
-                    "entity_name": re_.get("ENTITY_NAME") or f"Entity {eid}",
-                    "record_count": len(records),
-                    "data_sources": sources,
-                    "records": [
-                        {
-                            "data_source": r.get("DATA_SOURCE", "?"),
-                            "record_id": str(r.get("RECORD_ID", "?")),
-                            # Per-record match key (how this record joined the
-                            # entity); the seed record is typically empty. Drives
-                            # the Match Keys tab. Present with the default entity
-                            # flags' record-matching-info; falls back to "".
-                            "match_key": r.get("MATCH_KEY", "") or "",
-                        }
-                        for r in records
-                    ],
-                }
-            for rel in resp.get("RELATED_ENTITIES", []):
-                tid = rel.get("ENTITY_ID")
-                if tid is None:
-                    continue
-                key = (min(eid, tid), max(eid, tid))
-                if key not in self.edges:
-                    self.edges[key] = {
-                        "match_key": rel.get("MATCH_KEY", ""),
-                        "relationship_type": rel.get("MATCH_LEVEL_CODE")
-                        or rel.get("ERRULE_CODE")
-                        or "RELATED",
-                    }
+            self._absorb(resp)
         return self
+
+    def build_from_export(self, engine, flags):
+        """Build from the export stream: every resolved entity, in one pass.
+
+        Each export row carries the same shape a ``get_entity`` response does, so the
+        absorb step is shared with :meth:`build` unchanged — that is what makes this cheap.
+        Measured ~15 seconds for a model that took 19,584 round trips to build per-record
+        (observation, 2026-08-26; not re-measured here).
+
+        ⛔ **The three method names and their argument types differ by binding** — verified
+        against `get_sdk_reference(topic='parameters', …, language='python')`, server
+        1.35.3, 2026-09-01:
+
+            export_json_entity_report(flags: int = SZ_EXPORT_DEFAULT_FLAGS) -> int
+            fetch_next(export_handle: int) -> str
+            close_export_report(export_handle: int) -> None
+
+        Java is ``exportJsonEntityReport`` / ``fetchNext`` / ``closeExportReport`` taking a
+        ``long`` handle, C# ``ExportJsonEntityReport`` taking ``IntPtr``. A port of this
+        file MUST take the signature from the server for its own binding rather than
+        translating these (INV-002/INV-080). ⚠️ ``close_export_report`` is the V4 name;
+        ``close_export`` is a documented confabulation.
+        """
+        handle = engine.export_json_entity_report(flags)
+        try:
+            while True:
+                line = engine.fetch_next(handle)
+                if not line:
+                    break                      # end of stream
+                try:
+                    resp = json.loads(line)
+                except ValueError:
+                    continue                   # a row we cannot parse is not fatal
+                before = len(self.entities)
+                self._absorb(resp)
+                if len(self.entities) > before:
+                    eid = resp.get("RESOLVED_ENTITY", {}).get("ENTITY_ID")
+                    entity = self.entities.get(eid)
+                    if entity:
+                        # An export row is one ENTITY; `records_total` counts RECORDS, so
+                        # take the count from the entity rather than incrementing per row.
+                        self.records_total += entity.get("record_count", 0)
+        finally:
+            # Always close the handle, including on an exception mid-stream: an unclosed
+            # export handle holds engine resources for the life of the process.
+            try:
+                engine.close_export_report(handle)
+            except Exception:
+                pass
+        return self
+
+    def _absorb(self, resp):
+        """Fold one entity document into the model.
+
+        Shared verbatim by both build paths: an export row and a ``get_entity`` response
+        carry the same shape, which is why the export path needed no new absorb logic.
+        """
+        re_ = resp.get("RESOLVED_ENTITY", {})
+        eid = re_.get("ENTITY_ID")
+        if eid is None:
+            return
+        if eid not in self.entities:
+            records = re_.get("RECORDS", [])
+            sources = sorted({r.get("DATA_SOURCE", "?") for r in records})
+            self.entities[eid] = {
+                "entity_id": eid,
+                "entity_name": re_.get("ENTITY_NAME") or f"Entity {eid}",
+                "record_count": len(records),
+                "data_sources": sources,
+                "records": [
+                    {
+                        "data_source": r.get("DATA_SOURCE", "?"),
+                        "record_id": str(r.get("RECORD_ID", "?")),
+                        # Per-record match key (how this record joined the
+                        # entity); the seed record is typically empty. Drives
+                        # the Match Keys tab. Present with the default entity
+                        # flags' record-matching-info; falls back to "".
+                        "match_key": r.get("MATCH_KEY", "") or "",
+                    }
+                    for r in records
+                ],
+            }
+        for rel in resp.get("RELATED_ENTITIES", []):
+            tid = rel.get("ENTITY_ID")
+            if tid is None:
+                continue
+            key = (min(eid, tid), max(eid, tid))
+            if key not in self.edges:
+                self.edges[key] = {
+                    "match_key": rel.get("MATCH_KEY", ""),
+                    "relationship_type": rel.get("MATCH_LEVEL_CODE")
+                    or rel.get("ERRULE_CODE")
+                    or "RELATED",
+                }
 
     def data_sources(self):
         """Every data-source code present in the model, sorted.

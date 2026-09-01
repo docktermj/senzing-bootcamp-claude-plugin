@@ -95,3 +95,28 @@ or in Module 7's instruction marks the build strategy as the part that must chan
   second build path.
 - Related specs: `visualization-server-in-chosen-language.md` (the same server, the binding
   question).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**All three export method names were re-asked, not taken from the entry.** The feedback entry named
+the **Java** forms (`exportJsonEntityReport` / `fetchNext` / `closeExportReport`); the reference
+server is Python. Each was asked individually against server 1.35.3 —
+`export_json_entity_report(flags: int) -> int`, `fetch_next(export_handle: int) -> str`,
+`close_export_report(export_handle: int) -> None`. ⚠️ **`close_export_report` is on the server's own
+`common_confabulations` list** (as *"close_export vs close_export_report"*), which is precisely why
+a name carried across from another binding is not good enough.
+
+**The timing claim was not re-measured and is not asserted.** "~15 seconds for 19,584 records" needs
+a live engine with a loaded datastore of that size. It stays the reporter's observation with its
+conditions. What the guard verifies offline is stronger than a repeat of the number would be: both
+build paths produce **identical entity sets and edges** from the same documents, which is the claim
+that made the change small and is the reason the absorb step could be shared rather than duplicated.
+
+**Two implementation slips worth recording, both caught before commit.**
+
+1. The absorb block was extracted behind an `if True:` shim to preserve its indentation, and that
+   shim was briefly left in shipped code. Dedented properly.
+2. The extracted block still carried `continue` statements that were valid only inside the `for`
+   loop it came from. ⛔ **`ast.parse` accepts `continue` outside a loop and `compile` does not** —
+   so the syntax check run first reported "ok" on code Python would reject at import. Caught by
+   compiling instead of parsing, which is now the check worth running after any extraction.

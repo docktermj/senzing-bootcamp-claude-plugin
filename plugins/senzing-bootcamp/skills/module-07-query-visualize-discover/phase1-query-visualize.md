@@ -668,6 +668,25 @@ of the Truth Set. It MUST:
   (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable
   hairball at ~4,000. Re-check any other visual default at your actual entity count before
   presenting; the bootcamper cannot tell a bad default from bad data.
+- ⛔ **Build the model from the EXPORT STREAM, not one `get_entity` call per record.** The reference
+  server reads a records file and calls the engine once per record — correct at the Truth Set's 84
+  entities, and **19,584 round trips** on a Bootcamper's own data (observed 2026-08-26; the same
+  model built in ~15 seconds from the export stream). ⚠️ **The correctness gain outlives the speed
+  one:** a records-file build can only see entities that have a record in the file it was handed,
+  while the export stream yields **every resolved entity** — including embedded-master records the
+  mapper emitted that appear in no input file. Absorbing needs no change: each export row carries
+  the shape a `get_entity` response does.
+  - ⛔ **Take the export signature from the server, per binding (INV-002/INV-080).** Verified
+    `get_sdk_reference(topic='parameters', filter='export_json_entity_report', language='python')`,
+    server **1.35.3**, 2026-09-01: Python is
+    `export_json_entity_report(flags: int = <SzEngineFlags.SZ_EXPORT_DEFAULT_FLAGS: 3734497>) -> int`
+    on `SzEngine`, returning an export **handle**. The **method name and the flags type both differ
+    by binding** — Java `exportJsonEntityReport` taking `Set<SzFlag>`, C# `ExportJsonEntityReport`,
+    TypeScript `exportJsonEntityReport` taking `bigint` — so look it up for the Bootcamper's
+    language rather than translating the Python form.
+  - ⚠️ **Do not pin a `*_DEFAULT_FLAGS` composite into the export call.** `get_sdk_reference`'s own
+    production caution says their membership may change between versions with no error raised;
+    request the flags whose output the model actually consumes.
 - Keep all generated code and output inside the working directory (`src/server/` for code, HTML →
   `docs/visualizations/`, other output → `docs/` or `data/`; never `/tmp/`); pull
   entity/relationship/report data through generated SDK code and `reporting_guide`, never direct
@@ -675,6 +694,17 @@ of the Truth Set. It MUST:
 - Render offline with the vendored D3 asset inlined, no CDN (INV-091), and take palette/typography
   from `${CLAUDE_PLUGIN_ROOT}/scripts/brand_tokens.py` (INV-081; skill-relative fallback
   `../../scripts/brand_tokens.py`, INV-252).
+  - ⛔ **(INV-091) Copy the D3 asset into the project and resolve it from there — the reference's
+    lookup is
+    position-dependent and does not travel.** `senzing_viz_server.py` finds `vendor/d3.v7.min.js`
+    beside **its own file**, which is correct in the plugin's layout and finds nothing for a server
+    written into `src/server/`. Copy the asset under the project on first build and read it from
+    that path, so the live app keeps working after a plugin update moves or replaces the cached
+    plugin directory — Step 6c tells the Bootcamper they can return to this visualization, and that
+    promise is only as durable as the asset it needs. ⚠️ **The standalone snapshot is unaffected**:
+    D3 is inlined into it at build time, so only the **live server** is at risk.
+  - ⛔ **(INV-091) Keep the refusal-to-render when no asset is found.** Failing visibly is correct,
+    and a CDN fallback would break the offline guarantee that is the reason for vendoring D3 at all.
 - Write a self-contained standalone HTML snapshot under `docs/visualizations/` (INV-070), passing
   the app **dataset wording that names the Bootcamper's own sources** — e.g. "your CUSTOMERS and
   REFERENCE data", built from `config/data_sources.yaml`. ⛔ Never let it default to neutral wording

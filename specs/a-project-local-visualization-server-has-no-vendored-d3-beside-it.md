@@ -92,3 +92,18 @@ ships rather than against what was reported.
   inlined asset this spec extends to a project-local server);
   `bundled-file-reads-resolve-like-bundled-script-runs.md` (the same position-dependence class for
   bundled file reads).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**`senzing_viz_server.py` was not changed, though `## Affected files` lists it.** The spec lists it
+*"as the reference the guide copies"*, and the reference is **correct as it stands**: it sits beside
+`scripts/vendor/` and resolving the asset relative to its own file is right for the plugin's layout.
+The defect is in what Module 7 tells the guide to carry over, not in the reference. Changing the
+reference to hunt for a project directory it does not live in would break the Truth Set path to fix
+a copy that does not exist yet. The guard instead **pins the reference's current behavior as
+correct**, so a later edit cannot "fix" it into the project-local form.
+
+**Criterion 3 is implemented but not runtime-verified.** *"A live server restarted from the project
+resolves D3 without reading anything under the plugin directory"* is a property of a server the
+**guide writes during a bootcamp**, not of any file in this repo. It needs a `dry-run` phase 3 walk
+that builds the Module 7 visualization and restarts it. What is asserted here is the instruction.
