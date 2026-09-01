@@ -206,9 +206,26 @@ class TheSinceViewFiltersByRef(unittest.TestCase):
             self.assertTrue(path.endswith(".md"),
                             "reported a non-markdown file %r: the .md filter is not applied" % path)
             self.assertTrue(
-                HARD_RULE_SHAPE(body) is not None,
+                HARD_RULE_SHAPE(self._source_line(path, body)) is not None,
                 "reported a line that is not a hard rule (%r from %s); the diff parse is "
                 "picking up context or removed lines" % (body[:80], path))
+
+    @staticmethod
+    def _source_line(path, body):
+        """The full source line behind a reported one.
+
+        ⚠️ `since` truncates its display at 110 characters, and `classify()` needs the whole
+        line — a rule whose ⛔ sits past that cut classifies as None from the display string
+        alone. This test therefore passed only while every reported line was short enough to
+        survive truncation; a 638-character bullet in `module-completion.md` was the first to
+        expose it, and it read as "conformance reported a non-rule" when conformance was
+        right and this assertion was looking at a prefix.
+        """
+        candidate = (REPO_ROOT / path).read_text(encoding="utf-8") if (REPO_ROOT / path).exists() else ""
+        for line in candidate.split("\n"):
+            if line.startswith(body) or line == body:
+                return line
+        return body                                  # not truncated, or file moved
 
     def test_it_counts_only_ADDED_lines_in_a_repo_it_controls(self):
         """The count semantics, on a tree this test owns rather than the maintainer's.

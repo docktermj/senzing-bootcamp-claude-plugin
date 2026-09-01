@@ -81,3 +81,27 @@ own-line block form (INV-242), the no-pruning ⛔, and the open-the-graph-image 
 - Upstream: not applicable
 - Related specs: `specs/step-15s-both-versions-gate-is-unsatisfiable-on-a-generated-scenario.md` —
   same finding class (an instruction the guide provably cannot follow).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**None to the substance.** The timing is restated as two moments, the force of the requirement is
+unchanged, the checkpoint is named as the carrier, and no module's 👉 gates were touched.
+
+**One thing the spec did not anticipate, recorded because it is the more useful finding.** Editing
+this bullet made an existing guard fail —
+`tests/test_conformance_sees_a_rule_beside_a_citation.py::test_it_reports_only_hard_rules_and_only_from_shipped_markdown`
+— and the guard was wrong, not the change. It asserts that every line `conformance.py since` reports
+is a hard rule, by running the script's own `classify()` over the reported text; but `since`
+**truncates its display at 110 characters**, so it was classifying a *prefix*. This bullet is 638
+characters and carries its ⛔ past the cut, so `classify()` returned `None` and the failure read as
+*"conformance reported a non-rule"* — when `classify()` on the **full** line returns `mid-line` and
+conformance was correct throughout.
+
+The test had passed only because no reported line had previously been long enough to lose its rule
+marker to truncation. It now resolves the reported prefix back to its source line before
+classifying. That is strictly stronger: the old form would have silently accepted any long rule as
+"not a rule", which is the same false-negative shape the guard exists to prevent.
+
+⚠️ **The new rule was put on its own line rather than appended to the bullet.** A 638-character
+bullet carrying three separate ⛔ rules is what made the truncation defect invisible, and adding a
+fourth to it would have deepened exactly that.
