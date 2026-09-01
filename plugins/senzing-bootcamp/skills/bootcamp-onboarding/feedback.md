@@ -75,7 +75,11 @@ context so you do not ask the bootcamper to repeat it):
 2. 👉 **What happened?**
 3. 👉 **Why does it matter to you?**
 4. 👉 **Do you have a suggested fix?**
-5. 👉 **What priority would you give this? Reply with a number:** (1) High, (2) Medium, (3) Low.
+5. 👉 **What priority would you give this? Reply with a number:**
+
+   1. **High**
+   2. **Medium**
+   3. **Low**
 
 ⛔ **Ask only the questions their message has not already answered (INV-006).** Anything it supplies
 — in whole or in part — is **captured, not re-asked**: confirm what you captured in one line, then

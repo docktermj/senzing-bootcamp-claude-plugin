@@ -357,9 +357,37 @@ what they already covered.
 
 ### 6b–6d. Ask only about "not yet determined" items, one per turn
 
-- 6b (record types): 👉 **Which records are you working with? Reply with a number:** (1) people, (2) organizations, (3) both.
-- 6c (source count): 👉 **How many distinct data sources will we work with?**
-- 6d (desired outcome): 👉 **What does the end result look like? Reply with a number:** (1) a clean master list, (2) an API, (3) reports, (4) something else.
+- **6b (record types).** Options beneath the 👉, never on its line (`../bootcamp-onboarding/ground-rules.md`):
+
+  > 👉 **Which records are you working with? Reply with a number:**
+  >
+  > 1. **People**
+  > 2. **Organizations**
+  > 3. **Both**
+
+- **6c (source count).** 👉 **How many distinct data sources will we work with?**
+
+- **6d (desired outcome).** ⛔ **This one is MULTI-select, and asking it as single-select loses a
+  real answer.** A clean master list, an API over it and reports off it are **complements, not
+  alternatives** — they are the three normal deliverables of the same project, and most
+  organizations want more than one. Asked as a single-select on 2026-08-31, a Bootcamper answered
+  *"1 and 3"*: cooperative, coherent, and unrecordable. Same wording shape as Bootcamp preparation's
+  optional-module gate, so the plugin has one multi-select idiom rather than two:
+
+  > 👉 **What does the end result look like? Reply with the numbers from the list below, comma-separated:**
+  >
+  > 1. **A clean master list**
+  > 2. **An API**
+  > 3. **Reports**
+  > 4. **Something else**
+
+  ⛔ **Record every option they choose, not the first.** The answer travels: Step 11's **Desired
+  Output** section carries it into `docs/business_problem.md`, and Module 7 step 1 derives query
+  requirements from that document — so narrowing "1 and 3" to "a clean master list" writes a
+  requirement they did not give and steers a module they have not reached.
+
+  ⚠️ **Leave 6b single-select.** Its **Both** option already covers its combinations, and record
+  types are a closed three-way set rather than an open list.
 
 *(Internal: end each turn on its question and wait; checkpoint after each.)* When no
 undetermined items remain, Phase 1 is complete — proceed to Phase 2 (load

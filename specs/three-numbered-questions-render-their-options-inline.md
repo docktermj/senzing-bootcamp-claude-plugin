@@ -97,3 +97,17 @@ pinning.
 - Upstream: not applicable
 - Related specs: `specs/feedback-step-2-mishandles-a-partial-feedback-report.md` (the other defect in
   the same passage; different root cause, filed separately)
+
+## Deviations from this spec, and why (2026-09-01)
+
+**None to the substance.** All three questions re-rendered, the guard added, no question pinned.
+
+**One point worth recording for the next reader:** the guard's matcher is anchored on `(1)`
+following a 👉 **on the same line**, not on any question wording — the phrasings already seen are
+what INV-282 warns against pinning. Three correctly-rendered questions are pinned as **must-not-match
+fixtures** beside the historical inline shape, including the comma-separated multi-select idiom and
+an open-ended 👉 with no options at all, so a later widening that starts flagging compliant prose
+fails here rather than being absorbed.
+
+**Landed in one commit with `desired-outcome-question-is-single-select-for-a-multi-valued-answer`.**
+Both specs rewrite Step 6d's line; this one changes its shape, the other changes what it asks.

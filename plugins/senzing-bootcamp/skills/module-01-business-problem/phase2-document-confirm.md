@@ -151,8 +151,9 @@ Save to `docs/business_problem.md` using this template:
 > "[Their own words, verbatim]"
 
 ## Desired Output
-**Format**: [Master list / API / Reports / Export]  **Use case**: [One-time / Ongoing /
-Real-time]  **Integration**: [Standalone / Integrated with [systems]]
+**Format**: [every option they chose, comma-separated — Master list / API / Reports / Export]
+**Use case**: [One-time / Ongoing / Real-time]  **Integration**: [Standalone / Integrated with
+[systems]]
 
 > "[Their own words, verbatim]"
 
@@ -192,6 +193,14 @@ Types` are selections from fixed vocabularies; there is nothing to preserve.
 Drop the `> "…"` line entirely for that section. This is the rule the acknowledge clause already
 applies to bare option numbers (`../bootcamp-onboarding/ground-rules.md`): an invented "verbatim"
 line is worse than none, because it looks like evidence.
+
+⛔ **Desired Output records EVERY option the Bootcamper chose.** Step 6d is a
+multi-select — a master list, an API and reports are complements — so `**Format**` is a list, not a
+single value. Writing "1 and 3" as `Master list` alone narrows a requirement the Bootcamper gave,
+and it does not stop here: Module 7 step 1 derives its query requirements from this document, so the
+narrowed version becomes the requirements they are shown at Module 7 and approve there too. On the
+generated-scenario path Step 15b names this field specifically, because a bare option reply leaves
+no `> "…"` line to catch the drift.
 
 ⚠️ **For Integration Requirements the answer is already on disk — quote from there, do not
 reconstruct it.** INV-097 persists `integration_targets` to `config/bootcamp_preferences.yaml` at

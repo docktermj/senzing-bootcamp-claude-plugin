@@ -95,3 +95,18 @@ closed three-way set rather than an open list.
 - Upstream: not applicable
 - Related specs: `specs/three-numbered-questions-render-their-options-inline.md` — same line, different
   root cause; land them together.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**No invariant citation was attached, and that was a deliberate reversal mid-implementation.** The
+"record every option" rules were first written citing **INV-097**, on the reasoning that it governs
+how a Module 1 answer reaches `docs/business_problem.md`. Re-reading INV-097 before committing: it
+governs the **software-integration and deployment-target questions** and their persistence to
+`config/bootcamp_preferences.yaml` — it says nothing about the desired-outcome answer. Both draft
+citations were removed and the rule deferred instead. A plausible-but-wrong citation is the
+INV-076/INV-077 defect class this repo has already paid for; it reads as reviewed while pointing at
+a guarantee that does not cover the rule.
+
+**Landed in one commit with `three-numbered-questions-render-their-options-inline`**, as that spec
+requires — both rewrite Step 6d's line, and splitting them would leave one of the two broken between
+commits. Two ledger entries, one commit, one shared guard.
