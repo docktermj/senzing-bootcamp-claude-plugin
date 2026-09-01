@@ -161,3 +161,54 @@ invokes it.
 > workflow's own mapping reference warns against.
 >
 > Senzing SDK 4.4.0; MCP server 1.35.1; sz_routing_report.py hash 172b85ee4fbcdfb9.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Re-verified against server 1.35.3 — the defect is unchanged, so the relay ships.** Re-read the
+delivered `sz_routing_report.py` (6,855 bytes): `discover_payload_fields()` still ends in
+`return []`, still populated only from `--payload-fields` or a `phase1_manifest.json`, and
+`routing_report()` still computes `payload_keys` from the output, prints it, and does not use it for
+`exempt_fields`. `download_resource`'s own tool description lists the seven resources it serves, and
+**`phase1_manifest.json` is still not among them** — the second exemption route remains unsatisfiable
+by anything the workflow provides. Had this been fixed upstream, the relay would have been dropped
+rather than shipped.
+
+⚠️ **The spec's script hash could not be compared and was not re-stated.** It records
+`172b85ee4fbcdfb9` without naming the algorithm; the delivered file's BLAKE2b-64 is
+`3d975e1939acd89d` and its SHA-256 begins `328572230e6f5e25`, so the two are not comparable and a
+"hash changed" claim would be unfounded. The shipped note cites the **byte size and the code** —
+which are checkable — rather than a hash whose provenance is unclear. A hash without its algorithm
+is the same defect class as a census without its date.
+
+**The note went into the existing "further limitations" list rather than beside the step-4 command.**
+The spec proposed a standalone note at the routing-report instruction. That file already carries a
+numbered list of MCP-delivered-tool limitations sharing one handling procedure and one freshness
+convention — and limitation 3 is *already* about `sz_routing_report.py`. Filing this as limitation 4
+puts it where a reader meets the others, inherits the shared handling, and avoids a second parallel
+convention for the same class of defect. It cites **INV-173**, which governs it exactly: a gate that
+cannot represent a legitimate input MUST NOT have its finding treated as evidence about the data or
+resolved by altering the data.
+
+⛔ **This broke three existing guards, and both halves of that were real.**
+
+1. **A genuine defect I introduced:** the block's heading is used as a **cross-reference anchor**
+   three times elsewhere in the same file (*"see 'Three further limitations' below"*). Renaming it to
+   "Four" broke all three pointers. Fixed by updating the references; the guards caught it, which is
+   what they are for.
+2. **A premise the guards had pinned:** `test_verbatim_check_limitation.py` and
+   `test_verbatim_check_limitations_freshness.py` located the block with the literal strings
+   `"Three further limitations"` and `"Handling is the same for all three"`, so a fourth entry took
+   **19 tests down as ERRORS** rather than failures. The count is *data*; the block and its shared
+   handling procedure are the *claim*. The locators now match any count (`\w+ further limitations`)
+   and every substantive assertion is unchanged — nothing was relaxed. ⚠️ **A self-counting heading
+   used as an anchor is a trap that will recur** the next time a limitation is added; it is left as
+   it is because renaming the anchor is a wider change than this spec, and the count is now asserted
+   consistent across all four of its appearances by
+   `tests/test_routing_report_payload_limitation_is_relayed.py`.
+
+**One guard was right and I was wrong:** `test_all_three_are_dated_...` pins *"First observed
+2026-07-27"*, and my rewritten intro had dropped that phrasing. The date is a real claim about the
+original observation, so the prose was restored to carry it rather than the assertion changed.
+
+**The upstream half was already sent** (2026-08-31, `category='bug'`, maintainer-approved). Nothing
+was re-sent.
