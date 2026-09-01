@@ -53,7 +53,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - ⚠️ **`test_the_premise_holds_that_bare_ticks_would_be_fractional` pins d3's own behavior, not the plugin's.** It reproduces d3-array's `tickIncrement` offline and asserts fractional ticks occur for exactly `maxN` ∈ {1, 2, 3}. It is there so a future reader can see *why* `tickValues` is required rather than taking it on trust — and so that if d3's algorithm ever changes, the fix's rationale is re-examined instead of the assertion being loosened.
 - **Establishes no invariant** on its own — but see the open half below.
 - ⚠️ **Deviation from the spec: the `visualization-api-reference.md` half was NOT done.** The spec's `## Affected files` names it, because INV-090 has the Truth Set server rebuilt in the bootcamper's chosen language against that contract — so a Java or C# rebuild will reproduce this defect unless the contract says count axes carry integer ticks. That is a prose change to a shipped contract and is left for the maintainer. **The spec stays open on that criterion.**
-- **Commit:** `uncommitted`
+- **Commit:** `a21f1ba`
 
 ## the-improve-path-repoints-the-registry-without-updating-record-count
 
