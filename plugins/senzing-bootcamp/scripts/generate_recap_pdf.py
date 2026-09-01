@@ -693,8 +693,68 @@ def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     return remainder, (notes if notes.entries else None)
 
 
+#: Fenced blocks lifted out of the recap before module parsing and then DISCARDED.
+#:
+#: ⛔ The notes fence is not here because its content is KEPT — `_extract_notes_block`
+#: parses it into a `NotesSection`. Everything in this tuple is transient working state
+#: that must not reach `Recap.modules`, and the parse path iterates the tuple rather than
+#: naming markers one at a time: adding a fence here is what brings it under the lift
+#: (INV-246), so a third fenced block cannot repeat this defect by being overlooked.
+#:
+#: ⚠️ The checkpoint fence had the same exposure as the notes fence and none of the
+#: protection. `recap_checkpoint.md`'s own interior uses `## ` headings (`## Where we are`,
+#: `## Still to do`, …), the durability hooks fold it verbatim, and every `## ` in a recap
+#: is parsed as a module — so a resumed session put five phantom "modules" beside the real
+#: ones in the keepsake PDF. `audit_recap` warned, but the warning is non-fatal and the
+#: block was never lifted, so the PDF rendered anyway (2026-08-26, plugin 0.5.2).
+DISCARDED_FENCES: Tuple[Tuple[str, str], ...] = (
+    (RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END),
+)
+
+
+def _strip_discarded_fences(text: str) -> str:
+    """Lift every :data:`DISCARDED_FENCES` block out of ``text`` before module parsing.
+
+    ⛔ An UNTERMINATED fence is left in place here, which is the opposite of what
+    `_extract_notes_block` does — and the asymmetry is deliberate. Graduation appends the
+    notes block *after* the last module, so running an unterminated notes fence to
+    end-of-text costs at most the notes' formatting. The checkpoint is folded **mid-recap**,
+    so truncating to end-of-text would delete the Bootcamper's real finalized modules. A
+    phantom section that `audit_recap` already warns about is the lesser loss; deleting
+    module content to avoid it is not a trade this may make.
+    """
+    for start_marker, end_marker in DISCARDED_FENCES:
+        while True:
+            start = text.find(start_marker)
+            if start == -1:
+                break
+            end = text.find(end_marker, start)
+            if end == -1:
+                break                      # unterminated — see the docstring
+            text = text[:start] + text[end + len(end_marker):]
+    return text
+
+
+#: A module section heading, used only to decide whether a lift would empty the recap.
+_MODULE_HEADING_RE = re.compile(r"(?m)^##\s+\S")
+
+
 def parse_recap(text: str) -> Recap:
     text, notes = _extract_notes_block(text)
+
+    # ⛔ THE LIFT MUST NEVER EMPTY THE RECAP. A checkpoint fence contains only the
+    # in-progress narrative — `recap_checkpoint.py`'s `_strip_block` says so outright:
+    # "Completed `## {module}` sections carry no markers and are never touched." But a
+    # malformed or mis-placed fence CAN enclose finalized sections, and discarding those
+    # would delete the Bootcamper's real module content to avoid phantom headings — a
+    # trade this must not make. Where stripping would remove every module heading from a
+    # recap that had one, keep the unstripped text: the phantom sections then render and
+    # `audit_recap` warns about the surviving block, which is the pre-existing behavior
+    # and the lesser loss.
+    stripped = _strip_discarded_fences(text)
+    if _MODULE_HEADING_RE.search(stripped) or not _MODULE_HEADING_RE.search(text):
+        text = stripped
+
     lines = text.splitlines()
 
     title = "Senzing Bootcamp Recap"
@@ -855,15 +915,27 @@ def _source_content_chars(text: str) -> int:
     the renderers legitimately drop them, so counting them would understate
     retention for a perfectly good recap.
     """
+    # ⛔ A DISCARDED_FENCES block is lifted before module parsing, so its characters
+    # CANNOT reach the PDF by design. Counting them in the denominator would measure the
+    # lift's own effect as content loss — and on a resumed session, whose checkpoint is
+    # large relative to a partly-written recap, that is enough to trip the
+    # catastrophic-content-loss gate and block the PDF outright (INV-048 requires the
+    # recap PDF to always be produced). Measured on a fixture: 42% retention, fatal,
+    # where the block was the only thing "missing".
+    text = _strip_discarded_fences(text)
+
     total = 0
     for raw in text.splitlines():
         line = raw.strip()
         if not line or line == "---":
             continue
-        # The notes fence markers are structure, not content: the renderers drop them
-        # exactly as they drop `---`, so counting them would understate retention on a
-        # recap whose only difference is that the Bootcamper wrote something down.
-        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END):
+        # Fence markers are structure, not content: the renderers drop them exactly as
+        # they drop `---`, so counting them would understate retention on a recap whose
+        # only difference is that the Bootcamper wrote something down. The checkpoint
+        # markers are here for the UNTERMINATED case, where the block itself survives
+        # the lift (see `_strip_discarded_fences`).
+        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END,
+                    RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END):
             continue
         total += len(line)
     return total

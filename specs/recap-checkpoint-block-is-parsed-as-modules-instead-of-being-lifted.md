@@ -96,3 +96,43 @@ emits — the file is written by a hook, and the parser is what the guarantee ha
 - Related specs: `nothing-writes-the-recap-checkpoint.md` (the checkpoint's *production*, a
   different subject); `bootcamp-notes-capture-and-recap-section.md` (the sibling fence whose lift
   this one is missing).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Two things the spec did not anticipate, both found by running the change rather than reading it.**
+
+**1. Lifting the block registers as content loss unless the denominator is fixed too.**
+`_source_content_chars` counts the raw source; `_rendered_content_chars` counts what the parsed
+recap carries. Lifting the checkpoint removes characters from the second and not the first, so
+retention falls by exactly the size of the block. On a fixture that produced **42% retention and a
+FATAL "catastrophic content loss" verdict** — which would refuse to render the recap PDF that
+INV-048 requires always to be produced. `_source_content_chars` now strips the discarded fences
+before counting, so retention is measured against renderable source. Without this the fix trades a
+cosmetic defect for a blocked deliverable.
+
+**2. The lift must refuse to empty the recap, and an existing test is what surfaced it.**
+`tests/test_recap_pdf_guard.py::test_stray_checkpoint_block_still_renders_but_warns` builds a
+fixture whose fence encloses **every** module section, and asserted that such a recap still renders
+with a warning. The first implementation discarded all of it and the generator then refused —
+*"input does not look like a bootcamp recap"*.
+
+⚠️ **The fixture models a state the fold hook cannot produce** — `recap_checkpoint.py`'s
+`_strip_block` says outright that *"Completed `## {module}` sections carry no markers and are never
+touched"* — so the easy resolution was to call the fixture unrealistic and change it. **That was not
+done.** The fixture is protecting something real: a malformed or mis-placed fence *can* enclose
+finalized sections, and discarding them would delete the Bootcamper's own module content to avoid
+phantom headings. `parse_recap` now keeps the unstripped text when stripping would remove every
+module heading from a recap that had one. The existing test passes **unchanged**, and the rule is
+pinned by `TheLiftNeverEmptiesTheRecap`.
+
+**Change 3 of `## Proposed change` was implemented as the "at minimum" option.** The fences are a
+`DISCARDED_FENCES` tuple the parse path iterates, not a scan. A scan would have to recognize fence
+markers by shape, and the two fences are treated differently — the notes fence's content is **kept**
+and parsed into a `NotesSection`, the checkpoint's is discarded — so a single scanned set would
+erase the distinction that matters. Adding a fence to the tuple is what brings it under the lift.
+
+**The unterminated-fence asymmetry with the notes block is deliberate and documented in the code.**
+`_extract_notes_block` runs an unterminated fence to end-of-text, which is safe because graduation
+appends notes *after* the last module. The checkpoint is folded mid-recap, so the same treatment
+would delete real modules; an unterminated checkpoint fence is therefore left in place, and
+`audit_recap` warns about it.
