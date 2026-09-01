@@ -44,9 +44,22 @@ Dashboard tab either — the entity-size distribution is the Merge Statistics hi
 (``/api/stats``), not a separate view. Their ids stay reserved rather than reused; see the
 ``TABS`` note in ``capture_screenshots.py``.
 
-Data source: ``get_entity_by_record_id`` with ``SZ_ENTITY_DEFAULT_FLAGS`` (which
-includes ``SZ_ENTITY_INCLUDE_ALL_RELATIONS``), so nodes and edges come from one
-call per loaded record. No direct SQL is ever run against the database.
+Data source: TWO build paths, chosen by whether ``--records`` is given. Both read the
+engine through the SDK; no direct SQL is ever run against the database on either.
+
+    --records given    one ``get_entity_by_record_id`` per record, with
+                       ``SZ_ENTITY_DEFAULT_FLAGS``. Correct for the TRUTH SET, whose
+                       record file is the authority on what was loaded.
+    --records omitted  the export stream, one pass over every resolved entity. This is
+                       the path Module 7 REQUIRES for a bootcamper's own datastore: the
+                       per-record build costs one round trip per record, and it can only
+                       see entities that have a record in the file it was handed, so an
+                       embedded-master record the mapper emitted into no input file is
+                       invisible to it.
+
+The export path's flags are chosen explicitly rather than as a DEFAULT composite; the
+reason, and the mapping from each flag to the field it populates, is stated at the call
+in ``build_model`` rather than repeated here.
 
 Usage:
     # Serve the live web app (Python reference; run directly only when the chosen language is Python — INV-090):
@@ -55,6 +68,10 @@ Usage:
     # Also write a persistent standalone snapshot (no server needed to view):
     python3 senzing_viz_server.py --records data/senzing-ready/*.jsonl \\
         --snapshot docs/visualizations/results.html
+
+    # Build from the export stream instead — every resolved entity, one pass. Preferred
+    # for a bootcamper's own datastore (Module 7); note there is no --records argument:
+    python3 senzing_viz_server.py --snapshot docs/visualizations/results.html
 
     # Just build the snapshot and exit (no server), used by the completion gate:
     python3 senzing_viz_server.py --records src/system_verification/truthset_data.jsonl \\

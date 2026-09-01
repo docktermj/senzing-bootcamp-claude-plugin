@@ -183,7 +183,7 @@ class TheExportHandleIsAlwaysClosed(unittest.TestCase):
 
 
 class TheExportPathIsReachableFromTheShippedServer(unittest.TestCase):
-    """⛔ The MEDIUM finding of `production-readiness-audit-2026-09-01d`.
+    """The MEDIUM finding of `production-readiness-audit-2026-09-01d`.
 
     `build_from_export` was added and **nothing in the shipped script called it**:
     `build_model` built per-record unconditionally and `--records` was `required=True`, so
@@ -265,6 +265,84 @@ class TheExportPathIsReachableFromTheShippedServer(unittest.TestCase):
                     "the export flags must name what `_absorb` actually reads; %s "
                     "populates a field the model consumes" % required,
                 )
+
+
+class TheHeaderDescribesBothBuildPaths(unittest.TestCase):
+    """The MEDIUM finding of `production-readiness-audit-2026-09-01e`.
+
+    After the export path was wired, the module header still said the data source was
+    ``get_entity_by_record_id`` … "one call per loaded record" — the path Module 7
+    **forbids** for a Bootcamper's datastore, presented as the file's only behavior. The
+    header is the first thing a reader sees, and Module 7 tells the guide to *"build it
+    modeled on the shipped Truth Set visualization server"*, so a guide modeling on this
+    file was told the wrong thing by its opening paragraph.
+
+    ⚠️ That was the same instruction/reference disagreement the previous audit had just
+    fixed in the call graph, relocated into the prose: one rule, several sites, fixed at
+    one of them.
+    """
+
+    def setUp(self):
+        source = SERVER.read_text(encoding="utf-8")
+        # The module docstring only — a match anywhere else in a 2,000-line file would
+        # not tell a reader at the top of it anything.
+        self.header = ast.get_docstring(ast.parse(source)) or ""
+        # ⚠️ And the DATA SOURCE section only, for the claims about it. Checked against
+        # the whole docstring, `test_the_header_names_both_paths` passed with the entire
+        # two-path block deleted — because the Usage block below it also says "export
+        # stream". An assertion a neighboring section can satisfy is not an assertion
+        # about the section it names.
+        self.data_source = self.header.split("Usage:")[0]
+
+    def test_the_header_names_both_paths(self):
+        for path in ("get_entity_by_record_id", "export stream"):
+            with self.subTest(path=path):
+                self.assertIn(
+                    path, self.data_source,
+                    "the module header must name both build paths. Describing only the "
+                    "per-record one tells a guide modeling on this file to implement "
+                    "exactly what Module 7's stop-sign forbids.",
+                )
+
+    def test_the_header_says_what_selects_each(self):
+        self.assertRegex(
+            re.sub(r"\s+", " ", self.data_source),
+            r"(?i)--records given.*--records omitted",
+            "naming both paths is not enough — the header must say which condition "
+            "selects each, or a reader cannot tell which one they are getting.",
+        )
+
+    def test_the_header_no_longer_claims_one_call_per_record_is_the_data_source(self):
+        """The retired sentence, pinned so it cannot come back as a 'simplification'."""
+        self.assertNotRegex(
+            re.sub(r"\s+", " ", self.data_source),
+            r"so nodes and edges come from one call per loaded record",
+            "the header must not present the per-record build as the file's only data "
+            "source.",
+        )
+
+    def test_the_no_direct_sql_guarantee_survives_and_covers_both(self):
+        self.assertRegex(
+            re.sub(r"\s+", " ", self.data_source),
+            r"(?i)no direct SQL is ever run against the database on either",
+            "the no-direct-SQL guarantee must survive the rewrite and must be stated as "
+            "covering both paths — it is true of both, and dropping it to make room for "
+            "the second path would trade a real guarantee for a description.",
+        )
+
+    def test_the_usage_block_shows_the_export_invocation(self):
+        """A form shown nowhere is a form a reader does not know exists."""
+        usage = self.header[self.header.index("Usage:"):]
+        without_records = [
+            line for line in usage.splitlines()
+            if "senzing_viz_server.py" in line and "--records" not in line
+        ]
+        self.assertTrue(
+            without_records,
+            "the Usage block must show an invocation WITHOUT --records. Every example "
+            "passing it means the export form is undiscoverable to a reader working "
+            "top-to-bottom, which is how the path stayed unreachable in the first place.",
+        )
 
 
 class TheModuleSaysWhichStrategyApplies(unittest.TestCase):
