@@ -370,10 +370,13 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > about it when Module 7 was not.** Module 7 briefly forbade the flag on why calls, claiming the
 > breakdown was there without it; on **SDK 4.3.4** `WHY_KEY_DETAILS` was **absent** until the flag
 > (plus a relations flag) was passed, and absent again without it on **4.3.2** — observation-only,
-> 2026-08-16 (INV-080/INV-149). Note that **no flag is *documented* to populate it**: all 29 flags
-> applying to `why_records` name other `response_paths` (`get_sdk_reference(topic='flags',
-> filter='why_records')`, server 1.32.9, 2026-08-17). So pass the flag, and still check the keys you
-> actually got.
+> 2026-08-16 (INV-080/INV-149). The server now documents the requirement, and the observation above agrees
+> with it: `get_sdk_reference(topic='response_schemas', filter='why_entities')` lists
+> `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with `requires_flags:
+> ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` (server **1.35.3**, 2026-09-01). ⚠️ **The `flags` topic alone
+> does not say so** — that flag's `response_paths` names only `RELATED_ENTITIES[].MATCH_KEY_DETAILS`
+> — so read `response_schemas` before concluding a field is attributed to nothing. So pass the flag,
+> and still check the keys you actually got.
 >
 > **Both are documented — look them up rather than dumping first.**
 > `get_sdk_reference(topic='response_schemas', filter='why_entities')` returns the `data[]` entry

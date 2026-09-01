@@ -161,7 +161,11 @@ class TheFlagIsPrescribedWithItsConditions(unittest.TestCase):
     def test_the_server_position_and_the_observation_are_separate(self):
         """INV-169 — neither presented as governing the other."""
         guidance = squash(flag_guidance(read()))
-        self.assertIn("no flag is documented as populating it", guidance)
+        # ⚠️ The server's position is now that the requirement IS documented —
+        # `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` in `response_schemas`
+        # (1.35.3, 2026-09-01). The separation this asserts is unchanged: the documented
+        # requirement and the engine observation are stated as different kinds of claim.
+        self.assertIn("requires_flags", guidance)
         self.assertIn("observation-only", guidance)
         self.assertIn("INV-080/INV-149", guidance)
 

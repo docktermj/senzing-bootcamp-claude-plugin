@@ -114,3 +114,42 @@ prose, not a marker.
 - Related specs: `flag-gated-fields-are-unannotated-in-both-reference-topics.md`;
   `mcp-negative-markers-carry-rationale-nothing-reverifies.md` (the same staleness mechanism, for
   markers rather than prose).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**The correction shipped is narrower than "it is documented now", and the narrower form is the
+useful one.** The `flags` topic **still** attributes only `RELATED_ENTITIES[].MATCH_KEY_DETAILS` to
+`SZ_INCLUDE_MATCH_KEY_DETAILS` — so a reader who checks that topic alone still finds the why-side
+field unattributed and re-derives the retired conclusion. All three sites therefore say **both**
+things: `response_schemas` carries `requires_flags`, and `flags` alone does not say so. Asserting
+only the first would have shipped a correction that the next reader disproves with one tool call.
+
+**Four existing guards failed, and the four were not the same kind of failure.**
+
+- **Three pinned an expired premise.** `test_why_key_details_flag_claim_is_withdrawn.py` (×3, at
+  `:177`, `:182`, `:262`) and `test_module07_why_flags.py::test_the_server_position_and_the_observation_are_separate`
+  asserted the **exact retired sentences** — *"no flag is documented as populating it"* and
+  ``"`MATCH_KEY_DETAILS` object on **each related entity**"`` — against `server 1.32.9, 2026-08-17`.
+  Their **claims** are untouched by this change: that the server's position is stated with its
+  route, and that the position and the engine observation are kept separate as different kinds of
+  claim (INV-169). Only the position moved. The assertions now pin the claim — `requires_flags`,
+  the `why_entities` route, and the current version — with the reason recorded in each docstring.
+  ⚠️ **Nothing was relaxed**: `test_the_flags_documented_effect_is_named_correctly` still pins the
+  related-entity path, which is the half that has *not* changed.
+- **One was my own error, not a stale premise.** I had dropped `INV-080/` from the observation
+  marker, leaving `(observation-only, 2026-08-16; INV-149)`. `INV-080/INV-149` is this repo's
+  established idiom for "this is an observation, not an MCP-sourced fact", and the guard was right
+  to require it. **The prose was restored rather than the assertion changed.**
+
+**A guard of my own was weak and the negative control caught it.**
+`test_the_engine_side_observation_is_still_marked_observation_only` checked the whole file for
+`observation-only`, and passed against the mutation that deleted the marker — because
+`visualization-api-reference.md` carries other observation-only notes elsewhere. It is now anchored
+to a window around the `4.3.2` claim it qualifies. A marker 2,000 characters from its claim marks
+nothing.
+
+**Criterion 3's "say why a default composite does not produce it" is implemented at one site**, not
+three: `module-07-query-visualize-discover/phase1-query-visualize.md`, where the flags are chosen.
+Repeating `SZ_WHY_RECORDS_DEFAULT_FLAGS`' membership in all three would restate a fact that belongs
+where the call is composed, and INV-179 argues against stating a rule in more places than the step
+that needs it.

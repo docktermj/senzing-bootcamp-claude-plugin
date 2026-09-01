@@ -149,12 +149,25 @@ than as a flags problem. OR the flag in explicitly:
 `SZ_WHY_ENTITIES_DEFAULT_FLAGS | SZ_ENTITY_INCLUDE_ENTITY_NAME`
 (`SZ_ENTITY_INCLUDE_ENTITY_NAME`'s `applies_to` includes `why_entities`, `why_records` and
 `why_record_in_entity` — verified 2026-07-31). ⛔ **Add `SZ_INCLUDE_MATCH_KEY_DETAILS` together
-with a relations flag when the match-key breakdown is wanted.** `WHY_KEY_DETAILS` is documented on
-the why response and **no flag is documented as populating it**
-(`get_sdk_reference(topic='flags', filter='why_records')`, server 1.32.9, 2026-08-17: 29 flags
-apply, none names it) — but on **Senzing SDK 4.3.4** it was **absent** without that flag and
-**present** with it plus `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, and on **4.3.2** absent without it
-(observation-only, 2026-08-16; INV-080/INV-149). ⚠️ **This flag was previously removed from this
+with a relations flag when the match-key breakdown is wanted.** **The server documents the requirement — read it from
+`response_schemas`, not from `flags`.** `get_sdk_reference(topic='response_schemas',
+filter='why_entities')` lists `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` carrying
+`requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`, and that flag's own row documents the relations
+dependency: *"dependent on using one of the following flags: SZ_ENTITY_INCLUDE_ALL_RELATIONS,
+SZ_ENTITY_INCLUDE_POSSIBLY_SAME_RELATIONS, …"* (server **1.35.3**, 2026-09-01). ⚠️ **The `flags`
+topic alone still attributes nothing to the why-side path** — `SZ_INCLUDE_MATCH_KEY_DETAILS`'
+`response_paths` names only `RELATED_ENTITIES[].MATCH_KEY_DETAILS` — so a reader who checks only
+that topic concludes the field is unattributed. Check `response_schemas` too. The earlier
+engine-side observation agrees with what is now documented: on **SDK 4.3.4** the field was
+**absent** without that flag and **present** with it plus `SZ_ENTITY_INCLUDE_ALL_RELATIONS`, and on
+**4.3.2** absent without it (observation-only, 2026-08-16; INV-080/INV-149).
+
+⚠️ **A why call under its own default composite will not produce it, and that is documented rather
+than broken.** `SZ_WHY_RECORDS_DEFAULT_FLAGS` is `composite_members: ["SZ_INCLUDE_FEATURE_SCORES"]`
+— *"Equivalent to: SZ_INCLUDE_FEATURE_SCORES"* (server **1.35.3**, 2026-09-01) — so a
+`whyRecords(...)` called with the default plus a name flag returns `FEATURE_SCORES` and no
+`WHY_KEY_DETAILS`. Reported from a live Java run on 2026-08-26 and consistent with the
+documentation: the field is conditional, and the default composite does not carry its condition. ⚠️ **This flag was previously removed from this
 expression on the grounds that the breakdown is "already there without it" — that was wrong**: the
 measurement it rested on passed the flag in *both* arms, so its contribution was never varied. The
 full statement, with both builds and the reason a version floor cannot be read from them, is in

@@ -174,12 +174,28 @@ class TheServerPositionAndTheObservationAreSeparate(unittest.TestCase):
         self.text = flat(PHASE2)
 
     def test_the_server_position_is_stated_with_its_route(self):
-        self.assertIn("no flag is documented as populating it", self.text)
-        self.assertIn("filter='why_records'", self.text)
-        self.assertIn("server 1.32.9, 2026-08-17", self.text)
+        """⚠️ The server's POSITION changed; the requirement that it be stated did not.
+
+        This pinned the sentence *"no flag is documented as populating it"* against
+        `server 1.32.9, 2026-08-17`, which was the server's position when written. On
+        **1.35.3, 2026-09-01** `get_sdk_reference(topic='response_schemas',
+        filter='why_entities')` carries `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`
+        on the why-side path, so the sentence is now false. The class's claim — the server
+        position is stated, with the route that establishes it — is unchanged, and is what
+        this asserts instead of the retired wording (INV-282: pin the claim, not the
+        phrasing that happened to carry it).
+        """
+        self.assertIn("requires_flags", self.text)
+        self.assertIn("filter='why_entities'", self.text)
+        self.assertRegex(self.text, r"1\.35\.\d")
 
     def test_the_flags_documented_effect_is_named_correctly(self):
-        self.assertIn("`MATCH_KEY_DETAILS` object on **each related entity**", self.text)
+        """The flags topic still attributes only the RELATED_ENTITIES path to this flag.
+
+        That half is unchanged on 1.35.3 and is why both topics must be read: a reader
+        who checks only `flags` still finds the why-side field unattributed.
+        """
+        self.assertIn("RELATED_ENTITIES[].MATCH_KEY_DETAILS", self.text)
 
     def test_the_engine_result_is_marked_observation_only(self):
         self.assertIn("observation-only, not an MCP claim", self.text)
@@ -259,8 +275,14 @@ class TheApiReferenceRecordsThatItWasRight(unittest.TestCase):
         self.assertIn('The "with the flag" in that sentence is load-bearing', self.text)
 
     def test_it_records_the_observation_with_its_conditions(self):
+        """⚠️ Same correction: the observation stays, the server's position moved.
+
+        The retired half asserted *"no flag is *documented* to populate it"*. The server
+        documents it as of 1.35.3, so this now pins the observation marker plus the route
+        that carries the requirement.
+        """
         self.assertIn("observation-only", self.text)
-        self.assertIn("no flag is *documented* to populate it", self.text)
+        self.assertIn("requires_flags", self.text)
 
 
 if __name__ == "__main__":

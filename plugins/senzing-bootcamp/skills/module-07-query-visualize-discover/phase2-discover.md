@@ -153,12 +153,16 @@ teaches the bootcamper how Senzing explains its resolution decisions.
      with a relations flag.** Two separate things are known here and neither governs the other
      (INV-169); read both before choosing flags.
 
-     **What the server documents** (`get_sdk_reference(topic='flags', filter='why_records')` and
-     `filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server 1.32.9, 2026-08-17): `WHY_KEY_DETAILS` is a
-     real path on the why response, and **no flag is documented as populating it** — all 29 flags
-     that apply to `why_records` name other `response_paths`, and `SZ_INCLUDE_MATCH_KEY_DETAILS`'
-     own documented effect is a `MATCH_KEY_DETAILS` object on **each related entity**
-     (`RELATED_ENTITIES[]`). So the server attributes the field to nothing.
+     **What the server documents** (server **1.35.3**, 2026-09-01): the field's requirement is
+     in `response_schemas`, not in `flags`.
+     `get_sdk_reference(topic='response_schemas', filter='why_entities')` lists
+     `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with
+     `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`, and that flag's row documents the
+     relations dependency in its description. ⚠️ **The `flags` topic alone still points elsewhere**:
+     `SZ_INCLUDE_MATCH_KEY_DETAILS`' own `response_paths` names only
+     `RELATED_ENTITIES[].MATCH_KEY_DETAILS`, the **related-entity** object — so checking only that
+     topic leaves the why-side field looking unattributed. Read both topics before concluding a
+     field is populated by nothing.
 
      ⚠️ **What was observed, engine-side — observation-only, not an MCP claim** (INV-080/INV-149):
      on **Senzing SDK 4.3.4**, `WHY_KEY_DETAILS` was **absent** from `WHY_RESULTS[].MATCH_INFO`
