@@ -81,6 +81,69 @@ def deferred_rule_text():
     return re.sub(r"\s+", " ", " ".join(out)).lower()
 
 
+#: ⛔ The citation must be on the RULE'S OWN LINE, not merely near it.
+#:
+#: This check used to ask `conformance.py per-rule --uncited` whether a rule was cited, and
+#: `per-rule` counts an invariant cited in the **sentence beside** a rule as citing it. That is
+#: right for `per-rule`'s own question — can a reader at this line name the governing rule — and
+#: wrong as an accounting test, because the neighbor's citation can be about something else.
+#:
+#: Found by the 2026-09-01 audit: `module-04-data-collection/SKILL.md:469` ships
+#: ⛔ "Prefer `download_url` (MCP-hosted) over `source_download_url` for every CORD fetch" with no
+#: invariant at its line and no deferral naming it, and this test passed — because the paragraph
+#: two lines below reads "Observation, not an MCP-sourced fact (INV-080/INV-149)", which govern the
+#: provenance of a 403 observation and say nothing about route preference. The reverse-contract
+#: defense reported an unregistered guarantee as accounted for.
+#:
+#: ⚠️ `per-rule`'s own counting is deliberately NOT changed — every past ledger figure was measured
+#: against it, and widening it would move a number nobody would re-measure. The guard is stricter
+#: than the report instead.
+#:
+#: ⛔ And the check must run on the SOURCE line, not the reported one: `since` truncates its
+#: display at 110 characters, so a citation past the cut is invisible. Checked against the
+#: truncated text this flagged four rules that ARE cited — including a 638-character bullet
+#: carrying INV-146 and INV-242 — which is the same truncation defect the 2026-09-01 audit
+#: found in `test_conformance_sees_a_rule_beside_a_citation.py`, reintroduced here within the
+#: hour by the fix for the audit's own finding.
+INV_ON_THE_LINE = re.compile(r"INV-\d+")
+
+
+def _comparable(text):
+    """Both sides of the deferral match, reduced the same way.
+
+    ⚠️ `normalize()` strips the ⛔ from a rule line; the deferral quotes the rule WITH it. For a
+    rule whose ⛔ leads the line that still matched, because the probe was a substring of
+    "⛔ <same text>". For a rule whose ⛔ sits mid-line — `- **6d (desired outcome).** ⛔ **This
+    one is MULTI-select…** — the stop sign lands between the two halves of the probe and the
+    match fails against a deferral that names the rule correctly. Strip it from both sides.
+    """
+    return re.sub(r"\s+", " ", re.sub(r"[`*⛔]", "", text)).lower().strip()
+
+
+def source_lines(since_output):
+    """[(relpath, full source line)] for every rule `since` reported.
+
+    `since` prints a file heading followed by `     + <text>` lines truncated at 110
+    characters. Resolve each back to the file so the citation check sees the whole line.
+    """
+    out, current = [], None
+    for raw in since_output.splitlines():
+        stripped = raw.strip()
+        if stripped.startswith("plugins/") and stripped.endswith(".md"):
+            current = stripped
+        elif stripped.startswith("+ ") and current:
+            body = stripped[2:]
+            path = REPO_ROOT / current
+            full = body
+            if path.exists():
+                for line in path.read_text(encoding="utf-8").split("\n"):
+                    if line.startswith(body):
+                        full = line
+                        break
+            out.append((current, full))
+    return out
+
+
 class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
     def test_the_check_can_run(self):
         """⛔ INV-265 — say so when the scan cannot run, rather than passing silently."""
@@ -94,19 +157,20 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
         if since is None or uncited is None:
             self.skipTest("conformance.py could not resolve the since-last-audit range")
 
-        added = [l[7:].strip() for l in since.splitlines() if l.startswith("     +")]
+        added = source_lines(since)
         if not added:
             self.skipTest("no hard rules added since the newest audit entry — nothing to check")
 
-        flat_uncited = re.sub(r"\s+", " ", uncited)
         deferred = deferred_rule_text()
         unaccounted = []
-        for line in added:
+        for _path, line in added:
             key = normalize(line)
-            if not key or key not in flat_uncited:
-                continue                                   # cited at the line
-            probe = re.sub(r"[`*]", "", key).lower()[:44]
-            if probe and probe in re.sub(r"[`*]", "", deferred):
+            if not key:
+                continue
+            if INV_ON_THE_LINE.search(line):
+                continue                                   # cited ON its own line
+            probe = _comparable(key)[:44]
+            if probe and probe in _comparable(deferred):
                 continue                                   # named in a deferral
             unaccounted.append(line[:110])
 

@@ -420,8 +420,8 @@ inform the user of this."* (verified against the live tool description, server 1
 Never describe CORD as synthetic, simulated or "real-world-like": a Bootcamper who believes the
 records are fabricated treats named individuals as props, and those names reach `docs/bootcamp_recap.md`
 through Module 7's screenshots and out again in the keepsake PDF they are encouraged to share.
-Do **not** turn this into a gate — they have already chosen sample data, and a 👉 here would ask a
-question with no action behind it.
+⛔ **(INV-247) Do not turn this into a gate** — the bootcamp does not specify one here, they have
+already chosen sample data, and a 👉 would ask a question with no action behind it (INV-012).
 
 Use `get_sample_data(dataset='list')` to show available CORD datasets. Present the fetch URL from
 the response exactly as the tool gives it, and say **which** of the two you are presenting — they

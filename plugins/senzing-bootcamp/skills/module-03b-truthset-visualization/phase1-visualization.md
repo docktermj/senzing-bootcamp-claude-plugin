@@ -155,8 +155,8 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    the 👉: CORD is real public and commercial records, historical snapshots for evaluation rather
    than operational use. The sample-data tool's contract requires this of every caller, and this
    path reaches CORD without passing through Module 4's wording. The canonical sentences are in
-   `../module-04-data-collection/SKILL.md` (Step 2's CORD block). It is a statement and does not
-   count against INV-251.
+   `../module-04-data-collection/SKILL.md` (Step 2's CORD block). It is a statement, not a gate the bootcamp
+   specifies (INV-247), and it does not count against INV-251.
 
    👉 **The Truth Set is unavailable. Would you like to visualize a non-deterministic CORD collection (Las Vegas, London, Moscow) instead?**
 

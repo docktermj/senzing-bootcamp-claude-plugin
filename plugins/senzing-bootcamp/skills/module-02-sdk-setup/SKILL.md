@@ -88,7 +88,7 @@ supported, so all three are listed):
 verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
 
 If the library is present, report the SDK as installed and skip the **installation** — Step 2, and
-Step 3's install commands. ⛔ **Not Step 3 entirely: its environment-script work still runs**, and it
+Step 3's install commands. ⛔ **(INV-222) Not Step 3 entirely: its environment-script work still runs**, and it
 is the single most likely thing an existing install is missing — see "Required stops" in the V4.0+
 branch below. Then proceed to Step 4 verification.
 
