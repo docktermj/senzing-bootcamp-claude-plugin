@@ -103,6 +103,13 @@ licensing as a default the bootcamper already has, never as a hard cap:
   (INV-179), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
   the value you would be re-deriving was already measured and persisted by the step that owns this
   question, and a second SDK call is the way two answers start to differ.
+  ⛔ **One exception, and it is the reason `license_record_limit_measured_at` exists: a reading marked
+  provisional (or carrying no marker) takes the absent branch, not this one.** SDK setup's Step 5a
+  reads the license before Step 8 writes `CONFIGPATH`, so that reading cannot see a license installed
+  at the system config path; Step 8a re-takes it, but its "cannot re-measure" branch deliberately
+  leaves the provisional figure in place rather than blanking it. A provisional value is therefore a
+  real measurement of an incomplete view — which is exactly what the "do not measure again" rule
+  above must not apply to, because re-deriving it is the point.
   ⚠️ **`license` in `config/bootcamp_preferences.yaml` is not this gate.** It records *how* a license
   was obtained — applied or requested — and a bootcamper who simply has a good one installed is
   measured and never writes it. The measured limit governs (the same precedence the branches below
@@ -207,8 +214,10 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
     machinery. (`get_sdk_reference(topic='response_schemas', filter='getLicense')`, server 1.32.9,
     2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
     `get_license() -> str`.)
-  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, so later steps,
-    Phase B and graduation see a detected value instead of the same absence.
+  - **Persist it** as `license_record_limit` in `config/bootcamp_progress.json`, together with
+    `license_record_limit_measured_at: "module-06 phase A (engine configuration in force)"`, so later
+    steps, Phase B and graduation see a detected value instead of the same absence — and can tell it
+    was taken with a complete view rather than SDK setup's provisional one.
   - **Then re-enter these three branches** with the measured value. `recordLimit: 0` lands on the
     first branch and correctly suppresses the note.
   - **Only if the call fails** (no engine yet, SDK error) does the default-limit note apply — and

@@ -94,6 +94,20 @@ limit: never from a remembered or hardcoded figure:
 - **Present and greater than 0** (custom license with a finite record cap): the effective limit
   is that value. Recommend sampling for license reasons only when the dataset total genuinely
   exceeds it.
+
+  ⛔ **First check WHEN it was measured — a present value is authoritative only if the reading was
+  taken with an engine configuration in force.** Read `license_record_limit_measured_at` alongside
+  the figure. SDK setup takes a **provisional** reading at its Step 5a, before Step 8 writes
+  `CONFIGPATH`, and re-takes it at Step 8a; a value still marked provisional cannot have seen a
+  license installed at the system config path, so it may be the built-in default standing in for a
+  larger one. **Re-measure by Step 8a's own procedure (sub-step 7 below) before deciding anything
+  about capacity**, then re-enter these branches with the result. If the marker is **absent**
+  — a project that predates it — treat the figure as provisional and re-measure too.
+  ⚠️ **This is the same failure as the absent case below, wearing the opposite disguise.** There,
+  silence is mistaken for "no custom license"; here, a measured-but-incomplete figure is mistaken for
+  a complete one — and this one is worse, because absence at least triggers a re-measure while
+  presence suppresses it. A Bootcamper whose license has **no cap** would be steered toward a smaller
+  dataset on the strength of a reading that never saw their license.
 - **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
 - **Absent or null** — ⛔ **this means "never measured", not "no custom license": measure it before
   deciding anything about capacity.** (INV-244) Every step that writes this field writes only a
@@ -797,11 +811,19 @@ whether the anticipated volume looked likely to exceed it (`license_guidance_def
 from the actual collected total. Confirm every Senzing/SDK fact via the Senzing MCP server, never
 training data.
 
-1. **Read state and compute the total.** Read `license_record_limit` from
-   `config/bootcamp_progress.json` and the `license` / `license_guidance_deferred` markers from
+1. **Read state and compute the total.** Read `license_record_limit` **and
+   `license_record_limit_measured_at`** from `config/bootcamp_progress.json`, and the `license` /
+   `license_guidance_deferred` markers from
    `config/bootcamp_preferences.yaml`. Compute the collected total record count from
    `config/data_sources.yaml` (per the canonical framing at the top of this module). If the total
    cannot be computed, note the warning and proceed to Step 8b (non-blocking).
+
+   ⛔ **A figure whose `_measured_at` marker says provisional, or which carries no marker, is
+   re-measured here before any branch below reads it** — per the canonical framing's
+   present-and-greater-than-0 rule at the top of this module. Do not carry a pre-configuration
+   reading into sub-steps 2–4: a provisional figure is the built-in default standing in for whatever
+   the Bootcamper actually has, and every branch below would then decide capacity against a ceiling
+   that may not exist.
 
 2. **Already-licensed guard (INV-006).** If a custom license is already configured (`license: custom`
    in `config/bootcamp_preferences.yaml`, or a `license_record_limit` reflecting a custom key),

@@ -1078,6 +1078,23 @@ supplies the settings and Step 4 has just verified the SDK works, so the capacit
 told is a reading of **their** machine rather than an assumption about it. Take the reading **before**
 branching on anything recorded, and let it govern everything below (INV-012).
 
+⛔ **This reading is PROVISIONAL, and Step 8a re-takes it — `get_license()` resolves the license
+from the settings it is handed, and the settings here do not yet carry `CONFIGPATH`.** The check
+order above has four tiers, and the third is *system CONFIGPATH* — a `PIPELINE` key that **Step 8**
+writes, three steps after this one. So a reading taken here can only ever return one of the first
+two tiers or the built-in default: it cannot see a license installed at the system config path, and
+on a machine that has one it reports the built-in figure with no indication anything was missed.
+Measured on **Senzing SDK 4.4.0** (build `4.4.0.26242`), 2026-09-01, on a machine carrying a license
+at `/etc/opt/senzing`: `{"PIPELINE": {}}` returns `recordLimit: 500`, while the same call with
+`CONFIGPATH` in force returns `recordLimit: 0` — no cap. Which tier wins for a given settings string
+is engine behavior no MCP route reports, so this stays **observation-only** with its version and date
+(INV-080/INV-149).
+
+**A reading is only complete once the engine configuration is**, which is why Step 8a re-measures and
+why sub-step 3's replace-and-say-both-numbers rule below is reachable at all. Take this reading
+anyway — it is the right conservative figure until Step 8 exists, and its "cannot measure yet" branch
+still applies — but record it as provisional, per sub-step 3.
+
 1. **Take the reading.** `SzProduct`'s license method takes no arguments and returns the active
    license as a JSON string — `getLicense()` in Java and TypeScript, `get_license()` in Python and
    Rust, `GetLicense()` in C# (`get_sdk_reference(topic='parameters', filter='getLicense')`, server
@@ -1100,8 +1117,16 @@ branching on anything recorded, and let it govern everything below (INV-012).
    `0`. Name it as a reading of the installed license, so it is not mistaken for a published default.
 
 3. **Persist it.** **Write the measured value into `config/bootcamp_progress.json`** as
-   `license_record_limit`. If a value was already recorded and the measurement disagrees with it,
+   `license_record_limit`, and **record when it was taken** as
+   `license_record_limit_measured_at: "module-02 step 5a (provisional — engine configuration not yet
+   written)"`. If a value was already recorded and the measurement disagrees with it,
    replace the recorded one and **say the recorded figure was withdrawn** — naming both numbers.
+
+   ⛔ **The `_measured_at` marker is not bookkeeping — it is what lets a later step tell a complete
+   reading from an incomplete one.** Both are genuine measurements, so the figure alone cannot
+   distinguish them, and every downstream reader treats a present value as authoritative *because* it
+   was measured. Module 4's Step 8a reads this marker for exactly that reason. Write it on every path
+   that writes the field, here and at Step 8a.
    Do not re-ask anything (INV-006).
    - ⛔ **(INV-278) Presence is not proof of detection, which is why the reading comes first.** A
      figure already in the file is not evidence that anyone measured it — on 2026-08-25 a value
@@ -1630,6 +1655,37 @@ does not. Step 9's connection test uses the factory-lifecycle snippets from the 
 **Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
 here and report it — a missing config surfaces at this step as one clear failure, or later as
 `SENZ7221` several steps from its cause.
+
+### 8a.1 Re-measure the license — the reading is only complete now
+
+⛔ **(INV-244) Re-take the license reading here, and treat this one as the authoritative value.**
+Step 5a's reading was provisional by construction: `get_license()` resolves the license from the
+settings it is handed, and until Step 8 wrote `CONFIGPATH` those settings could not reach a license
+installed at the system config path. That tier is the third of the four in Step 5's check order, so
+the earlier reading could only ever return one of the first two or the built-in default.
+
+Take the reading exactly as Step 5a's sub-step 1 describes — same method, same
+save-then-read-before-parsing discipline (INV-115) — using the settings that now carry `CONFIGPATH`.
+Then apply Step 5a's sub-step 3 rules to the result:
+
+- **Write it** to `config/bootcamp_progress.json` as `license_record_limit`, with
+  `license_record_limit_measured_at: "module-02 step 8a (engine configuration in force)"`.
+- **When it disagrees with the provisional figure, say the earlier one was withdrawn — naming both
+  numbers**, exactly as sub-step 3 requires. ⚠️ **A correction that RAISES the capacity still gets
+  said out loud.** It is the pleasant direction and therefore the one most likely to be swallowed,
+  and it is load-bearing: anything already sized against the smaller figure — a sampling plan, a
+  generated scenario — was sized against a ceiling that does not exist.
+- **When the re-measurement cannot run**, leave the provisional value and its `_measured_at` marker
+  in place, say the check could not be re-run, and continue. Never blank the field: absence means
+  *never measured* to every step that reads it (INV-244), and a provisional figure is strictly
+  better than that.
+
+⚠️ **This is the step that makes Step 5a's replace-and-withdraw machinery reachable.** Nothing else
+in this module writes `license_record_limit` a second time, so before this step existed those rules
+described a situation that could not arise, and a machine whose license lives at `CONFIGPATH`
+carried the built-in figure through to Data collection — where it drives the sampling decision and
+the License-Key gate. Measured on **Senzing SDK 4.4.0** (`4.4.0.26242`), 2026-09-01: a machine whose
+license reports `recordLimit: 0` (no cap) reads `500` at Step 5a and `0` here.
 
 **Checkpoint:** write step 8a to `config/bootcamp_progress.json`.
 

@@ -58,6 +58,12 @@ evaluation limit (a licensing error at the cap), read `license_record_limit` fro
 license is configured) and drive the decision from that effective limit, never a remembered or
 hardcoded figure:
 
+⛔ **Read `license_record_limit_measured_at` alongside it, and treat a reading marked provisional —
+or carrying no marker — as the absent case below.** SDK setup's Step 5a takes its reading before
+Step 8 writes `CONFIGPATH`, so it cannot see a license installed at the system config path. A
+provisional figure is a genuine measurement of an incomplete view, which is the one shape the
+absent-versus-present split above cannot see on its own.
+
 - **`0` (no cap), or ≥ the dataset size**, the active license permits the full load: omit the
   evaluation-capacity warning and proceed.
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
