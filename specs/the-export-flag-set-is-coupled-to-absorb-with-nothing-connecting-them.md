@@ -105,3 +105,52 @@ somewhere else, and nothing re-derives it.
 - Related specs: `the-export-stream-build-is-unreachable-in-the-shipped-server.md` (introduced the
   list); `why-key-details-is-documented-now-so-the-no-flag-claim-is-stale.md` (the same
   flag-gated-silent-blank class, on the why response).
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Criterion 4 was not implemented, because implementing it as written would have written a
+Senzing claim into the suite that the server does not support.**
+
+The criterion asks for a test that drops `SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO` from
+`export_flags` and confirms the match-key comparison then fails. Making that assertion
+requires a flag→field mapping for `export_json_entity_report` — specifically "without
+`SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO`, `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` is absent
+from the export document".
+
+Re-verifying against the live server (Step 3.3) found no support for that mapping, in
+either direction:
+
+- `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_MATCHING_INFO')` —
+  server 1.35.4, 2026-09-01 — returns `applies_to` naming the `get_entity` / `why_*` /
+  `find_*` family and **not** `export_json_entity_report`.
+- `get_sdk_reference(topic='response_schemas', filter='export_json_entity_report',
+  language='python')` — the route that owns the export document — lists
+  `RESOLVED_ENTITY.RECORDS[].MATCH_KEY` with **no** `requires_flags`. The only flag-gated
+  paths in the entire export response are the `MATCH_KEY_DETAILS` subtree
+  (`SZ_INCLUDE_MATCH_KEY_DETAILS`).
+
+So the premise the criterion rests on — that this flag gates that field on this method —
+is contradicted by the flag's own `applies_to` and unsupported by the export schema. A
+test asserting it would have been an offline suite certifying a fact the server does not
+state, which is the INV-080 failure mode this repo has already had to retract twice.
+
+**What shipped instead**, satisfying criterion 3's second branch and going past it:
+
+- `FakeExportEngine` documents plainly that it does not interpret real flag bits, so no
+  test built on it can be read as validating the flag set.
+- It records `flags_seen`, and `test_the_flags_argument_reaches_the_engine` asserts the
+  flags argument actually reaches `export_json_entity_report` — the most direct form of
+  the coupling defect, and previously unguarded.
+- It gained a `strip` parameter, and `AMissingFieldIsSilentNotLoud` demonstrates the
+  consequence INV-179 names: a field the engine did not return degrades to blank without
+  raising. That is the mechanism that makes a missing flag invisible, asserted without
+  claiming which flag would cause it.
+- `EveryAbsorbedFieldIsAccountedFor` is the tripwire the spec's item 1 wanted a comment to
+  be: `_absorb`'s field reads are derived by scanning (INV-246), and a new one fails the
+  suite until it is looked up in the export response schema and, if flag-gated there,
+  added to `export_flags`.
+
+The contradiction itself is recorded as `MCP-NEGATIVE` at `senzing_viz_server.py:1873` and
+specced separately as `export-flags-are-not-documented-against-the-export-method.md`, which
+is where the question of *which* flag set should ship is put to the maintainer. Criterion 5
+was honored: the explicit list is unchanged and no DEFAULT composite was reintroduced.

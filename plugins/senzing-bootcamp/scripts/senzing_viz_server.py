@@ -398,6 +398,18 @@ class Model:
 
         Shared verbatim by both build paths: an export row and a ``get_entity`` response
         carry the same shape, which is why the export path needed no new absorb logic.
+
+        ⛔ **(INV-179) READING A NEW FIELD HERE MEANS ADDING ITS FLAG TO ``export_flags``
+        IN ``build_model``.** The per-record path passes the broad
+        ``SZ_ENTITY_DEFAULT_FLAGS``, so a newly-read field probably works there; the export
+        path passes an explicit list, and a field whose flag is missing comes back
+        **absent** and renders blank — no error, no warning. INV-179 names that as one of
+        the three causes of a blank field, and the one nothing warns about. The Truth Set
+        would look fine and a Bootcamper's own datastore would not.
+
+        ⚠️ ``tests/test_visualization_model_build_scales.py`` fails when a field read here
+        is not accounted for in its field-to-flag map, which is what turns this comment
+        into something that fires rather than something that is read.
         """
         re_ = resp.get("RESOLVED_ENTITY", {})
         eid = re_.get("ENTITY_ID")
@@ -1841,6 +1853,24 @@ def build_model(settings, patterns):
         # tells the guide not to pin one into the export call, so this file must not — a
         # reference that contradicts the instruction pointing at it is the defect
         # `the-export-stream-build-is-unreachable-in-the-shipped-server` was filed for.
+        #
+        # ⛔ (INV-179) This list is coupled to `Model._absorb`, ~500 lines above: each flag
+        # is here because `_absorb` reads the field it populates, and a field read there
+        # without its flag here comes back blank from a real engine with no error. The
+        # coupling is enforced by the field-to-flag map in
+        # `tests/test_visualization_model_build_scales.py` — change one end and that test
+        # tells you about the other.
+        #
+        # ⚠️ The server documents these five SZ_ENTITY_INCLUDE_* flags against the
+        # get_entity family, NOT against the export method we pass them to. The composite
+        # that IS documented for export (SZ_ENTITY_DEFAULT_FLAGS, applies_to includes
+        # export_json_entity_report) has response_paths equal to exactly the four paths
+        # `_absorb` reads. Whether the individual flags are honored on the export stream
+        # is not something an offline suite or a machine with no datastore can settle, so
+        # it is recorded rather than guessed — see
+        # `specs/export-flags-are-not-documented-against-the-export-method.md`.
+        #
+        # MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_RECORD_DATA') — no SZ_ENTITY_INCLUDE_* flag in this set lists export_json_entity_report in applies_to — owner: get_sdk_reference(topic='response_schemas', filter='export_json_entity_report') documents RESOLVED_ENTITY.ENTITY_ID/.ENTITY_NAME/.RECORDS[] and RELATED_ENTITIES[] as export response paths and carries requires_flags ONLY on MATCH_KEY_DETAILS — server 1.35.4, 2026-09-01
         #
         # Each flag below is here because `_absorb` reads what it populates:
         #   ALL_ENTITIES          -> which entities the export yields

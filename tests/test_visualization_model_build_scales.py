@@ -85,18 +85,38 @@ class FakeRecordEngine:
 
 
 class FakeExportEngine:
-    """Serves the export triple, and records that the handle was closed."""
+    """Serves the export triple, and records that the handle was closed.
 
-    def __init__(self, docs):
+    ⚠️ **It does not interpret real flag bits, and no test here should be read as
+    validating the flag set.** ``flags`` is recorded in ``flags_seen`` (so the argument is
+    at least observable rather than silently dropped) and ``strip`` simulates the ONE
+    consequence that matters: a field the engine did not return. What a real engine does
+    with ``SzEngineFlags`` is not knowable offline (INV-108) or on a machine with no
+    datastore, so it is simulated explicitly instead of implied.
+    """
+
+    def __init__(self, docs, strip=()):
         self.docs = list(docs)
         self.closed = []
         self.opened = 0
+        self.flags_seen = []
+        self.strip = set(strip)
         self._streams = {}
+
+    def _served(self, doc):
+        """Return ``doc`` with every field in ``strip`` removed, at any depth."""
+        if isinstance(doc, dict):
+            return {k: self._served(v) for k, v in doc.items() if k not in self.strip}
+        if isinstance(doc, list):
+            return [self._served(v) for v in doc]
+        return doc
 
     def export_json_entity_report(self, flags):
         self.opened += 1
+        self.flags_seen.append(flags)
         handle = 900 + self.opened
-        self._streams[handle] = iter([json.dumps(d) for d in self.docs])
+        self._streams[handle] = iter(
+            [json.dumps(self._served(d)) for d in self.docs])
         return handle
 
     def fetch_next(self, handle):
@@ -387,3 +407,143 @@ class TheModuleSaysWhichStrategyApplies(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# The fields `_absorb` reads, each against the export response document that carries it.
+# Source: get_sdk_reference(topic='response_schemas', filter='export_json_entity_report',
+# language='python') — server 1.35.4, 2026-09-01. `requires` is the flag the schema marks
+# the path with; None means the schema documents the path with no `requires_flags`, which
+# is true of every path this model reads.
+ABSORBED_FIELDS = {
+    "RESOLVED_ENTITY": ("RESOLVED_ENTITY", None),
+    "ENTITY_ID": ("RESOLVED_ENTITY.ENTITY_ID", None),
+    "ENTITY_NAME": ("RESOLVED_ENTITY.ENTITY_NAME", None),
+    "RECORDS": ("RESOLVED_ENTITY.RECORDS[]", None),
+    "RECORD_ID": ("RESOLVED_ENTITY.RECORDS[].RECORD_ID", None),
+    "DATA_SOURCE": ("RESOLVED_ENTITY.RECORDS[].DATA_SOURCE", None),
+    "MATCH_KEY": ("RESOLVED_ENTITY.RECORDS[].MATCH_KEY", None),
+    "ERRULE_CODE": ("RELATED_ENTITIES[].ERRULE_CODE", None),
+    "MATCH_LEVEL_CODE": ("RELATED_ENTITIES[].MATCH_LEVEL_CODE", None),
+    "RELATED_ENTITIES": ("RELATED_ENTITIES[]", None),
+    # Not a response field: the fallback string for an edge with neither code.
+    "RELATED": (None, None),
+}
+
+
+class EveryAbsorbedFieldIsAccountedFor(unittest.TestCase):
+    """The tripwire that makes the ``_absorb`` ↔ ``export_flags`` coupling fire.
+
+    Neither end can see the other: `_absorb` is ~1,450 lines above the flag set, and a
+    field read there whose flag is missing from the export list comes back **absent** —
+    no error, no warning, a blank cell in the rendered page (INV-179). A comment saying
+    so is read by whoever already suspects it. This fails instead.
+    """
+
+    def setUp(self):
+        self.source = SERVER.read_text(encoding="utf-8")
+        tree = ast.parse(self.source)
+        self.absorb = next(
+            n for n in ast.walk(tree)
+            if isinstance(n, ast.FunctionDef) and n.name == "_absorb")
+
+    def read_fields(self):
+        """Every SCREAMING_CASE string constant in `_absorb` — derived, never listed.
+
+        ⛔ (INV-246) Scanned rather than hardcoded on purpose: a hardcoded list certifies
+        the fields already thought of and is blind to the one a later edit adds, which is
+        the only field this test exists to catch.
+        """
+        return {n.value for n in ast.walk(self.absorb)
+                if isinstance(n, ast.Constant) and isinstance(n.value, str)
+                and re.fullmatch(r"[A-Z][A-Z0-9_]{2,}", n.value)}
+
+    def test_every_field_read_is_in_the_map(self):
+        unknown = self.read_fields() - set(ABSORBED_FIELDS)
+        self.assertEqual(
+            set(), unknown,
+            "`Model._absorb` reads a field this test does not account for: "
+            f"{sorted(unknown)}. Look the path up in get_sdk_reference("
+            "topic='response_schemas', filter='export_json_entity_report'), add it to "
+            "ABSORBED_FIELDS, and — if the schema marks it with `requires_flags` — add "
+            "that flag to `export_flags` in build_model. On the export path a field "
+            "whose flag is missing renders blank with no error (INV-179).",
+        )
+
+    def test_every_required_flag_is_in_the_export_set(self):
+        """No field read today is flag-gated; this fires when one becomes so."""
+        flags_block = self.source[self.source.index("export_flags = ("):]
+        flags_block = flags_block[:flags_block.index(")")]
+        for field, (path, requires) in sorted(ABSORBED_FIELDS.items()):
+            if requires is None:
+                continue
+            with self.subTest(field=field):
+                self.assertIn(
+                    requires, flags_block,
+                    f"{field} ({path}) needs {requires}, which `export_flags` does not "
+                    "request. The per-record path would still work — it passes the broad "
+                    "SZ_ENTITY_DEFAULT_FLAGS — so this breaks only the Bootcamper's own "
+                    "datastore, silently.",
+                )
+
+    def test_the_map_is_not_stale(self):
+        """A field in the map that `_absorb` no longer reads means the map went stale."""
+        unread = set(ABSORBED_FIELDS) - self.read_fields()
+        self.assertEqual(
+            set(), unread,
+            f"ABSORBED_FIELDS lists {sorted(unread)}, which `_absorb` no longer reads. "
+            "A map that has drifted from the code stops being evidence about it.",
+        )
+
+
+class AMissingFieldIsSilentNotLoud(unittest.TestCase):
+    """The failure mode the coupling comment claims: absent field, no error, blank cell.
+
+    This is what stops `test_the_two_paths_agree` being read as validation of the flag
+    set. The fake ignores real flag bits, so the agreement it demonstrates holds only for
+    the fields the fake was asked to serve — and here is what happens to a field it was
+    not.
+    """
+
+    def setUp(self):
+        self.viz = load_server()
+
+    def test_a_stripped_match_key_renders_blank_rather_than_raising(self):
+        docs = [{
+            "RESOLVED_ENTITY": {
+                "ENTITY_ID": 1,
+                "ENTITY_NAME": "Alpha",
+                "RECORDS": [{"DATA_SOURCE": "TEST", "RECORD_ID": "1",
+                             "MATCH_KEY": "+NAME"}],
+            },
+            "RELATED_ENTITIES": [],
+        }]
+        full = self.viz.Model().build_from_export(FakeExportEngine(docs), 0)
+        self.assertEqual(
+            "+NAME", full.entities[1]["records"][0]["match_key"],
+            "Precondition: the field is read when the engine serves it.",
+        )
+
+        stripped = self.viz.Model().build_from_export(
+            FakeExportEngine(docs, strip={"MATCH_KEY"}), 0)
+        self.assertEqual(
+            "", stripped.entities[1]["records"][0]["match_key"],
+            "A field the engine did not return must degrade to blank, not raise — which "
+            "is exactly why a missing flag is invisible and needs a test rather than a "
+            "comment (INV-179).",
+        )
+        self.assertEqual(
+            1, len(stripped.entities),
+            "The entity itself must still be built; a missing optional field must not "
+            "cost the whole row.",
+        )
+
+    def test_the_flags_argument_reaches_the_engine(self):
+        """`build_from_export` must pass its flags through, not drop them."""
+        engine = FakeExportEngine([])
+        self.viz.Model().build_from_export(engine, 12345)
+        self.assertEqual(
+            [12345], engine.flags_seen,
+            "The flags argument must reach export_json_entity_report. A build that "
+            "computes a flag set and then does not pass it is the defect this whole "
+            "coupling is about, in its most direct form.",
+        )
