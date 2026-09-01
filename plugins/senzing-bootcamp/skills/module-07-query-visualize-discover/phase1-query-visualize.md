@@ -204,11 +204,12 @@ server 1.33.0, 2026-08-26). Two shapes follow, and the choice is the binding's, 
   itself be a **collection of members**. If it is a collection, it cannot be listed among the
   members; it is **merged** into the set.
 
-<!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS', language='java') — the flag row carries applies_to, composite_members, description, name, response_paths and source_file, with no field naming a binding type, and is byte-identical with and without the language argument — owner: get_sdk_reference(topic='parameters', filter='<method>', language='java') IS the route that owns per-binding types and returns flags as Set<SzFlag> for Java plus a warning naming every binding that differs, so the parameters topic is where the reader must go (routing negative) — server 1.33.0, 2026-08-26 -->
-⚠️ **`topic='flags'` cannot answer this — it returns composites and single flags in the *same* JSON
-shape, with `composite_members` as the only difference and no field naming a binding type**
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS', language='java') — no field on any returned row names a binding or its argument types — the rows carry only membership, dependency and provenance fields — and the response is byte-identical with and without the language argument — owner: get_sdk_reference(topic='parameters', filter='<method>', language='java') IS the route that owns per-binding types and returns flags as Set<SzFlag> for Java plus a warning naming every binding that differs, so the parameters topic is where the reader must go (routing negative) — server 1.35.3, 2026-09-01 -->
+⚠️ **`topic='flags'` cannot answer this — no field it returns names a binding or its argument
+types.** Rows differ from one another only in membership and dependency fields
+(`composite_members`, `depends_on`, `response_paths`), never in anything language-specific
 (`get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS', language='java')`,
-server 1.33.0, 2026-08-26: the row is byte-identical with and without `language`). So the flags
+server 1.35.3, 2026-09-01: the response is byte-identical with and without `language`). So the flags
 listing is where you learn membership and the parameters listing is where you learn representation;
 asking only the first is what produces a flag set that does not compile.
 
@@ -404,7 +405,7 @@ export parser is the habit that produces the error, and all three fields render 
 raising (`get_sdk_reference(topic='response_schemas', filter='why_entities', language='python')` —
 the document shared by `why_entities`, `why_records` and `why_record_in_entity` — server 1.33.0,
 2026-08-21).
-<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same call returns those three names on the entity side under RESOLVED_ENTITY.RECORDS[] and RELATED_ENTITIES[], which is what makes the absence a rename rather than a gap (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: get_sdk_reference(topic='response_schemas', filter='why_entities', language='python') — no MATCH_KEY, ERRULE_CODE or MATCH_KEY_DETAILS field appears under WHY_RESULTS[] at any depth — owner: get_sdk_reference(topic='response_schemas', filter='why_entities') IS the route that owns the why response document (shared by why_entities, why_records and why_record_in_entity), so its field list is the answer rather than a miss; the same document carries the renamed trio one level in, at WHY_RESULTS[].MATCH_INFO — WHY_KEY, WHY_ERRULE_CODE and WHY_KEY_DETAILS, of which only WHY_KEY_DETAILS is flag-gated (requires_flags SZ_INCLUDE_MATCH_KEY_DETAILS) — which is what makes the absence a rename rather than a gap (absence negative) — server 1.35.3, 2026-09-01 -->
 ⚠️ **Getting
 `WHY_KEY_DETAILS` to appear may require `SZ_INCLUDE_MATCH_KEY_DETAILS` plus a relations flag**: no
 flag is *documented* to populate it, yet it was absent without that flag on two SDK builds

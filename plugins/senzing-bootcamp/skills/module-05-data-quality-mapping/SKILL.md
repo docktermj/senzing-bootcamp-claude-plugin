@@ -80,7 +80,7 @@ transformation programs tested + output validated with quality >70%.
   traps verified live via `search_docs`, server 1.32.9, docs indexed 2026-08-11 20:52 UTC,
   2026-08-13.)
   <!-- MCP-NEGATIVE: search_docs(query='globalization') — returns no UTF-8 / supported-languages answer in its top hits, and its highest-ranked Guide hit is a title-only stub — owner: search_docs(query='UTF-8 encoding non-Latin character support multi-language data quality', category='globalization') returns it, as the "What languages does Senzing support?" section (routing negative — the material is served; the bare query misses it) — server 1.33.0, 2026-08-21 -->
-  <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all, all five hits being repo docs/best-practices.md template files about Markdown lint and Dockerfiles — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it, as "Address matching examples > CJK+English cross-script matching" (routing negative — the category filter is what recovers it) — server 1.33.0, 2026-08-21 -->
+  <!-- MCP-NEGATIVE: search_docs(query='multi-language data quality best practices') — returns no globalization content at all — the hits are repo template docs/best-practices.md files about Markdown lint and Dockerfiles, none carrying non-Latin or cross-script guidance — owner: search_docs(query='data quality practices multi-language non-Latin', category='globalization') returns it, as "Address matching examples > CJK+English cross-script matching" (routing negative — the category filter is what recovers it) — server 1.35.3, 2026-09-01 -->
 
 ## Error handling
 

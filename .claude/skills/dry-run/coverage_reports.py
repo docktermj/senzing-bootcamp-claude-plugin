@@ -566,6 +566,51 @@ def find_negatives(repo):
     return found
 
 
+#: A rationale that pins a COUNT is the marker shape that cannot survive an index rebuild.
+#: The claim ("tool X does not contain Y") is re-asked by phase 1; the rationale beside it is
+#: not, so a census quietly stops describing the response while the claim above it stays true
+#: and the date says the whole comment was checked. On 2026-08-31 two of the three drifted
+#: rationales were exactly this shape — "all four hits are …" (ten hits by then) and an
+#: exhaustive field list (a field had been added). A count is never the discriminating fact:
+#: "no field names a binding type" says what the census was standing in for and does not expire.
+#: ⚠️ `both` counts on its own; `all`/`every` do not. "all six hits" pins six, and breaks
+#: when the index returns ten; "every hit is V3-to-V4 material" is a property over whatever
+#: came back and survives a rebuild. That distinction is the whole point of the report, so
+#: the two forms are pinned as fixtures on either side in
+#: `tests/test_mcp_negative_rationale_shape.py`.
+#: ⚠️ `document` is dropped from the BOTH branch because it is also a verb: a shipped marker
+#: reads "both document installing only …", where the subject is two routes and `document` is
+#: what they do. A numeral cannot precede a verb ("four documents"), so the numbered branch
+#: keeps it. Found by negative control, and pinned as a must-not-flag fixture -- the same
+#: verb/noun collision that had to be corrected in two other guards this session.
+_RESULT_NOUN = r"(?:hits?|results?|rows?|matches|entries|documents?|chunks?)"
+_COUNTABLE_NOUN = r"(?:hits?|results?|rows?|matches|entries|chunks?)"
+CENSUS_SHAPED = re.compile(
+    r"\b(?:(?:all|only|just)\s+)?"
+    r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+"
+    + _RESULT_NOUN + r"\b"
+    r"|\bboth\s+" + _COUNTABLE_NOUN + r"\b",
+    re.IGNORECASE,
+)
+
+
+def find_census_rationales(found):
+    """[(relpath, lineno, phrase)] for markers whose rationale pins a count.
+
+    Reads the CLAIM and OWNER halves of an already-parsed marker — the two places a
+    rationale lives. Reports rather than gates: a count is occasionally the fact itself
+    ("the corpus has one entry for this code"), so the call is the reader's.
+    """
+    flagged = []
+    for _key, _version, _date, claim, owner, relpath, lineno in found:
+        for half in (claim, owner):
+            m = CENSUS_SHAPED.search(half)
+            if m:
+                flagged.append((relpath, lineno, m.group(0).strip()))
+                break
+    return flagged
+
+
 def find_malformed_negatives(repo):
     """[(relpath, lineno, line)] for every `MCP-NEGATIVE:` that does not fully parse.
 
@@ -753,6 +798,16 @@ def report_negatives(repo, current_server=None):
         for relpath, lineno, line in malformed:
             print("     %s:%d" % (relpath, lineno))
             print("       %s" % line[:150])
+        print()
+    census = find_census_rationales(found)
+    if census:
+        print("⚠️ CENSUS-SHAPED rationales: %d — re-describe rather than re-date." % len(census))
+        print("   These pin a COUNT. Phase 1 re-asks the CLAIM, never the rationale beside it,")
+        print("   so a census stops describing the response while the claim stays true and the")
+        print("   date certifies the whole comment. Replace it with the discriminating property")
+        print("   the count was standing in for — that is the half a later reader acts on.")
+        for relpath, lineno, phrase in census:
+            print("     %s:%d  — %r" % (relpath, lineno, phrase))
         print()
     if not found:
         print("  (none found — if that is a surprise, the markers are missing, not the claims)")

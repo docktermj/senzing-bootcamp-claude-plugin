@@ -120,3 +120,45 @@ line for the reader to act on but validates only the claim's shape and date.
   and only its stated justification has expired.
 - Upstream: not applicable — this is a plugin/skill bookkeeping defect, no Senzing-side bug
 - Related specs: `counting-the-writers-of-license-record-limit-is-the-wrong-invariant.md`
+
+## Deviations from this spec, and why (2026-09-01)
+
+**The server moved between writing and implementing, which is the case Step 3.3 exists for.**
+`get_capabilities` reports **1.35.3** (index built 2026-09-01 11:58 UTC), not the 1.35.1 this spec
+swept. Every claim and every proposed rationale was therefore re-asked today rather than copied, and
+the markers are stamped **server 1.35.3, 2026-09-01** — not the 2026-08-31 the criteria name. All
+three claims still hold.
+
+**Two of the three replacement rationales this spec proposes are themselves wrong on 1.35.3.**
+
+- **`phase1-query-visualize.md:207`** — the spec says *"the row now also carries `depends_on`"*.
+  It does not. `get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS',
+  language='java')` returns eight rows; the `SZ_ENTITY_INCLUDE_ALL_RELATIONS` row carries
+  `applies_to`, `composite_members`, `description`, `name` and `source_file` — **neither**
+  `depends_on` **nor** `response_paths`. Both appear on *sibling* rows
+  (`SZ_ENTITY_INCLUDE_RELATED_ENTITY_NAME` and friends). Correcting one census into another census
+  would have re-armed the same defect, so the rationale now states the property: **no field on any
+  returned row names a binding or its argument types**, and the response is byte-identical with and
+  without `language` (re-verified both ways today).
+- **`phase1-query-visualize.md:407`** — the spec says `WHY_KEY`, `WHY_ERRULE_CODE` and
+  `WHY_KEY_DETAILS`, *"the last two gated on `SZ_INCLUDE_MATCH_KEY_DETAILS`"*. Only
+  **`WHY_KEY_DETAILS`** carries `requires_flags`; `WHY_KEY` and `WHY_ERRULE_CODE` are ungated. The
+  marker says so.
+
+⚠️ **Both errors are the shape this spec is about, committed inside the spec that names it** — a
+rationale written from a reading rather than re-asked. Recorded here because it is the strongest
+available evidence for the procedure change in `## Proposed change` item 1.
+
+**The sweep found two more census rationales the spec did not name (INV-246).** The new detector
+flags by scanning, so it reported sites this spec's author had not looked at:
+`module-02-sdk-setup/SKILL.md:345` (*"all six hits are V3-to-V4"* — ten hits today) and
+`module-05-data-quality-mapping/SKILL.md:83` (*"all five hits being repo docs/best-practices.md
+template files"* — six such files today, plus unrelated pages). Both claims still hold, both owner
+routes re-asked and intact — including the globalization category filter, which still recovers
+*"Address matching examples > CJK+English cross-script matching"*. Both were re-described and
+restamped in this change.
+
+**One flagged rationale was deliberately left alone.** `specs/DECLINED.md:126` (*"10 hits"*) is a
+**record of a decision already taken**, not shipped guidance. Rewriting the evidence recorded
+against a declined spec is the maintainer's call, so the report lists it and the guard's tree-scan
+is scoped to `plugins/`. It is the one remaining census-shaped rationale in the repo.

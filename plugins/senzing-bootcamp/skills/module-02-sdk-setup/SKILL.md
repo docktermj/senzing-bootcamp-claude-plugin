@@ -106,7 +106,7 @@ Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "
 versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
 observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
 version through the SDK rather than concluding the SDK is missing.
-<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; every hit is a version-READING example or a build/packaging document, none stating where the file lives — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.35.3, 2026-09-01 -->
 
 **If the SDK is found and version is V4.0+:**
 
@@ -342,7 +342,7 @@ topic (re-checked 2026-08-13). So whether a point release needs any schema or co
 **undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
 has a populated repository, mention that the update touches the SDK and not their data — then let
 them decide.
-<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; every hit is V3-to-V4 migration material (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.35.3, 2026-09-01 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
