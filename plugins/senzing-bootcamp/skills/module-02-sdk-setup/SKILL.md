@@ -302,11 +302,35 @@ uses a **hyphen**:
 | `dpkg-query` / `rpm -q` / `direct_download` filename | `4.3.3-26191` |
 | `szBuildVersion.json` → `BUILD_VERSION` | `4.3.3.26191` |
 
-Comparing those two raw strings reports a difference where none exists. **Prefer the package
-manager's version string**; when only the JSON is available, normalize the separator before
-comparing. (Observed on a real 4.3.3-26191 install, 2026-07-31 — an environment observation, not
-an MCP-sourced fact.) On Windows that file is in the **sibling** `data` directory, not under
-`%SENZING_DIR%`.
+Comparing those two raw strings reports a difference where none exists. (Observed on a real
+4.3.3-26191 install, 2026-07-31 — an environment observation, not an MCP-sourced fact.) On Windows
+that file is in the **sibling** `data` directory, not under `%SENZING_DIR%`.
+
+⛔ **The two sources disagree for two different reasons, and only one of them is cosmetic —
+normalize the separator FIRST, then read what is left.**
+
+- **Same version, different separator** (`4.3.3-26191` vs `4.3.3.26191`) — a formatting artifact.
+  Normalize and treat them as equal; the package manager's string is the one to report.
+- **Genuinely different values after normalizing** — the install on disk is **not** the one the
+  package manager records. That happens on an extracted, POC or hand-placed install, and then
+  `szBuildVersion.json` describes what will actually **load**, so it wins. Reporting the package
+  manager's number here states a wrong version as fact about the very thing this module exists to
+  establish. Observed 2026-09-01 on Ubuntu 24.04: `dpkg-query` reported `4.3.4-26210` while
+  `/opt/senzing/er/szBuildVersion.json` read `4.4.0.26242`, and `SzProduct.get_version()` — once
+  Step 3's environment script had run — returned `4.4.0`, agreeing with the file and not with
+  `dpkg`. Environment observation, not an MCP-sourced fact.
+- **The package manager reports nothing at all** — no such package, empty output, or no package
+  manager. That is **not** "not installed": it means the install is not package-manager-owned, and
+  `szBuildVersion.json` is the source. ⚠️ **This is a route the server documents rather than an
+  exotic case** — `sdk_guide(topic='install', platform='linux_apt')` gives
+  `dpkg-deb -x senzingsdk-runtime_*.deb /opt/senzing` for containers, CI and no-sudo environments
+  (server 1.35.3, 2026-09-01), and on it no package is ever registered.
+
+⚠️ **`SzProduct.get_version()` is the tiebreaker, and it is reachable later than you need it.**
+It is authoritative for the library that will actually load, but the import fails until Step 3's
+environment script exports `LD_LIBRARY_PATH` — which is exactly why Step 1 can be forced onto the
+filesystem fallback. Once Step 3 has run, use it to settle any disagreement, and correct the
+version aloud if what you reported at Step 1 turns out to have been the package manager's.
 
 ⛔ **If the available version cannot be determined, say the check was skipped and name why**
 (INV-163). "No data" is never "up to date" — an unreachable repository, a missing package manager,

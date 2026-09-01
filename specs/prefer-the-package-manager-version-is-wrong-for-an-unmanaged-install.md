@@ -122,3 +122,26 @@ environment script exports `LD_LIBRARY_PATH`.
   SDK builds and is not a typical Bootcamper environment. The *mechanism* generalizes (the server
   documents the extraction route), but the specific 4.3.4-vs-4.4.0 split is a maintainer-box artifact
   and should not be cited as a Bootcamper-facing frequency claim.
+
+## Deviations from this spec, and why (2026-09-01)
+
+**The evidence table's third row has moved, and the shipped text uses the row that reproduces.**
+The spec records `apt-cache policy` Candidate as `4.3.4-26210`; on 2026-09-01 it is **`4.4.0-26242`**
+— the repository has caught up with the build on disk. What still reproduces, and what the fix
+actually turns on, is the **installed package record**: `dpkg-query -W senzingsdk-runtime` reports
+`4.3.4-26210` against an on-disk `szBuildVersion.json` of `4.4.0.26242`. The shipped text cites that
+disagreement and not the candidate version, since the candidate is about what is *available* — which
+INV-163 already governs — rather than what is *installed*.
+
+**An existing guard had pinned the sentence this fix removes.**
+`tests/test_sdk_update_offer.py::test_it_says_which_source_to_prefer` asserted the literal *"Prefer
+the package manager's version string"*. Its claim — that the section tells the reader which source
+wins — is unchanged; it now has two answers rather than one, so the assertion was rewritten to
+require a resolution for **both** causes. That is strictly harder to satisfy than the single phrase
+it replaced.
+
+**Both observations are marked observation-only, separately.** The 2026-07-31 separator observation
+and the 2026-09-01 version-split observation each carry their own marker, and the guard asserts two
+of them. A single marker covering both is exactly the shape that let this file's `szBuildVersion.json`
+provenance caveat go half-stale — fixed in `szbuildversion-windows-path-is-now-mcp-sourced`
+immediately before this one, in the same run and the same file.

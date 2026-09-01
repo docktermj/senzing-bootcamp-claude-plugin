@@ -278,8 +278,22 @@ class TheVersionComparisonTrapIsStated(unittest.TestCase):
         self.assertRegex(self.flat, r"(?i)dot\*?\*? where every package manager uses a \*?\*?hyphen")
 
     def test_it_says_which_source_to_prefer(self):
-        self.assertRegex(self.flat, r"(?i)Prefer the package manager's version string")
-        self.assertRegex(self.flat, r"(?i)normalize the separator before comparing")
+        """⚠️ Asserts a resolution for BOTH causes, not the one unconditional sentence.
+
+        This pinned *"Prefer the package manager's version string"* — the rule as originally
+        written. On 2026-09-01 that rule was found wrong for an install the package manager
+        does not own (`dpkg-query` 4.3.4-26210 against an on-disk 4.4.0.26242), so the section
+        now resolves by cause: separator artifact -> package manager, genuine difference ->
+        `szBuildVersion.json`. The claim this test makes — the reader is told which source
+        wins — is unchanged and now has two answers instead of one.
+        """
+        self.assertRegex(self.flat, r"(?i)normalize the separator")
+        self.assertRegex(
+            self.flat, r"(?i)the package manager's string is the one to report",
+            "the separator case must still resolve to the package manager's string")
+        self.assertRegex(
+            self.flat, r"(?i)describes what will actually \*\*load\*\*, so it wins",
+            "a genuine difference must resolve to the file that describes the loading library")
 
     def test_the_windows_json_location_differs(self):
         """On Windows szBuildVersion.json is a sibling of er, not under SENZING_DIR."""
