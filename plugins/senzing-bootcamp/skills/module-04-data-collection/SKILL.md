@@ -401,14 +401,27 @@ _(Internal: end the turn on this question and wait.)_
 **If the bootcamper chose option 5** — or otherwise doesn't have their own data, or wants free
 data to practice with — recommend CORD data as the primary alternative:
 
-> "Senzing provides **CORD (Collections Of Relatable Data)**: curated, real-world-like
-> datasets designed specifically for entity resolution evaluation. These are the best option
-> for learning with realistic data patterns.
+> "Senzing provides **CORD (Collections Of Relatable Data)**: curated collections of **real**
+> public and commercial records, assembled specifically for entity resolution evaluation.
+>
+> These are **real records about real people and organizations** — historical snapshots
+> published for evaluation, **not for operational use**. They are the best option for
+> learning, because the matching problems in them are the ones real data actually has.
 >
 > I can pull CORD datasets (Las Vegas, London, Moscow) using the `get_sample_data` tool: these
 > are ready-to-use Senzing JSONL files.
 >
 > Learn more about CORD: <https://senzing.com/senzing-ready-data-collections-cord/>"
+
+⛔ **(INV-012) The two sentences about real data are a statement, not a question — and they are
+not optional.** `get_sample_data`'s own contract requires it of every caller: *"IMPORTANT: This is
+REAL data (not synthetic) — historical snapshots for evaluation only, not operational use. Always
+inform the user of this."* (verified against the live tool description, server 1.35.3, 2026-09-01).
+Never describe CORD as synthetic, simulated or "real-world-like": a Bootcamper who believes the
+records are fabricated treats named individuals as props, and those names reach `docs/bootcamp_recap.md`
+through Module 7's screenshots and out again in the keepsake PDF they are encouraged to share.
+Do **not** turn this into a gate — they have already chosen sample data, and a 👉 here would ask a
+question with no action behind it.
 
 Use `get_sample_data(dataset='list')` to show available CORD datasets. Present the fetch URL from
 the response exactly as the tool gives it, and say **which** of the two you are presenting — they

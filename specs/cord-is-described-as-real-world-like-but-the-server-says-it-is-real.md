@@ -104,3 +104,29 @@ the letter never surfaces it.
   lacks anything; the server demonstrably carries it, quoted above.
 - Upstream: not applicable — the defect is the plugin's, and the server's contract is correct.
 - Related specs: none
+
+## Deviations from this spec, and why (2026-09-01)
+
+**Three acquisition paths, not two (INV-246).** The spec's `## Affected files` names Module 4 and
+Module 1 Step 4b. Scanning for CORD **acquisition** — recommending it, binding a scenario to it, or
+offering it as a substitute — found a third: `module-03b-truthset-visualization/phase1-visualization.md`
+offers a non-deterministic CORD collection when the Truth Set is unavailable, and reaches the data
+**without passing through Module 4's wording at all**. It now carries the disclosure. The guard
+derives its site set by that scan rather than from this list.
+
+**No record counts were shipped.** The spec cites *"642,046 records across 11 sources"* and names the
+providers. That is a census — the exact shape
+`specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md`, implemented immediately before
+this one in the same run, exists to remove — and it would be re-verifiable only by re-running the
+tool. The shipped text states what the data **is** (real public and commercial records, historical
+snapshots, evaluation rather than operational use), which is the disclosure the tool actually
+requires and which does not expire when a collection is refreshed.
+
+**Re-verified against server 1.35.3, not the 1.35.1 the spec swept.** The obligation is unchanged and
+still verbatim in the `get_sample_data` tool description.
+
+⚠️ **`module-05-data-quality-mapping/phase1-quality-assessment.md` was deliberately excluded.** Its
+👉 names a CORD source ("Your CORD source [SOURCE_NAME] is already in Senzing-loadable form…"), so a
+word-level scan flags it, but it *consumes* data Module 4 acquired — the file says so outright — and
+requiring the disclosure there would restate it to a Bootcamper who has had the files on disk for two
+modules. It is pinned in the guard as a must-not-match so a later widening cannot quietly add it.

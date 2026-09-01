@@ -242,6 +242,12 @@ collection to cover a customer-360 problem in order to reach the `cord` branch.
 
 - **Fitting CORD dataset returned** (one of the three eligible collections, matching the
   category's domain): back the scenario with it, provenance `cord`.
+  - ⛔ **Say plainly that CORD is real data, here, in the turn that binds it.** This is the first
+    moment the Bootcamper's scenario becomes real-people data, and Module 4's wording is several
+    modules away. `get_sample_data`'s contract requires its caller to disclose it — real records,
+    historical snapshots, evaluation rather than operational use — and the canonical sentences are
+    in `../module-04-data-collection/SKILL.md` (Step 2's CORD block). A statement, never a 👉
+    (INV-012).
 - **None fit** — including every case where the only apparent fit was `truthset`: synthetic data,
   provenance `synthesized`. Data collection generates the files for this provenance without asking
   again (`../module-04-data-collection/SKILL.md` → Step 2), so this branch is complete, not
