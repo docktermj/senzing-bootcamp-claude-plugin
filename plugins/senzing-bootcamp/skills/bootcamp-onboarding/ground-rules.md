@@ -308,14 +308,23 @@ steering files.)
   normative and does go stale. For coverage, **`get_capabilities` governs**, and a disagreement is
   settled by making the call, not by preferring whichever text looks newer.
 
-  <!-- COVERAGE-FIGURE-SCAN: quoted-history — the two lines below QUOTE the stale declared
-       description in order to say it is stale. `tests/test_find_examples_coverage_is_uncitable.py`
-       exempts from this marker to the next blank line; keep that block short. -->
-  Read on server **1.33.0**, 2026-08-28: `find_examples`' declared description lists
-  `.py, .java, .cs, .rs` and "Python, Java, C#, Rust", while `get_capabilities` lists `.ts` and
-  `.js` too and names TypeScript/Node.js.
+  ⚠️ **The example this rule was written from has been RESOLVED upstream — which is why the rule is
+  stated as a property and not as that example.** On server 1.33.0 `find_examples`' declared
+  description omitted `.ts`/`.js` and TypeScript and gave a lower repository count than
+  `get_capabilities`; it was reported upstream 2026-08-27, and on **server 1.36.0, 2026-09-02** the
+  two agree on count, extensions and languages. The rule did not go with it: a declared
+  description's coverage prose is still not normative, and still goes stale on the server's
+  schedule rather than the plugin's.
 
-  A live `language='typescript'` search returns a `.ts` file, so the declared half is stale.
+  **The live illustration, same server and date:** `search_docs`' declared description says the
+  corpus is *"~2175 chunks"*, while every `search_docs` response carries
+  `metadata.documents_indexed: 14637`. ⚠️ **Those are not necessarily contradictory — they may
+  simply be different units** (a chunk need not be a document), and **the tool documents neither**.
+  That is the point: a reader cannot tell from the declared prose how large the corpus is, or
+  whether the two figures describe the same thing. A coverage figure a caller cannot act on is
+  exactly the kind this rule says not to quote — and the reason holds whether or not any two
+  figures are in outright conflict.
+
   `generate_scaffold` shows the same split **inside one schema**: its summary line says
   "Languages: python, java, csharp, rust" and omits `error_handling` from its workflow list, while
   that schema's own `language` and `workflow` **property** descriptions do list

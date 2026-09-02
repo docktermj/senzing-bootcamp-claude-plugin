@@ -53,6 +53,24 @@ VERIFIED_ON = "server 1.32.9, docs index 2026-08-11 20:52 UTC, checked 2026-08-1
 #: to stop.
 VERIFIED_QUERIES = {
     # ---------------------------------------------------------------------------------
+    # Executed 2026-09-02 on server 1.36.0 (twice: during the dry run that produced
+    # `specs/proceed-on-sqlite-keeps-the-tier-s-thread-count.md`, and again at
+    # implementation). The claim it supports is a NEGATIVE, which is why the query is
+    # prescribed at all: Phase B must not characterize an engine message the corpus does
+    # not document, so the step names the query whose emptiness is the evidence.
+    "resolved entity is out of sync expected got concurrent loading SQLite lock":
+        "EMPTY OF THE TARGET, WHICH IS THE POINT. No hit names the "
+        "'Resolved entity ... is out of sync' engine message at all. #1 is 'Enabling the "
+        "Per-Entity Feature Store & Advisory Locking in Senzing 4.4.0' (86.7), whose "
+        "behavior-by-database table states that on SQLite the engine 'Falls back to LEASE "
+        "automatically (no-op)' with no advisory locks -- adjacent and useful, but not the "
+        "message. #2 is 'Scaling Out Your Database With Clustering' (76.4). So the message "
+        "is uncovered by the corpus rather than missed by the phrasing, which is what makes "
+        "the absence negative at phaseB-load-first-source.md safe to state (INV-194: the "
+        "owner route was asked). Re-ask before re-dating; a negative is the one claim shape "
+        "that cannot go stale detectably.",
+
+    # ---------------------------------------------------------------------------------
     # Executed 2026-08-28 on server 1.33.0, during the `/feedback-to-specs` triage that
     # produced `specs/mapping-step3-rejects-disjoint-name-declarations.md`. The claim it
     # supports is the SCOPE of the NAME rule -- the step-3 validator's message asserts a

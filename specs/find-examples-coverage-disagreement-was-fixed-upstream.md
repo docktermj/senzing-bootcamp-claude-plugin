@@ -118,3 +118,53 @@ Rescope rather than delete — the rule survives, its premise changed.
 - Upstream: not applicable — the upstream report was already sent 2026-08-27 and this spec records that it was **acted on**.
 - Related specs: `specs/find-examples-self-describes-two-different-coverages.md` (the 2026-08-28 spec this supersedes the premise of)
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The proposed live example was shipped with a weaker, truer claim.** Proposed change 2 said to
+   replace the expired example with *"the live `search_docs` '~2175 chunks' vs
+   `documents_indexed: 14637` pair"*, and criterion 5 asked for a test asserting *"INV-280's live
+   illustrating example is a pair that currently **disagrees**"*. Re-verified on server
+   **1.36.0, 2026-09-02**: both figures are real — the declared description says `~2175 chunks`,
+   every response carries `metadata.documents_indexed: 14637` — but they are **plausibly different
+   units**, and the tool documents neither. Calling that a disagreement pins a stronger claim than
+   the evidence supports. It ships as what it is: two coverage figures the tool does not reconcile,
+   so a caller cannot act on the declared one — which is INV-280's actual subject. The test
+   correspondingly asserts the illustration is **dated and caveated**, and explicitly does *not*
+   assert a contradiction; its docstring says why.
+
+2. **A third site needed changing that the spec did not name — the guard's own assertions, not just
+   its messages.** Proposed change 4 said to *"keep both assertions; rewrite the two failure
+   messages"*. Two **other** assertions in the same file had the expired premise baked in and failed
+   the moment the claim was corrected:
+   - `test_the_contested_fact_is_recorded_where_the_index_is_quoted` required the literal string
+     `2026-08-28` — the date the disagreement was last *confirmed*. Pinning it would have kept the
+     guard green while the note said the sources still disagree. Rescoped to require the **re-check**
+     date and server version; the historical evidence is still required by the `index.ts` assertion.
+   - `test_the_exemption_is_narrow` asserted `scanned < total`, i.e. that the `COVERAGE-FIGURE-SCAN`
+     marker exists and exempts something. That premise expired with the example: ground-rules no
+     longer quotes a stale extension list or count, so **no exemption is needed and its absence is
+     the correct end state**. Rescoped to keep the real rule — if a marker is present it covers one
+     paragraph, never a region.
+
+   Both are the same shape as the defect this spec describes, one level down: a guard whose premise
+   expired, holding a rule that is still right.
+
+3. **The rewrite could not quote the aligned figure, and says so.** The first draft of the phaseA
+   note wrote *"42 indexed Senzing GitHub repositories"* to show the two now match — and tripped
+   `test_no_shipped_file_states_a_repository_count`, the guard this very spec preserves. Corrected to
+   state that the counts match **without naming the number**, with one line explaining that a note
+   exempting itself to say the figures agree would be the only place in the plugin holding a coverage
+   figure. The guard caught it; the fix demonstrates the rule rather than needing an exemption.
+
+4. **INV-280's own ⛔ no-count rule needed an `INV-280` citation.** Reflowing the paragraph moved
+   that pre-existing rule onto a new line, so `conformance.py since` correctly reported it as an
+   added hard rule citing no invariant. Cited at its line (INV-183).
+
+## Invariants introduced
+
+None — and deliberately so. This **corrects** INV-280 rather than replacing or extending it: the
+invariant's wording is the property, its examples are dated evidence beneath it, and the correction
+note records that the original example was resolved upstream while the rule stands. A ⛔ was added to
+INV-280 telling future readers not to re-pin the invariant to whichever pair is current, so the next
+resolution costs a correction note rather than a rewrite.

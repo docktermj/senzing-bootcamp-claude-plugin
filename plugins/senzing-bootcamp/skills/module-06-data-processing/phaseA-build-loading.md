@@ -236,6 +236,42 @@ loader. Every tier that represents a real production system gets the threaded pa
   record_count=<raw_value>)` for the threaded production pattern. Add a code comment stating the
   tier and the architecture recommendation (thread pool for small and medium; distributed /
   queue-based for large).
+
+  ⛔ **(INV-296) The tier picks the PATTERN; `database_type` picks the WORKER COUNT — read both.** Read
+  `database_type` from `config/bootcamp_preferences.yaml` (the key SDK setup's Step 7 writes when the
+  engine is chosen, valued `sqlite` or `postgresql` — the same file and key the SQLite pre-load
+  check below reads, never `bootcamp_progress.json`) **here**, not only at that check
+  further down. The tier answers "what shape of program"; it cannot answer "how many writers this
+  datastore tolerates", and taking the worker count from the tier alone is how a
+  production-tier loader ends up pointed at a datastore that cannot take it.
+
+  **The server makes this a database question, in its own words.**
+  `search_docs(query='loading', category='anti_patterns')` → *"Do Not Use Single-Threaded Loading"*
+  says *"Start with 2-8 workers per CPU core and **tune based on your database and storage
+  throughput**"*, and *"Do Not Use SQLite in Production"* says SQLite *"does not support concurrent
+  writes"*, listing *"Database locked errors under concurrent access"* among its symptoms (server
+  **1.36.0**, 2026-09-02). So:
+
+  - **`postgresql`** (or any supported RDBMS) — take the tier's full concurrency. This is the case
+    the 2-8-per-core figure is written for; nothing is capped.
+  - **`sqlite`** — keep the tier's threaded *pattern* and **serialize the writes**: a single writer,
+    or a small fixed ceiling if the language's pool cannot be sized to one. ⚠️ **This ceiling is a
+    DERIVATION, not a served figure** — no MCP route returns a SQLite worker count. What the server
+    serves is the property (no concurrent writes; locked errors under concurrent access) and the
+    instruction to tune by database; the ceiling is that property's consequence. Mark it that way in
+    the code comment rather than presenting a number as documented (INV-080/INV-149).
+  - **Absent or unreadable** — treat it as the SQLite case and say so. The conservative reading is
+    the one that cannot corrupt: a serialized loader on PostgreSQL is merely slower, while a
+    thread-pooled loader on SQLite is the documented failure.
+
+  **Say it in the code comment the step already requires**, so the take-home loader carries both
+  halves: the tier and its architecture, *and* that concurrency was reduced for this datastore with
+  what to raise it to when they move to PostgreSQL. A loader tuned for a database the Bootcamper is
+  not using is a defect they inherit silently — and they **do** inherit it: graduation copies
+  `src/load/**` into `production/src/load/` **verbatim** and deliberately does not rewrite it
+  (`../graduation/SKILL.md` → Step 2, "the loader is theirs"). This comment is therefore the only
+  place the concurrency decision is explained to them at all, and the only thing that tells them
+  what to change when the production datastore is not SQLite.
 - **`demo`:** call `sdk_guide(topic='load', language='<chosen_language>', record_count=<raw_value>)`
   — the same call, with a count below the threshold, which returns the single-threaded demo
   template. Add a code comment stating the tier and that single-threaded loading is appropriate at
@@ -365,16 +401,24 @@ Truth Set visualization module already run.
    `get_sdk_reference(…, language=<binding>)` is the route that answers per binding. It already warns
    about name and type divergence; **error-condition divergence is the gap this note covers.**
 
-   ⚠️ **`get_capabilities` is quoted here deliberately: `find_examples`' own declared description
-   disagrees with it, and the declared one is the stale half.** The declared tool description — the
-   text a client loads from the manifest — understates the index: it omits TypeScript and JavaScript
-   from both the language list and the indexed file extensions, and gives a lower repository count.
-   Settled by a call rather than by argument:
-   `find_examples(query='add record engine initialization', language='typescript')` returns
-   `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts`, so `.ts` **is**
-   indexed (server **1.33.0**, re-confirmed 2026-08-28; reported upstream 2026-08-27). ⛔ **Do not
-   quote a repository count anywhere in this plugin** — the two sources give different numbers, so no
-   count is citeable, and pinning either one recreates the defect. Quote `get_capabilities` for what
+   ⚠️ **`get_capabilities` is quoted here deliberately, and the reason is now historical: the two
+   sources once disagreed about this index, and the upstream report was acted on.** On server
+   **1.33.0** `find_examples`' declared description — the text a client loads from the manifest —
+   omitted TypeScript and JavaScript from both the language list and the indexed extensions and gave
+   a lower repository count, which was settled by a call rather than by argument
+   (`find_examples(query='add record engine initialization', language='typescript')` returned
+   `brianmacy/sz-napi` → `code-snippets/initialization/engine-priming/index.ts`, so `.ts` **was**
+   indexed) and reported upstream 2026-08-27. **Re-checked on server 1.36.0, 2026-09-02: the server
+   aligned the two.** The declared description now gives the **same** repository count as
+   `get_capabilities`, lists `.py, .java, .cs, .rs, .ts, .js`, and names TypeScript/Node.js. ⚠️ **The
+   count is deliberately not written here** — the rule below forbids quoting it, and a note that
+   exempted itself to say the two figures now match would be the one place in the plugin holding a
+   coverage figure. Ask `get_capabilities` if you need it. ⛔ **(INV-280) Do not
+   quote a repository count anywhere in this plugin** — **not because the two sources disagree
+   today, but because a coverage figure is volatile server-side state**: the count moves as
+   repositories are indexed, so a number pinned in shipped guidance goes stale on the server's
+   schedule and nothing here notices. That reason survives the alignment; the prohibition is
+   unchanged. Quote `get_capabilities` for what
    the index covers.
 3. **Build the registration code if the language requires it** (compiled languages — Java, C#,
    Rust, TypeScript), using the same per-language build command as the loader.
@@ -432,6 +476,14 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
    - **Proceed on SQLite:** record `sqlite_volume_prompt` = `{decided: true, choice: "proceed",
      tier, raw_value}` in preferences, then continue to the Phase B load. Do not re-present this
      prompt for the same load.
+     ⛔ **(INV-296) Proceeding keeps SQLite *and* the serialized writer count step 3 selected for it — say
+     so in one line.** Both options in this question are about **where** the data lands; neither
+     mentions **how** it is written, so "proceed" reads as accepting a known slowdown rather than
+     accepting a loader tuned for this datastore. State that the loader writes serially because
+     SQLite does not support concurrent writes, and that its header comment says what to raise the
+     worker count to on PostgreSQL. If step 3 did **not** apply the reduction — because
+     `database_type` was absent then and is known now — apply it before the load rather than
+     carrying a thread-pooled loader into a datastore this question just confirmed is SQLite.
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
      "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
      guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.

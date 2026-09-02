@@ -41,6 +41,30 @@ As records load, Senzing resolves entities automatically:
 - See how new records match or create entities
 - This gives immediate feedback on data quality and matching behavior
 
+⛔ **(INV-297) The engine writes its own diagnostics to that console, and they are NOT per-record failures —
+say which is which before the Bootcamper reads one.** This step and step 7 both point them at the
+output, so they will see engine-level lines prefixed `ERR:` (they carry an `[szstatic:…]` thread
+tag) sitting beside a loader summary that says **0 failed**, with nothing telling them the two are
+different things. **The loader's own `failed` count and its error log are the authority on record
+failures**; a line the engine wrote about its internal state is not one, and neither confirms nor
+denies the other.
+
+What to say when one appears: name it as engine output rather than a failed record, and point at
+the reconciliation that settles it — records attempted equals records loaded, the redo queue
+reached empty, and the error log is absent or empty. If those three hold, nothing was lost.
+
+⚠️ **Do not explain what a specific engine message means unless a route serves it.**
+`search_docs(query='resolved entity is out of sync expected got concurrent loading SQLite lock')`
+returns **no document naming that message** — owner-checked: `search_docs` is the corpus route for a
+documented engine message, and the nearest material it serves is the *"Enabling the Per-Entity
+Feature Store & Advisory Locking in Senzing 4.4.0"* article, which states that on SQLite the engine
+*"falls back to `LEASE` automatically"* with no advisory locks; so the message is uncovered by the
+corpus rather than missed by the query (absence negative) — server **1.36.0**, 2026-09-02. An
+`out of sync` line seen during a concurrent SQLite load is therefore reported as **an environment
+observation**, with the SDK version and date, or not characterized at all (INV-080/INV-149) — never
+as a Senzing fact and never as reassurance the plugin cannot source.
+<!-- MCP-NEGATIVE: search_docs(query='resolved entity is out of sync expected got concurrent loading SQLite lock') — no indexed document names the "Resolved entity … is out of sync" engine message — owner: search_docs IS the corpus route for a documented engine message and the nearest material it serves is the 4.4.0 advisory-locking article stating SQLite falls back to LEASE with no advisory locks, so the message is uncovered by the corpus rather than missed by the query (absence negative) — server 1.36.0, 2026-09-02 -->
+
 **Checkpoint:** write step 6.
 
 ## 7. Load the full dataset

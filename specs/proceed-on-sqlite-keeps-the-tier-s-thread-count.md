@@ -117,3 +117,51 @@ thread count chosen for a different database.
 - Upstream: not applicable — the plugin's reconciliation is what is missing; no server defect implied.
 - Related specs: none
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The cap could NOT be "sourced from MCP" as a figure — no route serves one.** Proposed change 1
+   said to *"source the cap from MCP rather than writing a number into the skill (a sourcing
+   floor)"*. Re-asked on server **1.36.0, 2026-09-02**:
+   `search_docs(query='loading', category='anti_patterns')` serves the *property* — SQLite *"does
+   not support concurrent writes"*, with *"Database locked errors under concurrent access"* among
+   its symptoms — and serves the instruction *"Start with 2-8 workers per CPU core and **tune based
+   on your database and storage throughput**"*, which is what makes the worker count a database
+   question at all. It does **not** serve a SQLite worker count;
+   `search_docs(query='SQLite concurrent writes single writer loading threads limitation')` returned
+   only database-setup and tuning pages. So the ceiling ships as that property's **consequence**,
+   explicitly marked as a derivation rather than as a served figure (INV-080/INV-149). This is the
+   sourcing floor honored in the only form available, not waived.
+
+2. **The spec did not name the file the key lives in, and the first draft got it wrong.** The Root
+   cause says only *"Module 2 Step 7 persists `database_type`"*. The first draft of the Step 3 edit
+   read it from `config/bootcamp_progress.json`; the INV-246 sweep found that **every** other site —
+   including `module-02-sdk-setup/SKILL.md:1441`, which defines the key, and `:1450`, which states
+   that Phase A reads it *"from that file by name"* — uses `config/bootcamp_preferences.yaml`. A
+   reader from the wrong file finds nothing and silently takes the absent branch, which would have
+   made the fix inert while reading as implemented. Corrected, and
+   `tests/test_loader_concurrency_reads_database_type.py` now scans every shipped file for a
+   `database_type` read pointed at the progress file.
+
+3. **Graduation was checked and is NOT a second decision point — which changed what the comment
+   requirement means.** The sweep asked whether graduation re-derives the loader, since it generates
+   `production/` parameterized by `database_type`. It does not: `../graduation/SKILL.md` Step 2
+   copies `src/load/**` into `production/src/load/` **verbatim** and says so deliberately (*"the
+   loader is theirs, and a path edited by graduation is a change they never saw made"*). So Phase A's
+   code comment is the **only** place the concurrency decision is ever explained to the Bootcamper,
+   and the only thing that tells them what to raise it to in production. That is now stated at the
+   step rather than left implicit, and asserted by the guard.
+
+4. **Two invariants were registered; the spec predicted none.** INV-296 and INV-297, on the
+   maintainer's sign-off, with the drafted wording shown before anything was written to
+   `INVARIANTS.md`. See `## Invariants introduced` below.
+
+## Invariants introduced
+
+- `INV-296` — Where a generated artifact's shape is selected from a recorded preference, every
+  recorded input that constrains that shape MUST be read at the point of generation, and a
+  narrowing MUST be applied there and recorded in the artifact itself (recorded in
+  `specs/INVARIANTS.md`).
+- `INV-297` — Output written by the Senzing engine MUST NOT be conflated with the plugin's own
+  per-record outcome counts; the step MUST name which is authoritative and give the reconciliation
+  that settles a contradiction (recorded in `specs/INVARIANTS.md`).

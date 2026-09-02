@@ -267,7 +267,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 111 on 2026-09-02: INV-287 gained an enforcer after all —
 # `test_checklist_items_ship_their_exceptions.py` — closing the one invariant this
 # review registered unguarded. Re-derived by running the extractor.
-EXPECTED_PAIRS = 111
+# 113 as of 2026-09-02: INV-296 and INV-297 were registered from
+# `proceed-on-sqlite-keeps-the-tier-s-thread-count`, each naming
+# tests/test_loader_concurrency_reads_database_type.py as its enforcer.
+EXPECTED_PAIRS = 113
 
 
 def pairs():

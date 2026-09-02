@@ -98,9 +98,12 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
                     bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
         self.assertEqual(
             [], bad,
-            "a shipped file states a find_examples repository count. The server gives two "
-            "different numbers, so NO count is citeable — quoting either recreates the "
-            "defect this guard exists for:\n  " + "\n  ".join(bad))
+            "a shipped file states a find_examples repository count. A coverage figure is "
+            "VOLATILE server-side state — the count moves as repositories are indexed — so no "
+            "count is citeable, and one pinned here goes stale on the server's schedule with "
+            "nothing in this repo noticing. (The two sources also once disagreed; that was "
+            "reported upstream and resolved by server 1.36.0, 2026-09-02. The prohibition "
+            "does not depend on it.) Ask get_capabilities instead:\n  " + "\n  ".join(bad))
 
     def test_no_shipped_file_enumerates_the_stale_extension_list(self):
         bad = []
@@ -110,9 +113,11 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
                     bad.append(f"{p.relative_to(REPO_ROOT)}:{n}  {line.strip()[:100]}")
         self.assertEqual(
             [], bad,
-            "a shipped file enumerates find_examples' indexed extensions ending at `.rs`, "
-            "which is the declared description's stale list and omits the indexed .ts/.js:\n  "
-            + "\n  ".join(bad))
+            "a shipped file enumerates find_examples' indexed extensions ending at `.rs`. "
+            "That truncated list omits the indexed .ts/.js, and an enumerated coverage list is "
+            "volatile server-side state for the same reason a count is — it moves when the "
+            "index gains a file type. Name the languages via get_capabilities rather than "
+            "freezing an extension list:\n  " + "\n  ".join(bad))
 
     def test_the_scan_is_not_vacuous(self):
         """⛔ INV-265 — a scan that matches nothing certifies nothing."""
@@ -123,7 +128,17 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
                         "the extension matcher no longer detects the stale list")
 
     def test_the_exemption_is_narrow(self):
-        """⛔ The marker must not become a file-wide opt-out."""
+        """⛔ The marker must not become a file-wide opt-out — but it need not exist at all.
+
+        ⚠️ **Rescoped 2026-09-02.** This also asserted `scanned < total`, i.e. that the
+        exemption marker is present and exempting something. That premise expired: the marker
+        existed because ground-rules.md quoted the stale declared description in order to call
+        it stale, and the disagreement was resolved upstream by server 1.36.0. Ground-rules now
+        illustrates INV-280 with a live pair that trips neither pattern, so **no exemption is
+        needed and its absence is the correct end state** — not a guard failing open. What
+        survives is the real rule: if a marker IS present, it covers one quoting paragraph and
+        never a region.
+        """
         gr = PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding" / "ground-rules.md"
         total = len(gr.read_text(encoding="utf-8").splitlines())
         scanned = len(scannable_lines(gr))
@@ -131,13 +146,72 @@ class NoShippedFileCitesACoverageFigure(unittest.TestCase):
             scanned, total - 15,
             f"the quoted-history exemption is skipping {total - scanned} lines of "
             "ground-rules.md; it is meant to cover one quoting paragraph, not a region")
-        self.assertLess(scanned, total, "the marker is present but exempting nothing")
 
     def test_the_current_list_is_not_flagged(self):
         """The complete list is fine to write — only the truncated one is stale."""
         self.assertFalse(STALE_EXTENSIONS.search(".py, .java, .cs, .rs, .ts, .js"),
                          "the matcher flags the CURRENT extension list, which would push an "
                          "editor into deleting a correct sentence")
+
+
+class TheLiveIllustrationStaysCheckable(unittest.TestCase):
+    """The rule outlives its examples — so each example must say when it was last true.
+
+    The `find_examples` disagreement INV-280 was written from was resolved upstream between
+    server 1.33.0 and 1.36.0, and nothing in this repo noticed: two shipped sites went on
+    asserting it in the present tense, and this guard's own failure messages gave the resolved
+    disagreement as the reason for a prohibition that has a better one. The fix is not a
+    once-off correction — it is that every illustrating example carries the server version and
+    date it was checked, so the *next* resolution costs a correction note instead of shipping a
+    false claim.
+
+    ⚠️ This deliberately does NOT assert that the live pair contradicts itself. The current
+    illustration is `search_docs`' declared "~2175 chunks" against a live
+    `documents_indexed: 14637`, which may simply be different units — and that is enough for
+    INV-280, whose subject is a coverage figure a caller cannot act on, not only one in outright
+    conflict. Asserting a contradiction would pin a stronger claim than the evidence supports.
+    """
+
+    def test_ground_rules_dates_its_live_illustration(self):
+        gr = PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding" / "ground-rules.md"
+        flat = re.sub(r"\s+", " ", gr.read_text(encoding="utf-8"))
+        self.assertIn(
+            "The live illustration", flat,
+            "INV-280's passage must name a CURRENT illustration, not only the historical one — "
+            "a rule whose only example is resolved reads as resolved")
+        self.assertRegex(
+            flat, r"live illustration, same server and date",
+            "the live illustration must be tied to the server version and date it was observed")
+        self.assertIn(
+            "documents_indexed", flat,
+            "the live pair is the declared chunk figure against the response's "
+            "documents_indexed; name the field so the next reader can re-ask it")
+
+    def test_the_units_caveat_is_present_so_the_claim_is_not_overstated(self):
+        gr = PLUGIN / "senzing-bootcamp" / "skills" / "bootcamp-onboarding" / "ground-rules.md"
+        flat = re.sub(r"\s+", " ", gr.read_text(encoding="utf-8"))
+        self.assertRegex(
+            flat, r"not necessarily contradictory — they may simply be different units",
+            "the live pair must not be presented as a contradiction it may not be; the rule "
+            "rests on the figure being unactionable, which is the weaker and true claim")
+
+    def test_the_resolved_example_is_marked_as_history_everywhere_it_appears(self):
+        """No shipped file may assert the resolved disagreement in the present tense."""
+        offenders = []
+        for path in sorted(PLUGIN.rglob("*.md")):
+            if "__pycache__" in str(path):
+                continue
+            flat = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+            if "declared description" not in flat:
+                continue
+            if re.search(r"declared description\s+disagrees with it", flat):
+                offenders.append(str(path.relative_to(REPO_ROOT)))
+        self.assertEqual(
+            [], offenders,
+            "these files still say find_examples' declared description DISAGREES with "
+            "get_capabilities, in the present tense. Re-checked on server 1.36.0, 2026-09-02: "
+            "they agree on count, extensions and languages. State it as dated history:\n  "
+            + "\n  ".join(offenders))
 
 
 class ThePluginRecordsWhichSourceGoverns(unittest.TestCase):
@@ -164,9 +238,19 @@ class ThePluginRecordsWhichSourceGoverns(unittest.TestCase):
         self.assertIn("index.ts", flat,
                       "the note does not name the live .ts result that settled the "
                       "disagreement, so a reader cannot tell it was measured rather than argued")
-        self.assertIn("2026-08-28", flat,
-                      "the contested-fact note carries no date, so nobody can tell when it "
-                      "was last checked (INV-080)")
+        # ⚠️ Rescoped 2026-09-02: this pinned "2026-08-28", the date the disagreement was
+        # last CONFIRMED. After the upstream fix landed, the date a reader acts on is the
+        # RE-CHECK date — pinning the older one would have kept the guard green while the
+        # note said the two sources still disagree. Require the re-check date; the historical
+        # evidence is still required by the index.ts assertion above.
+        self.assertIn("2026-09-02", flat,
+                      "the contested-fact note does not carry the date its claim was last "
+                      "re-checked against the server, so nobody can tell whether the "
+                      "disagreement it describes still exists (INV-080)")
+        self.assertRegex(
+            flat, r"1\.36\.0",
+            "the note must name the server version the re-check ran against, not only the "
+            "version the original disagreement was observed on")
 
 
 if __name__ == "__main__":
