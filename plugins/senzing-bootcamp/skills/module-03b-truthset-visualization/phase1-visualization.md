@@ -199,7 +199,14 @@ Whatever the language, the server MUST reproduce the reference's behavior:
 
 - Build the entity model from the loaded records — one `get_entity_by_record_id` call per record,
   requesting the default entity flags (which include all relations) so it never queries the
-  database directly. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
+  database directly.
+  - ⚠️ **(INV-289) One call per record is correct HERE, and is scoped to the Truth Set.** Its
+    record file is the authority on what was loaded, and 84 entities is 84 round trips. It does
+    **not** carry to the Bootcamper's own datastore: `../module-07-query-visualize-discover/phase1-query-visualize.md`
+    requires the **export stream** there, because a records-file build costs one round trip per
+    record and can only see entities that have a record in the file it was handed — an
+    embedded-master record the mapper emitted into no input file is invisible to it. Say this
+    when handing the server forward, so the strategy does not travel by resemblance. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
   (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data (INV-080).
 - Serve the JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/records`, `/api/search`,
   `/api/why`, `/api/how`, `/api/overlap`, `/api/matchkeys`, `/api/features` — with the exact

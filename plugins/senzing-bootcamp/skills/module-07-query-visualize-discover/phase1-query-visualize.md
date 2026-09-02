@@ -668,7 +668,7 @@ of the Truth Set. It MUST:
   (off above ~150 nodes) precisely because a default tuned to 84 entities produced an unreadable
   hairball at ~4,000. Re-check any other visual default at your actual entity count before
   presenting; the bootcamper cannot tell a bad default from bad data.
-- ⛔ **Build the model from the EXPORT STREAM, not one `get_entity` call per record.** The reference
+- ⛔ **(INV-289) Build the model from the EXPORT STREAM, not one `get_entity` call per record.** The reference
   server reads a records file and calls the engine once per record — correct at the Truth Set's 84
   entities, and **19,584 round trips** on a Bootcamper's own data (observed 2026-08-26; the same
   model built in ~15 seconds from the export stream). ⚠️ **The correctness gain outlives the speed

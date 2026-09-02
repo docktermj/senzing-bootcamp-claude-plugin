@@ -237,7 +237,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # which now cites INV-288 back. One invariant, one test, one pair. Re-derived by running
 # the extractor. INV-287, registered the same day, adds no pair: it names no enforcer,
 # deliberately and says so in its own text.
-EXPECTED_PAIRS = 103
+# 104 on 2026-09-02: INV-289 (reuse by instruction names its scale dependence) names
+# `test_visualization_model_build_scales.py`, which now cites INV-289 back. Re-derived by
+# running the extractor.
+EXPECTED_PAIRS = 104
 
 
 def pairs():

@@ -12,6 +12,17 @@ resolved entity**, including embedded-master records a mapper emitted that appea
 input file. So the per-record build can silently under-represent the multi-source
 resolution Module 7 exists to show.
 
+Enforces **INV-289** — where a reference implementation is reused by instruction, any
+part of it whose correctness depends on the scale or shape of the data it was written
+against is named at the point of reuse. ⚠️ It asserts BOTH ends: Module 7 stating the
+strategy its data requires, and Module 3b stating that its per-record build is scoped to
+the Truth Set. The second was missing until the invariant was registered, and asserting
+only the first would have certified half a rule.
+
+⚠️ What this establishes is that both statements SHIP. Whether a live walk actually
+carries the right strategy forward is a claim about a turn, and `dry-run` phase 3's to
+observe.
+
 Method names and argument types verified against the live server per binding
 (``get_sdk_reference(topic='parameters', …, language='python')``, server 1.35.3,
 2026-09-01)::
@@ -643,4 +654,61 @@ class EveryShippedSiteAgreesAboutTheExportFlags(unittest.TestCase):
             f"these files teach the export call without naming a flag composite: {silent}. "
             "A reader told to call the method but not what to pass will assemble members, "
             "which is the case observed to drop relationships.",
+        )
+
+
+class BothEndsOfTheReuseNameTheScaleScope(unittest.TestCase):
+    """INV-289 binds the module where the reference is CORRECT, not only the one that changes.
+
+    Module 7 always named its scale dependence — that is the finding its spec came from.
+    Module 3b did not: it instructed "one `get_entity_by_record_id` call per record" flatly,
+    as required behavior, while also telling the guide to build the server "modeled on the
+    shipped reference". A guide could follow both modules correctly and still carry a
+    per-record server into Module 7, because nothing at the 3b end said the instruction was
+    scoped to the Truth Set.
+
+    ⚠️ Found while REGISTERING the invariant, not while implementing the spec. The block
+    named one file; the rule governs reuse-by-instruction, and the plugin instructs that in
+    two modules. An invariant registered while one of its own sites fails it is how INV-097
+    stood unimplemented for seven weeks and INV-060 for six.
+    """
+
+    M07 = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
+           "module-07-query-visualize-discover" / "phase1-query-visualize.md")
+    M03B = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
+            "module-03b-truthset-visualization" / "phase1-visualization.md")
+
+    def flat(self, path):
+        return re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+
+    def test_module_7_requires_the_export_stream(self):
+        self.assertRegex(
+            self.flat(self.M07), r"(?i)Build the model from the EXPORT STREAM",
+            "Module 7 must state the strategy its data requires, not leave it to resemblance.",
+        )
+
+    def test_module_3b_says_its_per_record_build_is_scoped(self):
+        """The half that was missing. Asserts the CLAIM, not one phrasing of it."""
+        self.assertRegex(
+            self.flat(self.M03B), r"(?i)correct HERE.{0,60}scoped to the Truth Set",
+            "module-03b must say its per-record build is scoped to the Truth Set. Stated "
+            "flatly it is an instruction that travels — the guide carries the server into "
+            "Module 7 and the scale dependence goes with it, unnamed (INV-289).",
+        )
+
+    def test_module_3b_points_at_where_the_other_strategy_lives(self):
+        self.assertRegex(
+            self.flat(self.M03B),
+            r"module-07-query-visualize-discover/phase1-query-visualize\.md",
+            "naming the scope without naming where the other strategy is stated leaves the "
+            "guide knowing the instruction is scoped and not knowing to what.",
+        )
+
+    def test_module_3b_gives_the_completeness_reason_not_only_the_speed_one(self):
+        """⚠️ The reason that outlives the other. Speed is noticed; completeness is not."""
+        self.assertRegex(
+            self.flat(self.M03B), r"(?i)no input file|invisible to it|embedded-master",
+            "the scope note must carry the COMPLETENESS reason — a records-file build cannot "
+            "see entities with no record in the file it was handed. A note giving only the "
+            "round-trip cost reads as an optimization, and an optimization is skippable.",
         )
