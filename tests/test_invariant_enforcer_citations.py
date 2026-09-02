@@ -228,7 +228,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # that test now cites INV-285 back. One invariant, one test, one pair. Re-derived by
 # running the extractor -- this guard fired on the omission before the back-citation was
 # added, which is the pin doing its job at the first registration after it was pinned.
-EXPECTED_PAIRS = 101
+# 102 on 2026-09-01: INV-286 (a question whose options are complements is asked as a
+# multi-select and every chosen option recorded in full) names
+# `test_question_options_render_beneath.py`, which now cites INV-286 back. One invariant,
+# one test, one pair. Re-derived by running the extractor.
+EXPECTED_PAIRS = 102
 
 
 def pairs():

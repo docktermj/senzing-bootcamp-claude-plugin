@@ -321,7 +321,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Implemented:** 2026-09-01
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-01-business-problem/phase1-discovery.md`, `plugins/senzing-bootcamp/skills/module-01-business-problem/phase2-document-confirm.md`, `tests/test_question_options_render_beneath.py`
 - **MCP re-check:** n/a (no Senzing fact) — this is entirely the plugin's own interaction specification.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** Two hard rules ship citing no invariant at their line, confirmed by the INV-282 set difference and by `tests/test_new_hard_rules_are_cited_or_deferred.py`:
+- **DEFERRED INVARIANT (resolved INV-286, registered by the maintainer 2026-09-01).** The two rules below shipped citing no invariant at their line; both are now cited, as is a **third site the bullets named only in passing** — `phase2-document-confirm.md`'s Desired Output rule, found by scanning rather than by reading this list (INV-246). `INV-286` is appended to `specs/INVARIANTS.md` with its index entry in the same edit:
     - **6d (desired outcome).** ⛔ **This one is MULTI-select, and asking it as single-select loses a real answer.** — in `module-01-business-problem/phase1-discovery.md`, Step 6d.
     - ⛔ **Record every option they choose, not the first.** The answer travels: Step 11's Desired Output section carries it — same step, and its mirror at `phase2-document-confirm.md` Step 11 (*"Desired Output records EVERY option the Bootcamper chose"*).
 

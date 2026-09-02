@@ -367,7 +367,7 @@ what they already covered.
 
 - **6c (source count).** 👉 **How many distinct data sources will we work with?**
 
-- **6d (desired outcome).** ⛔ **This one is MULTI-select, and asking it as single-select loses a
+- **6d (desired outcome).** ⛔ **(INV-286) This one is MULTI-select, and asking it as single-select loses a
   real answer.** A clean master list, an API over it and reports off it are **complements, not
   alternatives** — they are the three normal deliverables of the same project, and most
   organizations want more than one. Asked as a single-select on 2026-08-31, a Bootcamper answered
@@ -381,7 +381,7 @@ what they already covered.
   > 3. **Reports**
   > 4. **Something else**
 
-  ⛔ **Record every option they choose, not the first.** The answer travels: Step 11's **Desired
+  ⛔ **(INV-286) Record every option they choose, not the first.** The answer travels: Step 11's **Desired
   Output** section carries it into `docs/business_problem.md`, and Module 7 step 1 derives query
   requirements from that document — so narrowing "1 and 3" to "a clean master list" writes a
   requirement they did not give and steers a module they have not reached.

@@ -18,6 +18,13 @@ any ``INV-NNN`` in the surrounding section, and both ends cite invariants indepe
 the pair was never compared -- the INV-212 shape. A cross-file guard is the only thing that
 closes it.
 
+Enforces **INV-286** — a question whose options are complements is asked as a multi-select,
+and every option chosen is recorded in full wherever the answer is persisted or rendered.
+
+⚠️ What this asserts is that the multi-select form and the record-in-full rule **ship**. That
+a live walk actually records "1 and 3" in full is a claim about a turn, and needs a
+``dry-run`` phase 3 pass down the Business Case Offer path.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

@@ -194,7 +194,7 @@ Drop the `> "…"` line entirely for that section. This is the rule the acknowle
 applies to bare option numbers (`../bootcamp-onboarding/ground-rules.md`): an invented "verbatim"
 line is worse than none, because it looks like evidence.
 
-⛔ **Desired Output records EVERY option the Bootcamper chose.** Step 6d is a
+⛔ **(INV-286) Desired Output records EVERY option the Bootcamper chose.** Step 6d is a
 multi-select — a master list, an API and reports are complements — so `**Format**` is a list, not a
 single value. Writing "1 and 3" as `Master list` alone narrows a requirement the Bootcamper gave,
 and it does not stop here: Module 7 step 1 derives its query requirements from this document, so the
