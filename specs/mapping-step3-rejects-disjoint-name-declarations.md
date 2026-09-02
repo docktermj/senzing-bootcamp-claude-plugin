@@ -112,7 +112,15 @@ constraint lives inside one step's runtime validation, which no offline test can
   entry) and 2026-08-27 (a `/dry-run` phase-3 walk that hit the identical rejection and applied the
   identical `type_discriminator` workaround). Marked observation-only per INV-080/INV-149 rather
   than presented as re-verified. ⛔ **Re-drive step 3 before sending anything upstream.**
-- Upstream: **not yet sent — needs maintainer approval, and needs the step-3 re-drive above first.**
+- Upstream: **not sent — the re-drive removed the reason to send it.** The step-3 re-drive
+  was performed on 2026-09-02 against server 1.35.4 (see the section at the end of this
+  file): the rejection still fires, but the message now carries a `FIX:` clause naming
+  `type_discriminator` explicitly, which was this spec's primary complaint. What remains is
+  the framing sentence being broader than the specification it enforces — wording, with the
+  actionable guidance already present — and the maintainer judged that not worth an
+  anonymous, unfollowable submission. Revisit only if the framing is found to mislead
+  someone in practice. ⚠️ Superseded text follows, kept because it records what was owed
+  before the re-drive:
   The entry records `not yet forwarded`, which per `feedback-to-specs` Step 1 means the report is
   **still owed** — nobody declined it.
 - Related specs:

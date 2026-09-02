@@ -133,9 +133,15 @@ marker so `coverage_reports.py negatives` re-asks it.
   `_absorb` reads as export response fields and carries `requires_flags` **only** on the
   `MATCH_KEY_DETAILS` subtree, so the export document itself does not mark the fields this
   model needs as flag-gated.
-- Upstream: not yet sent — needs maintainer approval. The contradiction is worth Senzing's
-  attention (a composite documented for `export_json_entity_report` whose members are not),
-  and a drafted message would ask which of the two readings is correct rather than assert a
-  defect.
+- Upstream: **sent 2026-09-02 via `submit_feedback` (`question`, anonymous)**, on the
+  maintainer's explicit approval of the exact text. Filed as a question rather than a bug:
+  the contradiction in the documentation is demonstrable from the server's own responses,
+  but no wrong *behavior* was observed — this machine has no loaded datastore, so which
+  reading is correct could not be settled by running the export. The message quotes both
+  sides, gives a two-call reproduction (`SZ_ENTITY_DEFAULT_FLAGS` vs
+  `SZ_ENTITY_INCLUDE_RECORD_DATA`, compare `applies_to`), notes that the production guidance
+  cannot be followed for the export methods under reading (b), and carries the
+  `response_schemas` evidence for (a). ⚠️ **Submissions are anonymous and cannot be followed
+  up**; a reply, if any, would have to come through `support@senzing.com`.
 - Related specs: `the-export-flag-set-is-coupled-to-absorb-with-nothing-connecting-them`,
   `the-viz-server-header-describes-only-one-of-its-two-build-paths`
