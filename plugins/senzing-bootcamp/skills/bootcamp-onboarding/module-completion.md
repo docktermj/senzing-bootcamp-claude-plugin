@@ -275,15 +275,30 @@ a short `{name}`):
    headless backends (Playwright, Selenium, headless Chrome/Chromium, `wkhtmltoimage`) and never
    fetches a remote URL (offline — INV-091). Pass only tabs the app actually shows for this data —
    the helper reports any tab that produced no image on stderr rather than dropping it silently.
-2. **If it exits non-zero** (exit 2 = nothing was captured): skip screenshots, keep the
-   visualization's HTML link in the recap, and continue. Honor verbosity (say nothing at the
-   `minimal` preset). **Read which of the three reasons it gave** — they are not interchangeable and
-   only one is about a missing install: no requested tab exists in this app; **no browser was found**
-   (the message names every location searched); or **a browser was found but every capture failed**
-   (the message names it). In the last two cases do **not** install a browser or suggest installing
-   one — capture is dependency-optional by contract (INV-122), and a Windows machine that carried
-   both Edge and Chrome was once told no capability was available, which sent the reader to install
-   software they already had.
+2. ⛔ **(INV-122) Two non-zero exits, and they need OPPOSITE responses — read the code, not just
+   "it failed".** Exit **1** is a caller error and exit **2** is a capability or content limit.
+   Treating 1 as 2 skips screenshots on a run where every tab was capturable.
+
+   - **exit 1 — an unrecognized tab id.** The `--tabs` value above names an id outside the
+     helper's own vocabulary, so it rejected the request **before capturing anything** and the
+     message names every valid id. Nothing is wrong with the machine and nothing was
+     uncapturable: **correct the tab list and run it again.** Do **not** take the skip path — that
+     would drop **every** screenshot from the recap while all of them were available, which is the
+     loss INV-146 exists to prevent, reached through a typo instead of a cap.
+   - **exit 2 — nothing was captured**: skip screenshots, keep the visualization's HTML link in
+     the recap, and continue. Honor verbosity (say nothing at the `minimal` preset). **Read which
+     of the three reasons it gave** — they are not interchangeable and only one is about a missing
+     install: no requested tab exists in this app; **no browser was found** (the message names
+     every location searched); or **a browser was found but every capture failed** (the message
+     names it). In the last two cases do **not** install a browser or suggest installing one —
+     capture is dependency-optional by contract (INV-122), and a Windows machine that carried both
+     Edge and Chrome was once told no capability was available, which sent the reader to install
+     software they already had.
+
+   ⚠️ **Why exit 1 is reachable from here and not from the other two capture sites.** Module 3b and
+   Module 7 pass `--tabs all`, a keyword the helper resolves itself; this step names the six ids
+   literally, so this is the one call that can disagree with the helper's vocabulary — after a tab
+   rename, a retired id, or an edit to the list above.
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
    named `{name}-<tab-slug>.png`. ⚠️ **Open the Entity Graph image and check the nodes are spread,
    not bunched in one corner.** A graph tab whose force simulation was restarted or captured too

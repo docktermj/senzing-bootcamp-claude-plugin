@@ -88,3 +88,44 @@ amendment updated `capture_screenshots.py` (the producer) and
 - MCP re-check: **n/a (no Senzing fact).** The subject is the plugin's own helper and its own invariant. The exit codes were verified live on 2026-09-02 while implementing `capture-screenshots-aborts-where-inv-122-says-skip` (exit 1 on an unrecognized id with zero files written; exit 2 with the pre-flight message) and are not re-claimed here.
 - Upstream: not applicable.
 - Related specs: `specs/capture-screenshots-aborts-where-inv-122-says-skip.md` (implemented 2026-09-02 — the amendment this step was not swept for)
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The sweep changed the finding's shape: one site to fix, and the sweep is what proves it.**
+   Proposed change 3 said to sweep for other consumers rather than fixing one line. Three shipped
+   files invoke the helper — `module-completion.md`, `module-03b/phase1-visualization.md:358`, and
+   `module-07/phase1-query-visualize.md:746` — but the other two pass **`--tabs all`**, a keyword
+   the helper resolves itself, so their requests cannot disagree with its vocabulary and **exit 1
+   is unreachable from them**. Both also delegate explicitly: *"The procedure (backends, exit
+   codes, `--single`, the caption rule) stays stated once in `module-completion.md`"*. So fixing
+   the one site fixes the class **by reference**, and the sweep's value here was establishing that
+   rather than finding more sites. That reachability claim is now itself guarded — if another site
+   starts naming tab ids literally, `test_only_module_completion_names_tab_ids_literally` fails.
+
+2. **Criterion 4's guard scans for the gloss across all shipped markdown, and exempts a window
+   that names exit 1 nearby** — so a step that distinguishes the codes in different sentences
+   passes, and only a genuine conflation fails. Pinning the one known line would have certified
+   the site already fixed and nothing else (INV-246).
+
+3. **Proposed change 4 (derive the tab list rather than hardcode it) stays out of scope, and is
+   now better understood.** The sweep shows the two sites that pass `--tabs all` are immune, which
+   makes "use `--tabs all` here too" look like the root-cause fix. It is not obviously safe:
+   `module-completion.md:244` carries a ⛔ distinguishing `--single` from an omitted `--tabs`, and
+   the literal list is what pins capture order against the tab table INV-155/INV-147 bind the
+   recap's embedding to. Changing it is a separate decision with its own evidence, not a tidy-up
+   to fold into this fix.
+
+4. **My own guard pinned markup rather than the claim, and failed on correct prose.**
+   `test_exit_one_is_named_as_a_caller_error` first required the literal `exit **1**`; the shipped
+   bullet reads `**exit 1 — an unrecognized tab id.**`, where the emphasis wraps the whole label
+   instead of the digit. Rewritten to match the claim in either bolding. This is the third guard
+   this session to fail on a rewording that said exactly the same thing — the recurring lesson
+   being that a regex over prose should assert what the sentence *claims*, never how it is marked
+   up.
+
+## Invariants introduced
+
+None. INV-122 already makes the three exit codes normative — that amendment is what turned this
+step into a defect — and the fix is to cite it at the step that reads them (INV-183). The
+reachability asymmetry between `--tabs all` and a literal id list is a property of the helper's
+own argument handling, guarded by a test rather than promoted to a rule.
