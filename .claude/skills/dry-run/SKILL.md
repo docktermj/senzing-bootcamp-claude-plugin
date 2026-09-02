@@ -135,6 +135,21 @@ three bytes; a restored file with the same size and a same-second mtime lets Pyt
 reuse bytecode compiled from the mutated source, so the suite keeps failing on
 already-correct code. `find . -name __pycache__ -type d -exec rm -rf {} +`.
 
+⛔ **A `pgrep -f` guard matches its own command line.**
+`while pgrep -f "unittest discover -s tests"; do sleep 15; done` never exits: `-f`
+matches the full command line, and the watcher's own `bash -c` argument contains the
+pattern, so it finds itself. Bracket the first character — `"[u]nittest discover"` — or
+match the process rather than the string (`pgrep -f "python3.*unittest"`). Four such
+watchers spun for **27 hours** after a phase-2 run here, and they kept each other alive:
+killing three would not have freed the fourth, because it still matched them.
+
+⚠️ **The second half is why this is a rule and not a footnote.** Two later "is anything
+still running?" sweeps reported *nothing* while all four were spinning — the sweeps
+searched for `unittest|until grep` and these used `while`, so the cleanup check missed the
+thing it was written to find. When verifying a scratch run left nothing behind, list the
+session's own shells (`pgrep -a bash`) rather than grepping for the idiom you remember
+using.
+
 ## What to do with a finding
 
 A dry-run finding is only half done when the plugin is fixed. Follow this for each:
