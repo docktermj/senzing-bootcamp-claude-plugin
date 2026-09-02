@@ -232,7 +232,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # multi-select and every chosen option recorded in full) names
 # `test_question_options_render_beneath.py`, which now cites INV-286 back. One invariant,
 # one test, one pair. Re-derived by running the extractor.
-EXPECTED_PAIRS = 102
+# 103 on 2026-09-02: INV-288 (a fence's span never extends past the next opening marker
+# of its own type) names `test_recap_checkpoint_is_lifted_before_module_parsing.py`,
+# which now cites INV-288 back. One invariant, one test, one pair. Re-derived by running
+# the extractor. INV-287, registered the same day, adds no pair: it names no enforcer,
+# deliberately and says so in its own text.
+EXPECTED_PAIRS = 103
 
 
 def pairs():

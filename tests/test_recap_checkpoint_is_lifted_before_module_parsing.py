@@ -16,6 +16,13 @@ warning" was not accurate. But the warning is **non-fatal** and the block was ne
 so the PDF rendered with the phantom sections anyway. Detection is not prevention, and this
 guard asserts both halves: the lift happens AND the warning survives it.
 
+Enforces **INV-288** — a fence's span never extends past the next opening marker of its
+own type, and a malformed fence never costs content it was not opened around.
+
+⚠️ It also pins the boundary with **INV-258**: the end-of-text fallback for an unterminated
+fence is reached only where no well-formed span exists anywhere. Both behaviors are
+asserted here, which is what stops a later edit satisfying one by breaking the other.
+
 Stdlib only; the generator is loaded by path, importing nothing from ``plugins/`` as a
 package (INV-108).
 """

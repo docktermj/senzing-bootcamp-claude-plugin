@@ -668,7 +668,7 @@ def _parse_notes_block(inner: str) -> NotesSection:
 def _fence_spans(text: str, start_marker: str, end_marker: str):
     """Every WELL-FORMED ``(start, end_exclusive)`` fence span, and the strays skipped.
 
-    ⛔ **A fence's span NEVER extends past the next START of its own type.** Both handlers
+    ⛔ **(INV-288) A fence's span NEVER extends past the next START of its own type.** Both handlers
     used to locate their terminator with ``text.find(END, start)`` — the next END *anywhere*
     in the document — so a stray unterminated START annexed the region up to a later fence's
     terminator, and **every finalized module section in that region was discarded**.
