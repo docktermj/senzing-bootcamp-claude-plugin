@@ -114,6 +114,14 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    1. **Fetch each source from a URL in the response, never a hardcoded one.** Prefer
       `citation.download_url` (MCP-hosted; every Truth Set source is far below its
       `download_url_max_records` cap) and fall back to `citation.source_download_url`.
+      - ⛔ **(INV-292) A 403 on that fallback is a REFUSAL, not a throttle — do not retry
+        it.** `source_download_url` carries a third-party host, and a backoff changes
+        nothing: switch back to `citation.download_url` and continue from there. This step
+        runs **before** Module 4, so its download contract
+        (`../module-04-data-collection/SKILL.md`) does not reach the Bootcamper first; the
+        remedy is stated here rather than assumed.
+      - ⛔ **(INV-292) Never set a misleading User-Agent to get around it** — beyond being
+        the wrong habit to teach, it was measured not to work.
       ⚠️ **The two responses use the name `download_url` for different hosts** — a real trap:
       `source='list'` returns `available_sources[].download_url` pointing at
       **raw.githubusercontent.com**, while a per-source call returns `citation.download_url` pointing

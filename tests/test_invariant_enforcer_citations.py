@@ -247,7 +247,9 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 106 on 2026-09-02: INV-291 (a retrieval query a step depends on is measured before it
 # ships) names `test_module_0_suggested_queries_are_measured.py`, which now cites it back.
 # Re-derived by running the extractor.
-EXPECTED_PAIRS = 106
+# 107 on 2026-09-02: INV-292 (prefer the programmatic route; a refusal is not a throttle)
+# names `test_cord_fetch_has_a_403_remedy.py`, which now cites it back. Re-derived.
+EXPECTED_PAIRS = 107
 
 
 def pairs():

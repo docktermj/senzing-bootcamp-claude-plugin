@@ -466,7 +466,7 @@ writes the prose body, because no status check was asked for. Left uncaught, `da
 one-line file that fails in Module 5's mapping or lands as a "1 record" quality assessment, and the
 Bootcamper debugs their mapping for a fault created two modules earlier.
 
-**⛔ Prefer `download_url` (MCP-hosted) over `source_download_url` for every CORD fetch.** Both
+**⛔ (INV-292) Prefer `download_url` (MCP-hosted) over `source_download_url` for every CORD fetch.** Both
 appear in the same `citation`, so both look equally available; they are not. The MCP endpoint is
 served to programmatic clients and needs only `mcp.senzing.com` reachable, which is also what keeps
 it working in a restricted-egress environment — the server's own citation note says so. Use
@@ -481,7 +481,7 @@ generated scenario failed identically on 2026-08-31. Whether this is a CDN rule,
 holds from every network, is not something any MCP route reports — so it is dated and scoped to
 where it was measured rather than stated as Senzing behavior.
 
-⛔ **Never set a misleading User-Agent to get around it.** Beyond being the wrong thing to teach, it
+⛔ **(INV-292) Never set a misleading User-Agent to get around it.** Beyond being the wrong thing to teach, it
 does not even work: `Mozilla/5.0` was measured **403** on the same host in the same run. The remedy
 is the other URL, which the response already gave you.
 
@@ -497,7 +497,7 @@ elsewhere.**
    the same four-source fetch that lost two sources returned **all four complete** when each request
    retried with a one-second backoff (server 1.32.9, 2026-08-12).
 
-   ⛔ **On 403, do not retry — switch URLs.** A 403 is a refusal, not a throttle, so a backoff
+   ⛔ **(INV-292) On 403, do not retry — switch URLs.** A 403 is a refusal, not a throttle, so a backoff
    changes nothing and burns the Bootcamper's time before failing anyway. Re-fetch the same source
    via the **other** URL in the same `citation` — in practice `download_url`, if the failed attempt
    used `source_download_url` — and continue with check 2 against that URL's expected count. Only if

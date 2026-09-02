@@ -21,6 +21,14 @@ choice a guide reaches for first. A working route was in the same response the w
 ⚠️ This is an observation of a web host from one machine, not an MCP-reported fact
 (INV-080/INV-149), so the guard asserts it is dated and scoped -- never that it is timeless.
 
+Enforces **INV-292** — where a provider supplies more than one URL for the same content,
+the programmatic route is preferred and every non-2xx has a next step distinguishing a
+throttle from a refusal.
+
+⚠️ It asserts the rule at BOTH fetch steps. module-03b documented only the throttle while
+instructing a fallback to the URL measured to 403, and it runs first — so asserting only
+Module 4 would have certified the half that was never the problem.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
@@ -172,3 +180,77 @@ class NothingInstructsASpoofedUserAgent(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EveryFetchStepDistinguishesRefusalFromThrottle(unittest.TestCase):
+    """INV-292 binds every step that fetches from the two-URL provider, not only Module 4.
+
+    module-03b instructs falling back to `citation.source_download_url` — the URL measured
+    to 403 against the Python stdlib client — and documented only the THROTTLE case (retry
+    with backoff on HTTP 429). It runs BEFORE Module 4, so a Bootcamper taking that fallback
+    met the refusal with no remedy and Module 4's contract had not been read yet.
+
+    ⚠️ Found while registering the invariant, by sweeping for the rule rather than reading
+    the deferral's file list (INV-246). A non-2xx rule that covers one status is the half
+    that fails silently.
+    """
+
+    M04 = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
+           "module-04-data-collection" / "SKILL.md")
+    M03B = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
+            "module-03b-truthset-visualization" / "phase1-visualization.md")
+
+    def flat(self, path):
+        return re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+
+    def refusal_block(self):
+        """module-03b's INV-292 sub-bullet ONLY.
+
+        ⚠️ Checked against the whole file, the before-Module-4 assertion passed with that
+        clause deleted — satisfied by a pre-existing parenthetical 11 lines away that also
+        says "it runs before Module 4", about the egress host. An assertion a neighboring
+        sentence can satisfy is not an assertion about the clause it names.
+        """
+        text = self.M03B.read_text(encoding="utf-8")
+        start = text.index("(INV-292) A 403 on that fallback")
+        return re.sub(r"\s+", " ", text[start:text.index("\n   2.", start)])
+
+    def test_module_4_states_the_refusal_rule(self):
+        self.assertRegex(
+            self.flat(self.M04), r"(?i)On 403, do not retry — switch URLs",
+            "Module 4 must keep the refusal branch — it is where the 403 was measured.",
+        )
+
+    def test_module_3b_also_states_it(self):
+        """The half that was missing, asserted by CLAIM rather than by one phrasing."""
+        self.assertRegex(
+            self.flat(self.M03B), r"(?i)403.{0,60}REFUSAL, not a throttle",
+            "module-03b instructs a fallback to source_download_url, the URL measured to "
+            "403. Documenting only HTTP 429 leaves the refusal case unhandled at the step "
+            "that reaches it first (INV-292).",
+        )
+
+    def test_module_3b_says_what_to_do_instead_of_retrying(self):
+        self.assertRegex(
+            self.flat(self.M03B), r"(?i)switch back to `?citation\.download_url",
+            "naming the failure without naming the recovery leaves the guide knowing a "
+            "retry is wrong and not knowing what is right.",
+        )
+
+    def test_module_3b_says_why_module_4s_contract_does_not_cover_it(self):
+        """⚠️ The ordering is the reason this must be stated twice rather than once."""
+        self.assertRegex(
+            self.refusal_block(), r"(?i)runs \*\*before\*\* Module 4",
+            "the reason 3b states the remedy itself — rather than pointing at Module 4 — is "
+            "that 3b runs first. Delete that and a later editor merges the two and "
+            "reintroduces the gap.",
+        )
+
+    def test_neither_step_teaches_a_user_agent_workaround(self):
+        for path in (self.M04, self.M03B):
+            with self.subTest(file=path.name):
+                self.assertRegex(
+                    self.flat(path), r"(?i)[Nn]ever set a misleading User-Agent",
+                    "a client-identity workaround must be forbidden wherever the 403 is "
+                    "reachable, not only where it was first measured.",
+                )
