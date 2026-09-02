@@ -1122,7 +1122,7 @@ supplies the settings and Step 4 has just verified the SDK works, so the capacit
 told is a reading of **their** machine rather than an assumption about it. Take the reading **before**
 branching on anything recorded, and let it govern everything below (INV-012).
 
-⛔ **This reading is PROVISIONAL, and Step 8a re-takes it — `get_license()` resolves the license
+⛔ **(INV-295) This reading is PROVISIONAL, and Step 8a re-takes it — `get_license()` resolves the license
 from the settings it is handed, and the settings here do not yet carry `CONFIGPATH`.** The check
 order above has four tiers, and the third is *system CONFIGPATH* — a `PIPELINE` key that **Step 8**
 writes, three steps after this one. So a reading taken here can only ever return one of the first
@@ -1166,7 +1166,7 @@ still applies — but record it as provisional, per sub-step 3.
    written)"`. If a value was already recorded and the measurement disagrees with it,
    replace the recorded one and **say the recorded figure was withdrawn** — naming both numbers.
 
-   ⛔ **The `_measured_at` marker is not bookkeeping — it is what lets a later step tell a complete
+   ⛔ **(INV-295) The `_measured_at` marker is not bookkeeping — it is what lets a later step tell a complete
    reading from an incomplete one.** Both are genuine measurements, so the figure alone cannot
    distinguish them, and every downstream reader treats a present value as authoritative *because* it
    was measured. Module 4's Step 8a reads this marker for exactly that reason. Write it on every path

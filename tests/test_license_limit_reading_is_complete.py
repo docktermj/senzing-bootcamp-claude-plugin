@@ -21,8 +21,20 @@ reports, so it is recorded as observation-only (INV-080/INV-149).
 
 ⛔ The site set here is DERIVED BY SCANNING, never hardcoded (INV-246). A guard
 that names the files the author already thought of certifies exactly those and is
-blind to the one that matters. Stdlib only, and nothing under ``plugins/`` is
-imported (INV-108).
+blind to the one that matters.
+
+Enforces **INV-295** — a measurement whose result can change once later configuration
+exists records WHEN it was taken, and a step branching on it treats a pre-configuration
+reading as provisional rather than authoritative.
+
+⚠️ Scoped deliberately: ``platform`` and ``database_type`` are also environment
+measurements and need no marker, because neither can move once a later step writes
+configuration. Asserting a timestamp on them would teach that the marker means nothing.
+
+⚠️ What this establishes is that the six rules SHIP across four modules. Whether a live
+walk actually re-measures at Step 8a is a claim about a turn, and ``dry-run`` phase 3's.
+
+Stdlib only, and nothing under ``plugins/`` is imported (INV-108).
 """
 
 import re

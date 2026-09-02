@@ -95,7 +95,7 @@ limit: never from a remembered or hardcoded figure:
   is that value. Recommend sampling for license reasons only when the dataset total genuinely
   exceeds it.
 
-  ⛔ **First check WHEN it was measured — a present value is authoritative only if the reading was
+  ⛔ **(INV-295) First check WHEN it was measured — a present value is authoritative only if the reading was
   taken with an engine configuration in force.** Read `license_record_limit_measured_at` alongside
   the figure. SDK setup takes a **provisional** reading at its Step 5a, before Step 8 writes
   `CONFIGPATH`, and re-takes it at Step 8a; a value still marked provisional cannot have seen a
@@ -858,7 +858,7 @@ training data.
    `config/data_sources.yaml` (per the canonical framing at the top of this module). If the total
    cannot be computed, note the warning and proceed to Step 8b (non-blocking).
 
-   ⛔ **A figure whose `_measured_at` marker says provisional, or which carries no marker, is
+   ⛔ **(INV-295) A figure whose `_measured_at` marker says provisional, or which carries no marker, is
    re-measured here before any branch below reads it** — per the canonical framing's
    present-and-greater-than-0 rule at the top of this module. Do not carry a pre-configuration
    reading into sub-steps 2–4: a provisional figure is the built-in default standing in for whatever

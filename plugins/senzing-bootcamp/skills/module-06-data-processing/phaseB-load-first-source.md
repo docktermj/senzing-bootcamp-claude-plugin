@@ -58,7 +58,7 @@ evaluation limit (a licensing error at the cap), read `license_record_limit` fro
 license is configured) and drive the decision from that effective limit, never a remembered or
 hardcoded figure:
 
-⛔ **Read `license_record_limit_measured_at` alongside it, and treat a reading marked provisional —
+⛔ **(INV-295) Read `license_record_limit_measured_at` alongside it, and treat a reading marked provisional —
 or carrying no marker — as the absent case below.** SDK setup's Step 5a takes its reading before
 Step 8 writes `CONFIGPATH`, so it cannot see a license installed at the system config path. A
 provisional figure is a genuine measurement of an incomplete view, which is the one shape the

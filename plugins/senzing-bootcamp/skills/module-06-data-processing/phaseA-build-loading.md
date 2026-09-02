@@ -103,7 +103,7 @@ licensing as a default the bootcamper already has, never as a hard cap:
   (INV-179), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
   the value you would be re-deriving was already measured and persisted by the step that owns this
   question, and a second SDK call is the way two answers start to differ.
-  ⛔ **One exception, and it is the reason `license_record_limit_measured_at` exists: a reading marked
+  ⛔ **(INV-295) One exception, and it is the reason `license_record_limit_measured_at` exists: a reading marked
   provisional (or carrying no marker) takes the absent branch, not this one.** SDK setup's Step 5a
   reads the license before Step 8 writes `CONFIGPATH`, so that reading cannot see a license installed
   at the system config path; Step 8a re-takes it, but its "cannot re-measure" branch deliberately

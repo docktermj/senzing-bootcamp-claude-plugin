@@ -46,12 +46,28 @@ def pending_blocks():
 
 class NoPendingDeferralNamesALiteralId(unittest.TestCase):
     def test_the_scan_finds_the_pending_blocks(self):
-        """A scan matching nothing would make the assertion below vacuous."""
-        self.assertGreaterEqual(
-            len(pending_blocks()), 1,
-            "No pending DEFERRED INVARIANT blocks found. If the queue is genuinely empty this "
-            "test is moot, but check the marker wording before believing it — the blocks are "
-            "the maintainer's actual worklist.",
+        """A scan matching nothing would make the assertion below vacuous.
+
+        ⚠️ Zero is legitimate ONLY when the queue is genuinely empty, which happened on
+        2026-09-02 when the maintainer decided the last nine. So zero must be corroborated
+        by a second, independent reading of the ledger rather than accepted on the strength
+        of this scan finding nothing — a marker whose wording drifted would also find
+        nothing, and would look exactly like a finished queue.
+        """
+        found = pending_blocks()
+        if found:
+            return
+        resolved = LEDGER.read_text(encoding="utf-8").count("DEFERRED INVARIANT (resolved ")
+        self.assertNotIn(
+            PENDING, LEDGER.read_text(encoding="utf-8"),
+            "the scan found no pending blocks while the marker it looks for is still in the "
+            "ledger — the scan is broken, not the queue empty.",
+        )
+        self.assertGreater(
+            resolved, 0,
+            "no pending blocks AND no resolved ones either: the ledger carries no deferrals "
+            "in any state, which means the marker wording changed and this guard has stopped "
+            "reading the maintainer's worklist.",
         )
 
     def test_no_pending_block_states_a_literal_next_free_id(self):

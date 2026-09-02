@@ -254,7 +254,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # Re-derived.
 # 109 on 2026-09-02: INV-294 (structure is classified by contents, never by name) names
 # `test_coverage_check_looks_inside_root_arrays.py`, which now cites it back. Re-derived.
-EXPECTED_PAIRS = 109
+# 110 on 2026-09-02: INV-295 (a measurement records when it was taken) names
+# `test_license_limit_reading_is_complete.py`, which now cites it back. Re-derived. This
+# closes the 2026-09-02 review: nine deferrals decided, EXPECTED_PAIRS 100 -> 110 across
+# it, every step re-derived rather than incremented.
+EXPECTED_PAIRS = 110
 
 
 def pairs():

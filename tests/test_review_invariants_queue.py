@@ -92,11 +92,31 @@ class TheQueueCountsBlocksNotMentions(unittest.TestCase):
         out = helper("check")
         m = re.search(r"(\d+) rule quotes checked, (\d+) mismatched", out)
         self.assertIsNotNone(m, out[:300])
-        self.assertGreater(int(m.group(1)), 0, "checked nothing — the scan is broken")
         self.assertEqual(
             "0", m.group(2),
             f"a deferral quotes a rule its named file does not contain:\n{out}",
         )
+        # ⚠️ Zero CHECKED is legitimate once every deferral carrying `— in `path`` bullets has
+        # been resolved — which happened on 2026-09-02. It is not legitimate while such a
+        # block is still pending, so the floor is conditional on the queue rather than fixed.
+        # A fixed floor of 1 fails on a finished queue and reads as a defect; no floor at all
+        # would let a broken scan report a clean run forever.
+        # Block-aware: a rule bullet counts only while inside an UNRESOLVED block. Counting
+        # every such bullet in the file counts the resolved ones too, which are exactly what
+        # the helper stops checking — so the floor never falls and a finished queue reads as
+        # a broken scan.
+        quotable, inside = 0, False
+        for line in LEDGER.read_text(encoding="utf-8").splitlines():
+            if line.startswith("- **") or line.startswith("## "):
+                inside = ("DEFERRED INVARIANT" in line and "resolved INV-" not in line)
+            elif inside and line.lstrip().startswith("- ") and "⛔ **" in line and "— in `" in line:
+                quotable += 1
+        if quotable:
+            self.assertGreater(
+                int(m.group(1)), 0,
+                f"the ledger still carries {quotable} quotable rule bullet(s) and the scan "
+                "checked none — the scan is broken, not the queue empty.",
+            )
 
     def test_next_id_is_one_past_the_highest(self):
         inv = (REPO / "specs" / "INVARIANTS.md").read_text(encoding="utf-8")
