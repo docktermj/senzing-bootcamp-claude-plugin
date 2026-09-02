@@ -949,11 +949,17 @@ main{padding:0}
 .legend .row{display:flex;align-items:center;gap:6px;margin:2px 0}
 .legend .dot{width:12px;height:12px;border-radius:50%}
 .node circle{stroke:#fff;stroke-width:1.5px;cursor:pointer}
-.node text{font-size:10px;fill:var(--ink);pointer-events:none}
+.node text,.node-labels text{font-size:10px;fill:var(--ink);pointer-events:none}
 /* Label visibility is driven by a class on the container, set explicitly at
    init -- an unchecked checkbox fires no change event, so the initial state
    cannot be left to the handler (contract: "Init-state note"). */
-.hide-node-labels .node text{display:none}
+.hide-node-labels .node text,.hide-node-labels .node-labels text{display:none}
+/* ⛔ `.node-labels` is listed in BOTH rules above deliberately. Node labels moved out of
+   the per-datum `.node` group on 2026-09-02 so no circle can paint over a neighbor's
+   text; a selector left matching only `.node text` would have silently un-hidden every
+   label at production scale, regressing `visualization-legibility-at-production-scale`
+   -- the auto-off at LABEL_AUTO_OFF works by adding `hide-node-labels` to the container
+   and letting it descend. Keep both selectors in step. */
 .hide-edge-labels .edge text{display:none}
 .gctl{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;z-index:2}
 .gctl label{display:flex;align-items:center;gap:6px;margin:2px 0;cursor:pointer}
@@ -1168,30 +1174,6 @@ async function drawGraph(){
   const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
   const root=svg.append("g");
   svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
-  const sim=graphSim=d3.forceSimulation(nodes)
-    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(network?100:90))
-    .force("charge",d3.forceManyBody().strength(network?-180:-160))
-    .force("center",d3.forceCenter(W/2,H/2))
-    .force("collide",d3.forceCollide().radius(function(d){return radius(d)+6;}));
-  const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
-  const line=edge.append("line");
-  // Relationship-type color plus a dash pattern, so the types stay distinguishable in a
-  // monochrome screenshot (contract: pair color with a non-color distinction).
-  if(network){
-    line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
-        .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
-  }
-  edge.append("text").text(function(d){return d.match_key||"";});
-  const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
-    .call(d3.drag().on("start",dstart).on("drag",dragged).on("end",dend))
-    .on("click",function(ev,d){openModal(d);})
-    .on("mousemove",function(ev,d){const tt=d3.select("#tt");
-      tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
-        .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
-    .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
-  node.append("circle").attr("r",radius).attr("fill",function(d){return color(srcKeyOf(d));})
-    .attr("stroke",function(d){var k=srcKeyOf(d);return srcStrokeW(k)?srcStroke(k):null;})
-    .attr("stroke-width",function(d){return srcStrokeW(srcKeyOf(d))||null;});
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
   // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
@@ -1212,14 +1194,63 @@ async function drawGraph(){
       taken[lab]=full;
       nodeLabel[n.entity_id]=lab;
     });})();
-  node.append("text").attr("dy",function(d){return radius(d)+11;}).attr("text-anchor","middle")
-      .text(function(d){return nodeLabel[d.entity_id];})
-      .append("title").text(function(d){return d.entity_name||"";});
+  const sim=graphSim=d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(function(d){return d.id;}).distance(network?100:90))
+    .force("charge",d3.forceManyBody().strength(network?-180:-160))
+    .force("center",d3.forceCenter(W/2,H/2))
+    // ⛔ Collide accounts for the LABEL's extent, not just the circle -- but only while
+    // labels are actually shown. Above LABEL_AUTO_OFF they default off, and inflating the
+    // collision radius for text nobody renders would over-separate the very production-scale
+    // layout `visualization-legibility-at-production-scale` tuned. ~2.9px per character at
+    // font-size 10 is a deliberate estimate: SVG text has no measurable width before layout,
+    // and a estimate that is close is worth more here than exactness.
+    .force("collide",d3.forceCollide().radius(function(d){
+      const r=radius(d)+6;
+      if(nodes.length>LABEL_AUTO_OFF)return r;
+      const lab=nodeLabel[d.entity_id]||"";
+      return Math.max(r,lab.length*2.9);}));
+  const edge=root.append("g").selectAll("g").data(links).join("g").attr("class","edge");
+  const line=edge.append("line");
+  // Relationship-type color plus a dash pattern, so the types stay distinguishable in a
+  // monochrome screenshot (contract: pair color with a non-color distinction).
+  if(network){
+    line.attr("stroke",function(d){return rcolor(d.rtype);}).attr("stroke-width",2)
+        .attr("stroke-dasharray",function(d){return rdash(d.rtype);});
+  }
+  edge.append("text").text(function(d){return d.match_key||"";});
+  const node=root.append("g").selectAll("g").data(nodes).join("g").attr("class","node")
+    .call(d3.drag().on("start",dstart).on("drag",dragged).on("end",dend))
+    .on("click",function(ev,d){openModal(d);})
+    .on("mousemove",function(ev,d){const tt=d3.select("#tt");
+      tt.style("opacity",1).style("left",(ev.offsetX+14)+"px").style("top",(ev.offsetY+8)+"px")
+        .html("<b>"+esc(d.entity_name)+"</b><br>ID "+d.entity_id+" · "+d.record_count+" record(s)<br>"+d.data_sources.join(", "));})
+    .on("mouseout",function(){d3.select("#tt").style("opacity",0);});
+  node.append("circle").attr("r",radius).attr("fill",function(d){return color(srcKeyOf(d));})
+    .attr("stroke",function(d){var k=srcKeyOf(d);return srcStrokeW(k)?srcStroke(k):null;})
+    .attr("stroke-width",function(d){return srcStrokeW(srcKeyOf(d))||null;});
+  // ⛔ Labels live in their OWN group, appended after the node group, so paint order can never
+  // put a circle over text. They used to be a text child of each per-datum node group, which
+  // paints node1-circle, node1-text, node2-circle, node2-text -- so node 2's disc covered
+  // ⚠️ Do NOT write the node group's class attribute literally in this comment: the JS is inlined
+  // into the served page, so `test_viz_tab_consolidation` counting rendered nodes in the DOM
+  // counts the comment too. It did, and reported 10 nodes for a 9-entity fixture.
+  // node 1's label. Observed at N=2, the smallest possible graph: "Aurelia B Quorndon" rendered
+  // as "relia B Quorndon" with the leading "Au" behind the neighboring circle, and byte-identical
+  // across an 8s and a 30s virtual-time budget, so it was the settled state and not a
+  // layout-settling artifact. The per-node `dy` was already radius-scaled and was never the cause.
+  const labelLayer=root.append("g").attr("class","node-labels");
+  const label=labelLayer.selectAll("text").data(nodes).join("text").attr("text-anchor","middle")
+      .text(function(d){return nodeLabel[d.entity_id];});
+  label.append("title").text(function(d){return d.entity_name||"";});
   sim.on("tick",function(){
     edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
       .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
     edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
     node.attr("transform",function(d){return "translate("+d.x+","+d.y+")";});
+    // Same offset the `<text>` child used to get from `dy`: the node's OWN radius plus a
+    // constant, so a data-scaled disc cannot swallow its own label.
+    label.attr("x",function(d){return d.x;})
+         .attr("y",function(d){return d.y+radius(d)+11;});
   });
   if(network){drawRelationshipLegend(box,links,rtypes,rcolor,edge);}
   else{drawLegend(nodes);}

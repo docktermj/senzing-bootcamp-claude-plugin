@@ -899,6 +899,27 @@ Applies to **Entity Graph** in both of its modes.
   are, checked on the **fitted** strings). A hover-only tooltip does
   **not** satisfy this: the complaint it addresses is being unable to tell which records matched
   without hovering every node in turn.
+- **Node labels are painted AFTER every node (required — INV-090/INV-104/INV-124).** Emit all node
+  labels in their own layer, drawn after the whole node layer, so no node marker can ever paint over
+  another node's text. ⛔ **(INV-090/INV-104/INV-124) The natural structure is the defective one:** binding one group per
+  datum and appending marker-then-text inside it emits marker,text,marker,text — so a later node's
+  marker covers an earlier node's label, and every string is still present in the DOM while glyphs
+  are missing from the image. Observed on the **smallest possible graph, 2 entities**: an 18-character
+  entity name rendered with its leading characters behind the neighboring marker. ⚠️ Offsetting a label by its
+  own marker's size is necessary but **not** sufficient and was never the cause — a node does not
+  occlude its own label; its neighbor does.
+- **Collision must account for the label's extent, not just the marker (required).** Size the
+  collision/overlap pass from the rendered label as well as the marker, and apply it **only while
+  labels are actually shown** — inflating it for text nobody renders over-separates a
+  production-scale layout for no benefit. Measured on Senzing 4.4.0, 4 records → 2 entities,
+  1440×900: with the marker alone the minimum distance from a marker to a *neighbor's* glyphs was
+  **3 px**; accounting for label width it was **55.7 px** at the settled budget. ⚠️ Expect the
+  layout to take longer to settle once labels influence it — verify at the budget your capture
+  actually uses rather than assuming the pre-change settling time still applies.
+- **Whatever hides labels must follow them into the new layer (required).** If labels default off
+  above a node-count threshold, the mechanism that hides them MUST target the layer they are now
+  in. A selector or predicate left pointing at the old per-node structure leaves every label
+  rendered at exactly the scale the threshold exists for, and nothing fails loudly.
 - **Legends are generated FROM the data, and filter it.** Build each legend from the values actually
   present in the rendered set — the `relationship_type` values on the drawn edges, the data sources
   on the drawn nodes. A legend entry can then never exist without matching marks, which is what

@@ -152,11 +152,26 @@ class TheReferenceImplementsIt(unittest.TestCase):
         self.assertRegex(source(), r'\.text\(function\(d\)\{return nodeLabel\[d\.entity_id\];\}\)')
 
     def test_the_full_name_is_reachable_on_hover(self):
-        """INV-153: the untruncated value must be reachable — <title> on the label itself."""
+        """INV-153: the untruncated value must be reachable — <title> on the label itself.
+
+        ⚠️ Rescoped 2026-09-02. The regex required `.append("title")` to be *chained directly*
+        onto the `.text(...)` that sets the fitted label. When node labels moved into their own
+        layer so no circle could paint over a neighbor's text
+        (`entity-graph-node-occludes-a-neighbors-label-at-small-n`), the label selection had to be
+        held in a variable for the tick handler to position, which puts the `<title>` on the next
+        statement -- and this failed on a change that preserved the contract exactly. It pinned
+        the SYNTAX; the property is that the label element itself carries a `<title>` holding the
+        untruncated `entity_name`. That is what it asserts now, in either shape.
+        """
+        src = source()
         self.assertRegex(
-            source(),
-            r"nodeLabel\[d\.entity_id\];\}\)\s*\n?\s*\.append\(\"title\"\)",
-            "the node label needs its own <title>, not only the group tooltip",
+            src,
+            r"(?:nodeLabel\[d\.entity_id\];\}\)\s*\n?\s*\.append\(\"title\"\)"
+            r"|label\.append\(\"title\"\)\.text\(function\(d\)\{return d\.entity_name)",
+            "the node label needs its own <title> carrying the untruncated entity_name, not "
+            "only the group tooltip. Chained onto the label's `.text(...)` or applied to the "
+            "held label selection are both fine — what matters is that it is on the label "
+            "element, since that is what a reader hovers to recover a truncated name.",
         )
 
     def test_the_old_inline_truncation_is_gone(self):
