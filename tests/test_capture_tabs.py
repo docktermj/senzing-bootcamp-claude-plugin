@@ -540,5 +540,131 @@ class TestCaptureIsSequentialOnly(unittest.TestCase):
         self.assertEqual("", err.getvalue())
 
 
+#: A SIX-tab page with `overlap` deliberately absent from the markup. The module-level FIXTURE
+#: carries only three tabs, which cannot express criterion 2 of
+#: `capture-screenshots-aborts-where-inv-122-says-skip`: "Case B skipping `overlap` while still
+#: capturing the other five with slug names".
+SIX_TAB_FIXTURE = """<!doctype html><html><head><meta charset="utf-8"><title>Viz</title>
+<style>.tab{display:none}.tab.active{display:block}</style></head><body>
+<nav id="nav"></nav>
+<section class="tab active" id="tab-graph">ENTITY GRAPH</section>
+<section class="tab" id="tab-stats">MERGE STATISTICS</section>
+<section class="tab" id="tab-matchkeys">MATCH KEYS</section>
+<section class="tab" id="tab-features">FEATURE SCORES</section>
+<section class="tab" id="tab-probe">SEARCH PROBE</section>
+<script>
+var ALL=[["graph","Entity Graph"],["stats","Merge Statistics"],["matchkeys","Match Keys"],
+         ["features","Feature Scores"],["probe","Search / Probe"]];
+function activate(id){
+  document.querySelectorAll(".tab").forEach(function(t){t.className="tab";});
+  var el=document.getElementById("tab-"+id); if(el)el.className="tab active";
+}
+setTimeout(function(){
+  var nav=document.getElementById("nav");
+  ALL.forEach(function(t){
+    var b=document.createElement("button"); b.id="navbtn-"+t[0]; b.textContent=t[1];
+    b.onclick=function(){activate(t[0]);}; nav.appendChild(b);
+  });
+}, 300);
+</script></body></html>
+"""
+
+
+class TestUnrecognizedIdAndAbsentTabAreDifferentFailures(unittest.TestCase):
+    """INV-122's two cases, pinned side by side because one clause used to cover both.
+
+    ⛔ **The maintainer's decision, 2026-09-02: keep the abort, scope the invariant.** INV-122
+    said only that "a tab that is not present in the page MUST be skipped and reported", which
+    read as forbidding the abort this script performs on an unrecognized id -- so a defensible
+    implementation looked like a violation. The two cases answer different questions:
+
+    * **Case A, unrecognized id** -- outside the script's own tab vocabulary. A request error,
+      rejected BEFORE any capture, exit **1**, no files, message naming every valid id. A typo
+      caught before work beats a silently short set a caller takes for complete.
+    * **Case B, recognized tab absent from THIS page** -- the app does not render it for this
+      data. Skipped and reported, the other tabs still captured under their slug names, exit
+      **0**.
+
+    Neither behavior changed; the invariant now says which is which
+    (`specs/capture-screenshots-aborts-where-inv-122-says-skip.md`).
+    """
+
+    def setUp(self):
+        self.module = load_module()
+
+    def test_case_a_one_bad_id_writes_nothing_even_beside_valid_present_tabs(self):
+        """The cost of the abort, stated as a test rather than left implicit."""
+        with tempfile.TemporaryDirectory() as tmp:
+            html = os.path.join(tmp, "app.html")
+            with open(html, "w", encoding="utf-8") as handle:
+                handle.write(SIX_TAB_FIXTURE)
+            out = os.path.join(tmp, "out")
+            os.makedirs(out)
+            result = run(["--html", html, "--out-dir", out, "--name", "viz",
+                          "--tabs", "graph,nosuchtab,matchkeys"])
+            self.assertEqual(
+                1, result.returncode,
+                "an unrecognized id is a caller error and exits 1 (INV-122), not 0 or 2:\n"
+                + result.stderr)
+            self.assertEqual(
+                [], sorted(f for f in os.listdir(out) if f.endswith(".png")),
+                "the run must write NO files -- `graph` and `matchkeys` are both valid and "
+                "both present, and are deliberately not captured, so a typo can never yield "
+                "a partial set that reads as complete")
+            self.assertIn("unknown tab id(s): nosuchtab", result.stderr)
+            for valid in self.module.DEFAULT_TABS:
+                with self.subTest(valid=valid):
+                    self.assertIn(
+                        valid, result.stderr,
+                        "the message must name every valid id, or the caller cannot fix the "
+                        "typo without reading the source")
+
+    @unittest.skipUnless(has_browser(), "no headless Chrome/Chromium available")
+    def test_case_b_absent_overlap_is_skipped_and_the_other_five_are_captured(self):
+        """Criterion 2, verbatim: skip `overlap`, capture the other five with slug names."""
+        with tempfile.TemporaryDirectory() as tmp:
+            html = os.path.join(tmp, "app.html")
+            with open(html, "w", encoding="utf-8") as handle:
+                handle.write(SIX_TAB_FIXTURE)
+            out = os.path.join(tmp, "out")
+            result = run(["--html", html, "--out-dir", out, "--name", "viz", "--tabs", "all"])
+            self.assertEqual(
+                0, result.returncode,
+                "a recognized-but-absent tab is a skip, and the run still succeeds for the "
+                "tabs it captured:\n" + result.stderr)
+            expected = sorted(
+                "viz-%s.png" % self.module.TABS[t][0]
+                for t in self.module.DEFAULT_TABS if t != "overlap")
+            self.assertEqual(
+                expected, sorted(f for f in os.listdir(out) if f.endswith(".png")),
+                "all five present tabs must be captured under their own slug names")
+            self.assertNotIn("viz-cross-source.png", os.listdir(out),
+                             "the absent tab must never be saved under its name -- that is the "
+                             "defect INV-122 exists for")
+            self.assertIn("overlap", result.stderr)
+
+    def test_the_three_exit_codes_are_documented_in_the_invariant(self):
+        """Criterion 3: a reader must be able to look up what each code means."""
+        text = read(os.path.join(REPO_ROOT, "specs", "INVARIANTS.md"))
+        start = text.index("- **INV-122**")
+        clause = text[start:text.index("\n- **INV-", start + 5)]
+        for code, meaning in (("0", "captured"), ("1", "caller"), ("2", "headless")):
+            with self.subTest(code=code):
+                self.assertRegex(
+                    clause, r"\*\*%s\*\*" % code,
+                    "INV-122 must document exit %s (%s). Three codes that are not written "
+                    "down are three codes a run reports interchangeably." % (code, meaning))
+
+    def test_the_script_cites_the_rule_where_it_rejects(self):
+        """INV-183: the rule must be citable at the step it binds."""
+        text = read(SCRIPT)
+        i = text.index('unknown tab id(s)')
+        window = text[max(0, i - 1200):i]
+        self.assertIn(
+            "INV-122", window,
+            "the rejection site must cite INV-122. It did not until 2026-09-02, which is how "
+            "a behavior the invariant had not scoped read as a violation of it.")
+
+
 if __name__ == "__main__":
     unittest.main()

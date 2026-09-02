@@ -995,6 +995,15 @@ def resolve_tabs(spec: str) -> list:
         else:
             unknown.append(raw)
     if unknown:
+        # ⛔ (INV-122) An UNRECOGNIZED id is a caller error and fails the whole run BEFORE any
+        # capture, exit 1, even when the other requested ids are valid and present. That is
+        # deliberately NOT the skip rule two paragraphs of this contract also state: a
+        # *recognized* tab this page does not render is skipped, reported, and the run exits 0.
+        # The two answer different questions -- this one is about the REQUEST, the skip is about
+        # THIS PAGE's content -- and the difference matters because a typo caught before work is
+        # cheaper than a silently short set a caller who never read stderr takes for complete.
+        # INV-122 was silent on this until 2026-09-02, which made a defensible abort read as a
+        # violation of its skip clause; the clause was scoped rather than the behavior changed.
         raise ValueError(
             f"unknown tab id(s): {', '.join(unknown)}. Tab ids: {', '.join(DEFAULT_TABS)}"
         )

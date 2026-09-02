@@ -107,3 +107,52 @@ implementation is defensible and the invariant is silent, which is the gap worth
 - Upstream: not applicable
 - Related specs: `specs/default-tab-capture-without-injection.md`, `specs/capture-screenshots-cannot-tell-whether-the-tab-actually-changed.md` (the 2026-08-28 finding on the `--url` path; ⚠️ note that path was **not** re-tested this run — see coverage limits)
 
+
+## Resolution (2026-09-02) — Option 2, on the maintainer's decision
+
+Asked at the start of an unattended `/implement-spec` loop, since the spec states this
+"needs the maintainer's call, because it is a contract decision rather than a bug fix".
+**Option 2 chosen: keep the abort, scope INV-122's clause.** So `capture_screenshots.py` is
+unchanged in behavior; the invariant was silent and is now explicit.
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The script's behavior did not change, but the script did.** `## Affected files` lists
+   `capture_screenshots.py` as touched "only under Option 1". Under Option 2 it still needed a
+   one-comment change: the rejection site carried **no `INV-122` citation and no rationale**, so
+   the rule the maintainer just scoped was not citable at the step it binds (INV-183) — which is
+   exactly the condition that made a defensible abort read as a violation in the first place. The
+   comment states both cases and why they differ; `test_the_script_cites_the_rule_where_it_rejects`
+   pins it, and dropping the citation fails that test.
+
+2. **The module-level test fixture could not express criterion 2.** It carries three tabs
+   (`graph`, `stats`, `overlap`), so "Case B skipping `overlap` while still capturing the other
+   **five** with slug names" was unassertable against it. Added `SIX_TAB_FIXTURE` — five tabs
+   present, `overlap` absent from the markup — and the test asserts the five expected filenames
+   are **derived from `TABS`** rather than written out, so a slug rename fails here instead of
+   silently passing. ⚠️ The absent-reason it exercises is `not_present`; the `not_applicable`
+   reason (the app suppressing a tab for this data, which is what the dry run observed) is
+   covered separately by the existing manifest assertion in
+   `TestAbsentTabIsNeverCapturedUnderItsName`. Both are skips, which is what criterion 2 asks
+   about.
+
+3. **Criterion 2 is verified LIVE, not simulated.** Headless Chrome 152.0.7977.75 is available
+   here, so `test_case_b_...` really captures: exit **0**, five PNGs
+   (`viz-entity-graph`, `viz-merge-statistics`, `viz-match-keys`, `viz-feature-scores`,
+   `viz-search-probe`), no `viz-cross-source.png`, and `overlap` named on stderr. Confirmed as
+   `ok` rather than `skipped`.
+
+4. **Criterion 4's negative control was run in both directions.** Making an unrecognized id
+   *skip* instead of abort — Option 1's behavior, the road not taken — fails
+   `test_case_a_...` **and** the pre-existing `test_unknown_tab_is_rejected_with_the_known_ids`;
+   removing the citation fails `test_the_script_cites_the_rule_where_it_rejects`. Restored, and
+   the only surviving diff to the script is the nine-line comment.
+
+## Invariants introduced
+
+None — **INV-122 was corrected in place**, which is the sanctioned route when the invariant
+itself is what is wrong (`/dry-run` step 6: "an invariant that encodes a false premise is worse
+than a missing one"). Its wording now distinguishes an unrecognized tab id (caller error, reject
+before any capture, exit 1) from a recognized tab absent from the page (skip, report, exit 0),
+states the three exit codes it requires to stay distinguishable, and records the date and the
+decision. The rule's original clause is unchanged; only its scope is now stated.
