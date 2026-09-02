@@ -159,3 +159,49 @@ holding the relevant concept, rather than several hundred lines away at the adva
 
 **The coverage consequence is referenced, not restated** (INV-179) — the field-count note later in
 the same file already owns it, and this caution points at it in one sentence.
+
+## Re-drive against server 1.35.4 (2026-09-02) — the actionable half is FIXED upstream
+
+Driven end to end before sending anything upstream: a 6-row CSV with `ROW_KIND`
+(`Company`/`Contact`), `PRIMARY_NAME_ORG` populated only on Company rows and
+`NAME_FIRST`/`NAME_LAST` only on Contact rows — **zero rows carry both**, verified in the
+fixture. `mapping_workflow` start → step 1 → step 2 (`record_type: MIXED`) → step 3
+declaring all three name fields with no `type_discriminator`.
+
+**The rejection still occurs.** Verbatim, server 1.35.4, 2026-09-02:
+
+> `schema 'entities': NAME_ORG cannot co-exist with person name attributes NAME_FIRST,
+> NAME_LAST — a record is either a person or an organization. FIX: declare the name ONCE
+> and let the mapper emit NAME_ORG for an ORGANIZATION record and NAME_FULL (or parsed
+> person parts) for a PERSON record, branched by RECORD_TYPE; or use a type_discriminator
+> to make the mapping conditional.`
+
+⛔ **The message now names `type_discriminator`, and that was this spec's primary
+complaint.** Compare the 2026-08-25 text quoted above, which ended at *"a record is either
+a person or an organization"* and which this spec faulted precisely because *"Nothing in
+the message names `type_discriminator`, which is the actual fix."* A `FIX:` clause has
+since been added that names both remedies explicitly.
+
+**So the cost this spec was filed for is gone.** A Bootcamper hitting this today is told
+what to do in the same breath as the rejection; they no longer spend an attempt re-checking
+data that was correct.
+
+**What remains is narrower, and is wording rather than behavior:**
+
+1. The rule is still enforced at the level of **field declarations**, not per NAME object.
+2. The message still frames it as *"a record is either a person or an organization"*, a
+   record-level invariant the mapping already satisfied — while the Entity Specification
+   scopes the rule to **one NAME object** (*"do not mix `NAME_ORG` with parsed person fields
+   in the same object"*).
+
+⚠️ **This materially changes the upstream question.** It is no longer *"the message
+describes the wrong defect and names no fix"* — it is *"the framing sentence is broader
+than the specification it enforces"*, with the actionable guidance already present. That is
+a documentation nicety, not a workflow defect, and the maintainer should decide whether it
+is worth an anonymous submission at all.
+
+⚠️ **Noted in passing, not specced:** step 2's prose instructs `record_type: "MIXED"` for a
+type-discriminated schema, while the typed `payload` branch for step 2 enumerates only
+`PERSON|ORGANIZATION|VESSEL|AIRCRAFT`. `MIXED` is accepted through the untyped `data`
+channel and returns `warnings: ["record_type 'MIXED' is non-standard"]`. Prose and schema
+disagree; a client using constrained decoding cannot follow the instruction.
