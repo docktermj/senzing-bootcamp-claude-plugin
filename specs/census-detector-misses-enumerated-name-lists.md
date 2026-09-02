@@ -120,3 +120,83 @@ is covered.
 - Upstream: not applicable — this is a maintainer-tool defect, not a server one.
 - Related specs: `specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md` (implemented 2026-09-01 — introduced the count-shaped detector this extends), `specs/restamp-27-mcp-negatives-to-server-1-36-0.md` (corrects the instance)
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **Shipped as a SIBLING reporter, not by extending `find_census_rationales`.** The spec
+   offered either ("extend `find_census_rationales` (or add a sibling reporter)"). Extending the
+   shared function would have converted a report into a **gate**: the existing
+   `NoShippedMarkerPinsACount::test_no_marker_under_plugins_rests_on_a_count` asserts that *no*
+   marker under `plugins/` is flagged by that function, so folding the new shape in would have
+   failed the suite on `phase2-data-mapping.md:719` — the very hit criterion 1 requires the
+   report to produce. `find_enumeration_rationales` therefore sits beside it, and the "report,
+   never gate" property in both docstrings survives.
+
+2. **The discriminator needed a FOURTH condition the spec does not name, and without it the
+   criterion-2 case flagged.** The spec's three conditions — reporting verb, two or more
+   coordinated named elements, a governing element noun — were implemented as written, with the
+   noun tested for *presence in the clause*. That flagged
+   `module-02-sdk-setup/SKILL.md:387`, which criterion 2 forbids. ⚠️ **The spec quotes that
+   fixture truncated** — `"every hit is V3-to-V4 material …"` — and the elided tail is what
+   supplies the noun: *"… and the topic list carries no upgrade **entry**"*. There, `entry`
+   governs `upgrade` in a separate conjunct, and the parenthesised run is examples under the
+   property word `material`. So the noun must **govern** the run: adjacent within 40 characters
+   and with **no coordinator in the gap** (`_governing_noun`). That single condition is what
+   separates the one real drift from the three legitimate lists.
+
+3. **A tool-call stripper was required and is not in the spec.** The parsed `claim` half
+   **includes the invocation**, so `search_docs(query='…', category='data_mapping')` hands the
+   matcher two snake_case tokens and a `section` noun for free — on every `search_docs` negative
+   in the corpus. Without `_strip_tool_calls` the report would have been useless on its first
+   run. ⚠️ Its own first version was too greedy (`\s*\(`) and ate the prose parenthetical in
+   *Payload attributes (optional)*, reporting the name as `*Payload  *`; a stripper that removes
+   real element names suppresses the hits this exists to find. Now requires no space before `(`
+   and an `=` or quote inside.
+
+4. **`phase1-verification.md:251` is left unflagged, and the blind spot is documented rather than
+   implied.** The spec lists it must-not-flag and it reproduced exactly on 1.36.0 — but it **is**
+   an exhaustive field list, the shape the detector's own comment names as a 2026-08-31 drift
+   cause. It escapes because `field` trails in a separate conjunct, the same structure that keeps
+   `:387` out. Stated in `find_enumeration_rationales`' docstring and in its guard's docstring,
+   with the instruction to widen `_governing_noun` rather than drop the coordinator test if that
+   phrasing ever drifts. Reporting it was the alternative; it would also have flagged `:387`.
+
+5. **Two enumeration sites exist that the spec never named (INV-246).** The spec's list is four;
+   scanning found six. Both extra sites fall out under the governing-noun rule and are recorded
+   here so a future widening knows they are there:
+   `module-02-sdk-setup/SKILL.md:887` (*"env_vars holds only PYTHONPATH and LD_LIBRARY_PATH"* —
+   a genuine enumeration of response content, and the marker attached to the still-unsent
+   `sdk_guide` language-parameter report) and
+   `module-07-query-visualize-discover/phase1-query-visualize.md:421` (*"shared by why_entities,
+   why_records and why_record_in_entity"* — a list of methods sharing a document, a property).
+
+6. **Criterion 1's second half is mechanism-verified, not tree-verified, and lands with the next
+   spec.** "Stops flagging it after `restamp-27-mcp-negatives-to-server-1-36-0` rewrites it" was
+   confirmed by rewriting that rationale to the property form and observing the whole
+   ENUMERATION-SHAPED block disappear, then restoring the file byte-identical. ⛔ **That control
+   also establishes a constraint on the restamp: re-listing today's three section titles keeps the
+   rationale flagged, correctly** — `test_a_corrected_enumeration_is_still_flagged` pins it — so
+   the correction must name the **property**, not a fresher list.
+
+7. **Two of my own guards were wrong on the first pass, both found by negative control rather than
+   review.** They asserted a *contingent* state — that the live tree currently has hits — so the
+   next spec's fix would have broken them, one with a bare `IndexError` instead of a diagnosis.
+   Rebuilt on a synthetic scratch tree (`tempfile`), with the live-tree claim isolated in
+   `TheDriftedSiteIsFlaggedUntilItIsCorrected`, whose failure message names both possible causes
+   and says which one to check first. Separately, the block-splitting assertion ran past the
+   report's own marker listing and read the fixtures' verbatim text back out of it.
+
+8. **The test file needed the `MCP-NEGATIVE-SCAN: ignore-file` opt-out.** Its synthetic markers
+   are concatenated Python literals, so the token lands on a line whose `owner:` clause is on the
+   next one — which the scanner correctly reported as three malformed markers. Same route as
+   `tests/test_coverage_reports.py`, with the reason stated in the docstring.
+
+## Invariants introduced
+
+None, and deliberately — matching the sibling this extends. The spec that introduced the
+count-shaped detector (`mcp-negative-markers-carry-rationale-nothing-reverifies`, 2026-09-01)
+registered no invariant either, citing INV-108/INV-246/INV-282 and nothing new. The reason holds
+here: this is a **report**, it gates nothing, and the durable rule it serves — a negative's
+rationale must state the discriminating property rather than a census of the response — is
+already the property the report's own preamble asserts and the guards pin. Minting an invariant
+for a maintainer-tool heuristic would bind every future spec to a regex.

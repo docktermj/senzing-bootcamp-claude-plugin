@@ -1,4 +1,10 @@
-"""A negative marker's rationale must not rest on a count.
+"""A negative marker's rationale must not rest on a count, or on an enumerated name-list.
+
+MCP-NEGATIVE-SCAN: ignore-file — the marker strings below are synthetic scratch-tree
+fixtures for the reporter, not claims about any server. They are written as concatenated
+Python literals, so the token lands on a line whose `owner:` clause is on the next one, and
+the scanner correctly reads that as a MALFORMED marker — which is how this was found, by
+the very guard the fixtures exercise. Same route as `tests/test_coverage_reports.py`.
 
 An ``MCP-NEGATIVE`` marker has two halves that age at different rates: the **claim**
 ("tool X does not contain Y"), which `/dry-run` phase 1 re-asks, and the **rationale** --
@@ -149,6 +155,301 @@ class NoShippedMarkerPinsACount(unittest.TestCase):
             "A shipped marker's rationale pins a count. Re-ask the owning route and replace "
             "the census with the property it stands in for -- do NOT simply re-date it, which "
             "certifies text nobody re-read.",
+        )
+
+
+class TheEnumerationDetectorFlagsANameList(unittest.TestCase):
+    """The shape a numeral cannot express, and which `find_census_rationales` cannot see.
+
+    An enumerated name-list expires for exactly the reason a count does -- a rename, a drop
+    or an addition falsifies it server-side, silently, because phase 1 re-asks the CLAIM and
+    never the rationale. It was named as an observed drift cause in the detector's own comment
+    on 2026-08-31 and left unimplemented; on 2026-09-02 it drifted again undetected.
+    """
+
+    def setUp(self):
+        self.reports = load_reports()
+
+    def test_the_shipped_drifted_phrasing_is_flagged(self):
+        """`phase2-data-mapping.md:719`, verbatim -- the instance that went undetected.
+
+        On server 1.36.0, 2026-09-02 that route returns *Payload attributes (optional)*,
+        *Attributes for the record key* and *Attribute reference*. There is no
+        *Mapping identifiers* section in the response at all.
+        """
+        owner = (
+            "search_docs over the Entity Specification IS the route that would carry such a "
+            "precedence rule, and it returned the *Payload attributes (optional)* and "
+            "*Mapping identifiers* sections, which establish that payload and registered "
+            "features are distinct categories (absence negative)"
+        )
+        self.assertTrue(
+            self.reports.find_enumeration_rationales([row("no such rule", owner=owner)]),
+            "A rationale naming the sections the route returned must be flagged. This exact "
+            "text cited a section the server does not return, while the claim above it stayed "
+            "true and the date certified the whole comment as checked.",
+        )
+
+    def test_the_property_shaped_rewrite_is_not_flagged(self):
+        """What the correction must look like -- and why re-listing is not a fix.
+
+        Replacing one section name with the currently-returned three would leave the rationale
+        flagged, correctly: the next server-side rename breaks it again. The discriminating
+        property is what the enumeration was standing in for.
+        """
+        owner = (
+            "search_docs over the Entity Specification IS the route that would carry such a "
+            "precedence rule; its payload and feature-attribute sections establish that the "
+            "two are distinct categories and that choosing between them is a mapping "
+            "decision, but none states a precedence for a colliding root-level key "
+            "(absence negative)"
+        )
+        self.assertFalse(
+            self.reports.find_enumeration_rationales([row("no such rule", owner=owner)]),
+            "A rationale stating the PROPERTY the list stood in for must not be flagged -- "
+            "otherwise the report gives the fixer nowhere to land.",
+        )
+
+    def test_a_corrected_enumeration_is_still_flagged(self):
+        """Re-listing the current sections is a re-date in disguise, and must still report."""
+        owner = (
+            "search_docs IS the route, and it returned the *Payload attributes (optional)*, "
+            "*Attributes for the record key* and *Attribute reference* sections "
+            "(absence negative)"
+        )
+        self.assertTrue(
+            self.reports.find_enumeration_rationales([row("no such rule", owner=owner)]),
+            "Swapping today's section names in keeps the liability: the rationale is still "
+            "falsified by the next rename. The report must not go quiet on it.",
+        )
+
+    def test_the_noun_may_govern_from_either_side(self):
+        for owner in (
+            "the response carries the fields `file_path` and `raw_url` (routing negative)",
+            "it returned the *Alpha* and *Beta* sections (absence negative)",
+        ):
+            with self.subTest(owner=owner[:40]):
+                self.assertTrue(
+                    self.reports.find_enumeration_rationales([row("x", owner=owner)]),
+                    "Both phrasings ship; a matcher that reads only one direction misses half.",
+                )
+
+
+class TheEnumerationDetectorLeavesLegitimateListsAlone(unittest.TestCase):
+    """⛔ Three of the four enumerations in the corpus on 2026-09-02 were LEGITIMATE.
+
+    An exhaustive list IS the discriminating fact of an absence claim -- "no `brew upgrade`
+    anywhere; what it does carry is ..." -- so this half of the discrimination carries more
+    weight here than for the count matcher. INV-282's lesson: every construction the detector
+    must NOT flag is pinned beside the ones it must, so a later widening fails here rather
+    than being absorbed as a louder report.
+    """
+
+    def setUp(self):
+        self.reports = load_reports()
+
+    def test_a_property_with_examples_is_not_flagged(self):
+        """`module-02-sdk-setup/SKILL.md:387`, verbatim. The spec names this must-not-flag.
+
+        ⚠️ It has the verb, and a coordinated snake_case run, and an element noun in the
+        clause -- so a presence-in-clause test flags it, which the first implementation did.
+        `entry` governs `upgrade`, in a different conjunct; the run is examples under the
+        property word `material`. That is why `_governing_noun` tests the gap for a
+        coordinator rather than only its width.
+        """
+        claim = (
+            "no 4.x-to-4.y update procedure anywhere; every hit is V3-to-V4 migration "
+            "material (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) "
+            "and the topic list carries no upgrade entry"
+        )
+        self.assertFalse(
+            self.reports.find_enumeration_rationales([row(claim)]),
+            "A property over whatever came back, with examples, must not be flagged. It "
+            "survives a rebuild, which is the whole distinction this report is drawing.",
+        )
+
+    def test_the_exhaustive_command_lists_are_not_flagged(self):
+        """`SKILL.md:252` (brew) and `:278` (scoop), verbatim -- the legitimate use.
+
+        The list is the discriminating fact of the absence: no version-management command
+        anywhere, and here is what the response does carry instead. Both reproduced exactly
+        on server 1.36.0, 2026-09-02.
+        """
+        shipped = [
+            "no brew outdated, brew info or brew upgrade anywhere in the response; the brew "
+            "commands it does carry are tap, trust, install --cask, uninstall --cask, untap, "
+            "install/link libpq, and --prefix",
+            "no scoop status, scoop info or scoop update anywhere in the response; the scoop "
+            "commands it does carry are bucket add, install, and config (for the EULA variable)",
+        ]
+        for claim in shipped:
+            with self.subTest(claim=claim[:48]):
+                self.assertFalse(
+                    self.reports.find_enumeration_rationales([row(claim)]),
+                    "An exhaustive list of bare command words is the fact itself. Flagging "
+                    "it trains the reader to skip the report.",
+                )
+
+    def test_a_trailing_field_noun_is_not_treated_as_governing(self):
+        """`phase1-verification.md:251`, verbatim -- and the detector's known blind spot.
+
+        ⚠️ This one is honestly uncomfortable: it IS an exhaustive field list, the shape the
+        comment names as a 2026-08-31 drift cause, and it reproduced exactly on 1.36.0. It is
+        left unflagged because `field` trails in a separate conjunct, the same structure that
+        keeps `:387` out. The trade is stated in `find_enumeration_rationales`' docstring
+        rather than left for a reader to infer from silence.
+        """
+        claim = (
+            "its snippets[] carry file_path, source_url, repo, raw_url, size_bytes and "
+            "line_count with no content field at all"
+        )
+        self.assertFalse(
+            self.reports.find_enumeration_rationales([row(claim)]),
+            "Pinned as the CURRENT behavior, not as an endorsement. If this phrasing drifts, "
+            "widen _governing_noun -- do not drop the coordinator test.",
+        )
+
+    def test_a_tool_calls_own_parameters_are_not_an_enumeration(self):
+        """⚠️ The claim half INCLUDES the invocation, so this would flag nearly every marker.
+
+        `search_docs(query='...', category='data_mapping')` hands the matcher two snake_case
+        tokens and, with a `section` noun anywhere nearby, a hit -- for free, on every marker
+        that happens to be a `search_docs` negative. Found while designing the matcher; the
+        report would have been useless on its first run.
+        """
+        claim = (
+            "search_docs(query='payload attribute precedence', category='data_mapping') "
+            "— no indexed section states what happens at the record root"
+        )
+        self.assertFalse(
+            self.reports.find_enumeration_rationales([row(claim)]),
+            "A call's own parameters enumerate nothing about the response.",
+        )
+
+    def test_all_caps_prose_is_not_a_pair_of_named_elements(self):
+        self.assertFalse(
+            self.reports.find_enumeration_rationales(
+                [row("the response MUST and NEVER carry a section key", owner="whatever")]
+            ),
+            "ALL-CAPS prose words are not response elements; counting them manufactures a "
+            "coordinated pair out of emphasis.",
+        )
+
+
+class TheTwoReportersStayDistinct(unittest.TestCase):
+    """Neither block may absorb the other's hits, or the report double-counts."""
+
+    def setUp(self):
+        self.reports = load_reports()
+
+    def test_a_count_is_not_reported_as_an_enumeration(self):
+        self.assertFalse(
+            self.reports.find_enumeration_rationales([row("both results are SDK examples")]),
+            "A count belongs under the census label, which prescribes a different fix.",
+        )
+
+    def test_an_enumeration_is_not_reported_as_a_count(self):
+        owner = "it returned the *Alpha* and *Beta* sections (absence negative)"
+        self.assertFalse(
+            self.reports.find_census_rationales([row("x", owner=owner)]),
+            "An enumeration carries no numeral; if the census matcher claims it, the count "
+            "report stops meaning what its own preamble says.",
+        )
+
+
+class TheReportSeparatesTheTwoShapes(unittest.TestCase):
+    """Criterion 3, asserted against real output on a SYNTHETIC tree.
+
+    ⚠️ Driven from fixtures rather than the live repo on purpose. The first version of this
+    class read the shipped tree, which made it assert a CONTINGENT fact -- that hits exist --
+    so it would have failed the moment `restamp-27-mcp-negatives-to-server-1-36-0` corrected
+    the last enumeration, for a good reason and with a bad message. "Both labels appear when
+    both shapes are present" is the durable property; "the tree currently has a hit" is a
+    separate claim, below, and is marked as expected to invert.
+    """
+
+    MARKERS = (
+        "<!-- MCP-NEGATIVE: search_docs(query='a') — no such thing; both results are SDK "
+        "examples — owner: search_docs IS the route (absence negative) — server 1.36.0, "
+        "2026-09-02 -->\n"
+        "<!-- MCP-NEGATIVE: search_docs(query='b') — no such rule — owner: search_docs IS "
+        "the route, and it returned the *Alpha* and *Beta* sections (absence negative) — "
+        "server 1.36.0, 2026-09-02 -->\n"
+    )
+
+    def _report(self, text):
+        import contextlib
+        import io
+        import tempfile
+
+        reports = load_reports()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "plugins"
+            root.mkdir()
+            (root / "fixture.md").write_text(text, encoding="utf-8")
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                reports.report_negatives(tmp, None)
+            return buf.getvalue()
+
+    def test_both_labels_and_both_judgment_notes_are_printed(self):
+        out = self._report(self.MARKERS)
+        self.assertIn("CENSUS-SHAPED rationales", out)
+        self.assertIn("ENUMERATION-SHAPED rationales", out)
+        self.assertEqual(
+            2, out.count("A hit needs judgment"),
+            "Each block carries its own judgment note. One shared note lets a reader apply "
+            "the count block's reasoning to an enumeration, where the legitimate-use rate "
+            "is much higher -- three of four in the corpus on 2026-09-02.",
+        )
+
+    def test_each_shape_is_listed_under_its_own_label_only(self):
+        """A hit under the wrong label prescribes the wrong fix: re-describe vs re-ask."""
+        out = self._report(self.MARKERS)
+        census = out.split("CENSUS-SHAPED rationales", 1)[1].split("ENUMERATION-SHAPED", 1)[0]
+        # ⚠️ Bound the tail at the marker listing. Without this the block runs to end of
+        # output and picks up both markers' verbatim text from the listing below, which
+        # made this assertion pass-by-accident in one direction and fail in the other.
+        enumerated = out.split("ENUMERATION-SHAPED rationales", 1)[1].split("\nmarkers:", 1)[0]
+        self.assertIn("'both results'", census)
+        self.assertNotIn("Alpha", census)
+        self.assertIn("*Alpha* and *Beta*", enumerated)
+        self.assertNotIn("both results", enumerated)
+
+    def test_the_report_stays_quiet_when_no_rationale_has_either_shape(self):
+        """Neither block may print on a clean tree, or the labels stop carrying information."""
+        clean = (
+            "<!-- MCP-NEGATIVE: search_docs(query='c') — the topic list carries no upgrade "
+            "entry — owner: search_docs IS the corpus route and it is empty (absence "
+            "negative) — server 1.36.0, 2026-09-02 -->\n"
+        )
+        out = self._report(clean)
+        self.assertNotIn("CENSUS-SHAPED", out)
+        self.assertNotIn("ENUMERATION-SHAPED", out)
+
+
+class TheDriftedSiteIsFlaggedUntilItIsCorrected(unittest.TestCase):
+    """Criterion 1, first half: the report flags `:719` BEFORE the restamp rewrites it.
+
+    ⛔ **Expected to invert, and that is the point.**
+    `restamp-27-mcp-negatives-to-server-1-36-0` replaces that rationale with the property it
+    stands in for. When it does, this test fails with the message below -- which says to flip
+    it rather than leaving a reader to guess whether the report broke or the tree got fixed.
+    """
+
+    def test_the_shipped_drift_is_reported(self):
+        reports = load_reports()
+        found = reports.find_negatives(str(REPO))
+        hits = ["%s:%d" % (r[0], r[1]) for r in reports.find_enumeration_rationales(found)]
+        self.assertIn(
+            "plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/"
+            "phase2-data-mapping.md:719",
+            hits,
+            "The detector no longer flags the enumeration it was written for. TWO very "
+            "different causes: (a) the rationale was corrected -- then delete this class and "
+            "assert `find_enumeration_rationales` is empty over plugins/, the way "
+            "NoShippedMarkerPinsACount does for counts; or (b) the matcher regressed. Check "
+            "the marker text at that line before touching the matcher.",
         )
 
 

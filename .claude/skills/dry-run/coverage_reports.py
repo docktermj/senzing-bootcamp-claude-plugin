@@ -570,8 +570,13 @@ def find_negatives(repo):
 #: The claim ("tool X does not contain Y") is re-asked by phase 1; the rationale beside it is
 #: not, so a census quietly stops describing the response while the claim above it stays true
 #: and the date says the whole comment was checked. On 2026-08-31 two of the three drifted
-#: rationales were exactly this shape — "all four hits are …" (ten hits by then) and an
-#: exhaustive field list (a field had been added). A count is never the discriminating fact:
+#: rationales drifted for one reason in two shapes — "all four hits are …" (ten hits by then),
+#: which is THIS matcher, and an exhaustive field list (a field had been added), which is NOT:
+#: an enumeration carries no numeral, so nothing here can see it. That half is
+#: `ENUMERATION_SHAPED` / `find_enumeration_rationales` below, added 2026-09-02 after the
+#: uncovered shape drifted a second time undetected (`phase2-data-mapping.md:719` cited a
+#: *Mapping identifiers* section the route no longer returns). Read the two as one report in
+#: two halves. A count is never the discriminating fact:
 #: "no field names a binding type" says what the census was standing in for and does not expire.
 #: ⚠️ `both` counts on its own; `all`/`every` do not. "all six hits" pins six, and breaks
 #: when the index returns ten; "every hit is V3-to-V4 material" is a property over whatever
@@ -608,6 +613,172 @@ def find_census_rationales(found):
             if m:
                 flagged.append((relpath, lineno, m.group(0).strip()))
                 break
+    return flagged
+
+
+#: An ENUMERATED NAME-LIST expires for the same reason a count does, and carries no numeral,
+#: so `CENSUS_SHAPED` above is structurally blind to it. A rationale saying the route "returned
+#: the *A* and *B* sections" is falsified by the server renaming, dropping or adding one —
+#: silently, because phase 1 re-asks the CLAIM and never the rationale, and the marker's date
+#: then certifies a comment nobody re-read. This is not hypothetical twice over: the shape was
+#: named as an observed drift cause in the comment above on 2026-08-31 and left unimplemented,
+#: and on 2026-09-02 `phase2-data-mapping.md:719` was found citing a *Mapping identifiers*
+#: section that `search_docs` over the Entity Specification does not return at all (server
+#: 1.36.0, 2026-09-02). Nothing flagged it; a human read the returned titles against the
+#: rationale's and noticed.
+#:
+#: ⛔ **Three conditions, all required — the third is what makes this readable rather than noise.**
+#: A reporting verb, then two or more COORDINATED named elements after it, plus a governing
+#: element noun anywhere in the clause. Dropping any one of them flags correct prose:
+#:   - Coordination, not mere co-occurrence. `search_docs` is itself snake_case and appears in
+#:     nearly every `owner:` clause, so "2+ names anywhere" would flag almost every marker via
+#:     its own owning route's name. A joined run (`A, B` / `A and B`) is what an enumeration is.
+#:   - The element noun is the whole reason "every hit is V3-to-V4 material (sz_dbupgrade,
+#:     sz_configupgrade, …)" is NOT flagged: it has the verb and the coordinated snake_case run,
+#:     and it is a PROPERTY over whatever came back, with examples. `hit`/`material` name no
+#:     response element, so it falls out — the same property/census line `CENSUS_SHAPED` draws.
+#: ⚠️ The parsed `claim` half INCLUDES the tool invocation, so `search_docs(query='…',
+#: category='data_mapping')` hands every marker two snake_case tokens and a `section` noun for
+#: free. `_strip_tool_calls` removes them first: a call's own parameters are not an enumeration
+#: of what the response contained. Found while designing this, not by a later negative control,
+#: and it would have made the report useless on its first run.
+_ELEMENT_NOUN = (
+    r"(?:sections?|fields?|flags?|keys?|commands?|parameters?|entry|entries)"
+)
+_REPORT_VERB = (
+    r"(?:returned|returns|carries|carry|carried|holds|hold|held"
+    r"|lists|list|listed|are|is|were|was)"
+)
+#: A named element: emphasized (`*…*`, `` `…` ``) or a bare ALL-CAPS / snake_case identifier.
+#: Emphasis is the strongest signal — a rationale quoting a response's own section title
+#: almost always marks it — and the bare forms catch field lists like `snippets[]`'s.
+_EMPHASIZED = r"(?:\*[^*\n]{2,60}\*|`[^`\n]{2,60}`)"
+_IDENTIFIER = (
+    r"(?:[A-Z][A-Z0-9_]{2,}(?:\[\])?(?:\.[A-Z][A-Z0-9_]*)*"
+    r"|[a-z][a-z0-9]*(?:_[a-z0-9]+)+)"
+)
+_NAMED = r"(?:" + _EMPHASIZED + r"|" + _IDENTIFIER + r")"
+#: ALL-CAPS prose is not a response element. Without this, a rationale writing MUST or NEVER
+#: beside another capital contributes a spurious coordinated pair.
+_CAPS_STOPWORDS = frozenset("""
+    MUST NEVER NOT AND THE ITS IS ARE ALL ONE TWO ONLY JUST YES NO DUE OK ERR
+    SDK MCP JSON HTTP HTTPS URL URI API CLI PII SQL CSV JSONL UTC README TODO
+    """.split())
+_COORDINATED = re.compile(
+    _NAMED + r"(?:\s*(?:,|,?\s*and|,?\s*or)\s*(?:the\s+)?" + _NAMED + r")+"
+)
+_ELEMENT_NOUN_RE = re.compile(r"\b" + _ELEMENT_NOUN + r"\b", re.IGNORECASE)
+#: ⚠️ No space before `(`, and the arguments must carry an `=` or a quote. Without both,
+#: this ate the prose parenthetical in "*Payload attributes (optional)*" and reported the
+#: name as `*Payload  *` — a stripper that removes real response-element names would
+#: suppress the very hits this reporter exists to find.
+_TOOL_CALL = re.compile(r"\b[a-z][a-z0-9_]*\([^()]*[='\"][^()]*\)")
+
+
+def _strip_tool_calls(text):
+    """Remove `tool(param='value', …)` invocations — their parameters enumerate nothing.
+
+    The marker's claim half opens with the call that was asked, so without this every
+    rationale inherits the call's own snake_case tokens as if they were response elements.
+    """
+    return _TOOL_CALL.sub(" ", text)
+
+
+def _clauses(text):
+    """Split on `;` and em dash only.
+
+    ⚠️ Deliberately NOT on `--`: a shipped marker enumerates `install --cask` and
+    `uninstall --cask`, and splitting there would cut a clause in half mid-name.
+    """
+    return [c for c in re.split(r"[;—]", text) if c.strip()]
+
+
+def _named_run(clause):
+    """The longest coordinated run of named elements in `clause`, or None.
+
+    Filters ALL-CAPS prose words out of a run and requires two survivors, so
+    "MUST and NEVER" does not read as an enumeration of two response elements.
+    """
+    for m in _COORDINATED.finditer(clause):
+        names = [n for n in re.findall(_NAMED, m.group(0))
+                 if n.upper().strip("*`[]().") not in _CAPS_STOPWORDS]
+        if len(names) >= 2:
+            return m.group(0).strip()
+    return None
+
+
+#: The gap between the enumeration and its element noun may not cross a coordinator. This is
+#: the condition that separates a GOVERNING noun from one that merely shares the clause, and it
+#: is what keeps the criterion-2 case out: in `module-02-sdk-setup/SKILL.md:387` the noun sits
+#: in a different conjunct — "every hit is V3-to-V4 migration material (sz_dbupgrade,
+#: sz_configupgrade, …) **and the topic list carries no upgrade entry**" — where `entry` governs
+#: `upgrade`, not the parenthesised run, and the run itself is examples under the property word
+#: `material`. Presence-in-clause alone flagged it, which is a false positive on the exact
+#: fixture the spec names as must-not-flag.
+_COORDINATOR = re.compile(r"\b(?:and|or|but)\b|[;,]", re.IGNORECASE)
+_GOVERNING_GAP = 40
+
+
+def _governing_noun(clause, run_start, run_end):
+    """The element noun governing the run at [run_start, run_end), or None.
+
+    Adjacent means: within `_GOVERNING_GAP` characters on either side, with no coordinator
+    between noun and run. Both directions are real phrasings — "returned the *A* and *B*
+    sections" puts it after, "carries the fields `a` and `b`" puts it before.
+    """
+    for m in _ELEMENT_NOUN_RE.finditer(clause):
+        if m.end() <= run_start:
+            gap = clause[m.end():run_start]
+        elif m.start() >= run_end:
+            gap = clause[run_end:m.start()]
+        else:
+            continue                      # the noun is inside the run; it is a name, not a noun
+        if len(gap) <= _GOVERNING_GAP and not _COORDINATOR.search(gap):
+            return m.group(0)
+    return None
+
+
+def find_enumeration_rationales(found):
+    """[(relpath, lineno, phrase)] for markers whose rationale enumerates named elements.
+
+    The sibling of `find_census_rationales` for the shape a numeral cannot express. Reports
+    rather than gates, and for a stronger reason than the count case: three of the four
+    enumerations in the corpus on 2026-09-02 were legitimate — an exhaustive list IS the
+    discriminating fact of an absence claim ("no `brew upgrade` anywhere; what it does carry
+    is …"). What makes an enumeration a liability is not its shape but whether the claim
+    beside it would survive the list changing, and no regex can read that. So the reader
+    judges, exactly as the preamble says.
+
+    ⚠️ **What this does NOT cover, stated so the gap is loud rather than assumed.** The
+    element noun must GOVERN the run (see `_governing_noun`), so an enumeration whose noun
+    trails in a separate conjunct is missed — `phase1-verification.md:251`'s
+    "carry file_path, source_url, … with no content **field** at all" is the shipped example,
+    and it is the same "exhaustive field list" the comment above names as a 2026-08-31 drift
+    cause. That is a deliberate trade: presence-in-clause also flagged the property-shaped
+    fixture the spec forbids flagging, and a report that cries wolf is one nobody opens. If a
+    second enumeration drifts in that phrasing, widen `_governing_noun` — do not drop the
+    coordinator test, which is the half doing the discriminating.
+    """
+    flagged = []
+    for _key, _version, _date, claim, owner, relpath, lineno in found:
+        hit = None
+        for half in (claim, owner):
+            for clause in _clauses(_strip_tool_calls(half)):
+                vm = re.search(_REPORT_VERB + r"\b", clause, re.IGNORECASE)
+                if not vm:
+                    continue
+                tail = clause[vm.end():]
+                run = _named_run(tail)
+                if not run:
+                    continue
+                start = vm.end() + tail.index(run)
+                if _governing_noun(clause, start, start + len(run)):
+                    hit = run
+                    break
+            if hit:
+                break
+        if hit:
+            flagged.append((relpath, lineno, hit))
     return flagged
 
 
@@ -808,6 +979,23 @@ def report_negatives(repo, current_server=None):
         print("   the count was standing in for — that is the half a later reader acts on.")
         for relpath, lineno, phrase in census:
             print("     %s:%d  — %r" % (relpath, lineno, phrase))
+        print("   ⚠️ A hit needs judgment: a count is occasionally the fact itself.")
+        print()
+    enumerated = find_enumeration_rationales(found)
+    if enumerated:
+        print("⚠️ ENUMERATION-SHAPED rationales: %d — re-ask before re-dating."
+              % len(enumerated))
+        print("   These pin a LIST OF NAMED ELEMENTS presented as what the route returned.")
+        print("   It expires exactly as a count does and for the same reason — a rename, a")
+        print("   drop or an addition falsifies it server-side — but carries no numeral, so")
+        print("   the census matcher above is structurally blind to it. On 2026-09-02 this")
+        print("   shape had drifted undetected: a rationale cited a *Mapping identifiers*")
+        print("   section the route does not return.")
+        for relpath, lineno, phrase in enumerated:
+            print("     %s:%d  — %r" % (relpath, lineno, phrase))
+        print("   ⚠️ A hit needs judgment, and MORE often than above: an exhaustive list is")
+        print("     frequently the discriminating fact of an absence claim, which is the")
+        print("     legitimate use. Ask whether the claim survives the list changing.")
         print()
     if not found:
         print("  (none found — if that is a surprise, the markers are missing, not the claims)")
