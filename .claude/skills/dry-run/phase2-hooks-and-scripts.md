@@ -102,7 +102,22 @@ Drive each and **inspect the artifact, not the exit code** (INV-129):
   and name files by tab slug.
 - `senzing_viz_server.py --no-serve --snapshot …` — without `libSz.so` it must fail
   loudly and write **no** snapshot; a blank page would satisfy the file-exists check
-  while failing INV-077.
+  while failing INV-077. ⛔ **TWO gates fail this way and they are not interchangeable —
+  read the exit code, not just "it failed and wrote nothing".**
+  - **exit 2** — the config-completeness pre-flight rejected `engine_config.json`
+    (`PIPELINE` missing `CONFIGPATH`/`RESOURCEPATH`/`SUPPORTPATH`). The SDK was never
+    touched. `config/engine_config_incomplete.json` is the fixture for this gate.
+  - **exit 1** — the pre-flight passed and the SDK could not be loaded
+    (`failed to load the Senzing library` / `libSz.so: cannot open shared object file`).
+    This is the gate this bullet is about, and `config/engine_config.json` is the fixture
+    that reaches it.
+
+  ⚠️ Reporting the SDK branch as checked after hitting the config branch is not
+  hypothetical: until 2026-09-02 the scaffold shipped `{"PIPELINE": {}}`, so **every**
+  prior phase-2 run that listed this as verified had exercised the config gate instead.
+  It went unnoticed because those runs had no `libSz.so` either, which makes the two
+  outcomes indistinguishable unless the exit code is read
+  (`specs/scaffold-engine-config-never-reaches-the-sdk-path.md`).
 - `brand_tokens.color_for_sources()` — pass sources that are **not** the Truth Set's
   names, which is every real bootcamper's case (INV-127). Assert distinct encodings,
   including more sources than palette entries (it must vary a second channel, not

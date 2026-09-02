@@ -80,12 +80,55 @@ class EveryFixturePathIsAPathThePluginUses(unittest.TestCase):
                 continue          # a row annotating a key inside another fixture
             checked += 1
             with self.subTest(path=path):
-                self.assertIn(
-                    path, self.corpus,
+                if path in self.corpus:
+                    continue
+                base, doc = self._variant_of(path)
+                self.assertTrue(
+                    base and doc,
                     "the scaffold writes %r (row %r, modes %s) and no file under "
                     "plugins/ names that path — the fixture exercises something the "
-                    "plugin never touches" % (path, display, sorted(modes)))
+                    "plugin never touches.\n"
+                    "  If it is a deliberate NEGATIVE VARIANT of a real fixture (a "
+                    "deformed copy passed to a plugin script's own flag to drive a "
+                    "specific gate), it must satisfy BOTH: its base path — this one with "
+                    "the trailing `_suffix` removed — appears under plugins/, and the "
+                    "variant filename is named in the dry-run phase docs so a maintainer "
+                    "can find out which gate it reaches.\n"
+                    "  base %r under plugins/: %s;  named in dry-run docs: %s"
+                    % (path, display, sorted(modes),
+                       self._base_path(path), bool(base), bool(doc)))
         self.assertGreater(checked, 5, "almost no rows carried a path to check")
+
+    @staticmethod
+    def _base_path(path):
+        """`config/engine_config_incomplete.json` -> `config/engine_config.json`."""
+        stem, dot, ext = path.rpartition(".")
+        if not dot or "_" not in stem.rsplit("/", 1)[-1]:
+            return path
+        return stem.rsplit("_", 1)[0] + dot + ext
+
+    def _variant_of(self, path):
+        """(base-is-real, variant-is-documented) for a path absent from plugins/.
+
+        ⚠️ Rescoped 2026-09-02, not loosened. `scaffold-engine-config-never-reaches-the-sdk-path`
+        added `config/engine_config_incomplete.json`: a deliberately deformed copy of the real
+        `config/engine_config.json`, passed to `senzing_viz_server.py --settings` to reach the
+        config-completeness pre-flight (exit 2) while the default fixture reaches the SDK gate
+        (exit 1). The plugin DOES read it -- when told to -- so the guard's premise ("a filename
+        the plugin never reads") does not hold for it.
+
+        ⛔ The two conditions together are what keep the teeth. The drift this file was written
+        for, `src/system_verification/records.jsonl`, still fails: strip its suffix and the base
+        is still absent from plugins/, so a plain typo cannot slip through by claiming to be a
+        variant. And a variant nobody documented fails too, because a fixture whose gate is
+        unwritten is the "looks like coverage" problem in a new costume.
+        """
+        base = self._base_path(path)
+        base_is_real = base != path and base in self.corpus
+        name = path.rsplit("/", 1)[-1]
+        docs = (REPO_ROOT / ".claude" / "skills" / "dry-run").glob("*.md")
+        documented = any(name in d.read_text(encoding="utf-8") for d in docs)
+        return base_is_real, documented
 
     def test_the_verification_records_fixture_uses_the_plugins_spelling(self):
         """The specific drift, named, so a revert is unambiguous rather than generic."""

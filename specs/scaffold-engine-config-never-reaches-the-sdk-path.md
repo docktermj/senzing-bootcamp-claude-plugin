@@ -101,3 +101,66 @@ has actually exercised the config-validation branch, so the `libSz.so` failure p
 - Upstream: not applicable — maintainer-tool fixture, not a server or plugin defect.
 - Related specs: none
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The `SQL.CONNECTION` could not use the `default_paths` `db_url` the spec pointed at.**
+   Proposed change 1 says to use the values `sdk_guide(topic='install', platform='linux_apt')`
+   returns in `default_paths`. Re-asked on **server 1.36.0, 2026-09-02**: that response's `db_url`
+   is `sqlite3://na:na@/tmp/sqlite/G2C.db`, and the maintainer's global `write-location-gate.py`
+   blocks system-temp writes — a fixture pointing there would fail for a reason unrelated to the
+   gate being tested. The three `PIPELINE` paths are used verbatim as returned
+   (`/etc/opt/senzing`, `/opt/senzing/er/resources`, `/opt/senzing/data`); the datastore is
+   derived from the project root instead (`<root>/database/G2C.db`, using a directory `DIRS`
+   already creates). Pinned by `test_the_sql_connection_points_inside_the_scratch_project`, which
+   asserts against the scaffold **source** so the tempting verbatim copy is what fails.
+
+2. **The literal paths are the `linux_apt` defaults, and the scope is stated rather than
+   engineered around.** The cross-platform invariant is satisfied in the sense that matters: a
+   *complete* `PIPELINE` clears the completeness pre-flight on every platform, which is the whole
+   job of the fixture, so the SDK gate is the one reached everywhere. Only criterion 2's
+   "SDK present → exit 0" case is Linux-specific. Deriving the paths per-platform was considered
+   and rejected: the three platforms do not share a shape (Linux puts `CONFIGPATH` at
+   `/etc/opt/senzing`, outside `SENZING_ROOT`, while macOS and Windows put it under the root and
+   place `SUPPORTPATH` at a *sibling* `data` directory), so the derivation would be three
+   hardcoded shapes wearing a function. The per-platform values are recorded in the comment for a
+   maintainer running phase 2 elsewhere, and `test_the_linux_only_scope_is_stated` pins that.
+
+3. **An existing guard had to be rescoped, and the spec did not anticipate it.**
+   `tests/test_dry_run_scaffold_paths_exist.py` asserts every `FIXTURE_MAP` path appears somewhere
+   under `plugins/` — a fixture at a filename the plugin never reads "looks like coverage". Adding
+   `config/engine_config_incomplete.json` failed it. The guard's premise does not hold for this
+   file: the plugin **does** read it, when passed to `senzing_viz_server.py --settings`, which is
+   the flag the pre-flight gate is reached through. Rescoped, per the dry-run rule to invert or
+   rescope rather than delete: a path absent from `plugins/` is accepted only if **both** its base
+   path (the name with the trailing `_suffix` removed) is under `plugins/` **and** the variant
+   filename is named in the dry-run phase docs. ⛔ Negative-controlled on both conditions —
+   `src/system_verification/records.jsonl`, the drift that guard was written for, still fails
+   (no real base), and an *undocumented* variant of a real path fails too. A one-off allowlist was
+   rejected as the listed-guard antipattern (INV-246).
+
+4. **All three gates were verified LIVE, which is what this spec is really about.** Criterion 2
+   needed "a machine where the SDK is installed and a repository is initialized", so one was
+   created at the fixture's own datastore path (schema from
+   `/opt/senzing/er/resources/schema/szcore-schema-sqlite-create.sql`, then
+   `create_config_from_template()` + `set_default_config()`, config id 1973165579). Results on
+   Senzing SDK **4.4.0, build 4.4.0.26242**: incomplete fixture → **exit 2**, pre-flight message,
+   no snapshot; complete fixture with `PYTHONPATH`/`LD_LIBRARY_PATH` unset → **exit 1**,
+   `libSz.so: cannot open shared object file`, no snapshot; complete fixture with the SDK and the
+   initialized repository → **exit 0**, a 342 KB snapshot written. ⚠️ **This is the first time the
+   SDK-missing branch has actually been exercised** — the point of the spec.
+
+5. **I read `$?` after a pipe again and briefly recorded exit 0 for the exit-2 case.** The same
+   mistake this session already produced once, and it is why the criterion-3 measurement was
+   redone with output redirected to a file instead of piped to `tail`. Recorded because the
+   methodology's value depends on the measurements being trustworthy, and this one was wrong on
+   first reading.
+
+## Invariants introduced
+
+None. The rule this establishes — a fixture must reach the gate its banner claims — is the
+existing property of `tests/test_dry_run_scaffold_paths_exist.py` and
+`tests/test_scaffold_banner_matches_build.py`, now extended to fixture *content* rather than only
+its path and its banner row. Both guards are development-environment rules under `.claude/`, which
+`coverage_reports.py shipped` exempts by design, and no shipped hard rule was added (checked by
+set difference per INV-282: 11 added lines, all from earlier implementations, 0 uncited).

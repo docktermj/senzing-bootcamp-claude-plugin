@@ -285,9 +285,30 @@ ALL_MODES = frozenset(MODES)
 #: None for a row annotating a key *inside* another fixture. Keeping the real path here —
 #: rather than only the display string — is what lets a test compare the banner against
 #: what `build()` actually writes, in every mode.
+#: PIPELINE paths for the complete fixture, from `sdk_guide(topic='install',
+#: platform='linux_apt')` -> `default_paths` on MCP server **1.36.0, 2026-09-02**
+#: (config_path `/etc/opt/senzing`, resource_path `/opt/senzing/er/resources`,
+#: support_path `/opt/senzing/data`). Re-asked at implementation time, not copied from the spec.
+#: ⚠️ These are the **linux_apt** defaults, and deliberately literal. The fixture's job is to
+#: satisfy the completeness pre-flight so the SDK gate is the one reached, and complete paths do
+#: that on every platform. Only the "SDK present -> exit 0" case is Linux-specific; on macOS the
+#: same call returns `$(brew --prefix)/opt/senzing/{er/etc,er/resources}` with SUPPORTPATH at the
+#: sibling `opt/senzing/data`, and on Windows `%SENZING_DIR%\\{etc,resources}` with SUPPORTPATH at
+#: `%SENZING_DIR%\\..\\data` -- a maintainer running phase 2 there should expect the SDK gate too,
+#: reached for the same reason.
+PIPELINE_DEFAULTS = (
+    ("CONFIGPATH", "/etc/opt/senzing"),
+    ("RESOURCEPATH", "/opt/senzing/er/resources"),
+    ("SUPPORTPATH", "/opt/senzing/data"),
+)
+
 FIXTURE_MAP = [
     ("config/engine_config.json", "config/engine_config.json", ALL_MODES,
-     "minimal settings so scripts reach their real failure, not a missing-file one"),
+     "COMPLETE PIPELINE -> passes the config pre-flight and reaches the SDK gate "
+     "(exit 1, libSz.so) or initializes where the SDK is present"),
+    ("config/engine_config_incomplete.json", "config/engine_config_incomplete.json", ALL_MODES,
+     "empty PIPELINE -> stops AT the config pre-flight (exit 2); the other gate, kept "
+     "so both stay covered"),
     ("config/bootcamp_progress.json", "config/bootcamp_progress.json", frozenset({"mid"}),
      "makes every hook consider the bootcamp active; mid-module so resume paths run"),
     ("  └ docker_containers", None, frozenset({"mid"}),
@@ -359,7 +380,26 @@ def build(root: Path, fresh: bool, seeded: bool = False) -> None:
     for d in DIRS:
         (root / d).mkdir(parents=True, exist_ok=True)
 
+    # ⛔ The PIPELINE must be COMPLETE. `senzing_viz_server.py` runs a config-completeness
+    # pre-flight (`REQUIRED_PIPELINE_KEYS` = CONFIGPATH, RESOURCEPATH, SUPPORTPATH) BEFORE it
+    # touches the SDK, so `{"PIPELINE": {}}` exits 2 having never reached the SDK — while the
+    # banner claimed the fixture existed to reach "their real failure". Both gates fail loudly
+    # and write nothing, which is why no prior phase-2 run separated them: on a machine with no
+    # `libSz.so` they are indistinguishable without reading the exit code. The 2026-09-02 run
+    # was the first with a working SDK, and the SDK-missing branch turned out to have been
+    # unverified by every dry run that listed it as checked.
     (root / "config/engine_config.json").write_text(
+        json.dumps(
+            {"PIPELINE": dict(PIPELINE_DEFAULTS),
+             "SQL": {"CONNECTION": "sqlite3://na:na@%s" % (root / "database" / "G2C.db")}},
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    # The pre-flight gate is good behavior and stays covered by its own named fixture, rather
+    # than being deleted along with the defect it was masking.
+    (root / "config/engine_config_incomplete.json").write_text(
         json.dumps({"PIPELINE": {}}, indent=2) + "\n", encoding="utf-8"
     )
 
