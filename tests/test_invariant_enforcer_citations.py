@@ -228,6 +228,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # that test now cites INV-285 back. One invariant, one test, one pair. Re-derived by
 # running the extractor -- this guard fired on the omission before the back-citation was
 # added, which is the pin doing its job at the first registration after it was pinned.
+#
+# ⚠️ 2026-09-02: INV-287 was registered naming NO enforcer and was written up here as
+# adding no pair. That comment then hid it: `coverage_reports.py invariants` counts any
+# test mentioning an id as coverage, so the one invariant with no guard was the one its
+# gap report did not list. INV-287 is now enforced by
+# `tests/test_checklist_items_ship_their_exceptions.py` and DOES add a pair.
 # 102 on 2026-09-01: INV-286 (a question whose options are complements is asked as a
 # multi-select and every chosen option recorded in full) names
 # `test_question_options_render_beneath.py`, which now cites INV-286 back. One invariant,
@@ -258,7 +264,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # `test_license_limit_reading_is_complete.py`, which now cites it back. Re-derived. This
 # closes the 2026-09-02 review: nine deferrals decided, EXPECTED_PAIRS 100 -> 110 across
 # it, every step re-derived rather than incremented.
-EXPECTED_PAIRS = 110
+# 111 on 2026-09-02: INV-287 gained an enforcer after all —
+# `test_checklist_items_ship_their_exceptions.py` — closing the one invariant this
+# review registered unguarded. Re-derived by running the extractor.
+EXPECTED_PAIRS = 111
 
 
 def pairs():
