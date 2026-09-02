@@ -510,7 +510,8 @@ Based on the assessment — evidence first, wording second:
 
 ⛔ **The Poor band has THREE outcomes, and only one of them reaches Module 5 (INV-264).** This mirrors the
 match-key audit's shape one module earlier (`../module-06-data-processing/phaseD-validation.md` →
-"Report a high-share cross-source suppressor as a FINDING, never a pass/fail"), and for the same
+"Report a high-share suppressor as a FINDING, never a pass/fail", whose buckets decide **which**
+question the finding earns), and for the same
 reason: the possible-match rate is driven mostly by things a remap cannot change — how populated each
 field is in the source, how common the names are, and how large the dataset is. On the
 generated-scenario path the plugin **creates** those characteristics itself: INV-239 requires a source
@@ -900,7 +901,10 @@ Source every figure through generated SDK code and `reporting_guide` — never d
    (INV-242) — and say explicitly which case applies: **the data had little overlap
    to find**, or **the pipeline underperformed**. Without it, a correct result on a
    low-overlap dataset reads as a weak one. If the match-key audit ran in Data processing, its
-   suppressor findings belong here.
+   suppressor findings belong here — **carrying the bucket they came from**, because a per-record
+   suppressor (records merged despite a conflict) and a relationship suppressor (entities the engine
+   declined to merge because of one) read as the same number and mean opposite things. A keepsake
+   that records the share without the bucket cannot be acted on later.
 
 ⛔ **Write it in Latin-script characters, and build diagrams from ASCII.** The PDF's built-in fonts
 cover Latin-1 only, so any character outside it — Cyrillic, Greek, CJK, Arabic — is **dropped from

@@ -325,11 +325,46 @@ which is exactly the gap the UAT percentages below leave open.
    print("carries RELATED_ENTITIES:", "RELATED_ENTITIES" in first)
    ```
 
-2. **Tabulate the suppressors.** In a match key, `+` means the feature **contributed** to the match
-   and `-` means it **detracted** (MCP-confirmed via `response_schemas` on
-   `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`). Count the features appearing with a leading `-`, ranked
-   by frequency, and **separate single-source from cross-source** comparisons — the cross-source
-   ones are where a mapping disagreement between two sources shows up.
+2. **Tabulate the suppressors — into THREE buckets, each with its own denominator.** In a match key,
+   `+` means the feature **contributed** to the match and `-` means it **detracted** (MCP-confirmed
+   via `response_schemas` on `RESOLVED_ENTITY.RECORDS[].MATCH_KEY`, whose description reads
+   *"Features that matched: + means contributed, - means detracted"* — server **1.36.0**,
+   2026-09-02). Count the features appearing with a leading `-`, ranked by frequency, and split them
+   **both** ways step 1 already reads them:
+
+   | Bucket | Read from | What a `-FEATURE` there means |
+   |---|---|---|
+   | single-source per-record | `RESOLVED_ENTITY.RECORDS[]`, entity's own sources all equal | records in one source merged **despite** the feature disagreeing |
+   | cross-source per-record | `RESOLVED_ENTITY.RECORDS[]`, entity spans 2+ sources | records from different sources merged **despite** it disagreeing — the mapping signal |
+   | relationship | `RELATED_ENTITIES[]` | Senzing **declined to merge** these entities **because** it disagreed |
+
+   ⛔ **(INV-264) The per-record and relationship buckets mean OPPOSITE things, so pooling them
+   yields a number that is neither** — and a band or share that means nothing MUST NOT route
+   anyone into remediation. A per-record suppressor is an over-merge signal — the records were
+   joined anyway. A relationship suppressor is the engine exercising restraint — it is what
+   *should* happen when a feature genuinely conflicts, and on ambiguous data it is the correct
+   outcome rather than a defect. The server draws the same line: `RELATED_ENTITIES[]` is documented
+   as *"Entities related to but **not resolved into** this one"*, and its `MATCH_KEY` carries the
+   vaguer description *"Features that matched/did not match"* rather than the per-record path's
+   contributed/detracted wording (both from the same `response_schemas` lookup, server **1.36.0**,
+   2026-09-02).
+
+   **Report each bucket against its own total** — a relationship share against relationship
+   comparisons, a per-record share against per-record comparisons. Mixing the denominators is how a
+   57.4%-of-relationships figure presents as 19.5% of everything (observed 2026-09-02 on SDK 4.4.0,
+   build 4.4.0.26242: 1,758 `-DOB` suppressors, **zero** of them per-record).
+
+   ⚠️ **Deduplicate the relationship bucket** — every relationship appears in both entities'
+   `RELATED_ENTITIES`, so sort each `(min_id, max_id)` pair into a set first. Step 1 states this for
+   the read; it applies again to the count.
+
+   ⚠️ **Two structured fields can replace string-matching the key, where the reader can see them.**
+   `RELATED_ENTITIES[].IS_AMBIGUOUS` is documented as *"1 if ambiguous relationship, 0 otherwise"*,
+   and `RELATED_ENTITIES[].MATCH_KEY_DETAILS` carries a `DENIALS[]` array beside its
+   `CONFIRMATIONS[]` — the structured form of detracted-versus-contributed. `MATCH_KEY_DETAILS`
+   `requires_flags: [SZ_INCLUDE_MATCH_KEY_DETAILS]`, which itself `depends_on` a relations flag, so
+   treat the breakdown as conditional and fall back to parsing the key when it is absent (same
+   lookup, server **1.36.0**, 2026-09-02).
 3. ⛔ **An empty cross-source suppressor list is a plumbing failure until proven otherwise.**
    "No suppressors found" and "this reader cannot answer the question" render identically — a
    clean result — so never report the first without ruling out the second. Before making any
@@ -348,12 +383,25 @@ which is exactly the gap the UAT percentages below leave open.
    reason. Never render it as "no suppressors were found" (INV-115: a blank parsed field is a
    probable wrong reader before it is real absent data).
 
-4. **Report a high-share cross-source suppressor as a FINDING, never a pass/fail (INV-264).** If one feature
-   is detracting on a large share of cross-source comparisons, say so plainly and ask the
-   bootcamper to check whether the two sources' fields for that feature genuinely measure the same
-   thing. ⛔ This must not become an automatic gate: a suppressor is often entirely legitimate (two
-   records really do disagree), and a hard failure here would produce false alarms and train
+4. **Report a high-share suppressor as a FINDING, never a pass/fail (INV-264) — and ask the question
+   that fits the bucket.** Name the feature, its share, and **which bucket** it came from; the two
+   buckets need different questions because they describe opposite behavior:
+
+   - **Cross-source per-record** — records merged despite the feature disagreeing. Ask the
+     bootcamper to check **whether the two sources' fields for that feature genuinely measure the
+     same thing**. (This is the original wording and it is correct for this bucket.)
+   - **Relationship** — Senzing declined to merge because the feature disagreed. Do **not** ask the
+     measure-the-same-thing question here; nothing is mis-mapped by the engine refusing a conflict.
+     Ask instead **which feature raised these pairs as candidates, and whether it is distinguishing
+     enough to be doing that work** — a high relationship-suppressor share usually means some
+     *other* feature is being treated as more identifying than it is (an email two people share, a
+     phone on a household, a role account).
+
+   ⛔ **(INV-264)** This must not become an automatic gate: a suppressor is often entirely
+   legitimate (two records really do disagree), and a hard failure here would produce false alarms and train
    bootcampers to dismiss the signal — which would cost more than the check gains.
+   ⛔ **(INV-264) A relationship-bucket finding is not evidence of poor match accuracy** — see the
+   gate below.
 5. **Carry the outcome into the decision gate below**, alongside the UAT numbers. The audit has
    **three** outcomes, not two — finding, no finding, and could-not-measure — and the gate must be
    told which one it got.
@@ -380,9 +428,24 @@ them** — the percentages alone cannot see a suppressor problem, so a bootcampe
 iterating and proceeding needs both. A high-share cross-source suppressor is the strongest reason
 to choose "iterate now" even when the numbers look acceptable.
 
+⛔ **(INV-264) Route match accuracy on the PER-RECORD bucket only. A relationship-bucket share,
+however
+large, MUST NOT by itself push the gate below the ≥90% branch.** This is INV-264 reaching the
+**gate** rather than the report: the audit already reports a suppressor as a finding and never a
+pass/fail, and that was not enough — a pooled share still routed the Bootcamper into remediation
+one step later, which is the outcome that invariant forbids. The two buckets describe opposite
+behavior (audit step 2), so a pooled figure routes on a number that means nothing: a high
+relationship share means the engine *declined* to merge on a conflict, which is the outcome the
+Bootcamper wants, and treating it as poor accuracy sends them back to re-map a mapping that was not
+the problem. Observed 2026-09-02: pooled at 19.5% the gate took the `<80%` branch and recommended
+returning to Data Quality, Mapping, and Transformation, while the per-record bucket was **zero** and
+a ten-entity spot-check of merged entities was **10 of 10 clean**. Report the relationship finding
+in full — it is real and worth acting on — but report it *alongside* strong numbers, not instead of
+them.
+
 State which of the audit's three outcomes applies; do **not** collapse the third into the second:
 
-- **A finding** — name the suppressing feature and its share.
+- **A finding** — name the suppressing feature, its share, and **which bucket** it came from.
 - **No finding** — the audit ran and found nothing of concern.
 - **Could not measure** — the relationship half of the audit did not execute (step 3). Say so
   plainly rather than letting silence imply a clean result: a gate decided on an unmeasured number
@@ -392,7 +455,9 @@ State which of the audit's three outcomes applies; do **not** collapse the third
 - **UAT ≥90% and match accuracy ≥90%:** state "Results look strong." and proceed to the module
   transition question. **If the audit produced a finding, say so in the same breath** — strong
   numbers plus a suppressing feature is exactly the case this audit exists to surface, and the
-  bootcamper should hear it before moving on.
+  bootcamper should hear it before moving on. ⚠️ **A zero per-record bucket with a large
+  relationship bucket lands here**, and that is the intended routing, not a leak: the numbers are
+  strong *and* the finding stands.
 - **UAT <80%:** state "Results need improvement — I recommend going back to Data Quality, Mapping, and Transformation
   to refine the mapping." and proceed to the transition question.
 - **UAT 80–89%:** results are mixed, so ask the bootcamper to decide with a single pinned question
