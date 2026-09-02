@@ -94,3 +94,59 @@ about names. `citations.py verify` cannot see it — the ID resolves; only readi
 - MCP re-check: **n/a (no Senzing fact).** Purely internal: the subject is which invariant governs a rule in the plugin's own visualization contract. No Senzing claim is asserted or re-asserted here (INV-080).
 - Upstream: not applicable.
 - Related specs: the three carrying the stock phrase, named above
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **The sweep found a FIFTH site, and it was correct — the spec's list of four was not the set.**
+   `plugins/senzing-bootcamp/docs/model-selection.md:92` cites INV-124 for *"tab ids and
+   deep-linking"*, which is precisely its subject. Left untouched. Proposed change 2 anticipated
+   this ("check each remaining INV-124 citation rather than assuming the four above are the whole
+   set"), and scanning rather than trusting the list is what found it (INV-246).
+
+2. ⛔ **Removing the four citations left INV-124 stated nowhere in the contract, and an existing
+   guard caught it.** `tests/test_any_language_contract_complete.py::test_every_candidate_is_stated_or_reasonably_exempt`
+   failed: INV-124 binds the server the Bootcamper builds, so it must be stated in the
+   any-language build guidance or recorded as apparatus they do not build — and it was neither
+   once the four wrong citations were gone. The contract **did** state the requirement, in the tab
+   table at `:688-704`, but cited INV-155 and INV-147 there and not INV-124. Fixed by citing
+   INV-124 at that table, which is where it governs and where the ids are normative. ⚠️ **This is
+   the finding one level down:** the mis-citation was masking a *missing* citation, so correcting
+   it exposed a rule that was registered, guarded, and named at no step (INV-183 / the INV-212
+   case). The spec did not anticipate it.
+
+3. **Two existing guards pinned the wrong citation and were rescoped, not deleted.**
+   `test_graph_label_distinctness::test_it_tells_a_non_python_implementer_the_rule_is_theirs`
+   asserted the literal `INV-090/INV-124`. ⚠️ Corroboration that the correction is right came from
+   the repo itself: the sibling guard in `test_any_language_contract_complete.py` already tells a
+   failing reader to *"state it in the contract **(INV-002/INV-090)**"* — the pair this spec
+   argues for, written before this spec existed.
+
+4. ⛔ **My own new INV-124 citation tripped my own new guard, and the guard was wrong, not the
+   citation.** The tab-table citation says the hooks *"bind the server in whichever language it is
+   generated"* — an any-language claim beside INV-124, which is exactly the shape the scan
+   flags. But there it is **correct**: that is INV-124's own wording about its own subject. The
+   scan now exempts a window naming the tab-hook subject, which is the same discriminator the
+   surviving-citations assertion applies from the other side, so the two agree instead of
+   fighting. **The defect is a citation off its subject, not a citation near a word.**
+
+5. **The spec-side scan in criterion 4 was written, run, and abandoned — deliberately.** It
+   flagged **19** sites and every one was legitimate: `INVARIANTS.md` (INV-124's own text contains
+   "in whichever language it is generated"), `IMPLEMENTED.md` ledger entries, this spec (which must
+   state the defect to describe it), and the three dated correction notes. Four legitimate shapes
+   indistinguishable from the defect by proximity; a scan needing to exempt each measures nothing,
+   and the exemption list would be the hardcoded-site antipattern in a new hat. The reasoning is
+   recorded as a comment where the class would have gone, so the next author does not re-derive
+   it. The spec bodies are handled where they should be: corrected in place, each with a dated
+   note.
+
+6. **Two of my own guard's thresholds were wrong on the first run.** The sanity check asserted the
+   any-language claim appears more than twice in shipped text; it appears exactly twice, so a
+   correct tree failed. A threshold guessed rather than measured reports the wrong thing on day
+   one — it is now `>= 2` with the measurement in the docstring.
+
+## Invariants introduced
+
+None. This corrects citations to invariants that already exist — **INV-002** and **INV-090** carry
+the any-language claim, and **INV-124** keeps its own subject and now has a citation at the table
+that states it. No new rule is established; what was missing was accuracy about which existing
+rule governs, in both directions.

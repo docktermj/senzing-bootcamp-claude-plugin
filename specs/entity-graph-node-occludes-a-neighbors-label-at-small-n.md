@@ -50,7 +50,7 @@ What to check in `plugins/senzing-bootcamp/scripts/senzing_viz_server.py`:
 3. The force simulation's collision radius — whether it accounts for the label's rendered width
    at all, or only the circle.
 
-⛔ Per INV-090/INV-104/INV-124 the visualization contract binds **every** language
+⛔ Per INV-002/INV-090/INV-104 the visualization contract binds **every** language
 implementation, so the fix belongs in `visualization-api-reference.md` as well as in the Python
 reference, or a bootcamper building the server in Java reproduces it.
 
@@ -159,8 +159,8 @@ reproduce here. The structural defect is nonetheless confirmed, and the margin w
      preserving the contract exactly failed it. Rescoped to the property, accepting either shape.
    - `specs/…` was cited in `visualization-api-reference.md`; `specs/` is never propagated to the
      public repo, so a shipped file may not point there. Removed.
-   - **Four British spellings** (INV-253) in the new files — `neighbour`, `NEIGHBOUR`,
-     `rasterisation`, `initialised`, `labelled`. The same lapse as earlier in this session.
+   - **Four British spellings** (INV-253) in the new files — `neighbor`, `NEIGHBOR`,
+     `rasterization`, `initialized`, `labeled`. The same lapse as earlier in this session.
    ⚠️ Also: the `⛔ **The natural structure is the defective one:**` rule needed its citation on
    **its own line**. The invariant-citation check the skill prescribes reported **0 uncited**
    while `tests/test_new_hard_rules_are_cited_or_deferred` correctly flagged it — the helper
@@ -174,3 +174,7 @@ implementation — that is precisely what the spec's own ⛔ asks for. Three nor
 added there: labels painted after every node (with the natural-but-defective structure named),
 collision sized from the label's extent and applied only while labels show, and whatever hides
 labels must follow them into their new layer.
+
+## Citation correction (2026-09-02)
+
+This spec cited **INV-124** as part of the reason the visualization contract binds every language. It does not: INV-124 governs the **tab hooks the recap capture depends on** (`tab-<id>`, `navbtn-<id>`, `activate()`, deep-linking), and its "in whichever language it is generated" clause scopes *its own* subject. The rules that carry the any-language claim are **INV-002** (the SBCP is language-agnostic) and **INV-090** (the server is built in the chosen language, modeled on the `visualization-api-reference.md` contract). Corrected in place because implementing this spec copied the wrong trio into shipped text, where a reader following the citation reached a rule about tab ids (`specs/inv-124-is-cited-as-the-any-language-rule-it-is-not.md`).

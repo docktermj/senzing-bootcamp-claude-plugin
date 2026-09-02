@@ -206,8 +206,20 @@ class TheContractStatesItGenerally(unittest.TestCase):
         self.assertRegex(text, r"(?i)Compare the \*\*fitted\*\* strings, not the source values")
 
     def test_it_tells_a_non_python_implementer_the_rule_is_theirs(self):
+        """⚠️ Rescoped 2026-09-02: this pinned `INV-090/INV-124`, and INV-124 is the wrong rule.
+
+        INV-124 governs the recap capture's tab hooks — `tab-<id>`, `navbtn-<id>`, `activate()`,
+        deep-linking. It does not say a rendering rule binds other languages; its "in whichever
+        language it is generated" clause scopes its own subject. The rules that carry the
+        any-language claim are INV-002 (language-agnostic) and INV-090 (the server is built in
+        the chosen language, modeled on this contract) — which is the pair this file's own
+        sibling guard already names in its failure message
+        (`inv-124-is-cited-as-the-any-language-rule-it-is-not`). Asserting the property: the
+        rule is attributed to an invariant that actually governs it, and the reader is told why
+        it is stated in the contract rather than only in the Python reference.
+        """
         text = re.sub(r"\s+", " ", contract())
-        self.assertRegex(text, r"INV-090/INV-124")
+        self.assertRegex(text, r"INV-002/INV-090|INV-090/INV-002")
         self.assertRegex(text, r"(?i)a rule that lives only in the Python reference")
 
     def test_the_lead_no_longer_says_there_are_two_defaults(self):

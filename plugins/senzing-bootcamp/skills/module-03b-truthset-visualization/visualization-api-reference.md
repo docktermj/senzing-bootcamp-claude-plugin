@@ -209,7 +209,7 @@ error — so a `NAME_FULL`-only search silently fails for every organization in 
 half-organization dataset that is half the population unsearchable: `"ABSOLUTE DENTAL"` returned 0
 results while a person name returned a hit immediately. Build the attribute document per attribute
 and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both and merge by
-`ENTITY_ID`). This binds a server in **any** language (INV-090/INV-124), not only the bundled Python
+`ENTITY_ID`). This binds a server in **any** language (INV-002/INV-090), not only the bundled Python
 reference — the defect propagated into a generated query program precisely because it lived in the
 reference implementation and in no written rule.
 
@@ -644,7 +644,7 @@ identically; company names sharing a long prefix are routine rather than exotic,
 real dataset can be organizations (INV-164). Compare the **fitted** strings, not the source values,
 and disambiguate any pair that collides while its values differ — the Python reference appends a
 positional suffix. Truncation must never remove the leading characters. Implement this in whatever
-language the server is written in (INV-090/INV-124): it is stated here because a rule that lives only
+language the server is written in (INV-002/INV-090): it is stated here because a rule that lives only
 in the Python reference reaches no generated server, which is exactly how the `NAME_FULL` search
 defect shipped (INV-164).
 
@@ -691,6 +691,13 @@ INV-147 binds the recap's embedding to it) — by `module-completion.md`'s captu
 graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
 list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
 app; images in capture or append order cannot be lined up against the interface.
+
+⛔ **(INV-124) The `Section id` and `Nav button id` columns are the capture's hooks, and they bind
+the server in whichever language it is generated.** The recap capture activates a tab by finding
+`tab-<id>` and `navbtn-<id>` and calling a page-scope `activate(<id>)`, and deep-links with
+`?tab=<id>` / `?q=<text>` — so a generated server that renders the right tabs under different ids
+produces a recap with no screenshots. This is the one place these ids are normative; every other
+file cites this table.
 
 | Tab | Id | Section id | Nav button id | Screenshot slug |
 |---|---|---|---|---|
@@ -899,9 +906,9 @@ Applies to **Entity Graph** in both of its modes.
   are, checked on the **fitted** strings). A hover-only tooltip does
   **not** satisfy this: the complaint it addresses is being unable to tell which records matched
   without hovering every node in turn.
-- **Node labels are painted AFTER every node (required — INV-090/INV-104/INV-124).** Emit all node
+- **Node labels are painted AFTER every node (required — INV-002/INV-090/INV-104).** Emit all node
   labels in their own layer, drawn after the whole node layer, so no node marker can ever paint over
-  another node's text. ⛔ **(INV-090/INV-104/INV-124) The natural structure is the defective one:** binding one group per
+  another node's text. ⛔ **(INV-002/INV-090/INV-104) The natural structure is the defective one:** binding one group per
   datum and appending marker-then-text inside it emits marker,text,marker,text — so a later node's
   marker covers an earlier node's label, and every string is still present in the DOM while glyphs
   are missing from the image. Observed on the **smallest possible graph, 2 entities**: an 18-character
