@@ -30,13 +30,28 @@ REPO = Path(__file__).resolve().parent.parent
 PLUGIN = REPO / "plugins" / "senzing-bootcamp"
 LEDGER = REPO / "specs" / "IMPLEMENTED.md"
 
-# `⛔ **<quote>** — in `<path>`` -- the shape every deferral rule bullet uses.
-RULE = re.compile(r"⛔ \*\*(.+?)\*\*\s*—?\s*in `([^`]+)`")
+# `⛔ **<quote>** ... — in `<path>`` -- the shape every deferral rule bullet uses.
+#
+# ⚠️ The `.*?` between the quote and `— in` is load-bearing. Without it this pattern
+# required the path to follow the closing `**` immediately, so it silently skipped every
+# bullet that explains itself before naming its file -- 3 of 17, including the one for
+# INV-285, which went unchecked through its own registration. A guard that skips what it
+# cannot parse reports a clean run over the subset it happened to match.
+RULE = re.compile(r"⛔ \*\*(.+?)\*\*.*?—\s*in `([^`]+)`")
+
+#: A rule gains `(INV-NNN)` at its line when the deferral is approved, so the shipped text
+#: legitimately differs from the quote by exactly that. Normalize it off BOTH sides rather
+#: than re-editing every quote at mint time -- ten deferrals are still pending.
+CITATION = re.compile(r"\(INV-\d{3}\)\s*")
 
 
 def flat(s):
-    """Collapse whitespace: the source wraps these rules across lines, the ledger does not."""
-    return re.sub(r"\s+", " ", s).strip()
+    """Collapse whitespace and drop `(INV-NNN)` citations, so a minted rule still matches.
+
+    The source wraps these rules across lines and the ledger does not, and an approved rule
+    carries a citation the deferral's quote predates. Neither difference is a misquote.
+    """
+    return CITATION.sub("", re.sub(r"\s+", " ", s)).strip()
 
 
 def resolve(loc):
@@ -79,8 +94,20 @@ class DeferralQuotesAreVerbatim(unittest.TestCase):
 
     def test_the_scan_finds_the_quotes(self):
         """A guard that silently matches nothing certifies nothing."""
+        found = list(quoted_rules())
+        # Every bullet that names a file must be PARSED, not just some of them -- the
+        # skip-what-you-cannot-parse gap this guard shipped with on 2026-09-01.
+        naming_a_file = [
+            l for l in LEDGER.read_text(encoding="utf-8").splitlines()
+            if l.lstrip().startswith("- ") and "⛔ **" in l and "— in `" in l
+        ]
+        self.assertEqual(
+            len(naming_a_file), len(found),
+            f"{len(naming_a_file) - len(found)} rule bullet(s) name a file but were not "
+            "parsed, so their quotes are unchecked while this guard reports a clean run.",
+        )
         self.assertGreaterEqual(
-            len(list(quoted_rules())), 10,
+            len(found), 10,
             "the rule-bullet pattern matched almost nothing — the ledger's deferral shape "
             "has changed and this guard is no longer reading it.",
         )

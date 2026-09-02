@@ -223,7 +223,12 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # (`test_license_limit_is_written_only_from_a_measurement.py` and
 # `test_new_hard_rules_are_cited_or_deferred.py`), because it governs how both derive their
 # matchers. Re-derived by running the extractor, not relaxed.
-EXPECTED_PAIRS = 100
+# 101 on 2026-09-01: INV-285 (a provenance label covering several independently-moving
+# facts is stated per fact) names `test_build_version_provenance_is_per_platform.py`, and
+# that test now cites INV-285 back. One invariant, one test, one pair. Re-derived by
+# running the extractor -- this guard fired on the omission before the back-citation was
+# added, which is the pin doing its job at the first registration after it was pinned.
+EXPECTED_PAIRS = 101
 
 
 def pairs():

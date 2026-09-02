@@ -103,7 +103,7 @@ check, or `SzProduct.get_version()`, which returns `VERSION`, `BUILD_DATE`, `BUI
 `NATIVE_API_VERSION` (`search_docs`, server 1.32.9, 2026-08-13). Failing that, build metadata sits
 in `szBuildVersion.json` — see "Comparing the two versions" in Step 1b.
 
-⛔ **Its provenance differs by platform, so it is stated per platform.** One caveat spanning all
+⛔ **(INV-285) Its provenance differs by platform, so it is stated per platform.** One caveat spanning all
 three is what let the Windows half go stale while reading as reviewed.
 
 - **Windows — MCP-sourced.** Under the **sibling** `data` directory, not under `%SENZING_DIR%`:

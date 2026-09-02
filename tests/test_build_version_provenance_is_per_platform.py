@@ -29,6 +29,13 @@ Verified 2026-09-01, server 1.35.3, all three routes asked:
     linux_apt  -> names it nowhere; observed on-box at 4.4.0.26242  (observation)
     macos_arm  -> names it nowhere; support data listed without it  (unknown)
 
+Enforces **INV-285** — a provenance label covering several independently-moving facts is
+stated per fact, each with its own route and date.
+
+⚠️ What this asserts is that the per-platform attribution **ships**, not that a live turn
+obeys it. An ``Enforced by`` clause naming this file is a claim about the text, and the
+guide's behavior at that step is `dry-run` phase 3's to observe.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 
