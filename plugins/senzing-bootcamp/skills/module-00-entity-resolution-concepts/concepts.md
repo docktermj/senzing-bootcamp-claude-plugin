@@ -42,7 +42,7 @@ kept only because it returns the material it is for — **MCP server 1.35.3, doc
   server's own page. Replaced; the query now returns the *"How Does Entity Resolution Work?"*
   section at **rank 1** (108.7), which is the numbered pipeline itself.
 
-⛔ **Both were found by running them, and neither was findable by reading them** — they are
+⛔ **(INV-291) Both were found by running them, and neither was findable by reading them** — they are
 well-formed, on-topic and use the right technical vocabulary. So if you change an entry here, **run
 it first**, and if the index date above has moved, re-run all six rather than trusting this note.
 The false-positives entry is the standing example of a *good* result that still needs reading: its

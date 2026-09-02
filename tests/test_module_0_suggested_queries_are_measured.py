@@ -22,6 +22,14 @@ have not come back and that the list still claims a measurement with a date atta
 the six against the server is `/dry-run` phase 1's job, and the dated note is what tells that
 run whether the claim is stale.
 
+Enforces **INV-291** — a retrieval query whose result a step depends on is measured against
+the live index before it ships, and its list records the server version and docs index date.
+
+⚠️ This asserts the MEASUREMENT NOTE ships, not that the queries still return what it says.
+The suite is offline (INV-108), so a query that rots after the docs index moves is invisible
+here — that re-check belongs to `dry-run` phase 1, which is why the recorded index date is
+part of the rule rather than a nicety.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

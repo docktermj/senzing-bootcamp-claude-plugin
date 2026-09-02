@@ -244,7 +244,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # the cause of their disagreement) names
 # `test_version_precedence_handles_an_unmanaged_install.py`, which now cites it back.
 # Re-derived by running the extractor.
-EXPECTED_PAIRS = 105
+# 106 on 2026-09-02: INV-291 (a retrieval query a step depends on is measured before it
+# ships) names `test_module_0_suggested_queries_are_measured.py`, which now cites it back.
+# Re-derived by running the extractor.
+EXPECTED_PAIRS = 106
 
 
 def pairs():
