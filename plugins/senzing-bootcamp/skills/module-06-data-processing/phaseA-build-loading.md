@@ -353,17 +353,33 @@ Truth Set visualization module already run.
 
    <!-- MCP-NEGATIVE: sdk_guide(topic='configure', language='python', data_sources=['ECOMMERCE_ORDERS','POS_LOYALTY','EMAIL_MARKETING']) — none of the three supplied codes appears anywhere in the response; the returned snippet still carries the hardcoded sample tuple — owner: sdk_guide(topic='configure', data_sources=[...]) IS the route that would carry substituted codes — data_sources is its own documented parameter ("Data sources to register (for configure topic)"), so this call was asked WITH the codes rather than inferred from a sibling call, and its response selected the registration snippet correctly while substituting nothing (absence negative) — server 1.36.0, 2026-09-02 -->
    ⛔ **`data_sources` SELECTS the snippet and SUBSTITUTES nothing — you must fill in the codes
-   yourself.** Passing it makes the registration snippet primary
-   (`source_path: python/configuration/register_data_sources.py`); omitting it returns the
-   **seeding** snippet (`init_default_config.py`) instead, which is not what this step needs. But the
-   returned code still hardcodes the sample tuple `("CUSTOMERS", "REFERENCE", "WATCHLIST")`, and its
-   own `notes` say *"Replace sample data source names with your own"* — the codes you passed appear
-   nowhere in the response. Locate the snippet by its **`source_path`**, not by position among the
-   alternatives, then substitute the step-1 codes into it. Shipping it unsubstituted registers three
-   codes the Bootcamper does not have and leaves the first load failing `SENZ2207` on the codes they
-   do — which is what item 1 above exists to prevent. (Re-verified with the three codes passed
-   explicitly: `sdk_guide(topic='configure', language='python', data_sources=[…])`, server
-   **1.33.0, 2026-08-21**.)
+   yourself.** Passing it makes the **registration** snippet primary; omitting it returns the
+   **seeding** snippet instead, which is not what this step needs. The returned code hardcodes a
+   sample tuple of Senzing's own demo data source codes, its own `notes` say *"Replace sample data
+   source names with your own"*, and **none of the codes you passed appears anywhere in the
+   response**. Locate the snippet by its **`source_path`**, not by position among the alternatives,
+   then substitute the step-1 codes into it. Shipping it unsubstituted registers codes the
+   Bootcamper does not have and leaves the first load failing `SENZ2207` on the codes they do —
+   which is what item 1 above exists to prevent.
+
+   ⛔ **(INV-002/INV-090) Match the response against that PROPERTY, never against a literal tuple
+   or filename from this page — both are per-language.** The property holds in every language and
+   survives a snippet being re-authored; the literals do not. Verified with the three codes passed
+   explicitly on server **1.36.0, 2026-09-02**: Python's snippet
+   (`python/configuration/register_data_sources.py`) hardcodes
+   `("CUSTOMERS", "REFERENCE", "WATCHLIST")`, while **Java's**
+   (`java/snippets/configuration/RegisterDataSources.java`) hardcodes
+   `{"CUSTOMERS", "EMPLOYEES", "WATCHLIST"}` — **`EMPLOYEES`, not `REFERENCE`**, and a different
+   `source_path` shape. Telling a Java Bootcamper to look for `REFERENCE` sends them hunting for a
+   line that is not in the response they received. Read `programming_language` from preferences and
+   describe what you actually got back.
+
+   ⚠️ **The config-replacement mechanics differ per language too, and neither shape is canonical.**
+   Both languages register the modified config and then replace the default config id; **Java's
+   snippet wraps that pair in a retry loop** — `while (!replacedConfig)`, catching
+   `SzReplaceConflictException` and re-reading the current default config id — where Python's does
+   not (server **1.36.0, 2026-09-02**). The substitution rule is unaffected either way: keep every
+   Senzing method, signature and flag exactly as the snippet has them, and change only the codes.
 
    ⚠️ **On a freshly schema-created datastore, call it WITHOUT `data_sources` first.** The
    registration snippet reads the *current* default config, so it assumes one is already registered;

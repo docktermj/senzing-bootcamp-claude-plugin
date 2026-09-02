@@ -95,3 +95,49 @@ match against.
 - Upstream: not applicable — the server is behaving as documented; the plugin's illustration is what is out of date.
 - Related specs: none
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **Both halves of proposed change 1 shipped, not one or the other.** The spec offers "either name
+   it as Python's … or drop the literal entirely and state the property", preferring the property.
+   The property is now the operative sentence — *"The returned code hardcodes a sample tuple of
+   Senzing's own demo data source codes … and none of the codes you passed appears anywhere in the
+   response"* — and both literals are kept beneath it as dated per-language **evidence**, because a
+   guide that has already read the old wording needs to see *why* `REFERENCE` was wrong rather than
+   just stop seeing it. The added ⛔ makes the instruction the general one: match the property,
+   never a literal from this page, since a third language would otherwise reintroduce the defect.
+
+2. **A second unscoped literal in the same paragraph, which the spec did not name (INV-246).** The
+   step told the guide to *"locate the snippet by its `source_path`"* and then gave
+   `python/configuration/register_data_sources.py` unqualified. Java's is
+   `java/snippets/configuration/RegisterDataSources.java` — a different **shape**, not just a
+   different basename, so a reader matching the Python path finds nothing. Both paths are now
+   attributed, and `test_the_source_path_is_not_stated_as_universal` pins it. Found by sweeping the
+   block rather than editing the line the spec pointed at.
+
+3. **The dated parenthetical was Python-only and is replaced, not just re-dated.** It read
+   *"(Re-verified with the three codes passed explicitly: `sdk_guide(topic='configure',
+   language='python', data_sources=[…])`, server **1.33.0, 2026-08-21**.)"* — which is precisely how
+   a Python measurement came to read as universal. Both languages were re-read at **1.36.0,
+   2026-09-02** before the text was written, and the version and date now sit on the two-language
+   comparison rather than on a single-language call.
+
+4. ⛔ **The guard took four designs, and the first three are the lesson.** The obvious scan — find
+   `REFERENCE`/`EMPLOYEES` in shipped prose, demand a nearby language — flagged **21** sites on its
+   first run. Every one was legitimate: `REFERENCE` is also one of the demo **Truth Set's** own data
+   sources (`CUSTOMERS`, `REFERENCE`, `WATCHLIST`, per `get_sample_data`), named all over the
+   bootcamp in recap examples, purge steps and entity-graph JSON. Two context filters later it was
+   still flagging two Truth Set sites, at which point the design was wrong rather than the
+   thresholds. **Inverted: find the CLAIM, then check its attribution.** The defect is never the
+   code — it is prose asserting a snippet *hardcodes a particular tuple*, which is per-language.
+   ⚠️ Even that flagged the **corrected** prose once, because "hardcodes a sample tuple of
+   Senzing's own demo data source codes" matched a phrase-only pattern while naming no tuple at all.
+   The final signature requires a demo-code literal close behind the claim, so stating the property
+   is silent here by construction and quoting one language's literal is caught. Negative-controlled:
+   restoring the unscoped tuple and deleting the attribution paragraph fails five assertions.
+
+## Invariants introduced
+
+None. This is INV-002/INV-090 applied to an **illustration** rather than an instruction, and both
+are cited at the new ⛔. No new rule is needed — what was missing was the citation at the step, and
+a guard that fails when the next language-specific literal is presented as universal.
