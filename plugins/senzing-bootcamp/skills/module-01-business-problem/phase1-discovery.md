@@ -242,7 +242,7 @@ collection to cover a customer-360 problem in order to reach the `cord` branch.
 
 - **Fitting CORD dataset returned** (one of the three eligible collections, matching the
   category's domain): back the scenario with it, provenance `cord`.
-  - ⛔ **Say plainly that CORD is real data, here, in the turn that binds it.** This is the first
+  - ⛔ **(INV-293) Say plainly that CORD is real data, here, in the turn that binds it.** This is the first
     moment the Bootcamper's scenario becomes real-people data, and Module 4's wording is several
     modules away. `get_sample_data`'s contract requires its caller to disclose it — real records,
     historical snapshots, evaluation rather than operational use — and the canonical sentences are

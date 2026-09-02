@@ -159,7 +159,7 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    the fallback is reachable; say "retry"). Then offer a clearly labeled **non-deterministic**
    CORD collection that exercises the visualization but has no ground-truth key:
 
-   ⛔ **Precede the question with the real-data disclosure** — one line, in the same turn, before
+   ⛔ **(INV-293) Precede the question with the real-data disclosure** — one line, in the same turn, before
    the 👉: CORD is real public and commercial records, historical snapshots for evaluation rather
    than operational use. The sample-data tool's contract requires this of every caller, and this
    path reaches CORD without passing through Module 4's wording. The canonical sentences are in

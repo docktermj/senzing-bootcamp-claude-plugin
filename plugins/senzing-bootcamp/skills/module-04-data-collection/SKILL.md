@@ -413,7 +413,7 @@ data to practice with — recommend CORD data as the primary alternative:
 >
 > Learn more about CORD: <https://senzing.com/senzing-ready-data-collections-cord/>"
 
-⛔ **(INV-012) The two sentences about real data are a statement, not a question — and they are
+⛔ **(INV-012/INV-293) The two sentences about real data are a statement, not a question — and they are
 not optional.** `get_sample_data`'s own contract requires it of every caller: *"IMPORTANT: This is
 REAL data (not synthetic) — historical snapshots for evaluation only, not operational use. Always
 inform the user of this."* (verified against the live tool description, server 1.35.3, 2026-09-01).

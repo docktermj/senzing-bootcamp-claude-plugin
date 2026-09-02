@@ -24,6 +24,14 @@ hardcoded: the originating spec named two, and the scan found three -- Module 3b
 CORD substitute when the Truth Set is unavailable, reaching the data without passing through
 Module 4's wording at all.
 
+Enforces **INV-293** — a provider's disclosure obligation is met at every path that
+ACQUIRES the data, in the turn that acquires or binds it.
+
+⚠️ Scope matters here and the guard respects it: `get_sample_data` also serves the Truth
+Set, which is Senzing's demo data and carries no such obligation. A file that references
+already-acquired CORD, or routes to the tool, acquires nothing. Asserting the disclosure
+everywhere the tool is named would demand a false statement about the Truth Set.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

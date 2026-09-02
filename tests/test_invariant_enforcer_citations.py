@@ -249,7 +249,10 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # Re-derived by running the extractor.
 # 107 on 2026-09-02: INV-292 (prefer the programmatic route; a refusal is not a throttle)
 # names `test_cord_fetch_has_a_403_remedy.py`, which now cites it back. Re-derived.
-EXPECTED_PAIRS = 107
+# 108 on 2026-09-02: INV-293 (a provider's disclosure obligation binds every acquisition
+# path) names `test_cord_is_disclosed_as_real_data.py`, which now cites it back.
+# Re-derived.
+EXPECTED_PAIRS = 108
 
 
 def pairs():
