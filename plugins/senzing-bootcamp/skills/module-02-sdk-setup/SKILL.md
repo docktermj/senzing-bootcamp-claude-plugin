@@ -306,7 +306,7 @@ Comparing those two raw strings reports a difference where none exists. (Observe
 4.3.3-26191 install, 2026-07-31 — an environment observation, not an MCP-sourced fact.) On Windows
 that file is in the **sibling** `data` directory, not under `%SENZING_DIR%`.
 
-⛔ **The two sources disagree for two different reasons, and only one of them is cosmetic —
+⛔ **(INV-290) The two sources disagree for two different reasons, and only one of them is cosmetic —
 normalize the separator FIRST, then read what is left.**
 
 - **Same version, different separator** (`4.3.3-26191` vs `4.3.3.26191`) — a formatting artifact.

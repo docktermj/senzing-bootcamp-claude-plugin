@@ -22,6 +22,14 @@ documents `dpkg-deb -x` extraction for containers, CI and no-sudo environments (
 server 1.35.3, 2026-09-01). On that route no package is ever registered, `dpkg-query` reports
 nothing, and the old rule sends the guide to the empty source and away from the correct one.
 
+Enforces **INV-290** — two sources reporting the same environment fact are resolved by the
+CAUSE of their disagreement, never by a fixed precedence, and an empty result from one
+source is not a finding about the fact.
+
+⚠️ What this asserts is that the branch SHIPS. Whether a live turn reports the right version
+on a machine where the two genuinely disagree needs a `dry-run` phase 3 walk on such a
+machine — which is how the defect was found in the first place.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

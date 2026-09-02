@@ -240,7 +240,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 104 on 2026-09-02: INV-289 (reuse by instruction names its scale dependence) names
 # `test_visualization_model_build_scales.py`, which now cites INV-289 back. Re-derived by
 # running the extractor.
-EXPECTED_PAIRS = 104
+# 105 on 2026-09-02: INV-290 (two sources reporting one environment fact are resolved by
+# the cause of their disagreement) names
+# `test_version_precedence_handles_an_unmanaged_install.py`, which now cites it back.
+# Re-derived by running the extractor.
+EXPECTED_PAIRS = 105
 
 
 def pairs():

@@ -273,7 +273,7 @@ entries at once. Two things a reader should know about the hashes now recorded:
 - **Implemented:** 2026-09-01
 - **Files changed:** `plugins/senzing-bootcamp/skills/module-02-sdk-setup/SKILL.md`, `tests/test_version_precedence_handles_an_unmanaged_install.py`, `tests/test_sdk_update_offer.py`
 - **MCP re-check:** server **1.35.3**, 2026-09-01 — **confirmed.** `sdk_guide(topic='install', platform='linux_apt')` still documents `dpkg-deb -x senzingsdk-runtime_*.deb /opt/senzing` for containers, CI and no-sudo environments, both in `install_commands` and as its own gotcha. That is the generalizing case: on it no package is registered and `dpkg-query` has nothing to report. The local disagreement was **re-measured** rather than carried over — `dpkg-query` reports `4.3.4-26210` against an on-disk `szBuildVersion.json` of `4.4.0.26242`.
-- **DEFERRED INVARIANT — awaiting the maintainer's sign-off; NOT minted.** One hard rule ships citing no invariant at its line, confirmed by the INV-282 set difference and by `tests/test_new_hard_rules_are_cited_or_deferred.py`:
+- **DEFERRED INVARIANT (resolved INV-290, registered by the maintainer 2026-09-02).** The rule below shipped citing no invariant at its line and is now cited there. ⚠️ **Registered with INV-269 named as a specific instance of it** — same shape, one fact and two sources, resolved by which one describes what actually loads — so a reader arriving at either can find the other; INV-269 is untouched:
     - ⛔ **The two sources disagree for two different reasons, and only one of them is cosmetic — normalize the separator FIRST, then read what is left.** — in `module-02-sdk-setup/SKILL.md`, Step 1b's "Comparing the two versions".
 
     Drafted wording, next free id:
