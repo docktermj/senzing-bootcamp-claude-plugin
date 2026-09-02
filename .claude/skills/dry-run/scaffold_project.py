@@ -301,7 +301,14 @@ FIXTURE_MAP = [
     ("docs/bootcamp_recap.md", "docs/bootcamp_recap.md", frozenset({"mid"}),
      "a completed section carrying all four subsections (INV-103)"),
     ("docs/progress/recap_checkpoint.md", "docs/progress/recap_checkpoint.md", frozenset({"mid"}),
-     "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059); its '— in progress' heading is the only chip long enough to reach the PDF cover's 46-char clip, so FOLD FIRST, then render (INV-048)"),
+     "an UNFINALIZED block -> fold idempotency, run it 3x (INV-059). Its '— in progress' "
+     "heading is the only chip long enough to reach the PDF cover's 46-char clip, but "
+     "FOLDING ALONE CANNOT REACH IT: the fold puts that heading inside the "
+     "RECAP-CHECKPOINT fence, which generate_recap_pdf.py strips before module parsing, "
+     "so the section is absent from the cover, the contents and the body (audit_recap "
+     "warns, correctly, that a module was folded but never finalized). To exercise the "
+     "clip: fold 3x for INV-059, THEN remove the two fence markers -- what "
+     "module-completion step 2d does -- then render (INV-048). Measured 2026-09-02"),
     ("docs/feedback/...FEEDBACK.md", "docs/feedback/SENZING_BOOTCAMP_PLUGIN_FEEDBACK.md", ALL_MODES,
      "a precious entry the normalizer must leave byte-identical (INV-067)"),
     ("docs/loading_strategy.md", "docs/loading_strategy.md", frozenset({"mid"}),

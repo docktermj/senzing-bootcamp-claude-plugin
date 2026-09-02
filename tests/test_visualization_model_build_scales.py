@@ -712,3 +712,47 @@ class BothEndsOfTheReuseNameTheScaleScope(unittest.TestCase):
             "see entities with no record in the file it was handed. A note giving only the "
             "round-trip cost reads as an optimization, and an optimization is skippable.",
         )
+
+    M03B_SKILL = (REPO / "plugins" / "senzing-bootcamp" / "skills" /
+                  "module-03b-truthset-visualization" / "SKILL.md")
+
+    def test_module_3bs_overview_also_names_the_scope(self):
+        """The third site, found by the 2026-09-02 audit the day INV-289 was registered.
+
+        `SKILL.md` carries the reuse instruction twice (*"modeled on the shipped
+        reference"*) and stated the per-record build flatly beside it. The operative
+        instruction in `phase1-visualization.md` was scoped when INV-289 was minted; the
+        overview — which a guide reads first to orient — was not. Both halves unqualified
+        in the file read first is how the strategy travels.
+        """
+        self.assertRegex(
+            self.flat(self.M03B_SKILL), r"(?i)per-record build is scoped to the Truth Set",
+            "module-03b/SKILL.md states the per-record build without saying it is scoped. "
+            "INV-289 binds both ends of a reuse, and this file carries the reuse "
+            "instruction at :33 and :118.",
+        )
+
+    def test_the_overview_points_at_the_reasoning_rather_than_repeating_it(self):
+        """⚠️ INV-183 puts a rule where it is used; two copies is the drift class.
+
+        The overview needs the FACT that a scope exists and where to read it — not the
+        round-trip count and the embedded-master argument, which belong at the build step
+        and are asserted there by `test_module_3b_gives_the_completeness_reason_...`.
+        """
+        # ⚠️ The SCOPE BULLET only. Checked against the whole file this passed with the
+        # pointer deleted — `phase1-visualization.md` is named again in the phase overview
+        # ~13 lines below, about something else entirely.
+        text = self.M03B_SKILL.read_text(encoding="utf-8")
+        start = text.index("(INV-289) That per-record build is scoped")
+        flat = re.sub(r"\s+", " ", text[start:text.index("\n- ", start)])
+        self.assertRegex(
+            flat, r"phase1-visualization\.md",
+            "the overview must say where the reasoning lives, or a guide told the build is "
+            "scoped has no way to find out to what.",
+        )
+        self.assertNotRegex(
+            flat, r"(?i)embedded-master|round trip",
+            "the overview must not restate the reasoning — one rule, stated at the step "
+            "that needs it (INV-183). Two copies drift, which is the class this whole "
+            "invariant came from.",
+        )
