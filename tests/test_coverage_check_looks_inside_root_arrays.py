@@ -18,6 +18,14 @@ content sits inside such an array is offered the fast path with real fields
 undecided -- which is what the step's own stop sign already forbids at the leaf
 ("do not resolve by exact string match"), reached one level up at the container.
 
+Enforces **INV-294** — a key is classified as structure by its CONTENTS, never by its name
+or shape, and a stated set of structural keys is closed.
+
+⚠️ `phase1-quality-assessment.md` states structural keys TWICE, for two different checks —
+Step 5a's partition and the raw-source coverage denominator — and the sets legitimately
+differ, which the file's own warning at the second one explains. Each is closed within its
+own check; merging them is not a tidy-up, and this guard asserts Step 5a's only.
+
 Stdlib only; nothing under ``plugins/`` is imported (INV-108).
 """
 

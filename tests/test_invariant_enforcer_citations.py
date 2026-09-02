@@ -252,7 +252,9 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 108 on 2026-09-02: INV-293 (a provider's disclosure obligation binds every acquisition
 # path) names `test_cord_is_disclosed_as_real_data.py`, which now cites it back.
 # Re-derived.
-EXPECTED_PAIRS = 108
+# 109 on 2026-09-02: INV-294 (structure is classified by contents, never by name) names
+# `test_coverage_check_looks_inside_root_arrays.py`, which now cites it back. Re-derived.
+EXPECTED_PAIRS = 109
 
 
 def pairs():

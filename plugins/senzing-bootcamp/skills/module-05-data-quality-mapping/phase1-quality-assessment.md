@@ -264,7 +264,7 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    - **unrecognized keys** — everything else, *including the contents of any root array whose
      contained keys do not resolve*.
 
-   ⛔ **A root array is a per-feature sub-list only if its CONTENTS are spec attributes — decide it
+   ⛔ **(INV-294) A root array is a per-feature sub-list only if its CONTENTS are spec attributes — decide it
    by looking inside, never by the key's shape.** The structural set above is closed, and the `…`
    continues a list of *examples of the test*, not an invitation to add members by resemblance:
    plural, uppercase and an array-of-objects is exactly what an unrecognized array looks like too.
