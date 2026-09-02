@@ -922,10 +922,11 @@ the files are exactly as they were before this paragraph.
     consumes — **except the export call**, where `SZ_ENTITY_DEFAULT_FLAGS` is the documented
     choice and hand-assembling `SZ_ENTITY_INCLUDE_*` members has been observed to drop
     `RELATED_ENTITIES` entirely, with no error."*
-    ⛔ **(INV-287) Ship the exception with the item, never the item alone.** The bare instruction points at
-    the one call where following it silently loses every relationship
+    ⛔ **(INV-287) Ship the exception with the item, never the item alone.** The bare
+    instruction points at the one call where following it silently loses every relationship
     (`../module-06-data-processing/phaseD-validation.md`), and a checklist a Bootcamper works
-    through unattended is exactly where an unqualified rule does that damage. Give the reason, because it is what makes the item non-obvious: the server states
+    through unattended is exactly where an unqualified rule does that damage.
+    Give the reason, because it is what makes the item non-obvious: the server states
     that DEFAULT composites are for getting started and exploration rather than production, that
     their **membership may change between Senzing versions**, and that pinned code can therefore
     *"silently change what it returns after an upgrade — no error is raised"*; they also over-fetch,

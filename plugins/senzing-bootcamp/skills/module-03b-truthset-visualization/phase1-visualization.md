@@ -114,19 +114,18 @@ The Senzing MCP server is the primary and preferred source; it always takes prec
    1. **Fetch each source from a URL in the response, never a hardcoded one.** Prefer
       `citation.download_url` (MCP-hosted; every Truth Set source is far below its
       `download_url_max_records` cap) and fall back to `citation.source_download_url`.
-      - ⛔ **(INV-292) A 403 on that fallback is a REFUSAL, not a throttle — do not retry
-        it.** `source_download_url` carries a third-party host, and a backoff changes
-        nothing: switch back to `citation.download_url` and continue from there. This step
-        runs **before** Module 4, so its download contract
-        (`../module-04-data-collection/SKILL.md`) does not reach the Bootcamper first; the
-        remedy is stated here rather than assumed.
-      - ⛔ **(INV-292) Never set a misleading User-Agent to get around it** — beyond being
-        the wrong habit to teach, it was measured not to work.
       ⚠️ **The two responses use the name `download_url` for different hosts** — a real trap:
       `source='list'` returns `available_sources[].download_url` pointing at
       **raw.githubusercontent.com**, while a per-source call returns `citation.download_url` pointing
       at **mcp.senzing.com**. Read the URL you actually intend to use rather than the field name
       (same server and date).
+      - ⛔ **(INV-292) A 403 on that fallback is a REFUSAL, not a throttle — do not retry it.**
+        `source_download_url` carries a third-party host, and a backoff changes nothing: switch
+        back to `citation.download_url` and continue from there. This step runs **before**
+        Module 4, so its download contract (`../module-04-data-collection/SKILL.md`) does not
+        reach the Bootcamper first; the remedy is stated here rather than assumed.
+      - ⛔ **(INV-292) Never set a misleading User-Agent to get around it** — beyond being the
+        wrong habit to teach, it was measured not to work.
    2. ⛔ **Name the egress host from the URL you chose, per dataset.** `mcp.senzing.com` for the
       MCP-hosted download; for `source_download_url`, whatever host it carries — for the Truth Set
       that is **`raw.githubusercontent.com`**, *not* `senzing.com`. The MCP server's own instructions
@@ -207,15 +206,17 @@ Whatever the language, the server MUST reproduce the reference's behavior:
 
 - Build the entity model from the loaded records — one `get_entity_by_record_id` call per record,
   requesting the default entity flags (which include all relations) so it never queries the
-  database directly.
+  database directly. Get the exact SDK method, flag, and attribute names from the Senzing MCP
+  tools (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data
+  (INV-080).
   - ⚠️ **(INV-289) One call per record is correct HERE, and is scoped to the Truth Set.** Its
     record file is the authority on what was loaded, and 84 entities is 84 round trips. It does
-    **not** carry to the Bootcamper's own datastore: `../module-07-query-visualize-discover/phase1-query-visualize.md`
-    requires the **export stream** there, because a records-file build costs one round trip per
-    record and can only see entities that have a record in the file it was handed — an
-    embedded-master record the mapper emitted into no input file is invisible to it. Say this
-    when handing the server forward, so the strategy does not travel by resemblance. Get the exact SDK method, flag, and attribute names from the Senzing MCP tools
-  (`sdk_guide` / `get_sdk_reference` / `generate_scaffold`), never from training data (INV-080).
+    **not** carry to the Bootcamper's own datastore:
+    `../module-07-query-visualize-discover/phase1-query-visualize.md` requires the **export
+    stream** there, because a records-file build costs one round trip per record and can only see
+    entities that have a record in the file it was handed — an embedded-master record the mapper
+    emitted into no input file is invisible to it. Say this when handing the server forward, so
+    the strategy does not travel by resemblance.
 - Serve the JSON APIs — `/api/stats`, `/api/graph`, `/api/merges`, `/api/records`, `/api/search`,
   `/api/why`, `/api/how`, `/api/overlap`, `/api/matchkeys`, `/api/features` — with the exact
   response shapes in `visualization-api-reference.md`. That contract is the authority on the
