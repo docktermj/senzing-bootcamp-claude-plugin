@@ -147,3 +147,95 @@ re-tested.
 - Upstream: not applicable — no negative turned false, so nothing to report.
 - Related specs: `specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md` (implemented 2026-09-01; its census warning correctly caught one of the two drifts), `specs/census-detector-misses-enumerated-name-lists.md` (the gap that let the other one through)
 
+
+## Deviations from this spec, and why (2026-09-02)
+
+1. **All 25 claims were re-asked again at implementation time rather than restamped on this spec's
+   record — because the stamp IS the certification.** The spec records a re-ask performed earlier the
+   same day at the same server version, so trusting it would have produced the identical stamp. It was
+   re-asked anyway: `implement-spec` Step 3.3 forbids copying a Senzing fact out of a spec into shipped
+   text without re-confirming it, and writing *"server 1.36.0, 2026-09-02"* into 25 markers is exactly
+   that — a claim that someone asked. Restamping on the spec's word would have been the
+   *"re-dating in bulk makes every marker look reviewed"* failure the report itself warns about, with
+   the spec file supplying the appearance of review. **Outcome: 25 of 25 claims still hold, 2
+   rationales drifted — the spec's finding reproduced exactly.** Routes re-asked: `get_capabilities`;
+   the declared schemas of `find_examples` / `generate_scaffold` / `download_resource` via
+   `ToolSearch`; `sdk_guide` install × macos_arm, windows, linux_apt, macos_arm+python,
+   linux_apt+java; `sdk_guide` configure × python and python+data_sources; `sdk_guide` load × python
+   at record_count 1000 and 19500; `search_docs` × 8 queries (globalization ×2 incl.
+   `category='globalization'`, multi-language ×2, evaluation-license, szBuildVersion, 4.3→4.4 upgrade,
+   sz-mcp-coworker, hardware-sizing, payload-precedence); `generate_scaffold(python, initialize)`;
+   `explain_error_code('SENZ9000')`; `get_sdk_reference` flags × `SZ_ENTITY_INCLUDE_ALL_RELATIONS`
+   with and without `language`, and response_schemas × `why_entities`. A per-marker verdict log was
+   written to disk as the re-ask proceeded, so a compaction could not cost the evidence the stamps
+   rest on.
+
+2. **28 markers, not 27 — so the criterion's arithmetic moved.** Criterion 1 asks for
+   *"2 DUE, 25 current"*. `phaseB-load-first-source.md:66` was added by
+   `proceed-on-sqlite-keeps-the-tier-s-thread-count` **after** this spec was written and was already
+   stamped 1.36.0/2026-09-02. The report now reads **28 markers — 2 DUE, 26 current**: the same 25
+   restamped here, plus that one. The two DUE are exactly the two the spec names
+   (`phase2-data-mapping.md:359`, `DECLINED.md:135`), verified by name rather than by count.
+
+3. **Criterion 4 is satisfied in substance but not literally, and the spec contradicts itself here.**
+   Criterion 4 says *"No marker's **claim** text changed."* Proposed change 2 says to replace
+   `DECLINED.md:126`'s hit enumeration — **which sits inside that marker's claim half**, not its
+   `owner:` clause. Both cannot hold. Resolved by reading criterion 4 as protecting the *assertion*:
+   the sentence *"no indexed document names sz-mcp-coworker at all"* is byte-identical, and only the
+   parenthetical census after it was rewritten. That parenthetical is rationale wherever it sits —
+   which is precisely why `find_census_rationales` reads **both** halves. Verified as a full-string
+   multiset comparison of every changed line's claim and owner halves: **24 of 25 claim halves and 24
+   of 25 owner halves byte-identical**, the two exceptions being the two sanctioned rewrites.
+   ⚠️ My first version of that check truncated claims to 70 characters and reported *"0 differ"* —
+   it would have missed this entirely. That is the INV-282 spot-check failure in miniature, caught
+   only because the answer was already known to be non-zero.
+
+4. **`:719`'s rewrite names the PROPERTY and only one section — re-citing the returned three would
+   have kept it flagged.** Proposed change 2 says to *"cite the sections actually returned"*. Doing
+   that literally re-creates an enumerated name-list, which
+   `census-detector-misses-enumerated-name-lists` (implemented immediately before this spec, `93024f9`)
+   now reports — and `test_a_corrected_enumeration_is_still_flagged` pins that as correct behavior,
+   because the next server-side rename falsifies a fresh list exactly as it falsified the old one. The
+   rationale instead quotes *Attribute reference*'s live in-feature-object rule — *"Only the attributes
+   listed here may appear inside a feature object. Anything else is treated as payload"* — and states
+   the property: no returned section gives any precedence for a **record-root** key whose name belongs
+   to a registered feature. One named section, no coordinated run, so the report is quiet for the right
+   reason rather than by evading the matcher.
+
+5. **`DECLINED.md:126`'s count was dropped, not kept as incidental.** The spec allows
+   *"Keep the count only if it is stated as incidental."* The count is the thing
+   `find_census_rationales` flags, and criterion 2 requires the census warning to stop firing, so
+   keeping it would have needed wording careful enough to fool a matcher — the wrong goal. Replaced
+   with the discriminating property (no hit's title, section or `source_url` contains the string) plus
+   a note that which documents come back is incidental. ⚠️ Worth recording for the next revisit:
+   `explain_error_code('SENZ9000')` **does** name *"sz-mcp-coworker selfcheck (airgap binary)"*. The
+   claim survives because it is scoped to *"no **indexed document**"* and its owner names `search_docs`
+   — a structured error record is not an indexed document — but a future reader checking "does anything
+   name it?" will find that it does.
+
+6. **A guard was inverted, as its own failure message instructed.**
+   `TheDriftedSiteIsFlaggedUntilItIsCorrected` asserted `:719` was flagged (the predecessor spec's
+   criterion 1, first half). The restamp made it fail with the message it was written to give, naming
+   the two possible causes; the detector returned an **empty** list while all twenty fixture-driven
+   assertions still passed, which is what distinguished "rationale corrected" from "matcher
+   regressed". Replaced by `NoShippedMarkerPinsAnEnumeration`, mirroring `NoShippedMarkerPinsACount`
+   including its deliberate `plugins/`-only scope. Negative-controlled: reintroducing
+   *Mapping identifiers* makes the report flag it and the new guard fail; file restored.
+
+7. **Two sub-claims the spec listed as unverified were verified, and one upstream report re-confirmed.**
+   `:220`'s *"byte-identical with and without `language`"* half — which the spec explicitly flagged as
+   not re-tested — was tested: the two responses match in every field, same eight rows, same caution,
+   same `source_url`. Separately, `:887`'s identity sub-claim reproduced at 1.36.0
+   (`sdk_guide(install, linux_apt, java)` is byte-identical to the same call with no `language`, down
+   to `next_steps[0].params.language: null`), which re-confirms the still-unsent upstream report.
+   ⚠️ These two are **not** the same finding: `get_sdk_reference`'s `language` narrows *method
+   signatures*, and `SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a flag rather than a method, so having
+   nothing to narrow is defensible. `sdk_guide`'s is not.
+
+## Invariants introduced
+
+None. This spec records a re-ask and two rationale corrections; it establishes no new rule. The rules
+it exercises already exist — INV-080/INV-149 (a Senzing fact carries its route, version and date),
+INV-194 (a negative names the owning route), and INV-295 (a measurement records when it was taken) —
+and the one durable lesson from the implementation, that a fresh enumeration is a re-date in disguise,
+is already enforced by `find_enumeration_rationales` and pinned by its guards.

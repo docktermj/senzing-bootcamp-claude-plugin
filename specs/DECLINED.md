@@ -123,7 +123,7 @@ re-deriving the whole argument. Write "nothing foreseeable" only when that is ge
     reaches `senzing.com/docs/agentic`, the MCP server's own page, which returns an overview and
     carries no setup or self-hosting content. So "named but undocumented" is now established via the
     owning route rather than by a query that merely missed.
-    MCP-NEGATIVE: search_docs(query='sz-mcp-coworker selfcheck airgap binary stdio mode') — no indexed document names sz-mcp-coworker at all (10 hits at the default max_results, every one unrelated: a Scala SelfCheck.scala in brianmacy/sz_spark, the @senzing/sdk-* npm prebuilt-binary tables, assorted loaders) — owner: search_docs IS the route that would carry it, and the one the Revisit-if condition is written against, so this empty result is the answer rather than a miss (absence negative) — server 1.33.0, 2026-08-21
+    MCP-NEGATIVE: search_docs(query='sz-mcp-coworker selfcheck airgap binary stdio mode') — no indexed document names sz-mcp-coworker at all (no hit's title, section or source_url contains that string; which documents come back is incidental and changes as the index is rebuilt) — owner: search_docs IS the route that would carry it, and the one the Revisit-if condition is written against, so this empty result is the answer rather than a miss (absence negative) — server 1.36.0, 2026-09-02
   - **The stdio *install* citation is gone; the mode itself is still named.** At 1.32.3 `sdk_guide`'s
     description named a **stdio mode** whose package URL was a local `sz-mcp-coworker extract`
     command. At 1.32.9 that text is gone: `sdk_guide(topic='install', platform='linux_apt')` offers

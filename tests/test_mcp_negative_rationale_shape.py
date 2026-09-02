@@ -428,28 +428,35 @@ class TheReportSeparatesTheTwoShapes(unittest.TestCase):
         self.assertNotIn("ENUMERATION-SHAPED", out)
 
 
-class TheDriftedSiteIsFlaggedUntilItIsCorrected(unittest.TestCase):
-    """Criterion 1, first half: the report flags `:719` BEFORE the restamp rewrites it.
+class NoShippedMarkerPinsAnEnumeration(unittest.TestCase):
+    """The state `restamp-27-mcp-negatives-to-server-1-36-0` established, asserted against the tree.
 
-    ⛔ **Expected to invert, and that is the point.**
-    `restamp-27-mcp-negatives-to-server-1-36-0` replaces that rationale with the property it
-    stands in for. When it does, this test fails with the message below -- which says to flip
-    it rather than leaving a reader to guess whether the report broke or the tree got fixed.
+    ⛔ **This class REPLACED an inverted one, and the replacement is the point.** While the drift
+    was live, `TheDriftedSiteIsFlaggedUntilItIsCorrected` asserted that
+    `phase2-data-mapping.md:719` WAS flagged -- criterion 1's first half. Its failure message named
+    the two causes a later silence could have (rationale corrected, or matcher regressed) and said
+    to flip it once the first applied. On 2026-09-02 the restamp corrected that rationale, the guard
+    failed with exactly that message, and the detector returned an empty list while all twenty
+    fixture-driven assertions still passed -- which is what distinguished (a) from (b). Flipped.
+
+    ⚠️ Scoped to ``plugins/`` for the same reason `NoShippedMarkerPinsACount` is: ``specs/DECLINED.md``
+    carries a marker and is a RECORD of a decision already taken, so rewriting its evidence is the
+    maintainer's call rather than a guard's. Its census WAS corrected in the same change and it is
+    clean today; the report still lists it, and this test still does not.
     """
 
-    def test_the_shipped_drift_is_reported(self):
+    def test_no_marker_under_plugins_pins_an_enumeration(self):
         reports = load_reports()
-        found = reports.find_negatives(str(REPO))
-        hits = ["%s:%d" % (r[0], r[1]) for r in reports.find_enumeration_rationales(found)]
-        self.assertIn(
-            "plugins/senzing-bootcamp/skills/module-05-data-quality-mapping/"
-            "phase2-data-mapping.md:719",
-            hits,
-            "The detector no longer flags the enumeration it was written for. TWO very "
-            "different causes: (a) the rationale was corrected -- then delete this class and "
-            "assert `find_enumeration_rationales` is empty over plugins/, the way "
-            "NoShippedMarkerPinsACount does for counts; or (b) the matcher regressed. Check "
-            "the marker text at that line before touching the matcher.",
+        found = [r for r in reports.find_negatives(str(REPO)) if r[5].startswith("plugins")]
+        self.assertTrue(found, "No markers found under plugins/ -- has the scan broken?")
+        flagged = reports.find_enumeration_rationales(found)
+        self.assertEqual(
+            [], flagged,
+            "A shipped marker's rationale enumerates named response elements as what the route "
+            "returned. Re-ask the owning route and replace the list with the PROPERTY it stands "
+            "in for -- re-listing today's names is a re-date in disguise and keeps the liability, "
+            "because the next server-side rename falsifies it again:\n  "
+            + "\n  ".join("%s:%d — %r" % f for f in flagged),
         )
 
 

@@ -1873,7 +1873,7 @@ def build_model(settings, patterns):
         # bites, as the Performance item in `production/MIGRATION_CHECKLIST.md`, because
         # that is about the code the Bootcamper ships rather than this reference.
         #
-        # MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS') — the SZ_ENTITY_INCLUDE_* relationship and record flags do not list export_json_entity_report in applies_to — owner: get_sdk_reference(topic='flags', filter='SZ_ENTITY_DEFAULT_FLAGS') IS the route that owns entity content on the export family: its applies_to includes export_json_entity_report and export_csv_entity_report, and its response_paths are RELATED_ENTITIES[] / RESOLVED_ENTITY.ENTITY_ID / .ENTITY_NAME / .RECORDS[] / .RECORD_SUMMARY[], so the composite is where the reader must go rather than concluding the export cannot return relationships (routing negative) — server 1.35.4, 2026-09-01
+        # MCP-NEGATIVE: get_sdk_reference(topic='flags', filter='SZ_ENTITY_INCLUDE_ALL_RELATIONS') — the SZ_ENTITY_INCLUDE_* relationship and record flags do not list export_json_entity_report in applies_to — owner: get_sdk_reference(topic='flags', filter='SZ_ENTITY_DEFAULT_FLAGS') IS the route that owns entity content on the export family: its applies_to includes export_json_entity_report and export_csv_entity_report, and its response_paths are RELATED_ENTITIES[] / RESOLVED_ENTITY.ENTITY_ID / .ENTITY_NAME / .RECORDS[] / .RECORD_SUMMARY[], so the composite is where the reader must go rather than concluding the export cannot return relationships (routing negative) — server 1.36.0, 2026-09-02
         export_flags = (
             SzEngineFlags.SZ_EXPORT_INCLUDE_ALL_ENTITIES
             | SzEngineFlags.SZ_ENTITY_DEFAULT_FLAGS
