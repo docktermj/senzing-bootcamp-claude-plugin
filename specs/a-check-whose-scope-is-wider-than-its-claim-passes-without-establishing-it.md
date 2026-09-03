@@ -94,3 +94,66 @@ matters and report success for it.
 - MCP re-check: **n/a (no Senzing fact).** Both halves are internal: which of the plugin's own invariants governs one of its own rules, and the scope of one of its own guards. No Senzing claim is asserted or re-asserted (INV-080).
 - Upstream: not applicable.
 - Related specs: `specs/inv-124-is-cited-as-the-any-language-rule-it-is-not.md` (the same class, found by the previous audit, where the ID resolved but did not govern)
+
+## Deviations from this spec, and why (2026-09-03)
+
+⛔ **Half of this spec is RETRACTED. Finding (a) was a false positive, and the spec is its own
+best example of the thing it describes — a check whose scope was wider than its claim.**
+
+### (a) is withdrawn: the rule IS governed, and by the invariant it restates
+
+The deadline rule at `visualization-api-reference.md:938` is inside a bullet whose **head** reads:
+
+> `- **An animated view MUST expose a settled signal, and the capture MUST wait on it (required —
+>   INV-002/INV-090/INV-298).**`
+
+And **INV-298's own registered text contains the same rule, near-verbatim**: *"⛔ A time budget is
+not a settle guarantee, and a bigger one is not a better guarantee."* So the shipped ⛔ is a
+restatement of the invariant cited four lines above it, in its own bullet. The `INV-129` mid-bullet
+governs its own clause correctly. **Nothing is mis-cited and nothing needs a new citation.**
+
+The audit's claim — that the line-level checker was "satisfied by an adjacent unrelated ID" — was
+produced by a scanner that read the **line** instead of the **bullet**. The same scanner, run
+across the corpus, reported 10 hits of the shape; the **two examined closely were both correctly
+cited in their own paragraph**:
+
+- `:938` — cited at its bullet head (INV-298), as above.
+- `:838` — `⛔ **Whatever you implement, cover the quotes.**` is cited at `:845`, seven lines later
+  in the same paragraph: *"which is why it is a ⛔ and not a nicety **(INV-106)**."*
+
+So criteria 1, 2 and 5 are **void**, not met — there is no defect at either site, and adding a
+citation to "fix" one would have been a change made to satisfy a wrong finding.
+
+### The decision on (3), now measured properly — the line stays the unit
+
+Proposed change 3 asked whether the citation check could ask a narrower question, and to measure
+before changing it. Three measurements, in order of how much each moved the answer:
+
+| question | corpus-wide hits | verdict |
+|---|---|---|
+| citation not inside the ⛔'s bolded span | **~537 of 632** | unusable — most rules cite at the bullet head |
+| …and the line's only citation precedes the ⛔ | **10** | affordable, but **poor precision** — 2 of 2 examined were correct |
+| citation anywhere on the line (**today's check**) | gate, currently clean | kept |
+
+⛔ **Rules are routinely and correctly cited at the head of the bullet they govern**, which is
+above the line the stop sign lands on, and Markdown reflow decides where lines break. So a
+stricter *line*-level rule flags correct prose, and the honest unit is the **enclosing bullet** —
+which is more than a regex should attempt. The existing line-level gate is a cheap approximation
+that is satisfied here for the right reason once the bullet is read. **Neither a stricter gate nor
+a report in that form is worth adding**, and no scanner was left behind: one that reports 10 hits
+with at best middling precision would train its reader to skip it, which is the failure the
+`coverage_reports.py` preamble already warns about.
+
+### (b) is real and is fixed
+
+`test_the_layout_is_driven_synchronously` searched the whole of `senzing_viz_server.py` for the
+synchronous tick loop. It is now scoped to the `if(capture){…}` branch, and the negative control
+fires: moving the loop out of the branch fails it. ⚠️ Its sibling
+`test_the_finished_layout_is_fitted` had the identical defect, was caught during implementation
+when *its* negative control failed to fire, and the correction was not carried across — which is
+the actual, narrow lesson here: **when a negative control catches a scope defect in one assertion,
+check its siblings in the same class before moving on.**
+
+## Invariants introduced
+
+None. (b) is a test-scope correction, and (a) is withdrawn.

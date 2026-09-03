@@ -82,3 +82,41 @@ where the defect was noticed rather than everywhere the rule binds. Two sites, o
 - MCP re-check: **n/a (no Senzing fact).** The subject is the plugin's own capture helper. The ~5-tick measurement it rests on is a live-engine observation from 2026-09-03 on SDK 4.4.0 build 4.4.0.26242, recorded in `graph-capture-budget-does-not-converge-at-truth-set-density` and not re-claimed here.
 - Upstream: not applicable.
 - Related specs: `specs/graph-capture-budget-does-not-converge-at-truth-set-density.md` (implemented 2026-09-03 — the change that swept two of the three paths)
+
+## Deviations from this spec, and why (2026-09-03)
+
+1. **Option 1 was taken — the single-page path now requests the render — and its one stated risk
+   was verified rather than assumed.** Proposed change 1 said the presettle and fit "would apply
+   to a page that may have no layout at all… so probably harmless, but it should be verified".
+   Verified live: a minimal non-viz page (an HTML table, no d3, no graph container) captured with
+   `--single` and `?capture=1` present still writes its PNG (12,950 bytes), keeps the
+   no-tab-slug filename `quality.png`, and records `settled: n/a`. The parameter is simply ignored
+   by a page with nothing to settle. On the tabbed app — which `--single` is not meant to target
+   but can — it upgrades an unsettled capture to a settled one.
+
+2. **The fix is one shared helper rather than a third call site.** Rather than appending the
+   parameter in the single-page branch too, all three branches now route through `_with_capture`,
+   which also handles the `?`-vs-`&` joiner that a live-server URL already carrying `?tab=`
+   requires. That is what makes the guard's scanning question answerable: "does every `url = …`
+   in `capture()` go through the helper?" rather than "do these three lines each contain the
+   literal?".
+
+3. **A guard from earlier today had to be rescoped, and it is the third of its kind this
+   session.** `test_a_file_snapshot_url_carries_the_request` pinned the literal
+   `_to_url(str(temp)) + "?capture=1"` and failed the moment the paths were refactored onto the
+   shared helper — a change that made the guarantee **stronger**. Rescoped to the property, with
+   the cross-reference to the scanning guard that actually asserts completeness. ⚠️ The recurring
+   lesson, now written into three test files: **a regex over source should assert what the code
+   guarantees, never one spelling of it.**
+
+4. **I broke the test file while rescoping it** — a raw string cannot carry `\"`, so the
+   assertion's regex terminated early and the module stopped importing. `test_python_sources_
+   compile_cleanly` caught it with the exact line, which is what that guard exists for: the
+   suite count silently dropped from 4,125 to 4,112 as the module failed to load, and nothing
+   else would have said why.
+
+## Invariants introduced
+
+None. INV-298 and INV-299 already require the render and the report; this applies them at the
+one path that was missed, and records the single-page settle answer as a decision rather than an
+omission.

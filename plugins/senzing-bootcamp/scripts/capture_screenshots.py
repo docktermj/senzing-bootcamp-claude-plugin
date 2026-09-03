@@ -174,7 +174,20 @@ def _record_settled(state: str) -> None:
 
 
 def _settle_expected(tab: str) -> bool:
-    """Does this tab animate to its final layout, so a settled signal is owed?"""
+    """Does this tab animate to its final layout, so a settled signal is owed (INV-298)?
+
+    ⚠️ **The single-page id answers False by DECISION, not by omission**, which is what this
+    docstring exists to record. `--single` is scoped to static deliverables — the Data Quality,
+    Mapping and Transformation pages — which have no layout to settle, so demanding a signal
+    there would report `unsettled` on every one of them and train the reader to ignore the
+    warning that matters. The path still *requests* the capture render (`_with_capture`), so an
+    animated view captured that way is settled regardless; what it does not do is claim to have
+    checked.
+
+    ⛔ **Do not add the single-page id to `_ANIMATED_TABS` to change this answer.** That set also
+    sizes the virtual-time budget and feeds the tab-label lookup, so widening it to settle a
+    signal question would change two unrelated behaviors. Ask this question here.
+    """
     return tab in _ANIMATED_TABS
 
 
@@ -376,6 +389,20 @@ def _out_path(out_dir: Path, name: str, tab: str) -> Path:
     return out_dir / f"{name}-{slug}.png"
 
 
+def _with_capture(url: str) -> str:
+    """Append the capture-render request to any URL (INV-298/INV-299).
+
+    ⛔ **Every capture path goes through this, including the single-page one.** The render was
+    first wired into the two per-tab branches only, leaving `--single` three lines above them
+    in the same `if/elif/else` — a rule applied where the defect was measured rather than
+    everywhere it binds (INV-246). On a static deliverable (the Data Quality, Mapping and
+    Transformation pages `--single` is scoped to) the parameter is simply ignored: those pages
+    have no force layout to settle. On the tabbed app, which `--single` is not meant to target
+    but can, it upgrades an unsettled capture to a settled one.
+    """
+    return "%s%scapture=1" % (url, "&" if urlparse(url).query else "?")
+
+
 def _tab_url(url: str, tab: str, query: str = "") -> str:
     """Append ?tab=/&q= deep-link parameters to a live-server URL.
 
@@ -384,7 +411,7 @@ def _tab_url(url: str, tab: str, query: str = "") -> str:
     still image can neither zoom nor wait, so it needs a different render from the
     interactive one — and the animation path never finishes under headless virtual time.
     """
-    params = {"tab": tab, "capture": "1"}
+    params = {"tab": tab, "capture": "1"}   # see `_with_capture` for why every path asks
     if query and tab == "probe":
         params["q"] = query
     joiner = "&" if urlparse(url).query else "?"
@@ -1296,7 +1323,7 @@ def capture(
                 # The page as it loads: no ?tab= deep link, and no activation copy —
                 # there is nothing to activate, and injecting one would only add a
                 # script that finds no tab and exhausts its retries.
-                url = target if is_url else _to_url(str(html))
+                url = _with_capture(target if is_url else _to_url(str(html)))
             elif is_url:
                 url = _tab_url(target, tab, query)
             else:
@@ -1304,7 +1331,7 @@ def capture(
                 # (INV-298/INV-299) `?capture=1` on a file: URL too — Chrome exposes it via
                 # `location.search` for file URLs, and it is what makes the page settle
                 # rather than animate. Without it the capture gets ~5 of ~300 layout ticks.
-                url = _to_url(str(temp)) + "?capture=1"
+                url = _with_capture(_to_url(str(temp)))
             winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner

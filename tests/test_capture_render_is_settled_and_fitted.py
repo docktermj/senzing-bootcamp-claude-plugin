@@ -68,16 +68,28 @@ class TheRendererHonorsTheCaptureRequest(unittest.TestCase):
         )
 
     def test_the_layout_is_driven_synchronously(self):
-        """`simulation.tick()` in a loop — not a longer wait on animation frames."""
+        """`simulation.tick()` in a loop — not a longer wait on animation frames.
+
+        ⚠️ Scoped to the capture BRANCH, not the file. The first version searched all of
+        `senzing_viz_server.py`, so moving the loop out of `if(capture){…}` — the only thing
+        that makes a capture settle — left it green. Its sibling
+        `test_the_finished_layout_is_fitted` had the identical defect, was caught when its
+        negative control failed to fire, and the correction was not carried across until the
+        2026-09-03 audit found it
+        (`specs/a-check-whose-scope-is-wider-than-its-claim-passes-without-establishing-it.md`).
+        """
+        start = self.text.index("  if(capture){")
+        block = self.text[start:self.text.index("\n  }", start)]
         self.assertRegex(
-            self.text, r"for\(let i=0;i<need;i\+\+\)\{sim\.tick\(\);\}",
-            "the layout must be advanced in a loop. Waiting longer cannot work: headless "
-            "virtual time does not advance requestAnimationFrame, which is why the animation "
-            "path got 5 of ~300 ticks at every budget from 5s to 300s.",
+            block, r"for\(let i=0;i<need;i\+\+\)\{sim\.tick\(\);\}",
+            "the layout must be advanced in a loop INSIDE the capture branch. Waiting longer "
+            "cannot work: headless virtual time does not advance requestAnimationFrame, which "
+            "is why the animation path got 5 of ~300 ticks at every budget from 5s to 300s.",
         )
         self.assertIn(
-            "sim.stop()", self.text,
-            "stop the timer before driving it by hand, or the two compete",
+            "sim.stop()", block,
+            "stop the timer before driving it by hand, or the two compete — and do it in the "
+            "branch, so the interactive path keeps its animation",
         )
 
     def test_the_tick_count_comes_from_the_simulations_own_parameters(self):
@@ -170,11 +182,19 @@ class TheCaptureRequestsThatRender(unittest.TestCase):
         self.text = read(CAPTURE)
 
     def test_a_file_snapshot_url_carries_the_request(self):
+        # ⚠️ Asserts the PROPERTY, not one spelling of it. The first version pinned the literal
+        # `_to_url(str(temp)) + "?capture=1"` and failed the moment the three capture paths were
+        # refactored onto a shared `_with_capture` helper — a change that made the guarantee
+        # stronger, not weaker. Third guard this session to fail on a rewording that said the
+        # same thing (`specs/the-single-page-capture-never-requests-the-settled-render.md`).
         self.assertRegex(
-            self.text, r'_to_url\(str\(temp\)\) \+ "\?capture=1"',
+            self.text,
+            r'_with_capture\(_to_url\(str\(temp\)\)\)' r'|_to_url\(str\(temp\)\)\s*\+\s*"\?capture=1"',
             "the standalone snapshot is the artifact the recap embeds, and it is loaded over "
             "file: — Chrome exposes the query there, and without it the capture gets ~5 of "
-            "~300 layout ticks",
+            "~300 layout ticks. Either the shared helper or an inline append satisfies this; "
+            "`tests/test_every_capture_path_requests_the_render.py` is what asserts that EVERY "
+            "path asks, by scanning rather than by naming them.",
         )
 
     def test_a_live_server_url_carries_the_request(self):
