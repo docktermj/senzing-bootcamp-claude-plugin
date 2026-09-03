@@ -89,6 +89,35 @@ class TheResolverReadsWhatTheRefActuallyTouches(unittest.TestCase):
         git(repo, "commit", "--quiet", "-m", "fix(demo): shipped work plus its record")
         cls.with_work = git(repo, "rev-parse", "--short", "HEAD")
 
+        # ⛔ A merge is the shape `git show --name-only` answers EMPTY for, and a root commit
+        # is the shape `diff-tree -r -m` answers EMPTY for without `--root`. Both are built,
+        # so neither probe can pass this class by accident.
+        git(repo, "checkout", "--quiet", "-b", "shipped-side")
+        (repo / "plugins" / "senzing-bootcamp" / "skills" / "demo" / "SIDE.md").write_text(
+            "- ⛔ **A hard rule arriving through a merge.**\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "--quiet", "-m", "feat(demo): a rule on a side branch")
+        git(repo, "checkout", "--quiet", "main")
+        (repo / "specs" / "note.md").write_text("a specs-only change\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "--quiet", "-m", "docs(specs): a specs-only change")
+        git(repo, "merge", "--quiet", "--no-ff", "shipped-side", "-m",
+            "chore(demo): merge the shipped side branch")
+        cls.merge_with_work = git(repo, "rev-parse", "--short", "HEAD")
+
+        git(repo, "checkout", "--quiet", "-b", "specs-side")
+        (repo / "specs" / "side-note.md").write_text("specs only, on a branch\n",
+                                                     encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "--quiet", "-m", "docs(specs): a note on a side branch")
+        git(repo, "checkout", "--quiet", "main")
+        (repo / "specs" / "other.md").write_text("specs only, on main\n", encoding="utf-8")
+        git(repo, "add", "-A")
+        git(repo, "commit", "--quiet", "-m", "docs(specs): another note")
+        git(repo, "merge", "--quiet", "--no-ff", "specs-side", "-m",
+            "chore(specs): merge the specs-only side branch")
+        cls.merge_without_work = git(repo, "rev-parse", "--short", "HEAD")
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmp, ignore_errors=True)
@@ -132,6 +161,70 @@ class TheResolverReadsWhatTheRefActuallyTouches(unittest.TestCase):
                          "resolver expects; warning there would train the reader to skip it")
         self.assertIn("from ledger entry", printed,
                       "the provenance line must survive — it is how a reader checks the range")
+
+
+    def test_a_merge_carrying_shipped_work_is_reported(self):
+        """⛔ `git show --name-only` prints NOTHING for a merge, so it passed one silently.
+
+        Measured across all three commit shapes on 2026-09-03: `git show --name-only` answers
+        empty on a merge, `diff-tree -r -m` answers empty on a root commit, and only
+        `diff-tree -r -m --root` answers all three. The first version of this detector used
+        `git show`, so this case is the regression that version could not see.
+        """
+        ref, printed = self.resolve(self.merge_with_work)
+        self.assertIn("SUSPECT-REF", printed,
+                      "a merge that brings a shipped hard rule in through its side branch "
+                      "carries shipped work; a probe that reports nothing for a merge makes "
+                      "this pass silently, which is the defect being fixed:\n" + printed)
+        self.assertIn("SIDE.md", printed,
+                      "the warning must name the propagated file the merge carried")
+        self.assertNotEqual(self.merge_with_work, ref, "the range must widen past the merge")
+
+    def test_a_merge_carrying_no_shipped_work_stays_silent(self):
+        """The fix must not turn every merge into a warning — that is how a check gets ignored."""
+        ref, printed = self.resolve(self.merge_without_work)
+        self.assertEqual(self.merge_without_work, ref, printed)
+        self.assertNotIn("SUSPECT-REF", printed,
+                         "this merge touches only specs/, which is exactly what an audit "
+                         "record is allowed to do")
+
+    def test_a_root_commit_carrying_shipped_work_is_reported(self):
+        """The blind spot the obvious replacement would have introduced.
+
+        `diff-tree --name-only -r -m` without `--root` reports nothing for a commit with no
+        parent, so switching probes naively trades the merge case for this one. Built as its
+        own repository, because a root commit cannot be added to an existing history.
+        """
+        tmp = tempfile.mkdtemp(prefix="since-root-")
+        try:
+            repo = Path(tmp)
+            git(repo, "init", "--quiet", "--initial-branch", "main")
+            git(repo, "config", "user.email", "fixture@example.invalid")
+            git(repo, "config", "user.name", "fixture")
+            (repo / "specs").mkdir()
+            shipped = repo / "plugins" / "senzing-bootcamp"
+            shipped.mkdir(parents=True)
+            (shipped / "SKILL.md").write_text("- ⛔ **A rule in the very first commit.**\n",
+                                              encoding="utf-8")
+            (repo / "specs" / "IMPLEMENTED.md").write_text(LEDGER % "uncommitted",
+                                                           encoding="utf-8")
+            git(repo, "add", "-A")
+            git(repo, "commit", "--quiet", "-m", "chore: the root commit, with shipped work")
+            root = git(repo, "rev-parse", "--short", "HEAD")
+            (repo / "specs" / "IMPLEMENTED.md").write_text(LEDGER % root, encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                ref = self.module.last_audit_ref(repo)
+            printed = out.getvalue()
+            self.assertIn("SUSPECT-REF", printed,
+                          "a root commit carrying shipped work must still be reported; the "
+                          "probe answers empty for it unless --root is passed:\n" + printed)
+            self.assertIn("no parent", printed,
+                          "with nothing to widen to, the resolver must say so rather than "
+                          "implying a widened range")
+            self.assertEqual(root, ref, "there is no parent, so the ref must stand as recorded")
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_the_propagated_set_is_the_one_propagate_sh_mirrors(self):
         """⛔ The detector's premise: these are the paths an audit record must not touch.

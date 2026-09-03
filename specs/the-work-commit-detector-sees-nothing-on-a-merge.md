@@ -87,3 +87,41 @@ found nothing".
   scanner. Nothing here asserts anything about Senzing (INV-080).
 - Upstream: not applicable
 - Related specs: `specs/since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit.md`
+
+## Deviations from this spec, and why (2026-09-03)
+
+- ⛔ **The spec's own remedy was incomplete, and implementing it as written would have traded
+  one blind spot for another.** Proposed change 1 named
+  `git diff-tree --no-commit-id --name-only -r -m <ref>`. Measured across all three commit
+  shapes in a throwaway repository before changing anything:
+
+  | probe | root commit | normal | merge |
+  |---|---|---|---|
+  | `git show --name-only --format=` | lists | lists | **EMPTY** |
+  | `diff-tree --name-only -r -m` | **EMPTY** | lists | lists |
+  | `diff-tree --name-only -r -m --root` | lists | lists | lists |
+
+  So the spec's command answers nothing for a commit with no parent. Shipped with `--root`,
+  which covers all three. The table is recorded at the call site, because the next reader will
+  otherwise re-derive it — and the naive fix is the one that looks obviously right.
+- **A third fixture case was added beyond the two the spec asked for:** a root commit carrying
+  shipped work, built as its own repository since a root commit cannot be appended to an
+  existing history. Without it, the `--root` half of the fix is unguarded and the next
+  simplification would silently reintroduce the gap.
+- **Two negative controls, one per blind spot**, each failing exactly one test: reverting to
+  `git show --name-only` fails only the merge case; dropping `--root` fails only the root case.
+
+## My own mistakes in this cycle, recorded (2026-09-03)
+
+- ⛔ **A patch script asserted against text I had assumed rather than read**, so it applied
+  nothing and exited on the assertion — leaving the root-blind probe in place and the suite red
+  until the file was actually opened. The assertion is what made it visible; a `replace()`
+  without one would have reported success and changed nothing.
+- ⛔ **A revert restored a copy taken BEFORE the cycle's edit**, which silently undid the
+  comment and docstring along with the probe. That is the "same-size revert" hazard
+  `unattended-spec-loop` names, in a different guise: the danger is not only stale bytecode but
+  a `cp` whose source predates the work being controlled. Re-applied in full and verified by
+  grepping for both the flag and the docstring line rather than trusting the copy.
+- **A stray CJK glyph was typed into a test docstring** (`答s` for `answers`) and removed on
+  reading. Harmless here, and worth noting because INV-259's encoding checks govern shipped
+  text while `tests/` is unguarded for it.

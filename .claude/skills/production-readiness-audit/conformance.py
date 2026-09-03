@@ -316,14 +316,34 @@ def _widen_past_a_work_commit(repo, ref, entry):
     SKIPS on "nothing added", so it goes green by not running, and the `unattended-spec-loop`
     set-difference script iterates an empty list.
 
+    ⚠️ **What the probe sees is itself a measured question, not an obvious one** -- see the
+    table at the call below. A merge and a root commit each come back EMPTY from one of the two
+    plausible git invocations, and empty reads as "touches nothing shipped".
+
     So the contradiction is detected -- an audit-record commit that touches a propagated path
     contradicts its own entry -- reported loudly, and the range widened to the parent. The
     widening is announced rather than silent: a resolver that re-points a range without saying
     so is how a wrong baseline becomes invisible a second time.
     (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`.)
     """
-    touched = subprocess.run(["git", "show", "--name-only", "--format=", ref],
-                             cwd=str(repo), capture_output=True, text=True)
+    # ⛔ **`git show --name-only` cannot answer this for every commit shape, and its wrong
+    # answer is silence.** Measured 2026-09-03 in a throwaway repo, all three shapes:
+    #
+    #   probe                                  root commit   normal   merge
+    #   git show --name-only --format=         lists         lists    EMPTY
+    #   diff-tree --name-only -r -m            EMPTY         lists    lists
+    #   diff-tree --name-only -r -m --root     lists         lists    lists
+    #
+    # So `git show` passes a merge silently, and the obvious replacement without `--root`
+    # would only trade that for a root-commit blind spot. `--root` covers all three; `-m` is
+    # what makes a merge report each parent's diff; `-r` recurses into trees, without which a
+    # change deep in a directory reports the top-level tree name and no `plugins/...` path
+    # would ever match. Both blind spots are negative-controlled in
+    # `tests/test_since_last_audit_widens_past_a_work_commit.py`.
+    # (Source: `the-work-commit-detector-sees-nothing-on-a-merge`, 2026-09-03.)
+    touched = subprocess.run(
+        ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", "-m", "--root", ref],
+        cwd=str(repo), capture_output=True, text=True)
     if touched.returncode != 0:
         return ref
     shipped = sorted({f for f in touched.stdout.split()
