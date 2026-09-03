@@ -565,7 +565,7 @@ none of these are covered by it:
    ⚠️ **None of this is blocking.** The recap PDF is produced unconditionally (INV-048) and a missing
    manifest does **not** fail `--check`; the requirement is that graduation **states** the shortfall,
    not that it refuses to graduate. Do not re-state Module 7's capture instruction either — it is
-   already explicit, and a fourth copy is the state-it-once violation (INV-183). What was missing was
+   already explicit, and a fourth copy is the state-it-once violation (INV-183, INV-300). What was missing was
    the silence afterward, and that is what this closes.
 
    ⛔ **Do not use the generator's `embedded N of M images` figure for this.** Its denominator is

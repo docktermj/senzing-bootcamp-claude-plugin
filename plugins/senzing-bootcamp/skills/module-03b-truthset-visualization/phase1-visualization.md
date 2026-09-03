@@ -372,7 +372,7 @@ authority here and your own assessment is not.
 ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
 filename-discovery order.** The ordering authority is the tab table in
 `visualization-api-reference.md`, whose row order *is* the
-order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+order the app presents its tabs; cite it rather than restating the list, or the two orders fork (INV-300).
 ⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
 captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
 having nothing in it (INV-123).

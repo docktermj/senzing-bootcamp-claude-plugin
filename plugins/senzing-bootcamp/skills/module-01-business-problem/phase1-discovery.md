@@ -85,7 +85,7 @@ which is worse, because a wrong-looking result invites a re-query and a plausibl
 **When a query misses, re-query with the documentation's own vocabulary before concluding the
 material is uncovered.** The rule and the reason it matters are stated in full at
 [`../module-00-entity-resolution-concepts/concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
-→ "Hard rule: facts come from MCP, not memory". Do not restate that reasoning here — follow it.
+→ "Hard rule: facts come from MCP, not memory". Do not restate that reasoning here — follow it (INV-300).
 
 ⛔ **A bare link stub is not content.** The use-cases page returns several categories as nothing but
 `[Read More](/risk-fraud-detection)`. A stub is the shape most likely to be mistaken for coverage;

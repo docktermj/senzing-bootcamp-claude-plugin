@@ -102,7 +102,7 @@ absent-versus-present split above cannot see on its own.
   would tell someone who declined to go hunting for a license they never asked for. Absent
   `license_key_requested` → no reminder; say nothing about email.
 
-  **The apply procedure already exists — point at it, do not restate it.** Module 4 Step 8a
+  **The apply procedure already exists — point at it, do not restate it (INV-300).** Module 4 Step 8a
   **sub-step 5** decodes a Base64 key or copies a `.lic` to `licenses/g2.lic`, adds `LICENSEFILE` to
   the engine-config PIPELINE section, and records `license: custom`. ⛔ **Do not write a second copy
   of it here, and do not substitute a different mechanism.** A platform-specific procedure duplicated

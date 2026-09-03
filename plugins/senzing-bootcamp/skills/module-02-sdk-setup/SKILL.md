@@ -491,7 +491,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   The rule, the in-container compile check that confirms it, and why a host/container
   version split is *not* the first explanation are in
   `../bootcamp-onboarding/ground-rules.md` → "Running a file you just wrote, when the run happens
-  somewhere else". Do not restate them here (INV-183): the rule applies from this module through
+  somewhere else". Do not restate them here (INV-183, INV-300): the rule applies from this module through
   query programs, so it lives with the cross-cutting execution rules and is linked from the step
   that creates the condition.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
@@ -715,7 +715,7 @@ called out at the step rather than left to the ground rules (INV-183).
 <a id="env-script-path-resolution"></a>
 
 **The env script MUST resolve its own path in the platform's *default* shell, not only in bash.**
-This is the canonical statement of the rule; other modules link here rather than restating it.
+This is the canonical statement of the rule; other modules link here rather than restating it (INV-300).
 Because the documented pattern is to **source** the script into the bootcamper's interactive shell
 (see the same-shell requirement below), the shell it has to work in is whatever that bootcamper's
 shell actually is — and on macOS that is **zsh**, not bash. `${BASH_SOURCE[0]}` — the idiom anyone
@@ -819,7 +819,7 @@ is that case — no SDK jar path, and no entry to route to — and a script buil
 is then missing the one path that language needs. **The classpath bullet under *The launch
 environment* below records what that route returns, with its dated `MCP-NEGATIVE` marker, and gives
 the path to export and the check that confirms it.** Follow it rather than re-deriving the negative
-here (INV-183: the rule lives where the reader needs it, and a second dated copy is a second thing
+here (INV-183, INV-300: the rule lives where the reader needs it, and a second dated copy is a second thing
 to keep true).
 
 Three things in that block are the point, not decoration:

@@ -222,7 +222,7 @@ would suppress the switch question through the whole opening of a Core run — f
 bootcamper who is already running something stronger, which is the common case rather than an edge
 case. `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt" is
 **authoritative** for the comparison, including the per-dial rule for a value that cannot be read;
-do not restate that procedure here — two copies is how this drifted in the first place.
+do not restate that procedure here — two copies is how this drifted in the first place (INV-300).
 
 This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
 stay stable. Skip straight from Step 3 to Step 4.

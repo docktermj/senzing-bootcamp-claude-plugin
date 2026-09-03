@@ -71,7 +71,7 @@ first instances appeared, and later sites reached for the nearest available id o
 
 ## Invariants introduced
 
-- `INV-NNN` — **Requires maintainer-approved wording before implementation.** Drafted:
+- ✅ **`INV-300` — REGISTERED, approved by the maintainer 2026-09-03** (verdict: *register as drafted*, narrow scope). Recorded in `specs/INVARIANTS.md` with its index entry in the same edit, cited at 38 shipped sites, and enforced by `tests/test_a_single_statement_claim_names_its_authority.py`, which cites it back. The approved wording, which is what INVARIANTS.md now carries as the authority:
 
   > Where shipped guidance states that a rule, procedure or question's wording is **owned by
   > one place** — *"stated once"*, *"the canonical statement"*, *"do not restate it here"*,
@@ -176,3 +176,52 @@ reference that fails the suite. This note carried the prefixed form for one comm
 exactly that — see the dated correction on `production-readiness-audit-2026-09-03d`. Append the minted
 invariant with its index entry in the same edit, then work change 2's site set **by scanning** — not from this
 spec's list, which is where the author noticed the rule rather than its extent (INV-246).
+
+## Deviations from this spec, and why (2026-09-03)
+
+- ⛔ **The index group is NOT the one this spec implied, and the reason matters.** *The
+  development record itself* is the intuitive home for an authoring rule, and it is **the
+  exemption group** `coverage_reports.py shipped` uses: its own admission rule says *"its
+  members bind the development environment, so an ID here is never expected to appear in a
+  shipped file under `plugins/`. File a new invariant here only when that is true of it."*
+  INV-300 must be cited in shipped text, so filing it there would have exempted it from the
+  one check that notices an uncited rule. Filed instead in *Generator behavior* beside
+  **INV-183**, on the INV-268-extends-INV-132 precedent: an extension lives with its parent.
+- **Criterion 5's wording was wrong about `coverage_reports.py shipped`.** It asks for the
+  report to *"report the new id as cited in shipped text"*; that report lists only invariants
+  **missing** a citation, so the pass signal is INV-300's **absence** from its output — which
+  is what it shows. Verified, criterion met in substance.
+- ⚠️ **The scan found a claim my own reading had dismissed** — `phase2-data-mapping.md:1278`.
+  Its sentence begins with code reuse (*"reuse this same reader in later modules rather than
+  re-deriving one per module"*), which I classified as out of scope, and **ends** with an
+  ownership claim (*"Full rationale, and the rule … are in `module-02-sdk-setup/SKILL.md` →
+  'The launch environment'"*) carrying no citation. That is INV-246 landing on the person
+  applying it: the site set came from scanning, and scanning is what caught what reading
+  missed.
+- **Two existing guards pinned the exact phrase the citation was inserted into** —
+  `test_cord_fetch_integrity.py:63` (*"canonical statement; do not restate it elsewhere"*) and
+  `test_sampling_and_validation_routing.py:60` (*"canonical statement; do not restate it
+  here"*). The citation was moved **clear of** the pinned phrase rather than the guards being
+  rescoped: the phrase they pin *is* the canonical-declaration wording, so preserving it is
+  correct and the insertion point was the mistake. ⚠️ **Fourth syntax-pinned-guard collision
+  in this session.**
+- **Six candidate hits are exempted as not ownership claims**, each with its reason in the
+  guard, and each exemption is asserted to still match real text — a stale exemption silently
+  widens as prose changes.
+
+## My own mistakes in this implementation, recorded (2026-09-03)
+
+- ⛔ **The guard's first version was too weak, and its own negative control is what caught
+  it.** The citation check accepted any `INV-\d+` in the passage, so deleting INV-300 from a
+  claim left it green — a neighboring rule six lines away cited something unrelated. That is
+  proximity substituting for governance, reproduced *inside* the guard written to prevent it.
+  Tightened to `INV-(?:300|183)`, and re-controlled three ways: a removed citation, a
+  neighbor's unrelated id, and a stale exemption. **The lesson is that the control fired only
+  because it was run — a control that "should" fail proves nothing until it does.**
+- **A failure message printed 1.3 MB of shipped markdown**, because `assertIn(phrase, corpus)`
+  prints the haystack. Replaced with a boolean assertion that names the missing phrase.
+- **A British spelling of *neighboring* went into the new test** — the `-our-` form — and was
+  caught by INV-253's guard, not by me. ⚠️ Written here as a description rather than as the
+  word itself: quoting it would need a `PER_FILE_WAIVERS` entry in
+  `tests/test_us_english_spelling.py`, and that guard deliberately has no inline marker, so
+  a quote costs a maintained word/count pair that fails as stale once the prose moves.

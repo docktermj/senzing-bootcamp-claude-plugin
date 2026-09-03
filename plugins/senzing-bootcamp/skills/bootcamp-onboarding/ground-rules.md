@@ -567,7 +567,7 @@ the platform's **default** shell — not only in bash. On macOS that shell is **
   branch — the canonical idiom, with the fail-loudly root check that goes with it, is in
   `../module-02-sdk-setup/SKILL.md` under
   [the env script's path resolution](../module-02-sdk-setup/SKILL.md#env-script-path-resolution).
-  Do not restate it; link to it.
+  Do not restate it; link to it (INV-300).
 - ⛔ **A sourced script must never `exit` or `set -e` (INV-175).** It shares the bootcamper's shell, so `exit`
   closes their terminal and `set -e` leaks into the rest of their session. Use `return`.
 - **Verify the resolved path before using it, and name it when it is wrong.** Silently exporting a

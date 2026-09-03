@@ -688,7 +688,7 @@ id, so a server in any language (INV-090) must use these exact ids and expose th
 **The row order below is also the order the app presents its tabs, left to right, and therefore the
 order screenshots are embedded in the recap** (INV-155 fixes the six-tab set and this order;
 INV-147 binds the recap's embedding to it) — by `module-completion.md`'s capture step and by
-graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
+graduation's orphaned-screenshot backfill alike. Both cite this table (INV-300) rather than restating the
 list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
 app; images in capture or append order cannot be lined up against the interface.
 
@@ -1118,7 +1118,7 @@ $ nohup bash -c '...'                  -> (empty)
   parent shell has the variable set — so the obvious response is to add `-Djava.library.path=…`,
   **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "MCP Java scaffolds may need a JSON
   library the install does not provide" states why a JVM flag cannot repair a dynamic-linker search
-  path after the process has started; follow it there rather than re-deriving it (INV-183).
+  path after the process has started; follow it there rather than re-deriving it (INV-183, INV-300).
 - ⚠️ **Foreground programs work throughout, which is what makes this confusing.** They are direct
   children of the shell that exported the variable, so nothing is stripped. The failure appears only
   when a process is backgrounded or wrapped — exactly what starting a server is.

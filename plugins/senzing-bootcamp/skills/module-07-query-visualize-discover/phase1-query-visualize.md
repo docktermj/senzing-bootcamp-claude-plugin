@@ -315,7 +315,7 @@ reads fine — every signal the rule uses to say "suspect the flags" — and add
 array the engine had nothing to put in. Distinguish **absent** (the key is missing → cause 2, flags)
 from **present but empty** (the key is there with no members → cause 3, data). The worked instance is
 `WHY_KEY_DETAILS.CONFIRMATIONS[]`, whose three states and fallback are stated once in
-`phase2-discover.md` step 4b.3 (INV-179).
+`phase2-discover.md` step 4b.3 (INV-179, INV-300).
 
 Verify against `response_schemas` or a dumped raw response before rendering. Never render a blank
 value as though it were a real result — say "no value returned for X" so the failure is visible.
@@ -424,7 +424,7 @@ the document shared by `why_entities`, `why_records` and `why_record_in_entity` 
 flag is *documented* to populate it, yet it was absent without that flag on two SDK builds
 (observation-only). If it is missing for the flags in force, say so explicitly and fall back to
 `FEATURE_SCORES` rather than rendering an empty section — the full statement is in
-`phase2-discover.md` step 4b.3, which states it once (INV-179).
+`phase2-discover.md` step 4b.3, which states it once (INV-179, INV-300).
 
 **Checkpoint:** write step 3a.
 
@@ -454,7 +454,7 @@ server 1.32.9 (docs index 2026-08-11), that query returns the *Entity Resolution
 BM25 matched "evaluation" in the procurement sense. `reporting_guide` owns this material; ask it.
 If a lookup here returns nothing relevant, re-query with the documentation's own vocabulary before
 concluding the material is uncovered — [`concepts.md`](../module-00-entity-resolution-concepts/concepts.md)
-states that rule in full; follow it rather than restating it here.
+states that rule in full; follow it rather than restating it here (INV-300).
 
 ⛔ **Never state a quality verdict without showing the evidence for it.** Verbatim from
 `reporting_guide(topic='evaluation', language='python')` (server 1.32.9, 2026-08-12), which calls
@@ -752,7 +752,7 @@ of the Truth Set. It MUST:
   assumption, without running this script, lost twelve recap images; the same script then captured
   6 of 6 tabs first try against plain headless Chrome. The procedure (backends, exit codes,
   `--single`, the caption rule) stays stated once in `module-completion.md` — this is the tool's
-  identity, not a copy of its manual (INV-183).
+  identity, not a copy of its manual (INV-183, INV-300).
 
   ⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
   "no headless capability" from "no requested tab exists" — which is exactly why its exit code is
@@ -761,7 +761,7 @@ of the Truth Set. It MUST:
   ⛔ **Embed in the app's own tab order — never in capture or append order, and never in
   filename-discovery order.** The ordering authority is the tab table in
   `../module-03b-truthset-visualization/visualization-api-reference.md`, whose row order *is* the
-  order the app presents its tabs; cite it rather than restating the list, or the two orders fork.
+  order the app presents its tabs; cite it rather than restating the list, or the two orders fork (INV-300).
   ⛔ **A caption must never imply a result set the image does not show.** Where Search / Probe was
   captured empty or inactive, say so in the caption — an undisclosed empty panel reads as the data
   having nothing in it (INV-123).

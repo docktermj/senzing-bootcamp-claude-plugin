@@ -242,7 +242,7 @@ nothing shown and nothing asked.
   guided mode, present the plan and end the turn on the pinned question at **step 10** before
   advancing. In the faster mode, present it and advance the same turn, which is what the tool wanted
   anyway. **Step 10 owns that question's wording** — it is pinned there and is not restated here, so
-  the two cannot drift apart (INV-183). INV-233 is why this cross-reference is safe: an instruction to
+  the two cannot drift apart (INV-183, INV-300). INV-233 is why this cross-reference is safe: an instruction to
   end the turn on a question must resolve to a pinned question that actually exists at the step it
   names.
 - **Do not weaken the mapping-verbosity offer to match the tool.** The bootcamper was promised they
@@ -610,7 +610,7 @@ at step 9 already holds the evidence: scan its `Unique`, `Unique %` and frequenc
 columns for a populated text field carrying many repeating real-world names. If there is one, declare
 it as an `embedded_master` in this step's payload. See **"A second entity hiding in a column:
 `embedded_master`, and when to go `back`"** above for the three signals, the payload it requires, and
-the recovery route if this check is missed — do not restate them here (INV-183: the rule is named and
+the recovery route if this check is missed — do not restate them here (INV-183, INV-300: the rule is named and
 linked at the step that needs it, never forked into a second copy).
 
 > **Presentation (conditional on `mapping_verbosity`):**
@@ -1266,7 +1266,7 @@ reads/writes, and what it handles.
 ⛔ **On Java, that `snake_case` filename and an idiomatic class name cannot both be `public`** —
 declare the top-level class package-private and keep the prescribed path. Applies equally to the
 `<name>_mapper.<ext>` the workflow's own step 4 asks for. The rule, its reason and the C# difference
-are in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237); do not restate them
+are in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237, INV-300); do not restate them
 here.
 
 **Keep JSON handling dependency-free.** This is usually the first Java the bootcamp generates, and
@@ -1275,7 +1275,7 @@ depend on an external JSON library (a scaffold importing `javax.json` will not c
 Write the reader here so it needs only the standard library, and **reuse this same reader in later
 modules** rather than re-deriving one per module: Data processing's loading program expects it. Full
 rationale, and the rule that replacing the JSON library is safe while altering SDK calls is not, are
-in `../module-02-sdk-setup/SKILL.md` → "The launch environment".
+in `../module-02-sdk-setup/SKILL.md` → "The launch environment" (INV-300).
 
 **Checkpoint:** write step 13.
 

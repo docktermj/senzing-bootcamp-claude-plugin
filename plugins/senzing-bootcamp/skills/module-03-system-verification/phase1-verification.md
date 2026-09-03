@@ -96,7 +96,7 @@ Verify MCP server connectivity before code generation operations.
    document search (INV-204): this step discards the content and keeps only "did the server answer", so a
    `search_docs` query pays for retrieval it throws away. See
    [`../bootcamp-onboarding/onboarding-flow.md`](../bootcamp-onboarding/onboarding-flow.md) →
-   "MCP health check", which states the reasoning; do not restate it here, and do not restore a
+   "MCP health check", which states the reasoning; do not restate it here (INV-300), and do not restore a
    `search_docs` probe.
 2. **If a response is received** (including empty results): MCP connectivity confirmed. Proceed
    silently; do not display connectivity status to the bootcamper.
@@ -330,7 +330,7 @@ Verify the MCP server can generate a full pipeline script in the chosen language
    Step 5
    compiles it — resolve it here, not from a raw compiler error.** The full procedure is stated
    once in `../module-02-sdk-setup/SKILL.md` → **"MCP Java scaffolds may need a JSON library the
-   install does not provide"**; follow it there rather than a copy here (INV-183). Two things are
+   install does not provide"**; follow it there rather than a copy here (INV-183, INV-300). Two things are
    restated at this step deliberately, because a bootcamper hitting this is reading *this* file:
 
    - ⛔ **Replacing the JSON library is safe. Altering the Senzing SDK calls is not.** Keep
@@ -384,7 +384,7 @@ all build commands.
 ⛔ **On Java, keep `verify_pipeline.java` and declare the top-level class package-private** — the
 filename is `snake_case` and the idiomatic class name is not, and only a `public` top-level class is
 filename-bound. The rule, its reason and the C# difference are in `../bootcamp-onboarding/ground-rules.md`
-→ "File placement" (INV-237); do not restate them here and do not rename the file, which this table's
+→ "File placement" (INV-237); do not restate them here (INV-300) and do not rename the file, which this table's
 own tests pin.
 
 1. Execute the build command for the chosen language.
@@ -451,7 +451,7 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
      mechanism, and no binding's exception type is a contract (INV-002). The full
      reasoning, including the community-versus-official `search_docs` hazard, is stated
      once at `../module-06-data-processing/phaseA-build-loading.md` step 4a item 2
-     (INV-183); do not restate it here.
+     (INV-183, INV-300); do not restate it here.
    - ⛔ **Pass `data_sources` so the registration snippet is primary, then substitute
      your codes into it** — the parameter selects the snippet and fills in nothing, so
      the returned code still carries the sample tuple. Locate it by `source_path`. Same

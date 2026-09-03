@@ -270,7 +270,11 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # 113 as of 2026-09-02: INV-296 and INV-297 were registered from
 # `proceed-on-sqlite-keeps-the-tier-s-thread-count`, each naming
 # tests/test_loader_concurrency_reads_database_type.py as its enforcer.
-EXPECTED_PAIRS = 113
+# 114 on 2026-09-03: INV-300 (a single-statement claim names its authority) names
+# `test_a_single_statement_claim_names_its_authority.py`, which cites it back. Re-derived by
+# running `pairs()` and reading its length — 114, with the new pair confirmed present by
+# name — not by incrementing 113.
+EXPECTED_PAIRS = 114
 
 
 def pairs():

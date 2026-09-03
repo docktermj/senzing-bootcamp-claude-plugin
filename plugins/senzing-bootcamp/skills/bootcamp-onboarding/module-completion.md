@@ -327,7 +327,7 @@ a short `{name}`):
    ⛔ **Embed in the app's tab order, never in capture or append order.** The order is the row order
    of the tab table in
    `../module-03b-truthset-visualization/visualization-api-reference.md` → "Tab identifiers and
-   deep-linking" — read it there rather than restating the list, so a tab change updates one file.
+   deep-linking" — read it there rather than restating the list (INV-300), so a tab change updates one file.
    A tab that produced no image is simply skipped; the rest keep their relative order. The recap is
    a walkthrough of the app, so a reader must be able to line the images up against the interface
    left to right.

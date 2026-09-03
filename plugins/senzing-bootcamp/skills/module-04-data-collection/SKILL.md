@@ -46,7 +46,7 @@ early, write what actually completed, so a resume lands on the right step rather
 or skipping it.
 
 See `../bootcamp-onboarding/ground-rules.md` → the 👉 protocol, which defines the non-yielding step
-and the single-write checkpoint that follows from it; it is stated once, there, and not restated here.
+and the single-write checkpoint that follows from it; it is stated once, there, and not restated here (INV-300).
 
 **First:** Read `config/bootcamp_progress.json`, then (per ground-rules) show the module start
 banner, journey map, before/after framing, a brief numbered overview of this module's steps, an estimated time-to-complete (INV-096), and the recommended model/effort nudge (INV-063), before any module work. Read `current_step` and
@@ -120,7 +120,7 @@ limit: never from a remembered or hardcoded figure:
   cap** toward a smaller dataset, here, in the module where the sampling decision is actually made.
   - **Measure it** by Step 8a's own procedure (sub-step 7 below): generate a scaffold calling
     `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
-    (INV-115), and parse `recordLimit`. Follow that step rather than restating it.
+    (INV-115), and parse `recordLimit`. Follow that step rather than restating it (INV-300).
     (`get_sdk_reference(topic='response_schemas', filter='get_license')`, server 1.32.9,
     2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
     `get_license() -> str`.)
@@ -152,7 +152,7 @@ forward.
 ⛔ **Sampling rule — when 2+ sources are present, random selection destroys the signal entity
 resolution exists to find.** This is the canonical statement; every other place that reduces a
 dataset (the smaller-slice path later in this step, and the load-time branch in Step 8b) refers
-here rather than restating it.
+here rather than restating it (INV-300).
 
 A random sample is the right instinct for **profiling** — it preserves each source's distributions —
 and the wrong one for **entity resolution**, which needs the *same real-world entities to appear in
@@ -285,7 +285,7 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     ⚠️ **The arithmetic is Module 5's, not this step's — read it there rather than trusting this
     table.** The composite formula and the per-`RECORD_TYPE` completeness denominator are stated once
     in `../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 6 (INV-174); this step
-    carries only the target and one worked illustration, so the two cannot drift (INV-183).
+    carries only the target and one worked illustration, so the two cannot drift (INV-183, INV-300).
 
     ⚠️ **Reaching this band honestly means about a third of all field values absent, which is heavier
     degradation than a real CRM or POS export usually carries.** That is a consequence of pairing a
@@ -486,7 +486,7 @@ does not even work: `Mozilla/5.0` was measured **403** on the same host in the s
 is the other URL, which the response already gave you.
 
 Three checks, all required, in this order. **This is the canonical statement; do not restate it
-elsewhere.**
+elsewhere (INV-300).**
 
 1. **Check the HTTP status of every fetch.** Anything outside 2xx is a **failed fetch** — never treat
    the body as data. Use whatever your chosen language offers: an HTTP client raises or exposes a
@@ -1113,7 +1113,7 @@ about a roughly half-hour load, for a load of about two minutes.
      match clusters; also accept a bootcamper-described strategy. **Where 2+ sources are present,
      present the overlap-preserving strategy as the recommended one and say why the others lose
      cross-source matches — see the [sampling rule](#overlap-preserving-sampling) in Step 6, which
-     is the canonical statement; do not restate it here.** Validate the target record
+     is the canonical statement; do not restate it here (INV-300).** Validate the target record
      count (a positive integer strictly less than the collected total) and re-ask until valid.
      Create the sample with the chosen strategy, write it under `data/samples/`, and document
      the strategy **and the reason for it** in a sample manifest. Then record the decision

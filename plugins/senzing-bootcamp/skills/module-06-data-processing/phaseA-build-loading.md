@@ -100,7 +100,7 @@ licensing as a default the bootcamper already has, never as a hard cap:
   limit below the dataset size** puts licensing in scope at this step. If the field is **absent or
   null** that means *"never measured"*, not *"no custom license"* — follow the three branches under
   *"Reconcile it against the license already detected"* below rather than restating them here
-  (INV-183), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
+  (INV-183, INV-300), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
   the value you would be re-deriving was already measured and persisted by the step that owns this
   question, and a second SDK call is the way two answers start to differ.
   ⛔ **(INV-295) One exception, and it is the reason `license_record_limit_measured_at` exists: a reading marked
@@ -209,7 +209,7 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   explicitly (INV-012). It is one SDK call away.
   - **Measure it** by the procedure Module 4 Step 8a already defines — generate a scaffold calling
     `SzProduct.get_license()`, save the returned JSON, read it to confirm the shape before parsing
-    (INV-115), and parse `recordLimit`. Follow that step rather than re-deriving it; the module
+    (INV-115), and parse `recordLimit`. Follow that step rather than re-deriving it (INV-300); the module
     already builds and runs SDK programs in the bootcamper's language, so this needs no new
     machinery. (`get_sdk_reference(topic='response_schemas', filter='getLicense')`, server 1.32.9,
     2026-08-14, confirms the method in every binding — `SzProduct.getLicense() -> String`,
@@ -502,7 +502,7 @@ stop-and-confirm heads-up, NOT a mandatory gate, the bootcamper may always proce
      carrying a thread-pooled loader into a datastore this question just confirmed is SQLite.
    - **Migrate to PostgreSQL:** record `sqlite_volume_prompt` = `{decided: true, choice:
      "migrate", tier, raw_value}` in preferences, then hand off to the database-migration
-     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here.
+     guidance (PostgreSQL migration is a production follow-up; see the graduation migration checklist). Do not restate migration steps here (INV-300).
 
 *(Internal: when this heads-up fires, end the turn on the pinned question in item 4 and wait.)* Use
 only synthetic/persisted values, never echo credentials or connection strings. (The Kiro

@@ -105,7 +105,7 @@ Truth Set DATA.
   server's entity-model build (one `get_entity_by_record_id` per record), never from direct SQL.
   ⚠️ **(INV-289) That per-record build is scoped to the Truth Set** — it does not carry to the
   Bootcamper's own datastore, which needs the export stream. The reason is stated where the build
-  happens, at `phase1-visualization.md` Step 2; do not restate it here (INV-183).
+  happens, at `phase1-visualization.md` Step 2; do not restate it here (INV-183, INV-300).
 - Kiro process control (`controlBashProcess`) maps here to running the web service as a background
   process and stopping it later at this module's close.
 - **Visualization (Step 2) is built in the Bootcamper's chosen programming language,** modeled on the
