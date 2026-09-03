@@ -151,6 +151,15 @@ months. Nothing new was written into the plugin, so there is no new guarantee to
 deferral would be about text that is already there. The working tree was left clean; no partial
 work to revert.
 
+⛔ **`/review-invariants` will NOT show this draft, so do not read an empty queue as nothing
+waiting.** `pending_invariants.py` reads `DEFERRED INVARIANT` blocks in
+`specs/IMPLEMENTED.md`, and this draft is not one: a deferral records a **rule that already
+shipped** with no invariant, whereas nothing was shipped here — the wording is a *proposal*
+living in this spec. On 2026-09-03 that queue reported `pending: 0   held: 1   next free id:
+INV-300` with this draft outstanding, and both statements were true. ⚠️ Whether the review
+queue should also read specs' `## Invariants introduced` sections for unminted ids is a
+maintainer decision, not a defect this run should have decided.
+
 ### The question that unblocks it
 
 👉 **Approve, amend, or reject the drafted wording in `## Invariants introduced` above — and
