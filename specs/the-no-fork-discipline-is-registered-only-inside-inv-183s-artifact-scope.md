@@ -158,7 +158,11 @@ settle the scope question it names:** does the invariant bind only a site that *
 single-statement ownership (the drafted form: ~40 sites, mechanically findable), or every
 passage that *could* have restated a rule and did not (unbounded, and not checkable)?
 
-On approval: mint the next free id (**INV-300** as of 2026-09-03; re-read it with
-`pending_invariants.py next-id`, since several drafts may compete for it), append it with its
-index entry in the same edit, then work change 2's site set **by scanning** — not from this
+On approval: mint the next free id — **300** at the time of writing, 2026-09-03, and
+⛔ **re-read it with `pending_invariants.py next-id` rather than trusting that number**, since
+several drafts can compete for one id. ⚠️ The id is written here **without its `INV-` prefix on
+purpose**: `citations.py verify` scans this tree for `INV-nnn` and an unminted one is a dangling
+reference that fails the suite. This note carried the prefixed form for one commit and did
+exactly that — see the dated correction on `production-readiness-audit-2026-09-03d`. Append the minted
+invariant with its index entry in the same edit, then work change 2's site set **by scanning** — not from this
 spec's list, which is where the author noticed the rule rather than its extent (INV-246).
