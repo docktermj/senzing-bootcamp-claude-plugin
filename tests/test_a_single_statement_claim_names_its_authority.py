@@ -13,6 +13,30 @@ question's wording it was cited for a clause whose scope did not reach it.
 bullet head several lines above the sentence that states it, and a line-level check reports
 those as uncited — the 2026-09-03 audit had to retract a finding produced exactly that way.
 
+⛔ **INV-300 states THREE obligations; this file asserts two of them.** Mapped explicitly,
+because the invariant's own `Enforced by` clause names this test and a reader takes that to
+mean the whole rule is guarded:
+
+===========================================================  ==========================
+INV-300 obligation                                           status here
+===========================================================  ==========================
+(a) name the owning file or step                             **asserted**, for pointer
+                                                             sites; owner-side
+                                                             declarations are exempt by
+                                                             their own wording
+(b) cite the invariant that makes single-statement           **asserted**
+    authoritative
+(c) the pointing site carries no second copy of the rule     **NOT asserted, and not
+                                                             assertable** — see below
+===========================================================  ==========================
+
+⚠️ **(c) is not a gap that better regexes would close.** INV-300 itself says why: *"the
+duplication scan reports **exact** repeats, so two statements that have stopped matching are
+precisely what it cannot see."* Establishing it means reading each pointer against its target
+and judging whether the pointer restates the rule — 38 pairs as of 2026-09-03, and a person's
+work. A similarity scan was measured on this corpus and rejected: at a 0.82 floor it reports 18
+pairs of which 15 are phase-header boilerplate.
+
 ⚠️ **What this guard does NOT establish, said plainly because its vocabulary is open-ended:**
 
 - The claim vocabulary is a **phrase list**. A site that says the same thing in new words
@@ -79,6 +103,19 @@ NOT_A_CLAIM = (
 
 #: Measured at 42 on 2026-09-03. A floor, not a pin — the corpus grows.
 MIN_CLAIMS = 30
+
+#: ⛔ **An OWNER-side declaration is exempt from obligation (a), by its own wording.** A
+#: passage saying *"this is the canonical statement"* names no owning file because it IS the
+#: owner — the obligation reads vacuously there. Detected by the declaration itself, never by
+#: a list of the three sites known today (INV-246): a fourth canonical statement must be
+#: exempt on the same terms without anyone remembering to add it.
+OWNER_SIDE = re.compile(r"(?:this\s+is|is)\s+the\s+canonical\s+statement", re.I)
+
+#: How a passage names its owner: a file, a quoted section title, a step, or an anchor. Any
+#: one is enough — the obligation is that the reader can get there, not how.
+OWNER_REFERENCE = re.compile(
+    r"`[^`]+\.md`|`[^`]+\.py`|→\s*[\"“]|[\"“][^\"”]{4,}[\"”]|\b[Ss]tep\s+\d|"
+    r"sub-step\s+\d|#[a-z0-9-]{4,}")
 
 
 def shipped_markdown():
@@ -147,6 +184,41 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
             "bootcamper-facing artifact, which is the scope INV-183 covers. Without an id, "
             "nothing binds future work to the single-statement discipline and nothing notices "
             "when a later edit forks the rule into a second copy:\n" + "\n".join(offenders))
+
+    def test_each_pointer_side_claim_names_its_owner(self):
+        """Obligation (a): a claim that points must say where the rule lives.
+
+        ⚠️ **Measured before it was asserted**: 41 of the 42 claims already named an owner on
+        2026-09-03, and the one that did not was an owner-side declaration — so this assertion
+        was written from what the corpus does, not from what the invariant's sentence implies.
+        """
+        offenders = []
+        for relpath, lineno, line, window in ownership_claims():
+            if OWNER_SIDE.search(window):
+                continue
+            if OWNER_REFERENCE.search(window):
+                continue
+            offenders.append("  %s:%d — %s" % (relpath, lineno, line[:130]))
+        self.assertEqual(
+            [], offenders,
+            "a claim says a rule is stated once elsewhere and never says WHERE (INV-300). "
+            "Name the owning file, the quoted section, or the step — a pointer the reader "
+            "cannot follow leaves them to re-derive the rule, which is the second copy this "
+            "invariant exists to prevent:\n" + "\n".join(offenders))
+
+    def test_the_owner_side_exemption_is_not_a_path_list(self):
+        """⛔ The exemption must be earned by wording, so a fourth owner site is covered too.
+
+        Asserted against a synthetic passage rather than a shipped one: if this only checked
+        the three sites that exist today it would be the hardcoded list it exists to avoid.
+        """
+        synthetic = "**This is the canonical statement; do not restate it elsewhere (INV-300).**"
+        self.assertRegex(synthetic, OWNER_SIDE,
+                         "a canonical-statement declaration must be recognized as owner-side")
+        self.assertNotRegex(
+            "follow it there rather than a copy here (INV-300)", OWNER_SIDE,
+            "a pointer must NOT be treated as owner-side, or obligation (a) stops binding "
+            "the sites it was written for")
 
     def test_the_invariant_itself_is_reachable_from_the_claims(self):
         """⛔ INV-300 must actually be cited in shipped text, not only registered.

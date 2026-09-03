@@ -90,3 +90,24 @@ a pointer site and its target.
 - Related specs: `specs/the-no-fork-discipline-is-registered-only-inside-inv-183s-artifact-scope.md`,
   `specs/inv-300-is-drafted-from-the-pointer-side-and-cited-at-owner-side-declarations.md`,
   `specs/a-check-whose-scope-is-wider-than-its-claim-passes-without-establishing-it.md`
+
+## Deviations from this spec, and why (2026-09-03)
+
+- **The owner-side exemption shipped here, not in the sibling spec.** Obligation (a) cannot be
+  asserted without it: `module-04-data-collection/SKILL.md:488` is an owner-side declaration
+  and would fail the new assertion, so committing this spec first would have left the suite
+  red between two commits — which the loop forbids. The exemption is derived from the
+  declaration's own wording (`OWNER_SIDE`), never from a list of the three sites known today
+  (INV-246), and a test asserts that with a synthetic passage so the mechanism cannot silently
+  degrade into a path list.
+- ⛔ **The INV-300 note first named `tests/test_invariant_enforcer_citations.py`, and that
+  turned the suite red.** The extractor behind that guard reads **any** test filename inside an
+  invariant's text as an invariant→test pair, so naming it minted a spurious INV-300 pairing
+  and the count moved **114 → 115**. Reworded to describe the guard rather than name it, which
+  is recorded inside the note itself so the next author does not repeat it. ⚠️ The alternative —
+  re-deriving `EXPECTED_PAIRS` to 115 — would have required that test to cite INV-300 back, a
+  claim it has no business making, and would have blessed a false pair to make an assertion
+  pass.
+- **Obligation (a)'s assertion was written from measurement, not from the invariant's
+  sentence:** 41 of the 42 claims already named an owner, and the exception was the owner-side
+  case. A guard written from the sentence alone would have flagged it as a violation.
