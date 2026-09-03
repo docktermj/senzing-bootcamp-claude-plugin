@@ -133,7 +133,7 @@ absent-versus-present split above cannot see on its own.
   `license_key_requested` is absent** — a Bootcamper may hold a license the bootcamp never asked about,
   and it is the option this branch previously omitted entirely; what the `license_key_requested`
   marker gates is only the *"check your email, it may have arrived"* line above.
-- **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
+- **Absent or null** — ⛔ **"never measured", not "no custom license": measure before warning.** (INV-244) This
   is the same branch, and the same trap, as Phase A's — **every step that writes
   `license_record_limit` writes only a MEASURED value**, so its absence says nothing about the
   installed license: SDK setup's Step 5a measures as soon as the SDK is verified and deliberately

@@ -390,7 +390,7 @@ server is gone and the Truth Set data cannot be re-served, so a missed capture i
 ### 2.3 Start the live web app
 
 Start the server as a background process you can stop later in Step 4 (Cleanup), serving the loaded
-records on port 8080. ⛔ **(INV-179) The launch below backgrounds with a plain `&` from the shell that sourced
+records on port 8080. ⛔ **(INV-001, INV-002) The launch below backgrounds with a plain `&` from the shell that sourced
 the env script, and that is deliberate — on macOS, wrapping it in `nohup`, `env` or a nested
 `bash -c` strips `DYLD_*` and the server cannot find the native library.** The contract's
 "Server lifetime" section states the rule and the symptom; do not "improve" this line into a

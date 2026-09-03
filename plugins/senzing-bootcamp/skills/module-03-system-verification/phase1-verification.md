@@ -330,7 +330,7 @@ Verify the MCP server can generate a full pipeline script in the chosen language
    Step 5
    compiles it — resolve it here, not from a raw compiler error.** The full procedure is stated
    once in `../module-02-sdk-setup/SKILL.md` → **"MCP Java scaffolds may need a JSON library the
-   install does not provide"**; follow it there rather than a copy here (INV-179). Two things are
+   install does not provide"**; follow it there rather than a copy here (INV-183). Two things are
    restated at this step deliberately, because a bootcamper hitting this is reading *this* file:
 
    - ⛔ **Replacing the JSON library is safe. Altering the Senzing SDK calls is not.** Keep
@@ -451,7 +451,7 @@ first — so without this step every Module 3 run hits SENZ2207 on the first loa
      mechanism, and no binding's exception type is a contract (INV-002). The full
      reasoning, including the community-versus-official `search_docs` hazard, is stated
      once at `../module-06-data-processing/phaseA-build-loading.md` step 4a item 2
-     (INV-179); do not restate it here.
+     (INV-183); do not restate it here.
    - ⛔ **Pass `data_sources` so the registration snippet is primary, then substitute
      your codes into it** — the parameter selects the snippet and fills in nothing, so
      the returned code still carries the sample tuple. Locate it by `source_path`. Same

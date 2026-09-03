@@ -1118,7 +1118,7 @@ $ nohup bash -c '...'                  -> (empty)
   parent shell has the variable set — so the obvious response is to add `-Djava.library.path=…`,
   **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "MCP Java scaffolds may need a JSON
   library the install does not provide" states why a JVM flag cannot repair a dynamic-linker search
-  path after the process has started; follow it there rather than re-deriving it (INV-179).
+  path after the process has started; follow it there rather than re-deriving it (INV-183).
 - ⚠️ **Foreground programs work throughout, which is what makes this confusing.** They are direct
   children of the shell that exported the variable, so nothing is stripped. The failure appears only
   when a process is backgrounded or wrapped — exactly what starting a server is.

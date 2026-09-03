@@ -292,5 +292,150 @@ class TheFieldIsWrittenOnlyFromAMeasurement(unittest.TestCase):
                                  "which would push an editor into deleting correct text")
 
 
+#: The gloss shape, not the words "never asked" — which have legitimate uses in these same
+#: files (a Bootcamper "may hold a license the bootcamp never asked about" is correct, and is
+#: three lines from a site this matcher must catch). What is wrong is glossing the ABSENCE of a
+#: measured-only field as a question nobody put, which always takes this paired form.
+#: ⚠️ Calibrated 2026-09-03 against the pre-fix text: 3 hits, exactly the three defective
+#: sites, and 0 elsewhere in the five files that discuss the field.
+ABSENCE_GLOSSED_AS_UNASKED = re.compile(
+    r"(?:never|not)\s+asked.{0,40}?no custom license", re.S)
+
+
+class AbsenceIsGlossedAsUnmeasuredNotUnasked(unittest.TestCase):
+    """⛔ For a field written only from a measurement, absence means never MEASURED.
+
+    Three Module 6 sites glossed it as *"never asked"* until 2026-09-03 — inherited from
+    INV-244's general clause, which is correct for conditionally-written fields at large and
+    wrong for this one — while Module 4 and SDK setup said *never measured*. **Each of the
+    three contradicted its own next sentence**, which explains that absence is "a measurement
+    that did not happen".
+
+    "Asked" is not a neutral synonym here: nothing asks the Bootcamper for this value, and
+    INV-170 makes *asked* mean the opposite of detected — a value the Bootcamper was asked for
+    outranks an auto-detected one — so the gloss points at asking them when the remedy is one
+    SDK call.
+    """
+
+    def test_no_site_glosses_the_absence_as_a_question_nobody_asked(self):
+        bad = []
+        for path in field_sites():
+            flat = flatten(path.read_text(encoding="utf-8"))
+            for match in ABSENCE_GLOSSED_AS_UNASKED.finditer(flat):
+                bad.append(
+                    f"{path.relative_to(REPO_ROOT)}: "
+                    f"...{flat[max(0, match.start() - 60):match.end() + 40]}...")
+        self.assertEqual(
+            [], bad,
+            f"a site glosses an absent `{FIELD}` as never ASKED. The field is written only "
+            "from a measurement, so absence means never MEASURED — which is what the same "
+            "bullet's own explanation says, and what Module 4 and SDK setup already write. "
+            "INV-170 gives *asked* a different meaning, so this wording sends the guide to "
+            "ask the Bootcamper instead of measuring:\n  " + "\n  ".join(bad))
+
+    def test_the_matcher_sees_the_shape_and_spares_the_legitimate_use(self):
+        """Fixtures, so the calibration cannot rot silently as the prose is edited."""
+        for planted in (
+            'absent or null - **this means "never asked", not "no custom license". measure it',
+            'if the field is absent or null that means *"never asked"*, not *"no custom license"*',
+            '- **absent or null** - **"never asked", not "no custom license": measure before',
+        ):
+            with self.subTest(planted=planted[:46]):
+                self.assertRegex(flatten(planted), ABSENCE_GLOSSED_AS_UNASKED)
+        for ok in (
+            "a bootcamper may hold a license the bootcamp never asked about, and it is the "
+            "option this branch previously omitted entirely",
+            'this means "never measured", not "no custom license": measure it before deciding',
+            "the name is detected, never asked",
+        ):
+            with self.subTest(ok=ok[:46]):
+                self.assertNotRegex(flatten(ok), ABSENCE_GLOSSED_AS_UNASKED)
+
+
+class TheRulesetDoesNotCountThemEither(unittest.TestCase):
+    """⛔ The corpus extension of 2026-09-03, and the reason it took a spec to notice.
+
+    The 2026-08-28 fix removed every writer count from `plugins/` and left this guard to keep
+    them out. It did not reach `specs/INVARIANTS.md`, so **INV-244 — the invariant every one
+    of those sites cites as its authority — went on stating *"The only writer of
+    `license_record_limit` is Module 4's Step 8a gate"* for six days**: the first of the three
+    wrong counts, in the one file the fix could not have been read without.
+
+    ⚠️ **`INVARIANTS.md` is append-only and legitimately carries dated observations**, so this
+    cannot simply ban the phrasing — the remedy for a stale premise there is a dated correction
+    note, never a deletion. The exemption is therefore **the correction note itself**: a count
+    inside an invariant entry is allowed only where that entry also carries a
+    `SUPERSEDED-COUNT:` marker, which cannot be satisfied by accident because writing it means
+    writing the correction. A guard whose only way to pass is deleting history would be worse
+    than no guard.
+    """
+
+    RULESET = REPO_ROOT / "specs" / "INVARIANTS.md"
+    MARKER = "superseded-count:"
+
+    def entries(self):
+        """[(id, text)] for every invariant entry that discusses the field."""
+        out, current, ident = [], [], None
+        for line in self.RULESET.read_text(encoding="utf-8").split("\n"):
+            match = re.match(r"- \*\*(INV-\d+)\*\*", line)
+            if match:
+                if ident and FIELD in "\n".join(current):
+                    out.append((ident, "\n".join(current)))
+                ident, current = match.group(1), [line]
+            elif ident:
+                current.append(line)
+        if ident and FIELD in "\n".join(current):
+            out.append((ident, "\n".join(current)))
+        return out
+
+    def test_the_scan_finds_the_invariants_that_discuss_the_field(self):
+        """⛔ INV-265 — a scan that matches nothing certifies nothing."""
+        found = self.entries()
+        self.assertTrue(
+            found,
+            f"no invariant entry mentions `{FIELD}`; the parser broke or the field was "
+            "renamed. INV-244 is the entry this class exists for.")
+
+    def test_a_count_in_the_ruleset_carries_its_correction(self):
+        bad = []
+        for ident, text in self.entries():
+            flat = flatten(text)
+            if self.MARKER in flat:
+                continue
+            for pat in WRITER_COUNT:
+                match = re.search(pat, flat)
+                if match:
+                    bad.append(
+                        f"{ident}: /{pat}/ -> "
+                        f"...{flat[max(0, match.start() - 60):match.end() + 60]}...")
+        self.assertEqual(
+            [], bad,
+            f"an invariant states how many steps write `{FIELD}`, with no "
+            "`SUPERSEDED-COUNT:` correction note in the same entry. The count has been wrong "
+            "in every version it has had, and the rule rests on the measured-only property "
+            "instead. `INVARIANTS.md` is append-only, so the remedy is a dated correction "
+            "note beside the claim — never deleting it:\n  " + "\n  ".join(bad))
+
+    def test_the_exemption_cannot_be_had_without_the_correction(self):
+        """The marker is the whole exemption, so its absence must be what fails.
+
+        Run against fixtures rather than by mutating the file, so the control cannot be left
+        half-reverted — and asserted in both directions, since an exemption that fires on an
+        entry without the note would silently readmit every count.
+        """
+        claim = f"The only writer of `{FIELD}` is Module 4's Step 8a gate, which is volume-gated."
+        flat = flatten(claim)
+        self.assertTrue(
+            any(re.search(p, flat) for p in WRITER_COUNT),
+            "the count matcher must still see the claim this class was written for")
+        self.assertNotIn(
+            self.MARKER, flat,
+            "the bare claim must not look exempt — the marker is what grants the exemption")
+        self.assertIn(
+            self.MARKER,
+            flatten(claim + " (⚠️ SUPERSEDED-COUNT: corrected 2026-09-03, six writers.)"),
+            "an entry carrying the correction note must be recognized as exempt")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -109,8 +109,8 @@ limit: never from a remembered or hardcoded figure:
   presence suppresses it. A Bootcamper whose license has **no cap** would be steered toward a smaller
   dataset on the strength of a reading that never saw their license.
 - **Present and equal to 0** (custom license with no record cap): the license imposes no cap: do **not** recommend sampling for license reasons, and support loading the full dataset.
-- **Absent or null** — ⛔ **this means "never measured", not "no custom license": measure it before
-  deciding anything about capacity.** (INV-244) Every step that writes this field writes only a
+- **Absent or null** — ⛔ **(INV-244) this means "never measured", not "no custom license": measure it before
+  deciding anything about capacity.** Every step that writes this field writes only a
   **measured** value, so absence means every earlier measurement was skipped or failed: SDK setup's
   Step 5a measures as soon as the SDK is verified and deliberately writes nothing when it cannot,
   and Step 8a below is **volume-gated by design** — it fires only when the collected volume
@@ -285,7 +285,7 @@ made** for every source in it. Then read the source's entry in `config/data_sour
     ⚠️ **The arithmetic is Module 5's, not this step's — read it there rather than trusting this
     table.** The composite formula and the per-`RECORD_TYPE` completeness denominator are stated once
     in `../module-05-data-quality-mapping/phase1-quality-assessment.md` Step 6 (INV-174); this step
-    carries only the target and one worked illustration, so the two cannot drift (INV-179).
+    carries only the target and one worked illustration, so the two cannot drift (INV-183).
 
     ⚠️ **Reaching this band honestly means about a third of all field values absent, which is heavier
     degradation than a real CRM or POS export usually carries.** That is a consequence of pairing a

@@ -133,8 +133,21 @@ class EveryLaunchSiteWarnsAboutProtectedLaunchers(unittest.TestCase):
         self.assertIn("does not fix it", window,
                       "the contract names the symptom without saying that adding "
                       "-Djava.library.path does not fix it")
-        self.assertIn("inv-179", window,
-                      "the reasoning is restated rather than cited to module-02, which owns it")
+        # ⛔ **Assert the POINTER, never which id it carries.** This asserted `inv-179`
+        # until 2026-09-03 — as a proxy for "carries a citation" — and INV-179 governs
+        # SDK response flags, nothing about dynamic-linker search paths. So the guard held
+        # a mis-citation in place: correcting it to INV-183, the rule that actually requires
+        # a rule to be named and linked rather than restated, turned this test red. A guard
+        # that pins the id it happened to find certifies the citation it found, which is the
+        # one thing it cannot check. What is load-bearing is that the reader is sent to the
+        # owner instead of reading a second copy of the reasoning.
+        # (Source: `inv-179-is-cited-as-a-state-it-once-rule-it-does-not-contain`.)
+        self.assertIn("module-02-sdk-setup", window,
+                      "the reasoning is restated rather than pointing at module-02, which "
+                      "owns it — a second copy is what drifts")
+        self.assertRegex(window, r"inv-\d+",
+                         "the pointer carries no invariant citation, so a reader cannot look "
+                         "up why the rule binds (INV-183)")
 
     def test_the_rule_is_not_hidden_behind_a_platform_branch(self):
         """INV-001 — all three platforms are first-class; a macOS-only section hides it."""

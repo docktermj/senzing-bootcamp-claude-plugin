@@ -98,9 +98,9 @@ licensing as a default the bootcamper already has, never as a hard cap:
   or a value **≥ the dataset size**, means the bootcamper is not constrained: say nothing here about
   licenses, defaults, expansion paths or downsizing, and go straight to step 2. Only a **positive
   limit below the dataset size** puts licensing in scope at this step. If the field is **absent or
-  null** that means *"never asked"*, not *"no custom license"* — follow the three branches under
+  null** that means *"never measured"*, not *"no custom license"* — follow the three branches under
   *"Reconcile it against the license already detected"* below rather than restating them here
-  (INV-179), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
+  (INV-183), then re-enter this bullet with the measured value. ⛔ **Do not measure it again here**:
   the value you would be re-deriving was already measured and persisted by the step that owns this
   question, and a second SDK call is the way two answers start to differ.
   ⛔ **(INV-295) One exception, and it is the reason `license_record_limit_measured_at` exists: a reading marked
@@ -194,8 +194,8 @@ persists it from `SzProduct.get_license()`) and apply the same effective-limit r
   readout, and the pointer to Step 8a sub-step 5's apply procedure — belongs to
   `phaseB-load-first-source.md` step 7, once. Improvising a choice at this point is how a Bootcamper
   came to be offered *"wait until the evaluation license is applied"* with no way to reach it.
-- **Absent or null** — ⛔ **this means "never asked", not "no custom license". Measure it, do not
-  assume it.** (INV-244) **Every step that writes `license_record_limit` writes only a MEASURED value** —
+- **Absent or null** — ⛔ **(INV-244) this means "never measured", not "no custom license". Measure it, do not
+  assume it.** **Every step that writes `license_record_limit` writes only a MEASURED value** —
   including this branch, below. ⚠️ **Do not reason from a count of writers**; that number has been
   stated wrongly twice. What makes absence uninformative about the *license* is that no step writes
   this field without measuring it: SDK setup's Step 5a measures as soon as the SDK is verified and

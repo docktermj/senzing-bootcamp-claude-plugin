@@ -752,7 +752,7 @@ of the Truth Set. It MUST:
   assumption, without running this script, lost twelve recap images; the same script then captured
   6 of 6 tabs first try against plain headless Chrome. The procedure (backends, exit codes,
   `--single`, the caption rule) stays stated once in `module-completion.md` — this is the tool's
-  identity, not a copy of its manual (INV-179).
+  identity, not a copy of its manual (INV-183).
 
   ⛔ **The reported reason is INV-122's requirement, not a courtesy.** The helper MUST distinguish
   "no headless capability" from "no requested tab exists" — which is exactly why its exit code is
@@ -802,12 +802,12 @@ and wait for their go-ahead; do not re-ask on a loop. Never leave the bootcamper
 restart for a server they never agreed to stop. If the module ends with the server still up, say
 plainly that it is still running and how to stop it, rather than stopping it unasked.
 
-⛔ **(INV-179) On macOS, start it as a DIRECT CHILD of the shell that sourced the env script — never
+⛔ **(INV-001, INV-002) On macOS, start it as a DIRECT CHILD of the shell that sourced the env script — never
 through `nohup`, `env`, or a nested `bash -c`.** SIP strips `DYLD_*` when a protected binary execs a child,
 and those three are protected, so the server cannot find the native library even though the parent
 shell has the variable set. It surfaces as `no Sz in java.library.path`, and adding
 `-Djava.library.path` does not fix it. Full rule and the demonstration:
-`../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" (INV-179).
+`../module-03b-truthset-visualization/visualization-api-reference.md` → "Server lifetime" (INV-001, INV-002).
 
 ⛔ **Stop it by the pid captured when it was started, never by a command-line pattern.** (INV-223.)
 Capture the
