@@ -78,6 +78,22 @@ states the rule once for all three (INV-234).
    truncated fetch, or a saved error page, is caught here in one comparison instead of surfacing in
    Step 4 as attribute names that are merely absent. (INV-228's count-check discipline, applied to a
    resource fetch rather than a dataset.)
+3. ⛔ **(INV-115) Read the attribute names out of the FIRST COLUMN of the feature tables as PLAIN
+   TEXT — they are not backticked in this document, and a catalog built by scanning for backticked
+   tokens silently under-collects by roughly four fifths.** Verified against the served document on
+   server **1.33.0**, 2026-08-28. `NAME_ORG`, `ADDR_LINE1` and `PHONE_NUMBER` appear plain and are
+   **never** backticked anywhere in the file, so a backtick-tuned parse reports three of the
+   commonest attributes in the specification as unrecognized — which is the cheap way to tell a
+   broken parse from a real absence.
+   - ⚠️ **The same names render the other way through a different route, which is what makes this a
+     trap rather than a typo.** `search_docs(query='entity specification attribute names feature
+     tables NAME_ORG ADDR_LINE1 PHONE_NUMBER', category='data_mapping')` returns those same tables
+     with the names **backticked** (`` `OTHER_ID_TYPE` ``). A parse tuned on a `search_docs` excerpt
+     works there and under-collects here — and this saved document is what Step 4 reads.
+   - ⛔ **(INV-080) Do not pin an attribute count in this file** — whatever the document holds today, a figure
+     written into shipped prose is one nobody re-measures, and it goes stale silently because it
+     keeps reading authoritative. Confirm the parse against the saved copy instead: a catalog
+     missing `NAME_ORG` is a parse failure, not a specification change.
 
 ⚠️ **If the URL fetch fails, `inline=true` is the sanctioned fallback for this tool — and for this
 tool only.** `download_resource`'s declared schema carries `filename`, `filenames`, `inline` and
@@ -240,11 +256,33 @@ obtained via the `get_sample_data` MCP tool in Module 4):
    answers *will it load*. This answers *is there anything left to map* — and they are not the same
    question. Over the same sampled records, partition every root key into three sets:
 
-   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and the legacy
-     per-feature root sub-lists (`NAMES`, `ADDRESSES`, `IDENTIFIERS`, …);
+   - **structural keys** — `DATA_SOURCE`, `RECORD_ID`, `RECORD_TYPE`, `FEATURES`, and any root
+     sub-list **whose contents resolve to Entity Specification attributes** (`NAMES`, `ADDRESSES`,
+     `IDENTIFIERS`, …);
    - **specification attributes** — keys that resolve to an attribute in the Entity Specification
      you retrieved in Step 3 (the same copy step 1 above reuses — do not download it again);
-   - **unrecognized keys** — everything else.
+   - **unrecognized keys** — everything else, *including the contents of any root array whose
+     contained keys do not resolve*.
+
+   ⛔ **(INV-294) A root array is a per-feature sub-list only if its CONTENTS are spec attributes — decide it
+   by looking inside, never by the key's shape.** The structural set above is closed, and the `…`
+   continues a list of *examples of the test*, not an invitation to add members by resemblance:
+   plural, uppercase and an array-of-objects is exactly what an unrecognized array looks like too.
+   **So partition one level down as well** — for every root key holding an array of objects, run the
+   same three-way test on the contained keys, and count an unresolved contained key as an
+   unrecognized key of the source.
+
+   ⚠️ **The worked case, measured live.** `get_sample_data(dataset='las-vegas', source='GLEIF')`
+   returns four root arrays that look alike. Three are genuine sub-lists — `COUNTRIES` holds
+   `REGISTRATION_COUNTRY`, `DATES` holds `REGISTRATION_DATE`, `RELATIONSHIPS` holds
+   `REL_ANCHOR_*`/`REL_POINTER_*`, and all resolve. The fourth, **`RISKS`, holds `TOPIC`, which is
+   not a Senzing attribute at all** — 547 of the source's 1,952 records carry it, and `TOPIC` appears
+   in no feature table of the Entity Specification (both re-verified on MCP server **1.35.1**,
+   2026-09-01). Filed as structural, its undispositioned contents are invisible, and a source whose
+   only unmapped content sits inside such an array reaches step 5 with **zero** unrecognized keys —
+   the fast path is offered, and the module is skipped with real fields undecided. That is the
+   failure the ⛔ two paragraphs down already forbids, arriving one level up: at the **container**
+   rather than at the leaf.
 
    ⛔ **Do not resolve the second set by exact string match against the attribute catalog.** A
    catalog attribute can arrive carrying a leading label, and an exact match reports it as
@@ -571,6 +609,22 @@ Check the record-type mix before reporting the score or routing anyone to remedi
 rules above are unchanged — they decide whether a *value* is there; this decides whether the feature
 belonged in the denominator at all.
 
+⛔ **(INV-174, INV-264) Before reporting the score, print a per-`RECORD_TYPE` presence breakdown for
+EVERY field you marked as applying to BOTH types — and treat a 100%/0% split as an applicability
+error that stops the score.** No real field is present on every record of one type and none of the
+other; that shape is the signature of a wrong applicability set, not a finding about the data. The
+breakdown costs nothing — the profiling pass already holds both per-type counts.
+
+⚠️ **This is a precondition, not another heuristic.** The check above fires *after* a low score
+exists and keys on a NAME/ADDRESS pattern; this one runs *before* any score is reported and keys on
+the applicability set itself, which is the input that was wrong. On 2026-08-25 four fields on a
+72,799-record source were marked "both" while measuring 100% / 91.5% / 42.3% / 100% on
+`ORGANIZATION` and **0%** on `PERSON` — the source's person records are officer and contact records
+attached to a company, where a business address structurally cannot exist. The source scored 70.5%
+and landed in the remediation band; corrected, it scores 85.7% and passes. ⛔ **(INV-174) The applicability
+set is authored by hand per source, so getting it wrong is the default failure rather than an
+unusual one** — which is why it needs a check by construction rather than an instruction to be careful.
+
 Use these thresholds to guide the decision:
 
 - **≥80% quality score** → Proceed to Phase 2 (mapping). Data quality is strong enough for
@@ -736,6 +790,24 @@ improvising one breaches INV-056, which pins every gate question's wording preci
 drift at runtime. The ≥80% branch is the common one for curated data — a CORD source routinely
 scores there — so this is the path most runs take.
 
+⛔ **(INV-284) On a `provenance: synthesized` source, disclose before the 👉 — those gaps are deliberate.**
+Read `provenance` for this source from `config/data_sources.yaml`. When it is `synthesized`, Module
+4's Step 2 was **required** to manufacture exactly these gaps (INV-239: *"missing values in non-key
+fields, enough to put at least one source in the 70-79% band… That band opens the remediation
+conversation, so it has to be reachable"*) — so this gate is firing as designed, and "improve the
+data" means regenerating data the bootcamp authored minutes ago. Say so in one line **before** the
+question, because anything meant to inform the answer goes before it
+(`../bootcamp-onboarding/ground-rules.md` → the 👉 protocol):
+
+> "One thing worth knowing before you choose: this source was generated for the bootcamp, and its
+> gaps are deliberate — they were built in so this assessment would have something to find.
+> Improving them means regenerating data we authored a few minutes ago. That is a fair choice, it
+> is just not the same as fixing a real dataset."
+
+Then present the pinned question **unchanged, with both options live** (INV-056). ⛔ **Never
+silently regenerate.** Rewriting the Bootcamper's data as the answer to a question they were not
+told meant that is the failure this disclosure exists to prevent.
+
 - **Quality ≥80%:** "Your data quality is strong. Let's continue to mapping." **(statement, no 👉;
   continue into Phase 2 this turn)**
 - **Quality 70-79%:** "Your data quality is acceptable but has some gaps. You can continue to
@@ -758,6 +830,80 @@ scores there — so this is the path most runs take.
 *(Internal: in the two gating branches, end the turn on the applicable question and wait. In the
 ≥80% branch no question applies — do not manufacture one; continue into Phase 2 this same turn and
 end on its first 👉.)*
+
+### 7a. The improve path — what option 1 means, in both gating bands
+
+⛔ **(INV-284) This step is what the gate's first option executes.** Both gating bands offer to improve the
+data first, and until this step existed the turn ended on the question with nothing to run: no
+procedure, no re-score, no way back to the gate. A pinned question whose answer has no handling step
+is the unsatisfiable-instruction shape that teaches a guide to read the surrounding ⛔ rules as
+advisory, so treat this as executable, not advisory.
+
+1. **Name the weakest fields from the score you already computed** — do not re-measure. Step 6's
+   assessment already identifies them per field (e.g. *phone missing in 60% of records, address 44%,
+   date of birth 34%*). Name the worst three with their figures, worst first.
+
+2. **Split them by what can honestly be fixed here, and say which is which.** The score has three
+   dimensions and they are not equally repairable:
+
+   - ✅ **Fixable in this module — `format_consistency` and `duplicate_rate`** (0.25 and 0.05 of the
+     score). These are mechanical: normalize the minority formats in a field to its dominant one
+     (phone punctuation, date layout, casing, whitespace, state/country spellings) and resolve
+     records whose `(DATA_SOURCE, RECORD_ID)` pair repeats, per Step 6's own definitions. Do this
+     work **for** the Bootcamper rather than asking them to; it is deterministic and they can read
+     the diff.
+   - ⛔ **(INV-284) Not fixable here — `completeness`** (0.70 of the score, and usually what put the source in
+     the band). **A missing value cannot be invented**, and offering to fill one is offering to
+     fabricate data. Say that plainly. The honest route is a better export from the source system,
+     which is Data collection's job: offer a return to that module for this source, and say the
+     bootcamp will pick up here with the new file.
+
+3. **Write the improved data as a NEW file; never overwrite what was collected.** Put it beside the
+   original as `data/raw/<source>-improved.<ext>` and record the original `file_path` in the same
+   entry so nothing is lost. `data/raw/` holds source data as received (INV-050), and the original
+   stays exactly as received.
+
+4. ⛔ **(INV-243) Update every registry field the new file changes — not just `file_path`.** The
+   entry is a set of claims about the file it points at, and repointing it makes each of them a
+   claim about the improved file. Re-measure and rewrite, in `config/data_sources.yaml`:
+
+   - **`file_path`** → the improved file.
+   - **`record_count`** → **re-counted from the improved file.** ⛔ **(INV-243) This is the one that does
+     damage if it is skipped.** Resolving duplicates removes records, and Module 6 Phase B compares
+     its loaded count against the `record_count` written here (INV-243) — so a stale figure reports
+     a *correct* load as short by exactly the number of duplicates this step just removed, one
+     module downstream of the cause. Say both figures to the Bootcamper when it changes, with the
+     reason ("1,000 → 984 records; 16 duplicate `(DATA_SOURCE, RECORD_ID)` pairs resolved").
+   - **`file_size_bytes`** → re-measured.
+   - **`quality_score`** → the re-scored figure from step 5 below, once it is computed.
+   - **`updated_at`** → the current ISO 8601 timestamp.
+
+   ⛔ **(INV-203) Leave `expected_record_count`, `validation_status` and `validation_checks` describing the
+   ORIGINAL fetch, and say in the entry that they do.** Those fields record that a *fetched* file
+   arrived with a 2xx status and a count matching what the provider stated (INV-203); the improved
+   file was derived here, not fetched, so re-pointing them at it would assert a check nobody ran.
+   ⚠️ **`record_count` is the opposite case and must NOT be left alone for the same reason** — it is
+   a measurement of the file, and the file changed, so leaving it stale is what makes the entry
+   wrong rather than what keeps it honest.
+
+5. **Re-score the source with Step 6's formula and re-present the gate with the new figure**, naming
+   the before and after (e.g. *"75.1 → 79.4"*).
+
+   ⛔ **Re-presenting the gate here is NOT an INV-006 repeat, and a guide must not suppress it as
+   one.** INV-006 forbids re-asking a question already answered about the same state; the score has
+   changed, so this is a new question about a new state, and the Bootcamper's earlier answer was
+   about the old figure. Present whichever band's pinned question the **new** score selects — a
+   source that crossed into ≥80% gets no question at all and continues into Phase 2 this turn.
+
+6. **When nothing was fixable, say so rather than looping.** If the gaps are entirely completeness,
+   there is no mechanical work to do: state that, name the return-to-collection route from step 2,
+   and present the gate again with the score **unchanged and identified as unchanged**. Never
+   re-present an unchanged score as an improvement.
+
+⚠️ **On a `provenance: synthesized` source this path is still available and still honest** — the
+disclosure above has already told the Bootcamper the gaps are deliberate. Normalizing formats in
+generated data is real work with a real re-score; if they ask to regenerate instead, that is Module
+4's Step 2, and it is their call to make with the disclosure in hand.
 
 **Success indicator:** ✅ All data sources categorized + `docs/data_source_evaluation.md`
 created.

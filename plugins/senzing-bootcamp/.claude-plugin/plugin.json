@@ -1,11 +1,11 @@
 {
   "name": "senzing-bootcamp",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Guided bootcamp for learning Senzing entity resolution with Claude Code, from first demo to production deployment.",
   "author": {
     "name": "Senzing"
   },
-  "homepage": "https://github.com/docktermj/senzing-bootcamp-claude-plugin",
-  "repository": "https://github.com/docktermj/senzing-bootcamp-claude-plugin",
+  "homepage": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development",
+  "repository": "https://github.com/docktermj/senzing-bootcamp-claude-plugin-development",
   "license": "Apache-2.0"
 }

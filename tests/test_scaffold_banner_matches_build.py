@@ -31,6 +31,7 @@ Run:  python3 -m unittest discover -s tests
 import importlib.util
 import io
 import contextlib
+import re
 import sys
 import tempfile
 import unittest
@@ -228,3 +229,58 @@ class TheScaffoldStaysStdlibOnly(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheCheckpointFixtureSaysWhatFoldingCannotReach(unittest.TestCase):
+    """The banner's recipe for the PDF cover-chip clip must be one that works.
+
+    It told a phase-2 run the long '— in progress' heading reaches the cover's 46-character
+    clip if you "FOLD FIRST, then render". Measured on 2026-09-02: it does not. Folding puts
+    that heading inside the RECAP-CHECKPOINT fence, which `generate_recap_pdf.py` strips
+    before module parsing, so the section is absent from cover, contents and body — and
+    `audit_recap` correctly warns a module was folded but never finalized. Removing the two
+    fence markers first, which is what module-completion step 2d does, renders it whole.
+
+    ⚠️ **The fixture is right; the recipe was wrong.** An unfinalized block is exactly what
+    the INV-059 idempotency check needs, and that check passes. So this guards the
+    instruction, not the fixture — and specifically guards that the REASON survives, because
+    a later editor who reads "FOLD FIRST" as a needless two-step is one edit from restoring
+    a recipe that silently tests nothing.
+
+    Stdlib only; nothing under ``plugins/`` is imported (INV-108).
+    """
+
+    def banner(self):
+        return re.sub(r"\s+", " ", SCAFFOLD.read_text(encoding="utf-8"))
+
+    def test_the_banner_does_not_claim_folding_alone_reaches_the_clip(self):
+        b = self.banner()
+        self.assertNotRegex(
+            b, r"46-char clip, so FOLD FIRST",
+            "the banner tells a phase-2 run that folding is enough to exercise the cover "
+            "clip. It is not: the folded heading sits inside a fence the renderer strips, "
+            "so the run sees one 15-character chip and believes it tested the clip.",
+        )
+
+    def test_the_banner_names_finalizing_as_the_step_that_reaches_it(self):
+        self.assertRegex(
+            self.banner(), r"(?i)remove the two fence markers",
+            "saying folding is not enough, without saying what is, leaves the operator "
+            "knowing the recipe is wrong and not knowing the right one.",
+        )
+
+    def test_the_banner_keeps_the_reason_folding_cannot_reach_it(self):
+        """⚠️ The reason is what stops the two-step being 'simplified' back to one."""
+        self.assertRegex(
+            self.banner(), r"(?i)strips before module parsing|RECAP-CHECKPOINT fence, which",
+            "the banner must say WHY folding cannot reach the clip — the fence is stripped "
+            "before module parsing. Without it the extra step reads as ceremony.",
+        )
+
+    def test_the_idempotency_fixture_is_still_described(self):
+        """Fixing the recipe must not cost the check the fixture actually exists for."""
+        self.assertRegex(
+            self.banner(), r"(?i)fold idempotency, run it 3x \(INV-059\)",
+            "the unfinalized block's primary purpose is the INV-059 idempotency check. If "
+            "the clip recipe crowded it out, the more valuable half was traded away.",
+        )

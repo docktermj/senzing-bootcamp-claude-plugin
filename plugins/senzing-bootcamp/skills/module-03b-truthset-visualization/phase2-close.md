@@ -116,7 +116,7 @@ permanent. Work through 1–4 in order; do not hoist the purge.
      tool (INV-223 still governs: terminate by pid, confirm the port)** — no `procps`, no `lsof`. Signal through the shell builtin
      (`docker exec <container> sh -c 'kill <pid>'`) using the pid INV-223 required the launch to
      record, and probe the port with `python3`, never with `lsof`. **The kill's exit status is not evidence the server stopped; the port is.** Full rule
-     and the reason, stated once:
+     and the reason, stated once (INV-300):
      `visualization-api-reference.md` → "Server lifetime" → "Identifying the server process".
    - ⛔ **Never `pkill -f <script name>`** (or any other command-line pattern match). The pattern
      appears in the matching command's own command line, so it signals the invoking shell: on a dry
@@ -169,8 +169,11 @@ graduation's reconcile backfill (INV-085/INV-086/INV-087):
    Step 3. (This module's module-start banner/journey/before-after/step-overview were already shown at
    its module start in Phase 1, so only its close is presented here.)
 4. **Transition to the next module:** ask the single transition question (once), then on an
-   affirmative reply produce the next module's start banner, journey map, before/after framing, and
-   step overview per the ground rules.
+   affirmative reply **(INV-272) acknowledge it in one short visible line naming that module before invoking
+   its skill** (the ground rules' acknowledge clause and
+   `../bootcamp-onboarding/module-completion.md` Step 4 own the ordering — a skill invocation and its
+   file reads emit nothing the bootcamper can see), then produce the next module's start banner,
+   journey map, before/after framing, and step overview per the ground rules.
 
 👉 **Are you ready to move on to the next module: {next module name}?**
 

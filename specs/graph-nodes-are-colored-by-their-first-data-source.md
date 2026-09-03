@@ -58,7 +58,7 @@ artifact, not legibility of the view.
 ## Proposed change
 
 Specify both as **behavior** in `visualization-api-reference.md` so a server in any language inherits
-them (INV-090/INV-104/INV-124), then implement in the Python reference.
+them (INV-002/INV-090/INV-104), then implement in the Python reference.
 
 1. **Color a node by its source *combination*, not by one member.** The key is the entity's sorted
    source set (`GLEIF|LEI`, not `GLEIF`), so a cross-source entity is visually distinct from every
@@ -157,3 +157,7 @@ is untouched by any implemented spec and is the reason this spec exists.
    pinned the node's stroke expression as the literal `d.data_sources[0]` form this spec replaces.
    Its stated criterion (swatch and mark must agree for one key) is unchanged and still asserted;
    only the expression it pins moved to `srcKeyOf(d)`.
+
+## Citation correction (2026-09-02)
+
+This spec cited **INV-124** as part of the reason the visualization contract binds every language. It does not: INV-124 governs the **tab hooks the recap capture depends on** (`tab-<id>`, `navbtn-<id>`, `activate()`, deep-linking), and its "in whichever language it is generated" clause scopes *its own* subject. The rules that carry the any-language claim are **INV-002** (the SBCP is language-agnostic) and **INV-090** (the server is built in the chosen language, modeled on the `visualization-api-reference.md` contract). Corrected in place because implementing this spec copied the wrong trio into shipped text, where a reader following the citation reached a rule about tab ids (`specs/inv-124-is-cited-as-the-any-language-rule-it-is-not.md`).

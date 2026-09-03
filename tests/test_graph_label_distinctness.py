@@ -152,11 +152,26 @@ class TheReferenceImplementsIt(unittest.TestCase):
         self.assertRegex(source(), r'\.text\(function\(d\)\{return nodeLabel\[d\.entity_id\];\}\)')
 
     def test_the_full_name_is_reachable_on_hover(self):
-        """INV-153: the untruncated value must be reachable — <title> on the label itself."""
+        """INV-153: the untruncated value must be reachable — <title> on the label itself.
+
+        ⚠️ Rescoped 2026-09-02. The regex required `.append("title")` to be *chained directly*
+        onto the `.text(...)` that sets the fitted label. When node labels moved into their own
+        layer so no circle could paint over a neighbor's text
+        (`entity-graph-node-occludes-a-neighbors-label-at-small-n`), the label selection had to be
+        held in a variable for the tick handler to position, which puts the `<title>` on the next
+        statement -- and this failed on a change that preserved the contract exactly. It pinned
+        the SYNTAX; the property is that the label element itself carries a `<title>` holding the
+        untruncated `entity_name`. That is what it asserts now, in either shape.
+        """
+        src = source()
         self.assertRegex(
-            source(),
-            r"nodeLabel\[d\.entity_id\];\}\)\s*\n?\s*\.append\(\"title\"\)",
-            "the node label needs its own <title>, not only the group tooltip",
+            src,
+            r"(?:nodeLabel\[d\.entity_id\];\}\)\s*\n?\s*\.append\(\"title\"\)"
+            r"|label\.append\(\"title\"\)\.text\(function\(d\)\{return d\.entity_name)",
+            "the node label needs its own <title> carrying the untruncated entity_name, not "
+            "only the group tooltip. Chained onto the label's `.text(...)` or applied to the "
+            "held label selection are both fine — what matters is that it is on the label "
+            "element, since that is what a reader hovers to recover a truncated name.",
         )
 
     def test_the_old_inline_truncation_is_gone(self):
@@ -191,8 +206,20 @@ class TheContractStatesItGenerally(unittest.TestCase):
         self.assertRegex(text, r"(?i)Compare the \*\*fitted\*\* strings, not the source values")
 
     def test_it_tells_a_non_python_implementer_the_rule_is_theirs(self):
+        """⚠️ Rescoped 2026-09-02: this pinned `INV-090/INV-124`, and INV-124 is the wrong rule.
+
+        INV-124 governs the recap capture's tab hooks — `tab-<id>`, `navbtn-<id>`, `activate()`,
+        deep-linking. It does not say a rendering rule binds other languages; its "in whichever
+        language it is generated" clause scopes its own subject. The rules that carry the
+        any-language claim are INV-002 (language-agnostic) and INV-090 (the server is built in
+        the chosen language, modeled on this contract) — which is the pair this file's own
+        sibling guard already names in its failure message
+        (`inv-124-is-cited-as-the-any-language-rule-it-is-not`). Asserting the property: the
+        rule is attributed to an invariant that actually governs it, and the reader is told why
+        it is stated in the contract rather than only in the Python reference.
+        """
         text = re.sub(r"\s+", " ", contract())
-        self.assertRegex(text, r"INV-090/INV-124")
+        self.assertRegex(text, r"INV-002/INV-090|INV-090/INV-002")
         self.assertRegex(text, r"(?i)a rule that lives only in the Python reference")
 
     def test_the_lead_no_longer_says_there_are_two_defaults(self):

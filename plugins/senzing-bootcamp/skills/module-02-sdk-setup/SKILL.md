@@ -87,8 +87,10 @@ supported, so all three are listed):
 (Each path as `sdk_guide(topic='install', platform=…)` gives it under `post_install`/`env_vars`,
 verified on MCP server 1.32.9, docs indexed 2026-08-11 20:52 UTC, 2026-08-13.)
 
-If the library is present, report the SDK as installed, skip Steps 2 and 3 entirely, and proceed to
-Step 4 verification.
+If the library is present, report the SDK as installed and skip the **installation** — Step 2, and
+Step 3's install commands. ⛔ **(INV-222) Not Step 3 entirely: its environment-script work still runs**, and it
+is the single most likely thing an existing install is missing — see "Required stops" in the V4.0+
+branch below. Then proceed to Step 4 verification.
 
 ⛔ **Only conclude "not installed" for a platform whose library you actually checked.** If the
 platform is undetermined, or the check could not run, the result is **unknown** — say so and name
@@ -99,12 +101,30 @@ gets sent to reinstall it, which is exactly what this step opens by forbidding.
 **Reading the version once the library is found:** use the primary route — the language version
 check, or `SzProduct.get_version()`, which returns `VERSION`, `BUILD_DATE`, `BUILD_NUMBER` and
 `NATIVE_API_VERSION` (`search_docs`, server 1.32.9, 2026-08-13). Failing that, build metadata sits
-in `szBuildVersion.json`: on Linux under `/opt/senzing/er/` (and also `/opt/senzing/data/`), and on
-Windows in the **sibling** `data` directory, not under `%SENZING_DIR%` — see "Comparing the two
-versions" in Step 1b. ⚠️ Those are **environment observations, not MCP-sourced facts** (Linux
-observed 2026-08-13; the macOS location is unknown), so if the file is not where expected, read the
-version through the SDK rather than concluding the SDK is missing.
-<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; all four hits are SzProduct.get_version()/engine_version SDK examples — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative) — server 1.33.0, 2026-08-21 -->
+in `szBuildVersion.json` — see "Comparing the two versions" in Step 1b.
+
+⛔ **(INV-285) Its provenance differs by platform, so it is stated per platform.** One caveat spanning all
+three is what let the Windows half go stale while reading as reviewed.
+
+- **Windows — MCP-sourced.** Under the **sibling** `data` directory, not under `%SENZING_DIR%`:
+  Scoop sets `SENZING_DIR=<scoop-app-dir>\er` and the support data installs to
+  `<scoop-app-dir>\data`. Stated by the server itself, in the `gotchas[]` of
+  `sdk_guide(topic='install', platform='windows')`, which names `szBuildVersion.json` among that
+  support data (server **1.35.3**, 2026-09-01; the server cites the MSI Directory table for
+  4.3.3.26191).
+- **Linux — environment observation, not MCP-sourced (INV-149).** `/opt/senzing/er/` and also
+  `/opt/senzing/data/`. Observed on a real install, both files present and identical, reporting
+  `BUILD_VERSION 4.4.0.26242` (2026-09-01). No MCP route states it:
+  `sdk_guide(topic='install', platform='linux_apt')` gives `default_paths` and a
+  `ls /opt/senzing/er/lib/libSz.so` verification step and never mentions the file.
+- **macOS — unknown, and the route was asked.** `sdk_guide(topic='install', platform='macos_arm')`
+  names the support data under `$(brew --prefix)/opt/senzing/data` as `address_datamodel`,
+  `nomicon` and the `*TransRules.sz` modules, and stops there — no `szBuildVersion.json` anywhere
+  (server **1.35.3**, 2026-09-01). Do not guess it by analogy with Linux.
+
+If the file is not where expected, read the version through the SDK rather than concluding the SDK
+is missing.
+<!-- MCP-NEGATIVE: search_docs(query='szBuildVersion.json build version file location') — no indexed document gives that file's path on any platform; every hit is a version-READING example or a build/packaging document, none stating where the file lives — owner: search_docs IS the corpus route for a documented file location, and the version fact the corpus does serve is the SDK's get_version() rather than a file, so the SDK route is where the reader must go (routing negative; NOTE the Windows path IS served, by sdk_guide(topic='install', platform='windows') in its gotchas[] — this claim is scoped to search_docs and to Linux/macOS) — server 1.36.0, 2026-09-02 -->
 
 **If the SDK is found and version is V4.0+:**
 
@@ -202,11 +222,11 @@ same coverage gap reported upstream on 2026-08-13 — the server documents insta
      feature request WAS sent on 2026-07-31, but for the stdio-mode / private-deployment route — a
      different subject — and the two had been conflated, so 2026-08-13 is this gap's first report
      rather than a duplicate. Full evidence chain in the maintainer's development record. -->
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') and the same call with platform='windows' — install_commands, gotchas and post_install carry no brew upgrade --cask and no scoop update — owner: sdk_guide(topic='install', platform=<that platform>) IS the route that would carry an update command for each package manager, and both document installing only (absence negative) — server 1.36.0, 2026-09-02 -->
 
 **Linux, apt (`linux_apt`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt') — install_commands, gotchas and post_install carry no dpkg-query and no apt-cache policy; it verifies with ls /opt/senzing/er/lib/libSz.so, an existence probe — owner: sdk_guide(topic='install', platform='linux_apt') IS the route that would carry an installed-version query for apt, and it documents installing and existence-verification only (absence negative) — server 1.36.0, 2026-09-02 -->
 
 ```bash
 # plugin-owned — sdk_guide documents neither of these
@@ -229,7 +249,7 @@ sudo apt install -y senzingsdk-runtime senzingsdk-setup   # takes the newest ava
 
 **macOS, Homebrew cask (`macos_arm`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm') — no brew outdated, brew info or brew upgrade anywhere in the response; the brew commands it does carry are tap, trust, install --cask, uninstall --cask, untap, install/link libpq, and --prefix — owner: sdk_guide(topic='install', platform='macos_arm') IS the route that would carry a version-management command for the cask, and it carries none (absence negative) — server 1.36.0, 2026-09-02 -->
 
 ```bash
 # ALL plugin-owned — sdk_guide documents no brew version-management command:
@@ -255,7 +275,7 @@ paths still resolve.
 
 **Windows, Scoop (`windows`):**
 
-<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='windows') — no scoop status, scoop info or scoop update anywhere in the response; the scoop commands it does carry are bucket add, install, and config (for the EULA variable) — owner: sdk_guide(topic='install', platform='windows') IS the route that would carry a version-management command for Scoop, and it carries none (absence negative) — server 1.36.0, 2026-09-02 -->
 
 ```powershell
 # plugin-owned — sdk_guide documents no scoop version-management command:
@@ -282,11 +302,35 @@ uses a **hyphen**:
 | `dpkg-query` / `rpm -q` / `direct_download` filename | `4.3.3-26191` |
 | `szBuildVersion.json` → `BUILD_VERSION` | `4.3.3.26191` |
 
-Comparing those two raw strings reports a difference where none exists. **Prefer the package
-manager's version string**; when only the JSON is available, normalize the separator before
-comparing. (Observed on a real 4.3.3-26191 install, 2026-07-31 — an environment observation, not
-an MCP-sourced fact.) On Windows that file is in the **sibling** `data` directory, not under
-`%SENZING_DIR%`.
+Comparing those two raw strings reports a difference where none exists. (Observed on a real
+4.3.3-26191 install, 2026-07-31 — an environment observation, not an MCP-sourced fact.) On Windows
+that file is in the **sibling** `data` directory, not under `%SENZING_DIR%`.
+
+⛔ **(INV-290) The two sources disagree for two different reasons, and only one of them is cosmetic —
+normalize the separator FIRST, then read what is left.**
+
+- **Same version, different separator** (`4.3.3-26191` vs `4.3.3.26191`) — a formatting artifact.
+  Normalize and treat them as equal; the package manager's string is the one to report.
+- **Genuinely different values after normalizing** — the install on disk is **not** the one the
+  package manager records. That happens on an extracted, POC or hand-placed install, and then
+  `szBuildVersion.json` describes what will actually **load**, so it wins. Reporting the package
+  manager's number here states a wrong version as fact about the very thing this module exists to
+  establish. Observed 2026-09-01 on Ubuntu 24.04: `dpkg-query` reported `4.3.4-26210` while
+  `/opt/senzing/er/szBuildVersion.json` read `4.4.0.26242`, and `SzProduct.get_version()` — once
+  Step 3's environment script had run — returned `4.4.0`, agreeing with the file and not with
+  `dpkg`. Environment observation, not an MCP-sourced fact.
+- **The package manager reports nothing at all** — no such package, empty output, or no package
+  manager. That is **not** "not installed": it means the install is not package-manager-owned, and
+  `szBuildVersion.json` is the source. ⚠️ **This is a route the server documents rather than an
+  exotic case** — `sdk_guide(topic='install', platform='linux_apt')` gives
+  `dpkg-deb -x senzingsdk-runtime_*.deb /opt/senzing` for containers, CI and no-sudo environments
+  (server 1.35.3, 2026-09-01), and on it no package is ever registered.
+
+⚠️ **`SzProduct.get_version()` is the tiebreaker, and it is reachable later than you need it.**
+It is authoritative for the library that will actually load, but the import fails until Step 3's
+environment script exports `LD_LIBRARY_PATH` — which is exactly why Step 1 can be forced onto the
+filesystem fallback. Once Step 3 has run, use it to settle any disagreement, and correct the
+version aloud if what you reported at Step 1 turns out to have been the package manager's.
 
 ⛔ **If the available version cannot be determined, say the check was skipped and name why**
 (INV-163). "No data" is never "up to date" — an unreachable repository, a missing package manager,
@@ -340,7 +384,7 @@ topic (re-checked 2026-08-13). So whether a point release needs any schema or co
 **undocumented, not known to be unnecessary**. Say that in the offer, and if the bootcamper already
 has a populated repository, mention that the update touches the SDK and not their data — then let
 them decide.
-<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; all six hits are V3-to-V4 (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: search_docs(query='upgrade Senzing SDK 4.3 to 4.4 procedure') plus get_capabilities' sdk_guide topic enum — no 4.x-to-4.y update procedure anywhere; every hit is V3-to-V4 migration material (sz_dbupgrade, sz_configupgrade, breaking-changes, Migration.md) and the topic list carries no upgrade entry — owner: search_docs IS the corpus route for a documented procedure and sdk_guide's own topic enum is the authority on its topics, so both routes that would carry it were asked and both are empty (absence negative) — server 1.36.0, 2026-09-02 -->
 
 **Checkpoint:** record the outcome — `up-to-date`, `update-declined`, `updated-to-[version]`, or
 `check-skipped-[reason]` — under step 1 in `config/bootcamp_progress.json`, so a resumed session
@@ -447,7 +491,7 @@ For the `docker` path (Intel Mac, Python on macOS/Windows, or Windows without Sc
   The rule, the in-container compile check that confirms it, and why a host/container
   version split is *not* the first explanation are in
   `../bootcamp-onboarding/ground-rules.md` → "Running a file you just wrote, when the run happens
-  somewhere else". Do not restate them here (INV-183): the rule applies from this module through
+  somewhere else". Do not restate them here (INV-183, INV-300): the rule applies from this module through
   query programs, so it lives with the cross-cutting execution rules and is linked from the step
   that creates the condition.
 - **Record the container for lifecycle tracking (INV-101).** When you start the container,
@@ -671,7 +715,7 @@ called out at the step rather than left to the ground rules (INV-183).
 <a id="env-script-path-resolution"></a>
 
 **The env script MUST resolve its own path in the platform's *default* shell, not only in bash.**
-This is the canonical statement of the rule; other modules link here rather than restating it.
+This is the canonical statement of the rule; other modules link here rather than restating it (INV-300).
 Because the documented pattern is to **source** the script into the bootcamper's interactive shell
 (see the same-shell requirement below), the shell it has to work in is whatever that bootcamper's
 shell actually is — and on macOS that is **zsh**, not bash. `${BASH_SOURCE[0]}` — the idiom anyone
@@ -715,15 +759,68 @@ export SENZING_ENGINE_CONFIGURATION_JSON="$_sz_settings"
 # paths) go here — take them from sdk_guide(topic='install', platform=…, language=…),
 # never from memory or from this file (INV-080).
 #
-# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary, and it
-# hedges LD_LIBRARY_PATH as "only needed if native lib not found automatically" while the
-# language-specific gotchas[] entry in the SAME response requires it. A script written
-# from env_vars alone omits a variable the runtime needs, and the failure surfaces at the
-# first engine call -- "libSz.so: cannot open shared object file" -- one module after this
-# script was written, where it reads as a broken install. See Step 3 above for the quoted
-# contradiction, its provenance, and which half governs.
+# THAT LIST IS ILLUSTRATIVE, NOT A CHECKLIST. The authority for the FULL variable set is
+# the language-specific gotchas[] entry in the SAME sdk_guide response: export every
+# variable it names, whether or not this comment happens to list it (INV-222 -- the SDK's
+# language packages are made available BY PATH, and the paths come from that lookup). This comment names
+# no language on purpose (INV-002) -- the lookup above is what resolves the set for
+# whichever language was chosen.
+#
+# READ gotchas[] FOR YOUR LANGUAGE, NOT env_vars ALONE. env_vars is a summary and it
+# disagrees with gotchas[] in BOTH directions, so neither the summary nor a fixed list is
+# safe alone: it hedges LD_LIBRARY_PATH as "only needed if native lib not found
+# automatically" while the language-specific gotchas[] entry in the SAME response requires
+# it, and it marks other variables required that a fixed list like the one above can simply
+# omit.
+#
+# IF gotchas[] HAS NO ENTRY FOR YOUR LANGUAGE, THAT IS A GAP TO FILL -- NOT AN EMPTY SET.
+# The rule above assumes an entry exists. On some platform/language pairs it does not: the
+# response then carries nothing for the chosen language at all, and passing the language
+# argument returns the same response as passing none. Exporting only what env_vars happens
+# to carry then produces a script holding the native library path and NOTHING FOR THE
+# LANGUAGE -- a runtime that starts and cannot find the SDK.
+# So: when the chosen language has no entry for the detected platform, derive that language's
+# own paths from the INSTALL LAYOUT, export them here, and record them as an observation with
+# the version they were measured against -- never as a server fact (INV-080/INV-149). Say in
+# the script's header that the value was derived rather than returned.
+#
+# AN OMITTED VARIABLE FAILS IN ONE OF TWO WAYS, AND ONLY ONE OF THEM IS LOUD.
+#   - Loud: the runtime cannot find the native library, and the first engine call fails --
+#     "libSz.so: cannot open shared object file" -- one module after this script was
+#     written, where it reads as a broken install.
+#   - Silent: the runtime finds a DIFFERENT copy of the language bindings on its own module
+#     search path, imports it, raises nothing, and every later module runs against a
+#     different SDK version than the one this module just verified.
+# The second is why Step 4 prints the RESOLVED BINDING PATH and not just a version.
 unset _sz_self _sz_root _sz_settings
 ```
+
+⚠️ **The concrete case, because the general rule above names no language and the omission it
+guards against is invisible.** On `linux_apt` with **Python**, `sdk_guide(topic='install',
+platform='linux_apt', language='python')` returns **both** variables in `install.platform.env_vars`
+— `PYTHONPATH` marked *"required for Python SDK — the senzing and senzing-core packages ship with
+senzingsdk-runtime here"* and `LD_LIBRARY_PATH` carrying the *"only needed if…"* hedge — and its
+Python `gotchas[]` entry requires both unconditionally: *"Do NOT pip install them — instead set
+`PYTHONPATH=…` and `LD_LIBRARY_PATH=…`"* (server 1.33.0, verified 2026-08-26). **So the server
+supplies `PYTHONPATH`; a script that lacks it lost it here, not upstream.** This is **INV-222** at
+the site that writes the script: the SDK's language packages are made available *by path*, and those
+paths come from `sdk_guide` at run time rather than from memory or from this file (INV-080). This template has now
+been wrong at each end in turn — once naming `PYTHONPATH` and omitting `LD_LIBRARY_PATH`, then
+naming `LD_LIBRARY_PATH` and omitting `PYTHONPATH` — which is why the rule above routes to
+`gotchas[]` instead of carrying a longer list. `PYTHONPATH` is Linux-only because the Python SDK is:
+*"The Senzing Python SDK is ONLY supported on Linux"* (`platform='macos_arm', language='python'` →
+`compatibility_notes`, same server and date), so there is no macOS/Windows counterpart to add.
+
+⚠️ **The other shape of the same problem: a pair the response says nothing about.** The Python case
+above is a *disagreement* between `env_vars` and `gotchas[]`; the harder one is a platform/language
+pair for which the response carries **no language content at all**, so there is nothing to disagree
+with and the omission looks like "this language needs nothing extra". A JVM language on `linux_apt`
+is that case — no SDK jar path, and no entry to route to — and a script built from `env_vars` alone
+is then missing the one path that language needs. **The classpath bullet under *The launch
+environment* below records what that route returns, with its dated `MCP-NEGATIVE` marker, and gives
+the path to export and the check that confirms it.** Follow it rather than re-deriving the negative
+here (INV-183, INV-300: the rule lives where the reader needs it, and a second dated copy is a second thing
+to keep true).
 
 Three things in that block are the point, not decoration:
 
@@ -773,11 +870,30 @@ file (INV-080). What follows is the shape of the problem, not a substitute for t
 - **Do not pass flags through an unquoted variable.** `java $SENZING_JAVA_OPTS` does not word-split
   in zsh (macOS's default shell), so multiple flags arrive as a single argument. Write the flags
   explicitly in the launcher script.
-- **Classpath:** the MCP install guidance's example is
-  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:<your classes>" MyApp`. Note the SDK **jar** lives
-  under `sdk/java/`, while the **native** library lives under `lib/` — two different paths for two
-  different things, and confusing them produces a class-not-found or a library-not-found error
-  depending on which you get wrong. Confirm both paths via `sdk_guide`.
+- **Classpath — and it is platform-specific, which the example does not look like.** The install
+  guidance's example is the **`macos_arm` response's**, quoted from its Java `gotchas[]` entry:
+  `java -cp "${SENZING_ROOT}/sdk/java/sz-sdk.jar:myapp.jar" MyApp`
+  (`sdk_guide(topic='install', platform='macos_arm', language='java')`, server **1.35.1**,
+  re-confirmed 2026-08-31). Note the SDK **jar** lives under `sdk/java/`, while the **native**
+  library lives under `lib/` — two different paths for two different things, and confusing them
+  produces a class-not-found or a library-not-found error depending on which you get wrong.
+  - ⛔ **(INV-283) Never carry `${SENZING_ROOT}` to Linux.** The macOS install sets it and nothing on
+    `linux_apt` does; the server's own anti-pattern list names it for macOS and Windows only
+    (*"SENZING_DIR on macOS → correct: SENZING_ROOT (macOS uses different env var than Windows)"*,
+    same response). Applied verbatim on Linux it expands to `-cp "/sdk/java/sz-sdk.jar"`, every
+    `com.senzing.sdk` import fails to compile, and the failure surfaces in **System verification**
+    or later — one module away from the step that omitted the path, where it reads as a broken
+    install rather than a wrong classpath.
+    <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='linux_apt', language='java') — carries no SENZING_ROOT, no jar path and no Java gotchas[] entry; env_vars holds only PYTHONPATH and LD_LIBRARY_PATH, and the response is identical to the same call with no language argument, so the parameter is inert on this platform — owner: sdk_guide(topic='install', platform='linux_apt', language='java') IS the route that would carry a Java jar path for Linux, asked directly and answered with neither the path nor a Java entry (absence negative) — server 1.36.0, 2026-09-02 -->
+  - **On Linux the jar is at `/opt/senzing/er/sdk/java/sz-sdk.jar`** — ⚠️ **observation-only**
+    (INV-080/INV-149), measured against `senzingsdk-runtime` **4.3.4-26210** on 2026-08-31, because
+    **no MCP route serves a Java path for `linux_apt`**. Treat it as a starting point to verify on
+    the bootcamper's machine, never as a server fact: `ls /opt/senzing/er/sdk/java/sz-sdk.jar`. If
+    it is not there, derive it from the `default_paths` the `linux_apt` response *does* return
+    (`resource_path` is `/opt/senzing/er/resources`, so the SDK root is `/opt/senzing/er`) rather
+    than guessing, and say the path was derived.
+  - **Confirm the native library path via `sdk_guide`** — that one the Linux route does answer
+    (`LD_LIBRARY_PATH` → `/opt/senzing/er/lib`). It is only the **jar** that has no Linux route.
 - **If you see `.dylib`/`.so` "not found" errors, do not symlink or copy Senzing libraries.** Per
   the MCP anti-patterns, Senzing tries both extensions and may report one even when the other works;
   the real cause is usually a missing dependency or an unset `DYLD_LIBRARY_PATH`. Re-run the
@@ -808,7 +924,10 @@ timeout on macOS. Use a background process plus a polling loop with a deadline i
 timeout. Check before relying on it rather than assuming a Linux userland.
 
 **Other platforms.** On **Linux**, the equivalent variable is `LD_LIBRARY_PATH` and the same
-"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⚠️ **This is
+"set it in the launching shell" rule applies — confirm the specifics via `sdk_guide`. ⛔ **(INV-283) For
+Linux + a JVM language, `sdk_guide` answers the library half and not the classpath half** — see the
+classpath bullet above: the jar path is an install-layout observation there, not a server fact, and
+`${SENZING_ROOT}` must not be used to build it. ⚠️ **This is
 not a JVM-only concern:** on `linux_apt` with **Python**, `LD_LIBRARY_PATH` is required too, and
 `sdk_guide`'s `env_vars` hedges it while its language-specific `gotchas[]` entry does not — see
 Step 3's Python note, which is where a non-JVM author will be. On
@@ -831,6 +950,54 @@ here **cannot succeed even on a perfectly healthy, current install**.
 This module already says so at its own success indicator: *"an engine-class call
 (`SzEngine`/`SzDiagnostic`) succeeds — a version query alone does not qualify (**Step 9**)"*. That is
 **Step 9**'s bar, after the database and the seeded config exist. Step 4 must not duplicate it early.
+
+⛔ **(INV-269) Report WHERE the binding resolved from, not only that it loaded — and print it beside the
+version.** A version query answers through the **native library**, so it reports the *engine's*
+version and says nothing about which language package was imported. Those are two different places:
+the engine comes through the native library, the binding through the interpreter's own module search
+path. **Agreement between them is the thing being verified**, so print both:
+
+- the **engine** version, from the `workflow='information'` snippet below; and
+- the **resolved binding path** — for Python, `python3 -c "import senzing; print(senzing.__file__)"`;
+  for other languages, the equivalent "where did this module come from" probe for that runtime
+  (the loaded jar's location for JVM languages, the assembly path for C#).
+
+⛔ **A resolved path outside the SDK's own language directory means locally installed packages are
+shadowing the shipped ones** — the exact failure **INV-222** exists to prevent, reached here by an
+install that predates this bootcamp rather than by a `pip install` inside it. The remedy is Step 3's:
+uninstall them, **or** prepend the SDK path to the language's module search path so the shipped
+bindings win. Report which was done.
+
+⛔ **(INV-269) Print the PATH, not a package-metadata version — the metadata reports the wrong package.**
+It is tempting to print a binding *version* beside the engine version and compare numbers. Do not
+substitute that for the path. Measured on the development machine 2026-08-26 (observation-only,
+INV-080/INV-149 — no MCP route reports a language package's metadata layout): the SDK-shipped Python
+binding exposes **no** `__version__`, `VERSION` or `version` attribute at all, and
+`importlib.metadata.version("senzing")` returns **`4.1.2`** — the *PyPI distribution's* number —
+**even when the module actually imported is the SDK-shipped one** under `/opt/senzing/er/sdk/python`,
+because that directory ships no distribution metadata and the lookup falls through to
+`site-packages`. A version comparison built on it therefore reports the shadowing package's version
+while the correct module is loaded: the same silent skew this check exists to catch, wearing the
+check's own uniform. **The resolved path is the signal that cannot lie.**
+
+⚠️ **Why this check exists here and not only in Step 3.** A shadowed install produces a working
+import *and* a plausible, current-looking version, so a step that merely reports success is exactly
+what the defect hides behind (the fail-loudly reasoning INV-111 applies to generators). It is placed
+at Step 4 because **Step 4 is on every path**: Step 1's existing-install route skips Step 2 and Step
+3's install commands — which is where Step 3's own `senzing.__file__` detection lives — so a
+bootcamper who already had the SDK installed would otherwise never run it. Reproduced on the
+development machine 2026-08-26: with `PYTHONPATH` unset, `import senzing` resolved to
+`~/.local/lib/python3.12/site-packages/senzing/__init__.py` while the SDK-shipped bindings sat
+unreachable at `/opt/senzing/er/sdk/python`; with `PYTHONPATH` set, it resolved to the latter
+(observation-only — interpreter module-resolution order, which no MCP route reports; INV-080/INV-149).
+
+<!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install_commands, no env_vars and no gotchas at all, only compatibility_notes stating the Python SDK is Linux-only and offering Java/C# (official) or Docker/WSL2 instead, so there is no macOS PYTHONPATH counterpart to export — owner: sdk_guide(topic='install', platform=<that platform>, language='python') IS the route that would carry a per-platform Python variable set, and it answers by declining the platform rather than by omitting a variable (absence negative) — server 1.36.0, 2026-09-02 -->
+⚠️ **Do not invent a counterpart where the server says there is none.** `PYTHONPATH` is a
+Linux-only concern because the Python SDK itself is: *"The Senzing Python SDK is ONLY supported on
+Linux. It is NOT supported on macOS or Windows"* (`sdk_guide(topic='install', platform='macos_arm',
+language='python')` → `compatibility_notes`, server 1.33.0, 2026-08-26). So this check has no
+macOS/Windows Python form to add, and the `DYLD_LIBRARY_PATH` and `senzing-env.bat` guidance stays
+exactly as it is.
 
 ⚠️ **What it looks like when the engine is attempted here** (measured live on a healthy install,
 Senzing 4.3.4 build 4.3.4.26210, 2026-08-14): `SzProduct.get_version()` returns `4.3.4` **and** the
@@ -895,7 +1062,7 @@ carry that expectation across.
 that parameter as a "last resort", but the tool's **declared schema has no `inline` parameter at
 all** — only `language`, `version` and `workflow` (both confirmed live, server 1.32.9,
 2026-08-13).
-<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.33.0, 2026-08-21 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
+<!-- MCP-NEGATIVE: generate_scaffold's declared schema — carries no inline parameter, only language, version and workflow, while the response's own access_steps step 3 advertises the undeclared inline=true — owner: the tool's declared schema as the server advertises it is the authority on what it accepts, and it was read directly rather than inferred from the response prose (routing negative — the schema is the route, the prose is not) — server 1.36.0, 2026-09-02 --> Passing it is not a fallback, it is a call that cannot work, and it teaches nothing
 about why. This is INV-160's rule applied to a sibling tool: **an undeclared parameter MUST NOT be
 adopted as the remedy even when the response's own prose advertises one.** Fetch the `raw_url`
 instead — that path is confirmed working.
@@ -905,17 +1072,17 @@ troubleshooting.
 
 **Checkpoint:** write step 4 to `config/bootcamp_progress.json`.
 
-## Step 5: License (built-in evaluation license active)
+## Step 5: License (record capacity)
 
 > **Internal note:** this step does NOT prompt for a License Key. The single, volume-gated
 > Senzing License Key prompt is presented once, at the start of Data collection (Module 4),
-> per INV-093. SDK setup only confirms that the built-in evaluation license is active; the
-> "License Key" reference notes below are kept for context.
+> per INV-093. SDK setup **measures** the active license's record capacity and records it;
+> the "License Key" reference notes below are kept for context.
 
 > **License check order:** project-local `licenses/g2.lic` → the `SENZING_LICENSE_FILE` path → system
 > CONFIGPATH → the built-in evaluation license.
 >
-> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.33.0, 2026-08-21 -->
+> <!-- MCP-NEGATIVE: search_docs and sdk_guide(topic='install'|'configure') — neither names a license environment variable; exactly one route returns it — owner: sdk_guide(topic='load', language='python', record_count=1000) compatibility_notes name it verbatim, "place the license file at the path specified by SENZING_LICENSE_FILE or in the etc/ directory", re-asked and confirmed (routing negative — the name exists, go there) — server 1.36.0, 2026-09-02 -->
 > ⛔ **The license environment variable is `SENZING_LICENSE_FILE`, and only ONE tool route returns
 > it — do not go looking for it anywhere else.** (INV-208) It appears in the `compatibility_notes` of
 > `sdk_guide(topic='load', language=…, record_count=<above the default limit>)`, which says a
@@ -947,17 +1114,94 @@ troubleshooting.
 > the **Senzing End User License Agreement (EULA)** accepted during SDK install in Step 3. When
 > this step says "License Key", it means the runtime license, never the EULA.
 
-### 5a. Confirm the built-in evaluation license (no prompt)
+### 5a. Measure the active license's record limit (no prompt)
 
-**Already-licensed guard (check first).** Read `config/bootcamp_progress.json`. If a
-`license_record_limit` field is present, a custom license has already been configured (its limit
-was detected earlier, this session or a prior one). Acknowledge it: present the detected
-`recordLimit` as the authoritative limit ("Your license allows up to N records," or "Your license
-has no record cap (unlimited)" when it is `0`), and skip the evaluation-license note below. Do not
-re-ask (INV-006). Confirm any SDK facts against the Senzing MCP server rather than training data.
+⛔ **(INV-244) Measure the license here — never infer it from what the state file does or does not
+say.** This is the first step where the measurement is possible: Step 3 wrote the env script that
+supplies the settings and Step 4 has just verified the SDK works, so the capacity the bootcamper is
+told is a reading of **their** machine rather than an assumption about it. Take the reading **before**
+branching on anything recorded, and let it govern everything below (INV-012).
 
-Otherwise (only the built-in evaluation license is active), present this briefly — as a statement,
-**not a question:**
+⛔ **(INV-295) This reading is PROVISIONAL, and Step 8a re-takes it — `get_license()` resolves the license
+from the settings it is handed, and the settings here do not yet carry `CONFIGPATH`.** The check
+order above has four tiers, and the third is *system CONFIGPATH* — a `PIPELINE` key that **Step 8**
+writes, three steps after this one. So a reading taken here can only ever return one of the first
+two tiers or the built-in default: it cannot see a license installed at the system config path, and
+on a machine that has one it reports the built-in figure with no indication anything was missed.
+Measured on **Senzing SDK 4.4.0** (build `4.4.0.26242`), 2026-09-01, on a machine carrying a license
+at `/etc/opt/senzing`: `{"PIPELINE": {}}` returns `recordLimit: 500`, while the same call with
+`CONFIGPATH` in force returns `recordLimit: 0` — no cap. Which tier wins for a given settings string
+is engine behavior no MCP route reports, so this stays **observation-only** with its version and date
+(INV-080/INV-149).
+
+**A reading is only complete once the engine configuration is**, which is why Step 8a re-measures and
+why sub-step 3's replace-and-say-both-numbers rule below is reachable at all. Take this reading
+anyway — it is the right conservative figure until Step 8 exists, and its "cannot measure yet" branch
+still applies — but record it as provisional, per sub-step 3.
+
+1. **Take the reading.** `SzProduct`'s license method takes no arguments and returns the active
+   license as a JSON string — `getLicense()` in Java and TypeScript, `get_license()` in Python and
+   Rust, `GetLicense()` in C# (`get_sdk_reference(topic='parameters', filter='getLicense')`, server
+   **1.35.1**, 2026-08-31). The snippet ships in the **same** scaffold Step 4 already fetched:
+   `generate_scaffold(language='<chosen_language>', workflow='information')` returns `GetLicense`
+   beside the `GetVersion` this module ran one step ago (confirmed for Java on server **1.35.1**,
+   2026-08-31 — `java/snippets/information/GetLicense.java`). Fetch its `raw_url` like any other
+   scaffold snippet; the response is a listing, not source.
+   - ⚠️ **No engine configuration is needed, and its absence is not a failure.** `SzProduct` needs no
+     support data, which is exactly why Step 4's version call succeeds here while engine calls still
+     raise `SENZ7426` with Steps 7–8a still ahead. If the license call itself raises `SENZ7426` or
+     `SENZ7220`, treat it as the "cannot measure yet" branch below, not as a broken install.
+   - Save the returned JSON to `config/license.json` and **read the saved file to confirm its shape
+     before parsing it** (INV-115) — `get_license` has **no** `response_schemas` entry, so an empty
+     `data` array there is the expected result, not a failed lookup.
+   - Parse `recordLimit`: `0` means **no record cap (unlimited)**; a positive value is the cap.
+
+2. **State what was measured** — as a statement, **not a question:** "Your Senzing license allows up
+   to N records," or "Your Senzing license has **no record cap (unlimited)**" when `recordLimit` is
+   `0`. Name it as a reading of the installed license, so it is not mistaken for a published default.
+
+3. **Persist it.** **Write the measured value into `config/bootcamp_progress.json`** as
+   `license_record_limit`, and **record when it was taken** as
+   `license_record_limit_measured_at: "module-02 step 5a (provisional — engine configuration not yet
+   written)"`. If a value was already recorded and the measurement disagrees with it,
+   replace the recorded one and **say the recorded figure was withdrawn** — naming both numbers.
+
+   ⛔ **(INV-295) The `_measured_at` marker is not bookkeeping — it is what lets a later step tell a complete
+   reading from an incomplete one.** Both are genuine measurements, so the figure alone cannot
+   distinguish them, and every downstream reader treats a present value as authoritative *because* it
+   was measured. Module 4's Step 8a reads this marker for exactly that reason. Write it on every path
+   that writes the field, here and at Step 8a.
+   Do not re-ask anything (INV-006).
+   - ⛔ **(INV-278) Presence is not proof of detection, which is why the reading comes first.** A
+     figure already in the file is not evidence that anyone measured it — on 2026-08-25 a value
+     written from a Bootcamper's statement (100,000) sat in this field against an install whose
+     real limit was **500**. Measuring before reading it is what makes that unfalsifiable state
+     impossible here, rather than merely discouraged.
+
+⛔ **(INV-278) Persisting it is the point, not a detail.** Module 4's Step 8a reads this field and
+**volume-skips** its License-Key gate when the collected total is at or below the recorded limit, so
+a measurement that stays on screen leaves that gate driven by a figure nobody measured — which is the
+defect this step exists to close, not a smaller version of it. ⚠️ **A correction that makes the
+reported capacity smaller is the one worth stating out loud**, because anything already sized against
+the larger figure — a generated scenario, a collection plan — was sized against a ceiling that does
+not exist.
+
+⛔ **(INV-244, INV-278) Write this field ONLY from the reading taken here, and never from an
+assumption.** That is the whole contract: the field's authority rests on being measured, so a value
+that was stated, remembered, defaulted, or inferred from the absence of another value must never
+reach it. ⛔ **When the measurement cannot run, write nothing** — leave the field absent and take the
+branch below. An absent `license_record_limit` therefore means *no measurement has been taken yet*,
+which is what every step reading it relies on; a written one means this step, or Module 4's Step 8a,
+actually measured.
+
+**Only if the measurement genuinely cannot run** — the SDK call fails, the language's scaffold cannot
+be fetched, or the settings are not yet usable — say what could not be determined, and:
+
+- **If a value was already recorded**, present it as **recorded, not verified** — never as detected —
+  and say the check could not be run this session. Leave it in place; it is the best figure available
+  and replacing it with an assumption would be strictly worse.
+- **Otherwise**, present the built-in evaluation figure **as an assumption**, naming what could not be
+  determined:
 
 ⛔ **Fill `{record limit}` below from the MCP server before presenting this — the figure is not
 written into this skill on purpose.** The route that answers it is `sdk_guide` with a
@@ -967,7 +1211,7 @@ written into this skill on purpose.** The route that answers it is `sdk_guide` w
 sdk_guide(topic='load', language='<chosen_language>', platform='<user_platform>', record_count=1000)
 ```
 
-<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.33.0, 2026-08-21 -->
+<!-- MCP-NEGATIVE: search_docs(query='evaluation license record limit how many records without a license') — returns no figure, only EULA grant-of-license and DSR-pricing prose ("solely for up to the number of DSRs designated therein") — owner: sdk_guide(topic='load', record_count=<above the limit>) compatibility_notes give the number, "exceeds the default Senzing license limit of 500", and explain_error_code('SENZ9000') calls it the default 500-DSR free tier; both re-asked today (routing negative — the figure exists, go there) — server 1.36.0, 2026-09-02 -->
 `search_docs` does **not** answer this — asked for the evaluation license's record limit it returns
 EULA and pricing prose with no figure (re-checked 2026-08-13), which is why the tool is named here
 rather than left as "a Senzing MCP tool". Present exactly what the server returns (waiting up to 30
@@ -976,18 +1220,22 @@ unavailable from the MCP server. Never substitute a hardcoded or remembered figu
 capacity has changed before, and a stale number here is a Senzing fact asserted from memory
 (INV-080), in the one place the bootcamper is most likely to plan against it.
 
-"Your Senzing SDK uses a **built-in evaluation license** automatically when no custom license is
-present (limited to {record limit} records) — no license file needed. That's enough for the demo
-modules that come next (System verification and Truth Set visualization), which run on small
-synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll set up a
-Senzing License Key in the Data collection module, where your data volume is known. Nothing to do
-here."
+"I couldn't read your license from the SDK just now, so this is the **assumption** rather than a
+measurement: Senzing uses a **built-in evaluation license** automatically when no custom license is
+present (limited to {record limit} records) — no license file needed. What I could not determine is
+whether a custom license is installed on this machine, and what its record limit is. That's enough
+for the demo modules that come next (System verification and Truth Set visualization), which run on
+small synthetic and Truth Set data. If your **own** data later exceeds the evaluation limit, we'll
+set up a Senzing License Key in the Data collection module, where your data volume is known. Nothing
+to do here."
 
-> **Where the License Key is handled now:** the interactive License-Key setup (asking whether the
-> bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, requesting an
-> evaluation license via the MCP server or Senzing support, and detecting the record limit) is the
-> single, volume-gated gate at the start of Data collection (Module 4, Step 8a), per INV-093. SDK
-> setup no longer performs it.
+> **Where the License Key is handled now:** the interactive License-Key **setup** (asking whether the
+> bootcamper has a key, decoding/placing a `.lic` or Base64 key, wiring `LICENSEFILE`, and requesting
+> an evaluation license via the MCP server or Senzing support) is the single, volume-gated gate at the
+> start of Data collection (Module 4, Step 8a), per INV-093. SDK setup does not perform it. ⚠️ **Reading
+> the installed license is not setting one up** — this step measures the capacity that is already
+> there, which needs no prompt and no volume, and Module 4's gate is what asks for a key when the
+> collected volume actually exceeds it.
 
 **Checkpoint:** write step 5 to `config/bootcamp_progress.json`.
 
@@ -1224,7 +1472,7 @@ raise an error, it just leaves you with the bootstrap code and nothing to config
 bootcamper's platform. If the response has no `environment` key, that is what happened — re-issue
 the call with `platform` rather than reconstructing the paths by hand.
 
-MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.33.0, 2026-08-21
+MCP-NEGATIVE: sdk_guide(topic='configure', language='python') — returns no `environment` block, so neither `engine_config` nor `default_paths` — owner: sdk_guide(topic='configure', platform='linux_apt', language='python') IS the route that carries it and returned `environment.default_paths` plus `environment.engine_config` when asked (routing negative) — server 1.36.0, 2026-09-02
 
 **Build the JSON from `environment.default_paths`, not from the `engine_config` blob.** That response
 carries both — **provided `platform` was passed** (above). `default_paths` gives plain, correct
@@ -1299,7 +1547,7 @@ call for exactly this reason.
 > it returns only the "Python is Linux-only" compatibility note and **no install detail at all**, so
 > the gotcha above is invisible. Ask with a macOS-supported binding (Java or C#) to see it.
 > (Observed 1.32.9, 2026-08-12.)
-> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.33.0, 2026-08-21 -->
+> <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform='macos_arm', language='python') — returns no install detail, only the Linux-only note — owner: sdk_guide(topic='install', platform='macos_arm', language='python') compatibility_notes state the Python SDK is Linux-only — the absence IS the answer, not a gap — server 1.36.0, 2026-09-02 -->
 >
 > `SENZ7426` still fires at `getEngine()`, **before any record is submitted**, so "validate your
 > input data" would send the reader to inspect something that does not yet exist — which is exactly
@@ -1451,6 +1699,37 @@ does not. Step 9's connection test uses the factory-lifecycle snippets from the 
 **Verify the seed before moving on:** confirm a default config id is now present. If it is not, stop
 here and report it — a missing config surfaces at this step as one clear failure, or later as
 `SENZ7221` several steps from its cause.
+
+### 8a.1 Re-measure the license — the reading is only complete now
+
+⛔ **(INV-244) Re-take the license reading here, and treat this one as the authoritative value.**
+Step 5a's reading was provisional by construction: `get_license()` resolves the license from the
+settings it is handed, and until Step 8 wrote `CONFIGPATH` those settings could not reach a license
+installed at the system config path. That tier is the third of the four in Step 5's check order, so
+the earlier reading could only ever return one of the first two or the built-in default.
+
+Take the reading exactly as Step 5a's sub-step 1 describes — same method, same
+save-then-read-before-parsing discipline (INV-115) — using the settings that now carry `CONFIGPATH`.
+Then apply Step 5a's sub-step 3 rules to the result:
+
+- **Write it** to `config/bootcamp_progress.json` as `license_record_limit`, with
+  `license_record_limit_measured_at: "module-02 step 8a (engine configuration in force)"`.
+- **When it disagrees with the provisional figure, say the earlier one was withdrawn — naming both
+  numbers**, exactly as sub-step 3 requires. ⚠️ **A correction that RAISES the capacity still gets
+  said out loud.** It is the pleasant direction and therefore the one most likely to be swallowed,
+  and it is load-bearing: anything already sized against the smaller figure — a sampling plan, a
+  generated scenario — was sized against a ceiling that does not exist.
+- **When the re-measurement cannot run**, leave the provisional value and its `_measured_at` marker
+  in place, say the check could not be re-run, and continue. Never blank the field: absence means
+  *never measured* to every step that reads it (INV-244), and a provisional figure is strictly
+  better than that.
+
+⚠️ **This is the step that makes Step 5a's replace-and-withdraw machinery reachable.** Nothing else
+in this module writes `license_record_limit` a second time, so before this step existed those rules
+described a situation that could not arise, and a machine whose license lives at `CONFIGPATH`
+carried the built-in figure through to Data collection — where it drives the sampling decision and
+the License-Key gate. Measured on **Senzing SDK 4.4.0** (`4.4.0.26242`), 2026-09-01: a machine whose
+license reports `recordLimit: 0` (no cap) reads `500` at Step 5a and `0` here.
 
 **Checkpoint:** write step 8a to `config/bootcamp_progress.json`.
 

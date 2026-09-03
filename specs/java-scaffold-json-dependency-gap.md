@@ -131,3 +131,35 @@ Upstream (out of scope here — **FILED 2026-07-28**):
 - Related specs: `specs/macos-jvm-launch-environment-guidance.md` (the other undocumented Java-path gap —
   consider implementing in the same pass), `specs/mcp-grounding-in-every-skill.md`,
   `specs/graduation-assistant-retrospective-feedback.md` (the retrospective that surfaced this)
+
+## Upstream report sent (2026-08-28)
+
+The 2026-07-25 implementation recorded the upstream half as out of scope: *"Upstream fix (having
+`generate_scaffold` declare JSON-P in its `dependencies` field) remains out of scope;
+`submit_feedback` is the channel."* It was never sent. A 2026-08-25 bootcamp hit the same wall in
+Data processing and filed it again, routed `mcp-server` with `Upstream: not yet forwarded` — which
+means the report was **owed**, not declined.
+
+Re-verified on server **1.33.0, 2026-08-28** before sending, and the gap is wider than either report
+measured: `generate_scaffold(language='java', workflow='add_records')` returns **seven** loading
+snippets and **six of the six that read an input file** import `javax.json` — LoadViaLoop,
+LoadViaFutures, LoadWithInfoViaFutures, LoadViaQueue, LoadWithStatsViaLoop,
+LoadTruthSetWithInfoViaLoop. The only one without it, `LoadRecords.java`, hardcodes its records.
+`sdk_guide(topic='load', language='java', record_count=1000)` returns the same code **inline** with
+the same import. No jar under a senzingsdk-runtime 4.3.4-26210 install carries a `javax/json` class
+(OpenJDK 21.0.12; environment observation, INV-080/INV-149).
+
+⚠️ **One claim from the 2026-08-25 entry was checked and NOT confirmed, so it was left out of the
+report:** that `generate_scaffold` *"already returns a `dependencies` array (`com.senzing:sz-sdk-java`)
+for other topics, so the mechanism exists."* Five responses were checked on 2026-08-28 —
+`generate_scaffold` for `initialize`, `add_records` and `full_pipeline`, and `sdk_guide` for
+`install` and `load` — and **none** carries a `dependencies` field. The report asks for a dependency
+declaration rather than claiming an existing mechanism is unused.
+
+The maintainer approved the drafted text **verbatim** and it was sent as
+`submit_feedback(category='bug')` on 2026-08-28. Nothing identifying was included. The server's
+response records that submissions are **anonymous and cannot be followed up**, so no reply will
+arrive. The plugin-side mitigation — now at four sites, per
+`system-verification-java-loading-scaffold-hits-the-json-p-gap-too` — remains the operative
+protection regardless of what upstream does. Re-check on a later server version rather than assuming
+the report was acted on.

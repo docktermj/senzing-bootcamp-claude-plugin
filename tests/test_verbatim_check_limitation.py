@@ -303,7 +303,7 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
             self.text, r"(?i)Freshness, per limitation",
             "freshness must be stated per limitation, not as one blanket caveat")
         self.assertRegex(
-            self.text, r"(?i)all three are CURRENT behavior",
+            self.text, r"(?i)all \w+ are CURRENT behavior",
             "the freshness of each entry must be stated; limitation 2 was confirmed end to "
             "end on 2026-08-18, so pinning it as un-re-run would assert a disproved claim")
         self.assertRegex(
@@ -318,7 +318,7 @@ class ThreeFurtherGateLimitationsAreDocumented(unittest.TestCase):
                          "the Entity Specification sections that prescribe REL_* are not cited")
 
     def test_handling_routes_to_the_existing_exemption_path(self):
-        self.assertRegex(self.text, r"(?i)Handling is the same for all three")
+        self.assertRegex(self.text, r"(?i)Handling is the same for all \w+")
         self.assertIn("INV-173", self.text)
 
     def test_it_forbids_forking_the_scripts(self):

@@ -254,7 +254,9 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 ### Cross-cutting - Slash commands
 
-- [ ] `steering/slash-backup-project.md` -> `commands/backup-project.md`
+- [x] `steering/slash-backup-project.md` -> **superseded** by `commands/package-bootcamp.md` +
+      `skills/bootcamp-onboarding/packaging.md` (2026-08-26). Two profiles (`share`/`transfer`),
+      not a bare directory copy; see `specs/the-bootcamp-cannot-leave-the-machine-it-was-built-on.md`.
 - [ ] `steering/slash-commonmark-validation.md` -> `commands/commonmark-validation.md`
 - [ ] `steering/slash-git-commit.md` -> `commands/git-commit.md`
 
@@ -262,7 +264,11 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 - [ ] `hooks/analyze-after-mapping.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/ask-bootcamper.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
-- [ ] `hooks/backup-before-load.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
+- [ ] `hooks/backup-before-load.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action).
+      ⚠️ **Not covered by the 2026-08-26 packaging flow, deliberately.** That flow is
+      bootcamper-invoked and asks before it writes; an automatic pre-load backup is a different
+      decision (when it fires, whether it is silent, what it costs on a large repository) and is
+      still open.
 - [ ] `hooks/code-style-check.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/data-quality-check.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
 - [ ] `hooks/deployment-phase-gate.json` -> entry in `hooks/hooks.json` (translate trigger/matcher/action)
@@ -315,7 +321,9 @@ Legend: `[ ]` not started, `[~]` partial, `[x]` done. Update as you migrate.
 
 ### Phase 4 - Scripts: RUNTIME candidates (decide: bundle Python vs reimplement)
 
-- [ ] `scripts/backup_project.py` -> runtime feature (skill/hook-invoked)
+- [x] `scripts/backup_project.py` -> **superseded** by `scripts/package_bootcamp.py` (2026-08-26).
+      Stdlib `zipfile`, profile-scoped exclusions, INV-109 secret scan, symlink resolve-then-compare,
+      `PACKAGE_MANIFEST.json`, and `testzip()` + SHA-256 verification before it reports success.
 - [ ] `scripts/baseline_status.py` -> runtime feature (skill/hook-invoked)
 - [ ] `scripts/business_case_offer.py` -> runtime feature (skill/hook-invoked)
 - [ ] `scripts/check_database.py` -> runtime feature (skill/hook-invoked)

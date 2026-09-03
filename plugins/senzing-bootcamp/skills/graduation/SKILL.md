@@ -325,7 +325,10 @@ For each finding, append a `## Improvement:` entry to
   `../bootcamp-onboarding/feedback.md` Step 3c: show the exact message, strip anything identifying
   (INV-065), and send only on a yes. Batch the offer — one question covering all such findings, not
   one per finding, so the retrospective stays a single non-blocking step. On decline or failure,
-  record it and continue; every entry is saved locally regardless (INV-015).
+  record it and continue; every entry is saved locally regardless (INV-015). ⚠️ **(INV-281) A session forbidden to
+  send** — a maintainer `/dry-run` — still presents the offer, then records
+  `submission blocked: <reason>`, **never** `offered, declined` (Step 3): a yes that could not be
+  acted on is not a refusal.
 - The same **Context when reported** block, describing what *you* hit rather than what the
   bootcamper saw.
 
@@ -522,6 +525,48 @@ none of these are covered by it:
      re-run the full capture) and re-check rather than reading the coverage line as a pass.
    - **Fallback — the PNGs on disk.** Count `docs/visualizations/<name>-*.png` for that
      visualization's base name and compare against the section's image lines.
+
+   ⛔ **(INV-271) The manifest check is PER-NAME, and its denominator is the manifests that exist — so ask
+   separately whether a manifest is MISSING (INV-193, INV-265).** "Did every captured tab reach the
+   recap?" is answered for each manifest found; it cannot answer "should there have been another
+   manifest?" A module that captured nothing contributes no manifest, no denominator, and no
+   shortfall the check can see, and the `SKIPPED: tab-coverage check` branch fires only when **no**
+   manifest exists at all — so with one present it stays silent.
+
+   **The expected-visualization denominator closes it, and it does not come from the manifests.**
+   `--check` derives the set of **expected visualizations** from `modules_completed` in
+   `config/bootcamp_progress.json`, mapped to the visualization each producing module is specified to
+   build — `truthset_verification` for the Truth Set module, `results_visualization` for Module 7 —
+   and reports, by name, any expected visualization with no manifest:
+
+   ```text
+   SKIPPED: tab-coverage check for 'results_visualization' — the 'query_visualize_discover'
+   module ran (it is in modules_completed) … Coverage for it has NOT been measured — this is
+   not a pass …
+   ```
+
+   When that fires, `--check` **withholds the coverage figure entirely** and prints
+   `Tab coverage NOT reported: N expected visualization(s) have no manifest` instead. Relay that as
+   an **unrun** check naming the visualization and the module that owed it — never as a pass, and
+   never alongside a coverage percentage.
+
+   ⚠️ **This is why it matters, in the artifact that leaves with them.** On a 2026-08-25 run the
+   check reported *"6 of 6 captured tabs reached the recap"* — a clean pass — while the entire
+   Module 7 application, built over the Bootcamper's **own** resolved data, had been captured not at
+   all. The recap PDF illustrated the bootcamp with six pictures of the demo Truth Set, and the
+   Bootcamper's cross-source entities and fraud leads appeared only as prose. The sentence was true
+   of the manifests that existed and false of the bootcamp.
+
+   ⛔ **(INV-048, INV-193) Offer the remedy — it is cheap while the artifacts are still on disk.** Re-start the app and
+   re-run the capture against it (`capture_screenshots.py --url http://localhost:<port> --name
+   <name>`), then re-embed via the backfill path, rather than proceeding with a recap that pictures
+   the sample dataset in place of the Bootcamper's results.
+
+   ⚠️ **None of this is blocking.** The recap PDF is produced unconditionally (INV-048) and a missing
+   manifest does **not** fail `--check`; the requirement is that graduation **states** the shortfall,
+   not that it refuses to graduate. Do not re-state Module 7's capture instruction either — it is
+   already explicit, and a fourth copy is the state-it-once violation (INV-183, INV-300). What was missing was
+   the silence afterward, and that is what this closes.
 
    ⛔ **Do not use the generator's `embedded N of M images` figure for this.** Its denominator is
    the count of `![](…)` links in the recap it is measuring, so a section that embedded four of six
@@ -874,7 +919,14 @@ the files are exactly as they were before this paragraph.
 - **`production/MIGRATION_CHECKLIST.md`:** `- [ ]` checkboxes under six sections (Database, Security, Licensing, Performance, Data, Deployment). Because the bootcamp does not include dedicated performance/security/monitoring/deployment modules, add a note at the top: "⚠️ Some production topics (performance, security, monitoring, deployment) are not covered in depth during the bootcamp: complete these items before deploying," and mark those items with ⚠️.
   - **The Performance section MUST carry the DEFAULT-flags item** — ⚠️ *"Replace `*_DEFAULT_FLAGS`
     composites in `production/src/` with the explicit `SZ_*` flags whose output your code actually
-    consumes."* Give the reason, because it is what makes the item non-obvious: the server states
+    consumes — **except the export call**, where `SZ_ENTITY_DEFAULT_FLAGS` is the documented
+    choice and hand-assembling `SZ_ENTITY_INCLUDE_*` members has been observed to drop
+    `RELATED_ENTITIES` entirely, with no error."*
+    ⛔ **(INV-287) Ship the exception with the item, never the item alone.** The bare
+    instruction points at the one call where following it silently loses every relationship
+    (`../module-06-data-processing/phaseD-validation.md`), and a checklist a Bootcamper works
+    through unattended is exactly where an unqualified rule does that damage.
+    Give the reason, because it is what makes the item non-obvious: the server states
     that DEFAULT composites are for getting started and exploration rather than production, that
     their **membership may change between Senzing versions**, and that pinned code can therefore
     *"silently change what it returns after an upgrade — no error is raised"*; they also over-fetch,
@@ -1027,27 +1079,14 @@ overwriting it (neutral lead + numbered list, INV-051/INV-056); otherwise create
 
 ### 6a. Database backup
 
-Back up the resolved repository so it can be restored later. Read **`database_type`**
-(`sqlite`/`postgresql`) from pre-checks and the connection from `config/engine_config.json`.
-⛔ When `database_type` is indeterminate, **do not guess a branch** — determine the engine from
-`config/engine_config.json`'s connection string instead (and note the missing key per pre-check 3).
-Picking the wrong branch here means either no backup or `pg_dump` against a SQLite file, and the
-backup is the whole point of the bundle — INV-094 requires exactly one of the two branches below to
-have run.
+⛔ **Follow `database-backup.md` — it is the one implementation of this procedure, and behavior here
+is unchanged by the factoring.** It carries the `database_type` lookup, the do-not-guess rule for an
+indeterminate value, both engine branches, the warn-and-continue rule, and the restore commands Step
+6c records in the return guide. INV-094 requires exactly one of its two branches to have run.
 
-- **SQLite:** copy the repository file into `backups/revisit/database/` (e.g.
-  `cp database/G2C.db backups/revisit/database/G2C.db`).
-- **PostgreSQL:** run `pg_dump` of the Senzing database to
-  `backups/revisit/database/senzing.dump`. When the database runs in a Docker container, dump
-  through the container (e.g.
-  `docker exec <container> pg_dump -U <user> -d <db> -Fc > backups/revisit/database/senzing.dump`).
-  Confirm the exact user / database / container from `config/engine_config.json` (and the recorded
-  container, when container-lifecycle tracking is present); never invent credentials.
-
-Record the exact **restore** command in the return guide (Step 6c): SQLite = copy the file back to
-`database/`; PostgreSQL = `pg_restore` (or `psql <` for a plain dump) into a fresh database. If the
-backup cannot be produced (tool missing, database unreachable), warn and continue — the rest of the
-bundle still saves.
+The second caller is `../bootcamp-onboarding/packaging.md`: the `transfer` package profile needs a
+database backup, and when `backups/revisit/` does not exist yet it runs **that same file's**
+procedure rather than growing a second SQLite-vs-PostgreSQL branch.
 
 ### 6b. RESUME_STATE manifest
 
@@ -1101,6 +1140,16 @@ This runs exactly once, after the report, before graduation is reported finished
 
 1. **Guarantee the recap PDF exists.** Confirm `docs/bootcamp_recap.pdf` exists and is non-empty. If it is missing, re-run Step 1b (or the inline fallback) once so a valid PDF exists before you announce it. Never announce an artifact you have not confirmed exists at its path.
 2. **Emit one closing announcement** naming only the artifacts confirmed to exist. State that the recap PDF at `docs/bootcamp_recap.pdf` opens with a summary page and then walks through every completed module, capturing that module's Information Shared, Questions & Responses, Actions Taken, and End-of-Module Summary, and that the source lives at `docs/bootcamp_recap.md`. Name the `production/` project and its `GRADUATION_REPORT.md` and `MIGRATION_CHECKLIST.md`. Frame the PDF as a keepsake to revisit and share with their team.
+
+   **Add exactly one line** offering `/package-bootcamp`, which gathers the recap, the keepsake
+   documents, the visualizations and `production/` into a single zip under `backups/packages/` they
+   can archive, move to another machine, or hand to a colleague.
+
+   ⛔ **That line is a statement, not a question, and it names no output path (INV-251).** No new 👉
+   gate belongs here — the single closing question is untouched — and graduation does **not** run the
+   packager, so there is no archive yet whose path could be named. (`tests/test_graduation_announces_what_it_produces.py`
+   requires a path to be announced when a graduation bash block writes one; this design deliberately
+   writes none.)
 
    **Also name the two keepsake documents Step 5b rendered — each only if it exists:**
    `docs/business_problem.pdf` (the problem this bootcamp set out to solve — the document a

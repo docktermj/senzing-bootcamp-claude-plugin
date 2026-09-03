@@ -39,11 +39,17 @@ hold it. These two are properties **of the whole**, which no test can hold — a
 asserts N things about N places and cannot notice that place N+1 disagrees with them.
 So INV-003 and INV-004 are enforced by a person doing this, or not at all.
 
-The six prior audits are the evidence that this is not ceremony. Each ran against a
-**fully green suite** and each found real defects anyway — 372 tests green in the
-first, 506, 573, 883, and 1059 in the last. Their own summaries say it plainly: *"none
-of the findings was mechanically enforced"*, and *"none of which any of the 1059
-existing tests could see."* A sample of what a green suite shipped:
+Every prior audit in the two series ran against a **fully green suite** and found real
+defects anyway. Their own summaries say it plainly: *"none of the findings was
+mechanically enforced"*, and — quoting the run of the day — *"none of which any of the
+1059 existing tests could see."*
+
+⛔ **Read the count and the suite size off the ledger, never from here.** This paragraph
+said *"The six prior audits"* and topped out at 1059 tests until 2026-09-02, by which point
+the two series held **fifty-five** entries and the suite had passed **3,900** — the same
+staleness the ⛔ two paragraphs above forbids, in the section arguing the method works. The
+quoted figure above is left as a **quotation**, dated to the run that wrote it; it is not a
+claim about today. A sample of what a green suite shipped:
 
 - **Every screenshot was being lost from every Bootcamper's recap PDF.** INV-161 made
   image paths document-relative; `graduation/SKILL.md` said so correctly, and the three
@@ -159,6 +165,16 @@ the run rather than from a figure written here, which is how the previous baseli
   recorded commit, resolved from the ledger rather than guessed. For a run following an
   unattended implement session, this is the set that session is answerable for.
 
+⛔ **Commit an audit record on its own, BEFORE the implementations that answer it.** The
+`--since-last-audit` resolver takes the newest audit entry's `Commit:` field as its range
+start, so a record committed *with* the work makes the range start at the work and report
+`0 hard-rule lines added` — which reads exactly like a run that added none, and is enough to
+let a hard rule ship with no invariant and no deferral. Measured 2026-09-03: `ffa6a2f` carried
+a record plus its two implementations, `since --since-last-audit` reported 0, and
+`since --ref e5fee7c` reported 6. The resolver now detects such a ref (`⛔ SUSPECT-REF`) and
+widens to its parent, so the range is recoverable — but the ordering is what makes it right in
+the first place. (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`.)
+
 Each hit is *either* an unregistered rule (propose an invariant) *or* a missing citation to one
 that exists (fix the citation). Both are findings, they need different fixes, and deciding which
 requires reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.
@@ -188,8 +204,15 @@ removing it silently breaks every citation that resolved to it.
    file, not from here:
 
    ```bash
-   grep -n '^## \(production-readiness-audit\|deep-dive-audit\)' specs/IMPLEMENTED.md | tail -8
+   grep -n '^## \(production-readiness-audit\|deep-dive-audit\)' specs/IMPLEMENTED.md | head -8
    ```
+
+   ⛔ **`head`, not `tail` — `IMPLEMENTED.md` is newest-first**, as its own header says. This
+   line read `tail -8` until 2026-09-02, so it returned the OLDEST eight: a run that day was
+   handed `2026-08-11` plus seven July `deep-dive-audit-*` entries, and the five entries from
+   the previous day never appeared. That is the failure the ⚠️ two paragraphs below describes,
+   produced by the command rather than by a hardcoded list — and it is silent, because a
+   plausible list of real audit entries comes back either way.
 
    They name what was already found, which invariants each established, and — most useful — the
    *classes* that recur. Re-finding a fixed defect wastes the run; missing that a class recurs
@@ -337,7 +360,10 @@ Neither number is a target. Use them to find:
 
 ## Step 7: The defect classes worth hunting, in value order
 
-Drawn from the six prior audits. The first three produced the highest-severity findings.
+Drawn from the audits recorded in `IMPLEMENTED.md`. The first three produced the
+highest-severity findings. (⚠️ This said *"the six prior audits"* until 2026-09-02, when
+there were fifty-five — the classes below are what survived, and the number was never
+what made them worth hunting.)
 
 1. **A rule applied to some of the sites it binds.** Every time. When you fix one site,
    grep for the pattern and fix the class.

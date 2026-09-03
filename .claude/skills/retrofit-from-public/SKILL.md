@@ -1,6 +1,6 @@
 ---
 name: retrofit-from-public
-description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) back into this development repo. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) back into development. The inverse of propagate-to-public: copies the propagated content back, applies the inverse owner rewrite (Senzing to docktermj), never deletes, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
+description: 'Retrofit changes made in the public access repo (Senzing/senzing-bootcamp-claude-plugin) back into this development repo. Use when the maintainer wants to bring public-repo edits (PR fixes, typo/spelling corrections, direct changes) back into development. The inverse of propagate-to-public: copies the propagated content back, applies the inverse slug rewrite (Senzing to docktermj), never deletes, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
 ---
 
 # Retrofit ← Public access repo
@@ -9,7 +9,7 @@ This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It brings changes that were made in the **public access repo**
 (`Senzing/senzing-bootcamp-claude-plugin`, cloned locally at
 `~/senzing.git/senzing-bootcamp-claude-plugin`) back into this **development
-repo** (`docktermj/senzing-bootcamp-claude-plugin`).
+repo** (`docktermj/senzing-bootcamp-claude-plugin-development`).
 
 It is the counterpart to `propagate-to-public`. Propagate is authoritative
 (dev → public). Retrofit is the *return path* for edits that happen in public —
@@ -19,10 +19,11 @@ The work is done by [`retrofit.sh`](retrofit.sh) in this skill's directory.
 
 ## Retrofit is NOT a mirror image of propagate — three asymmetries
 
-1. **The transform is inverted, narrowly.** Propagate rewrites
-   `docktermj → Senzing`; retrofit undoes it, or the dev repo's identity would be
-   poisoned with Senzing URLs:
-   - `Senzing/senzing-bootcamp-claude-plugin` → `docktermj/senzing-bootcamp-claude-plugin`
+1. **The transform is inverted, narrowly.** Propagate rewrites this repo's slug
+   to the public one; retrofit undoes it, or the dev repo's identity would be
+   poisoned with Senzing URLs. Both halves are restored — the `docktermj` owner
+   *and* the `-development` name suffix the public repo does not carry:
+   - `Senzing/senzing-bootcamp-claude-plugin` → `docktermj/senzing-bootcamp-claude-plugin-development`
    - `marketplace.json` owner `"name": "Senzing"` → `"name": "docktermj"` (that file only)
 
    It is **not** a blanket `Senzing → docktermj`. `plugin.json`'s
@@ -99,8 +100,8 @@ The script **only updates the dev working tree** — no commit, no push.
    it's a dev-only addition to keep or content removed in public to delete — the
    script never deletes it for you.
 4. Sanity-check the reverse transform in the diff: dev self-references should read
-   `docktermj/senzing-bootcamp-claude-plugin` and `plugin.json` `author` should
-   still be `Senzing`.
+   `docktermj/senzing-bootcamp-claude-plugin-development` and `plugin.json`
+   `author` should still be `Senzing`.
 5. ⛔ **Run the full suite, and reconcile every test the retrofit desynced.**
 
    ```bash

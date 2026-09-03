@@ -25,7 +25,7 @@ no mitigation beyond the label toggle.
 ## Root cause
 
 Both are defaults measured against an 84-entity dataset, in a contract that binds every
-language implementation (INV-090/INV-104/INV-124).
+language implementation (INV-002/INV-090/INV-104).
 
 **Match-key labels — a fixed gutter with no truncation and no overflow handling.**
 `plugins/senzing-bootcamp/scripts/senzing_viz_server.py:1104`:
@@ -171,3 +171,7 @@ behavior, the no-relationships case), and both changed functions were syntax-che
 `node --check`. That proves the arithmetic guarantees; it does **not** prove the graph reads better at
 2,799 entities. Someone with real resolved data should open the app and confirm the subgraph default
 is the right call at that scale.
+
+## Citation correction (2026-09-02)
+
+This spec cited **INV-124** as part of the reason the visualization contract binds every language. It does not: INV-124 governs the **tab hooks the recap capture depends on** (`tab-<id>`, `navbtn-<id>`, `activate()`, deep-linking), and its "in whichever language it is generated" clause scopes *its own* subject. The rules that carry the any-language claim are **INV-002** (the SBCP is language-agnostic) and **INV-090** (the server is built in the chosen language, modeled on the `visualization-api-reference.md` contract). Corrected in place because implementing this spec copied the wrong trio into shipped text, where a reader following the citation reached a rule about tab ids (`specs/inv-124-is-cited-as-the-any-language-rule-it-is-not.md`).

@@ -168,10 +168,31 @@ class TestMatchKeyDetailsIsNotGroupedWithTheRelationsFlags(unittest.TestCase):
         )
 
     def test_phase_d_stays_correctly_scoped(self):
-        """The sibling site was already right — it must not be 'harmonized' to the wrong form."""
+        """The sibling site was already right — it must not be 'harmonized' to the wrong form.
+
+        ⚠️ **Narrowed 2026-09-02.** This asserted `assertNotIn("SZ_INCLUDE_MATCH_KEY_DETAILS")`
+        on Phase D, which is broader than this class's rule: the rule is that the flag must not
+        be **grouped with the relations flags as omitting the export methods**, not that its
+        name may not appear. The blunt form was a proxy that held only while Phase D happened
+        not to mention the flag — and the flag is named freely in five other shipped files
+        (`visualization-api-reference.md`, `module-07`'s two phase files, `ground-rules.md`),
+        so the ban was never policy. Phase D's match-key audit now cites it correctly, stating
+        that `MATCH_KEY_DETAILS` `requires_flags` it and that it `depends_on` a relations flag,
+        which is the documented relationship and the opposite of the grouped error. So this now
+        pins the grouped form, the same way the sibling test above does for the viz reference.
+        """
         text = read(PHASE_D)
         self.assertIn("`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members", text)
-        self.assertNotIn("SZ_INCLUDE_MATCH_KEY_DETAILS", text)
+        grouped = re.search(
+            r"`SZ_ENTITY_INCLUDE_ALL_RELATIONS` and its members[^.]{0,160}?"
+            r"`SZ_INCLUDE_MATCH_KEY_DETAILS`[^.]{0,80}?do\s+\*?\*?not\*?\*?\s+list the\s+export",
+            text, re.S,
+        )
+        self.assertIsNone(
+            grouped,
+            "SZ_INCLUDE_MATCH_KEY_DETAILS must not be listed among the flags said to omit "
+            "the export methods — its applies_to names both export methods",
+        )
 
 
 class TestEmptyResultIsTreatedAsPlumbingFailure(unittest.TestCase):

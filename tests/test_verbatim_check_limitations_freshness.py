@@ -49,17 +49,28 @@ def squash(text):
     return re.sub(r"\s+", " ", re.sub(r"^[ \t]*>[ \t]?", "", text, flags=re.M))
 
 
+#: ⚠️ The block names its own length ("Three further limitations", "…for all three"), so a
+#: hardcoded locator breaks the moment a limitation is added — which is exactly what happened
+#: when a fourth was documented on 2026-09-01, taking 19 tests down as ERRORS rather than
+#: failures. The COUNT is data; the block and its shared handling procedure are the claim, so
+#: the locators match any count and the assertions below still check what they always did.
+_BLOCK_START = re.compile(r"⛔ \*\*\w+ further limitations")
+_BLOCK_END = re.compile(r"\*\*Handling is the same for all \w+")
+
+
 def limitations_block():
     text = PHASE2.read_text(encoding="utf-8")
-    start = text.index("⛔ **Three further limitations")
-    end = text.index("**Handling is the same for all three", start)
-    return squash(text[start:end])
+    start = _BLOCK_START.search(text)
+    assert start, "the further-limitations block was not found — has it been renamed?"
+    end = _BLOCK_END.search(text, start.start())
+    assert end, "the shared handling line was not found after the limitations block"
+    return squash(text[start.start():end.start()])
 
 
 def map_step():
     text = PHASE2.read_text(encoding="utf-8")
     start = text.index("### 11. Map")
-    end = text.index("⛔ **Three further limitations", start)
+    end = _BLOCK_START.search(text, start).start()
     return squash(text[start:end])
 
 
@@ -87,7 +98,7 @@ class TheBlanketCaveatIsReplacedByPerLimitationFreshness(unittest.TestCase):
     def test_freshness_is_stated_per_limitation(self):
         self.assertRegex(
             self.block,
-            r"(?i)Freshness, per limitation — all three are CURRENT behavior",
+            r"(?i)Freshness, per limitation — all \w+ are CURRENT behavior",
             "the block does not say which entries are current")
 
     def test_the_re_verification_route_is_named(self):
@@ -262,7 +273,7 @@ class TheExtractWarningArrivesBeforeTheGate(unittest.TestCase):
 
     def test_it_points_at_the_full_procedure(self):
         self.assertRegex(
-            self.step, r"(?i)Three further limitations.{0,40}full procedure",
+            self.step, r"(?i)\w+ further limitations.{0,40}full procedure",
             "the pointer duplicates the guidance instead of routing to it, which is how "
             "the two drift apart")
 
@@ -282,8 +293,9 @@ class TheSurroundingRulesSurvive(unittest.TestCase):
             "the worked example of a retired limitation was lost")
 
     def test_the_four_step_handling_is_intact(self):
-        self.assertIn("Handling is the same for all three: the four steps above.", self.text,
-                      "the shared handling procedure was lost")
+        self.assertRegex(
+            self.text, r"Handling is the same for all \w+: the four steps above\.",
+            "the shared handling procedure was lost")
 
 
 if __name__ == "__main__":

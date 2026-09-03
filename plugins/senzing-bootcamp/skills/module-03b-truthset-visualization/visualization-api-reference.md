@@ -209,7 +209,7 @@ error — so a `NAME_FULL`-only search silently fails for every organization in 
 half-organization dataset that is half the population unsearchable: `"ABSOLUTE DENTAL"` returned 0
 results while a person name returned a hit immediately. Build the attribute document per attribute
 and try `NAME_FULL`, then `NAME_ORG` when the first yields nothing (or send both and merge by
-`ENTITY_ID`). This binds a server in **any** language (INV-090/INV-124), not only the bundled Python
+`ENTITY_ID`). This binds a server in **any** language (INV-002/INV-090), not only the bundled Python
 reference — the defect propagated into a generated query program precisely because it lived in the
 reference implementation and in no written rule.
 
@@ -370,10 +370,13 @@ resolution occurred), return an empty `per_record` list and empty `resolution_ru
 > about it when Module 7 was not.** Module 7 briefly forbade the flag on why calls, claiming the
 > breakdown was there without it; on **SDK 4.3.4** `WHY_KEY_DETAILS` was **absent** until the flag
 > (plus a relations flag) was passed, and absent again without it on **4.3.2** — observation-only,
-> 2026-08-16 (INV-080/INV-149). Note that **no flag is *documented* to populate it**: all 29 flags
-> applying to `why_records` name other `response_paths` (`get_sdk_reference(topic='flags',
-> filter='why_records')`, server 1.32.9, 2026-08-17). So pass the flag, and still check the keys you
-> actually got.
+> 2026-08-16 (INV-080/INV-149). The server now documents the requirement, and the observation above agrees
+> with it: `get_sdk_reference(topic='response_schemas', filter='why_entities')` lists
+> `WHY_RESULTS[].MATCH_INFO.WHY_KEY_DETAILS` with `requires_flags:
+> ["SZ_INCLUDE_MATCH_KEY_DETAILS"]` (server **1.35.3**, 2026-09-01). ⚠️ **The `flags` topic alone
+> does not say so** — that flag's `response_paths` names only `RELATED_ENTITIES[].MATCH_KEY_DETAILS`
+> — so read `response_schemas` before concluding a field is attributed to nothing. So pass the flag,
+> and still check the keys you actually got.
 >
 > **Both are documented — look them up rather than dumping first.**
 > `get_sdk_reference(topic='response_schemas', filter='why_entities')` returns the `data[]` entry
@@ -456,8 +459,17 @@ breaks the tab.
 
 **`GET /api/how?entity_id=<id>`:** Explain HOW an entity was constructed from its records
 
-Backed by `how_entity_by_entity_id` with `SZ_HOW_ENTITY_DEFAULT_FLAGS` (confirm via the MCP
-server).
+Backed by `how_entity_by_entity_id`. ⛔ **(INV-080, INV-115) `SZ_HOW_ENTITY_DEFAULT_FLAGS` alone will NOT return the
+match-key breakdown — add `SZ_INCLUDE_MATCH_KEY_DETAILS` with a relations flag if the renderer shows
+it** (the same addition the `/api/why` entry above already makes on the why side). The server is
+explicit that the default is not enough: `SZ_HOW_ENTITY_DEFAULT_FLAGS` is `SZ_INCLUDE_FEATURE_SCORES`
+alone, `response_paths` `HOW_RESULTS.RESOLUTION_STEPS[]`, and `SZ_INCLUDE_MATCH_KEY_DETAILS` lists
+`how_entity_by_entity_id` in `applies_to` with `depends_on` one of the five relations flags
+(`get_sdk_reference(topic='flags', filter='SZ_INCLUDE_FEATURE_SCORES', language='python')` and
+`filter='SZ_INCLUDE_MATCH_KEY_DETAILS'`, server **1.33.0**, 2026-08-26). Confirm both, and the
+response structure, via the MCP server. ⚠️ **Treat the breakdown as conditional and fall back to
+`FEATURE_SCORES`** — see the asymmetry note above for what the server does and does not attribute to
+this flag on a how response, and never render an empty section.
 
 ```json
 {
@@ -632,7 +644,7 @@ identically; company names sharing a long prefix are routine rather than exotic,
 real dataset can be organizations (INV-164). Compare the **fitted** strings, not the source values,
 and disambiguate any pair that collides while its values differ — the Python reference appends a
 positional suffix. Truncation must never remove the leading characters. Implement this in whatever
-language the server is written in (INV-090/INV-124): it is stated here because a rule that lives only
+language the server is written in (INV-002/INV-090): it is stated here because a rule that lives only
 in the Python reference reaches no generated server, which is exactly how the `NAME_FULL` search
 defect shipped (INV-164).
 
@@ -676,9 +688,16 @@ id, so a server in any language (INV-090) must use these exact ids and expose th
 **The row order below is also the order the app presents its tabs, left to right, and therefore the
 order screenshots are embedded in the recap** (INV-155 fixes the six-tab set and this order;
 INV-147 binds the recap's embedding to it) — by `module-completion.md`'s capture step and by
-graduation's orphaned-screenshot backfill alike. Both cite this table rather than restating the
+graduation's orphaned-screenshot backfill alike. Both cite this table (INV-300) rather than restating the
 list, so changing a tab's position here changes it everywhere. The recap is a walkthrough of the
 app; images in capture or append order cannot be lined up against the interface.
+
+⛔ **(INV-124) The `Section id` and `Nav button id` columns are the capture's hooks, and they bind
+the server in whichever language it is generated.** The recap capture activates a tab by finding
+`tab-<id>` and `navbtn-<id>` and calling a page-scope `activate(<id>)`, and deep-links with
+`?tab=<id>` / `?q=<text>` — so a generated server that renders the right tabs under different ids
+produces a recap with no screenshots. This is the one place these ids are normative; every other
+file cites this table.
 
 | Tab | Id | Section id | Nav button id | Screenshot slug |
 |---|---|---|---|---|
@@ -887,6 +906,55 @@ Applies to **Entity Graph** in both of its modes.
   are, checked on the **fitted** strings). A hover-only tooltip does
   **not** satisfy this: the complaint it addresses is being unable to tell which records matched
   without hovering every node in turn.
+- **Node labels are painted AFTER every node (required — INV-002/INV-090/INV-104).** Emit all node
+  labels in their own layer, drawn after the whole node layer, so no node marker can ever paint over
+  another node's text. ⛔ **(INV-002/INV-090/INV-104) The natural structure is the defective one:** binding one group per
+  datum and appending marker-then-text inside it emits marker,text,marker,text — so a later node's
+  marker covers an earlier node's label, and every string is still present in the DOM while glyphs
+  are missing from the image. Observed on the **smallest possible graph, 2 entities**: an 18-character
+  entity name rendered with its leading characters behind the neighboring marker. ⚠️ Offsetting a label by its
+  own marker's size is necessary but **not** sufficient and was never the cause — a node does not
+  occlude its own label; its neighbor does.
+- **A screenshot MUST come from a CAPTURE-ORIENTED render, not the interactive one (required —
+  INV-002/INV-090/INV-299).** Honor `?capture=1` by (a) driving the layout to completion
+  **synchronously** — advance the physics in a loop rather than waiting on animation frames —
+  (b) **fitting** the finished layout inside the viewport, and (c) **suppressing on-canvas labels**
+  above a capture ceiling *lower* than the interactive one. ⛔ **(INV-299) All three, or none: each masks
+  the next.** Measured 2026-09-03 on the 85-entity Truth Set — the animation path advanced **5 of the
+  ~300 ticks** the layout needs at every budget from 5 s to 300 s, because a headless browser's
+  virtual time does not advance animation frames; settling alone then pushed **most nodes
+  off-canvas**, because centering bounds nothing; and fitting alone rendered a 10 px label at
+  **2–3 px**. ⚠️ **Leave the interactive view alone** — a real browser advances animation frames
+  normally, so a reader opening the app or the standalone snapshot already gets a settled layout,
+  and applying the capture's label ceiling there would degrade a view they can zoom and toggle.
+  ⚠️ **Suppress both label sets through your own auto-off mechanism**, not a bespoke hide on the
+  name layer: the interactive ceiling governs entity names *and* match keys together, and reusing
+  it keeps the on-screen toggles honest about what was actually drawn.
+- **An animated view MUST expose a settled signal, and the capture MUST wait on it (required —
+  INV-002/INV-090/INV-298).** Remove `data-graph-settled` from the document element when a layout
+  **begins**, and set it to `1` when that layout has reached its **final positions** — immediately
+  where there is nothing to lay out, so a waiter on an empty graph is never left waiting. A
+  screenshot of an animated view is taken **after that signal**, never on a time budget alone, and
+  a capture that proceeds without it MUST say so (INV-129). ⛔ **A deadline is not a settle
+  guarantee, and a longer one is not a better guarantee.** Measured 2026-09-03 on the 85-entity
+  Truth Set: five captures at a 30 s budget and five at 120 s produced the *same* image while five
+  at 300 s produced **two**, and real time barely moved (0.6 s → 0.7 s) because virtual time
+  advances as fast as the page allows. ⚠️ **Expose it as a DOM attribute, not a JavaScript
+  variable.** The Python reference held its simulation in a top-level `let`, which never reaches
+  `window`, so nothing outside the page's own script could observe it — an attribute is
+  observable by any driver in any language, which is the whole point of putting the rule here.
+- **Collision must account for the label's extent, not just the marker (required).** Size the
+  collision/overlap pass from the rendered label as well as the marker, and apply it **only while
+  labels are actually shown** — inflating it for text nobody renders over-separates a
+  production-scale layout for no benefit. Measured on Senzing 4.4.0, 4 records → 2 entities,
+  1440×900: with the marker alone the minimum distance from a marker to a *neighbor's* glyphs was
+  **3 px**; accounting for label width it was **55.7 px** at the settled budget. ⚠️ Expect the
+  layout to take longer to settle once labels influence it — verify at the budget your capture
+  actually uses rather than assuming the pre-change settling time still applies.
+- **Whatever hides labels must follow them into the new layer (required).** If labels default off
+  above a node-count threshold, the mechanism that hides them MUST target the layer they are now
+  in. A selector or predicate left pointing at the old per-node structure leaves every label
+  rendered at exactly the scale the threshold exists for, and nothing fails loudly.
 - **Legends are generated FROM the data, and filter it.** Build each legend from the values actually
   present in the rendered set — the `relationship_type` values on the drawn edges, the data sources
   on the drawn nodes. A legend entry can then never exist without matching marks, which is what
@@ -894,6 +962,27 @@ Applies to **Entity Graph** in both of its modes.
   Clicking a legend entry filters the view to that type/source and toggles back; show the active
   filter state and a per-entry count. Pair color with a non-color distinction (e.g. line style per
   relationship type) so the encoding survives a monochrome screenshot.
+  - ⛔ **A legend count's LABEL is a claim about its denominator — name the denominator the code
+    actually uses.** The per-source rows on the Entity Graph count **participation**: every entity
+    drawing on that source, cross-source entities included. Label that block **"Entities per
+    source:"**, never "Single-source:". The shipped reference carried the wrong label and the numbers
+    were individually correct, which is why nothing caught it — on a two-source run the block read
+    `CRM_CUSTOMERS 65` and `WEBSTORE_ACCOUNTS 70` against **121** entities of which **14** spanned
+    both (`65 + 70 − 14 = 121`); the true single-source figures were 51 and 56, and every figure on
+    screen agreed with every other, so the only wrong thing was the word above them.
+  - ⛔ **Do not "fix" it by recomputing the counts.** The whole row is participation-shaped: the
+    tooltip filters the *source*, the click handler keeps a node when **any** of its sources is still
+    on, and the swatch is the per-source color while a cross-source entity is drawn in its own
+    combination color. Recomputing to true single-source figures would agree with the label and
+    disagree with all three — three changes to avoid one.
+  - **State the overlap, because two adjacent blocks read as a partition.** With a combination block
+    headed "entities in more than one source have their own color", the per-source block needs one
+    clause saying an entity in several sources is counted in **each** of its sources' rows. Without
+    it the pair reads as disjoint and the cross-source entities look double-counted or absent.
+  - **Label the per-source block whether or not combination rows exist.** In the reference this
+    heading sat inside the combinations branch, so it vanished on single-source runs — where the
+    label is accidentally correct — and appeared only where participation and single-source diverge,
+    which is exactly the run the module exists to demonstrate.
 - **Data-source colors are ASSIGNED FROM the sources present, never from a name-keyed palette.**
   Build the source→color map at model-build time from the data-source codes actually loaded. A map
   keyed by source *name* is not acceptable: the shipped palette names the Truth Set's sources
@@ -1011,6 +1100,33 @@ The sequence in every module that starts a server is therefore:
 2. Hand the URL to the bootcamper and let them explore at their own pace.
 3. Ask the teardown gate below, and only then clean up.
 
+⛔ **(INV-001, INV-002) On macOS, start the server as a DIRECT CHILD of the shell that sourced the
+env script — never through `nohup`, `env`, or a nested `bash -c`.** macOS System Integrity Protection strips `DYLD_*`
+out of the environment whenever a **protected** binary execs a child, and `/usr/bin/nohup`,
+`/usr/bin/env` and `/bin/bash` are all protected. The variable is set correctly in the parent shell
+and simply does not survive the wrapper. Demonstrated on Darwin 25.5.0 arm64, 2026-08-25
+(environment observation, INV-080/INV-149):
+
+```text
+$ echo $DYLD_LIBRARY_PATH              -> /opt/homebrew/opt/senzing/er/lib:...
+$ bash -c 'echo $DYLD_LIBRARY_PATH'    -> (empty)
+$ nohup bash -c '...'                  -> (empty)
+```
+
+- ⚠️ **The symptom points away from the cause.** It surfaces as
+  `java.lang.UnsatisfiedLinkError: no Sz in java.library.path` from a **backgrounded** process whose
+  parent shell has the variable set — so the obvious response is to add `-Djava.library.path=…`,
+  **which does not fix it**. `../module-02-sdk-setup/SKILL.md` → "MCP Java scaffolds may need a JSON
+  library the install does not provide" states why a JVM flag cannot repair a dynamic-linker search
+  path after the process has started; follow it there rather than re-deriving it (INV-183, INV-300).
+- ⚠️ **Foreground programs work throughout, which is what makes this confusing.** They are direct
+  children of the shell that exported the variable, so nothing is stripped. The failure appears only
+  when a process is backgrounded or wrapped — exactly what starting a server is.
+- ⚠️ **Silent on Linux and Windows**, where `DYLD_*` does not exist. That is why it is stated here,
+  in the contract every platform reads, rather than behind a macOS branch a Linux reader skips
+  (INV-001). The JVM error above is illustration; the rule is about the launcher, not the language
+  (INV-002).
+
 ### Coloring graph nodes (required — behavior, in every language, INV-259)
 
 ⛔ **A node is colored by its whole source set — never by one member of it (INV-259).** The key is the
@@ -1035,6 +1151,53 @@ collision this fixes; that is the error made while repairing it by hand, not a h
 
 **The legend MUST name each combination** it colors (INV-259), labeled as a combination and counted over the
 nodes actually drawn. A color a viewer cannot name is not an improvement over the wrong color.
+
+#### The encoding self-check (required — behavior, in every language)
+
+⛔ **(INV-270) The graph endpoint MUST expose a self-check, and the build step MUST run it before capture.**
+The rule above is stated three times across this bootcamp and was still re-implemented wrong in a
+generated Java app on 2026-08-25 — colored from `data_sources[0]`, with 294 of 5,619 cross-source
+entities rendered as single-source. Prose did not prevent that. A check that fails will.
+
+**What to expose.** Alongside `total` and `capped`, the graph payload carries the number of distinct
+**sorted source-set keys** over the nodes it emits — the same keys the client computes to color them:
+
+```text
+encoding_check: {
+  distinct_source_set_keys: <int>,     # distinct sorted, joined source sets over emitted nodes
+  source_set_keys: [<string>, …],      # e.g. ["CUSTOMERS", "CUSTOMERS|REFERENCE", "WATCHLIST"]
+  combination_keys: [<string>, …],     # the subset containing the join separator
+  status: "ok" | "not_exercised",
+  detail: <string>
+}
+```
+
+**What to verify.** The number of distinct color keys the **legend names** MUST equal
+`distinct_source_set_keys`. That equality is false exactly when a node is colored by one member of
+its set: first-source coloring collapses every combination onto a single-source key, so the legend
+key count drops below the source-set count. Both numbers are already computed in order to draw the
+graph, so the check costs nothing.
+
+⚠️ **Fewer than two distinct keys means the check was NOT exercised — report that, never "passed"
+(INV-265).** With one registered data source every key is that source, the comparison cannot fail,
+and reporting a pass would be reporting agreement from a match that could not disagree. Say
+"not exercised — one data source" and move on.
+
+⛔ **That is NOT the Truth Set's case — this module is a genuine test site for INV-259.** The Truth
+Set registers **three** data sources and resolves entities spanning them, so the comparison is live
+here and a real `ok`/mismatch verdict is what this module should produce
+(`get_sample_data(dataset='truthset', source='list')` → CUSTOMERS, REFERENCE, WATCHLIST, 159
+records; server 1.33.0, 2026-08-28). A `not_exercised` result **in this module is itself a signal** —
+fewer sources loaded than expected — not a routine outcome to move past. The single-source case
+belongs to System verification's synthetic `VERIFY` data, and to a bootcamper who loads exactly one
+source. ⚠️ Observation, not a server fact: one full 159-record load on 2026-08-27 emitted **7**
+distinct source-set keys, **4** of them combinations, over 84 entities — first-source coloring would
+have collapsed those four and dropped the legend count to 3, which is the mismatch this check
+exists to catch.
+
+⛔ **On a mismatch, stop and fix the encoding before capturing screenshots (INV-259).** The screenshots become
+a permanent keepsake in the recap and the production project; capturing first means shipping the
+wrong picture and discovering it afterwards, which is what happened.
 
 ### The graph payload is bounded, and says so (required)
 

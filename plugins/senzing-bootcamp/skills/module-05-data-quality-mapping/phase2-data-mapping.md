@@ -242,7 +242,7 @@ nothing shown and nothing asked.
   guided mode, present the plan and end the turn on the pinned question at **step 10** before
   advancing. In the faster mode, present it and advance the same turn, which is what the tool wanted
   anyway. **Step 10 owns that question's wording** — it is pinned there and is not restated here, so
-  the two cannot drift apart (INV-183). INV-233 is why this cross-reference is safe: an instruction to
+  the two cannot drift apart (INV-183, INV-300). INV-233 is why this cross-reference is safe: an instruction to
   end the turn on a question must resolve to a pinned question that actually exists at the step it
   names.
 - **Do not weaken the mapping-verbosity offer to match the tool.** The bootcamper was promised they
@@ -368,7 +368,7 @@ EMBEDDED MASTER RULES below require, reached from the plan side.
 ⚠️ **Choosing the sentinel here decides a step-4 outcome: it widens the verbatim check's REL_*
 rejection to include `REL_ANCHOR_KEY` and `REL_POINTER_KEY`.** A hashed RECORD_ID appears nowhere in
 the source, so the keys mirroring it are unharvestable too. That is expected, not a mapping defect —
-limitation 2 under "Three further limitations" has the condition and the offender-count check that
+limitation 2 under "Four further limitations" has the condition and the offender-count check that
 distinguishes it from one.
 
 On success the server **moves the field count**: the embedded entry's `field_count` is subtracted from
@@ -569,6 +569,35 @@ predominant type and let step 3's `type_discriminator` do the typing — which i
 what the tool's own prose says happens anyway (*"The type_discriminator details will be defined in
 Step 3 mapping"*), so nothing is lost.
 
+⛔ **(INV-136, INV-125) Step 3 rejects a source that declares BOTH organization and person name
+fields — even when no record carries both — and its message describes the wrong problem.** A source whose name fields are
+disjoint *by record type* is rejected with:
+
+```text
+NAME_ORG cannot co-exist with person name attributes NAME_FIRST, NAME_FULL, NAME_LAST — a
+record is either a person or an organization.
+```
+
+**The fix is to declare the names through `type_discriminator.field_overrides`** — including where
+the override is **identity in both branches**, declared purely to satisfy the validator. Observed on
+two sources on server **1.33.0**, 2026-08-25, and again on 2026-08-27; both had verified-disjoint
+fields (one populated per record, selected by `RECORD_TYPE`; zero rows carrying both).
+
+- ⚠️ **Read the message as "declare it differently", not "your data is wrong".** It states a
+  **record-level** rule, and the mapping already satisfied it — the rejection is about the *field
+  declarations*. A run that reads it literally spends its first attempt re-checking data that is
+  correct. The rule's authoritative scope is narrower still: the Entity Specification's `Feature:
+  NAME` section says *"do not mix `NAME_ORG` with parsed person fields **in the same object**"*
+  (`search_docs(query='entity specification attribute names feature tables NAME_ORG ADDR_LINE1
+  PHONE_NUMBER', category='data_mapping')`, server **1.33.0**, 2026-08-28) — one NAME object, not one record, and
+  certainly not one declaration.
+- ⚠️ **Expect the coverage count to drop after you apply it.** Fields moved into `field_overrides`
+  are counted by nothing, so the mapping reports fewer covered fields than it dispositions. That is
+  the known field-count warning described below — **not** unmapped data. Do not chase it.
+- ⛔ **(INV-136) Do not pre-emptively emit a `type_discriminator` on every source.** It is the fix for this
+  rejection, not a default: adding an identity override to a mapping that does not need one buys the
+  same coverage-count surprise for nothing.
+
 ⚠️ **If a warning like that reaches you, it is not your error and not a mapping defect** — record it
 as expected and proceed (INV-048/INV-173). This is **one** known-bad interaction, and it does not
 license ignoring step-2 warnings generally: the others are real. And note the prose's *"must be PERSON or
@@ -581,7 +610,7 @@ at step 9 already holds the evidence: scan its `Unique`, `Unique %` and frequenc
 columns for a populated text field carrying many repeating real-world names. If there is one, declare
 it as an `embedded_master` in this step's payload. See **"A second entity hiding in a column:
 `embedded_master`, and when to go `back`"** above for the three signals, the payload it requires, and
-the recovery route if this check is missed — do not restate them here (INV-183: the rule is named and
+the recovery route if this check is missed — do not restate them here (INV-183, INV-300: the rule is named and
 linked at the step that needs it, never forked into a second copy).
 
 > **Presentation (conditional on `mapping_verbosity`):**
@@ -687,7 +716,7 @@ anyway — so the Bootcamper's explicit routing answer was honored in form and n
 as a strong local observation, not as a documented rule, and re-confirm before relying on it
 elsewhere (INV-080/INV-149).
 
-MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and it returned the *Payload attributes (optional)* and *Mapping identifiers* sections, which establish that payload and registered features are distinct categories and that choosing between them is a mapping decision, but state no precedence for a colliding root-level key (absence negative) — server 1.33.0, 2026-08-21
+MCP-NEGATIVE: search_docs(query='payload attribute versus registered feature attribute record root extracted as feature precedence', category='data_mapping') — no indexed section states what happens when a payload-intended key at the record root carries a registered feature attribute's name — owner: search_docs over the Entity Specification IS the route that would carry such a precedence rule, and its *Attribute reference* section states the rule for the inside-a-feature-object case -- "Only the attributes listed here may appear inside a feature object. Anything else is treated as payload" -- while no returned section states any precedence for a record-root key whose name belongs to a registered feature, which is the case asked about (absence negative) — server 1.36.0, 2026-09-02
 
 **On a collision, do NOT silently re-route or override the answer (INV-006).** Their intent — *do
 not match on this* — is achievable; only the key **name** is wrong. Say what will actually happen
@@ -720,7 +749,7 @@ something must check the behavior was actually obtained.
 > gate fails.** `extract` is for pulling a value out of a prose field, and **every correct
 > multi-word extraction is rejected by step 4's verbatim gate**, by construction: the gate compares
 > whole values, `|`/`;` segments and single whitespace tokens by equality, never substrings
-> (confirmed on server 1.32.9, 2026-08-14 — see "Three further limitations" below for the mechanism
+> (confirmed on server 1.32.9, 2026-08-14 — see "Four further limitations" below for the mechanism
 > and the evidence). `extract` is not exotic: any prose field with an embedded address, date of birth
 > or identifier reaches it.
 >
@@ -729,7 +758,7 @@ something must check the behavior was actually obtained.
 > at your own correct code. Confirm the value is faithful to the source, **record the exemption and
 > its reason** in the source's mapping notes, and **proceed** — a checker limitation must not become
 > an iterate-forever loop or a blocked module (INV-048/INV-173). The four numbered steps under
-> "Three further limitations" are the full procedure; this pointer exists because that block sits
+> "Four further limitations" are the full procedure; this pointer exists because that block sits
 > below the step where the collision happens.
 
 > **Heads-up before you map a dynamic-key field.** When a value is derived from the source **field
@@ -897,11 +926,12 @@ no MCP server version, so every bootcamper is on the current server and this is 
    would not even work — the allowed set was built without it, under either emission — and distorting
    data to turn a gate green is the one outcome worse than the gate being wrong.
 
-⛔ **Three further limitations, where the harvester works and something else does not.** First
+⛔ **Four further limitations (INV-173), where the harvester works and something else does not.** First
 observed 2026-07-27 on SDK 4.3.3.26191, across four sources mapped end to end (`OPENSANCTIONS_PEP`,
-`OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`); all three reported upstream the same day.
+`OFAC_SDN`, `ICIJ`, `UK_COMPANIES_HOUSE`); those three were reported upstream the same day.
+**Limitation 4 came later** — found 2026-08-31 on a CORD source and reported upstream that day.
 
-⚠️ **Freshness, per limitation — all three are CURRENT behavior.**
+⚠️ **Freshness, per limitation — all four are CURRENT behavior.**
 Limitations 1 and 3 were re-confirmed on **MCP server 1.32.9, 2026-08-14**, by reading the scripts
 the server itself delivers — `download_resource(filenames=['sz_verbatim_check.py',
 'sz_routing_report.py'])`, whose response is a **listing of URLs, not the scripts**, so reading them
@@ -911,6 +941,9 @@ means fetching each `url` first (`ground-rules.md` → "Working examples") — a
 Limitation **2** was confirmed end to end on **2026-08-18** by a run that finally had a source with
 **disclosed relationships** — and that run also **widened** it: see the entry itself, which now
 states the condition under which the KEY attributes fail too.
+Limitation **4** was re-confirmed on **MCP server 1.35.3, 2026-09-01**, the same way as 1 and 3 — by
+reading the delivered `sz_routing_report.py` and checking `discover_payload_fields()`'s `return []`
+against the resource list `download_resource` advertises. Mechanism, not a re-run.
 
 1. **Any correct `extract` output is rejected. CONFIRMED CURRENT — server 1.32.9, 2026-08-14.** The
    workflow documents `extract` for prose fields
@@ -982,7 +1015,36 @@ states the condition under which the KEY attributes fail too.
    limitation, not an environment problem** — see the gate presentation at step 4, which says so
    where you will meet it.
 
-**Handling is the same for all three: the four steps above.** Do not conclude the mapping is wrong,
+4. **The routing report counts every PAYLOAD field as "dropped". CONFIRMED CURRENT — server
+   1.35.3, 2026-09-01.** `sz_routing_report.py` exempts payload fields from its dropped list —
+   `exempt_fields = NEVER_FROM_SOURCE | set(payload_fields)` — but `discover_payload_fields()`
+   populates that set only from a `--payload-fields` override or from a `phase1_manifest.json`
+   beside the output, and **neither exists in this workflow**: step 4's own command passes no
+   override, and `phase1_manifest.json` is not among the seven resources `mapping_workflow`
+   delivers (`sz_schema_generator.py`, `sz_json_analyzer.py`, `sz_verbatim_check.py`,
+   `sz_routing_report.py`, `senzing_entity_specification.md`, `senzing_mapping_examples.md`,
+   `identifier_crosswalk.json`) nor written by any step. So the set is always empty and the
+   exemption never engages. Re-read from the script the server delivers today (6,855 bytes): the
+   `return []` at the end of `discover_payload_fields()` is still what runs.
+
+   **Measured, server 1.35.1, 2026-08-31** — mapping the 1,554-record `las-vegas /
+   US-LABOR-VIOLATIONS` CORD source (61 fields; 6 feature, 6 payload, 49 ignore): **14,480** dropped
+   entries as the workflow instructs, against **5,620** with `--payload-fields` supplied by hand.
+   The **8,860** difference — 61% of the report — is the six correctly-dispositioned payload
+   fields, all present at the root of all 1,554 output records. **The report contradicts itself
+   within one page**: it prints those same fields under *"Payload root keys"* a few lines above the
+   dropped list.
+
+   ⛔ **(INV-173) Never promote a payload field into a feature to quiet this report.** Step 4 tells you to
+   reconsider every dropped entry *and* not to route dropped values into payload; with payload
+   fields listed as dropped those two instructions conflict, and the path of least resistance is
+   the **dumping-ground anti-pattern the workflow's own mapping reference warns against** — reached
+   by believing a broken measurement. Read the dropped list with your payload fields struck out,
+   or re-run with `--payload-fields "<your payload fields, comma-separated>"` for the true list.
+   ⚠️ **This is a reporting defect, not a mapping one**: it says nothing about your dispositions,
+   and nothing about the mapping needs changing because of it.
+
+**Handling is the same for all four: the four steps above.** Do not conclude the mapping is wrong,
 confirm faithfulness against the Entity Specification via MCP, record the exemption and its reason,
 and proceed (INV-173). For the CSV case the workable route is to adapt CSV→JSONL and call the
 checker's own `verify()`, so the executed logic stays upstream's, unmodified.
@@ -1204,7 +1266,7 @@ reads/writes, and what it handles.
 ⛔ **On Java, that `snake_case` filename and an idiomatic class name cannot both be `public`** —
 declare the top-level class package-private and keep the prescribed path. Applies equally to the
 `<name>_mapper.<ext>` the workflow's own step 4 asks for. The rule, its reason and the C# difference
-are in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237); do not restate them
+are in `../bootcamp-onboarding/ground-rules.md` → "File placement" (INV-237, INV-300); do not restate them
 here.
 
 **Keep JSON handling dependency-free.** This is usually the first Java the bootcamp generates, and
@@ -1213,7 +1275,7 @@ depend on an external JSON library (a scaffold importing `javax.json` will not c
 Write the reader here so it needs only the standard library, and **reuse this same reader in later
 modules** rather than re-deriving one per module: Data processing's loading program expects it. Full
 rationale, and the rule that replacing the JSON library is safe while altering SDK calls is not, are
-in `../module-02-sdk-setup/SKILL.md` → "The launch environment".
+in `../module-02-sdk-setup/SKILL.md` → "The launch environment" (INV-300).
 
 **Checkpoint:** write step 13.
 

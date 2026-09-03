@@ -665,6 +665,63 @@ def _parse_notes_block(inner: str) -> NotesSection:
     return section
 
 
+def _fence_spans(text: str, start_marker: str, end_marker: str):
+    """Every WELL-FORMED ``(start, end_exclusive)`` fence span, and the strays skipped.
+
+    ⛔ **(INV-288) A fence's span NEVER extends past the next START of its own type.** Both handlers
+    used to locate their terminator with ``text.find(END, start)`` — the next END *anywhere*
+    in the document — so a stray unterminated START annexed the region up to a later fence's
+    terminator, and **every finalized module section in that region was discarded**.
+
+    Measured 2026-09-01 on the shipped script, for both fences: a three-module recap parsed
+    to two, with `## SDK setup` and its content gone. It was silent three ways — ``audit_recap``
+    fired the *unfinalized-module* warning (true, and about something else), ``--expect-modules``
+    checks presence and never absence, and ``_source_content_chars`` stripped the same region so
+    the deleted module left the retention **denominator** too: 94% retention, no fatal, on a
+    recap that had lost a module.
+
+    A stray START is therefore skipped rather than paired: the caller leaves its block in
+    place, the well-formed fence after it is still handled, and the module between them
+    survives. Returns ``(spans, strays)`` so the caller can report the strays.
+    """
+    spans, strays = [], []
+    pos = 0
+    while True:
+        start = text.find(start_marker, pos)
+        if start == -1:
+            break
+        end = text.find(end_marker, start)
+        if end == -1:
+            break                      # genuinely unterminated — the caller's own policy
+        nxt = text.find(start_marker, start + len(start_marker))
+        if nxt != -1 and nxt < end:
+            # This START's terminator belongs to a later block. Skip it; do not span both.
+            strays.append(start)
+            pos = nxt
+            continue
+        spans.append((start, end + len(end_marker)))
+        pos = end + len(end_marker)
+    return spans, strays
+
+
+def stray_fence_markers(text: str):
+    """Every stray (unterminated-but-followed-by-another) fence START in ``text``.
+
+    Reported by :func:`audit_recap`: a stray marker means the recap is malformed in a way
+    that leaves content in the document which the fence was supposed to lift — for the
+    notes fence that is a Bootcamper's private note one heading away from the recap
+    (INV-100), and the operator has to be told rather than have it silently rendered or
+    silently deleted.
+    """
+    out = []
+    for start_marker, end_marker in (
+        (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END),
+    ) + tuple(DISCARDED_FENCES):
+        _spans, strays = _fence_spans(text, start_marker, end_marker)
+        out.extend((start_marker, i) for i in strays)
+    return out
+
+
 def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     """Lift the BOOTCAMP-NOTES fence out of ``text`` before any module parsing.
 
@@ -673,28 +730,93 @@ def _extract_notes_block(text: str) -> Tuple[str, Optional[NotesSection]]:
     never reaches the module loop, so no renamed module can collide with it and no note
     can be promoted to a module section.
     """
+    spans, _strays = _fence_spans(text, BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END)
+    if spans:
+        # The first WELL-FORMED block. A stray START before it is left where it is — its
+        # region is not annexed, so no finalized module between the two is deleted. The
+        # stray is reported by `stray_fence_markers` rather than silently swallowed.
+        start, end = spans[0]
+        inner = text[start + len(BOOTCAMP_NOTES_START): end - len(BOOTCAMP_NOTES_END)]
+        remainder = text[:start] + text[end:]
+        notes = _parse_notes_block(inner)
+        return remainder, (notes if notes.entries else None)
+
     start = text.find(BOOTCAMP_NOTES_START)
     if start == -1:
         return text, None
-    end = text.find(BOOTCAMP_NOTES_END, start)
-    if end == -1:
-        # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
-        # Graduation appends this block AFTER the last module section, so everything past
-        # the opening marker is notes; treating the marker as absent instead would let
-        # the notes heading be parsed as a module and put a Bootcamper's private note on
-        # their Certificate of Completion (INV-100). Losing the fence must cost the
-        # notes' formatting at worst, never the modules and never the certificate.
-        inner = text[start + len(BOOTCAMP_NOTES_START):]
-        notes = _parse_notes_block(inner)
-        return text[:start], (notes if notes.entries else None)
-    inner = text[start + len(BOOTCAMP_NOTES_START):end]
-    remainder = text[:start] + text[end + len(BOOTCAMP_NOTES_END):]
+    # ⛔ An unterminated fence — a write truncated mid-fold — runs to end of text.
+    # Graduation appends this block AFTER the last module section, so everything past
+    # the opening marker is notes; treating the marker as absent instead would let
+    # the notes heading be parsed as a module and put a Bootcamper's private note on
+    # their Certificate of Completion (INV-100). Losing the fence must cost the
+    # notes' formatting at worst, never the modules and never the certificate.
+    # ⚠️ This is reached only when there is NO well-formed block anywhere — the
+    # genuinely-truncated case the policy was written for. Where a later well-formed
+    # fence exists, the branch above handles it and this end-of-text sweep is not used,
+    # because sweeping would delete every module after the stray marker.
+    inner = text[start + len(BOOTCAMP_NOTES_START):]
     notes = _parse_notes_block(inner)
-    return remainder, (notes if notes.entries else None)
+    return text[:start], (notes if notes.entries else None)
+
+
+#: Fenced blocks lifted out of the recap before module parsing and then DISCARDED.
+#:
+#: ⛔ The notes fence is not here because its content is KEPT — `_extract_notes_block`
+#: parses it into a `NotesSection`. Everything in this tuple is transient working state
+#: that must not reach `Recap.modules`, and the parse path iterates the tuple rather than
+#: naming markers one at a time: adding a fence here is what brings it under the lift
+#: (INV-246), so a third fenced block cannot repeat this defect by being overlooked.
+#:
+#: ⚠️ The checkpoint fence had the same exposure as the notes fence and none of the
+#: protection. `recap_checkpoint.md`'s own interior uses `## ` headings (`## Where we are`,
+#: `## Still to do`, …), the durability hooks fold it verbatim, and every `## ` in a recap
+#: is parsed as a module — so a resumed session put five phantom "modules" beside the real
+#: ones in the keepsake PDF. `audit_recap` warned, but the warning is non-fatal and the
+#: block was never lifted, so the PDF rendered anyway (2026-08-26, plugin 0.5.2).
+DISCARDED_FENCES: Tuple[Tuple[str, str], ...] = (
+    (RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END),
+)
+
+
+def _strip_discarded_fences(text: str) -> str:
+    """Lift every :data:`DISCARDED_FENCES` block out of ``text`` before module parsing.
+
+    ⛔ An UNTERMINATED fence is left in place here, which is the opposite of what
+    `_extract_notes_block` does — and the asymmetry is deliberate. Graduation appends the
+    notes block *after* the last module, so running an unterminated notes fence to
+    end-of-text costs at most the notes' formatting. The checkpoint is folded **mid-recap**,
+    so truncating to end-of-text would delete the Bootcamper's real finalized modules. A
+    phantom section that `audit_recap` already warns about is the lesser loss; deleting
+    module content to avoid it is not a trade this may make.
+    """
+    for start_marker, end_marker in DISCARDED_FENCES:
+        spans, _strays = _fence_spans(text, start_marker, end_marker)
+        # Right to left, so an earlier span's indices stay valid after a later removal.
+        for start, end in reversed(spans):
+            text = text[:start] + text[end:]
+    return text
+
+
+#: A module section heading, used only to decide whether a lift would empty the recap.
+_MODULE_HEADING_RE = re.compile(r"(?m)^##\s+\S")
 
 
 def parse_recap(text: str) -> Recap:
     text, notes = _extract_notes_block(text)
+
+    # ⛔ THE LIFT MUST NEVER EMPTY THE RECAP. A checkpoint fence contains only the
+    # in-progress narrative — `recap_checkpoint.py`'s `_strip_block` says so outright:
+    # "Completed `## {module}` sections carry no markers and are never touched." But a
+    # malformed or mis-placed fence CAN enclose finalized sections, and discarding those
+    # would delete the Bootcamper's real module content to avoid phantom headings — a
+    # trade this must not make. Where stripping would remove every module heading from a
+    # recap that had one, keep the unstripped text: the phantom sections then render and
+    # `audit_recap` warns about the surviving block, which is the pre-existing behavior
+    # and the lesser loss.
+    stripped = _strip_discarded_fences(text)
+    if _MODULE_HEADING_RE.search(stripped) or not _MODULE_HEADING_RE.search(text):
+        text = stripped
+
     lines = text.splitlines()
 
     title = "Senzing Bootcamp Recap"
@@ -855,15 +977,27 @@ def _source_content_chars(text: str) -> int:
     the renderers legitimately drop them, so counting them would understate
     retention for a perfectly good recap.
     """
+    # ⛔ A DISCARDED_FENCES block is lifted before module parsing, so its characters
+    # CANNOT reach the PDF by design. Counting them in the denominator would measure the
+    # lift's own effect as content loss — and on a resumed session, whose checkpoint is
+    # large relative to a partly-written recap, that is enough to trip the
+    # catastrophic-content-loss gate and block the PDF outright (INV-048 requires the
+    # recap PDF to always be produced). Measured on a fixture: 42% retention, fatal,
+    # where the block was the only thing "missing".
+    text = _strip_discarded_fences(text)
+
     total = 0
     for raw in text.splitlines():
         line = raw.strip()
         if not line or line == "---":
             continue
-        # The notes fence markers are structure, not content: the renderers drop them
-        # exactly as they drop `---`, so counting them would understate retention on a
-        # recap whose only difference is that the Bootcamper wrote something down.
-        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END):
+        # Fence markers are structure, not content: the renderers drop them exactly as
+        # they drop `---`, so counting them would understate retention on a recap whose
+        # only difference is that the Bootcamper wrote something down. The checkpoint
+        # markers are here for the UNTERMINATED case, where the block itself survives
+        # the lift (see `_strip_discarded_fences`).
+        if line in (BOOTCAMP_NOTES_START, BOOTCAMP_NOTES_END,
+                    RECAP_CHECKPOINT_START, RECAP_CHECKPOINT_END):
             continue
         total += len(line)
     return total
@@ -1055,6 +1189,128 @@ def find_tab_manifests(base_dirs: Optional[Sequence[Path]] = None) -> List[dict]
     return manifests
 
 
+# --- The expected-visualization denominator (INV-271) -----------------------
+#
+# `tab_coverage_problems` answers "did every captured tab reach the recap?" for each
+# manifest it is given, and `find_tab_manifests` supplies the manifests that exist. So
+# its denominator is *the set of captures that happened*: a module that captured nothing
+# contributes no manifest, no denominator, and no shortfall anything can see.
+#
+# ⛔ That is INV-193's own failure shape, one level out. INV-193 moved the completeness
+# denominator off the artifact being measured and onto the manifest; the manifest is
+# external to the recap, but the SET of manifests is still derived from whatever capture
+# happened to produce. On 2026-08-25 the check reported "6 of 6 captured tabs reached the
+# recap" -- a clean pass -- while the whole Module 7 application, built over the
+# Bootcamper's own resolved data, had been captured not at all. The keepsake illustrated
+# the bootcamp with pictures of the sample dataset.
+#
+# The fix is a denominator that does not come from the manifests: the modules that ran.
+# `config/bootcamp_progress.json` records `modules_completed`, and each visualizing module
+# is specified to build one named visualization. Below is that mapping; a module absent
+# from it produces no visualization and contributes nothing to expect.
+
+# ⛔ The KEYS are module name tokens owned elsewhere: the registry is
+# `skills/bootcamp-preparation/SKILL.md`'s module table, and
+# `skills/bootcamp-onboarding/module-completion.md` is what writes a module's token into
+# `modules_completed` at its close. This map is therefore a COPY, and a copy that goes stale
+# fails silently -- `read_completed_modules()` degrades in the under-reporting direction, so a
+# key no module writes any more produces no error, just a tab-coverage figure that reads clean
+# with a whole visualization missing. `tests/test_expected_visualization_denominator.py` pins it
+# from both ends: `TheMappingKeysMatchTheTokenRegistry` against the registry table, and
+# `test_the_mapping_covers_both_visualizing_modules` against the map's own content (a valid key
+# mapped to the wrong visualization name is invisible to the first).
+MODULE_VISUALIZATIONS = {
+    # module name token in `modules_completed` -> the `{name}` its capture step uses
+    "truthset_visualization": "truthset_verification",
+    "query_visualize_discover": "results_visualization",
+}
+
+DEFAULT_PROGRESS = Path("config") / "bootcamp_progress.json"
+
+
+def read_completed_modules(path=DEFAULT_PROGRESS) -> List[str]:
+    """The ``modules_completed`` list from the progress JSON, or [] if unreadable.
+
+    Any read or parse problem yields [] rather than raising: a missing progress file
+    must degrade to "nothing expected" and leave the pre-existing per-manifest checks
+    exactly as they were, never break the render (INV-048). Returning [] is safe in the
+    honest direction -- it can only under-report, and the caller says so when it does.
+    """
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return []
+    if not isinstance(data, dict):
+        return []
+    completed = data.get("modules_completed")
+    if not isinstance(completed, list):
+        return []
+    return [item for item in completed if isinstance(item, str)]
+
+
+def expected_visualizations(completed: Sequence[str]) -> List[str]:
+    """The visualization names the modules that ran were specified to build."""
+    names = []
+    for module in completed:
+        name = MODULE_VISUALIZATIONS.get(module)
+        if name and name not in names:
+            names.append(name)
+    return sorted(names)
+
+
+def manifest_names(manifests: Sequence[dict]) -> set:
+    """Every visualization a manifest accounts for.
+
+    Prefers the manifest's own ``name`` field and falls back to the filename stem, so a
+    manifest written by an older capture that predates that field still counts.
+    """
+    names = set()
+    for manifest in manifests:
+        name = manifest.get("name")
+        if isinstance(name, str) and name:
+            names.add(name)
+            continue
+        path = manifest.get("_path")
+        if isinstance(path, str) and path:
+            stem = Path(path).name
+            if stem.endswith("-tabs.json"):
+                names.add(stem[: -len("-tabs.json")])
+    return names
+
+
+def missing_visualization_reports(
+    expected: Sequence[str], manifests: Sequence[dict]
+) -> List[str]:
+    """One report per expected visualization that has no manifest.
+
+    Phrased as an UNRUN check, not a failure: nothing here is evidence the tabs were
+    never captured, only that coverage for them cannot be measured. Graduation is
+    non-blocking (INV-048), so the requirement is that the shortfall is stated -- by
+    name, with the module that owed it, and with the remedy -- never that graduation
+    refuses (INV-163, INV-193, INV-265).
+    """
+    present = manifest_names(manifests)
+    owed = {name: module for module, name in MODULE_VISUALIZATIONS.items()}
+    reports = []
+    for name in expected:
+        if name in present:
+            continue
+        module = owed.get(name, "an unrecorded module")
+        reports.append(
+            f"tab-coverage check for '{name}' — the '{module}' module ran (it is in "
+            f"modules_completed) and is specified to build this visualization, but no "
+            f"{name}-tabs.json was found beside the recap's images. Coverage for it has "
+            f"NOT been measured — this is not a pass, and the per-manifest figure below "
+            f"cannot see it because its denominator is the manifests that exist. "
+            f"Remedy while the artifacts are still on disk: re-start the app and re-run "
+            f"capture_screenshots.py --url http://localhost:<port> --name {name}, then "
+            f"re-embed (the backfill path), rather than shipping a recap that pictures "
+            f"the sample dataset in place of the Bootcamper's own results."
+        )
+    return reports
+
+
 def tab_coverage_problems(source_text: str, manifests: Sequence[dict]) -> List[str]:
     """Captured tabs that never reached the recap, named by slug.
 
@@ -1202,6 +1458,20 @@ def audit_recap(
             f"recap still contains a {RECAP_CHECKPOINT_START} … "
             f"{RECAP_CHECKPOINT_END} block — a module was folded by the "
             "durability hooks but never finalized (module-completion step 2d)"
+        )
+
+    # ⛔ A stray fence START — one whose terminator belongs to a LATER block — is reported
+    # by name. It is not the same condition as the surviving-block warning above, and
+    # saying so matters: the stray's region is deliberately NOT annexed (annexing it
+    # deleted finalized modules), so its content stays in the document, and for the notes
+    # fence that is a Bootcamper's private note one heading away from the recap (INV-100).
+    # Neither silently deleting it nor silently rendering it is acceptable; naming it is.
+    for marker, index in stray_fence_markers(source_text):
+        warnings.append(
+            "stray %s at offset %d — its closing marker belongs to a later block, so the "
+            "region was left in place rather than removed (removing it would delete any "
+            "finalized module section between the two). Repair the recap's fences."
+            % (marker, index)
         )
 
     source_chars = _source_content_chars(source_text)
@@ -3602,6 +3872,23 @@ def main(argv: Optional[List[str]] = None) -> int:
             "names contain commas, e.g. 'Query, Visualize and Discover'."
         ),
     )
+    parser.add_argument(
+        "--progress",
+        default=str(DEFAULT_PROGRESS),
+        help=(
+            "Progress JSON whose `modules_completed` supplies the EXPECTED set of "
+            "visualizations. This is the tab-coverage denominator that does not come "
+            "from the manifests, so a module that captured nothing is still visible."
+        ),
+    )
+    parser.add_argument(
+        "--expect-visualizations",
+        default=None,
+        help=(
+            "Comma-separated visualization names to expect, overriding --progress. "
+            "Mainly for tests and for a run whose progress file is unavailable."
+        ),
+    )
     args = parser.parse_args(argv)
 
     inp = Path(args.input)
@@ -3609,7 +3896,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stderr.write(f"Recap not found: {inp}\n")
         return 1
 
-    source_text = inp.read_text(encoding="utf-8")
+    try:
+        source_text = inp.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        # Exists but is not UTF-8 — an editor that saves cp1252/ANSI is the usual cause.
+        # Refuse with a message the guide can relay rather than a traceback, and write no
+        # PDF (INV-110). Do NOT re-read with errors="replace": the recap is the
+        # bootcamper's document, and silently mangling their text is not ours to do.
+        sys.stderr.write(
+            f"Recap is not valid UTF-8: {inp} ({exc}). No PDF written. "
+            f"Re-save it as UTF-8 and run this again.\n"
+        )
+        return 1
     recap = parse_recap(source_text)
     expected = [s for s in (t.strip() for t in args.expect_modules.split(";")) if s]
     audit = audit_recap(recap, source_text, expected or None)
@@ -3648,11 +3946,32 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "is unknown. The embedded-image count cannot answer this: its "
                 "denominator comes from this same recap.\n"
             )
+        # …and whether a visualization that SHOULD have a manifest has none. This branch
+        # is the one the no-manifest branch above cannot reach: with some manifest
+        # present it never fires, so a wholly uncaptured module passed silently.
+        if args.expect_visualizations is not None:
+            expected = [
+                name.strip()
+                for name in args.expect_visualizations.split(",")
+                if name.strip()
+            ]
+        else:
+            expected = expected_visualizations(read_completed_modules(Path(args.progress)))
+        missing = missing_visualization_reports(expected, manifests)
+        for report in missing:
+            sys.stderr.write(f"SKIPPED: {report}\n")
+        # ⛔ The coverage figure is WITHHELD while an expected visualization is
+        # unaccounted for. Printing "6 of 6 captured tabs reached the recap" beside a
+        # missing-manifest notice is exactly the reading that made the 2026-08-25 run
+        # look clean: the sentence is true of the manifests that exist and false of the
+        # bootcamp (INV-163, INV-193, INV-265).
         print(
             "Recap complete: all module sections carry the required subsections, "
             "and every End-of-Module Summary carries its labeled blocks."
             + (f" Tab coverage: {tab_coverage_note(source_text, manifests)}."
-               if manifests else "")
+               if manifests and not missing else "")
+            + (f" Tab coverage NOT reported: {len(missing)} expected visualization(s) "
+               f"have no manifest (see SKIPPED above)." if missing else "")
         )
         return 0
 

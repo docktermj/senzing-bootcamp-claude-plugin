@@ -41,6 +41,30 @@ As records load, Senzing resolves entities automatically:
 - See how new records match or create entities
 - This gives immediate feedback on data quality and matching behavior
 
+⛔ **(INV-297) The engine writes its own diagnostics to that console, and they are NOT per-record failures —
+say which is which before the Bootcamper reads one.** This step and step 7 both point them at the
+output, so they will see engine-level lines prefixed `ERR:` (they carry an `[szstatic:…]` thread
+tag) sitting beside a loader summary that says **0 failed**, with nothing telling them the two are
+different things. **The loader's own `failed` count and its error log are the authority on record
+failures**; a line the engine wrote about its internal state is not one, and neither confirms nor
+denies the other.
+
+What to say when one appears: name it as engine output rather than a failed record, and point at
+the reconciliation that settles it — records attempted equals records loaded, the redo queue
+reached empty, and the error log is absent or empty. If those three hold, nothing was lost.
+
+⚠️ **Do not explain what a specific engine message means unless a route serves it.**
+`search_docs(query='resolved entity is out of sync expected got concurrent loading SQLite lock')`
+returns **no document naming that message** — owner-checked: `search_docs` is the corpus route for a
+documented engine message, and the nearest material it serves is the *"Enabling the Per-Entity
+Feature Store & Advisory Locking in Senzing 4.4.0"* article, which states that on SQLite the engine
+*"falls back to `LEASE` automatically"* with no advisory locks; so the message is uncovered by the
+corpus rather than missed by the query (absence negative) — server **1.36.0**, 2026-09-02. An
+`out of sync` line seen during a concurrent SQLite load is therefore reported as **an environment
+observation**, with the SDK version and date, or not characterized at all (INV-080/INV-149) — never
+as a Senzing fact and never as reassurance the plugin cannot source.
+<!-- MCP-NEGATIVE: search_docs(query='resolved entity is out of sync expected got concurrent loading SQLite lock') — no indexed document names the "Resolved entity … is out of sync" engine message — owner: search_docs IS the corpus route for a documented engine message and the nearest material it serves is the 4.4.0 advisory-locking article stating SQLite falls back to LEASE with no advisory locks, so the message is uncovered by the corpus rather than missed by the query (absence negative) — server 1.36.0, 2026-09-02 -->
+
 **Checkpoint:** write step 6.
 
 ## 7. Load the full dataset
@@ -58,6 +82,12 @@ evaluation limit (a licensing error at the cap), read `license_record_limit` fro
 license is configured) and drive the decision from that effective limit, never a remembered or
 hardcoded figure:
 
+⛔ **(INV-295) Read `license_record_limit_measured_at` alongside it, and treat a reading marked provisional —
+or carrying no marker — as the absent case below.** SDK setup's Step 5a takes its reading before
+Step 8 writes `CONFIGPATH`, so it cannot see a license installed at the system config path. A
+provisional figure is a genuine measurement of an incomplete view, which is the one shape the
+absent-versus-present split above cannot see on its own.
+
 - **`0` (no cap), or ≥ the dataset size**, the active license permits the full load: omit the
   evaluation-capacity warning and proceed.
 - **Positive and below the dataset size**, the dataset genuinely exceeds the cap: the single
@@ -72,7 +102,7 @@ hardcoded figure:
   would tell someone who declined to go hunting for a license they never asked for. Absent
   `license_key_requested` → no reminder; say nothing about email.
 
-  **The apply procedure already exists — point at it, do not restate it.** Module 4 Step 8a
+  **The apply procedure already exists — point at it, do not restate it (INV-300).** Module 4 Step 8a
   **sub-step 5** decodes a Base64 key or copies a `.lic` to `licenses/g2.lic`, adds `LICENSEFILE` to
   the engine-config PIPELINE section, and records `license: custom`. ⛔ **Do not write a second copy
   of it here, and do not substitute a different mechanism.** A platform-specific procedure duplicated
@@ -103,9 +133,13 @@ hardcoded figure:
   `license_key_requested` is absent** — a Bootcamper may hold a license the bootcamp never asked about,
   and it is the option this branch previously omitted entirely; what the `license_key_requested`
   marker gates is only the *"check your email, it may have arrived"* line above.
-- **Absent or null** — ⛔ **"never asked", not "no custom license": measure before warning.** (INV-244) This
-  is the same branch, and the same trap, as Phase A's — `license_record_limit` is written only by
-  Module 4's volume-gated Step 8a, so its absence says nothing about the installed license. Measure
+- **Absent or null** — ⛔ **"never measured", not "no custom license": measure before warning.** (INV-244) This
+  is the same branch, and the same trap, as Phase A's — **every step that writes
+  `license_record_limit` writes only a MEASURED value**, so its absence says nothing about the
+  installed license: SDK setup's Step 5a measures as soon as the SDK is verified and deliberately
+  writes nothing when it cannot, and Module 4's **volume-gated** Step 8a fires only when the
+  collected volume approaches the limit.
+  ⚠️ **Do not reason from a count of writers**; that number has been stated wrongly twice. Measure
   it exactly as Phase A's absent branch instructs (Module 4 Step 8a's procedure:
   `SzProduct.get_license()`, confirm the shape, parse `recordLimit`), persist it, and re-enter
   these three branches with the measured value — a license reporting `recordLimit: 0` then lands on

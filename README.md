@@ -41,13 +41,18 @@ recap PDF you can keep and share, and a production starter. See
 
 ## Install and start
 
-This is a Claude Code plugin.
-Claude Code has two interfaces you can run it in.
-Pick either:
+This is a Claude Code plugin, and it works wherever Claude Code runs.
+This walkthrough covers the two interfaces it has step-by-step instructions for:
 
 - **Claude Desktop** — Claude Code inside the desktop application; the step-by-step
   walkthrough below.
 - **Claude Code CLI** — Claude Code in a terminal; see [Using the Claude Code CLI].
+
+Claude Code also runs in the **Claude web app** and in **Claude IDE extensions** (VS Code,
+JetBrains). The bootcamp itself supports those — it adapts its model and reasoning-effort
+guidance to whichever interface you are in — but this walkthrough has no verified install
+steps for them, so install the plugin the way your client installs plugins and then start the
+bootcamp as below.
 
 ### Using Claude Desktop
 
@@ -70,7 +75,7 @@ and starting the Bootcamp.
     1. In the *Add marketplace* pane, enter "**URL:**"
 
         ```console
-        https://github.com/docktermj/senzing-bootcamp-claude-plugin
+        https://github.com/docktermj/senzing-bootcamp-claude-plugin-development
         ```
 
     1. Click the "**Sync**" button.
@@ -89,7 +94,7 @@ and starting the Bootcamp.
     Start the bootcamp
     ```
 
-    (Or use the `/start-bootcamp` command. See [Bootcamp commands] for the other two.)
+    (Or use the `/start-bootcamp` command. See [Bootcamp commands] for the rest.)
 
 ## What you finish with
 
@@ -109,7 +114,7 @@ the issue may be with an incomplete installation of Claude Desktop.
 - Claude Desktop requires `git` to be installed.
 
 [Bootcamp commands]: docs/README.md#bootcamp-commands
-[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
+[bootcamp_recap.pdf]: https://raw.githubusercontent.com/docktermj/senzing-bootcamp-claude-plugin-development/refs/heads/main/plugins/senzing-bootcamp/docs/examples/bootcamp_recap.example.pdf
 [Claude Desktop]: https://claude.ai/download
 [Claude Max 5x]: https://claude.com/pricing
 [Claude Pro]: https://claude.com/pricing

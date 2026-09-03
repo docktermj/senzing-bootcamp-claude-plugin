@@ -272,6 +272,15 @@ PER_FILE_WAIVERS = {
         "string is what `feedback/PROCESSED.jsonl` records as the dedup key, so "
         "correcting it would both misquote the source and break the correspondence.",
     ),
+    "specs/the-source-set-coloring-rule-is-stated-three-times-and-verified-nowhere.md": (
+        {"colours": 1},
+        "Quotes a bootcamper's feedback title verbatim in its `Source:` line, the same "
+        "class as the license-cap spec above. That exact string is the content-addressed "
+        "dedup key `feedback/PROCESSED.jsonl` records for entry ab0bf0a790067999, and the "
+        "archived entry it quotes lives under the whole-path-exempt `feedback/` -- so "
+        "correcting it here would misquote the source AND desync the spec from the "
+        "ledger. The spec's own prose, and its filename, use `coloring`.",
+    ),
     "tests/test_windows_browser_discovery.py": (
         {"programme": 3},
         "A GERMAN localized `%ProgramFiles%` fixture (`D:\\Programme`) proving "

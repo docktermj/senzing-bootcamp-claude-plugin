@@ -129,7 +129,42 @@ class TheStepTellsTheGuideToPassTheFlag(unittest.TestCase):
     def test_the_java_composite_caution_survives(self):
         """A composite constant may not belong to a Set<SzFlag> element type."""
         self.assertIn("composite_members", self.text)
-        self.assertIn("`long` bitmask, which will not compile into that argument", self.text)
+        # The caution must route the reader to the topic that reports a binding type.
+        self.assertIn("topic='parameters'", self.text)
+
+    def test_the_java_composite_is_named_a_set_not_a_long(self):
+        """Corrected 2026-08-26 against the installed sz-sdk.jar.
+
+        This assertion previously pinned "`long` bitmask, which will not compile into
+        that argument", which describes the *plural* class `SzFlags` and sent the reader
+        to the class that does not fit a `Set<SzFlag>` parameter. Verified with javap and
+        javac: `SzFlag.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `Set<SzFlag>` static field on
+        the enum class and is not an enum constant, so it merges with `addAll` and cannot
+        appear in `EnumSet.of`; `SzFlags.SZ_ENTITY_INCLUDE_ALL_RELATIONS` is a `long` (960).
+        """
+        self.assertIn("`Set<SzFlag>` static field", self.text)
+        self.assertIn("merged with `addAll` rather than listed in `EnumSet.of`", self.text)
+        # The trap is that both shapes exist under one name; the plural class must be named.
+        self.assertIn("class `SzFlags`", self.text)
+
+    def test_the_superseded_long_bitmask_claim_is_only_quoted_history(self):
+        """The retracted wording may appear only as quoted history, never as guidance.
+
+        The phrase "`long` bitmask" is legitimately current when it describes `SzFlags`,
+        the plural class. What must never stand alone is the retracted *attribution* —
+        that the composite you pass is a long — which is the claim that sent the reader
+        to the wrong class. It survives only inside the sentence withdrawing it.
+        """
+        retracted = "the composite is a `long` bitmask"
+        self.assertIn(retracted, self.text,
+                      "the correction must still quote what it corrects, or the carve-out "
+                      "is untested and could hide a genuine reintroduction")
+        idx = self.text.find(retracted)
+        while idx != -1:
+            self.assertIn("previously said", self.text[max(0, idx - 60):idx],
+                          "the retracted attribution appears outside the retraction that "
+                          "withdraws it, so the wrong claim reads as current guidance")
+            idx = self.text.find(retracted, idx + 1)
 
 
 class TheServerPositionAndTheObservationAreSeparate(unittest.TestCase):
@@ -139,12 +174,28 @@ class TheServerPositionAndTheObservationAreSeparate(unittest.TestCase):
         self.text = flat(PHASE2)
 
     def test_the_server_position_is_stated_with_its_route(self):
-        self.assertIn("no flag is documented as populating it", self.text)
-        self.assertIn("filter='why_records'", self.text)
-        self.assertIn("server 1.32.9, 2026-08-17", self.text)
+        """⚠️ The server's POSITION changed; the requirement that it be stated did not.
+
+        This pinned the sentence *"no flag is documented as populating it"* against
+        `server 1.32.9, 2026-08-17`, which was the server's position when written. On
+        **1.35.3, 2026-09-01** `get_sdk_reference(topic='response_schemas',
+        filter='why_entities')` carries `requires_flags: ["SZ_INCLUDE_MATCH_KEY_DETAILS"]`
+        on the why-side path, so the sentence is now false. The class's claim — the server
+        position is stated, with the route that establishes it — is unchanged, and is what
+        this asserts instead of the retired wording (INV-282: pin the claim, not the
+        phrasing that happened to carry it).
+        """
+        self.assertIn("requires_flags", self.text)
+        self.assertIn("filter='why_entities'", self.text)
+        self.assertRegex(self.text, r"1\.35\.\d")
 
     def test_the_flags_documented_effect_is_named_correctly(self):
-        self.assertIn("`MATCH_KEY_DETAILS` object on **each related entity**", self.text)
+        """The flags topic still attributes only the RELATED_ENTITIES path to this flag.
+
+        That half is unchanged on 1.35.3 and is why both topics must be read: a reader
+        who checks only `flags` still finds the why-side field unattributed.
+        """
+        self.assertIn("RELATED_ENTITIES[].MATCH_KEY_DETAILS", self.text)
 
     def test_the_engine_result_is_marked_observation_only(self):
         self.assertIn("observation-only, not an MCP claim", self.text)
@@ -224,8 +275,14 @@ class TheApiReferenceRecordsThatItWasRight(unittest.TestCase):
         self.assertIn('The "with the flag" in that sentence is load-bearing', self.text)
 
     def test_it_records_the_observation_with_its_conditions(self):
+        """⚠️ Same correction: the observation stays, the server's position moved.
+
+        The retired half asserted *"no flag is *documented* to populate it"*. The server
+        documents it as of 1.35.3, so this now pins the observation marker plus the route
+        that carries the requirement.
+        """
         self.assertIn("observation-only", self.text)
-        self.assertIn("no flag is *documented* to populate it", self.text)
+        self.assertIn("requires_flags", self.text)
 
 
 if __name__ == "__main__":

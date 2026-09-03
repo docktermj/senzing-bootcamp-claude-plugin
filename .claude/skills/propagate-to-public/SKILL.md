@@ -1,14 +1,14 @@
 ---
 name: propagate-to-public
-description: 'Propagate the shippable Senzing Bootcamp plugin from this development repo into the public access repo (Senzing/senzing-bootcamp-claude-plugin). Use when the maintainer wants to publish, release, sync, or push the plugin to the public repo. Mirrors only what a user needs to install and use, rewrites owner self-references to Senzing, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
+description: 'Propagate the shippable Senzing Bootcamp plugin from this development repo into the public access repo (Senzing/senzing-bootcamp-claude-plugin). Use when the maintainer wants to publish, release, sync, or push the plugin to the public repo. Mirrors only what a user needs to install and use, rewrites development self-references to the public Senzing slug, and stops at the working tree (no commit, no push). Maintainer tool — not part of the bootcamper experience.'
 ---
 
 # Propagate → Public access repo
 
 This is a **maintainer** tool for developing the Senzing Bootcamp Claude Plugin
 (SBCP). It copies the *shippable* subset of this development repo
-(`docktermj/senzing-bootcamp-claude-plugin`) into the **public access repo**
-(`Senzing/senzing-bootcamp-claude-plugin`, cloned locally at
+(`docktermj/senzing-bootcamp-claude-plugin-development`) into the **public
+access repo** (`Senzing/senzing-bootcamp-claude-plugin`, cloned locally at
 `~/senzing.git/senzing-bootcamp-claude-plugin`).
 
 The public repo holds **only what a user needs to install and use the plugin**.
@@ -68,13 +68,21 @@ deletes these): `.github/**`, `LICENSE`, `.claude/settings.json`,
 
 ## Transform applied during propagation
 
-Owner **self-references are rewritten `docktermj` → `Senzing`** so the published
+This repo's **self-references are rewritten to the public slug** so the published
 files point users at the Senzing repo:
 
-- `docktermj/senzing-bootcamp-claude-plugin` → `Senzing/senzing-bootcamp-claude-plugin`
+- `docktermj/senzing-bootcamp-claude-plugin-development` → `Senzing/senzing-bootcamp-claude-plugin`
   wherever it appears (README marketplace URL and raw-content PDF link,
   `docs/README.md` `marketplace add` command, `plugin.json` homepage/repository).
 - `marketplace.json` owner `"name": "docktermj"` → `"name": "Senzing"`.
+
+⛔ **The two slugs differ in owner *and* name.** The development repo carries a
+`-development` suffix the public repo does not, so `SLUG_OLD` in `propagate.sh`
+MUST stay the suffixed string. Left unsuffixed it still matches — as a
+*prefix* — and publishes the broken
+`Senzing/senzing-bootcamp-claude-plugin-development`. For the same reason a
+dev-tree file still carrying the old unsuffixed slug is not matched at all, and
+ships a `docktermj/…` link to the public repo.
 
 The separate `docktermj/senzing-bootcamp-free-data` links (in Module 4) are a
 **different repo** and are intentionally left unchanged.

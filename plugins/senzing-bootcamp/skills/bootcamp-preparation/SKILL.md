@@ -222,7 +222,7 @@ would suppress the switch question through the whole opening of a Core run — f
 bootcamper who is already running something stronger, which is the common case rather than an edge
 case. `../bootcamp-onboarding/ground-rules.md` → "Best-value model/effort prompt" is
 **authoritative** for the comparison, including the per-dial rule for a value that cannot be read;
-do not restate that procedure here — two copies is how this drifted in the first place.
+do not restate that procedure here — two copies is how this drifted in the first place (INV-300).
 
 This step number is kept so the surrounding step numbering and every cross-reference to Steps 4-7
 stay stable. Skip straight from Step 3 to Step 4.
@@ -269,7 +269,7 @@ questions.
   decision tree rather than a language one — `needs_input.parameter` is `platform`, offering five
   operating systems (both halves re-checked live, same server and date, `platform='linux_apt'` and
   no-platform).
-  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — owner: get_capabilities carries the language set (routing negative — the fact exists, go there) — server 1.33.0, 2026-08-21 -->
+  <!-- MCP-NEGATIVE: sdk_guide(topic='install', platform=…) — returns no language list at all — owner: get_capabilities carries the language set (routing negative — the fact exists, go there) — server 1.36.0, 2026-09-02 -->
   The one
   genuine platform↔language constraint the server does state — the Python SDK is supported on Linux
   only, with Docker or WSL2 as the route on macOS/Windows — is carried in the annotation rules

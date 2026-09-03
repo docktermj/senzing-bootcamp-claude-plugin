@@ -47,6 +47,31 @@ invented enum value breaks a module rather than degrading it.
    plugin routed around — which has happened twice
    (`senz7221-now-names-its-own-remedy`, `explain-error-code-now-owns-senz7426`).
 
+   ⛔ **A re-ask has THREE outcomes, not two.** A marker has two halves that age at
+   different rates: the **claim** ("tool X does not contain Y") and the **rationale** — the
+   `owner:` clause plus the detail saying why the claim is the answer rather than a miss.
+   Re-asking only exercises the claim, so:
+
+   - **Claim false** → correct the prose and invert or rescope the guard (below).
+   - **Claim true, rationale reproduces** → restamp the server version and date.
+   - **Claim true, rationale does NOT reproduce** → ⛔ **correct the rationale in the same
+     edit as the restamp**, and say in the report which rationales were rewritten. A
+     restamp that carries the rationale forward unchecked certifies text nobody read: the
+     date says "checked 2026-09-01" about the **whole comment**, not about its first
+     sentence.
+
+   The rationale is what a later reader uses to decide whether the routing conclusion still
+   stands, so a stale one is not cosmetic. On 2026-08-31 all 25 DUE claims still held and
+   **three rationales did not reproduce** — one of them the entire evidence for calling an
+   absence a *rename* rather than a *gap*, which is the distinction the plugin acts on
+   (`specs/mcp-negative-markers-carry-rationale-nothing-reverifies.md`).
+
+   ⚠️ **Prefer a discriminating property over a census.** Two of those three drifted because
+   they pinned a **count** ("all four hits are…") or an **exhaustive field list** ("carries
+   applies_to, composite_members, …") — the shapes that cannot survive an index rebuild or a
+   schema addition. Where the negative does not depend on the enumeration, write what
+   distinguishes it ("no field names a binding type") instead of what it happened to contain.
+
    ⛔ **When a negative no longer holds, the prose is only half the fix.** The second
    instance had the stale claim written into the **guards** as well: two assertions
    *required* the retired wording, so correcting the text failed the suite and the failure

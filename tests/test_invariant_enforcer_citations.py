@@ -204,7 +204,77 @@ NAMED_TEST = re.compile(r"tests/(test_[a-z0-9_]+\.py)")
 # enforcer. INV-265 and INV-267 were registered in the same edit and name no test in their own
 # text — their guards cite them rather than the reverse — so they add no pair here. Re-derived by
 # running the extractor, not relaxed.
-EXPECTED_PAIRS = 82
+# 85 as of 2026-08-27: INV-269, INV-270 and INV-271 each name their enforcer
+# (`test_env_script_names_every_required_export.py`, `test_encoding_self_check_is_stated_as_behavior.py`,
+# `test_expected_visualization_denominator.py`), and each of those tests now cites the invariant
+# back. INV-268 was registered in the same edit and names no test in its own text — its rule is
+# guarded through `test_why_key_details_flag_claim_is_withdrawn.py`, which is not an "Enforced by"
+# claim — so it adds no pair here. Re-derived by running the extractor, not relaxed.
+# 89 as of 2026-08-27 (second registration pass): INV-272, INV-273, INV-274 and INV-275 each name
+# their enforcer and each of those tests now cites the invariant back. INV-273 and INV-274 share
+# one enforcer (`test_sourcing_reaches_beyond_technical_facts.py`), so they contribute two pairs
+# against one file. Re-derived by running the extractor, not relaxed.
+# 90 as of 2026-08-27 (third registration pass): INV-276 names its enforcer
+# (`test_undecodable_recap_is_never_overwritten.py`) and that test cites the invariant back.
+# One invariant, one test, one pair. Re-derived by running the extractor, not relaxed.
+# 97 as of 2026-08-28 (the six deferred invariants signed off in one pass): INV-277 through
+# INV-282 each name their enforcer and each of those tests now cites the invariant back.
+# Six invariants, SEVEN pairs — INV-282 names two enforcers
+# (`test_license_limit_is_written_only_from_a_measurement.py` and
+# `test_new_hard_rules_are_cited_or_deferred.py`), because it governs how both derive their
+# matchers. Re-derived by running the extractor, not relaxed.
+# 101 on 2026-09-01: INV-285 (a provenance label covering several independently-moving
+# facts is stated per fact) names `test_build_version_provenance_is_per_platform.py`, and
+# that test now cites INV-285 back. One invariant, one test, one pair. Re-derived by
+# running the extractor -- this guard fired on the omission before the back-citation was
+# added, which is the pin doing its job at the first registration after it was pinned.
+#
+# ⚠️ 2026-09-02: INV-287 was registered naming NO enforcer and was written up here as
+# adding no pair. That comment then hid it: `coverage_reports.py invariants` counts any
+# test mentioning an id as coverage, so the one invariant with no guard was the one its
+# gap report did not list. INV-287 is now enforced by
+# `tests/test_checklist_items_ship_their_exceptions.py` and DOES add a pair.
+# 102 on 2026-09-01: INV-286 (a question whose options are complements is asked as a
+# multi-select and every chosen option recorded in full) names
+# `test_question_options_render_beneath.py`, which now cites INV-286 back. One invariant,
+# one test, one pair. Re-derived by running the extractor.
+# 103 on 2026-09-02: INV-288 (a fence's span never extends past the next opening marker
+# of its own type) names `test_recap_checkpoint_is_lifted_before_module_parsing.py`,
+# which now cites INV-288 back. One invariant, one test, one pair. Re-derived by running
+# the extractor. INV-287, registered the same day, adds no pair: it names no enforcer,
+# deliberately and says so in its own text.
+# 104 on 2026-09-02: INV-289 (reuse by instruction names its scale dependence) names
+# `test_visualization_model_build_scales.py`, which now cites INV-289 back. Re-derived by
+# running the extractor.
+# 105 on 2026-09-02: INV-290 (two sources reporting one environment fact are resolved by
+# the cause of their disagreement) names
+# `test_version_precedence_handles_an_unmanaged_install.py`, which now cites it back.
+# Re-derived by running the extractor.
+# 106 on 2026-09-02: INV-291 (a retrieval query a step depends on is measured before it
+# ships) names `test_module_0_suggested_queries_are_measured.py`, which now cites it back.
+# Re-derived by running the extractor.
+# 107 on 2026-09-02: INV-292 (prefer the programmatic route; a refusal is not a throttle)
+# names `test_cord_fetch_has_a_403_remedy.py`, which now cites it back. Re-derived.
+# 108 on 2026-09-02: INV-293 (a provider's disclosure obligation binds every acquisition
+# path) names `test_cord_is_disclosed_as_real_data.py`, which now cites it back.
+# Re-derived.
+# 109 on 2026-09-02: INV-294 (structure is classified by contents, never by name) names
+# `test_coverage_check_looks_inside_root_arrays.py`, which now cites it back. Re-derived.
+# 110 on 2026-09-02: INV-295 (a measurement records when it was taken) names
+# `test_license_limit_reading_is_complete.py`, which now cites it back. Re-derived. This
+# closes the 2026-09-02 review: nine deferrals decided, EXPECTED_PAIRS 100 -> 110 across
+# it, every step re-derived rather than incremented.
+# 111 on 2026-09-02: INV-287 gained an enforcer after all —
+# `test_checklist_items_ship_their_exceptions.py` — closing the one invariant this
+# review registered unguarded. Re-derived by running the extractor.
+# 113 as of 2026-09-02: INV-296 and INV-297 were registered from
+# `proceed-on-sqlite-keeps-the-tier-s-thread-count`, each naming
+# tests/test_loader_concurrency_reads_database_type.py as its enforcer.
+# 114 on 2026-09-03: INV-300 (a single-statement claim names its authority) names
+# `test_a_single_statement_claim_names_its_authority.py`, which cites it back. Re-derived by
+# running `pairs()` and reading its length — 114, with the new pair confirmed present by
+# name — not by incrementing 113.
+EXPECTED_PAIRS = 114
 
 
 def pairs():
