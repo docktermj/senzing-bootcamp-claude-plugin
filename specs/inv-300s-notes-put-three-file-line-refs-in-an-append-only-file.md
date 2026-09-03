@@ -93,3 +93,28 @@ silently because the list still reads authoritative."*
 - Related specs: `specs/inv-244-still-carries-the-writer-count-its-own-guard-rejects.md`,
   `specs/the-inv-300-guard-checks-one-of-the-invariants-three-obligations.md`,
   `specs/inv-300-is-drafted-from-the-pointer-side-and-cited-at-owner-side-declarations.md`
+
+## Deviations from this spec, and why (2026-09-03)
+
+- **The entry is 4,213 characters, down from 4,789 — 12% shorter, and still second-longest of
+  299.** The criterion asked for "materially shorter"; this is what could be cut without
+  touching a reason clause. The rule's own statement is 1,978 of those characters and both
+  notes are dated records of decisions, so the remaining length is the rule plus its history.
+  ⚠️ **Recorded as a disclosed judgment rather than a met target:** if the maintainer wants it
+  shorter, the next cut is moving the two-sides rationale into the spec and leaving only its
+  verdict — which trades findability of the *reason* for findability of the *rule*.
+- ⛔ **The objective half is fully met:** `conformance.py enumerations` went **48 → 47 of 299**
+  and INV-300 no longer appears on it, and the entry contains **zero** `file:line` references.
+  The three declarations are now identified by module and rule name, which survives any edit
+  above them.
+- ⛔ **The rewrite named the wrong third declaration, and the sibling finding is what caught
+  it.** The first version listed *"module 4's overlap-preserving sampling rule and its
+  sample-gate restatement"* — but the sample gate is precisely the **pointer**
+  `the-owner-side-detector-reads-a-pointer-as-an-owner` had just established is not an
+  owner-side declaration. Corrected to module 4's **three-checks CORD fetch rule**, which is
+  the third genuine owner. ⚠️ **This is the value of filing the finding before fixing
+  anything**: the wrong identification would otherwise have gone into the ruleset, in a note
+  whose whole subject is that ruleset claims must not go stale.
+- **The enforcer-coverage note now points at the guard's docstring** for the per-obligation
+  table and its measurements, rather than restating them — the no-fork discipline INV-300
+  itself governs, applied to INV-300's own note.
