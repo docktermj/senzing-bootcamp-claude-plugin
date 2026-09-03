@@ -165,6 +165,16 @@ the run rather than from a figure written here, which is how the previous baseli
   recorded commit, resolved from the ledger rather than guessed. For a run following an
   unattended implement session, this is the set that session is answerable for.
 
+⛔ **Commit an audit record on its own, BEFORE the implementations that answer it.** The
+`--since-last-audit` resolver takes the newest audit entry's `Commit:` field as its range
+start, so a record committed *with* the work makes the range start at the work and report
+`0 hard-rule lines added` — which reads exactly like a run that added none, and is enough to
+let a hard rule ship with no invariant and no deferral. Measured 2026-09-03: `ffa6a2f` carried
+a record plus its two implementations, `since --since-last-audit` reported 0, and
+`since --ref e5fee7c` reported 6. The resolver now detects such a ref (`⛔ SUSPECT-REF`) and
+widens to its parent, so the range is recoverable — but the ordering is what makes it right in
+the first place. (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`.)
+
 Each hit is *either* an unregistered rule (propose an invariant) *or* a missing citation to one
 that exists (fix the citation). Both are findings, they need different fixes, and deciding which
 requires reading the rule and searching `INVARIANTS.md` for its subject, which no regex can do.

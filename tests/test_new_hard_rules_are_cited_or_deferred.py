@@ -159,7 +159,23 @@ class EveryNewHardRuleIsAccountedFor(unittest.TestCase):
 
         added = source_lines(since)
         if not added:
-            self.skipTest("no hard rules added since the newest audit entry — nothing to check")
+            # ⛔ **Say WHICH kind of nothing this is.** An empty range and a range that never
+            # covered the work both arrive here as "no hard rules added", and until 2026-09-03
+            # the skip message asserted the first. It was the second: the newest audit entry
+            # recorded the commit that carried the implementations, so the range started AT
+            # them and six added rules sat outside it while this guard reported green by not
+            # running. The resolver now widens past such a ref and says so; this repeats it,
+            # because a skip line is what a reader actually sees.
+            # (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`.)
+            if "SUSPECT-REF" in since:
+                self.skipTest(
+                    "the range's recorded ref carried shipped work, so it was widened past it "
+                    "and STILL reports nothing added — read the widened range in the "
+                    "conformance output before believing this skip")
+            self.skipTest(
+                "no hard rules added since the newest audit entry — nothing to check. The ref "
+                "was accepted as recorded (no SUSPECT-REF), so this is an empty range rather "
+                "than a range that missed the work")
 
         deferred = deferred_rule_text()
         unaccounted = []

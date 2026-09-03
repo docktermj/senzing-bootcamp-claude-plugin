@@ -103,3 +103,23 @@ ordering easy to get wrong in either direction.
 - Related specs: `specs/the-audit-skill-reads-its-own-ledger-backwards.md`,
   `specs/a-malformed-ledger-entry-is-invisible-to-every-guard.md`,
   `specs/the-invariant-to-enforcing-test-link-is-asserted-nowhere.md`
+
+## Deviations from this spec, and why (2026-09-03)
+
+- **Criterion 1 asked for the parent range "as well as" the recorded one; one widened range
+  ships instead**, with the ⛔ warning naming both refs. `test_new_hard_rules_are_cited_or_deferred`
+  parses this view's output into the set of added rules, and two overlapping ranges give it two
+  answers to reason about — the ambiguity would land in the guard whose correctness this spec
+  exists to protect. The "never silently substitute" requirement is met by the warning, which
+  names the recorded ref, the entry that recorded it, the propagated files it touched, and the
+  ref actually used.
+- **`_PROPAGATED` is pinned against `.claude/skills/propagate-to-public/propagate.sh`**, not
+  `scripts/propagate.sh` — the script lives under the skill that owns it. ⚠️ The pin was first
+  written to `skipTest` when the file was missing, which is what it did: it reported `1 skipped`
+  and would have looked like coverage indefinitely. It now asserts the file exists. A skipped
+  assertion reads like a passing one, which is the same defect shape as a zero that reads like a
+  clean range.
+- **Not implemented: a version guard on the fixture's git.** It calls
+  `git init --initial-branch`, needing git ≥ 2.28, and the guard skips only when `git` is absent
+  entirely. Left as a disclosed assumption rather than fixed, since the repo's tooling already
+  assumes a modern git.

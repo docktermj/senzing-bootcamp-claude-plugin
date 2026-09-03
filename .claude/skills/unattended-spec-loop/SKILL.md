@@ -190,6 +190,14 @@ Record the audit itself as a dated `## production-readiness-audit-<date>` ledger
 marked **Not a spec**, whatever it found — including "found nothing", which is the result
 that ends the loop and therefore the one most worth being able to verify later.
 
+⛔ **The audit record is committed on its own, before the next cycle's implementations.** Its
+hash becomes the next cycle's `--since-last-audit` range start, so a record sharing a commit
+with implementation work makes that range begin at the work and report `0 hard-rule lines
+added` — and this guard's consumer, `tests/test_new_hard_rules_are_cited_or_deferred`, **skips**
+on "nothing added", so it goes green by not running. Nobody is watching for that in a loop.
+The resolver now warns (`⛔ SUSPECT-REF`) and widens to the parent; read the line rather than
+relying on it. (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`, 2026-09-03.)
+
 ### Stopping
 
 Stop and write the handoff when any of these is true:

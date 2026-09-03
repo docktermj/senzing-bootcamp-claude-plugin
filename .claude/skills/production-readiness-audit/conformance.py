@@ -290,10 +290,58 @@ def last_audit_ref(repo):
         print("   (ref %s from ledger entry %s)" % (ref, name))
         for s in skipped:
             print("   (skipped %s)" % s)
-        return ref
+        return _widen_past_a_work_commit(repo, ref, name)
     sys.stderr.write("no audit entry has a resolvable commit; skipped: %s\n" % "; ".join(skipped))
     return None
 
+
+
+#: Paths `propagate.sh` mirrors into the public repo. An audit-record commit touches none of
+#: them -- its own ledger entry says so, in the words "no shipped file modified by this audit".
+_PROPAGATED = ("plugins/", ".claude-plugin/", "docs/", "README.md")
+
+
+def _widen_past_a_work_commit(repo, ref, entry):
+    """The recorded ref, or its parent when that commit carries shipped work.
+
+    ⛔ **A range that starts AT the work reports zero, and zero is the answer this view
+    exists to make impossible.** The resolver takes the newest audit entry's `Commit:` field,
+    which is right only while an audit record is committed BEFORE the implementations that
+    answer it. On 2026-09-03 a record was committed together with its two implementations
+    (`ffa6a2f`), and `since --since-last-audit` reported `0 hard-rule line(s) added` while six
+    had been -- indistinguishable from a run that added none, and enough to let a hard rule
+    ship with no invariant and no deferral, which is the 2026-08-17 defect.
+
+    ⚠️ **Everything downstream inherits it**: `tests/test_new_hard_rules_are_cited_or_deferred`
+    SKIPS on "nothing added", so it goes green by not running, and the `unattended-spec-loop`
+    set-difference script iterates an empty list.
+
+    So the contradiction is detected -- an audit-record commit that touches a propagated path
+    contradicts its own entry -- reported loudly, and the range widened to the parent. The
+    widening is announced rather than silent: a resolver that re-points a range without saying
+    so is how a wrong baseline becomes invisible a second time.
+    (Source: `since-last-audit-reports-zero-when-the-audit-record-shares-the-work-commit`.)
+    """
+    touched = subprocess.run(["git", "show", "--name-only", "--format=", ref],
+                             cwd=str(repo), capture_output=True, text=True)
+    if touched.returncode != 0:
+        return ref
+    shipped = sorted({f for f in touched.stdout.split()
+                      if any(f.startswith(pre) for pre in _PROPAGATED)})
+    if not shipped:
+        return ref
+    parent = subprocess.run(["git", "rev-parse", "--verify", "--short", "%s^{commit}" % (ref + "^")],
+                            cwd=str(repo), capture_output=True, text=True)
+    print("   ⛔ SUSPECT-REF: %s is an audit record committed WITH shipped work" % ref)
+    print("     entry %s records it, and such an entry claims no shipped file was modified;" % entry)
+    print("     it touches %d propagated file(s): %s" % (len(shipped), ", ".join(shipped[:6])))
+    if parent.returncode != 0:
+        print("     it has no parent, so the range is left AT %s -- pass --ref explicitly" % ref)
+        return ref
+    widened = parent.stdout.strip()
+    print("     the range is WIDENED to its parent %s so the work it carries is in view." % widened)
+    print("     Commit an audit record on its own, BEFORE the implementations that answer it.")
+    return widened
 
 def cmd_since(args):
     """Hard-rule lines a git ref introduced -- the unit an unattended run needs.
