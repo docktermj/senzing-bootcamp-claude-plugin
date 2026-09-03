@@ -91,3 +91,54 @@ population it fires over is the right one.
 - Upstream: not applicable
 - Related specs: `specs/the-inv-300-guard-checks-one-of-the-invariants-three-obligations.md`,
   `specs/inv-300-is-drafted-from-the-pointer-side-and-cited-at-owner-side-declarations.md`
+
+## Blocked (unattended run 2026-09-03)
+
+**Blocked on criterion 4 — the negative control — which cannot be satisfied by a regex over
+this corpus. All partial work was reverted; the tree was left clean at `9f94062`.**
+
+⛔ **The classifier half works and is not the problem.** Tightening `OWNER_SIDE` to require the
+self-referential subject (`this is the canonical statement`) classifies all four sites
+correctly — `module-02-sdk-setup/SKILL.md:718`, `module-04-data-collection/SKILL.md:153` and
+`:488` as owners, `:1116` as the pointer it is — and fixtures pinned both forms. That change
+was built, verified, and then reverted with the rest, because on its own it does not satisfy
+this spec and the loop reverts a blocked spec's partial work rather than leaving a half-fix the
+ledger cannot describe honestly.
+
+**What blocks it: obligation (a)'s check cannot be made to fail on a site that names nothing.**
+Three measured attempts:
+
+| attempt | result |
+|---|---|
+| the shipped pattern (any quoted run of 4+ chars) at ±6 lines | control green — `"this language needs nothing extra"`, prose four lines away in another passage, satisfied it |
+| a tightened pattern (link, backticked `.md`/`.py`, `→ "Section"`, italic section, `Step N`, anchor) at ±6 | 0 false positives, control still green |
+| the same pattern at ±3 — the tightest sound scope measured (±2 yields 1 false positive, ±1 yields 7) | **control still green** |
+
+⛔ **The leak is structural, not a matter of a better regex.** The italic-section alternative
+`\*[A-Z][^*]{3,}\*` also matches **bold** runs, and bold is everywhere in this corpus — within
+±3 of `:1116` it matches *"Where 2+ sources are present, …"*, which is ordinary emphasis, not a
+reference. Removing that alternative breaks the one site that genuinely names its owner as an
+italicized section (`module-02-sdk-setup/SKILL.md:821` → *The launch environment*), which is
+how the same pattern reaches zero false positives in the first place. **Markdown does not
+distinguish "emphasis" from "section name", so no pattern over it distinguishes a reference
+from a phrase.**
+
+⚠️ **A British spelling also turned the suite red during the attempt** (the `-our-` form of
+*neighboring*, third occurrence in this session), caught by INV-253's guard. Reverted with the
+rest.
+
+### The question that unblocks it
+
+👉 **Which of these, for obligation (a)?**
+
+1. **Ship the classifier fix alone**, with criterion 4 struck: the pointer/owner distinction is
+   worth having even where the owner-naming check stays weak, and the weakness is now measured
+   and recorded here.
+2. **Assert obligation (a) structurally instead of textually** — require a **markdown link or a
+   backticked file path** in the claim's own sentence, and reword the handful of sites that
+   name their owner in prose (`:821`'s *The launch environment*, and any the scan finds) so
+   they carry a link. That makes the obligation checkable, at the cost of editing shipped prose
+   to fit a guard — which needs your call, since it is the tail wagging the dog.
+3. **Drop obligation (a)'s automated check**, record in INV-300's coverage note that only
+   obligation (b) is asserted, and leave owner-naming to review. Honest, and one fewer guard
+   that cannot fail.
