@@ -178,3 +178,59 @@ labels must follow them into their new layer.
 ## Citation correction (2026-09-02)
 
 This spec cited **INV-124** as part of the reason the visualization contract binds every language. It does not: INV-124 governs the **tab hooks the recap capture depends on** (`tab-<id>`, `navbtn-<id>`, `activate()`, deep-linking), and its "in whichever language it is generated" clause scopes *its own* subject. The rules that carry the any-language claim are **INV-002** (the SBCP is language-agnostic) and **INV-090** (the server is built in the chosen language, modeled on the `visualization-api-reference.md` contract). Corrected in place because implementing this spec copied the wrong trio into shipped text, where a reader following the citation reached a rule about tab ids (`specs/inv-124-is-cited-as-the-any-language-rule-it-is-not.md`).
+
+## The reproduction, closed on real Truth Set data (2026-09-03)
+
+The 2026-09-02 implementation recorded criteria 1 and 3 as **measured but not reproduced**: at the
+2-entity scaffold fixture the committed code already rendered both labels legibly, so the reported
+glyph clipping could not be demonstrated and the evidence was a **3 px** margin rather than a loss.
+That gap is now closed on the dataset the module actually loads.
+
+**Setup.** The full Truth Set — 159 records over CUSTOMERS (120), REFERENCE (22) and WATCHLIST
+(17), fetched from the `download_url`s `get_sample_data` returns — loaded into a fresh SQLite
+repository on Senzing SDK **4.4.0** (build 4.4.0.26242): **85 entities, 54 merged, 17 cross-source,
+65 relationships**, 0 load errors, redo drained. 85 nodes is below `LABEL_AUTO_OFF` (150), so
+labels are shown, which is what makes the defect reachable.
+
+**Method — paint order isolated in code, layout held fixed.** The label-layer block was moved to
+be created **before** the node group and nothing else was changed, so the simulation, the data and
+every node position are identical and the only difference is what paints over what. Verified
+before measuring: all 85 `class="node" transform="translate(...)"` strings match exactly between
+the two DOMs, and the "gained" pixel count (text in the flipped render absent from the original)
+is **0** — so no part of the difference is layout drift.
+
+**Result.**
+
+| | |
+|---|---|
+| glyph pixels a node circle covers when labels paint first | **1,713** |
+| entity labels losing glyph pixels | **31 of 85** (36%) |
+| worst single label — `Margaret Charney` | **324 px**, most of a 16-character name |
+
+So the defect is real, it is not a 2-entity curiosity, and at Truth Set density it damages **more
+than a third** of the names on the bootcamp's showpiece artifact. The shipped fix prevents all of
+it: the same comparison run against the current code shows the covered pixels restored to text.
+
+⛔ **Three method errors were made and corrected before this number was trusted, each of which had
+already produced a confident wrong answer.** They are recorded in
+`.claude/skills/dry-run/measure_label_occlusion.py` so the next run does not repeat them:
+
+1. **A diff below the noise floor.** At the shipped 30 s animated-tab budget the layout has not
+   converged at 85 nodes: two captures of *identical* code differ by **5,326** pixels. The first
+   reported figure (839 px) was smaller than that and therefore meaningless. 120 s is
+   byte-identical, and every number above was taken there. ⚠️ **The 30 s shortfall is a plugin
+   defect in its own right** → `specs/graph-capture-budget-does-not-converge-at-truth-set-density.md`.
+2. **A "before" variant that did not render.** Hand-editing the tick handler to drop the label
+   positioning left every `<g class="node">` with **no `transform` at all** — nodes created, never
+   positioned. Diffing a working render against a broken one shows a large spurious difference
+   that reads as confirmation. Now checked by requiring the expected count of positioned nodes in
+   the DOM.
+3. **Injected JS that silently did not apply.** A `setInterval` appended before `</body>` worked
+   under `--dump-dom` and had **no effect** through `capture_screenshots.py`; a control that
+   tripled every circle radius changed the text mask by 0 pixels, which is what exposed it.
+
+⚠️ **The clearance metric this spec's implementation used is the wrong tool above a handful of
+nodes**, and reported 0.0 px against correct code here. Once labels are in their own layer a
+circle overlapping a label's box is expected and harmless, and at 85 nodes a ±170 px band around
+one node contains several neighbors' labels (a 244 px ink span for a ≤20-character label). Paint
+order must be diffed directly instead. The harness now says so at the top.
