@@ -915,6 +915,21 @@ Applies to **Entity Graph** in both of its modes.
   entity name rendered with its leading characters behind the neighboring marker. ⚠️ Offsetting a label by its
   own marker's size is necessary but **not** sufficient and was never the cause — a node does not
   occlude its own label; its neighbor does.
+- **A screenshot MUST come from a CAPTURE-ORIENTED render, not the interactive one (required —
+  INV-002/INV-090/INV-299).** Honor `?capture=1` by (a) driving the layout to completion
+  **synchronously** — advance the physics in a loop rather than waiting on animation frames —
+  (b) **fitting** the finished layout inside the viewport, and (c) **suppressing on-canvas labels**
+  above a capture ceiling *lower* than the interactive one. ⛔ **(INV-299) All three, or none: each masks
+  the next.** Measured 2026-09-03 on the 85-entity Truth Set — the animation path advanced **5 of the
+  ~300 ticks** the layout needs at every budget from 5 s to 300 s, because a headless browser's
+  virtual time does not advance animation frames; settling alone then pushed **most nodes
+  off-canvas**, because centering bounds nothing; and fitting alone rendered a 10 px label at
+  **2–3 px**. ⚠️ **Leave the interactive view alone** — a real browser advances animation frames
+  normally, so a reader opening the app or the standalone snapshot already gets a settled layout,
+  and applying the capture's label ceiling there would degrade a view they can zoom and toggle.
+  ⚠️ **Suppress both label sets through your own auto-off mechanism**, not a bespoke hide on the
+  name layer: the interactive ceiling governs entity names *and* match keys together, and reusing
+  it keeps the on-screen toggles honest about what was actually drawn.
 - **An animated view MUST expose a settled signal, and the capture MUST wait on it (required —
   INV-002/INV-090/INV-298).** Remove `data-graph-settled` from the document element when a layout
   **begins**, and set it to `1` when that layout has reached its **final positions** — immediately

@@ -243,3 +243,58 @@ needs the presettle — which needs the layout decision recorded above (settled 
 criteria — two byte-identical captures at Truth Set density — are **not** met, and this spec is
 **not** recorded as implemented. What today's change does is make the defect visible on every
 capture instead of silent.
+
+## Implemented (2026-09-03), on the maintainer's layout decision
+
+**Decision:** presettle → fit → labels off for capture above ~40 nodes, interactive untouched.
+
+⚠️ **The spec's title and root cause remain wrong and are left standing as written**, with the
+correction above: the budget was never the cause. Implemented against the corrected diagnosis.
+
+### Criteria walk
+
+- **Two captures at Truth Set density byte-identical** — ✅ 3 of 3 identical, then 2 of 2 after the
+  label fix, on 159 records → 85 entities. The manifest reads `settled` and the unsettled warning
+  is silent.
+- **The same near the subgraph threshold (400), or the guidance states why not** — ✅ by
+  construction rather than by measurement, and the distinction matters: determinism no longer
+  depends on node count *or* on the budget, because the layout is advanced in a **synchronous
+  loop** whose length comes from the simulation's own `alphaMin`/`alphaDecay`. There is no race
+  left to lose. ⚠️ **Not runtime-verified above 400 entities** — the Truth Set yields 85, and this
+  environment has no dataset that reaches the `GRAPH_SUBGRAPH_DEFAULT_ABOVE` boundary; above it the
+  app opens in relationship-subgraph mode, which reduces the node count rather than raising it.
+- **A small graph is not made slower** — ✅ and it is now *faster*: the capture no longer waits at
+  all. An 85-entity capture completes in **0.7 s** real time, the same as before, and nothing waits
+  out a budget.
+- **`module-completion.md` no longer credits a settle budget** — ✅ the sentence *"the helper gives
+  animated tabs a longer settle budget"* is gone (0 occurrences) and replaced by what actually
+  happens, citing INV-298/INV-299. Asserted by
+  `test_module_completion_no_longer_credits_a_settle_budget`.
+- **Negative control** — ✅ six, each restoring green: presettle loop removed, fit call removed,
+  capture ceiling raised above the interactive one, ceiling not routed through the shared
+  auto-off, fit floor restored to 0.2, and the capture no longer requesting the render. ⚠️ The
+  fit control initially failed to fire, because the guard asserted `fitToExtent` was **defined**
+  rather than **called** — a guard certifying a definition. Strengthened, then it fired.
+- **Cross-platform and language-agnostic** — ✅ SVG/JS plus a query parameter; the rule is stated
+  in `visualization-api-reference.md`, where it binds every implementation (INV-002/INV-090).
+
+### What the implementation added beyond the decision
+
+⛔ **Both label sets, not just the names.** The first pass hid only `.node-labels` and left the
+**match-key edge labels** as unreadable smudges in the fitted image — visible on inspection of the
+artifact, not in any assertion. The ceiling now flows through `addGraphControls`, which owns the
+auto-off for both sets, so the on-screen toggles also agree with what was drawn. That reuse is why
+the app's own explanatory note (*"Labels hidden — 85 entities would overlap. Use the toggles to
+show them."*) appears correctly in the captured image.
+
+⚠️ **The fit's scale floor had to drop from 0.2 to 0.05.** A settled 85-entity layout needs well
+under 0.2, and the old floor would have clamped it and left nodes off-canvas — the defect the fit
+exists to remove.
+
+## Invariants introduced
+
+- `INV-299` — A screenshot of an animated view MUST be produced by a **capture-oriented render**,
+  requested explicitly (`?capture=1`), which drives the layout to completion **synchronously**,
+  **fits** it inside the viewport, and **suppresses on-canvas labels above a capture ceiling lower
+  than the interactive one**; the interactive view MUST be unaffected (recorded in
+  `specs/INVARIANTS.md`, approved by the maintainer 2026-09-03).

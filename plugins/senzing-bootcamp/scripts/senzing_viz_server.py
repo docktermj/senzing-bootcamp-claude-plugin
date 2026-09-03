@@ -1171,6 +1171,14 @@ async function drawGraph(){
     if(g.nodes.length>GRAPH_SUBGRAPH_DEFAULT_ABOVE&&links0.length){graphMode="network";}
   }
   const network=graphMode==="network";
+  // ⛔ (INV-298/INV-299) A capture-oriented render: settle the layout synchronously, fit it
+  // to the viewport, and drop labels above CAPTURE_LABEL_MAX. Requested with `?capture=1`,
+  // which `capture_screenshots.py` appends.
+  // ⚠️ Scoped to the CAPTURE deliberately -- the interactive artifact is NOT affected. The
+  // tick starvation this works around is specific to headless virtual time: a real browser
+  // advances requestAnimationFrame normally, so a bootcamper opening the standalone snapshot
+  // already gets a properly settled layout and keeps its animation, its labels and its zoom.
+  const capture=/[?&]capture=1/.test(location.search);
   // In network mode, keep only entities that a relationship actually connects -- the
   // subgraph the removed Relationship Network tab showed.
   let nodes;
@@ -1197,7 +1205,10 @@ async function drawGraph(){
   const rcolor=d3.scaleOrdinal().domain(rtypes).range([C_BLUE,C_GOLD,C_GREEN,"#8b5cf6","#ec4899","#0ea5e9"]);
   const svg=box.append("svg").attr("width",W).attr("height",H).attr("viewBox",[0,0,W,H]);
   const root=svg.append("g");
-  svg.call(d3.zoom().scaleExtent([0.2,4]).on("zoom",function(ev){root.attr("transform",ev.transform);}));
+  // scaleExtent's floor is lowered for the capture fit: a settled 85-entity layout needs
+  // well under 0.2 to fit, and clamping there would leave nodes off-canvas.
+  const zoomB=d3.zoom().scaleExtent([0.05,4]).on("zoom",function(ev){root.attr("transform",ev.transform);});
+  svg.call(zoomB);
   // Node labels are truncated to fit, so the distinctness rule applies here exactly as it
   // does to match keys (contract: "Defaults at production scale" item 1). Two entities whose
   // names share the first 19 characters -- ACME HOLDINGS INTERNATIONAL LLC vs ...INC, routine
@@ -1262,11 +1273,16 @@ async function drawGraph(){
   // as "relia B Quorndon" with the leading "Au" behind the neighboring circle, and byte-identical
   // across an 8s and a 30s virtual-time budget, so it was the settled state and not a
   // layout-settling artifact. The per-node `dy` was already radius-scaled and was never the cause.
+  // (INV-299) A dense capture keeps the structure and drops the names. Applied through the
+  // app's OWN auto-off mechanism below rather than a bespoke `display:none` here, so that
+  // BOTH label sets go (entity names and match keys — the interactive threshold governs both)
+  // and the on-screen checkboxes agree with what was actually drawn.
+  const captureLabels=!(capture&&nodes.length>CAPTURE_LABEL_MAX);
   const labelLayer=root.append("g").attr("class","node-labels");
   const label=labelLayer.selectAll("text").data(nodes).join("text").attr("text-anchor","middle")
       .text(function(d){return nodeLabel[d.entity_id];});
   label.append("title").text(function(d){return d.entity_name||"";});
-  sim.on("tick",function(){
+  function place(){
     edge.select("line").attr("x1",function(d){return d.source.x;}).attr("y1",function(d){return d.source.y;})
       .attr("x2",function(d){return d.target.x;}).attr("y2",function(d){return d.target.y;});
     edge.select("text").attr("x",function(d){return (d.source.x+d.target.x)/2;}).attr("y",function(d){return (d.source.y+d.target.y)/2;});
@@ -1275,10 +1291,48 @@ async function drawGraph(){
     // constant, so a data-scaled disc cannot swallow its own label.
     label.attr("x",function(d){return d.x;})
          .attr("y",function(d){return d.y+radius(d)+11;});
-  });
+  }
+  sim.on("tick",place);
+  // ⛔ (INV-298/INV-299) PRESETTLE: drive the layout to completion, then place once.
+  // `simulation.tick()` advances the physics WITHOUT dispatching events, which is why
+  // `place` is a named function called explicitly here.
+  // ⚠️ This is not an optimization — it is the only way a headless capture ever sees a
+  // finished layout. Measured 2026-09-03 through `capture_screenshots.py` on the 85-entity
+  // Truth Set: the animation path ran **5 of the ~300 ticks the layout needs**, at every
+  // virtual-time budget from 5s to 300s, because d3's timer is driven by
+  // requestAnimationFrame and headless virtual time does not advance it. The nodes sat near
+  // their initial phyllotaxis positions, which look plausibly spread out — which is why it
+  // went unnoticed.
+  if(capture){
+    sim.stop();
+    const need=Math.ceil(Math.log(sim.alphaMin())/Math.log(1-sim.alphaDecay()));
+    for(let i=0;i<need;i++){sim.tick();}
+    place();
+    fitToExtent();
+    graphSettled(true);
+  }
+  // ⛔ (INV-299) A SETTLED layout must still be a VISIBLE one. `forceCenter` centers the
+  // centroid and bounds nothing, so the finished 85-entity layout spreads well outside
+  // 1440x900: presettling alone put most nodes off-canvas and lost more of the graph than the
+  // unsettled clump it replaced. The near-initial layout was accidentally masking this.
+  function fitToExtent(){
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    nodes.forEach(function(d){
+      const r=radius(d)+14;
+      x0=Math.min(x0,d.x-r);x1=Math.max(x1,d.x+r);
+      // the label sits BELOW the node, so the extent is asymmetric -- but only when the
+      // labels are actually drawn, or the fit reserves space for text nobody renders.
+      y0=Math.min(y0,d.y-r);y1=Math.max(y1,d.y+r+(captureLabels?18:0));
+    });
+    if(!isFinite(x0))return;
+    const w=Math.max(1,x1-x0),h=Math.max(1,y1-y0);
+    const k=Math.min(4,Math.max(0.05,0.94*Math.min(W/w,H/h)));
+    svg.call(zoomB.transform,
+      d3.zoomIdentity.translate((W-k*(x0+x1))/2,(H-k*(y0+y1))/2).scale(k));
+  }
   if(network){drawRelationshipLegend(box,links,rtypes,rcolor,edge);}
   else{drawLegend(nodes);}
-  addGraphControls("graph-container",nodes.length);
+  addGraphControls("graph-container",nodes.length,!captureLabels);
   // (INV-298) d3 fires "end" when alpha decays below alphaMin -- the layout's own definition
   // of finished, rather than an outside guess at how long that takes.
   sim.on("end",function(){graphSettled(true);});
@@ -1309,15 +1363,26 @@ function radius(d){return Math.min(Math.max(8+d.record_count*4,8),40);}
 // the same app was reused for production-scale data in Module 7 (contract:
 // "Scale principle"). Toggles stay available either way.
 const LABEL_AUTO_OFF=150;
+// ⛔ (INV-299) A CAPTURE is not an interactive view, and needs a lower label ceiling.
+// Interactive labels stay on to 150 because the reader can zoom, pan and toggle them; a
+// still image offers none of that, and a settled layout fitted into 1440x900 renders a 10px
+// label at the fit scale -- about 2-3px at 85 entities, which is a smudge rather than a name.
+// The recap carries the entity names as text beside the image, so the captured graph's job
+// there is STRUCTURE. Above this count a capture drops the labels and keeps the structure
+// legible; below it, it keeps both. Measured 2026-09-03 on the 85-entity Truth Set.
+const CAPTURE_LABEL_MAX=40;
 // Non-color encoding companion to the relationship-type color, so the types
 // stay distinguishable in a monochrome recap screenshot and for color-vision
 // deficiency (contract: "Pair color with a non-color distinction").
 const R_DASH={possibly_same:"",possibly_related:"6,4",disclosed:"2,3",ambiguous:"10,3,2,3"};
 function rdash(ty){return R_DASH[String(ty||"").toLowerCase()]||"6,4";}
-function addGraphControls(containerId,nodeCount){
+function addGraphControls(containerId,nodeCount,forceLabelsOff){
   const c=d3.select("#"+containerId);
   c.select(".gctl").remove();
-  const auto=nodeCount>LABEL_AUTO_OFF;
+  // (INV-299) `forceLabelsOff` is the capture ceiling asserting itself over the interactive
+  // one. An explicit parameter rather than a faked `nodeCount`, so the reason is legible at
+  // the call site and this function keeps telling the truth about the graph it was given.
+  const auto=!!forceLabelsOff||nodeCount>LABEL_AUTO_OFF;
   // Apply the initial state to the container explicitly -- do NOT rely on the
   // checkbox change event, which does not fire for an unchecked box at load.
   const el=document.getElementById(containerId);

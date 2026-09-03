@@ -302,8 +302,9 @@ a short `{name}`):
 3. **If it succeeds** it prints one `<png path>⇥<tab label>` line per capture, and each file is
    named `{name}-<tab-slug>.png`. ⚠️ **Open the Entity Graph image and check the nodes are spread,
    not bunched in one corner.** A graph tab whose force simulation was restarted or captured too
-   early produces a valid PNG of an empty-looking graph at exit 0 — the helper gives animated tabs a
-   longer settle budget and the app's `activate()` no longer redraws an already-active tab, but this
+   early produces a valid PNG of an empty-looking graph at exit 0 — the helper requests a **capture-oriented
+   render** that settles the layout synchronously and fits it, rather than trusting a time budget
+   (INV-298/INV-299), and the app's `activate()` no longer redraws an already-active tab, but this
    is the one image where "it rendered" and "it is right" come apart, and INV-123 requires the
    caption to come from the opened image anyway. A graph PNG far smaller than its siblings is the
    tell. **Keep every captured tab** — and, **as a required step, in the

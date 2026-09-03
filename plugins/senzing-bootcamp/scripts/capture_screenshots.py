@@ -377,8 +377,14 @@ def _out_path(out_dir: Path, name: str, tab: str) -> Path:
 
 
 def _tab_url(url: str, tab: str, query: str = "") -> str:
-    """Append ?tab=/&q= deep-link parameters to a live-server URL."""
-    params = {"tab": tab}
+    """Append ?tab=/&q= deep-link parameters to a live-server URL.
+
+    Also requests the capture-oriented render (INV-298/INV-299): the page settles its layout
+    synchronously, fits it to the viewport and drops labels above its capture ceiling. A
+    still image can neither zoom nor wait, so it needs a different render from the
+    interactive one — and the animation path never finishes under headless virtual time.
+    """
+    params = {"tab": tab, "capture": "1"}
     if query and tab == "probe":
         params["q"] = query
     joiner = "&" if urlparse(url).query else "?"
@@ -1295,7 +1301,10 @@ def capture(
                 url = _tab_url(target, tab, query)
             else:
                 temp = _snapshot_copy(html, tab)
-                url = _to_url(str(temp))
+                # (INV-298/INV-299) `?capture=1` on a file: URL too — Chrome exposes it via
+                # `location.search` for file URLs, and it is what makes the page settle
+                # rather than animate. Without it the capture gets ~5 of ~300 layout ticks.
+                url = _to_url(str(temp)) + "?capture=1"
             winner = _capture_one(url, out, working_backend, tab=tab)
             if winner is not None:
                 working_backend = winner
