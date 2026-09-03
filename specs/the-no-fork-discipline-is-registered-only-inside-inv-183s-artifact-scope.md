@@ -155,8 +155,9 @@ work to revert.
 waiting.** `pending_invariants.py` reads `DEFERRED INVARIANT` blocks in
 `specs/IMPLEMENTED.md`, and this draft is not one: a deferral records a **rule that already
 shipped** with no invariant, whereas nothing was shipped here — the wording is a *proposal*
-living in this spec. On 2026-09-03 that queue reported `pending: 0   held: 1   next free id:
-INV-300` with this draft outstanding, and both statements were true. ⚠️ Whether the review
+living in this spec. On 2026-09-03 that queue reported `pending: 0`, `held: 1` and a next free id of
+**300** — written here without its prefix, for the reason given above — with this draft
+outstanding, and both statements were true. ⚠️ Whether the review
 queue should also read specs' `## Invariants introduced` sections for unminted ids is a
 maintainer decision, not a defect this run should have decided.
 
