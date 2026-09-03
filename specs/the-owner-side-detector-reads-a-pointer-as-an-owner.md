@@ -142,3 +142,39 @@ rest.
 3. **Drop obligation (a)'s automated check**, record in INV-300's coverage note that only
    obligation (b) is asserted, and leave owner-naming to review. Honest, and one fewer guard
    that cannot fail.
+
+## Unblocked and implemented (2026-09-03)
+
+✅ **The maintainer chose option 1: ship the classifier fix, strike criterion 4.** The
+`## Blocked` section above stands as the record of why that criterion cannot be met — three
+measured attempts, and the structural reason markdown defeats them — and is the evidence the
+decision was made on.
+
+⛔ **Criterion 4 is STRUCK, not silently dropped, and it is the only one.** It asked for a
+negative control that removes a pointer's anchor and step and sees obligation (a) fail. That
+control cannot fire for the reason recorded above, so it is retired by decision rather than
+left as an unticked box a later reader would try to satisfy. Every other criterion is met:
+
+- Criterion 1 ✅ — module 4's sample gate is classified a **pointer** and passes obligation (a)
+  on its existing link and step reference.
+- Criterion 2 ✅ — the three owner-side declarations keep the exemption and keep passing the
+  owner-side citation assertion.
+- Criterion 3 ✅ — fixtures pin both forms, including the real pointer that was misread.
+- Criterion 5 ✅ — obligation (a)'s failure message names the owner-side phrasing as the
+  remedy, so a false positive is answered by rewording and not by pointing a site at itself.
+
+**A standing control replaces the struck one, and it is a property rather than a count.** The
+classifier must discriminate on the **shipped corpus** in both directions: at least one passage
+classified owner-side (or the exemption is dead code), and at least one passage that names
+*another* location as the canonical statement classified as a pointer (or the loose form is
+back). ⛔ **Negative-controlled by reverting `OWNER_SIDE` to `(?:this\s+is|is)`**, which fails
+that assertion — naming all four sites the loose form swallows — plus two fixture subtests.
+Deliberately not a count of either set: a guard pinned to today's number would have accepted
+the wrong one before it.
+
+⚠️ **One defect of my own, found while adding that control:** the new docstring quoted the loose
+regex in a non-raw string, so `\s` was an invalid escape sequence — a `SyntaxWarning` today and
+an error in a future Python. Made raw, and the other 200-odd test modules were swept for the
+same: **zero** carry it. ⛔ **Worth knowing: `tests/test_python_sources_compile_cleanly.py` did
+not catch this**, because it compiles without escalating warnings — so a latent syntax defect
+passes the suite today.

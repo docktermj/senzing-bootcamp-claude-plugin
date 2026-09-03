@@ -109,7 +109,23 @@ MIN_CLAIMS = 30
 #: owner — the obligation reads vacuously there. Detected by the declaration itself, never by
 #: a list of the three sites known today (INV-246): a fourth canonical statement must be
 #: exempt on the same terms without anyone remembering to add it.
-OWNER_SIDE = re.compile(r"(?:this\s+is|is)\s+the\s+canonical\s+statement", re.I)
+#: ⛔ **The SUBJECT is the whole distinction, and this read the phrase instead until
+#: 2026-09-03.** An owner says *"**this** is the canonical statement"*; a pointer says
+#: *"X …, **which** is the canonical statement"*. The earlier `(?:this\s+is|is)` alternation
+#: matched the pointer form, so module 4's sample gate — *"see the sampling rule in Step 6,
+#: which is the canonical statement"* — was granted the owner's exemption from obligation (a).
+#: Nothing was wrong at that site (it names its owner by link and by step), but the obligation
+#: held there **unasserted**, and the owner-side clause *carry the rule in full* was being
+#: asserted of a pointer, where carrying the rule in full is exactly what it must not do.
+#: ⚠️ **The guard's negative controls could not have caught this**: they plant a missing
+#: citation and a missing owner, never a misclassified site. A control proves the assertion
+#: fires; it says nothing about whether the population it fires over is the right one.
+#: ⚠️ **What the tightened form cannot see:** an owner phrased another way — *"the canonical
+#: statement is here"*, *"this step owns the rule"* — is treated as a pointer and asked to name
+#: an owner it cannot name. The failure message for obligation (a) names that remedy, because
+#: the wrong fix is to point a site at itself.
+#: (Source: `the-owner-side-detector-reads-a-pointer-as-an-owner`, 2026-09-03.)
+OWNER_SIDE = re.compile(r"this\s+is\s+the\s+canonical\s+statement", re.I)
 
 #: How a passage names its owner: a file, a quoted section title, a step, or an anchor. Any
 #: one is enough — the obligation is that the reader can get there, not how.
@@ -204,7 +220,10 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
             "a claim says a rule is stated once elsewhere and never says WHERE (INV-300). "
             "Name the owning file, the quoted section, or the step — a pointer the reader "
             "cannot follow leaves them to re-derive the rule, which is the second copy this "
-            "invariant exists to prevent:\n" + "\n".join(offenders))
+            "invariant exists to prevent. ⚠️ If a site listed here IS the canonical statement "
+            "rather than a pointer to one, phrase it as \"This is the canonical statement\" and "
+            "it is exempt by wording — do NOT satisfy this by pointing the site at itself:\n"
+            + "\n".join(offenders))
 
     def test_every_owner_side_declaration_cites_this_invariant(self):
         """The owner side's own obligation (INV-300's two-sides note, 2026-09-03).
@@ -245,13 +264,69 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
         Asserted against a synthetic passage rather than a shipped one: if this only checked
         the three sites that exist today it would be the hardcoded list it exists to avoid.
         """
-        synthetic = "**This is the canonical statement; do not restate it elsewhere (INV-300).**"
-        self.assertRegex(synthetic, OWNER_SIDE,
-                         "a canonical-statement declaration must be recognized as owner-side")
-        self.assertNotRegex(
-            "follow it there rather than a copy here (INV-300)", OWNER_SIDE,
-            "a pointer must NOT be treated as owner-side, or obligation (a) stops binding "
-            "the sites it was written for")
+        for owner in (
+            "**This is the canonical statement; do not restate it elsewhere (INV-300).**",
+            "This is the canonical statement of the rule; other modules link here (INV-300).",
+        ):
+            with self.subTest(owner=owner[:44]):
+                self.assertRegex(owner, OWNER_SIDE,
+                                 "a self-referential canonical declaration is owner-side")
+        for pointer in (
+            "follow it there rather than a copy here (INV-300)",
+            # ⛔ The real site this classifier misread until 2026-09-03. A pointer names the
+            # owner and then describes it — the subject is the owner, not this passage.
+            "see the [sampling rule](#overlap-preserving-sampling) in Step 6, which "
+            "is the canonical statement; do not restate it here (INV-300).",
+            "Module 5's Step 6 is the canonical statement for this arithmetic.",
+        ):
+            with self.subTest(pointer=pointer[:44]):
+                self.assertNotRegex(
+                    pointer, OWNER_SIDE,
+                    "a pointer must NOT be treated as owner-side, or obligation (a) stops "
+                    "binding the sites it was written for")
+
+    def test_the_classifier_discriminates_on_REAL_text_not_only_fixtures(self):
+        r"""⛔ The standing control for the 2026-09-03 tightening, and the only one available.
+
+        Obligation (a) cannot be negative-controlled by editing a site: measured three ways on
+        2026-09-03, stripping a pointer's link and step leaves the guard green, because any
+        bold run within the window matches a section-reference pattern and bold is everywhere.
+        Markdown does not distinguish emphasis from a section name. The maintainer struck that
+        criterion and kept the classifier.
+
+        So the control is a **property over the shipped corpus**, in both directions: the
+        exemption must apply to something (or it is dead code that could be deleted without
+        notice), and the tightening must exclude something (or reverting to the loose
+        `(?:this\s+is|is)` form would pass unnoticed, which is exactly the regression this
+        change exists to prevent). ⚠️ Deliberately **not** a count of either set — a guard
+        pinned to today's number would have accepted the wrong one before it, which is the
+        shape `counting-the-writers-of-license-record-limit-is-the-wrong-invariant` forbids.
+        """
+        loose = re.compile(r"is\s+the\s+canonical\s+statement", re.I)
+        owners, pointers = [], []
+        for path in shipped_markdown():
+            with open(path, encoding="utf-8") as handle:
+                lines = handle.read().split("\n")
+            for index, line in enumerate(lines):
+                if not loose.search(line):
+                    continue
+                where = "%s:%d" % (os.path.relpath(path, REPO_ROOT), index + 1)
+                (owners if OWNER_SIDE.search(line) else pointers).append(where)
+        self.assertTrue(
+            owners,
+            "no shipped passage is classified owner-side, so the exemption applies to nothing "
+            "— either the canonical declarations were reworded, or the classifier no longer "
+            "matches how they are written")
+        self.assertTrue(
+            pointers,
+            "no shipped passage that names ANOTHER location as the canonical statement is "
+            "classified as a pointer. The classifier was tightened on 2026-09-03 precisely "
+            "because the loose form swallowed those; an empty set here means the loose form "
+            "is back and obligation (a) has stopped binding the sites it was written for. "
+            "Owners found: %r" % (owners,))
+        self.assertEqual(
+            [], sorted(set(owners) & set(pointers)),
+            "a passage cannot be both; the classifier has stopped discriminating")
 
     def test_the_invariant_itself_is_reachable_from_the_claims(self):
         """⛔ INV-300 must actually be cited in shipped text, not only registered.
