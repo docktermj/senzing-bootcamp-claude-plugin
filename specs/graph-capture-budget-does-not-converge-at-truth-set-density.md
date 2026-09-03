@@ -103,3 +103,96 @@ is too small.
 - MCP re-check: **n/a (no Senzing fact).** The subject is the plugin's own capture helper and its own renderer. The Truth Set was fetched via `get_sample_data(dataset='truthset', source='list')` on **server 1.36.0, 2026-09-03** for its download URLs and record counts (120 + 22 + 17 = 159); the resolution figures (85 entities, 54 merged, 17 cross-source, 65 relationships) are a live-engine observation on SDK 4.4.0 build 4.4.0.26242, not an MCP claim (INV-080/INV-149).
 - Upstream: not applicable — no server behavior is implicated.
 - Related specs: `specs/entity-graph-node-occludes-a-neighbors-label-at-small-n.md` (whose fix made settling slower, and whose own note asked for this verification), `specs/visualization-legibility-at-production-scale.md` (the density work this sits beside)
+
+## Root cause CORRECTED, and the spec is not implemented (2026-09-03)
+
+⛔ **This spec's root cause is wrong, and its central measurement does not reproduce.** Attempting
+the maintainer's chosen fix (the settled-signal route) surfaced the real cause, which is far worse
+and changes what the fix has to be. The spec stays **open**; what shipped is only the part the
+maintainer approved outright.
+
+### What does not reproduce
+
+The spec claims 30 000 ms "has not converged" while 120 000 ms is byte-identical. Re-measured on
+the same data and machine, five captures per budget:
+
+| budget | five captures |
+|---|---|
+| 30 000 ms | **1 distinct** image |
+| 120 000 ms | **1 distinct** — and the *same* image as 30 s |
+| 300 000 ms | **2 distinct** |
+
+So the deadline does not select the layout, and lengthening it made reproducibility **worse**.
+⚠️ Real time is nearly flat across budgets — **0.6 s at 30 s, 0.7 s at 300 s** — because virtual
+time advances as fast as the page allows, so "raise the budget" costs almost nothing and buys
+almost nothing. The spec's own 5,326-pixel figure was taken on a day the machine was under load
+from concurrent Senzing work; the variation is load-dependent, not budget-dependent.
+
+### The real cause
+
+**The force layout runs about five of the ~300 ticks it needs.** Instrumented through
+`capture_screenshots.py`'s own path, on the 85-entity Truth Set, with the tick count rendered
+into the captured PNG and read back from the image: **TICKS 5**. Under `--dump-dom` at budgets
+from 5 s to 300 s the count was 2–3. d3's simulation is driven by `requestAnimationFrame`, and
+headless virtual time does not advance it — so the budget is irrelevant by construction, and the
+2-vs-3-vs-5 spread is a race, which is the run-to-run variation.
+
+The Entity Graph in every recap is therefore **not** a picture of a settled layout captured a bit
+early. It is a picture of a layout that has barely started: nodes sit near their initial
+phyllotaxis positions, which look plausibly spread out, which is why this was never noticed. The
+visual signature is the one `module-completion.md` already tells the reader to look for — nodes
+clumped rather than spread — except the guidance frames it as an occasional mishap rather than
+what always happens.
+
+⚠️ **This does not invalidate the occlusion measurement in
+`entity-graph-node-occludes-a-neighbors-label-at-small-n`.** That comparison held layout fixed and
+verified it (all 85 node transforms identical, layout-drift indicator 0), so the 1,713 covered
+glyph pixels are real *at the layout the plugin actually captures* — which is the layout that
+ships.
+
+### Why the chosen fix cannot be finished without a decision
+
+Driving the layout to completion synchronously (`simulation.tick()` in a loop, which advances the
+physics without dispatching events) makes the signal reachable and the render **fully
+deterministic** — 5 of 5 captures byte-identical, signal set even at a 3 s budget. But it exposes
+two further problems, each masked by the previous one:
+
+1. **Nothing bounds the layout.** `forceCenter` centers the centroid and constrains nothing, so
+   the settled 85-entity layout spreads far outside 1440×900 and **most nodes end up off-canvas** —
+   losing more of the graph than the clump it replaced. The unsettled layout was accidentally
+   mitigating this by never expanding.
+2. **Fitting it makes the labels unreadable.** Adding a fit-to-extent transform (the app already
+   has `d3.zoom` on the root group) brings all 85 nodes on-canvas, still deterministic — and
+   shrinks the 10 px labels to 2–3 px smudges.
+
+So at 85 entities, "settled", "all nodes visible" and "labels legible" cannot all hold in one
+1440×900 screenshot. That is a design decision — it touches `LABEL_AUTO_OFF`, and therefore the
+already-implemented `visualization-legibility-at-production-scale` — not a defect repair, and it
+is the maintainer's call. Both prototypes were reverted rather than shipped.
+
+### What shipped, and what did not
+
+**Shipped** (the maintainer approved INV-298 outright, and Step 5.5 requires citing a minted ID at
+the sites it binds):
+
+- the settled signal in the Python reference — cleared as a layout begins, set on d3's `end`
+  event, set immediately for an empty graph, and cleared again when a drag restarts the layout;
+- **INV-298**, registered and indexed under *Visualization and screenshots*;
+- the rule stated in `visualization-api-reference.md`, where it binds every language
+  implementation (INV-002/INV-090) — including the reason it must be a DOM attribute rather than a
+  JS variable, since the reference's own simulation lives in a top-level `let` that never reaches
+  `window`.
+
+**Not shipped, and why:** the capture side. Waiting on the signal is only useful once the signal
+can be reached, and reaching it requires the presettle — which requires the layout decision above.
+Shipping the wait now would make every graph capture report "proceeded unsettled" on every
+bootcamp run, which is honest but is a warning about a defect nobody can act on yet.
+
+## Invariants introduced
+
+- `INV-298` — A visualization view that **animates** to its final layout MUST expose a settled
+  signal the capture can wait on: remove `data-graph-settled` from the document element when a
+  layout begins, set it to `1` at final positions (immediately where there is nothing to lay out);
+  a screenshot of an animated view is taken after that signal rather than on a fixed budget alone,
+  and a capture proceeding without it MUST report that it did (recorded in `specs/INVARIANTS.md`,
+  approved by the maintainer 2026-09-03).

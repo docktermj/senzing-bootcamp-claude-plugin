@@ -915,6 +915,19 @@ Applies to **Entity Graph** in both of its modes.
   entity name rendered with its leading characters behind the neighboring marker. ⚠️ Offsetting a label by its
   own marker's size is necessary but **not** sufficient and was never the cause — a node does not
   occlude its own label; its neighbor does.
+- **An animated view MUST expose a settled signal, and the capture MUST wait on it (required —
+  INV-002/INV-090/INV-298).** Remove `data-graph-settled` from the document element when a layout
+  **begins**, and set it to `1` when that layout has reached its **final positions** — immediately
+  where there is nothing to lay out, so a waiter on an empty graph is never left waiting. A
+  screenshot of an animated view is taken **after that signal**, never on a time budget alone, and
+  a capture that proceeds without it MUST say so (INV-129). ⛔ **A deadline is not a settle
+  guarantee, and a longer one is not a better guarantee.** Measured 2026-09-03 on the 85-entity
+  Truth Set: five captures at a 30 s budget and five at 120 s produced the *same* image while five
+  at 300 s produced **two**, and real time barely moved (0.6 s → 0.7 s) because virtual time
+  advances as fast as the page allows. ⚠️ **Expose it as a DOM attribute, not a JavaScript
+  variable.** The Python reference held its simulation in a top-level `let`, which never reaches
+  `window`, so nothing outside the page's own script could observe it — an attribute is
+  observable by any driver in any language, which is the whole point of putting the rule here.
 - **Collision must account for the label's extent, not just the marker (required).** Size the
   collision/overlap pass from the rendered label as well as the marker, and apply it **only while
   labels are actually shown** — inflating it for text nobody renders over-separates a

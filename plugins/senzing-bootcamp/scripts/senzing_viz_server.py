@@ -1107,6 +1107,18 @@ let graphModeAutoSet=false;
 // the previous simulation would otherwise keep ticking against DOM nodes that have been
 // removed — wasted work and a source of jank. Stopped before each redraw.
 let graphSim=null;
+// ⛔ (INV-298) The settled signal, on the document element so any driver in any language can
+// wait on it -- `document.documentElement.getAttribute("data-graph-settled")==="1"`. An
+// attribute rather than a JS global on purpose: `graphSim` is a top-level `let`, which never
+// reaches `window`, so nothing outside this script could observe it (found 2026-09-03 by an
+// injected probe that read nothing). Removing the attribute rather than setting "0" keeps
+// "not settled" and "no animated view on this page" the same observable state, so a waiter
+// cannot mistake a static tab for an unsettled one.
+function graphSettled(done){
+  const el=document.documentElement;
+  if(done){el.setAttribute("data-graph-settled","1");}
+  else{el.removeAttribute("data-graph-settled");}
+}
 function drawFor(id){
   if(id==="graph")drawGraph();
   else if(id==="stats")drawHist();
@@ -1142,6 +1154,14 @@ async function drawGraph(){
   d3.select("#graph-container .legend").remove();
   d3.select("#graph-container .empty-note").remove();
   if(graphSim){graphSim.stop();graphSim=null;}
+  // ⛔ (INV-298) The capture waits on this signal instead of a time budget. Cleared as a
+  // layout BEGINS and set when it reaches its final positions, so a screenshot is never a
+  // picture of a still-moving graph. A deadline cannot express this: measured 2026-09-03 on
+  // the 85-entity Truth Set, five captures at 30s and five at 120s produced the SAME image
+  // while five at 300s produced TWO -- the deadline does not select the layout, and
+  // lengthening it made reproducibility worse. `graphSettled(false)` here covers the redraw
+  // paths too (mode switch, and a drag that restarts the simulation).
+  graphSettled(false);
   const links0=g.edges.map(function(e){return {source:e.source_entity_id,target:e.target_entity_id,match_key:e.match_key,rtype:e.relationship_type||"RELATED"};});
   // Scale-aware default, applied once: above the threshold, open on the relationship
   // subgraph rather than the full population. Only when a subgraph actually exists,
@@ -1164,6 +1184,10 @@ async function drawGraph(){
     box.append("div").attr("class","muted empty-note").style("padding","14px")
        .text(network?"No relationships between entities were found in this data.":"No entities to graph.");
     addGraphControls("graph-container",0);
+    // (INV-298) Nothing to lay out is already settled -- without this a waiter on an empty
+    // graph has no signal to wait for and falls back to its timeout, which is the fixed
+    // deadline this replaces.
+    graphSettled(true);
     return;
   }
   // EDGE-KEY MAPPING: forceLink resolves against id via source/target; map before use.
@@ -1255,7 +1279,10 @@ async function drawGraph(){
   if(network){drawRelationshipLegend(box,links,rtypes,rcolor,edge);}
   else{drawLegend(nodes);}
   addGraphControls("graph-container",nodes.length);
-  function dstart(ev,d){if(!ev.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
+  // (INV-298) d3 fires "end" when alpha decays below alphaMin -- the layout's own definition
+  // of finished, rather than an outside guess at how long that takes.
+  sim.on("end",function(){graphSettled(true);});
+  function dstart(ev,d){if(!ev.active){graphSettled(false);sim.alphaTarget(0.3).restart();}d.fx=d.x;d.fy=d.y;}
   function dragged(ev,d){d.fx=ev.x;d.fy=ev.y;}
   function dend(ev,d){if(!ev.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
 }
