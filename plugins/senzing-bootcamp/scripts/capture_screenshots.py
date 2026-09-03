@@ -141,6 +141,43 @@ SINGLE_PAGE_LABEL = "Full page"
 # for. (Observed 2026-08-14: a three-source quality page ~2100px tall captured at 900px, two
 # of three sources absent, exit 0, real 84 KB PNG, manifest entry, label "Full page".)
 SINGLE_PAGE_LABEL_VIEWPORT = "Top of page (viewport only)"
+#: (INV-298) Whether the captured page reported its animated layout as SETTLED.
+#: `settled` the signal was present, `unsettled` an animated tab was captured without it,
+#: `unknown` the backend cannot read the DOM (wkhtmltoimage), `n/a` the tab does not animate.
+#: ⛔ **`unsettled` and `unknown` are different findings and must not be merged.** Reporting a
+#: backend limitation as an unsettled layout blames the artifact for the instrument, which is
+#: the reverse of what INV-129 asks for.
+SETTLED_YES = "settled"
+SETTLED_NO = "unsettled"
+SETTLED_UNKNOWN = "unknown"
+SETTLED_NA = "n/a"
+_SETTLED_ATTR = "data-graph-settled"
+_SETTLED_RE = re.compile(r'data-graph-settled="1"')
+_SETTLED_STATE = SETTLED_NA
+#: Per-tab settle outcomes for the run, filled by `capture()` and read by `main()`.
+#: ⚠️ A module global rather than an extra return value, for the same reason `_CURRENT_TAB`
+#: and `_FULL_PAGE_OUTCOME` are globals: `capture()` returns the written list and every
+#: caller and test unpacks exactly that, so widening its return type to carry this would
+#: break them for a reporting field. Reset at the top of `capture()`.
+_SETTLE_BY_TAB: "dict[str, str]" = {}
+
+
+def _record_settled(state: str) -> None:
+    """Record the settle outcome of the capture just taken (INV-298).
+
+    A global for the same reason `_FULL_PAGE_OUTCOME` is one: `_BACKENDS` is called
+    uniformly and tests substitute two-argument callables, so there is nowhere to thread a
+    return value through. Capture is serial — see the note on `_CURRENT_TAB`.
+    """
+    global _SETTLED_STATE
+    _SETTLED_STATE = state
+
+
+def _settle_expected(tab: str) -> bool:
+    """Does this tab animate to its final layout, so a settled signal is owed?"""
+    return tab in _ANIMATED_TABS
+
+
 FULL_PAGE_FULL = "full"
 FULL_PAGE_CLAMPED = "clamped"
 FULL_PAGE_VIEWPORT = "viewport"
@@ -514,7 +551,22 @@ def _capture_playwright(url: str, out: Path) -> bool:
             # "networkidle" can hang or fire inconsistently; wait for "load"
             # and give the D3 force layout a bounded moment to settle.
             page.goto(url, wait_until="load")
-            page.wait_for_timeout(2500)
+            # (INV-298) Wait for the layout's own signal rather than a flat guess. The 2500ms
+            # below stays as the fallback for a page that never reports one — a static tab, or
+            # an implementation that does not yet emit it.
+            settled = False
+            if _settle_expected(_CURRENT_TAB):
+                try:
+                    page.wait_for_function(
+                        "document.documentElement.getAttribute('%s') === '1'" % _SETTLED_ATTR,
+                        timeout=_virtual_time_ms(_CURRENT_TAB),
+                    )
+                    settled = True
+                except Exception:
+                    settled = False
+                _record_settled(SETTLED_YES if settled else SETTLED_NO)
+            if not settled:
+                page.wait_for_timeout(2500)
             if _single_page_mode():
                 height = None
                 try:
@@ -563,7 +615,26 @@ def _capture_selenium(url: str, out: Path) -> bool:
         driver.get(url)
         import time
 
-        time.sleep(2.5)
+        # (INV-298) Poll the layout's own signal instead of trusting elapsed time. The
+        # 2.5s sleep stays as the fallback for a page that reports none — a static tab, or
+        # an implementation that does not emit it yet.
+        settled = False
+        if _settle_expected(_CURRENT_TAB):
+            deadline = time.time() + (_virtual_time_ms(_CURRENT_TAB) / 1000.0)
+            while time.time() < deadline:
+                try:
+                    settled = bool(driver.execute_script(
+                        "return document.documentElement.getAttribute("
+                        "'%s') === '1';" % _SETTLED_ATTR
+                    ))
+                except Exception:
+                    settled = False
+                if settled:
+                    break
+                time.sleep(0.1)
+            _record_settled(SETTLED_YES if settled else SETTLED_NO)
+        if not settled:
+            time.sleep(2.5)
         if _single_page_mode():
             # Selenium has no full-page screenshot, so grow the window to the content and
             # re-shoot.
@@ -804,7 +875,10 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
         else:
             _record_full_page(FULL_PAGE_VIEWPORT, None, _WINDOW[1])
     try:
-        subprocess.run(
+        # ⚠️ `--dump-dom` rides along with `--screenshot` in the SAME invocation — verified
+        # 2026-09-03, both outputs are produced — so reading the settled signal (INV-298)
+        # costs no extra browser run and cannot disagree with the image it describes.
+        done = subprocess.run(
             [
                 exe,
                 "--headless=new",
@@ -814,6 +888,7 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
                 f"--window-size={_WINDOW[0]},{height}",
                 f"--virtual-time-budget={_virtual_time_ms(_CURRENT_TAB)}",
                 f"--screenshot={out}",
+                "--dump-dom",
                 url,
             ],
             check=False,
@@ -822,6 +897,17 @@ def _capture_chrome_cli(url: str, out: Path) -> bool:
         )
     except Exception:
         return False
+    if _settle_expected(_CURRENT_TAB):
+        # ⚠️ Read defensively, and leave the state UNKNOWN when stdout is not readable —
+        # never NO. "We could not look" is not "the layout was unfinished" (INV-298), and a
+        # crash here would fail a capture that had already succeeded, against the
+        # best-effort contract (INV-122). Found by `test_snapshot_and_capture_fidelity`,
+        # which mocks `subprocess.run`: `.stdout` was a MagicMock and the regex raised.
+        raw = getattr(done, "stdout", None)
+        if isinstance(raw, (bytes, bytearray)):
+            raw = raw.decode("utf-8", "replace")
+        if isinstance(raw, str):
+            _record_settled(SETTLED_YES if _SETTLED_RE.search(raw) else SETTLED_NO)
     return out.is_file() and out.stat().st_size > 0
 
 
@@ -958,6 +1044,11 @@ def _capture_one(url: str, out: Path, backend=None, tab: str = ""):
     _FULL_PAGE_OUTCOME, _FULL_PAGE_HEIGHT, _FULL_PAGE_CAPTURED = (
         FULL_PAGE_VIEWPORT, None, None,
     )
+    # (INV-298) Same reasoning for the settle record: one animated tab's `unsettled` must
+    # never label the static tab captured after it. An animated tab starts at `unknown`,
+    # not at `unsettled` — a backend that cannot read the DOM must not be reported as
+    # having found an unsettled layout, which would blame the artifact for the instrument.
+    _record_settled(SETTLED_UNKNOWN if _settle_expected(tab) else SETTLED_NA)
     if _CAPTURE_IN_FLIGHT:
         # Warn, never raise: a capture step must not block the module (INV-052/INV-048).
         sys.stderr.write(
@@ -1091,7 +1182,7 @@ def _prior_manifest(target: Path) -> "dict | None":
 
 def write_manifest(
     out_dir: Path, name: str, requested, absent, written, missed, suppressed=(),
-    failed_reason: str = "no image written by any backend",
+    failed_reason: str = "no image written by any backend", settled=None,
 ) -> bool:
     """Record what capture did, beside the PNGs. Returns True if written.
 
@@ -1125,6 +1216,12 @@ def write_manifest(
                 "slug": slug_of.get(tab, tab),
                 "file": _out_path(Path(out_dir), name, tab).name,
                 "label": _tab_label(tab),
+                # (INV-298) Whether the layout reported itself finished when this image was
+                # taken. `n/a` for a tab that does not animate; `unknown` when the backend
+                # cannot read the DOM. Graduation's coverage check reads this file, so a
+                # reader chasing a clumped-looking graph can tell an unsettled capture from
+                # a genuine result without re-running anything.
+                "settled": (settled or {}).get(tab, SETTLED_NA),
             }
             for tab in captured_tabs
         ],
@@ -1180,6 +1277,10 @@ def capture(
         raise ValueError(f"no such HTML file: {target}")
 
     written = []
+    # (INV-298) Reset per run, so a previous call's outcomes cannot be reported as this
+    # one's. Tests run the CLI in a subprocess and would never see the leak.
+    global _SETTLE_BY_TAB
+    _SETTLE_BY_TAB = {}
     working_backend = None
     for tab in tabs:
         out = _out_path(out_dir, name, tab)
@@ -1199,6 +1300,10 @@ def capture(
             if winner is not None:
                 working_backend = winner
                 written.append((out, _tab_label(tab)))
+                # (INV-298) Read the record BEFORE the next capture resets it: the global
+                # holds one tab's outcome, so collecting it here is what makes the manifest
+                # per-tab rather than a report about whichever tab happened to be last.
+                _SETTLE_BY_TAB[tab] = _SETTLED_STATE
             elif working_backend is None:
                 # Nothing worked for the first tab: no headless capability at all,
                 # so stop rather than failing identically for every remaining tab.
@@ -1427,8 +1532,35 @@ def main(argv=None) -> int:
         if _out_path(Path(args.out_dir), args.name, t) not in {p for p, _ in written}
     ]
     write_manifest(
-        Path(args.out_dir), args.name, tabs, absent, written, _missed, suppressed
+        Path(args.out_dir), args.name, tabs, absent, written, _missed, suppressed,
+        settled=_SETTLE_BY_TAB,
     )
+
+    # ⛔ (INV-298) An animated view captured without its settled signal is REPORTED, not
+    # passed off as a result. The image is kept — it is still the best available view, and
+    # capture is best-effort by contract (INV-122) — but a reader chasing a clumped-looking
+    # graph must not have to guess whether the layout finished.
+    unsettled = sorted(t for t, s in _SETTLE_BY_TAB.items() if s == SETTLED_NO)
+    if unsettled:
+        sys.stderr.write(
+            "capture_screenshots: captured %s BEFORE the layout reported itself settled "
+            "(INV-298) — the image shows an unfinished layout, which looks like nodes "
+            "clumped rather than spread. The `settled` field in the tab manifest records "
+            "this per tab. Do NOT re-run expecting a different result: measured 2026-09-03, "
+            "the layout advances ~5 of the ~300 ticks it needs regardless of the "
+            "virtual-time budget, because the simulation is driven by requestAnimationFrame "
+            "and headless virtual time does not advance it "
+            "(specs/graph-capture-budget-does-not-converge-at-truth-set-density.md).\n"
+            % ", ".join(unsettled)
+        )
+    unknown = sorted(t for t, s in _SETTLE_BY_TAB.items() if s == SETTLED_UNKNOWN)
+    if unknown:
+        sys.stderr.write(
+            "capture_screenshots: could not read the settled signal for %s — this backend "
+            "cannot inspect the DOM, so whether the layout finished is UNKNOWN rather than "
+            "known-bad (INV-298). Recorded as `unknown` in the manifest.\n"
+            % ", ".join(unknown)
+        )
 
     if not written:
         # Two different failures used to share one message, and the shared wording named

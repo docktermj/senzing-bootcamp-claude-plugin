@@ -196,3 +196,50 @@ bootcamp run, which is honest but is a warning about a defect nobody can act on 
   a screenshot of an animated view is taken after that signal rather than on a fixed budget alone,
   and a capture proceeding without it MUST report that it did (recorded in `specs/INVARIANTS.md`,
   approved by the maintainer 2026-09-03).
+
+## Second pass — INV-298's reporting half shipped (2026-09-03)
+
+The first pass registered INV-298 and made the renderer emit the signal, but nothing consumed
+it: `capture_screenshots.py` had **zero** references to `data-graph-settled` and still captured
+on the fixed budget in silence. ⛔ **That left the plugin out of compliance with an invariant it
+had just registered** — the reverse of the usual failure, where a rule ships with no invariant.
+Here the ruleset asserted something untrue about the product, and
+`test_any_language_contract_complete` could not see it because the rule *was* stated in the
+contract; nothing checked the capture obeyed it.
+
+Closed the half that needs no layout decision:
+
+- **Chrome CLI** — reads the signal from the **same invocation** as the screenshot
+  (`--dump-dom` rides along with `--screenshot`, verified), so the record can never describe a
+  different render than the image it labels.
+- **Playwright** — `wait_for_function` on the attribute, bounded by the tab's budget, replacing a
+  flat `wait_for_timeout(2500)` that was *shorter* than the CLI path's budget.
+- **Selenium** — polls the attribute to the same deadline; the 2.5 s sleep stays as the fallback
+  for a page that reports nothing.
+- **stderr** — an animated tab captured without the signal is reported, naming INV-298, and
+  saying plainly not to re-run expecting a different result and why.
+- **the tab manifest** — a per-tab `settled` field (`settled` / `unsettled` / `unknown` / `n/a`),
+  which graduation's coverage check already reads, so a reader chasing a clumped-looking graph can
+  tell an unfinished layout from a genuine result without re-running anything.
+
+⛔ **`unsettled` and `unknown` are kept apart.** An animated tab starts at `unknown` and only a
+backend that actually read the attribute may downgrade it, so a DOM-blind backend
+(`wkhtmltoimage`) is never reported as having found an unfinished layout — that would blame the
+artifact for the instrument, the reverse of INV-129. ⚠️ The first version of the guard for this
+asserted only that the constants and the message existed in the source, which **survived the
+exact mutation it was written to catch**: flipping the default from `unknown` to `unsettled` left
+all ten tests green, because the Chrome backend overwrites the default before anything observes
+it. Replaced with a behavioral assertion that substitutes a DOM-blind backend.
+
+⚠️ **Two existing guards caught a real robustness gap.** `test_snapshot_and_capture_fidelity` and
+`test_windows_browser_discovery` mock `subprocess.run`, so `.stdout` was a `MagicMock` and the
+regex raised — which in production would fail a capture that had already succeeded, against the
+best-effort contract (INV-122). The read is now defensive and leaves the state **`unknown`** when
+stdout cannot be read: "we could not look" is not "the layout was unfinished".
+
+**Still open, and why.** The wait half only bites once the signal is reachable, and reaching it
+needs the presettle — which needs the layout decision recorded above (settled + all-nodes-visible
++ legible labels cannot all hold for 85 entities in one 1440×900 shot). So the spec's acceptance
+criteria — two byte-identical captures at Truth Set density — are **not** met, and this spec is
+**not** recorded as implemented. What today's change does is make the defect visible on every
+capture instead of silent.
