@@ -126,3 +126,39 @@ first instances appeared, and later sites reached for the nearest available id o
 - Related specs: `specs/inv-179-is-cited-as-a-state-it-once-rule-it-does-not-contain.md`,
   `specs/the-one-question-per-turn-rule-is-registered-nowhere.md`,
   `specs/the-2026-08-21-run-shipped-three-unregistered-guarantees.md`
+
+## Blocked (unattended run 2026-09-03)
+
+**Blocked on the maintainer's sign-off of an invariant's wording, which an unattended run may
+not give.** `implement-spec` Step 5 reserves that decision, and `unattended-spec-loop` restates
+it: an invariant is permanent and binds every future spec.
+
+⛔ **Nothing partial was implementable, and that is worth stating rather than leaving as an
+apparent omission.** All three remaining proposed changes depend on the id existing:
+
+- **Change 2** cites the new id at the sites — unwritable before it is minted, which is the
+  precise trap `implement-spec` records for 2026-08-14: eight implementations shipped their
+  rules with no ids, the ids were minted later in one commit, and nothing sent anyone back to
+  the prose.
+- **Change 3**'s guard asserts that a single-statement claim carries an authority. Twenty-seven
+  sites carry none today, so the guard cannot be green before change 2 — and an assertion
+  weakened to pass would be the one outcome worse than a red suite.
+- **Change 1** *is* the sign-off.
+
+⚠️ **This is not the ship-the-rule-and-defer case.** That path applies when an implementation
+**ships** a hard rule with no invariant; here the rule already ships at ~40 sites and has for
+months. Nothing new was written into the plugin, so there is no new guarantee to defer — the
+deferral would be about text that is already there. The working tree was left clean; no partial
+work to revert.
+
+### The question that unblocks it
+
+👉 **Approve, amend, or reject the drafted wording in `## Invariants introduced` above — and
+settle the scope question it names:** does the invariant bind only a site that **claims**
+single-statement ownership (the drafted form: ~40 sites, mechanically findable), or every
+passage that *could* have restated a rule and did not (unbounded, and not checkable)?
+
+On approval: mint the next free id (**INV-300** as of 2026-09-03; re-read it with
+`pending_invariants.py next-id`, since several drafts may compete for it), append it with its
+index entry in the same edit, then work change 2's site set **by scanning** — not from this
+spec's list, which is where the author noticed the rule rather than its extent (INV-246).
