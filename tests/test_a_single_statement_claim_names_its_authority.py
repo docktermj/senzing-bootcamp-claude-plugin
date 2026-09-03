@@ -206,6 +206,39 @@ class EveryClaimNamesAnAuthority(unittest.TestCase):
             "cannot follow leaves them to re-derive the rule, which is the second copy this "
             "invariant exists to prevent:\n" + "\n".join(offenders))
 
+    def test_every_owner_side_declaration_cites_this_invariant(self):
+        """The owner side's own obligation (INV-300's two-sides note, 2026-09-03).
+
+        An owner-side declaration is exempt from naming an owner — it IS the owner — but it
+        owes the citation, so the discipline is reachable from either end rather than only
+        from the pointer. ⚠️ Checked over the passage, not the line: `module-04:488`'s
+        citation sits on the following line, moved there so it would not break the exact
+        phrase two other guards pin.
+
+        ⛔ **The other half of that clause — the owner carries the rule in full — is NOT
+        asserted here and is not assertable**, for the same reason as obligation (c): judging
+        whether a passage states a rule *completely* is semantic. The invariant says so too.
+        """
+        offenders = []
+        for path in shipped_markdown():
+            with open(path, encoding="utf-8") as handle:
+                lines = handle.read().split("\n")
+            for index, line in enumerate(lines):
+                if not OWNER_SIDE.search(line):
+                    continue
+                window = "\n".join(lines[max(0, index - WINDOW):index + WINDOW + 1])
+                if "INV-300" in window:
+                    continue
+                offenders.append(
+                    "  %s:%d — %s"
+                    % (os.path.relpath(path, REPO_ROOT), index + 1, line.strip()[:130]))
+        self.assertEqual(
+            [], offenders,
+            "a passage declares itself the canonical statement of a rule and does not cite "
+            "INV-300 in its own passage. The owner side is exempt from naming an owner, not "
+            "from citing the authority — without it the discipline is discoverable only from "
+            "whichever sites happen to point here:\n" + "\n".join(offenders))
+
     def test_the_owner_side_exemption_is_not_a_path_list(self):
         """⛔ The exemption must be earned by wording, so a fourth owner site is covered too.
 

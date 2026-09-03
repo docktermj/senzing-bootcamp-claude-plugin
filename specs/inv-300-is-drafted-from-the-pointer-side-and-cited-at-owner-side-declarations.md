@@ -92,3 +92,28 @@ the invariant is *narrower in description* than the class its own vocabulary sel
 - Upstream: not applicable
 - Related specs: `specs/the-inv-300-guard-checks-one-of-the-invariants-three-obligations.md`,
   `specs/the-no-fork-discipline-is-registered-only-inside-inv-183s-artifact-scope.md`
+
+## Invariants introduced
+
+- **None.** This spec amends INV-300 rather than registering a new invariant: the two-sides
+  note was approved by the maintainer on 2026-09-03 and appended to INV-300 in place, changing
+  no obligation on the pointing side.
+
+## Deviations from this spec, and why (2026-09-03)
+
+- **Proposed change 3 — the wording-based owner-side exemption — had already shipped**, in
+  `the-inv-300-guard-checks-one-of-the-invariants-three-obligations` (`1db616d`). It could not
+  wait for this spec: that spec's owner-naming assertion would have failed on
+  `module-04-data-collection/SKILL.md:488` and left the suite red between two commits. So this
+  spec's contribution to the guard is the **other** half — that an owner-side declaration owes
+  the citation — which the approved note added and which nothing asserted before.
+- **The new clause is asserted in halves, deliberately.** *Cite this invariant* is checked;
+  *carry the rule in full* is not, and the note says so, for the same reason as obligation (c):
+  judging whether a passage states a rule **completely** is semantic. Shipping a guard that
+  claimed the whole clause would be the defect the sibling spec exists to record.
+- ⚠️ **A line-level grep said only two of the three owner-side declarations cite INV-300.**
+  That was the grep's unit, not the truth: `module-04:488`'s citation sits on line 489, where
+  the sweep moved it so it would not break the exact phrase `test_cord_fetch_integrity` and
+  `test_sampling_and_validation_routing` pin. Verified per site over the passage before
+  believing the count — the same line-versus-passage error that produced a retracted audit
+  finding on 2026-09-03.
